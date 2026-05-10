@@ -3,427 +3,462 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Magna Bulgaria v39.1</title>
-<script src="https://cdn.tailwindcss.com"></script>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<title>Magna Bulgaria v40 - Lore Edition</title>
 <style>
-  :root { color-scheme: dark; }
-  body { font-family: 'Inter', system-ui; background:#050301; }
-  h1,h2,h3,.cinzel { font-family: 'Cinzel', serif; }
-  .panel {
-    background: radial-gradient(120% 120% at 50% 0%, #231a12 0%, #0f0a06 60%, #070402 100%);
-    border: 1px solid rgba(146, 111, 52, 0.35);
-    box-shadow: inset 0 1px 0 rgba(212,175,55,.15), inset 0 -30px 60px rgba(0,0,0,.7), 0 10px 30px rgba(0,0,0,.6);
-    position: relative;
-  }
-  .panel:before {
-    content:""; position:absolute; inset:0; border-radius:inherit; padding:1px;
-    background: linear-gradient(180deg, rgba(212,175,55,.5), transparent 40%);
-    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
-    -webkit-mask-composite: xor; mask-composite: exclude; opacity:.25; pointer-events:none;
-  }
-  .btn {
-    background: linear-gradient(180deg, #7c4a1a, #3d230c);
-    border:1px solid rgba(212,175,55,.35);
-    color:#f5e6c8; text-shadow:0 1px 0 #000;
-    transition: all .15s;
-  }
-  .btn:hover { background: linear-gradient(180deg, #956022, #4a2c0f); transform: translateY(-1px); }
-  .btn:active { transform: translateY(0px); }
-  .btn-ghost { background: rgba(0,0,0,.3); border:1px solid rgba(146,111,52,.3); }
-  .btn-ghost:hover { background: rgba(0,0,0,.5); }
-  .gold { color:#d4af37; }
-  .bar { height:8px; background:#1a130b; border:1px solid #3a2814; border-radius:999px; overflow:hidden; }
-  .bar > i { display:block; height:100%; background: linear-gradient(90deg, #d4af37, #8b5e34); }
-  .rune { filter: drop-shadow(0 0 8px rgba(212,175,55,.3)); }
-  ::-webkit-scrollbar { width:8px; height:8px; }
-  ::-webkit-scrollbar-thumb { background:#3a2814; border-radius:4px; }
+:root{
+  --bg:#0a0a0a;
+  --panel:#141008;
+  --gold:#d4af37;
+  --gold-dark:#8c7322;
+  --text:#e9dbb8;
+  --text-dim:#bfae84;
+}
+*{box-sizing:border-box}
+html,body{height:100%;margin:0;background:var(--bg);color:var(--text);font-family:Georgia,'Times New Roman',serif}
+body{background: radial-gradient(1200px 800px at 50% -200px,#1b140a 0%,#0a0a0a 60%)}
+.topbar{position:sticky;top:0;z-index:20;display:flex;justify-content:space-between;align-items:center;padding:10px 16px;background:linear-gradient(180deg,#1a1308,#0e0a05);border-bottom:3px solid var(--gold);box-shadow:0 4px 12px #000}
+.tb-info{display:flex;gap:14px;align-items:center;flex-wrap:wrap;font-size:15px}
+.tb-info strong{color:var(--gold);text-shadow:0 0 8px rgba(212,175,55,.35);font-size:17px;letter-spacing:.5px}
+.sep{opacity:.4}
+.tb-actions button{margin-left:8px}
+button{background:linear-gradient(#2a210f,#1a1408);color:var(--text);border:1px solid var(--gold);border-radius:6px;padding:6px 12px;cursor:pointer;font-family:inherit;font-size:14px;transition:all .2s}
+button:hover{background:linear-gradient(#3a2f18,#231a0b);box-shadow:0 0 10px rgba(212,175,55,.4);transform:translateY(-1px)}
+button:active{transform:translateY(0)}button:disabled{opacity:.5;cursor:not-allowed}
+.layout{display:grid;grid-template-columns:340px 1fr 340px;gap:14px;padding:14px;max-width:1600px;margin:0 auto}
+.panel{background:radial-gradient(ellipse at top,#1c150b 0%,#0f0a05 85%);border:2px solid var(--gold);border-radius:10px;padding:12px;box-shadow:inset 0 0 24px rgba(212,175,55,.08),0 6px 18px rgba(0,0,0,.7);position:relative}
+.panel::before{content:'';position:absolute;inset:0;border-radius:8px;pointer-events:none;box-shadow:inset 0 0 0 1px rgba(212,175,55,.18)}
+.panel h2,.panel h3{margin:0 0 10px;color:var(--gold);font-weight:700;text-transform:uppercase;letter-spacing:.5px;font-size:15px;border-bottom:1px solid rgba(212,175,55,.3);padding-bottom:6px}
+.scroll{max-height:420px;overflow-y:auto;padding-right:6px}
+.scroll::-webkit-scrollbar{width:8px}.scroll::-webkit-scrollbar-track{background:#0a0703}.scroll::-webkit-scrollbar-thumb{background:var(--gold-dark);border-radius:4px}
+.army{background:rgba(0,0,0,.3);border:1px solid rgba(212,175,55,.25);border-radius:8px;padding:8px;margin-bottom:9px}
+.army h4{margin:0 0 4px;color:var(--gold);font-size:15px}
+.army .stats{font-size:13px;color:var(--text-dim);display:flex;gap:12px;flex-wrap:wrap}
+.army .leader{margin:5px 0 6px;font-size:13px}
+.army button{width:100%;margin-top:4px;font-size:12px;padding:5px}
+.nation{border:1px solid rgba(212,175,55,.2);border-radius:6px;padding:8px;margin-bottom:7px;background:rgba(0,0,0,.22)}
+.nation.highlight{border:2px solid var(--gold);background:linear-gradient(180deg,rgba(212,175,55,.16),rgba(0,0,0,.2));box-shadow:0 0 14px rgba(212,175,55,.28)}
+.nation .title{font-weight:bold;color:var(--text)}
+.nation .desc{font-size:12px;color:var(--text-dim);font-style:italic;margin-top:2px}
+.nation .meta{display:flex;justify-content:space-between;font-size:12px;margin-top:5px;color:var(--gold)}
+.ritual{text-align:center;padding:22px 12px}
+.summon-btn{font-size:19px;padding:14px 24px;background:radial-gradient(#3a2a12,#1f1608);border:2px solid var(--gold);box-shadow:0 0 22px rgba(212,175,55,.22);margin:12px 0;letter-spacing:.5px}
+.summon-btn:hover{box-shadow:0 0 32px rgba(212,175,55,.5)}
+.cost{color:var(--text-dim);font-size:13px}.last{margin-top:10px;font-size:14px;min-height:22px;color:var(--gold)}
+.warrior{display:flex;gap:10px;align-items:center;padding:8px;border-bottom:1px dashed rgba(212,175,55,.15)}
+.warrior.locked{opacity:.42;filter:grayscale(1)}
+.warrior .portrait{width:38px;height:38px;border-radius:50%;background:#000;border:1px solid var(--gold-dark);display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0}
+.warrior.unlocked .portrait{background:radial-gradient(#3a2a12,#1a1206);border-color:var(--gold);box-shadow:0 0 8px rgba(212,175,55,.3)}
+.warrior.alexander.unlocked .portrait{box-shadow:0 0 16px gold,0 0 6px var(--gold)}
+.warrior .name{font-weight:bold;color:var(--text);font-size:14px}
+.warrior .bonus{font-size:11px;color:var(--text-dim)}
+.god-item{display:flex;justify-content:space-between;padding:6px 8px;border-bottom:1px solid rgba(212,175,55,.1);font-size:13px}
+.god-item.locked{opacity:.34}
+.god-item .gname{color:var(--text)}.god-item .gbonus{color:var(--gold);font-size:12px}
+.dynasty{margin:14px auto;max-width:1600px}
+.dyn-grid{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+.wives{display:flex;gap:8px;flex-wrap:wrap;margin-top:6px}
+.wives button.active{background:var(--gold);color:#000;font-weight:bold;box-shadow:0 0 12px rgba(212,175,55,.5)}
+.children{display:flex;gap:16px;margin-top:8px}
+.child{text-align:center;background:rgba(0,0,0,.3);border:1px solid rgba(212,175,55,.22);border-radius:8px;padding:8px 12px;min-width:84px}
+.child span{font-size:26px;display:block}.child small{color:var(--text-dim);font-size:12px}
+.bonus-text{font-size:12px;color:var(--gold);margin-top:6px;min-height:16px}
+.garrison-item{display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px dashed rgba(212,175,55,.15);font-size:13px}
+.garrison-item button{font-size:11px;padding:3px 8px}
+#toast-container{position:fixed;top:72px;right:18px;z-index:100;display:flex;flex-direction:column;gap:8px}
+.toast{background:linear-gradient(#1c150b,#0f0a05);border:1px solid var(--gold);border-left:4px solid var(--gold);color:var(--text);padding:10px 14px;border-radius:6px;box-shadow:0 6px 18px #000;min-width:260px;max-width:320px;animation:slideIn .3s ease;font-size:14px}
+@keyframes slideIn{from{opacity:0;transform:translateX(40px)}to{opacity:1;transform:translateX(0)}}
+@media(max-width:1100px){.layout{grid-template-columns:1fr}.dyn-grid{grid-template-columns:1fr}}
 </style>
 </head>
-<body class="min-h-screen text-[#e8dcc6] bg-[radial-gradient(ellipse_at_top,_#1f160d_0%,_#050301_70%)]">
-  <header class="sticky top-0 z-40 border-b border-amber-900/30 bg-black/70 backdrop-blur">
-    <div class="max-w-[1400px] mx-auto px-3 sm:px-6 py-3 flex items-center justify-between">
-      <div class="flex items-center gap-3">
-        <div class="w-10 h-10 rounded-full bg-gradient-to-br from-amber-500 to-yellow-700 grid place-items-center text-black font-black shadow-lg shadow-amber-900/30 rune cinzel">𐰉</div>
-        <div>
-          <h1 class="cinzel text-xl sm:text-2xl leading-none tracking-wider text-amber-200">MAGNA BULGARIA <span class="text-amber-500/70 text-xs align-super">v39.1</span></h1>
-          <p class="text-[10px] uppercase tracking-[0.2em] text-amber-200/50 -mt-1">Велика България</p>
-        </div>
-      <div class="flex items-center gap-2">
-        <button id="newGameBtn" class="btn px-3 py-1.5 rounded-md text-sm"><span data-i18n="newGame">Нова Игра</span></button>
-        <button id="langBtn" class="btn-ghost px-3 py-1.5 rounded-md text-sm">EN</button>
-        <button id="fullscreenBtn" class="btn-ghost px-3 py-1.5 rounded-md text-sm" title="Fullscreen">⛶</button>
-      </div>
+<body>
+<div id="toast-container"></div>
+<header class="topbar">
+  <div class="tb-info">
+    <strong data-i18n="khan">Кан Кубрат</strong>
+    <span class="sep">•</span>
+    <span id="goldStat">💰 5000</span>
+    <span class="sep">•</span>
+    <span id="yearStat">Год. 632</span>
+    <span class="sep">•</span>
+    <span data-i18n="dynastyDulo">Династия Дуло</span>
+  </div>
+  <div class="tb-actions">
+    <button id="btnLang">EN</button>
+    <button id="btnFS" title="Fullscreen">⛶</button>
+  </div>
+</header>
+
+<main class="layout">
+  <aside class="left">
+    <div class="panel">
+      <h2 data-i18n="armies">Трите Армии</h2>
+      <div id="armiesList"></div>
     </div>
-  </header>
-
-  <main class="max-w-[1400px] mx-auto p-3 sm:p-6">
-    <!-- Resources -->
-    <div class="panel rounded-xl px-4 py-3 mb-5 flex flex-wrap items-center justify-between gap-3">
-      <div class="flex items-center gap-5">
-        <div class="flex items-center gap-2"><span class="text-amber-300/70 text-sm" data-i18n="gold">Злато</span><span id="gold" class="gold text-xl font-semibold">500</span> <span class="text-amber-400">⦿</span></div>
-        <div class="flex items-center gap-2"><span class="text-amber-300/70 text-sm" data-i18n="turn">Ход</span><span id="turn" class="text-xl font-semibold">1</span></div>
-        <div class="flex items-center gap-2"><span class="text-amber-300/70 text-sm" data-i18n="faith">Вяра</span><span id="faith" class="text-xl font-semibold text-violet-300">50</span></div>
-      </div>
-      <div class="flex items-center gap-2">
-        <button id="nextTurnBtn" class="btn px-4 py-1.5 rounded-md text-sm"><span data-i18n="nextTurn">Следващ Ход</span> →</button>
-      </div>
+    <div class="panel">
+      <h2 data-i18n="nations">Народи на България</h2>
+      <div id="nationsList"></div>
     </div>
-
-    <!-- THREE ARMIES -->
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-6">
-      <!-- Batbayan -->
-      <div id="army-batbayan" class="panel rounded-2xl p-4">
-        <div class="flex items-start justify-between mb-2">
-          <h2 class="cinzel text-lg gold flex items-center gap-2"><span class="text-2xl">🛡️</span><span class="name">Батбаян</span></h2>
-          <span class="text-[11px] uppercase tracking-widest px-2 py-0.5 rounded bg-sky-950/50 border border-sky-800/40 text-sky-200" data-i18n="leftWing">Ляво Крило</span>
-        </div>
-        <div class="space-y-1.5 text-sm">
-          <div class="flex justify-between"><span class="text-amber-200/60" data-i18n="soldiers">Войници</span><span data-stat="soldiers" class="font-medium">12,000</span></div>
-          <div class="flex justify-between"><span class="text-amber-200/60" data-i18n="morale">Морал</span><span><span data-stat="morale">85</span>%</span></div>
-          <div class="flex justify-between"><span class="text-amber-200/60" data-i18n="rank">Ранг</span><span data-stat="rank" class="cinzel">III</span></div>
-          <div class="flex justify-between"><span class="text-amber-200/60" data-i18n="god">Бог</span><span data-stat="god" class="text-amber-300">—</span></div>
-        </div>
-        <div class="mt-3 bar"><i style="width:85%" data-bar="morale"></i></div>
-        <div class="mt-4 flex gap-2">
-          <button data-action="train" class="btn flex-1 py-1.5 rounded-md text-sm" data-i18n="train">Обучи (50з)</button>
-          <button data-action="march" class="btn-ghost flex-1 py-1.5 rounded-md text-sm border" data-i18n="march">Поход</button>
-        </div>
-      </div>
-
-      <!-- Kubrat -->
-      <div id="army-kubrat" class="panel rounded-2xl p-4 ring-1 ring-amber-400/20">
-        <div class="flex items-start justify-between mb-2">
-          <h2 class="cinzel text-xl gold flex items-center gap-2"><span class="text-2xl">👑</span><span class="name">Кубрат</span></h2>
-          <span class="text-[11px] uppercase tracking-widest px-2 py-0.5 rounded bg-amber-950/60 border border-amber-700/40 text-amber-200" data-i18n="center">Велик Хан</span>
-        </div>
-        <div class="space-y-1.5 text-sm">
-          <div class="flex justify-between"><span class="text-amber-200/60" data-i18n="soldiers">Войници</span><span data-stat="soldiers" class="font-medium">25,000</span></div>
-          <div class="flex justify-between"><span class="text-amber-200/60" data-i18n="morale">Морал</span><span><span data-stat="morale">95</span>%</span></div>
-          <div class="flex justify-between"><span class="text-amber-200/60" data-i18n="rank">Ранг</span><span data-stat="rank" class="cinzel">V</span></div>
-          <div class="flex justify-between"><span class="text-amber-200/60" data-i18n="god">Бог</span><span data-stat="god" class="text-amber-300">—</span></div>
-        </div>
-        <div class="mt-3 bar"><i style="width:95%" data-bar="morale"></i></div>
-        <div class="mt-4 flex gap-2">
-          <button data-action="train" class="btn flex-1 py-1.5 rounded-md text-sm" data-i18n="train">Обучи (50з)</button>
-          <button data-action="march" class="btn-ghost flex-1 py-1.5 rounded-md text-sm border" data-i18n="march">Поход</button>
-        </div>
-      </div>
-
-      <!-- Asparukh -->
-      <div id="army-asparukh" class="panel rounded-2xl p-4">
-        <div class="flex items-start justify-between mb-2">
-          <h2 class="cinzel text-lg gold flex items-center gap-2"><span class="text-2xl">⚔️</span><span class="name">Аспарух</span></h2>
-          <span class="text-[11px] uppercase tracking-widest px-2 py-0.5 rounded bg-emerald-950/50 border border-emerald-800/40 text-emerald-200" data-i18n="rightWing">Дясно Крило</span>
-        </div>
-        <div class="space-y-1.5 text-sm">
-          <div class="flex justify-between"><span class="text-amber-200/60" data-i18n="soldiers">Войници</span><span data-stat="soldiers" class="font-medium">18,000</span></div>
-          <div class="flex justify-between"><span class="text-amber-200/60" data-i18n="morale">Морал</span><span><span data-stat="morale">90</span>%</span></div>
-          <div class="flex justify-between"><span class="text-amber-200/60" data-i18n="rank">Ранг</span><span data-stat="rank" class="cinzel">IV</span></div>
-          <div class="flex justify-between"><span class="text-amber-200/60" data-i18n="god">Бог</span><span data-stat="god" class="text-amber-300">—</span></div>
-        </div>
-        <div class="mt-3 bar"><i style="width:90%" data-bar="morale"></i></div>
-        <div class="mt-4 flex gap-2">
-          <button data-action="train" class="btn flex-1 py-1.5 rounded-md text-sm" data-i18n="train">Обучи (50з)</button>
-          <button data-action="march" class="btn-ghost flex-1 py-1.5 rounded-md text-sm border" data-i18n="march">Поход</button>
-        </div>
-      </div>
+    <div class="panel">
+      <h3 data-i18n="garrisons">Гарнизони</h3>
+      <div id="garrisonsList"></div>
     </div>
+  </aside>
 
-    <!-- GARRISONS & LEADER -->
-    <div class="grid grid-cols-1 xl:grid-cols-3 gap-4">
-      <!-- Garrisons -->
-      <div class="panel rounded-2xl p-4 xl:col-span-2">
-        <div class="flex items-center justify-between mb-3">
-          <h3 class="cinzel text-lg gold" data-i18n="garrisons">Автономни Гарнизони</h3>
-          <span class="text-xs text-amber-200/50">+ <span id="totalIncome">132</span> <span data-i18n="gold">злато</span>/ход</span>
-        </div>
-        <div id="garrisonsList" class="grid sm:grid-cols-2 lg:grid-cols-3 gap-2.5"></div>
-      </div>
-
-      <!-- Leader -->
-      <div class="panel rounded-2xl p-4">
-        <h3 class="cinzel text-lg gold mb-3" data-i18n="leader">Кан Кубрат - Водач</h3>
-        <div class="space-y-3" id="leaderStats">
-          <div><div class="flex justify-between text-xs mb-1"><span data-i18n="power">Власт</span><span>75</span></div><div class="bar"><i style="width:75%"></i></div></div>
-          <div><div class="flex justify-between text-xs mb-1"><span data-i18n="diplomacy">Дипломация</span><span>68</span></div><div class="bar"><i style="width:68%"></i></div></div>
-          <div><div class="flex justify-between text-xs mb-1"><span data-i18n="warfare">Военно дело</span><span>82</span></div><div class="bar"><i style="width:82%"></i></div></div>
-          <div><div class="flex justify-between text-xs mb-1"><span data-i18n="economy">Икономика</span><span>70</span></div><div class="bar"><i style="width:70%"></i></div></div>
-          <div><div class="flex justify-between text-xs mb-1"><span data-i18n="belief">Вяра</span><span>88</span></div><div class="bar"><i style="width:88%"></i></div></div>
-        </div>
-        <div class="mt-4 pt-3 border-t border-amber-900/30 text-[11px] text-amber-200/60">Съвет: поддържай висок морал и призовавай боговете преди големи походи.</div>
-      </div>
+  <section class="center">
+    <div class="panel ritual">
+      <h2 data-i18n="ritual">Свещен Ритуал</h2>
+      <button id="btnSummon" class="summon-btn">Извикай Бог / Summon God</button>
+      <div class="cost" data-i18n="cost">Цена: 100 злато</div>
+      <div id="lastSummon" class="last">Последно: —</div>
     </div>
-
-    <!-- RITUAL -->
-    <div class="panel rounded-2xl p-4 mt-4">
-      <div class="flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <h3 class="cinzel text-lg gold flex items-center gap-2">🔥 <span data-i18n="ritual">Извърши Ритуал</span></h3>
-          <p class="text-xs text-amber-200/60 -mt-1">Тангра канъ — призов на късмет</p>
-        </div>
-        <div class="flex items-center gap-3">
-          <span class="text-xs px-2 py-1 rounded bg-black/40 border border-amber-900/40"><span data-i18n="chance">Шанс: 1.5%</span></span>
-          <button id="ritualBtn" class="btn px-5 py-2 rounded-lg font-medium"><span data-i18n="ritual">Извърши Ритуал</span> <span class="opacity-70" data-i18n="ritualCost">(100 злато)</span></button>
-          <button id="pantheonBtn" class="btn-ghost px-3 py-2 rounded-lg text-sm border" data-i18n="pantheon">Пантеон (69)</button>
-        </div>
-      </div>
+    <div class="panel gods">
+      <h3 data-i18n="gods">Богове (69)</h3>
+      <div id="godsList" class="scroll"></div>
     </div>
+  </section>
 
-    <!-- LOG -->
-    <div class="panel rounded-2xl p-4 mt-4">
-      <h3 class="cinzel text-base gold mb-2" data-i18n="log">Хроника</h3>
-      <div id="log" class="h-40 overflow-y-auto text-xs space-y-1 font-mono text-amber-100/80 pr-2"></div>
+  <aside class="right">
+    <div class="panel">
+      <h2 data-i18n="legendary">Легендарни Войни</h2>
+      <div id="warriorsList" class="scroll"></div>
     </div>
-  </main>
+  </aside>
+</main>
 
-  <!-- Pantheon Modal -->
-  <div id="pantheonModal" class="fixed inset-0 z-50 hidden">
-    <div class="absolute inset-0 bg-black/80 backdrop-blur-sm" id="pantheonClose"></div>
-    <div class="relative max-w-5xl mx-auto mt-10 panel rounded-2xl p-5 max-h-[85vh] overflow-hidden flex flex-col">
-      <div class="flex items-center justify-between mb-3">
-        <h3 class="cinzel text-xl gold">Пантеон на Българските Богове — 69</h3>
-        <button id="closePantheon" class="btn-ghost px-3 py-1 rounded border">✕</button>
+<footer class="panel dynasty">
+  <h3 data-i18n="dynasty">Династия Дуло</h3>
+  <div class="dyn-grid">
+    <div>
+      <label data-i18n="wife">Избери съпруга:</label>
+      <div class="wives">
+        <button data-wife="byzantine" data-i18n="byzantine">Византийска принцеса</button>
+        <button data-wife="khazar" data-i18n="khazar">Хазарска ханша</button>
+        <button data-wife="avar" data-i18n="avar">Аварска дъщеря</button>
       </div>
-      <div id="godsList" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2 text-sm overflow-y-auto pr-2"></div>
+      <div id="wifeBonus" class="bonus-text"></div>
+    </div>
+    <div>
+      <label data-i18n="children">Наследници:</label>
+      <div class="children">
+        <div class="child"><span>👑</span><small>Батбаян</small></div>
+        <div class="child"><span>⚔️</span><small>Аспарух</small></div>
+        <div class="child"><span>🐎</span><small>Котраг</small></div>
+      </div>
     </div>
   </div>
+</footer>
 
 <script>
-document.addEventListener('DOMContentLoaded', () => {
-  const i18n = {
-    bg: {
-      newGame:"Нова Игра", gold:"Злато", turn:"Ход", faith:"Вяра", nextTurn:"Следващ Ход",
-      leftWing:"Ляво Крило", center:"Велик Хан", rightWing:"Дясно Крило",
-      soldiers:"Войници", morale:"Морал", rank:"Ранг", god:"Бог",
-      train:"Обучи (50з)", march:"Поход",
-      garrisons:"Автономни Гарнизони", garrison:"Гарнизон", income:"Доход",
-      leader:"Кан Кубрат - Водач", power:"Власт", diplomacy:"Дипломация", warfare:"Военно дело", economy:"Икономика", belief:"Вяра",
-      ritual:"Извърши Ритуал", ritualCost:"(100 злато)", chance:"Шанс: 1.5%", pantheon:"Пантеон (69)", log:"Хроника",
-      lang:"EN"
-    },
-    en: {
-      newGame:"New Game", gold:"Gold", turn:"Turn", faith:"Faith", nextTurn:"Next Turn",
-      leftWing:"Left Wing", center:"Great Khan", rightWing:"Right Wing",
-      soldiers:"Soldiers", morale:"Morale", rank:"Rank", god:"God",
-      train:"Train (50g)", march:"March",
-      garrisons:"Autonomous Garrisons", garrison:"Garrison", income:"Income",
-      leader:"Khan Kubrat - Leader", power:"Authority", diplomacy:"Diplomacy", warfare:"Warfare", economy:"Economy", belief:"Faith",
-      ritual:"Perform Ritual", ritualCost:"(100 gold)", chance:"Chance: 1.5%", pantheon:"Pantheon (69)", log:"Chronicle",
-      lang:"BG"
-    }
-  };
+(() => {
+const T = {
+ bg:{
+  khan:'Кан Кубрат',dynastyDulo:'Династия Дуло',armies:'Трите Армии',infantry:'Пехота',cavalry:'Конница',leader:'Вожд',assign:'Назначи вожд',
+  ritual:'Свещен Ритуал',cost:'Цена: 100 злато',last:'Последно',none:'—',legendary:'Легендарни Войни',nations:'Народи на България',loyalty:'Лоялност',
+  garrisons:'Гарнизони',recruit:'Набери +100',dynasty:'Династия Дуло',wife:'Избери съпруга',children:'Наследници',gods:'Богове (69)',
+  attack:'атака',canKill:'Може да убие бог: 5%',summonedGod:'Призован бог',summonedWarrior:'Призован герой',nothing:'Ритуалът замлъкна',
+  noGold:'Нямаш достатъчно злато!',noWarriors:'Няма свободни герои',challenge:'предизвиква',killed:'убит от',survived:'оцеля',
+  byzantine:'Византийска принцеса',khazar:'Хазарска ханша',avar:'Аварска дъщеря',
+ },
+ en:{
+  khan:'Khan Kubrat',dynastyDulo:'Dulo Dynasty',armies:'Three Armies',infantry:'Infantry',cavalry:'Cavalry',leader:'Leader',assign:'Assign Leader',
+  ritual:'Sacred Ritual',cost:'Cost: 100 gold',last:'Last',none:'—',legendary:'Legendary Warriors',nations:'Peoples of Bulgaria',loyalty:'Loyalty',
+  garrisons:'Garrisons',recruit:'Recruit +100',dynasty:'Dulo Dynasty',wife:'Choose Wife',children:'Heirs',gods:'Gods (69)',
+  attack:'attack',canKill:'Can kill gods: 5%',summonedGod:'God summoned',summonedWarrior:'Hero summoned',nothing:'The ritual was silent',
+  noGold:'Not enough gold!',noWarriors:'No free heroes',challenge:'challenges',killed:'slain by',survived:'survived',
+  byzantine:'Byzantine Princess',khazar:'Khazar Khansha',avar:'Avar Daughter',
+ }
+};
 
-  const gods = [
-    {bg:"Тангра", en:"Tangra"}, {bg:"Умай", en:"Umay"}, {bg:"Ерлик Хан", en:"Erlik Khan"},
-    {bg:"Куар", en:"Kuar"}, {bg:"Ашина", en:"Ashina"}, {bg:"Кубар", en:"Kubar"},
-    {bg:"Барс Ил", en:"Bars Il"}, {bg:"Перун", en:"Perun"}, {bg:"Велес", en:"Veles"},
-    {bg:"Даждбог", en:"Dazhbog"}, {bg:"Сварог", en:"Svarog"}, {bg:"Стрибог", en:"Stribog"},
-    {bg:"Мокоша", en:"Mokosh"}, {bg:"Хорс", en:"Khors"}, {bg:"Симаргл", en:"Simargl"},
-    {bg:"Ярило", en:"Yarilo"}, {bg:"Лада", en:"Lada"}, {bg:"Леля", en:"Lelya"},
-    {bg:"Жива", en:"Zhiva"}, {bg:"Морана", en:"Morana"}, {bg:"Троян", en:"Troyan"},
-    {bg:"Световит", en:"Svetovit"}, {bg:"Триглав", en:"Triglav"}, {bg:"Руевит", en:"Ruevit"},
-    {bg:"Поревит", en:"Porevit"}, {bg:"Белобог", en:"Belobog"}, {bg:"Чернобог", en:"Chernobog"},
-    {bg:"Радогост", en:"Radogost"}, {bg:"Додола", en:"Dodola"}, {bg:"Коледа", en:"Koleda"},
-    {bg:"Купала", en:"Kupala"}, {bg:"Овсен", en:"Ovsen"}, {bg:"Полел", en:"Polel"},
-    {bg:"Вий", en:"Viy"}, {bg:"Див", en:"Div"}, {bg:"Змей", en:"Zmei"},
-    {bg:"Ламя", en:"Lamya"}, {bg:"Хала", en:"Hala"}, {bg:"Самодива", en:"Samodiva"},
-    {bg:"Юда", en:"Yuda"}, {bg:"Вила", en:"Vila"}, {bg:"Русалка", en:"Rusalka"},
-    {bg:"Водник", en:"Vodnik"}, {bg:"Върколак", en:"Varkolak"}, {bg:"Вампир", en:"Vampire"},
-    {bg:"Таласъм", en:"Talasam"}, {bg:"Караконджул", en:"Karakondzhul"}, {bg:"Стопан", en:"Stopan"},
-    {bg:"Орисия", en:"Orisiya"}, {bg:"Наречница", en:"Narechnitsa"}, {bg:"Змей Горянин", en:"Zmei Goryanin"},
-    {bg:"Сурва", en:"Surva"}, {bg:"Баба Марта", en:"Baba Marta"}, {bg:"Герман", en:"German"},
-    {bg:"Пеперуда", en:"Peperuda"}, {bg:"Бадняк", en:"Badnyak"}, {bg:"Огника", en:"Ognika"},
-    {bg:"Гръмовержец", en:"Gromoverzhets"}, {bg:"Вихър", en:"Vihar"}, {bg:"Полевик", en:"Polevik"},
-    {bg:"Горски Дух", en:"Gorski"}, {bg:"Езерник", en:"Ezernik"}, {bg:"Чума", en:"Chuma"},
-    {bg:"Ала", en:"Ala"}, {bg:"Торбалан", en:"Torbalan"}, {bg:"Лесник", en:"Lesnik"},
-    {bg:"Тодорка", en:"Todorka"}, {bg:"Златорог", en:"Zlatorog"}, {bg:"Бес", en:"Bes"},
-  ];
+const godsPool = [
+{id:'bendida',bg:'Бендида Велика',en:'Bendida Velika',bonus:'+30% лов'},
+{id:'veda',bg:'Веда Словена',en:'Veda Slovena',bonus:'+25% мъдрост'},
+{id:'zalmoxis',bg:'Залмоксис',en:'Zalmoxis',bonus:'+18% безсмъртие'},
+{id:'sabazios',bg:'Сабазий',en:'Sabazios',bonus:'+15% конница'},
+{id:'dionysus',bg:'Дионис Тракийски',en:'Thracian Dionysus',bonus:'+12% вино'},
+{id:'orpheus',bg:'Орфеев Дух',en:'Orpheus Spirit',bonus:'+20% песни'},
+{id:'bess',bg:'Бес Български',en:'Bess',bonus:'+10% планини'},
+{id:'karadjova',bg:'Караджова',en:'Karadjova',bonus:'+8% съдба'},
+{id:'samodiva',bg:'Самодива',en:'Samodiva',bonus:'+14% гори'},
+{id:'yuda',bg:'Юда',en:'Yuda',bonus:'+9% бури'},
+{id:'vela',bg:'Вела',en:'Vela',bonus:'+7% звезди'},
+{id:'senar',bg:'Сенар',en:'Senar',bonus:'+6% сънища'},
+{id:'zvezdobroy',bg:'Звездоброя',en:'Zvezdobroy',bonus:'+11% астрология'},
+{id:'dajd',bg:'Дажд',en:'Dajd',bonus:'+13% дъжд'},
+{id:'svarog',bg:'Сварог Мъдър',en:'Svarog the Wise',bonus:'+17% ковачество'},
+{id:'veles',bg:'Велес Пастир',en:'Veles Shepherd',bonus:'+16% стада'},
+{id:'zhiva',bg:'Жива Българска',en:'Zhiva',bonus:'+19% плодородие'},
+{id:'mora',bg:'Мора',en:'Mora',bonus:'+5% нощ'},
+{id:'dolya',bg:'Доля',en:'Dolya',bonus:'+8% късмет'},
+{id:'nedolya',bg:'Недоля',en:'Nedolya',bonus:'-3% враг'},
+{id:'sreshta',bg:'Среща',en:'Sreshta',bonus:'+7% съдба'},
+{id:'rozhanitsa',bg:'Рожаница',en:'Rozhanitsa',bonus:'+12% раждане'},
+{id:'bereginya',bg:'Берегиня',en:'Bereginya',bonus:'+14% закрила'},
+{id:'diva',bg:'Дива',en:'Diva',bonus:'+9% диво'},
+{id:'lelya',bg:'Леля',en:'Lelya',bonus:'+6% пролет'},
+{id:'kostroma',bg:'Кострома',en:'Kostroma',bonus:'+5% лято'},
+{id:'kupala',bg:'Купала',en:'Kupala',bonus:'+10% огън'},
+{id:'yarilo',bg:'Ярило Юнак',en:'Yarilo',bonus:'+15% младост'},
+{id:'troyan',bg:'Троян',en:'Troyan',bonus:'+11% лечебен'},
+{id:'svetovit',bg:'Световит Български',en:'Svetovit',bonus:'+20% война'},
+{id:'ruevit',bg:'Руевит',en:'Ruevit',bonus:'+13% сила'},
+{id:'porevit',bg:'Поревит',en:'Porevit',bonus:'+12% стратегия'},
+{id:'chernobog',bg:'Чернобог Древен',en:'Chernobog',bonus:'+18% тъмнина'},
+{id:'belobog',bg:'Белобог Светли',en:'Belobog',bonus:'+18% светлина'},
+{id:'stribog',bg:'Стрибог Вятър',en:'Stribog',bonus:'+14% вятър'},
+{id:'hors',bg:'Хорс Слънчев',en:'Hors',bonus:'+16% слънце'},
+{id:'mokosh',bg:'Мокоша Плодна',en:'Mokosh',bonus:'+17% тъкане'},
+{id:'dazhbog',bg:'Даждбог Щедър',en:'Dazhbog',bonus:'+19% изобилие'},
+{id:'semargl',bg:'Семаргл Огнен',en:'Semargl',bonus:'+15% пазител'},
+{id:'vihur',bg:'Вихър',en:'Vihur',bonus:'+8% вихри'},
+{id:'vila',bg:'Вила Горска',en:'Vila',bonus:'+10% планина'},
+{id:'zmey',bg:'Змей Огнян',en:'Zmey',bonus:'+22% дракон'},
+{id:'hala',bg:'Хала',en:'Hala',bonus:'+9% градушка'},
+{id:'lamia',bg:'Ламя',en:'Lamia',bonus:'+11% вода'},
+{id:'surva',bg:'Сурва',en:'Surva',bonus:'+7% нова година'},
+{id:'koleda',bg:'Коледа',en:'Koleda',bonus:'+8% зимнина'},
+{id:'german',bg:'Герман Дъждовен',en:'German',bonus:'+6% дъжд'},
+{id:'peperuda',bg:'Пеперуда',en:'Peperuda',bonus:'+5% плод'},
+{id:'derzun',bg:'Дерзун',en:'Derzun',bonus:'+4% дързост'},
+{id:'bogomil',bg:'Богомил',en:'Bogomil',bonus:'+12% дух'},
+{id:'boyan',bg:'Боян Маг',en:'Boyan',bonus:'+13% слово'},
+{id:'pchelina',bg:'Пчелина',en:'Pchelina',bonus:'+7% мед'},
+{id:'zhitomir',bg:'Житомир',en:'Zhitomir',bonus:'+9% жито'},
+{id:'radogost',bg:'Радогост',en:'Radogost',bonus:'+10% гости'},
+{id:'triglav',bg:'Триглав Мъдър',en:'Triglav',bonus:'+16% триединство'},
+{id:'prove',bg:'Прове Правда',en:'Prove',bonus:'+11% право'},
+{id:'karna',bg:'Карна',en:'Karna',bonus:'+6% плач'},
+{id:'zhelya',bg:'Желя',en:'Zhelya',bonus:'+6% тъга'},
+{id:'usura',bg:'Усура',en:'Usura',bonus:'+5% зора'},
+{id:'mother',bg:'Богиня Майка',en:'Mother Goddess',bonus:'+21% живот'},
+{id:'tara',bg:'Тара Болгара',en:'Tara',bonus:'+10% Балкан'},
+{id:'pirin',bg:'Пирин Дух',en:'Pirin',bonus:'+9% камък'},
+{id:'rila',bg:'Рила Старец',en:'Rila',bonus:'+12% мъдрост'},
+{id:'vitosha',bg:'Витоша Вилна',en:'Vitosha',bonus:'+8% София'},
+{id:'danube',bg:'Дунав Баща',en:'Danube Father',bonus:'+15% река'},
+{id:'iskar',bg:'Искър Вълк',en:'Iskar',bonus:'+7% бързина'},
+{id:'maritsa',bg:'Марица Златна',en:'Maritsa',bonus:'+11% злато'},
+{id:'balkan',bg:'Балкан Хайдут',en:'Balkan',bonus:'+14% свобода'},
+{id:'sun',bg:'Слънце Ясен',en:'Sun Yasen',bonus:'+20% светлина'},
+];
 
-  let lang = 'bg';
-  const initialState = () => ({
-    gold:500, turn:1, faith:50,
-    armies:{
-      batbayan:{id:'batbayan', nameBg:'Батбаян', nameEn:'Batbayan', soldiers:12000, morale:85, rank:3, god:null},
-      kubrat:{id:'kubrat', nameBg:'Кубрат', nameEn:'Kubrat', soldiers:25000, morale:95, rank:5, god:null},
-      asparukh:{id:'asparukh', nameBg:'Аспарух', nameEn:'Asparukh', soldiers:18000, morale:90, rank:4, god:null},
-    },
-    garrisons:[
-      {nameBg:'Плиска', nameEn:'Pliska', soldiers:2500, income:25},
-      {nameBg:'Преслав', nameEn:'Preslav', soldiers:1800, income:18},
-      {nameBg:'Онгъл', nameEn:'Ongal', soldiers:3000, income:30},
-      {nameBg:'Фанагория', nameEn:'Phanagoria', soldiers:2200, income:22},
-      {nameBg:'Варна', nameEn:'Varna', soldiers:1500, income:20},
-      {nameBg:'Дръстър', nameEn:'Drastar', soldiers:1700, income:17},
-    ],
-    leader:{power:75, diplomacy:68, warfare:82, economy:70, belief:88},
-    log:[]
-  });
-  let state = initialState();
+const warriorsPool = [
+{id:'alexander',bg:'Александър Македонски',en:'Alexander the Great',attack:40,desc:{bg:'Аз, Александър, син на Филип Македонски, българин по кръв',en:'I, Alexander, son of Philip of Macedon, Bulgarian by blood'}},
+{id:'krali_marko',bg:'Крали Марко',en:'Kral Marko',attack:25},
+{id:'spartak',bg:'Спартак',en:'Spartacus',attack:22},
+{id:'tomyris',bg:'Томирис',en:'Tomyris',attack:20},
+{id:'kuber',bg:'Кубер',en:'Kuber',attack:18},
+{id:'tervel',bg:'Кан Тервел',en:'Khan Tervel',attack:30},
+{id:'krum',bg:'Кан Крум',en:'Khan Krum',attack:28},
+{id:'simeon',bg:'Цар Симеон',en:'Tsar Simeon',attack:35},
+{id:'samuel',bg:'Цар Самуил',en:'Tsar Samuel',attack:32},
+{id:'momchil',bg:'Момчил войвода',en:'Momchil Voivode',attack:20},
+{id:'dobromir',bg:'Добромир Хръс',en:'Dobromir Chrysos',attack:15},
+{id:'ivaylo',bg:'Ивайло',en:'Ivaylo',attack:24},
+{id:'kaloyan',bg:'Калоян',en:'Kaloyan',attack:27},
+{id:'orpheus_w',bg:'Орфей',en:'Orpheus',attack:18},
+{id:'philip',bg:'Филип Македонски',en:'Philip of Macedon',attack:25},
+{id:'alexius',bg:'Алексий Слав',en:'Alexius Slav',attack:16},
+{id:'asen',bg:'Иван Асен II',en:'Ivan Asen II',attack:30},
+{id:'valchan',bg:'Вълчан войвода',en:'Valchan Voivode',attack:17},
+{id:'asparuh',bg:'Кан Аспарух',en:'Khan Asparuh',attack:33},
+{id:'batbayan',bg:'Батбаян',en:'Batbayan',attack:19},
+];
 
-  const $ = s => document.querySelector(s);
-  const $$ = s => document.querySelectorAll(s);
+const nations = [
+{id:'macedonians',name_bg:'Македонци (Македония)',name_en:'Macedonians (Macedonia)',desc_bg:'Древен български род',desc_en:'Ancient Bulgarian kin',loyalty:100,bonus_bg:'+25% пехота',bonus_en:'+25% infantry',highlight:true},
+{id:'thracians',name_bg:'Траки (Тракия)',name_en:'Thracians (Thrace)',loyalty:95,bonus_bg:'+15% конница',bonus_en:'+15% cavalry'},
+{id:'moesians',name_bg:'Мизи (Мизия) - включва Видин',name_en:'Moesians (Moesia) – includes Vidin',loyalty:92,bonus_bg:'+10% стабилност',bonus_en:'+10% stability'},
+{id:'dobrudja',name_bg:'Добруджанци',name_en:'Dobrudjans',loyalty:88,bonus_bg:'+20% флот',bonus_en:'+20% fleet'},
+{id:'shopi',name_bg:'Шопи',name_en:'Shopi',loyalty:90,bonus_bg:'+12% данък',bonus_en:'+12% tax'},
+];
 
-  function fmt(n){ return n.toLocaleString(lang==='bg'?'bg-BG':'en-US'); }
+const defaultState = {
+ lang:'bg',gold:5000,year:632,lastSummon:null,wife:null,
+ gods:[],warriors:[],
+ armies:{
+  left:{name_bg:'Батбаянова Орда',name_en:"Batbayan's Horde",infantry:4200,cavalry:1800,leader:null},
+  center:{name_bg:'Кубратова Дружина',name_en:"Kubrat's Retinue",infantry:5500,cavalry:2500,leader:null},
+  right:{name_bg:'Аспарухова Стрела',name_en:"Asparuh's Arrow",infantry:3000,cavalry:3400,leader:null},
+ },
+ garrisons:{pliska:1200,phanagoria:800,ongul:600}
+};
 
-  function updateLangUI(){
-    $$('[data-i18n]').forEach(el=>{
-      const k = el.dataset.i18n;
-      if(i18n[lang][k]) el.textContent = i18n[lang][k];
-    });
-    $('#langBtn').textContent = i18n[lang].lang;
-    document.documentElement.lang = lang;
-    renderAll();
+let state = loadState() || JSON.parse(JSON.stringify(defaultState));
+
+function saveState(){localStorage.setItem('mb_v40_lore',JSON.stringify(state))}
+function loadState(){try{const s=localStorage.getItem('mb_v40_lore');return s?JSON.parse(s):null}catch(e){return null}}
+
+function toast(msg){const c=document.getElementById('toast-container');const d=document.createElement('div');d.className='toast';d.textContent=msg;c.appendChild(d);setTimeout(()=>{d.style.opacity='0';d.style.transform='translateX(40px)';setTimeout(()=>d.remove(),300)},3800)}
+
+function applyTranslations(){document.querySelectorAll('[data-i18n]').forEach(el=>{const k=el.dataset.i18n;if(T[state.lang][k]) el.textContent=T[state.lang][k]});document.getElementById('btnLang').textContent=state.lang==='bg'?'EN':'BG'}
+
+function updateTop(){
+ document.getElementById('goldStat').textContent = `💰 ${state.gold.toLocaleString()}`;
+ document.getElementById('yearStat').textContent = state.lang==='bg' ? `Год. ${state.year}` : `Year ${state.year}`;
+}
+
+function renderArmies(){
+ const el=document.getElementById('armiesList');el.innerHTML='';
+ ['left','center','right'].forEach(k=>{
+  const a=state.armies[k];
+  const w = a.leader ? warriorsPool.find(x=>x.id===a.leader) : null;
+  const wo = a.leader ? state.warriors.find(x=>x.id===a.leader) : null;
+  const leaderName = w ? (state.lang==='bg'?w.bg:w.en)+(wo?` (+${wo.attack}%)`:'') : T[state.lang].none;
+  const name = state.lang==='bg'?a.name_bg:a.name_en;
+  el.innerHTML += `<div class="army"><h4>${name}</h4><div class="stats"><span>${T[state.lang].infantry}: ${a.infantry.toLocaleString()}</span><span>${T[state.lang].cavalry}: ${a.cavalry.toLocaleString()}</span></div><div class="leader">${T[state.lang].leader}: <b>${leaderName}</b></div><button onclick="assignLeader('${k}')">${T[state.lang].assign}</button></div>`;
+ });
+}
+
+function renderNations(){
+ const el=document.getElementById('nationsList');el.innerHTML='';
+ nations.forEach(n=>{
+  const div=document.createElement('div');div.className='nation'+(n.highlight?' highlight':'');
+  div.innerHTML=`<div class="title">${state.lang==='bg'?n.name_bg:n.name_en}</div>${n.desc_bg?`<div class="desc">${state.lang==='bg'?n.desc_bg:n.desc_en}</div>`:''}<div class="meta"><span>${T[state.lang].loyalty}: ${n.loyalty}%</span><span>${state.lang==='bg'?n.bonus_bg:n.bonus_en}</span></div>`;
+  el.appendChild(div);
+ });
+}
+
+function renderGarrisons(){
+ const el=document.getElementById('garrisonsList');el.innerHTML='';
+ Object.entries(state.garrisons).forEach(([city,c])=>{
+  const name=city.charAt(0).toUpperCase()+city.slice(1);
+  el.innerHTML+=`<div class="garrison-item"><span>${name}: <b>${c}</b></span><button onclick="recruitGarrison('${city}')">${T[state.lang].recruit} (50g)</button></div>`;
+ });
+}
+
+function renderWarriors(){
+ const el=document.getElementById('warriorsList');el.innerHTML='';
+ warriorsPool.forEach(w=>{
+  const owned=state.warriors.find(o=>o.id===w.id);
+  const div=document.createElement('div');div.className='warrior '+(owned?'unlocked':'locked')+(w.id==='alexander'?' alexander':'');
+  if(owned && w.desc){div.title=state.lang==='bg'?w.desc.bg:w.desc.en}
+  const name=owned?(state.lang==='bg'?w.bg:w.en):'???';
+  const atk=owned?owned.attack:w.attack;
+  div.innerHTML=`<div class="portrait">${owned?'⚔️':'?'}</div><div class="info"><div class="name">${name}</div><div class="bonus">${owned?`+${atk}% ${T[state.lang].attack} • ${T[state.lang].canKill}`:''}</div></div>`;
+  el.appendChild(div);
+ });
+}
+
+function renderGods(){
+ const el=document.getElementById('godsList');el.innerHTML='';
+ godsPool.forEach(g=>{
+  const owned=state.gods.includes(g.id);
+  const div=document.createElement('div');div.className='god-item '+(owned?'':'locked');
+  div.innerHTML=`<span class="gname">${owned?(state.lang==='bg'?g.bg:g.en):'???'}</span><span class="gbonus">${owned?g.bonus:''}</span>`;
+  el.appendChild(div);
+ });
+}
+
+function renderLast(){
+ const el=document.getElementById('lastSummon');
+ if(!state.lastSummon){el.textContent=`${T[state.lang].last}: ${T[state.lang].none}`;return}
+ if(state.lastSummon.type==='warrior'){
+  const w=warriorsPool.find(x=>x.id===state.lastSummon.id);
+  el.textContent=`${T[state.lang].last}: ${T[state.lang].summonedWarrior} - ${state.lang==='bg'?w.bg:w.en}`;
+ }else if(state.lastSummon.type==='god'){
+  const g=godsPool.find(x=>x.id===state.lastSummon.id);
+  el.textContent=`${T[state.lang].last}: ${T[state.lang].summonedGod} - ${state.lang==='bg'?g.bg:g.en}`;
+ }else{el.textContent=`${T[state.lang].last}: ${T[state.lang].nothing}`}
+}
+
+function renderDynasty(){
+ document.querySelectorAll('.wives button').forEach(b=>{b.classList.toggle('active',b.dataset.wife===state.wife)});
+ const wb=document.getElementById('wifeBonus');
+ if(!state.wife){wb.textContent=''}
+ else if(state.wife==='byzantine'){wb.textContent=state.lang==='bg'?'+25 злато/ход, дипломация':'+25 gold/turn, diplomacy'}
+ else if(state.wife==='khazar'){wb.textContent=state.lang==='bg'?'+30% конница, съюз':'+30% cavalry, alliance'}
+ else {wb.textContent=state.lang==='bg'?'+20% стабилност':'+20% stability'}
+}
+
+function updateUI(){applyTranslations();updateTop();renderArmies();renderNations();renderGarrisons();renderWarriors();renderGods();renderLast();renderDynasty();document.getElementById('btnSummon').disabled=state.gold<100}
+
+window.assignLeader=function(key){
+ const used=Object.values(state.armies).map(a=>a.leader).filter(Boolean);
+ const avail=state.warriors.filter(w=>!used.includes(w.id));
+ if(!avail.length){toast(T[state.lang].noWarriors);return}
+ avail.sort((a,b)=>b.attack-a.attack);
+ state.armies[key].leader=avail[0].id;
+ toast(`${state.lang==='bg'?'Назначен':'Assigned'}: ${(state.lang==='bg'?warriorsPool.find(w=>w.id===avail[0].id).bg:warriorsPool.find(w=>w.id===avail[0].id).en)}`);
+ saveState();updateUI();
+}
+window.recruitGarrison=function(city){if(state.gold<50){toast(T[state.lang].noGold);return}state.gold-=50;state.garrisons[city]+=100;saveState();updateUI();toast(`${city} +100`)}
+
+function doRitual(){
+ if(state.gold<100){toast(T[state.lang].noGold);return}
+ state.gold-=100;
+ const r=Math.random()*100;
+ if(r<0.8){
+  const pool=warriorsPool.filter(w=>!state.warriors.some(s=>s.id===w.id));
+  if(pool.length){
+   const w=pool[Math.floor(Math.random()*pool.length)];
+   state.warriors.push({id:w.id,attack:w.attack});
+   state.lastSummon={type:'warrior',id:w.id};
+   toast(`★ ${T[state.lang].summonedWarrior}: ${state.lang==='bg'?w.bg:w.en}`);
   }
-
-  function renderResources(){
-    $('#gold').textContent = fmt(state.gold);
-    $('#turn').textContent = state.turn;
-    $('#faith').textContent = Math.floor(state.faith);
-    $('#totalIncome').textContent = state.garrisons.reduce((a,g)=>a+g.income,0);
+ }else if(r<2.3){
+  const pool=godsPool.filter(g=>!state.gods.includes(g.id));
+  if(pool.length){
+   const g=pool[Math.floor(Math.random()*pool.length)];
+   state.gods.push(g.id);
+   state.lastSummon={type:'god',id:g.id};
+   toast(`✦ ${T[state.lang].summonedGod}: ${state.lang==='bg'?g.bg:g.en}`);
   }
+ }else{
+  state.lastSummon={type:'nothing'};
+  state.gold+=15;
+  toast(T[state.lang].nothing);
+ }
+ saveState();updateUI();
+}
 
-  function roman(n){ return ['–','I','II','III','IV','V'][n]||n; }
-
-  function renderArmies(){
-    Object.values(state.armies).forEach(a=>{
-      const el = $('#army-'+a.id);
-      el.querySelector('[data-stat="soldiers"]').textContent = fmt(a.soldiers);
-      el.querySelector('[data-stat="morale"]').textContent = a.morale;
-      el.querySelector('[data-stat="rank"]').textContent = roman(a.rank);
-      el.querySelector('[data-stat="god"]').textContent = a.god ? (lang==='bg'?a.god.bg:a.god.en) : '—';
-      el.querySelector('[data-bar="morale"]').style.width = a.morale+'%';
-      el.querySelector('h2 .name').textContent = lang==='bg'?a.nameBg:a.nameEn;
-    });
+function checkChallenge(){
+ if(!state.gods.length||!state.warriors.length) return;
+ if(Math.random()>0.3) return;
+ const w=state.warriors[Math.floor(Math.random()*state.warriors.length)];
+ const gid=state.gods[Math.floor(Math.random()*state.gods.length)];
+ const wData=warriorsPool.find(x=>x.id===w.id);
+ const gData=godsPool.find(x=>x.id===gid);
+ const wName=state.lang==='bg'?wData.bg:wData.en;
+ const gName=state.lang==='bg'?gData.bg:gData.en;
+ toast(`${wName} ${T[state.lang].challenge} ${gName}`);
+ setTimeout(()=>{
+  if(Math.random()<0.05){
+   state.gods=state.gods.filter(id=>id!==gid);
+   w.attack+=5;
+   toast(`☠ ${gName} ${T[state.lang].killed} ${wName}! +5%`);
+   saveState();updateUI();
+  }else{
+   toast(`${gName} ${T[state.lang].survived}`);
   }
+ },1200);
+}
 
-  function renderGarrisons(){
-    const list = $('#garrisonsList');
-    list.innerHTML = state.garrisons.map(g=>`
-      <div class="panel rounded-xl p-3 border border-amber-900/20">
-        <div class="flex items-center justify-between">
-          <div class="font-medium cinzel text-amber-200">${lang==='bg'?g.nameBg:g.nameEn}</div>
-          <div class="text-[10px] uppercase tracking-wider text-amber-300/60" data-i18n="garrison">Гарнизон</div>
-        </div>
-        <div class="mt-2 flex items-center justify-between text-sm">
-          <span class="text-amber-200/70">${i18n[lang].soldiers}</span>
-          <span>${fmt(g.soldiers)}</span>
-        </div>
-        <div class="flex items-center justify-between text-sm">
-          <span class="text-amber-200/70">${i18n[lang].income}</span>
-          <span class="text-emerald-300">+${g.income}</span>
-        </div>
-      </div>
-    `).join('');
-  }
+function getIncome(){
+ let base=20;
+ if(state.wife==='byzantine') base+=25;
+ if(state.wife==='khazar') base+=5;
+ if(state.wife==='avar') base+=10;
+ base+=state.warriors.length*3;
+ base+=state.gods.length*2;
+ base+=5;
+ return base;
+}
 
-  function addLog(msg, type='info'){
-    const time = new Date().toLocaleTimeString();
-    state.log.unshift({time,msg,type});
-    if(state.log.length>80) state.log.pop();
-    renderLog();
-  }
+function toggleFS(){if(!document.fullscreenElement){document.documentElement.requestFullscreen().catch(()=>{})}else{document.exitFullscreen()}}
 
-  function renderLog(){
-    const el = $('#log');
-    el.innerHTML = state.log.map(e=>{
-      const c = e.type==='good'?'text-emerald-300':e.type==='bad'?'text-red-300':e.type==='god'?'text-amber-300':'text-amber-100/70';
-      return `<div><span class="opacity-50">[${e.time}]</span> <span class="${c}">${e.msg}</span></div>`;
-    }).join('');
-  }
+document.getElementById('btnSummon').addEventListener('click',doRitual);
+document.getElementById('btnLang').addEventListener('click',()=>{state.lang=state.lang==='bg'?'en':'bg';saveState();updateUI()});
+document.getElementById('btnFS').addEventListener('click',toggleFS);
+document.querySelectorAll('.wives button').forEach(b=>b.addEventListener('click',()=>{state.wife=b.dataset.wife;saveState();updateUI();toast(state.lang==='bg'?'Брак сключен':'Marriage sealed')}));
 
-  function renderAll(){ renderResources(); renderArmies(); renderGarrisons(); renderLog(); }
+setInterval(()=>{state.gold+=getIncome();if(Math.random()<0.15)state.year++;updateTop();saveState()},6500);
+setInterval(checkChallenge,24000);
+setInterval(saveState,10000);
 
-  function train(army){
-    if(state.gold<50){ addLog(lang==='bg'?'Няма достатъчно злато!':'Not enough gold!', 'bad'); return; }
-    state.gold-=50; army.soldiers+=500; army.morale=Math.min(100, army.morale+2);
-    addLog(`${lang==='bg'?'Обучение:':'Training:'} ${lang==='bg'?army.nameBg:army.nameEn} +500`, 'good');
-    renderAll();
-  }
-  function march(army){
-    if(army.morale<15){ addLog(lang==='bg'?'Моралът е твърде нисък':'Morale too low','bad'); return; }
-    army.morale-=10; const loot = 30 + Math.floor(Math.random()*50);
-    state.gold += loot; army.soldiers = Math.max(1000, army.soldiers - 100);
-    addLog(`${lang==='bg'?army.nameBg:army.nameEn} ${lang==='bg'?'поход':'marched'}: +${loot} ${i18n[lang].gold}`, 'info');
-    renderAll();
-  }
-
-  function nextTurn(){
-    state.turn++;
-    const income = state.garrisons.reduce((a,g)=>a+g.income,0) + Math.floor(state.leader.economy/3);
-    state.gold += income;
-    state.faith = Math.min(100, state.faith + 0.8);
-    state.garrisons.forEach(g=> g.soldiers += Math.floor(Math.random()*40));
-    Object.values(state.armies).forEach(a=> a.morale = Math.max(50, a.morale - 1));
-    addLog(`${lang==='bg'?'Нов ход':'New turn'} ${state.turn}. ${lang==='bg'?'Приход':'Income'}: +${income}`, 'info');
-    renderAll();
-  }
-
-  function ritual(){
-    if(state.gold<100){ addLog(lang==='bg'?'Нужни са 100 злато':'Need 100 gold','bad'); return; }
-    state.gold -= 100; state.faith += 2;
-    const roll = Math.random()*100;
-    if(roll < 1.5){
-      const god = gods[Math.floor(Math.random()*gods.length)];
-      const armies = Object.values(state.armies);
-      const target = armies[Math.floor(Math.random()*armies.length)];
-      target.god = god;
-      target.rank = Math.min(5, target.rank+1);
-      target.morale = 100;
-      target.soldiers += 800;
-      const msg = lang==='bg'
-        ? `ЧУДО! ${god.bg} се яви при ${target.nameBg}! Морал 100, +800 войни.`
-        : `MIRACLE! ${god.en} appeared to ${target.nameEn}! Morale 100, +800 troops.`;
-      addLog(msg, 'god');
-      // flash
-      document.body.classList.add('ring-4','ring-amber-400/20');
-      setTimeout(()=>document.body.classList.remove('ring-4','ring-amber-400/20'),600);
-    } else {
-      addLog(lang==='bg'?'Ритуалът не успя. Боговете мълчат.':'Ritual failed. The gods are silent.', 'bad');
-    }
-    renderAll();
-  }
-
-  function newGame(){
-    state = initialState();
-    addLog(lang==='bg'?'Започна нова епопея на Magna Bulgaria.':'A new Magna Bulgaria saga begins.', 'good');
-    renderAll();
-  }
-
-  // Events
-  $('#nextTurnBtn').onclick = nextTurn;
-  $('#ritualBtn').onclick = ritual;
-  $('#newGameBtn').onclick = newGame;
-  $('#fullscreenBtn').onclick = ()=>{ if(!document.fullscreenElement) document.documentElement.requestFullscreen(); else document.exitFullscreen(); };
-  $('#langBtn').onclick = ()=>{ lang = lang==='bg'?'en':'bg'; updateLangUI(); };
-
-  $$('[id^="army-"]').forEach(panel=>{
-    const id = panel.id.replace('army-','');
-    panel.querySelector('[data-action="train"]').onclick = ()=> train(state.armies[id]);
-    panel.querySelector('[data-action="march"]').onclick = ()=> march(state.armies[id]);
-  });
-
-  // Pantheon
-  const modal = $('#pantheonModal');
-  function openPantheon(){
-    $('#godsList').innerHTML = gods.map((g,i)=>`
-      <div class="px-2 py-1.5 rounded bg-black/30 border border-amber-900/20 flex items-center gap-2">
-        <span class="text-[10px] w-5 text-amber-400/60">${i+1}</span>
-        <span>${lang==='bg'?g.bg:g.en}</span>
-      </div>
-    `).join('');
-    modal.classList.remove('hidden');
-  }
-  function closePantheon(){ modal.classList.add('hidden'); }
-  $('#pantheonBtn').onclick = openPantheon;
-  $('#closePantheon').onclick = closePantheon;
-  $('#pantheonClose').onclick = closePantheon;
-
-  // Init
-  addLog('В името на Тангра, обединихме племената. Magna Bulgaria се издига!', 'good');
-  updateLangUI();
-});
+updateUI();
+// initial flavor
+setTimeout(()=>toast(state.lang==='bg'?'Велика България се пробужда!':'Great Bulgaria awakens!'),800);
+})();
 </script>
 </body>
 </html>
