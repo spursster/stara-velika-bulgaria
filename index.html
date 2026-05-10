@@ -83,6 +83,7 @@ button:active{transform:translateY(0)}button:disabled{opacity:.5;cursor:not-allo
     <span data-i18n="dynastyDulo">Династия Дуло</span>
   </div>
   <div class="tb-actions">
+    <button id="btnNewGame" data-i18n="newGame">Нова Игра</button>
     <button id="btnLang">EN</button>
     <button id="btnFS" title="Fullscreen">⛶</button>
   </div>
@@ -110,6 +111,8 @@ button:active{transform:translateY(0)}button:disabled{opacity:.5;cursor:not-allo
       <button id="btnSummon" class="summon-btn">Извикай Бог / Summon God</button>
       <div class="cost" data-i18n="cost">Цена: 100 злато</div>
       <div id="lastSummon" class="last">Последно: —</div>
+      <button id="btnNextTurn" class="summon-btn" style="margin-top:18px;font-size:17px" data-i18n="nextTurn">▶ Нов Ход</button>
+      <div class="cost" data-i18n="nextInfo">+10 злато, +1 година</div>
     </div>
     <div class="panel gods">
       <h3 data-i18n="gods">Богове (69)</h3>
@@ -158,6 +161,7 @@ const T = {
   attack:'атака',canKill:'Може да убие бог: 5%',summonedGod:'Призован бог',summonedWarrior:'Призован герой',nothing:'Ритуалът замлъкна',
   noGold:'Нямаш достатъчно злато!',noWarriors:'Няма свободни герои',challenge:'предизвиква',killed:'убит от',survived:'оцеля',
   byzantine:'Византийска принцеса',khazar:'Хазарска ханша',avar:'Аварска дъщеря',
+  newGame:'Нова Игра',nextTurn:'▶ Нов Ход',nextInfo:'+10 злато, +1 година',turnDone:'Ход',
  },
  en:{
   khan:'Khan Kubrat',dynastyDulo:'Dulo Dynasty',armies:'Three Armies',infantry:'Infantry',cavalry:'Cavalry',leader:'Leader',assign:'Assign Leader',
@@ -166,6 +170,7 @@ const T = {
   attack:'attack',canKill:'Can kill gods: 5%',summonedGod:'God summoned',summonedWarrior:'Hero summoned',nothing:'The ritual was silent',
   noGold:'Not enough gold!',noWarriors:'No free heroes',challenge:'challenges',killed:'slain by',survived:'survived',
   byzantine:'Byzantine Princess',khazar:'Khazar Khansha',avar:'Avar Daughter',
+  newGame:'New Game',nextTurn:'▶ Next Turn',nextInfo:'+10 gold, +1 year',turnDone:'Turn',
  }
 };
 
@@ -444,15 +449,33 @@ function getIncome(){
  return base;
 }
 
+function nextTurn(){
+ state.year++;
+ state.gold += 10 + (state.wife==='byzantine'?25:0);
+ // grow garrisons slightly
+ Object.keys(state.garrisons).forEach(c=>{ state.garrisons[c]+=5 });
+ toast(`${T[state.lang].turnDone} ${state.year}: +${10 + (state.wife==='byzantine'?25:0)}g`);
+ if(Math.random()<0.25) checkChallenge();
+ saveState(); updateUI();
+}
+
+function newGame(){
+ if(confirm(state.lang==='bg'?'Сигурен ли си? Ще изтриеш прогреса.':'Are you sure? Progress will be lost.')){
+  localStorage.removeItem('magna40');
+  location.reload();
+ }
+}
+
 function toggleFS(){if(!document.fullscreenElement){document.documentElement.requestFullscreen().catch(()=>{})}else{document.exitFullscreen()}}
 
 document.getElementById('btnSummon').addEventListener('click',doRitual);
+document.getElementById('btnNextTurn').addEventListener('click',nextTurn);
+document.getElementById('btnNewGame').addEventListener('click',newGame);
 document.getElementById('btnLang').addEventListener('click',()=>{state.lang=state.lang==='bg'?'en':'bg';saveState();updateUI()});
 document.getElementById('btnFS').addEventListener('click',toggleFS);
 document.querySelectorAll('.wives button').forEach(b=>b.addEventListener('click',()=>{state.wife=b.dataset.wife;saveState();updateUI();toast(state.lang==='bg'?'Брак сключен':'Marriage sealed')}));
 
-setInterval(()=>{state.gold+=getIncome();if(Math.random()<0.15)state.year++;updateTop();saveState()},6500);
-setInterval(checkChallenge,24000);
+// remove auto-income, now manual turns only
 setInterval(saveState,10000);
 
 updateUI();
