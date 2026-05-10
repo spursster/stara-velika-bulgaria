@@ -31,4 +31,8 @@ document.getElementById('endTurn').onclick=function(){turn++;if(turn>4){turn=1;y
 document.getElementById('newGame').onclick=function(){if(confirm('Нова игра?')){localStorage.removeItem('svb362');location.reload()}};
 document.getElementById('fullScreen').onclick=function(){document.fullscreenElement?document.exitFullscreen():document.documentElement.requestFullscreen()};
 document.querySelectorAll('.nav-btn').forEach(b=>b.onclick=function(){document.querySelectorAll('.nav-btn').forEach(x=>x.classList.remove('active'));document.querySelectorAll('.panel').forEach(x=>x.classList.remove('active'));b.classList.add('active');document.getElementById(b.dataset.panel).classList.add('active')});
-document.querySelectorAll('.btn-build').forEach...
+document.querySelectorAll('.btn-build').forEach(b=>b.onclick=function(){var c=+b.dataset.cost;if(!c)return;if(gold>=c){gold-=c;updateUI();addLog('Построено: '+b.dataset.building);saveGame()}});
+document.getElementById('fanagoria').onclick=()=>showInfo('Фанагория','Столица');
+document.getElementById('tamatarcha').onclick=()=>showInfo('Таматарха','Търговия');
+loadGame();
+</script></body></html>
