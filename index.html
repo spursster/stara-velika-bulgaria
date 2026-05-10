@@ -1,38 +1,467 @@
-<!DOCTYPE html><html lang="bg"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><title>Стара Велика България - v36.3</title><style>*{box-sizing:border-box;margin:0;padding:0}body{font-family:Georgia,serif;background:#1A0F0A;color:#FFF;overflow-x:hidden}.app{display:flex;min-height:100vh}.warning-bar{position:fixed;top:0;left:64px;right:180px;height:32px;background:#8B0000;border-bottom:2px solid #FFD700;color:#FFD700;display:none;align-items:center;justify-content:center;font-weight:700;font-size:14px;z-index:1000;animation:pulse 2s infinite}@keyframes pulse{0%,100%{opacity:1}50%{opacity:0.7}}.warning-bar.show{display:flex}.sidebar{width:64px;background:#0D0806;padding:8px 4px;display:flex;flex-direction:column;gap:5px;position:fixed;height:100vh;left:0;top:0;z-index:999}.rightbar{width:180px;background:#0D0806;padding:8px;position:fixed;height:100vh;right:0;top:0;z-index:998;border-left:2px solid #B8860B;overflow-y:auto}.btn-endturn{width:100%;height:50px;background:#8B0000;border:2px solid #FFD700;color:#FFD700;font-weight:700;font-size:9px;cursor:pointer;line-height:1.1}.btn-endturn:active{background:#FFD700;color:#8B0000}.btn-fullscreen{width:100%;height:26px;background:#1A0F0A;border:1px solid #B8860B;color:#FFD700;font-size:10px;cursor:pointer}.btn-lang{width:100%;height:26px;background:#1A0F0A;border:1px solid #B8860B;color:#FFD700;font-size:10px;cursor:pointer}.btn-newgame{width:100%;height:26px;background:#1A0F0A;border:1px solid #8B0000;color:#FFD700;font-size:9px;cursor:pointer;margin-top:auto}.divider{height:1px;background:#B8860B;margin:3px 0}.nav-btn{width:48px;height:46px;margin:0 auto;background:#1A0F0A;border:2px solid #B8860B;color:#FFD700;font-size:20px;cursor:pointer;position:relative;display:flex;align-items:center;justify-content:center}.nav-btn.active,.nav-btn:hover{background:#8B0000}.badge{position:absolute;top:-4px;right:-4px;background:#8B0000;color:#FFF;border-radius:50%;width:16px;height:16px;font-size:10px;line-height:16px}.main{margin-left:64px;margin-right:180px;margin-top:32px;width:calc(100% - 244px);padding:16px}.panel{display:none}.panel.active{display:block}h1{font-size:22px;color:#B8860B;text-transform:uppercase;margin-bottom:16px;display:flex;align-items:center;gap:8px}h2{font-size:16px;color:#FFD700;margin:12px 0 8px 0}.stat{margin:8px 0;padding:12px;background:#0D0806;border-left:3px solid #B8860B;font-size:15px}.card{background:#0D0806;border:2px solid #B8860B;padding:12px;margin:12px 0;cursor:pointer;display:flex;gap:12px;align-items:center}.card:hover{background:#1A0F0A}.card-avatar{width:60px;height:60px;background:#1A0F0A;border:2px solid #FFD700;font-size:36px;display:flex;align-items:center;justify-content:center;flex-shrink:0}.card-content{flex:1}.card-content h3{color:#FFD700;margin-bottom:8px}.card-content p{font-size:14px;line-height:1.5}.map-container{background:#0D0806;border:2px solid #B8860B;padding:12px;margin-top:16px}.map-svg{width:100%;height:auto;background:#1A0F0A}.province-path{fill:#0D0806;stroke:#B8860B;stroke-width:2;cursor:pointer}.province-path:hover{fill:#8B0000}.province-path.owned{fill:#1A0F0A;stroke:#FFD700;stroke-width:3}.province-path.enemy{fill:#2A0000;stroke:#8B0000}.province-path.hidden{fill:#000;stroke:#333;opacity:0.3;cursor:not-allowed}.province-label{fill:#FFD700;font-size:14px;font-weight:700;pointer-events:none;text-shadow:1px 1px 2px #000}.province-label.hidden{display:none}.btn-build{width:100%;padding:12px;background:#1A0F0A;border:2px solid #B8860B;color:#FFD700;margin:8px 0;cursor:pointer;font-size:14px}.btn-build:hover{background:#8B0000}.btn-build:disabled{opacity:0.3;cursor:not-allowed}.tech-btn{width:100%;padding:12px;background:#1A0F0A;border:2px solid #B8860B;color:#FFD700;margin:8px 0;cursor:pointer;font-size:14px;text-align:left}.tech-btn:hover{background:#8B0000}.tech-btn.researched{background:#0D0806;border-color:#00FF00;color:#00FF00}.tech-btn.researching{background:#2A2A00;border-color:#FFFF00}.info-box{background:#8B0000;border:2px solid #FFD700;padding:12px;margin:12px 0;display:none}.info-box.show{display:block}.info-box h4{color:#FFD700;margin-bottom:8px}.close-btn{float:right;background:none;border:none;color:#FFD700;font-size:20px;cursor:pointer}.event-box{background:#1A0F0A;border:3px solid #FFD700;padding:16px;margin:16px 0;display:none}.event-box.show{display:block}.event-box h3{color:#FFD700;margin-bottom:12px;font-size:18px}.event-choice{width:100%;padding:12px;background:#0D0806;border:2px solid #B8860B;color:#FFD700;margin:8px 0;cursor:pointer;text-align:left;font-size:14px}.event-choice:hover{background:#8B0000}.slot{width:100%;height:60px;background:#1A0F0A;border:2px solid #B8860B;margin:8px 0;padding:8px;cursor:pointer;display:flex;align-items:center;gap:8px}.slot:hover{background:#0D0806}.slot-icon{width:40px;height:40px;background:#0D0806;border:1px solid #FFD700;font-size:24px;display:flex;align-items:center;justify-content:center}.slot-title{font-size:12px;color:#B8860B;font-weight:700;margin-bottom:4px}.slot-desc{font-size:11px;color:#FFF}.army-card{background:#0D0806;border:2px solid #B8860B;padding:12px;margin:12px 0}.army-card h3{color:#FFD700;margin-bottom:8px;display:flex;justify-content:space-between;align-items:center}.army-rank{color:#B8860B;font-size:12px}.army-stats{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:8px 0;font-size:13px}.army-action{width:100%;padding:8px;background:#1A0F0A;border:1px solid #B8860B;color:#FFD700;margin:4px 0;cursor:pointer;font-size:12px}.army-action:hover{background:#8B0000}.army-action.active{background:#8B0000;border-color:#FFD700}.modal{background:rgba(0,0,0,0.9);position:fixed;top:0;left:0;right:0;bottom:0;z-index:2000;display:none;align-items:center;justify-content:center}.modal.show{display:flex}.modal-content{background:#0D0806;border:3px solid #FFD700;padding:20px;width:90%;max-width:500px}.modal-content h3{color:#FFD700;margin-bottom:16px}.modal-content input,.modal-content select{width:100%;padding:10px;background:#1A0F0A;border:2px solid #B8860B;color:#FFF;margin:8px 0;font-size:14px}.modal-btn{width:48%;padding:12px;background:#8B0000;border:2px solid #FFD700;color:#FFD700;margin:8px 1%;cursor:pointer;font-size:14px}.modal-btn:hover{background:#FFD700;color:#8B0000}</style></head><body><div class="warning-bar" id="warningBar"></div><div class="app"><nav class="sidebar"><button class="btn-endturn" id="endTurn">⏭️<br>КРАЙ<br>НА ХОД</button><button class="btn-fullscreen" id="fullScreen">⛶ ЕКРАН</button><button class="btn-lang" id="langSwitch">🌐 EN</button><div class="divider"></div><button class="nav-btn active" data-panel="tablo">📊</button><button class="nav-btn" data-panel="karta">🗺️</button><button class="nav-btn" data-panel="armii">🛡️<span class="badge" id="armyBadge">0</span></button><button class="nav-btn" data-panel="rod">👑</button><button class="nav-btn" data-panel="generali">⚔️</button><button class="nav-btn" data-panel="bitki">📜</button><button class="nav-btn" data-panel="tehnologii">🔬</button><button class="nav-btn" data-panel="targovia">💰</button><button class="nav-btn" data-panel="stroitelstvo">🏗️</button><button class="nav-btn" data-panel="hronika">📜</button><button class="btn-newgame" id="newGame">🔄<br>НОВА<br>ИГРА</button></nav><main class="main"><div id="tablo" class="panel active"><h1>📊 ТАБЛО</h1><div class="stat">📅 Година: <span id="year">632</span> | 🔄 Ход: <span id="turn">1</span></div><div class="stat">👑 Канас Ювиги: Кубрат от рода Дуло</div><div class="stat">💰 Злато: <span id="gold">2847</span> | ⚔️ Войски: <span id="army">8400</span> | 🏰 Провинции: <span id="prov">2</span> | 🛡️ Армии: <span id="armyCount">0</span></div><div class="event-box" id="eventBox"><h3 id="eventTitle"></h3><p id="eventDesc"></p><button class="event-choice" id="choice1"></button><button class="event-choice" id="choice2"></button></div><div class="info-box" id="infoBox"><button class="close-btn" id="closeInfo">×</button><h4 id="infoTitle"></h4><p id="infoText"></p></div></div><div id="karta" class="panel"><h1>🗺️ КАРТА</h1><div class="map-container"><svg class="map-svg" viewBox="0 0 800 600"><rect width="800" height="600" fill="#0A1828"/><path d="M0 400 Q200 380 400 400 T800 420 L800 600 L0 600 Z" fill="#1A3A5A" opacity="0.5"/><text x="400" y="550" fill="#4A90E2" font-size="20" text-anchor="middle">Черно море</text><g id="fanagoria"><path class="province-path owned" d="M300 250 L380 240 L390 300 L310 310 Z"/><text class="province-label" x="345" y="280">Фанагория ⭐⭐</text></g><g id="tamatarcha"><path class="province-path owned" d="M400 260 L460 250 L470 310 L410 320 Z"/><text class="province-label" x="435" y="290">Таматарха ⭐</text></g><g id="chersones"><path class="province-path hidden" d="M250 320 L320 310 L330 370 L260 380 Z"/><text class="province-label hidden" x="295" y="350">Херсонес</text></g><g id="olbia"><path class="province-path hidden" d="M180 280 L240 270 L250 330 L190 340 Z"/><text class="province-label hidden" x="215" y="310">Олбия</text></g><g id="tiras"><path class="province-path hidden" d="M120 320 L170 310 L180 370 L130 380 Z"/><text class="province-label hidden" x="150" y="350">Тирас</text></g><g id="patria"><path class="province-path hidden" d="M500 180 L580 170 L590 230 L510 240 Z"/><text class="province-label hidden" x="545" y="210">Патрия</text></g><g id="kutriguria"><path class="province-path hidden" d="M420 150 L490 140 L500 200 L430 210 Z"/><text class="province-label hidden" x="460" y="180">Кутригурия</text></g><g id="hazari"><path class="province-path enemy" d="M550 200 L650 190 L660 280 L560 290 Z"/><text class="province-label" x="605" y="245">Хазари ⚔️</text></g></svg></div></div><div id="armii" class="panel"><h1>🛡️ АРМИИ</h1><button class="btn-build" id="createArmy">➕ СЪЗДАЙ ОТРЯД - 50 злато</button><div id="armyList"></div></div><div id="rod" class="panel"><h1>👑 РОД ДУЛО</h1><div class="card"><div class="card-avatar">👑</div><div class="card-content"><h3>Кубрат</h3><p>Канас Ювиги, 27 г.</p></div></div></div><div id="generali" class="panel"><h1>⚔️ БОЛЯРИ</h1><div id="leaderList"></div></div><div id="bitki" class="panel"><h1>📜 БИТКИ</h1><div id="battleLog"></div></div><div id="tehnologii" class="panel"><h1>🔬 ТЕХНОЛОГИИ</h1><button class="tech-btn researched">✅ Конен лък</button><button class="tech-btn" id="tech1">⏳ Желязна броня - 3 хода | 300 злато</button><button class="tech-btn" id="tech2">⏳ Обсадна техника - 5 хода | 500 злато</button><button class="tech-btn" id="tech3">⏳ Каменни стени - 4 хода | 400 злато</button></div><div id="targovia" class="panel"><h1>💰 ТЪРГОВИЯ</h1><div class="stat">Път на коприната: +100 злато/ход</div></div><div id="stroitelstvo" class="panel"><h1>🏗️ СТРОИТЕЛСТВО</h1><button class="btn-build" data-building="Стена" data-cost="500">🧱 Стена - 500</button></div><div id="hronika" class="panel"><h1>📜 ХРОНИКА</h1><div id="log"></div></div></main><aside class="rightbar"><h2>💎 АРТЕФАКТИ</h2><div class="slot"><div class="slot-icon">⚔️</div><div><div class="slot-title">Меч на Атила</div><div class="slot-desc">+25% атака</div></div></div></aside></div><div class="modal" id="createArmyModal"><div class="modal-content"><h3>СЪЗДАЙ ОТРЯД</h3><input type="text" id="armyName" placeholder="Име" maxlength="30"><select id="armyType"><option value="етнос">Оногундури</option><option value="провинция">Фанагория</option><option value="наемници">Наемници</option></select><button class="modal-btn" id="confirmCreate">СЪЗДАЙ</button><button class="modal-btn" id="cancelCreate">ОТКАЗ</button></div></div><script>
-var year=632,turn=1,gold=3000,army=9000,provCount=2;var techs={tech1:{name:'Желязна броня',turns:3,cost:300,researching:false,researched:false},tech2:{name:'Обсадна техника',turns:5,cost:500,researching:false,researched:false},tech3:{name:'Каменни стени',turns:4,cost:400,researching:false,researched:false}};var provinces={fanagoria:{name:'Фанагория',owned:true,hidden:false},tamatarcha:{name:'Таматарха',owned:true,hidden:false},chersones:{name:'Херсонес',owned:false,hidden:true},olbia:{name:'Олбия',owned:false,hidden:true},tiras:{name:'Тирас',owned:false,hidden:true},patria:{name:'Патрия',owned:false,hidden:true},kutriguria:{name:'Кутригурия',owned:false,hidden:true},hazari:{name:'Хазари',owned:false,hidden:false,enemy:true}};var armyRanks=[{name:'Разузнавачи',troops:100,req:0},{name:'Бойна дружина',troops:300,req:1},{name:'Болярска стража',troops:500,req:3},{name:'Конен полк',troops:800,req:5},{name:'Ударна тагма',troops:1200,req:5},{name:'Желязна дружина',troops:2000,req:8},{name:'Корпус',troops:3000,req:10},{name:'Стеноломци',troops:4000,req:12},{name:'Златна тагма',troops:6000,req:15},{name:'Легион',troops:10000,req:20}];var armies=[{id:1,name:'Първа дружина',rank:0,troops:100,wins:0,exp:0,leader:null,action:'лагер',location:'fanagoria'},{id:2,name:'Втора дружина',rank:0,troops:100,wins:0,exp:0,leader:null,action:'лагер',location:'tamatarcha'},{id:3,name:'Трета дружина',rank:0,troops:100,wins:0,exp:0,leader:null,action:'патрул',location:'fanagoria'}],leaders=[{name:'Баян',bonus:0.2},{name:'Тервел',bonus:0.2}],battleLogData=[];var events=[{title:'Пратеник от ромеите',desc:'Искат съюз.',c1:'Приеми +100 злато',c2:'Откажи',done:false,e1:function(){gold+=100;addLog('Съюз с ромеите');unlockProvince('chersones')},e2:function(){addLog('Отказахте')}},{title:'Добра реколта',desc:'Житниците пълни.',c1:'Данък +200',c2:'Раздай +100 войска',done:false,e1:function(){gold+=200;addLog('+200 злато')},e2:function(){army+=100;addLog('+100 войска')}},{title:'Кутригури',desc:'Искат съюз.',c1:'Приеми',c2:'Откажи',done:false,e1:function(){addLog('Кутригури се присъединиха');unlockProvince('kutriguria');army+=500},e2:function(){addLog('Отхвърлихте')}},{title:'Търговски керван',desc:'Идва от изток.',c1:'Вземи данък +150',c2:'Пусни безплатно',done:false,repeat:true,e1:function(){gold+=150;addLog('+150 злато от керван')},e2:function(){addLog('Репутация +')}},{title:'Хазарски набег',desc:'Малък отряд напада.',c1:'Отблъсни',c2:'Плати 100',done:false,repeat:true,e1:function(){if(armies.length>0){gold+=50;addLog('Отблъснат набег +50')}else{army=Math.max(0,army-100);addLog('Загуби -100 войска')}},e2:function(){gold=Math.max(0,gold-100);addLog('-100 злато')}},{title:'Находка',desc:'Селяни намериха злато.',c1:'Вземи +80',c2:'Остави им',done:false,repeat:true,e1:function(){gold+=80;addLog('+80 злато')},e2:function(){addLog('Народът те обича')}}];
+<!DOCTYPE html>
+<html lang="bg">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Kubrat: Създателят на България v37.0</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+    :root {
+        --bg: #050402;
+        --surface: #0f0c08;
+        --stone: #1b1611;
+        --stone-2: #241d14;
+        --gold: #d4af37;
+        --gold-light: #f3d575;
+        --gold-dark: #8a6a1f;
+        --text: #efe7d6;
+        --muted: #a19178;
+        --border: #3a2f1f;
+        --success: #5cb85c;
+        --danger: #c94a4a;
+    }
+    * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+    html, body { height: 100%; }
+    body {
+        margin: 0;
+        background: radial-gradient(1200px 800px at 50% -20%, #1a140b 0%, #070503 60%, #000 100%), var(--bg);
+        color: var(--text);
+        font-family: 'Manrope', system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+        overscroll-behavior: none;
+    }
+    img { max-width: 100%; display: block; }
 
-function loadGame(){var s=localStorage.getItem('svb362');if(s){var d=JSON.parse(s);year=d.year||632;turn=d.turn||1;gold=d.gold||2847;army=d.army||8400;provCount=d.provCount||2;techs=d.techs||techs;provinces=d.provinces||provinces;armies=d.armies||[];leaders=d.leaders||[];battleLogData=d.battleLogData||[];document.getElementById('log').innerHTML=d.log||''}updateUI();updateTechUI();updateProvinceMap();updateArmyList();updateLeaderList();updateBattleLog();checkWarnings()}
-function saveGame(){localStorage.setItem('svb362',JSON.stringify({year,turn,gold,army,provCount,techs,provinces,armies,leaders,battleLogData,log:document.getElementById('log').innerHTML}))}
-function updateUI(){document.getElementById('year').textContent=year;document.getElementById('turn').textContent=turn;document.getElementById('gold').textContent=gold;document.getElementById('army').textContent=army;document.getElementById('prov').textContent=provCount;document.getElementById('armyCount').textContent=armies.length;document.getElementById('armyBadge').textContent=armies.length}
-function updateTechUI(){for(var id in techs){var t=techs[id];var b=document.getElementById(id);if(!b)continue;if(t.researched){b.className='tech-btn researched';b.innerHTML='✅ '+t.name;b.onclick=null}else if(t.researching){b.className='tech-btn researching';b.innerHTML='⏳ '+t.name+' - '+t.turns;b.onclick=null}else{b.className='tech-btn';b.innerHTML='⏳ '+t.name+' - '+t.turns+' хода | '+t.cost+' злато';b.onclick=(function(id){return function(){researchTech(id)}})(id)}}}
-function researchTech(id){var t=techs[id];if(gold<t.cost){showInfo('Няма злато','Трябват '+t.cost);return}gold-=t.cost;t.researching=true;updateUI();updateTechUI();saveGame();addLog('Изследване: '+t.name)}
-function updateProvinceMap(){for(var id in provinces){var p=provinces[id];var el=document.getElementById(id);if(!el)continue;var path=el.querySelector('.province-path');var label=el.querySelector('.province-label');if(p.hidden){path.classList.add('hidden');label.classList.add('hidden')}else{path.classList.remove('hidden');label.classList.remove('hidden');path.classList.toggle('owned',p.owned);path.classList.toggle('enemy',p.enemy)}}}
-function unlockProvince(id){if(provinces[id]&&provinces[id].hidden){provinces[id].hidden=false;provinces[id].owned=true;provCount++;updateProvinceMap();updateUI();addLog('Нова провинция: '+provinces[id].name);saveGame()}}
-function createArmy(){if(gold<50){showInfo('Няма злато','Трябват 50 злато');return}document.getElementById('createArmyModal').classList.add('show')}
-document.getElementById('confirmCreate').onclick=function(){var name=document.getElementById('armyName').value.trim()||'Отряд '+(armies.length+1);if(gold<50){showInfo('Няма злато','Трябват 50');return}gold-=50;var newId=Date.now();armies.push({id:newId,name:name,rank:0,troops:100,wins:0,exp:0,leader:null,action:'лагер',location:'fanagoria'});updateUI();updateArmyList();saveGame();document.getElementById('createArmyModal').classList.remove('show');document.getElementById('armyName').value='';addLog('Създаден: '+name);alert('Армия създадена!')};
-document.getElementById('cancelCreate').onclick=function(){document.getElementById('createArmyModal').classList.remove('show')};
-document.getElementById('createArmy').onclick=createArmy;
+    .stone {
+        position: relative;
+        background: linear-gradient(180deg, var(--stone-2), var(--stone));
+        overflow: hidden;
+    }
+    .stone::before {
+        content: "";
+        position: absolute; inset: 0;
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 300 300'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+        opacity: .18; mix-blend-mode: overlay; pointer-events: none;
+    }
+    .gold-edge {
+        box-shadow: inset 0 0 0 1px #5a4420, inset 0 0 0 2px #0c0905, inset 0 1px 0 rgba(243,213,117,.5), 0 10px 30px rgba(0,0,0,.55);
+        border: 1px solid #4a371b;
+    }
 
-function updateArmyList(){var list=document.getElementById('armyList');list.innerHTML='';if(armies.length==0){list.innerHTML='<div class="stat">Няма армии - създай първата за 50 злато</div>';return}armies.forEach(function(a){var r=armyRanks[a.rank];var nr=a.rank<9?armyRanks[a.rank+1]:null;var can=nr&&a.wins>=nr.req&&gold>=500;var d=document.createElement('div');d.className='army-card';d.innerHTML='<h3>'+a.name+'<span class="army-rank">Ранг '+(a.rank+1)+': '+r.name+'</span></h3><div class="army-stats"><div>⚔️ '+a.troops+'</div><div>🏆 '+a.wins+'</div><div>📍 '+provinces[a.location].name+'</div><div>👑 '+(a.leader?a.leader.name:'Няма')+'</div></div>'+(leaders.length>0&&!a.leader?'<button class="btn-build" data-assign="'+a.id+'">👑 Назначи болярин</button>':'')+'<div><button class="army-action '+(a.action=='разузнаване'?'active':'')+'" data-id="'+a.id+'" data-action="разузнаване">🔍 Разузнаване</button><button class="army-action '+(a.action=='нападение'?'active':'')+'" data-id="'+a.id+'" data-action="нападение">⚔️ Нападение</button><button class="army-action '+(a.action=='обсада'?'active':'')+'" data-id="'+a.id+'" data-action="обсада">🏰 Обсада</button><button class="army-action '+(a.action=='патрул'?'active':'')+'" data-id="'+a.id+'" data-action="патрул">🛡️ Патрул</button><button class="army-action '+(a.action=='лагер'?'active':'')+'" data-id="'+a.id+'" data-action="лагер">🏕️ Лагер</button></div>'+(can?'<button class="btn-build" data-promote="'+a.id+'">⬆️ Повиши до '+nr.name+' - 500</button>':'');list.appendChild(d)})}
+    .app-shell { display: flex; flex-direction: column; min-height: 100dvh; }
 
-document.addEventListener('click',function(e){if(e.target.dataset.action){var a=armies.find(x=>x.id==+e.target.dataset.id);if(a){a.action=e.target.dataset.action;updateArmyList();saveGame();addLog(a.name+' → '+a.action)}}if(e.target.dataset.promote){var a=armies.find(x=>x.id==+e.target.dataset.promote);if(a&&gold>=500){gold-=500;a.rank++;a.troops=armyRanks[a.rank].troops;addLog(a.name+' повишен');updateUI();updateArmyList();saveGame()}}if(e.target.dataset.assign){var a=armies.find(x=>x.id==+e.target.dataset.assign);if(a&&leaders.length>0){a.leader=leaders.shift();addLog(a.name+' получи болярин '+a.leader.name);updateArmyList();updateLeaderList();saveGame()}}});
+    /* Top Bar */
+    .top-bar {
+        position: sticky; top: 0; z-index: 50;
+        height: 60px; padding: 0 12px;
+        display: flex; align-items: center; justify-content: space-between;
+        background: linear-gradient(180deg, rgba(20,15,9,.95), rgba(8,6,3,.9));
+        backdrop-filter: blur(10px);
+        border-bottom: 1px solid var(--border);
+    }
+    .brand { display: flex; align-items: center; gap: 10px; min-width: 0; }
+    .logo {
+        width: 34px; height: 34px; border-radius: 10px; flex: 0 0 34px;
+        background: conic-gradient(from 210deg, #f5e1a1, #d4af37, #8a6a1f, #f5e1a1);
+        box-shadow: 0 0 16px rgba(212,175,55,.25), inset 0 1px 2px rgba(255,255,255,.4);
+        position: relative;
+    }
+    .logo::after { content:"K"; position:absolute; inset:0; display:grid; place-items:center; font-weight:900; color:#2a1c07; text-shadow:0 1px 0 #ffe9aa; }
+    .title-wrap { min-width: 0; }
+    .game-name { font-weight: 800; font-size: 14px; line-height: 1.1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; letter-spacing: .2px; }
+    .game-name small { display:block; font-size:10px; color:var(--gold-light); opacity:.85; font-weight:700; letter-spacing:.6px; }
 
-function processArmyActions(){armies.forEach(function(a){if(a.action=='патрул'){gold+=50;addLog(a.name+' патрул +50')}else if(a.action=='лагер'){a.troops=Math.min(a.troops+20,armyRanks[a.rank].troops)}else if(a.action=='разузнаване'){if(Math.random()<0.5){gold+=30;a.exp+=5;addLog(a.name+' разузнаване +30')}if(provinces.olbia.hidden&&a.rank>=2){unlockProvince('olbia')}}else if(a.action=='нападение'||a.action=='обсада'){var win=Math.random()>0.3;if(win){a.wins++;a.exp+=15;gold+=100;addLog(a.name+' победа +100');if(!a.leader&&a.wins>=3&&Math.random()<0.7){var l={name:['Баян','Тервел','Крум','Аспарух'][Math.floor(Math.random()*4)],bonus:0.2};leaders.push(l);addLog('Нов болярин: '+l.name+' (свободен)');updateLeaderList()}if(a.action=='обсада'&&a.wins>=5&&provinces.patria.hidden){unlockProvince('patria')}}else{a.troops=Math.max(20,a.troops-30);addLog(a.name+' загуба -30')}}})}
+    .resources { display:flex; gap:8px; }
+    .res {
+        display:flex; align-items:center; gap:6px;
+        padding:8px 11px; border-radius:12px;
+        background: linear-gradient(180deg,#1a140c,#110d07);
+        border:1px solid #2e2416;
+        box-shadow: inset 0 1px 0 #3a2f1f, 0 4px 10px rgba(0,0,0,.4);
+        font-weight:800; font-size:14px; min-height:40px;
+    }
+    .res .ico {
+        width:22px; height:22px; border-radius:50%;
+        display:grid; place-items:center;
+        background: radial-gradient(circle at 30% 30%, #ffe9a6, #d4af37 60%, #8a6a1f);
+        color:#2b1b06; font-size:13px;
+        box-shadow: 0 0 8px rgba(212,175,55,.35), inset 0 1px 1px #fff7d6;
+    }
+    .res.gold { color: var(--gold-light); }
+    .res.army { color: #e7d9bd; }
 
-function updateLeaderList(){var l=document.getElementById('leaderList');l.innerHTML='';if(leaders.length==0){l.innerHTML='<div class="stat">Няма свободни боляри - спечели 3 битки</div>';return}leaders.forEach(function(x){var d=document.createElement('div');d.className='card';d.innerHTML='<div class="card-avatar">👑</div><div class="card-content"><h3>'+x.name+'</h3><p>Болярин - свободен</p></div>';l.appendChild(d)})}
-function updateBattleLog(){var l=document.getElementById('battleLog');l.innerHTML=battleLogData.length?battleLogData.map(b=>'<div class="stat">'+b+'</div>').join(''):'<div class="stat">Няма битки</div>'}
-function addLog(t){var log=document.getElementById('log');log.innerHTML='<div class="stat">'+year+': '+t+'</div>'+log.innerHTML}
-function showInfo(t,x){document.getElementById('infoTitle').textContent=t;document.getElementById('infoText').textContent=x;document.getElementById('infoBox').classList.add('show')}
-document.getElementById('closeInfo').onclick=function(){document.getElementById('infoBox').classList.remove('show')};
-function showEvent(){var avail=events.filter(e=>!e.done||e.repeat);if(avail.length==0)return;var e=avail[Math.floor(Math.random()*avail.length)];if(!e.repeat)e.done=true;document.getElementById('eventTitle').textContent=e.title;document.getElementById('eventDesc').textContent=e.desc;document.getElementById('choice1').textContent=e.c1;document.getElementById('choice2').textContent=e.c2;document.getElementById('choice1').onclick=function(){e.e1();updateUI();updateProvinceMap();document.getElementById('eventBox').classList.remove('show');saveGame()};document.getElementById('choice2').onclick=function(){e.e2();updateUI();document.getElementById('eventBox').classList.remove('show');saveGame()};document.getElementById('eventBox').classList.add('show')}
-function checkWarnings(){var b=document.getElementById('warningBar');if(year>=633&&year<636){b.classList.add('show');b.textContent='⚠️ Хазарите идват 635 г!'}else{b.classList.remove('show')}}
+    /* Viewport */
+    .viewport { flex:1; display:flex; flex-direction:column; gap:14px; padding-bottom:100px; }
 
-document.getElementById('endTurn').onclick=function(){turn++;if(turn>4){turn=1;year++}gold+=150+100;army+=50;processArmyActions();for(var id in techs){var t=techs[id];if(t.researching){t.turns--;if(t.turns<=0){t.researched=true;t.researching=false;addLog('Готово: '+t.name)}}}updateUI();updateTechUI();updateArmyList();checkWarnings();if(Math.random()<0.4)showEvent();saveGame();addLog('Край на ход')};
-document.getElementById('newGame').onclick=function(){if(confirm('Нова игра?')){localStorage.removeItem('svb362');location.reload()}};
-document.getElementById('fullScreen').onclick=function(){document.fullscreenElement?document.exitFullscreen():document.documentElement.requestFullscreen()};
-document.querySelectorAll('.nav-btn').forEach(b=>b.onclick=function(){document.querySelectorAll('.nav-btn').forEach(x=>x.classList.remove('active'));document.querySelectorAll('.panel').forEach(x=>x.classList.remove('active'));b.classList.add('active');document.getElementById(b.dataset.panel).classList.add('active')});
-document.querySelectorAll('.btn-build').forEach(b=>b.onclick=function(){var c=+b.dataset.cost;if(!c)return;if(gold>=c){gold-=c;updateUI();addLog('Построено: '+b.dataset.building);saveGame()}});
-document.getElementById('fanagoria').onclick=()=>showInfo('Фанагория','Столица');
-document.getElementById('tamatarcha').onclick=()=>showInfo('Таматарха','Търговия');
-loadGame();
-</script></body></html>
+    /* Map */
+    .map-panel {
+        margin:12px 12px 0; height:38vh; min-height:260px; border-radius:22px;
+    }
+    .map-inner { position:relative; height:100%; width:100%; border-radius:22px; overflow:hidden; }
+    .map-grid {
+        position:absolute; inset:0;
+        background:
+          linear-gradient(transparent 0 23px, rgba(255,215,130,.06) 24px),
+          linear-gradient(90deg, transparent 0 23px, rgba(255,215,130,.06) 24px),
+          radial-gradient(800px 400px at 50% 0%, rgba(212,175,55,.08), transparent 60%),
+          linear-gradient(180deg,#221b13,#0f0c08 70%);
+    }
+    .map-title {
+        position:absolute; top:14px; left:14px; right:14px;
+        display:flex; align-items:center; justify-content:space-between;
+    }
+    .map-title h2 {
+        margin:0; font-size:13px; letter-spacing:.8px; text-transform:uppercase; color:#d7c7a6;
+        background: rgba(0,0,0,.4); padding:6px 10px; border-radius:10px; border:1px solid rgba(212,175,55,.2);
+        backdrop-filter: blur(4px);
+    }
+    .map-legend { display:flex; gap:6px; }
+    .pill { font-size:11px; padding:4px 8px; border-radius:999px; background:rgba(212,175,55,.12); border:1px solid rgba(212,175,55,.25); color:var(--gold-light); font-weight:700; }
+    .map-svg { position:absolute; inset:0; display:grid; place-items:center; }
+    .map-svg svg { width:92%; height:auto; filter: drop-shadow(0 8px 20px rgba(0,0,0,.6)); opacity:.95; }
+    .town { fill:#f3d575; stroke:#2a1d0a; stroke-width:2; cursor:pointer; transition:transform .2s; }
+    .town:hover { transform:scale(1.1); }
+    .town-label { fill:#e9d9b7; font-size:11px; font-weight:700; text-shadow:0 1px 2px #000; }
+
+    /* Dashboard */
+    .dashboard { padding:0 12px; display:flex; flex-direction:column; gap:14px; }
+
+    .cards-row { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+
+    .char-card { border-radius:20px; padding:14px; text-align:center; }
+    .portrait-wrap {
+        width:92px; height:92px; margin:4px auto 0; border-radius:50%; padding:4px;
+        background: linear-gradient(180deg, #f5d67a, #8a6520);
+        box-shadow: 0 6px 18px rgba(0,0,0,.6), 0 0 0 4px #0b0703;
+    }
+    .portrait { width:100%; height:100%; border-radius:50%; object-fit:cover; border:2px solid #1a1208; filter: saturate(1.05) contrast(1.05); }
+    .char-name { margin-top:12px; font-weight:800; font-size:18px; letter-spacing:.2px; }
+    .char-title {
+        display:inline-block; margin-top:6px; font-size:11px; font-weight:800; letter-spacing:.6px; text-transform:uppercase;
+        color:var(--gold-light); padding:5px 10px; border-radius:999px;
+        background: linear-gradient(180deg, rgba(212,175,55,.22), rgba(212,175,55,.08));
+        border:1px solid rgba(212,175,55,.35);
+    }
+    .char-meta { margin-top:10px; font-size:12px; color:var(--muted); }
+
+    .bonus {
+        margin:12px auto 0; display:inline-flex; align-items:center; gap:6px;
+        padding:7px 10px; border-radius:10px; font-weight:800; font-size:13px; color:#ffe9a3;
+        background: repeating-linear-gradient(-45deg, rgba(212,175,55,.15) 0 8px, rgba(212,175,55,.08) 8px 16px), #1a140a;
+        border:1px dashed #b8913f; box-shadow: inset 0 0 10px rgba(212,175,55,.08);
+    }
+
+    .panel { border-radius:18px; padding:14px; }
+    .panel h3 { margin:0 0 10px; font-size:13px; text-transform:uppercase; letter-spacing:.8px; color:#d6c6a5; display:flex; align-items:center; gap:8px; }
+    .panel h3 .dot { width:8px; height:8px; border-radius:50%; background:var(--gold); box-shadow:0 0 8px rgba(212,175,55,.8); }
+
+    .abilities { display:grid; gap:10px; }
+    .ability {
+        display:flex; align-items:center; justify-content:space-between; gap:10px;
+        padding:12px; border-radius:12px;
+        background: linear-gradient(180deg,#1c160f,#120c07);
+        border:1px solid #2b2215;
+    }
+    .abi-left { display:flex; align-items:center; gap:10px; min-width:0; }
+    .abi-ico { width:34px; height:34px; border-radius:10px; display:grid; place-items:center; background:#22180d; border:1px solid #3a2a16; color:var(--gold-light); font-size:18px; }
+    .abi-name { font-weight:700; font-size:14px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .abi-desc { font-size:12px; color:var(--muted); margin-top:1px; }
+    .abi-buff { font-weight:900; font-size:13px; color:#0e0a04; background:linear-gradient(180deg,#f5d67a,#d4af37); padding:6px 9px; border-radius:9px; border:1px solid #8a6a1f; box-shadow:0 2px 6px rgba(0,0,0,.4); white-space:nowrap; }
+
+    .jobs { display:flex; flex-wrap:wrap; gap:8px; }
+    .job {
+        position:relative; padding:9px 12px; border-radius:999px; font-weight:700; font-size:13px; color:#f0e2c6;
+        background: linear-gradient(180deg,#2b2114,#1a140c); border:1px solid #4a3a21;
+        box-shadow: inset 0 1px 0 #5f4e34, 0 3px 10px rgba(0,0,0,.35);
+    }
+    .job.new::after { content:"НОВО"; position:absolute; top:-8px; right:-6px; background:var(--gold); color:#1a0f00; font-size:9px; font-weight:900; padding:2px 5px; border-radius:6px; letter-spacing:.3px; box-shadow:0 2px 4px rgba(0,0,0,.5); }
+
+    /* Bottom Nav */
+    .bottom-bar {
+        position:fixed; left:0; right:0; bottom:0; z-index:60;
+        height:84px; padding:8px 10px calc(8px + env(safe-area-inset-bottom));
+        display:flex; justify-content:space-around; align-items:flex-start; gap:6px;
+        background: linear-gradient(180deg, rgba(10,8,5,.85), rgba(5,4,2,.95));
+        backdrop-filter: blur(14px);
+        border-top:1px solid #2a2116;
+    }
+    .nav-btn {
+        flex:1; max-width:110px; height:56px; min-height:48px;
+        display:flex; flex-direction:column; align-items:center; justify-content:center; gap:5px;
+        background:transparent; border:none; color:var(--muted);
+        border-radius:14px; font-size:11px; font-weight:700; letter-spacing:.2px; cursor:pointer; transition:.2s;
+    }
+    .nav-btn .i { width:26px; height:26px; display:grid; place-items:center; border-radius:9px; background:#141008; border:1px solid #2a2116; transition:.2s; }
+    .nav-btn svg { width:18px; height:18px; stroke:currentColor; fill:none; stroke-width:2; }
+    .nav-btn.active { color:var(--gold-light); }
+    .nav-btn.active .i { background:linear-gradient(180deg, rgba(212,175,55,.22), rgba(212,175,55,.08)); border-color:rgba(212,175,55,.45); box-shadow: inset 0 0 10px rgba(212,175,55,.15), 0 4px 12px rgba(0,0,0,.35); }
+
+    .toast {
+        position:fixed; left:50%; bottom:96px; transform:translateX(-50%) translateY(20px);
+        background:#120c06; border:1px solid #3a2f1f; color:#f0e2c6; padding:10px 14px; border-radius:12px; font-weight:700; font-size:13px;
+        opacity:0; pointer-events:none; transition:.3s; z-index:70; box-shadow:0 8px 20px rgba(0,0,0,.5);
+    }
+    .toast.show { opacity:1; transform:translateX(-50%) translateY(0); }
+
+    /* Desktop enhancement */
+    @media (min-width: 900px) {
+        .app-shell { max-width:1380px; margin:0 auto; }
+        .top-bar { height:68px; padding:0 20px; border-radius:0 0 18px 18px; }
+        .game-name { font-size:16px; }
+        .game-name small { display:inline; margin-left:8px; }
+        .viewport {
+            display:grid; grid-template-columns: 1.5fr 420px; gap:18px;
+            padding:18px 18px 0; align-items:start;
+        }
+        .map-panel { margin:0; height:calc(100vh - 68px - 100px); min-height:560px; }
+        .dashboard { padding:0; height:calc(100vh - 68px - 100px); overflow:auto; padding-right:4px; }
+        .cards-row { gap:14px; }
+        .portrait-wrap { width:104px; height:104px; }
+        .bottom-bar {
+            position:relative; margin:18px; border-radius:18px; height:76px; padding:10px 14px;
+            background: linear-gradient(180deg,#141009,#0a0704); border:1px solid #2a2116; box-shadow:0 10px 30px rgba(0,0,0,.5);
+        }
+        .viewport { padding-bottom:0; }
+        .toast { bottom:120px; }
+    }
+
+    /* scrollbar */
+    ::-webkit-scrollbar { width:8px; height:8px; }
+    ::-webkit-scrollbar-thumb { background:#2a2116; border-radius:8px; border:1px solid #1a140c; }
+</style>
+</head>
+<body>
+<div class="app-shell">
+    <header class="top-bar">
+        <div class="brand">
+            <div class="logo"></div>
+            <div class="title-wrap">
+                <div class="game-name">Kubrat: Създателят на България <small>v37.0</small></div>
+            </div>
+        </div>
+        <div class="resources">
+            <div class="res gold" id="goldRes" title="Злато">
+                <span class="ico">₿</span>
+                <span id="goldVal">12 850</span>
+            </div>
+            <div class="res army" id="armyRes" title="Армия">
+                <span class="ico">⚔</span>
+                <span id="armyVal">7 400</span>
+            </div>
+        </div>
+    </header>
+
+    <div class="viewport">
+        <section class="map-panel stone gold-edge">
+            <div class="map-inner">
+                <div class="map-grid"></div>
+                <div class="map-title">
+                    <h2>Карта на Велика България</h2>
+                    <div class="map-legend">
+                        <span class="pill">630–660 г.</span>
+                        <span class="pill">Ход 37</span>
+                    </div>
+                <div class="map-svg">
+                    <svg viewBox="0 0 800 420" xmlns="http://www.w3.org/2000/svg">
+                        <defs>
+                            <linearGradient id="land" x1="0" x2="0" y1="0" y2="1">
+                                <stop offset="0%" stop-color="#3a2f1f"/>
+                                <stop offset="100%" stop-color="#1f1a12"/>
+                            </linearGradient>
+                            <filter id="soft"><feDropShadow dx="0" dy="4" stdDeviation="6" flood-opacity="0.5"/></filter>
+                        </defs>
+                        <path d="M80,260 C140,200 220,190 300,210 C380,230 460,240 540,210 C620,185 700,210 730,270 C700,320 620,350 540,340 C460,330 370,360 300,340 C210,315 130,310 80,260 Z"
+                              fill="url(#land)" stroke="#d4af37" stroke-opacity=".35" stroke-width="2" filter="url(#soft)"/>
+                        <path d="M150,210 L210,190 L280,200 L340,225" fill="none" stroke="#6d5a3a" stroke-dasharray="4 6" opacity=".6"/>
+                        <circle class="town" cx="180" cy="225" r="7" data-name="Фанагория"/>
+                        <text class="town-label" x="165" y="210">Фанагория</text>
+                        <circle class="town" cx="310" cy="205" r="6" data-name="Херсон"/>
+                        <text class="town-label" x="295" y="190">Херсон</text>
+                        <circle class="town" cx="420" cy="230" r="7" data-name="Онгъла"/>
+                        <text class="town-label" x="405" y="215">Онгъла</text>
+                        <circle class="town" cx="540" cy="205" r="6" data-name="Киев"/>
+                        <text class="town-label" x="530" y="190">Киев</text>
+                    </svg>
+                </div>
+            </div>
+        </section>
+
+        <section class="dashboard">
+            <div class="cards-row">
+                <!-- Кубрат -->
+                <article class="char-card stone gold-edge">
+                    <div class="portrait-wrap">
+                        <img class="portrait" alt="Кубрат" src="https://images.unsplash.com/photo-1500648767791-00dcc994a43e?q=80&w=400&auto=format&fit=crop&crop=faces">
+                    </div>
+                    <div class="char-name">Кубрат</div>
+                    <div class="char-title">Канасубиги</div>
+                    <div class="char-meta">Обединител на племената</div>
+                </article>
+
+                <!-- Ирина -->
+                <article class="char-card stone gold-edge">
+                    <div class="portrait-wrap">
+                        <img class="portrait" alt="Ирина Византийска" src="https://images.unsplash.com/photo-1544005313-94ddf0286df2?q=80&w=400&auto=format&fit=crop&crop=faces">
+                    </div>
+                    <div class="char-name">Ирина Византийска</div>
+                    <div class="char-title">Съюз чрез Брак</div>
+                    <div class="bonus" title="Брачен съюз">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#f3d575" stroke-width="2"><path d="M12 21s-6-4.3-9-8.1C1 10 3 6 7 6c2 0 3.5 1 5 2.5C13.5 7 15 6 17 6c4 0 6 4 4 6.9-3 3.8-9 8.1-9 8.1z"/></svg>
+                        +500 злато, +25/ход
+                    </div>
+                </article>
+            </div>
+
+            <div class="panel stone gold-edge">
+                <h3><span class="dot"></span> Наследници и умения</h3>
+                <div class="abilities">
+                    <div class="ability">
+                        <div class="abi-left">
+                            <div class="abi-ico">🏰</div>
+                            <div>
+                                <div class="abi-name">Баян</div>
+                                <div class="abi-desc">Старши син</div>
+                            </div>
+                        </div>
+                        <div class="abi-buff">Обсада +20%</div>
+                    </div>
+                    <div class="ability">
+                        <div class="abi-left">
+                            <div class="abi-ico">🐎</div>
+                            <div>
+                                <div class="abi-name">Тервел</div>
+                                <div class="abi-desc">Младият вълк</div>
+                            </div>
+                        </div>
+                        <div class="abi-buff">Кавалерия +15%</div>
+                    </div>
+                    <div class="ability">
+                        <div class="abi-left">
+                            <div class="abi-ico">🛡</div>
+                            <div>
+                                <div class="abi-name">Котраг</div>
+                                <div class="abi-desc">Пазител на изтока</div>
+                            </div>
+                        <div class="abi-buff">Защита +12%</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="panel stone gold-edge">
+                <h3><span class="dot"></span> Нови длъжности</h3>
+                <div class="jobs">
+                    <span class="job new">Багатур</span>
+                    <span class="job new">Таркан</span>
+                    <span class="job new">Жупан</span>
+                    <span class="job new">Боил</span>
+                    <span class="job">Кана боил колобър</span>
+                    <span class="job">Ичиргу боил</span>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <nav class="bottom-bar">
+        <button class="nav-btn active" data-tab="Армии" aria-label="Армии">
+            <span class="i">
+                <svg viewBox="0 0 24 24"><path d="M14.5 3.5l5 5-12 12-5-5 12-12zM6 20l-2 2M20 6l2-2"/></svg>
+            </span>
+            Армии
+        </button>
+        <button class="nav-btn" data-tab="Карта" aria-label="Карта">
+            <span class="i">
+                <svg viewBox="0 0 24 24"><path d="M9 18l-6-3 6-3 6 3 6-3v9l-6 3-6-3-6 3v-9z"/></svg>
+            </span>
+            Карта
+        </button>
+        <button class="nav-btn" data-tab="Род" aria-label="Род">
+            <span class="i">
+                <svg viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+            </span>
+            Род
+        </button>
+        <button class="nav-btn" data-tab="Тех" aria-label="Тех">
+            <span class="i">
+                <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 0 0 0 5 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.6c.5-.06 1 .06 1.51 1V3a2 2 0 1 1 4 0v.09c.06.5.4.95 1 1.52.6.5 1.32.66 1.82.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06c-.27.5-.11 1.32.33 1.82.5.95.84 1.51 1H21a2 2 0 1 1 0 4h-.09c-.5.06-.95.4-1.51 1z"/></svg>
+            </span>
+            Тех
+        </button>
+    </nav>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+(() => {
+    const fmt = n => n.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
+    let gold = 12850;
+    let army = 7400;
+    const goldEl = document.getElementById('goldVal');
+    const armyEl = document.getElementById('armyVal');
+    const toast = document.getElementById('toast');
+
+    function update() {
+        goldEl.textContent = fmt(gold);
+        armyEl.textContent = fmt(army);
+    }
+    update();
+
+    // Passive income from Irina
+    setInterval(() => {
+        gold += 25;
+        update();
+        pulse(goldEl);
+    }, 3000);
+
+    function pulse(el){
+        el.animate([{transform:'scale(1)'},{transform:'scale(1.08)'},{transform:'scale(1)'}],{duration:300, easing:'ease-out'});
+    }
+
+    // Map towns click
+    document.querySelectorAll('.town').forEach(t => {
+        t.addEventListener('click', () => {
+            const name = t.dataset.name;
+            gold += 75;
+            army += 50;
+            update();
+            showToast(`Завладян пост: ${name} +75 злато`);
+        });
+    });
+
+    // Bottom nav
+    document.querySelectorAll('.nav-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            const tab = btn.dataset.tab;
+            showToast(`${tab}`);
+            // haptic
+            if (navigator.vibrate) navigator.vibrate(10);
+        });
+    });
+
+    // Resources click = cheat for demo
+    document.getElementById('goldRes').addEventListener('click', ()=>{ gold += 500; update(); showToast('+500 злато (брачен дар)'); });
+    document.getElementById('armyRes').addEventListener('click', ()=>{ army += 200; update(); showToast('+200 воини набрани'); });
+
+    // Character cards tap
+    document.querySelectorAll('.char-card').forEach(c => {
+        c.addEventListener('click', () => {
+            c.animate([{transform:'translateY(0)'},{transform:'translateY(-3px)'},{transform:'translateY(0)'}],{duration:220});
+        });
+    });
+
+    let tmr;
+    function showToast(msg){
+        toast.textContent = msg;
+        toast.classList.add('show');
+        clearTimeout(tmr);
+        tmr = setTimeout(()=> toast.classList.remove('show'), 1600);
+    }
+
+    // Initial hint
+    setTimeout(()=> showToast('Докосни картата за плячка'), 800);
+})();
+</script>
+</body>
+</html>
