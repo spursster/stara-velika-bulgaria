@@ -3,423 +3,426 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Magna Bulgaria v39</title>
+<title>Magna Bulgaria v39.1</title>
 <script src="https://cdn.tailwindcss.com"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;800&family=Cinzel:wght@700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
   :root { color-scheme: dark; }
-  body { font-family: 'Manrope', system-ui; background:#020617; }
-  .font-cinzel { font-family: 'Cinzel', serif; }
-  .card { background: rgba(15,23,42,.75); backdrop-filter: blur(12px); border:1px solid rgba(148,163,184,.12); border-radius:1rem; }
-  .btn { transition: all .2s; font-weight: 600; }
-  .btn:active { transform: scale(.97); }
-  .no-scrollbar::-webkit-scrollbar { display:none; }
-  .scroll-thin::-webkit-scrollbar { width:6px; } .scroll-thin::-webkit-scrollbar-thumb { background:#334155; border-radius:3px; }
+  body { font-family: 'Inter', system-ui; background:#050301; }
+  h1,h2,h3,.cinzel { font-family: 'Cinzel', serif; }
+  .panel {
+    background: radial-gradient(120% 120% at 50% 0%, #231a12 0%, #0f0a06 60%, #070402 100%);
+    border: 1px solid rgba(146, 111, 52, 0.35);
+    box-shadow: inset 0 1px 0 rgba(212,175,55,.15), inset 0 -30px 60px rgba(0,0,0,.7), 0 10px 30px rgba(0,0,0,.6);
+    position: relative;
+  }
+  .panel:before {
+    content:""; position:absolute; inset:0; border-radius:inherit; padding:1px;
+    background: linear-gradient(180deg, rgba(212,175,55,.5), transparent 40%);
+    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor; mask-composite: exclude; opacity:.25; pointer-events:none;
+  }
+  .btn {
+    background: linear-gradient(180deg, #7c4a1a, #3d230c);
+    border:1px solid rgba(212,175,55,.35);
+    color:#f5e6c8; text-shadow:0 1px 0 #000;
+    transition: all .15s;
+  }
+  .btn:hover { background: linear-gradient(180deg, #956022, #4a2c0f); transform: translateY(-1px); }
+  .btn:active { transform: translateY(0px); }
+  .btn-ghost { background: rgba(0,0,0,.3); border:1px solid rgba(146,111,52,.3); }
+  .btn-ghost:hover { background: rgba(0,0,0,.5); }
+  .gold { color:#d4af37; }
+  .bar { height:8px; background:#1a130b; border:1px solid #3a2814; border-radius:999px; overflow:hidden; }
+  .bar > i { display:block; height:100%; background: linear-gradient(90deg, #d4af37, #8b5e34); }
+  .rune { filter: drop-shadow(0 0 8px rgba(212,175,55,.3)); }
+  ::-webkit-scrollbar { width:8px; height:8px; }
+  ::-webkit-scrollbar-thumb { background:#3a2814; border-radius:4px; }
 </style>
 </head>
-<body class="text-slate-100 selection:bg-amber-500/30 selection:text-amber-200">
-<div class="fixed inset-0 -z-10">
-  <div class="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-indigo-900/30 via-slate-950 to-slate-950"></div>
-  <div class="absolute -top-40 -right-40 w-96 h-96 bg-amber-600/20 rounded-full blur-3xl"></div>
-  <div class="absolute -bottom-40 -left-40 w-96 h-96 bg-rose-700/20 rounded-full blur-3xl"></div>
-</div>
-
-<header class="fixed top-0 left-0 right-0 z-40 border-b border-slate-800 bg-slate-950/70 backdrop-blur-xl">
-  <div class="max-w-[1600px] mx-auto px-3 md:px-6 h-[72px] flex items-center justify-between gap-3">
-    <div class="flex items-center gap-3">
-      <div class="w-11 h-11 rounded-2xl bg-gradient-to-br from-amber-500 via-orange-600 to-rose-700 grid place-items-center shadow-lg shadow-amber-900/30">
-        <span class="font-cinzel font-bold text-xl">Б</span>
-      </div>
-      <div>
-        <div class="text-[10px] uppercase tracking-[0.2em] text-slate-400">Magna Bulgaria v39</div>
-        <div class="font-cinzel text-[22px] md:text-[28px] leading-none">Година <span id="stat-year">632</span></div>
+<body class="min-h-screen text-[#e8dcc6] bg-[radial-gradient(ellipse_at_top,_#1f160d_0%,_#050301_70%)]">
+  <header class="sticky top-0 z-40 border-b border-amber-900/30 bg-black/70 backdrop-blur">
+    <div class="max-w-[1400px] mx-auto px-3 sm:px-6 py-3 flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-full bg-gradient-to-br from-amber-500 to-yellow-700 grid place-items-center text-black font-black shadow-lg shadow-amber-900/30 rune cinzel">𐰉</div>
+        <div>
+          <h1 class="cinzel text-xl sm:text-2xl leading-none tracking-wider text-amber-200">MAGNA BULGARIA <span class="text-amber-500/70 text-xs align-super">v39.1</span></h1>
+          <p class="text-[10px] uppercase tracking-[0.2em] text-amber-200/50 -mt-1">Велика България</p>
+        </div>
+      <div class="flex items-center gap-2">
+        <button id="newGameBtn" class="btn px-3 py-1.5 rounded-md text-sm"><span data-i18n="newGame">Нова Игра</span></button>
+        <button id="langBtn" class="btn-ghost px-3 py-1.5 rounded-md text-sm">EN</button>
+        <button id="fullscreenBtn" class="btn-ghost px-3 py-1.5 rounded-md text-sm" title="Fullscreen">⛶</button>
       </div>
     </div>
-    <div class="flex items-center gap-2.5 sm:gap-5">
-      <div class="text-center"><div class="text-[10px] text-slate-400 uppercase">Злато</div><div class="font-semibold flex items-center gap-1.5"><span class="text-amber-400">🪙</span><span id="stat-gold">500</span></div></div>
-      <div class="text-center hidden sm:block"><div class="text-[10px] text-slate-400 uppercase">Престиж</div><div class="font-semibold flex items-center gap-1.5"><span class="text-violet-400">👑</span><span id="stat-prestige">50</span></div></div>
-      <div class="text-center"><div class="text-[10px] text-slate-400 uppercase">Стабилност</div><div class="font-semibold flex items-center gap-1.5"><span class="text-emerald-400">⚖️</span><span id="stat-stability">85</span>%</div></div>
-      <div class="text-center hidden sm:block"><div class="text-[10px] text-slate-400 uppercase">Войска</div><div class="font-semibold flex items-center gap-1.5"><span class="text-rose-400">⚔️</span><span id="stat-military">0</span></div></div>
-      <div class="text-center"><div class="text-[10px] text-slate-400 uppercase">Богове</div><div class="font-semibold flex items-center gap-1.5"><span class="text-sky-400">✨</span><span id="stat-gods">0</span></div></div>
+  </header>
+
+  <main class="max-w-[1400px] mx-auto p-3 sm:p-6">
+    <!-- Resources -->
+    <div class="panel rounded-xl px-4 py-3 mb-5 flex flex-wrap items-center justify-between gap-3">
+      <div class="flex items-center gap-5">
+        <div class="flex items-center gap-2"><span class="text-amber-300/70 text-sm" data-i18n="gold">Злато</span><span id="gold" class="gold text-xl font-semibold">500</span> <span class="text-amber-400">⦿</span></div>
+        <div class="flex items-center gap-2"><span class="text-amber-300/70 text-sm" data-i18n="turn">Ход</span><span id="turn" class="text-xl font-semibold">1</span></div>
+        <div class="flex items-center gap-2"><span class="text-amber-300/70 text-sm" data-i18n="faith">Вяра</span><span id="faith" class="text-xl font-semibold text-violet-300">50</span></div>
+      </div>
+      <div class="flex items-center gap-2">
+        <button id="nextTurnBtn" class="btn px-4 py-1.5 rounded-md text-sm"><span data-i18n="nextTurn">Следващ Ход</span> →</button>
+      </div>
+    </div>
+
+    <!-- THREE ARMIES -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-6">
+      <!-- Batbayan -->
+      <div id="army-batbayan" class="panel rounded-2xl p-4">
+        <div class="flex items-start justify-between mb-2">
+          <h2 class="cinzel text-lg gold flex items-center gap-2"><span class="text-2xl">🛡️</span><span class="name">Батбаян</span></h2>
+          <span class="text-[11px] uppercase tracking-widest px-2 py-0.5 rounded bg-sky-950/50 border border-sky-800/40 text-sky-200" data-i18n="leftWing">Ляво Крило</span>
+        </div>
+        <div class="space-y-1.5 text-sm">
+          <div class="flex justify-between"><span class="text-amber-200/60" data-i18n="soldiers">Войници</span><span data-stat="soldiers" class="font-medium">12,000</span></div>
+          <div class="flex justify-between"><span class="text-amber-200/60" data-i18n="morale">Морал</span><span><span data-stat="morale">85</span>%</span></div>
+          <div class="flex justify-between"><span class="text-amber-200/60" data-i18n="rank">Ранг</span><span data-stat="rank" class="cinzel">III</span></div>
+          <div class="flex justify-between"><span class="text-amber-200/60" data-i18n="god">Бог</span><span data-stat="god" class="text-amber-300">—</span></div>
+        </div>
+        <div class="mt-3 bar"><i style="width:85%" data-bar="morale"></i></div>
+        <div class="mt-4 flex gap-2">
+          <button data-action="train" class="btn flex-1 py-1.5 rounded-md text-sm" data-i18n="train">Обучи (50з)</button>
+          <button data-action="march" class="btn-ghost flex-1 py-1.5 rounded-md text-sm border" data-i18n="march">Поход</button>
+        </div>
+      </div>
+
+      <!-- Kubrat -->
+      <div id="army-kubrat" class="panel rounded-2xl p-4 ring-1 ring-amber-400/20">
+        <div class="flex items-start justify-between mb-2">
+          <h2 class="cinzel text-xl gold flex items-center gap-2"><span class="text-2xl">👑</span><span class="name">Кубрат</span></h2>
+          <span class="text-[11px] uppercase tracking-widest px-2 py-0.5 rounded bg-amber-950/60 border border-amber-700/40 text-amber-200" data-i18n="center">Велик Хан</span>
+        </div>
+        <div class="space-y-1.5 text-sm">
+          <div class="flex justify-between"><span class="text-amber-200/60" data-i18n="soldiers">Войници</span><span data-stat="soldiers" class="font-medium">25,000</span></div>
+          <div class="flex justify-between"><span class="text-amber-200/60" data-i18n="morale">Морал</span><span><span data-stat="morale">95</span>%</span></div>
+          <div class="flex justify-between"><span class="text-amber-200/60" data-i18n="rank">Ранг</span><span data-stat="rank" class="cinzel">V</span></div>
+          <div class="flex justify-between"><span class="text-amber-200/60" data-i18n="god">Бог</span><span data-stat="god" class="text-amber-300">—</span></div>
+        </div>
+        <div class="mt-3 bar"><i style="width:95%" data-bar="morale"></i></div>
+        <div class="mt-4 flex gap-2">
+          <button data-action="train" class="btn flex-1 py-1.5 rounded-md text-sm" data-i18n="train">Обучи (50з)</button>
+          <button data-action="march" class="btn-ghost flex-1 py-1.5 rounded-md text-sm border" data-i18n="march">Поход</button>
+        </div>
+      </div>
+
+      <!-- Asparukh -->
+      <div id="army-asparukh" class="panel rounded-2xl p-4">
+        <div class="flex items-start justify-between mb-2">
+          <h2 class="cinzel text-lg gold flex items-center gap-2"><span class="text-2xl">⚔️</span><span class="name">Аспарух</span></h2>
+          <span class="text-[11px] uppercase tracking-widest px-2 py-0.5 rounded bg-emerald-950/50 border border-emerald-800/40 text-emerald-200" data-i18n="rightWing">Дясно Крило</span>
+        </div>
+        <div class="space-y-1.5 text-sm">
+          <div class="flex justify-between"><span class="text-amber-200/60" data-i18n="soldiers">Войници</span><span data-stat="soldiers" class="font-medium">18,000</span></div>
+          <div class="flex justify-between"><span class="text-amber-200/60" data-i18n="morale">Морал</span><span><span data-stat="morale">90</span>%</span></div>
+          <div class="flex justify-between"><span class="text-amber-200/60" data-i18n="rank">Ранг</span><span data-stat="rank" class="cinzel">IV</span></div>
+          <div class="flex justify-between"><span class="text-amber-200/60" data-i18n="god">Бог</span><span data-stat="god" class="text-amber-300">—</span></div>
+        </div>
+        <div class="mt-3 bar"><i style="width:90%" data-bar="morale"></i></div>
+        <div class="mt-4 flex gap-2">
+          <button data-action="train" class="btn flex-1 py-1.5 rounded-md text-sm" data-i18n="train">Обучи (50з)</button>
+          <button data-action="march" class="btn-ghost flex-1 py-1.5 rounded-md text-sm border" data-i18n="march">Поход</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- GARRISONS & LEADER -->
+    <div class="grid grid-cols-1 xl:grid-cols-3 gap-4">
+      <!-- Garrisons -->
+      <div class="panel rounded-2xl p-4 xl:col-span-2">
+        <div class="flex items-center justify-between mb-3">
+          <h3 class="cinzel text-lg gold" data-i18n="garrisons">Автономни Гарнизони</h3>
+          <span class="text-xs text-amber-200/50">+ <span id="totalIncome">132</span> <span data-i18n="gold">злато</span>/ход</span>
+        </div>
+        <div id="garrisonsList" class="grid sm:grid-cols-2 lg:grid-cols-3 gap-2.5"></div>
+      </div>
+
+      <!-- Leader -->
+      <div class="panel rounded-2xl p-4">
+        <h3 class="cinzel text-lg gold mb-3" data-i18n="leader">Кан Кубрат - Водач</h3>
+        <div class="space-y-3" id="leaderStats">
+          <div><div class="flex justify-between text-xs mb-1"><span data-i18n="power">Власт</span><span>75</span></div><div class="bar"><i style="width:75%"></i></div></div>
+          <div><div class="flex justify-between text-xs mb-1"><span data-i18n="diplomacy">Дипломация</span><span>68</span></div><div class="bar"><i style="width:68%"></i></div></div>
+          <div><div class="flex justify-between text-xs mb-1"><span data-i18n="warfare">Военно дело</span><span>82</span></div><div class="bar"><i style="width:82%"></i></div></div>
+          <div><div class="flex justify-between text-xs mb-1"><span data-i18n="economy">Икономика</span><span>70</span></div><div class="bar"><i style="width:70%"></i></div></div>
+          <div><div class="flex justify-between text-xs mb-1"><span data-i18n="belief">Вяра</span><span>88</span></div><div class="bar"><i style="width:88%"></i></div></div>
+        </div>
+        <div class="mt-4 pt-3 border-t border-amber-900/30 text-[11px] text-amber-200/60">Съвет: поддържай висок морал и призовавай боговете преди големи походи.</div>
+      </div>
+    </div>
+
+    <!-- RITUAL -->
+    <div class="panel rounded-2xl p-4 mt-4">
+      <div class="flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <h3 class="cinzel text-lg gold flex items-center gap-2">🔥 <span data-i18n="ritual">Извърши Ритуал</span></h3>
+          <p class="text-xs text-amber-200/60 -mt-1">Тангра канъ — призов на късмет</p>
+        </div>
+        <div class="flex items-center gap-3">
+          <span class="text-xs px-2 py-1 rounded bg-black/40 border border-amber-900/40"><span data-i18n="chance">Шанс: 1.5%</span></span>
+          <button id="ritualBtn" class="btn px-5 py-2 rounded-lg font-medium"><span data-i18n="ritual">Извърши Ритуал</span> <span class="opacity-70" data-i18n="ritualCost">(100 злато)</span></button>
+          <button id="pantheonBtn" class="btn-ghost px-3 py-2 rounded-lg text-sm border" data-i18n="pantheon">Пантеон (69)</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- LOG -->
+    <div class="panel rounded-2xl p-4 mt-4">
+      <h3 class="cinzel text-base gold mb-2" data-i18n="log">Хроника</h3>
+      <div id="log" class="h-40 overflow-y-auto text-xs space-y-1 font-mono text-amber-100/80 pr-2"></div>
+    </div>
+  </main>
+
+  <!-- Pantheon Modal -->
+  <div id="pantheonModal" class="fixed inset-0 z-50 hidden">
+    <div class="absolute inset-0 bg-black/80 backdrop-blur-sm" id="pantheonClose"></div>
+    <div class="relative max-w-5xl mx-auto mt-10 panel rounded-2xl p-5 max-h-[85vh] overflow-hidden flex flex-col">
+      <div class="flex items-center justify-between mb-3">
+        <h3 class="cinzel text-xl gold">Пантеон на Българските Богове — 69</h3>
+        <button id="closePantheon" class="btn-ghost px-3 py-1 rounded border">✕</button>
+      </div>
+      <div id="godsList" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2 text-sm overflow-y-auto pr-2"></div>
     </div>
   </div>
-</header>
-
-<main class="pt-[88px] pb-10 px-3 md:px-6 max-w-[1600px] mx-auto grid grid-cols-1 xl:grid-cols-12 gap-4 md:gap-6">
-  
-  <!-- LEFT -->
-  <aside class="xl:col-span-3 space-y-4">
-    <div class="card p-4 md:p-5">
-      <div class="flex items-center justify-between">
-        <h2 class="font-cinzel text-xl">Кан Кубрат</h2>
-        <span class="text-[11px] px-2 py-1 rounded-full bg-amber-500/15 text-amber-300 border border-amber-500/20">Владетел</span>
-      </div>
-      <div class="mt-4 space-y-3" id="leader-stats"></div>
-      <p class="mt-3 text-xs text-slate-400">Подобренията струват злато. Магията влияе на ритуалите.</p>
-    </div>
-
-    <div class="card p-4 md:p-5">
-      <h3 class="font-semibold flex items-center gap-2"><span class="text-2xl">🔮</span> Свещен Ритуал</h3>
-      <p class="text-sm text-slate-300 mt-1">Призови един от 69-те български богове. Боговете могат да водят армии и умират само от други богове.</p>
-      <div class="mt-3 p-3 rounded-xl bg-slate-900/60 border border-slate-800">
-        <div class="flex justify-between text-sm"><span>Цена</span><span class="text-amber-300">100 злато</span></div>
-        <div class="flex justify-between text-sm"><span>Шанс</span><span class="text-sky-300"><span id="ritual-chance">1.5</span>%</span></div>
-      </div>
-      <button id="ritualBtn" class="btn w-full mt-3 py-2.5 rounded-xl bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 shadow-lg shadow-violet-900/30">Извърши Ритуал</button>
-      <p class="text-[11px] text-slate-500 mt-2 text-center">Възможни: Перун-Бахта, Тангра, Бендида, Мадара и др.</p>
-    </div>
-
-    <div class="card p-4 md:p-5">
-      <h3 class="font-semibold flex items-center gap-2"><span>🏺</span> Артефакти</h3>
-      <div id="artifacts-list" class="mt-3 space-y-2"></div>
-    </div>
-  </aside>
-
-  <!-- CENTER -->
-  <section class="xl:col-span-6 space-y-4">
-    <div class="card p-3 md:p-4">
-      <div class="flex flex-wrap gap-2">
-        <button id="nextYearBtn" class="btn flex-1 min-w-[140px] py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700">Следваща Година ▶</button>
-        <button id="raidBtn" class="btn px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700">Набег</button>
-        <button id="campaignBtn" class="btn px-4 py-2.5 rounded-xl bg-gradient-to-r from-rose-600 to-amber-600 hover:from-rose-500 hover:to-amber-500 shadow">Поход</button>
-      </div>
-    </div>
-
-    <div class="grid md:grid-cols-3 gap-4">
-      <!-- LEFT ARMY -->
-      <div class="card p-4">
-        <div class="flex items-start justify-between">
-          <div>
-            <div class="text-[11px] uppercase tracking-widest text-slate-400">Ляво Крило</div>
-            <h3 class="font-semibold text-lg leading-tight">Батбаян</h3>
-          </div>
-          <span id="left-rank" class="text-[11px] px-2 py-1 rounded-full bg-slate-800 border border-slate-700">Новобранец</span>
-        </div>
-        <div class="mt-3 grid grid-cols-3 gap-2 text-center">
-          <div class="p-2 rounded-lg bg-slate-900/70"><div class="text-[11px] text-slate-400">Войници</div><div id="left-soldiers" class="font-bold">2500</div></div>
-          <div class="p-2 rounded-lg bg-slate-900/70"><div class="text-[11px] text-slate-400">АТК</div><div id="left-atk" class="font-bold text-rose-300">12</div></div>
-          <div class="p-2 rounded-lg bg-slate-900/70"><div class="text-[11px] text-slate-400">DEF</div><div id="left-def" class="font-bold text-sky-300">10</div></div>
-        </div>
-        <div class="mt-3 text-sm"><span class="text-slate-400">Бог:</span> <span id="left-god" class="text-amber-300">—</span></div>
-        <div class="mt-3 grid grid-cols-3 gap-2">
-          <button onclick="trainArmy('left')" class="btn py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-xs">Обучи 75з</button>
-          <button onclick="promoteArmy('left')" class="btn py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-xs">Повиши</button>
-          <button onclick="openAssign('left')" class="btn py-1.5 rounded-lg bg-indigo-600/30 hover:bg-indigo-600/50 text-xs border border-indigo-500/30">Бог</button>
-        </div>
-      </div>
-      <!-- CENTER ARMY -->
-      <div class="card p-4 ring-1 ring-amber-500/30">
-        <div class="flex items-start justify-between">
-          <div>
-            <div class="text-[11px] uppercase tracking-widest text-amber-300">Център</div>
-            <h3 class="font-semibold text-lg leading-tight">Кубрат</h3>
-          </div>
-          <span id="center-rank" class="text-[11px] px-2 py-1 rounded-full bg-amber-500/15 text-amber-200 border border-amber-500/30">Ветеран</span>
-        </div>
-        <div class="mt-3 grid grid-cols-3 gap-2 text-center">
-          <div class="p-2 rounded-lg bg-slate-900/70"><div class="text-[11px] text-slate-400">Войници</div><div id="center-soldiers" class="font-bold">4000</div></div>
-          <div class="p-2 rounded-lg bg-slate-900/70"><div class="text-[11px] text-slate-400">АТК</div><div id="center-atk" class="font-bold text-rose-300">18</div></div>
-          <div class="p-2 rounded-lg bg-slate-900/70"><div class="text-[11px] text-slate-400">DEF</div><div id="center-def" class="font-bold text-sky-300">16</div></div>
-        </div>
-        <div class="mt-3 text-sm"><span class="text-slate-400">Бог:</span> <span id="center-god" class="text-amber-300">—</span></div>
-        <div class="mt-3 grid grid-cols-3 gap-2">
-          <button onclick="trainArmy('center')" class="btn py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-xs">Обучи 75з</button>
-          <button onclick="promoteArmy('center')" class="btn py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-xs">Повиши</button>
-          <button onclick="openAssign('center')" class="btn py-1.5 rounded-lg bg-indigo-600/30 hover:bg-indigo-600/50 text-xs border border-indigo-500/30">Бог</button>
-        </div>
-      <!-- RIGHT ARMY -->
-      <div class="card p-4">
-        <div class="flex items-start justify-between">
-          <div>
-            <div class="text-[11px] uppercase tracking-widest text-slate-400">Дясно Крило</div>
-            <h3 class="font-semibold text-lg leading-tight">Аспарух</h3>
-          </div>
-          <span id="right-rank" class="text-[11px] px-2 py-1 rounded-full bg-slate-800 border border-slate-700">Новобранец</span>
-        </div>
-        <div class="mt-3 grid grid-cols-3 gap-2 text-center">
-          <div class="p-2 rounded-lg bg-slate-900/70"><div class="text-[11px] text-slate-400">Войници</div><div id="right-soldiers" class="font-bold">2800</div></div>
-          <div class="p-2 rounded-lg bg-slate-900/70"><div class="text-[11px] text-slate-400">АТК</div><div id="right-atk" class="font-bold text-rose-300">14</div></div>
-          <div class="p-2 rounded-lg bg-slate-900/70"><div class="text-[11px] text-slate-400">DEF</div><div id="right-def" class="font-bold text-sky-300">11</div></div>
-        </div>
-        <div class="mt-3 text-sm"><span class="text-slate-400">Бог:</span> <span id="right-god" class="text-amber-300">—</span></div>
-        <div class="mt-3 grid grid-cols-3 gap-2">
-          <button onclick="trainArmy('right')" class="btn py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-xs">Обучи 75з</button>
-          <button onclick="promoteArmy('right')" class="btn py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-xs">Повиши</button>
-          <button onclick="openAssign('right')" class="btn py-1.5 rounded-lg bg-indigo-600/30 hover:bg-indigo-600/50 text-xs border border-indigo-500/30">Бог</button>
-        </div>
-      </div>
-    </div>
-
-    <div class="card p-4">
-      <div class="flex items-center justify-between">
-        <h3 class="font-semibold flex items-center gap-2"><span>📜</span> Хроника</h3>
-        <span class="text-[11px] text-slate-400">Последни събития</span>
-      </div>
-      <div id="log" class="mt-3 max-h-[220px] overflow-y-auto scroll-thin pr-2 space-y-1"></div>
-    </div>
-  </section>
-
-  <!-- RIGHT -->
-  <aside class="xl:col-span-3 space-y-4">
-    <div class="card p-4 md:p-5">
-      <div class="flex items-center justify-between">
-        <h3 class="font-semibold flex items-center gap-2"><span>🏰</span> Автономни Гарнизони</h3>
-        <button onclick="reinforceGarrisons()" class="btn text-xs px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-700">Укрепи 150з</button>
-      </div>
-      <div id="garrisons" class="mt-3 space-y-2"></div>
-    </div>
-
-    <div class="card p-4 md:p-5">
-      <h3 class="font-semibold flex items-center gap-2"><span class="text-sky-400">✨</span> Призовани Богове</h3>
-      <div id="gods-list" class="mt-3 space-y-2 max-h-[260px] overflow-y-auto scroll-thin pr-1"></div>
-    </div>
-  </aside>
-</main>
-
-<!-- EVENT MODAL -->
-<div id="modal" class="hidden fixed inset-0 z-50 bg-black/80 backdrop-blur-sm p-4 grid place-items-center">
-  <div class="card w-full max-w-lg p-6 shadow-2xl">
-    <div id="modal-icon" class="text-4xl mb-2">🔮</div>
-    <h2 id="modal-title" class="font-cinzel text-2xl"></h2>
-    <div id="modal-body" class="mt-3 text-slate-300 leading-relaxed"></div>
-    <button id="modal-close" class="btn mt-5 w-full py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700">Затвори</button>
-  </div>
-</div>
-
-<!-- ASSIGN MODAL -->
-<div id="assignModal" class="hidden fixed inset-0 z-50 bg-black/80 backdrop-blur-sm p-4 grid place-items-center">
-  <div class="card w-full max-w-md p-5">
-    <h3 class="font-semibold text-lg">Назначи Бог</h3>
-    <p class="text-sm text-slate-400">Избери безсмъртен водач за армията.</p>
-    <div id="assign-list" class="mt-4 space-y-2 max-h-[50vh] overflow-y-auto"></div>
-    <button onclick="closeAssign()" class="btn mt-4 w-full py-2 rounded-xl bg-slate-800 hover:bg-slate-700">Отказ</button>
-  </div>
-</div>
 
 <script>
 document.addEventListener('DOMContentLoaded', () => {
-const RANKS = ["Новобранец","Ветеран","Легендарен"];
-const GOD_NAMES = ["Перун-Бахта","Бендида","Тангра","Залмоксис","Мадара","Тара","Сабазий","Орфей","Житна","Арес","Крал Марко","Крум","Симеон","Тервел","Аспарух","Калоян","Самуил","Иван Асен","Спартак","Хермес","Хефест","Дедал","Питагор","Аристотел","Кирил","Методий","Климент","Наум","Черноризец Храбър","Посейдон Дунавски","Артемида","Пан","Борей","Зефир","Рила","Пирин","Витоша","Марица","Черно Море","Хеката","3 Еринии","Мор","Глад","Война","Страх","Лъжа","Завист","Хестия","Хера","Тюхе","Нике","Ирида","Хеба","Асклепий","Хигия","Панацея","Ейрена","Загрей","Дерзел","Кандаон","Плейстор","Бендис","Севт","Резос","Орфей Тракиец","Ликург","Дуло"];
+  const i18n = {
+    bg: {
+      newGame:"Нова Игра", gold:"Злато", turn:"Ход", faith:"Вяра", nextTurn:"Следващ Ход",
+      leftWing:"Ляво Крило", center:"Велик Хан", rightWing:"Дясно Крило",
+      soldiers:"Войници", morale:"Морал", rank:"Ранг", god:"Бог",
+      train:"Обучи (50з)", march:"Поход",
+      garrisons:"Автономни Гарнизони", garrison:"Гарнизон", income:"Доход",
+      leader:"Кан Кубрат - Водач", power:"Власт", diplomacy:"Дипломация", warfare:"Военно дело", economy:"Икономика", belief:"Вяра",
+      ritual:"Извърши Ритуал", ritualCost:"(100 злато)", chance:"Шанс: 1.5%", pantheon:"Пантеон (69)", log:"Хроника",
+      lang:"EN"
+    },
+    en: {
+      newGame:"New Game", gold:"Gold", turn:"Turn", faith:"Faith", nextTurn:"Next Turn",
+      leftWing:"Left Wing", center:"Great Khan", rightWing:"Right Wing",
+      soldiers:"Soldiers", morale:"Morale", rank:"Rank", god:"God",
+      train:"Train (50g)", march:"March",
+      garrisons:"Autonomous Garrisons", garrison:"Garrison", income:"Income",
+      leader:"Khan Kubrat - Leader", power:"Authority", diplomacy:"Diplomacy", warfare:"Warfare", economy:"Economy", belief:"Faith",
+      ritual:"Perform Ritual", ritualCost:"(100 gold)", chance:"Chance: 1.5%", pantheon:"Pantheon (69)", log:"Chronicle",
+      lang:"BG"
+    }
+  };
 
-const state = {
-  year: 632,
-  gold: 500,
-  prestige: 50,
-  stability: 85,
-  leader: { military:8, diplomacy:9, intrigue:6, stewardship:8, magic:5 },
-  armies: {
-    left: { name:"Ляво Крило", commander:"Батбаян", soldiers:2500, rank:0, god:null, atk:12, def:10, wins:0 },
-    center: { name:"Център", commander:"Кубрат", soldiers:4000, rank:1, god:null, atk:18, def:16, wins:1 },
-    right: { name:"Дясно Крило", commander:"Аспарух", soldiers:2800, rank:0, god:null, atk:14, def:11, wins:0 },
-  },
-  garrisons: [
-    {city:"Фанагория", soldiers:1200},
-    {city:"Онгъл", soldiers:800},
-    {city:"Плиска", soldiers:500},
-  ],
-  artifacts: [
-    {name:"Сабя на Кубрат", desc:"+3 АТК за Център", used:false, apply:()=>{ state.armies.center.atk+=3 }},
-    {name:"Знаме на Дуло", desc:"+10 Стабилност", used:false, apply:()=>{ state.stability=Math.min(100, state.stability+10) }},
-    {name:"Шлем на Тангра", desc:"+2 Магия", used:false, apply:()=>{ state.leader.magic=Math.min(10, state.leader.magic+2) }},
-    {name:"Короната на Аспарух", desc:"+1 Стопанство", used:false, apply:()=>{ state.leader.stewardship=Math.min(10, state.leader.stewardship+1) }},
-  ],
-  summonedGods: [],
-  godPool: [...GOD_NAMES],
-};
+  const gods = [
+    {bg:"Тангра", en:"Tangra"}, {bg:"Умай", en:"Umay"}, {bg:"Ерлик Хан", en:"Erlik Khan"},
+    {bg:"Куар", en:"Kuar"}, {bg:"Ашина", en:"Ashina"}, {bg:"Кубар", en:"Kubar"},
+    {bg:"Барс Ил", en:"Bars Il"}, {bg:"Перун", en:"Perun"}, {bg:"Велес", en:"Veles"},
+    {bg:"Даждбог", en:"Dazhbog"}, {bg:"Сварог", en:"Svarog"}, {bg:"Стрибог", en:"Stribog"},
+    {bg:"Мокоша", en:"Mokosh"}, {bg:"Хорс", en:"Khors"}, {bg:"Симаргл", en:"Simargl"},
+    {bg:"Ярило", en:"Yarilo"}, {bg:"Лада", en:"Lada"}, {bg:"Леля", en:"Lelya"},
+    {bg:"Жива", en:"Zhiva"}, {bg:"Морана", en:"Morana"}, {bg:"Троян", en:"Troyan"},
+    {bg:"Световит", en:"Svetovit"}, {bg:"Триглав", en:"Triglav"}, {bg:"Руевит", en:"Ruevit"},
+    {bg:"Поревит", en:"Porevit"}, {bg:"Белобог", en:"Belobog"}, {bg:"Чернобог", en:"Chernobog"},
+    {bg:"Радогост", en:"Radogost"}, {bg:"Додола", en:"Dodola"}, {bg:"Коледа", en:"Koleda"},
+    {bg:"Купала", en:"Kupala"}, {bg:"Овсен", en:"Ovsen"}, {bg:"Полел", en:"Polel"},
+    {bg:"Вий", en:"Viy"}, {bg:"Див", en:"Div"}, {bg:"Змей", en:"Zmei"},
+    {bg:"Ламя", en:"Lamya"}, {bg:"Хала", en:"Hala"}, {bg:"Самодива", en:"Samodiva"},
+    {bg:"Юда", en:"Yuda"}, {bg:"Вила", en:"Vila"}, {bg:"Русалка", en:"Rusalka"},
+    {bg:"Водник", en:"Vodnik"}, {bg:"Върколак", en:"Varkolak"}, {bg:"Вампир", en:"Vampire"},
+    {bg:"Таласъм", en:"Talasam"}, {bg:"Караконджул", en:"Karakondzhul"}, {bg:"Стопан", en:"Stopan"},
+    {bg:"Орисия", en:"Orisiya"}, {bg:"Наречница", en:"Narechnitsa"}, {bg:"Змей Горянин", en:"Zmei Goryanin"},
+    {bg:"Сурва", en:"Surva"}, {bg:"Баба Марта", en:"Baba Marta"}, {bg:"Герман", en:"German"},
+    {bg:"Пеперуда", en:"Peperuda"}, {bg:"Бадняк", en:"Badnyak"}, {bg:"Огника", en:"Ognika"},
+    {bg:"Гръмовержец", en:"Gromoverzhets"}, {bg:"Вихър", en:"Vihar"}, {bg:"Полевик", en:"Polevik"},
+    {bg:"Горски Дух", en:"Gorski"}, {bg:"Езерник", en:"Ezernik"}, {bg:"Чума", en:"Chuma"},
+    {bg:"Ала", en:"Ala"}, {bg:"Торбалан", en:"Torbalan"}, {bg:"Лесник", en:"Lesnik"},
+    {bg:"Тодорка", en:"Todorka"}, {bg:"Златорог", en:"Zlatorog"}, {bg:"Бес", en:"Bes"},
+  ];
 
-function $(id){ return document.getElementById(id); }
-function log(msg){ const el=document.createElement('div'); el.className='text-[13px] leading-snug py-1 border-b border-slate-800/60'; el.innerHTML=`<span class="text-slate-500 mr-2">[${state.year}]</span>${msg}`; $('log').prepend(el); while($('log').children.length>60) $('log').lastChild.remove(); }
-function showModal(title, body, icon='🔮'){ $('modal-title').textContent=title; $('modal-body').innerHTML=body; $('modal-icon').textContent=icon; $('modal').classList.remove('hidden'); }
-$('modal-close').onclick=()=>$('modal').classList.add('hidden');
+  let lang = 'bg';
+  const initialState = () => ({
+    gold:500, turn:1, faith:50,
+    armies:{
+      batbayan:{id:'batbayan', nameBg:'Батбаян', nameEn:'Batbayan', soldiers:12000, morale:85, rank:3, god:null},
+      kubrat:{id:'kubrat', nameBg:'Кубрат', nameEn:'Kubrat', soldiers:25000, morale:95, rank:5, god:null},
+      asparukh:{id:'asparukh', nameBg:'Аспарух', nameEn:'Asparukh', soldiers:18000, morale:90, rank:4, god:null},
+    },
+    garrisons:[
+      {nameBg:'Плиска', nameEn:'Pliska', soldiers:2500, income:25},
+      {nameBg:'Преслав', nameEn:'Preslav', soldiers:1800, income:18},
+      {nameBg:'Онгъл', nameEn:'Ongal', soldiers:3000, income:30},
+      {nameBg:'Фанагория', nameEn:'Phanagoria', soldiers:2200, income:22},
+      {nameBg:'Варна', nameEn:'Varna', soldiers:1500, income:20},
+      {nameBg:'Дръстър', nameEn:'Drastar', soldiers:1700, income:17},
+    ],
+    leader:{power:75, diplomacy:68, warfare:82, economy:70, belief:88},
+    log:[]
+  });
+  let state = initialState();
 
-function calcMilitary(){ return Object.values(state.armies).reduce((s,a)=>s+a.soldiers,0) + state.garrisons.reduce((s,g)=>s+g.soldiers,0); }
+  const $ = s => document.querySelector(s);
+  const $$ = s => document.querySelectorAll(s);
 
-function updateUI(){
-  $('stat-year').textContent = state.year;
-  $('stat-gold').textContent = Math.floor(state.gold);
-  $('stat-prestige').textContent = Math.floor(state.prestige);
-  $('stat-stability').textContent = Math.max(0,Math.min(100, Math.floor(state.stability)));
-  $('stat-military').textContent = calcMilitary().toLocaleString('bg-BG');
-  $('stat-gods').textContent = state.summonedGods.length;
-  $('ritual-chance').textContent = (1.5 + state.leader.magic*0.2).toFixed(1);
+  function fmt(n){ return n.toLocaleString(lang==='bg'?'bg-BG':'en-US'); }
 
-  for(const k of ['left','center','right']){
-    const a = state.armies[k];
-    $(k+'-soldiers').textContent = a.soldiers.toLocaleString('bg-BG');
-    $(k+'-atk').textContent = a.atk;
-    $(k+'-def').textContent = a.def;
-    $(k+'-rank').textContent = RANKS[a.rank];
-    $(k+'-god').textContent = a.god || '—';
+  function updateLangUI(){
+    $$('[data-i18n]').forEach(el=>{
+      const k = el.dataset.i18n;
+      if(i18n[lang][k]) el.textContent = i18n[lang][k];
+    });
+    $('#langBtn').textContent = i18n[lang].lang;
+    document.documentElement.lang = lang;
+    renderAll();
   }
 
-  // leader
-  const stats = [['Военно дело','military'],['Дипломация','diplomacy'],['Интрига','intrigue'],['Стопанство','stewardship'],['Магия','magic']];
-  $('leader-stats').innerHTML = stats.map(([label,key])=>{
-    const val = state.leader[key];
-    return `<div class="group">
-      <div class="flex justify-between text-[12px] mb-1"><span class="text-slate-300">${label}</span><span class="text-slate-400">${val}/10</span></div>
-      <div class="h-2 bg-slate-800 rounded-full overflow-hidden"><div class="h-full bg-gradient-to-r from-violet-500 to-amber-500 transition-all" style="width:${val*10}%"></div></div>
-      <button onclick="upgradeStat('${key}')" class="opacity-0 group-hover:opacity-100 transition text-[11px] mt-1 text-amber-300 hover:underline">Повиши (${val*40}з)</button>
-    </div>`;
-  }).join('');
+  function renderResources(){
+    $('#gold').textContent = fmt(state.gold);
+    $('#turn').textContent = state.turn;
+    $('#faith').textContent = Math.floor(state.faith);
+    $('#totalIncome').textContent = state.garrisons.reduce((a,g)=>a+g.income,0);
+  }
 
-  // garrisons
-  $('garrisons').innerHTML = state.garrisons.map(g=>`
-    <div class="flex items-center justify-between p-2.5 rounded-xl bg-slate-900/60 border border-slate-800">
-      <div><div class="font-medium leading-tight">${g.city}</div><div class="text-[11px] text-slate-400">Гарнизон</div></div>
-      <div class="text-right"><div class="font-semibold">${g.soldiers}</div><div class="text-[11px] text-slate-500">войници</div></div>
-    </div>`).join('');
+  function roman(n){ return ['–','I','II','III','IV','V'][n]||n; }
 
-  // gods
-  if(state.summonedGods.length===0){
-    $('gods-list').innerHTML = `<div class="text-sm text-slate-500 p-3 rounded-xl bg-slate-900/40 border border-dashed border-slate-700 text-center">Все още няма призовани богове. Извърши ритуал.</div>`;
-  } else {
-    $('gods-list').innerHTML = state.summonedGods.map(g=>{
-      const assigned = Object.entries(state.armies).find(([k,a])=>a.god===g.name);
-      return `<div class="p-2.5 rounded-xl bg-slate-900/60 border border-slate-800 flex items-center justify-between">
-        <div><div class="font-medium text-amber-200">${g.name}</div><div class="text-[11px] text-slate-400">Сила ${g.power} • ${assigned? 'Води '+state.armies[assigned[0]].name : 'Свободен'}</div></div>
-        <button onclick="dismissGod(${g.id})" class="text-[11px] px-2 py-1 rounded bg-slate-800 hover:bg-slate-700">Освободи</button>
-      </div>`;
+  function renderArmies(){
+    Object.values(state.armies).forEach(a=>{
+      const el = $('#army-'+a.id);
+      el.querySelector('[data-stat="soldiers"]').textContent = fmt(a.soldiers);
+      el.querySelector('[data-stat="morale"]').textContent = a.morale;
+      el.querySelector('[data-stat="rank"]').textContent = roman(a.rank);
+      el.querySelector('[data-stat="god"]').textContent = a.god ? (lang==='bg'?a.god.bg:a.god.en) : '—';
+      el.querySelector('[data-bar="morale"]').style.width = a.morale+'%';
+      el.querySelector('h2 .name').textContent = lang==='bg'?a.nameBg:a.nameEn;
+    });
+  }
+
+  function renderGarrisons(){
+    const list = $('#garrisonsList');
+    list.innerHTML = state.garrisons.map(g=>`
+      <div class="panel rounded-xl p-3 border border-amber-900/20">
+        <div class="flex items-center justify-between">
+          <div class="font-medium cinzel text-amber-200">${lang==='bg'?g.nameBg:g.nameEn}</div>
+          <div class="text-[10px] uppercase tracking-wider text-amber-300/60" data-i18n="garrison">Гарнизон</div>
+        </div>
+        <div class="mt-2 flex items-center justify-between text-sm">
+          <span class="text-amber-200/70">${i18n[lang].soldiers}</span>
+          <span>${fmt(g.soldiers)}</span>
+        </div>
+        <div class="flex items-center justify-between text-sm">
+          <span class="text-amber-200/70">${i18n[lang].income}</span>
+          <span class="text-emerald-300">+${g.income}</span>
+        </div>
+      </div>
+    `).join('');
+  }
+
+  function addLog(msg, type='info'){
+    const time = new Date().toLocaleTimeString();
+    state.log.unshift({time,msg,type});
+    if(state.log.length>80) state.log.pop();
+    renderLog();
+  }
+
+  function renderLog(){
+    const el = $('#log');
+    el.innerHTML = state.log.map(e=>{
+      const c = e.type==='good'?'text-emerald-300':e.type==='bad'?'text-red-300':e.type==='god'?'text-amber-300':'text-amber-100/70';
+      return `<div><span class="opacity-50">[${e.time}]</span> <span class="${c}">${e.msg}</span></div>`;
     }).join('');
   }
 
-  // artifacts
-  $('artifacts-list').innerHTML = state.artifacts.map((a,i)=>`
-    <div class="p-2.5 rounded-xl bg-slate-900/60 border border-slate-800 flex items-center justify-between">
-      <div><div class="text-sm font-medium">${a.name}</div><div class="text-[11px] text-slate-400">${a.desc}</div></div>
-      <button ${a.used?'disabled':''} onclick="useArtifact(${i})" class="btn text-[11px] px-2.5 py-1 rounded-lg ${a.used?'bg-slate-800 text-slate-500':'bg-amber-600/20 hover:bg-amber-600/30 text-amber-200 border border-amber-500/30'}">${a.used?'Използван':'Екипирай'}</button>
-    </div>`).join('');
+  function renderAll(){ renderResources(); renderArmies(); renderGarrisons(); renderLog(); }
 
-  $('ritualBtn').disabled = state.gold < 100;
-  $('ritualBtn').classList.toggle('opacity-50', state.gold < 100);
-}
-
-window.upgradeStat = (key)=>{
-  const cost = state.leader[key]*40;
-  if(state.gold < cost || state.leader[key]>=10) return;
-  state.gold -= cost; state.leader[key]++; log(`Повишихте ${key} до ${state.leader[key]}.`);
-  updateUI();
-};
-
-window.trainArmy = (k)=>{
-  if(state.gold<75) return log('Няма достатъчно злато.');
-  state.gold-=75; state.armies[k].soldiers+=250; log(`+250 войници за ${state.armies[k].name}.`); updateUI();
-};
-window.promoteArmy = (k)=>{
-  const a=state.armies[k]; if(a.rank>=2) return log('Вече е Легендарен.');
-  const cost=(a.rank+1)*200; if(state.gold<cost) return log('Няма злато за повишение.');
-  state.gold-=cost; a.rank++; a.atk+=3; a.def+=3; log(`${a.name} повишен до <b>${RANKS[a.rank]}</b>!`); updateUI();
-};
-
-let assignTarget=null;
-window.openAssign = (k)=>{ assignTarget=k; const list=$('assign-list'); list.innerHTML = state.summonedGods.length? state.summonedGods.map(g=>{ const busy = Object.values(state.armies).some(a=>a.god===g.name && a!==state.armies[k]); return `<button onclick="assignGod(${g.id})" class="w-full text-left p-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 border border-slate-800 flex justify-between"><span>${g.name}</span><span class="text-xs text-slate-400">${busy?'зает':''}</span></button>`}).join('') : '<div class="text-slate-500 text-sm">Няма богове</div>'; $('assignModal').classList.remove('hidden'); };
-window.closeAssign = ()=>$('assignModal').classList.add('hidden');
-window.assignGod = (id)=>{ const g=state.summonedGods.find(x=>x.id===id); if(!g) return; // clear previous
-  Object.values(state.armies).forEach(a=>{ if(a.god===g.name) a.god=null; });
-  state.armies[assignTarget].god=g.name; log(`Бог ${g.name} оглави ${state.armies[assignTarget].name}.`); closeAssign(); updateUI();
-};
-window.dismissGod = (id)=>{ const g=state.summonedGods.find(x=>x.id===id); if(!g) return; Object.values(state.armies).forEach(a=>{ if(a.god===g.name) a.god=null; }); log(`${g.name} се оттегли.`); updateUI(); };
-
-window.useArtifact = (i)=>{ const a=state.artifacts[i]; if(a.used) return; a.used=true; a.apply(); log(`Екипирахте <b>${a.name}</b>. ${a.desc}.`); updateUI(); };
-
-window.reinforceGarrisons = ()=>{ if(state.gold<150) return log('Няма злато.'); state.gold-=150; state.garrisons.forEach(g=>g.soldiers+=200); state.stability=Math.min(100,state.stability+2); log('Укрепихте всички гарнизони +200.'); updateUI(); };
-
-function doRitual(){
-  if(state.gold<100) return;
-  state.gold-=100;
-  const chance = 0.015 + state.leader.magic*0.002;
-  if(Math.random()<chance && state.godPool.length){
-    const name = state.godPool.splice(Math.floor(Math.random()*state.godPool.length),1)[0];
-    const god = { id:Date.now()+Math.random(), name, power:5+Math.floor(Math.random()*6) };
-    state.summonedGods.push(god); state.prestige+=10; state.stability=Math.min(100,state.stability+3);
-    showModal('ЯВЛЕНИЕ!', `<div class="text-lg">Богът <span class="text-amber-300 font-semibold">${name}</span> слезе при българите!</div><p class="mt-2">Небето над Дунава прогърмя. Воините коленичиха. ${name} ще води армиите ни и ще живее, докато друг бог не го победи.</p><p class="mt-2 text-sm text-slate-400">Сила: ${god.power} • Безсмъртен</p>`, '✨');
-    log(`✨ Призован е <b>${name}</b>!`);
-  } else {
-    const fails=["Огънят угасна.","Вятърът отнесе тамяна.","Боговете мълчат днес."];
-    log(`Ритуалът се провали. ${fails[Math.floor(Math.random()*fails.length)]}`);
-    if(Math.random()<0.1){ state.stability=Math.max(0,state.stability-2); }
+  function train(army){
+    if(state.gold<50){ addLog(lang==='bg'?'Няма достатъчно злато!':'Not enough gold!', 'bad'); return; }
+    state.gold-=50; army.soldiers+=500; army.morale=Math.min(100, army.morale+2);
+    addLog(`${lang==='bg'?'Обучение:':'Training:'} ${lang==='bg'?army.nameBg:army.nameEn} +500`, 'good');
+    renderAll();
   }
-  updateUI();
-}
-$('ritualBtn').onclick=doRitual;
+  function march(army){
+    if(army.morale<15){ addLog(lang==='bg'?'Моралът е твърде нисък':'Morale too low','bad'); return; }
+    army.morale-=10; const loot = 30 + Math.floor(Math.random()*50);
+    state.gold += loot; army.soldiers = Math.max(1000, army.soldiers - 100);
+    addLog(`${lang==='bg'?army.nameBg:army.nameEn} ${lang==='bg'?'поход':'marched'}: +${loot} ${i18n[lang].gold}`, 'info');
+    renderAll();
+  }
 
-function nextYear(){
-  state.year++;
-  const income = 60 + state.leader.stewardship*14 + state.garrisons.length*8;
-  state.gold += income;
-  state.stability = Math.max(10, Math.min(100, state.stability + (Math.random()-0.45)*4));
-  state.prestige += 1 + Math.floor(state.summonedGods.length*0.5);
-  // upkeep
-  const upkeep = Math.floor(calcMilitary()*0.015);
-  state.gold = Math.max(0, state.gold - upkeep);
-  log(`Нова година. Приходи +${income}з, издръжка -${upkeep}з.`);
-  // random event
-  if(Math.random()<0.25){ const loss=Math.floor(Math.random()*120); state.garrisons[0].soldiers=Math.max(100,state.garrisons[0].soldiers-loss); log(`⚠️ Набег от хазари! Фанагория -${loss} войници.`); state.stability-=3; }
-  updateUI(); checkVictory();
-}
-$('nextYearBtn').onclick=nextYear;
+  function nextTurn(){
+    state.turn++;
+    const income = state.garrisons.reduce((a,g)=>a+g.income,0) + Math.floor(state.leader.economy/3);
+    state.gold += income;
+    state.faith = Math.min(100, state.faith + 0.8);
+    state.garrisons.forEach(g=> g.soldiers += Math.floor(Math.random()*40));
+    Object.values(state.armies).forEach(a=> a.morale = Math.max(50, a.morale - 1));
+    addLog(`${lang==='bg'?'Нов ход':'New turn'} ${state.turn}. ${lang==='bg'?'Приход':'Income'}: +${income}`, 'info');
+    renderAll();
+  }
 
-function doRaid(){
-  const gain = 20+Math.floor(Math.random()*40)+state.leader.intrigue*2;
-  state.gold+=gain; state.prestige+=2;
-  Object.values(state.armies).forEach(a=>{ a.soldiers=Math.max(100,a.soldiers-Math.floor(30+Math.random()*70)); });
-  state.stability=Math.max(0,state.stability-1);
-  log(`🏇 Набег успешен! +${gain} злато, леки загуби.`); updateUI();
-}
-$('raidBtn').onclick=doRaid;
-
-function doCampaign(){
-  if(state.gold<75) return log('Походът изисква 75 злато.');
-  state.gold-=75;
-  const playerPower = Object.values(state.armies).reduce((s,a)=>s + a.atk + a.def + a.soldiers/350 + (a.god?8:0) + a.rank*4, 0) + state.leader.military*2;
-  const enemyPower = 55 + (state.year-632)*1.2 + Math.random()*20;
-  const enemyHasGod = Math.random() < (0.25 + (state.year-632)*0.005);
-  
-  let result='';
-  if(playerPower > enemyPower){
-    const loot = 180 + Math.floor(Math.random()*120);
-    state.gold+=loot; state.prestige+=15; state.stability=Math.min(100,state.stability+4);
-    Object.values(state.armies).forEach(a=>{ a.wins++; a.soldiers=Math.max(200,a.soldiers-Math.floor(80+Math.random()*120)); if(a.wins>=3 && a.rank<2 && Math.random()<0.5){ a.rank++; a.atk+=2;a.def+=2; } });
-    result = `Победа! Превзехме византийски крепости. +${loot}з, +15 престиж.`;
-    // god duel win
-    if(enemyHasGod && state.summonedGods.length){
-      const pg = state.summonedGods.filter(g=>Object.values(state.armies).some(a=>a.god===g.name));
-      if(pg.length){ const g=pg[0]; state.prestige+=10; result+=` Бог ${g.name} разби вражеско божество!`; }
+  function ritual(){
+    if(state.gold<100){ addLog(lang==='bg'?'Нужни са 100 злато':'Need 100 gold','bad'); return; }
+    state.gold -= 100; state.faith += 2;
+    const roll = Math.random()*100;
+    if(roll < 1.5){
+      const god = gods[Math.floor(Math.random()*gods.length)];
+      const armies = Object.values(state.armies);
+      const target = armies[Math.floor(Math.random()*armies.length)];
+      target.god = god;
+      target.rank = Math.min(5, target.rank+1);
+      target.morale = 100;
+      target.soldiers += 800;
+      const msg = lang==='bg'
+        ? `ЧУДО! ${god.bg} се яви при ${target.nameBg}! Морал 100, +800 войни.`
+        : `MIRACLE! ${god.en} appeared to ${target.nameEn}! Morale 100, +800 troops.`;
+      addLog(msg, 'god');
+      // flash
+      document.body.classList.add('ring-4','ring-amber-400/20');
+      setTimeout(()=>document.body.classList.remove('ring-4','ring-amber-400/20'),600);
+    } else {
+      addLog(lang==='bg'?'Ритуалът не успя. Боговете мълчат.':'Ritual failed. The gods are silent.', 'bad');
     }
-  } else {
-    Object.values(state.armies).forEach(a=>{ a.soldiers=Math.max(150,a.soldiers-Math.floor(250+Math.random()*200)); });
-    state.prestige=Math.max(0,state.prestige-8); state.stability=Math.max(0,state.stability-7);
-    result = `Поражението при Дунава! Тежки загуби, -8 престиж.`;
-    if(enemyHasGod && state.summonedGods.length){
-      const fighting = state.summonedGods.filter(g=>Object.values(state.armies).some(a=>a.god===g.name));
-      if(fighting.length && Math.random()<0.5){
-        const fallen = fighting[0];
-        state.summonedGods = state.summonedGods.filter(x=>x.id!==fallen.id);
-        Object.values(state.armies).forEach(a=>{ if(a.god===fallen.name) a.god=null; });
-        result += ` 💀 Бог ${fallen.name} падна – убит само от друг бог!`;
-        showModal('Божествена Жертва', `В кърва схватка на небето, <b>${fallen.name}</b> бе повален от вражеско божество. Смъртните видяха мълнии над бойното поле.`, '⚔️');
-      }
-    }
+    renderAll();
   }
-  log(result); updateUI(); checkVictory();
-}
-$('campaignBtn').onclick=doCampaign;
 
-function checkVictory(){
-  if(state.prestige>=250 && state.year<=700 && state.summonedGods.length>=3){
-    showModal('ВЕЛИКА БЪЛГАРИЯ!', `Към ${state.year} г. името на българите се носи от Карпатите до Егея. Кан Кубрат обедини племената, боговете вървят с нас, а престижът ни е ${Math.floor(state.prestige)}. Magna Bulgaria е вечна!`, '👑');
+  function newGame(){
+    state = initialState();
+    addLog(lang==='bg'?'Започна нова епопея на Magna Bulgaria.':'A new Magna Bulgaria saga begins.', 'good');
+    renderAll();
   }
-}
 
-// init
-log('Велика България е основана. Кан Кубрат обединява племената около Фанагория.');
-log('Призовавайте богове чрез ритуали. Те умират само от други богове.');
-updateUI();
+  // Events
+  $('#nextTurnBtn').onclick = nextTurn;
+  $('#ritualBtn').onclick = ritual;
+  $('#newGameBtn').onclick = newGame;
+  $('#fullscreenBtn').onclick = ()=>{ if(!document.fullscreenElement) document.documentElement.requestFullscreen(); else document.exitFullscreen(); };
+  $('#langBtn').onclick = ()=>{ lang = lang==='bg'?'en':'bg'; updateLangUI(); };
 
-// keyboard
-window.addEventListener('keydown', e=>{ if(e.key===' '){ e.preventDefault(); nextYear(); } });
+  $$('[id^="army-"]').forEach(panel=>{
+    const id = panel.id.replace('army-','');
+    panel.querySelector('[data-action="train"]').onclick = ()=> train(state.armies[id]);
+    panel.querySelector('[data-action="march"]').onclick = ()=> march(state.armies[id]);
+  });
 
+  // Pantheon
+  const modal = $('#pantheonModal');
+  function openPantheon(){
+    $('#godsList').innerHTML = gods.map((g,i)=>`
+      <div class="px-2 py-1.5 rounded bg-black/30 border border-amber-900/20 flex items-center gap-2">
+        <span class="text-[10px] w-5 text-amber-400/60">${i+1}</span>
+        <span>${lang==='bg'?g.bg:g.en}</span>
+      </div>
+    `).join('');
+    modal.classList.remove('hidden');
+  }
+  function closePantheon(){ modal.classList.add('hidden'); }
+  $('#pantheonBtn').onclick = openPantheon;
+  $('#closePantheon').onclick = closePantheon;
+  $('#pantheonClose').onclick = closePantheon;
+
+  // Init
+  addLog('В името на Тангра, обединихме племената. Magna Bulgaria се издига!', 'good');
+  updateLangUI();
 });
 </script>
 </body>
