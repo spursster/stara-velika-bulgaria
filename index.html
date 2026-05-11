@@ -282,20 +282,6 @@ const nations = [
 ];
 
 const COUNCIL = [
- {id:'dulo',n:'Дуло',v:3,b:'+20% злато',l:100},
- {id:'asenevtsi',n:'Асеневци',v:2,b:'+30% злато',l:75},
- {id:'komitopuli',n:'Комитопули',v:2,b:'+25% защита',l:85},
- {id:'shishman',n:'Шишмановци',v:2,b:'+20% култура',l:80},
- {id:'makedoni',n:'Македони',v:2,b:'+40% армия',l:40},
- {id:'odrisi',n:'Одриси',v:1,b:'+20% храна',l:90},
- {id:'vokil',n:'Вокил',v:1,b:'+15% армия',l:70},
- {id:'ugain',n:'Угаин',v:1,b:'+10% храна',l:60},
- {id:'terter',n:'Тертер',v:1,b:'+15% търговия',l:65},
- {id:'smilets',n:'Смилец',v:1,b:'+10% всичко',l:55},
- {id:'ptolomei',n:'Птоломеи',v:1,b:'+30% наука',l:50},
- {id:'besarab',n:'Бесараб',v:1,b:'+15% злато',l:70},
- {id:'osman',n:'Османци',v:1,b:'+25% армия',l:30},
-];
 
 const defaultState = {
  lang:'bg',gold:5000,year:632,lastSummon:null,wife:null,
@@ -309,8 +295,7 @@ const defaultState = {
 };
 
 let state = loadState() || JSON.parse(JSON.stringify(defaultState));
-if(!state.council || Object.keys(state.council).length===0){ COUNCIL.forEach(d=> state.council[d.id]=d.l); }
-
+  
 function saveState(){localStorage.setItem('mb_v40_lore',JSON.stringify(state))}
 function loadState(){try{const s=localStorage.getItem('mb_v40_lore');return s?JSON.parse(s):null}catch(e){return null}}
 
@@ -507,6 +492,13 @@ document.querySelectorAll('.wives button').forEach(b=>b.addEventListener('click'
 
 setInterval(saveState,10000);
 
+  // Зареди Съвета от отделен файл
+fetch('./js/systems/council.js').then(r=>r.text()).then(t=>{
+  // прост начин без модули
+  eval(t.replace('export const','window.').replace('export function','window.'));
+  COUNCIL = window.COUNCIL_DATA;
+  updateUI();
+});
 updateUI();
 setTimeout(()=>toast(state.lang==='bg'?'Велика България се пробужда!':'Great Bulgaria awakens!'),800);
 })();
