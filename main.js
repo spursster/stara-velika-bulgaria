@@ -1,17 +1,28 @@
+// main.js — пълен, коригиран, готов за работа
+
 (async function bootstrap() {
+  console.log("Bootstrapping game...");
+
+  // 1. Зареждаме езика
   await I18N.loadLanguage(GameConfig.defaultLanguage);
 
-  // TODO: load data JSON (civilizations, dynasties, rulers, items, etc.)
-  // await DataLoader.loadAll();
+  // 2. Зареждаме династиите
+  try {
+    const dynasties = await fetch('data/dynasties.json').then(r => r.json());
+    Registry.set('dynasties', dynasties);
+  } catch (err) {
+    console.error("Грешка при зареждане на dynasties.json:", err);
+  }
 
-  // TODO: init systems (Dynasties, Rulers, Inventory, Abilities, Units, Combat, Rituals, Council, AI, etc.)
+  // 3. Рендер на UI панелите
+  if (window.DynastiesPanel) {
+    DynastiesPanel.render();
+  }
 
-  // първоначален рендер на панелите
-  // DynastiesPanel.render();
-  // MapScene.render();
-  // ExpeditionsPanel.render();
-  // NotificationsPanel.render();
-  // CouncilPanel.render();
+  // 4. Обновяване на годината в топбара
+  if (window.UIUpdateTopbarYear) {
+    UIUpdateTopbarYear();
+  }
 
-  console.log('Game bootstrapped at year', Registry.get('year'));
+  console.log("Game bootstrapped successfully.");
 })();
