@@ -1,53 +1,35 @@
 <!DOCTYPE html>
 <html lang="bg">
 <head>
-  <meta charset="UTF-8" />
-  <title>Stara Velika Bulgaria</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <link rel="stylesheet" href="css/style.css" />
+    <meta charset="UTF-8">
+    <title>Stara Velika Bulgaria</title>
+    <link rel="stylesheet" href="style.css">
 </head>
 
 <body>
-  <div id="app" class="app-root">
 
     <!-- TOP BAR -->
-    <header id="topbar"></header>
+    <section id="topbar"></section>
 
-    <!-- MAIN LAYOUT -->
-    <main class="layout">
+    <!-- LEFT PANEL -->
+    <section id="panel-left"></section>
 
-      <!-- LEFT PANEL (Dynasties, Council, Characters) -->
-      <aside id="panel-left" class="panel-left"></aside>
+    <!-- MAP SCENE -->
+    <section id="map-scene"></section>
 
-      <!-- MAP SCENE (Central map) -->
-      <section id="map-scene" class="map-scene"></section>
+    <!-- RIGHT PANEL -->
+    <section id="panel-right"></section>
 
-      <!-- RIGHT PANEL (Expeditions, Details, Events) -->
-      <aside id="panel-right" class="panel-right"></aside>
+    <!-- SCRIPTS -->
+    <script src="data/i18n/i18n.js"></script>
+    <script src="data/registry.js"></script>
 
-    </main>
+    <script src="ui_panels/topbar.js"></script>
+    <script src="ui_panels/dynasties_panel.js"></script>
+    <script src="ui_panels/map_scene.js"></script>
+    <script src="ui_panels/notifications_panel.js"></script>
 
-    <!-- BOTTOM BAR (Turn, Year, Actions) -->
-    <div id="bottom-bar" class="bottom-bar"></div>
+    <script src="main.js"></script>
 
-    <!-- MODALS -->
-    <div id="modals-root"></div>
-
-  </div>
-
-  <!-- SCRIPTS -->
-  <script src="config.js"></script>
-  <script src="registry.js"></script>
-  <script src="i18n.js"></script>
-  <script src="turn_manager.js"></script>
-  <script src="ui_layout.js"></script>
-
-  <!-- UI PANELS -->
-  <script src="ui_panels/topbar.js"></script>
-  <script src="ui_panels/dynasties_panel.js"></script>
-  <script src="ui_panels/map_scene.js"></script>
-
-  <!-- MAIN -->
-  <script src="main.js"></script>
 </body>
 </html>
