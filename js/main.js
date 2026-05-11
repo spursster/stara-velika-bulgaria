@@ -1,4 +1,5 @@
 import { loadData, initGame } from './core/game.js';
+import { renderDynasties } from './systems/ritual.js';
 window.addEventListener('DOMContentLoaded', async () => {
   await loadData();
   initGame();
@@ -7,4 +8,5 @@ window.addEventListener('DOMContentLoaded', async () => {
     if(!document.fullscreenElement) document.documentElement.requestFullscreen();
     else document.exitFullscreen();
   };
+  renderDynasties();
 });
