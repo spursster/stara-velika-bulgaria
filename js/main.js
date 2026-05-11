@@ -28,7 +28,6 @@ try {
       console.log('MapScene already registered.');
     }
   } else {
-    // Ако MapScene е дефинирана в друг файл, main.js ще стартира сцената когато е налична
     console.log('MapSceneClass not found at main.js load time.');
   }
 } catch (e) {
@@ -53,12 +52,10 @@ try {
 
 // Инициализация на registry и мениджъри (TurnManager, Explore, Council и т.н.)
 (function initRegistryAndManagers() {
-  // Уверяваме се, че registry е наличен (MapScene или друг код може да го създаде)
   const registry = (window.game && window.game.registry) ? window.game.registry : null;
 
   if (registry) {
     console.log('Registry found — инициализирам TurnManager и Explore.');
-    // Инициализация на TurnManager (ако е наличен)
     if (window.TurnManager && typeof window.TurnManager.init === 'function') {
       try {
         window.TurnManager.init({ registry: registry });
@@ -70,7 +67,6 @@ try {
       console.log('TurnManager not found at main.js load time.');
     }
 
-    // Инициализация на Explore manager (ако е наличен)
     if (window.Explore && typeof window.Explore.init === 'function') {
       try {
         window.Explore.init({ registry: registry });
@@ -82,7 +78,6 @@ try {
       console.log('Explore manager not found at main.js load time.');
     }
 
-    // Council може да бъде инициализиран от UIScene; логваме състоянието
     if (window.Council && typeof window.Council.init === 'function') {
       try {
         window.Council.init({ registry: registry });
