@@ -14,15 +14,21 @@
     console.error("Грешка при зареждане на dynasties.json:", err);
   }
 
-  // 3. Рендер на UI панелите
-  if (window.DynastiesPanel) {
-    DynastiesPanel.render();
+  // 3. Зареждаме регионите за картата
+  try {
+    const regions = await fetch('data/map_regions.json').then(r => r.json());
+    Registry.set('mapRegions', regions);
+  } catch (err) {
+    console.error("Грешка при зареждане на map_regions.json:", err);
   }
 
-  // 4. Обновяване на годината в топбара
-  if (window.UIUpdateTopbarYear) {
-    UIUpdateTopbarYear();
-  }
+  // 4. Рендер на UI панелите
+  if (window.DynastiesPanel) DynastiesPanel.render();
+  if (window.MapScene) MapScene.render();
+  if (window.Notifications) Notifications.render();
+
+  // 5. Обновяване на годината в топбара
+  if (window.UIUpdateTopbarYear) UIUpdateTopbarYear();
 
   console.log("Game bootstrapped successfully.");
 })();
