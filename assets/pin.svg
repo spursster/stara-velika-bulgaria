@@ -1,5 +1,13 @@
-<!-- assets/pin.svg -->
-<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24">
-  <path fill="#ef4444" d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/>
-  <circle cx="12" cy="9" r="2.5" fill="#fff"/>
+<!-- assets/pin.svg - по-видим пин -->
+<svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" role="img" aria-label="Map pin">
+  <defs>
+    <radialGradient id="pinGrad" cx="40%" cy="30%" r="70%">
+      <stop offset="0%" stop-color="#fff"/>
+      <stop offset="60%" stop-color="#ff7b7b"/>
+      <stop offset="100%" stop-color="#ef4444"/>
+    </radialGradient>
+  </defs>
+  <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z" fill="url(#pinGrad)"/>
+  <circle cx="12" cy="9" r="2.2" fill="#fff"/>
+  <circle cx="12" cy="9" r="1.0" fill="#ef4444"/>
 </svg>
