@@ -1,0 +1,17 @@
+[
+  {
+    "id": "moesia",
+    "name": "Мизия",
+    "owner": "dulo"
+  },
+  {
+    "id": "thracia",
+    "name": "Тракия",
+    "owner": "krum"
+  },
+  {
+    "id": "scythia",
+    "name": "Скития",
+    "owner": null
+  }
+]
