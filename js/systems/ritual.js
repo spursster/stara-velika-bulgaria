@@ -40,3 +40,13 @@ export function renderPantheon(content, update){
   }
   renderGods();
 }
+
+export function renderDynasties() {
+  const el = document.getElementById('dynasties');
+  if(!el) return;
+  fetch('data/dynasties.json').then(r=>r.json()).then(d=>{
+    el.innerHTML = '<h2>Български Династии</h2>' + Object.values(d).map(dy=>
+      `<div class="card"><h3>${dy.name}</h3><p>${dy.rulers.map(r=>r.name+' ('+r.years+')').join(', ')}</p></div>`
+    ).join('');
+  });
+}
