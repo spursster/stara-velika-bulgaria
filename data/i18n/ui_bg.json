@@ -10,4 +10,8 @@
   "ui.council": "Имперски съвет",
   "ui.character": "Персонаж",
   "ui.inventory": "Инвентар"
+  "ui.map": "Карта",
+"ui.mapLoading": "Зареждане на картата...",
+"ui.unclaimed": "Незаета"
+
 }
