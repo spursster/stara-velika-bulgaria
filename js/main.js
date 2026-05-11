@@ -1,0 +1,1 @@
+import {initGame,loadData} from './core/game.js';window.addEventListener('DOMContentLoaded',async()=>{await loadData();initGame()});
