@@ -1,19 +1,42 @@
 // js/scene_ui.js
+// UIScene с панел за Императорски съвет, експедиции и инвентар на владетелите.
+// Пълна версия за директна замяна.
+
 class UIScene extends Phaser.Scene {
   constructor() { super({ key: 'UIScene', active: true }); }
-
+  preload() {}
   create() {
-    const root = document.getElementById('ui-root');
-    root.innerHTML = `
-      <div>
-        <span class="button" id="new-game">Нова игра</span>
-        <span class="button" id="save-game">Запази</span>
-        <span class="button" id="load-game">Зареди</span>
-        <span class="panel small" id="status">Статус: готов</span>
-        <span class="button" id="open-council" style="margin-left:12px">Императорски съвет</span>
+    // root DOM
+    this.root = document.getElementById('ui-root');
+    if (!this.root) {
+      console.warn('UI root not found. Create <div id="ui-root"></div> in index.html');
+      this.root = document.createElement('div');
+      this.root.id = 'ui-root';
+      document.body.appendChild(this.root);
+    }
+
+    // basic layout
+    this.root.innerHTML = `
+      <div class="controls">
+        <div style="display:flex;gap:8px;align-items:center;">
+          <span class="button" id="new-game">Нова игра</span>
+          <span class="button" id="save-game">Запази</span>
+          <span class="button" id="load-game">Зареди</span>
+          <span class="button" id="next-turn" style="margin-left:12px">Следващ ход</span>
+          <span class="panel small" id="status">Статус: готов</span>
+        </div>
+        <div style="margin-left:auto; display:flex; gap:8px;">
+          <span class="button" id="open-council">Императорски съвет</span>
+          <span class="button" id="open-explore">Експедиции</span>
+        </div>
       </div>
-      <div id="dynasty-list" style="margin-top:10px"></div>
-      <div id="region-info"></div>
+
+      <div id="main-row" style="display:flex;gap:12px;margin-top:10px;">
+        <div id="left-col" style="flex:1;min-width:260px;"></div>
+        <div id="center-col" style="flex:2;min-width:420px;"></div>
+        <div id="right-col" style="flex:1;min-width:260px;"></div>
+      </div>
+
       <div id="council-panel" class="panel" style="display:none; margin-top:10px; max-width:980px;">
         <h3 style="margin:0 0 8px 0;">Императорски съвет</h3>
         <div id="council-members" style="display:flex;flex-wrap:wrap;gap:6px;"></div>
@@ -24,70 +47,81 @@ class UIScene extends Phaser.Scene {
         </div>
         <div id="council-log" class="small" style="margin-top:8px; max-height:160px; overflow:auto;"></div>
       </div>
+
+      <div id="explore-panel" class="panel" style="display:none; margin-top:10px; max-width:980px;">
+        <h3 style="margin:0 0 8px 0;">Експедиции</h3>
+        <div style="display:flex;gap:8px;align-items:center;margin-bottom:8px;">
+          <select id="explore-leader" style="min-width:220px;"></select>
+          <input id="explore-duration" type="number" min="1" max="60" value="8" style="width:80px;padding:6px;border-radius:6px;border:1px solid rgba(255,255,255,0.03);background:transparent;color:inherit" />
+          <span class="button" id="explore-start">Стартирай експедиция</span>
+          <span class="button secondary" id="explore-refresh">Обнови</span>
+        </div>
+        <div id="explore-list" style="display:flex;flex-direction:column;gap:8px;max-height:260px;overflow:auto;"></div>
+      </div>
+
+      <div id="ruler-panel" class="panel" style="margin-top:10px; display:block;">
+        <h3 style="margin:0 0 8px 0;">Владетели</h3>
+        <div id="dynasty-list" style="display:flex;gap:8px;flex-wrap:wrap;"></div>
+        <div id="ruler-detail" style="margin-top:8px;"></div>
+      </div>
     `;
 
+    // event bindings
     document.getElementById('new-game').addEventListener('click', () => this.newGame());
     document.getElementById('save-game').addEventListener('click', () => this.saveGame());
     document.getElementById('load-game').addEventListener('click', () => this.loadGame());
+    document.getElementById('next-turn').addEventListener('click', () => this.onNextTurn());
     document.getElementById('open-council').addEventListener('click', () => this.toggleCouncilPanel());
+    document.getElementById('open-explore').addEventListener('click', () => this.toggleExplorePanel());
+    document.getElementById('explore-start').addEventListener('click', () => this.onStartExpedition());
+    document.getElementById('explore-refresh').addEventListener('click', () => this.renderExploreList());
 
-    document.getElementById('council-propose').addEventListener('click', () => this.onPropose());
-    document.getElementById('council-hold').addEventListener('click', () => this.onHold());
-    document.getElementById('council-reelect').addEventListener('click', () => this.onReelect());
+    // store references
+    this.registry = (window.game && window.game.registry) ? window.game.registry : null;
 
+    // initial render
     this.renderDynasties();
+    this.renderCouncilPanel();
 
-    // initialize council: try registry, then data file
-    this.initCouncil();
-  }
-
-  renderDynasties() {
-    const dyn = this.registry.get('dynasties') || [];
-    const container = document.getElementById('dynasty-list');
-    container.innerHTML = '';
-    if (!Array.isArray(dyn) || dyn.length === 0) {
-      container.innerHTML = '<div class="panel">Няма заредени династии</div>';
-      return;
+    // try to init managers if not already
+    if (window.TurnManager && typeof window.TurnManager.init === 'function') {
+      try { window.TurnManager.init({ registry: this.registry }); } catch(e) { /* ignore */ }
     }
-    dyn.forEach(d => {
-      const el = document.createElement('div');
-      el.className = 'dynasty-item';
-      el.innerText = d.name + ' (' + (d.founder || '-') + ')';
-      container.appendChild(el);
-    });
-  }
-
-  showRegionInfo(regionId, dynasty) {
-    const info = document.getElementById('region-info');
-    if (!dynasty) {
-      info.innerHTML = `<div class="panel">Регион ${regionId} - няма данни</div>`;
-      return;
+    if (window.Explore && typeof window.Explore.init === 'function') {
+      try { window.Explore.init({ registry: this.registry }); } catch(e) { /* ignore */ }
     }
-    const rulers = Array.isArray(dynasty.rulers) ? dynasty.rulers : [];
-    const first = rulers[0] ? `${rulers[0].name} ${rulers[0].years || ''}` : 'Няма данни';
-    info.innerHTML = `
-      <div class="panel">
-        <strong>${dynasty.name}</strong><br>
-        Основател: ${dynasty.founder || '-'}<br>
-        Първи владетел: ${first}<br>
-        Брой владетели: ${rulers.length}
-      </div>
-    `;
+
+    // render explore leader select
+    this.populateExploreLeaders();
+
+    // periodic UI updater for status
+    this.time.addEvent({ delay: 1000, loop: true, callback: () => this.updateStatus() });
   }
 
+  updateStatus() {
+    const st = document.getElementById('status');
+    const gs = (window.TurnManager && window.TurnManager.getState) ? window.TurnManager.getState() : (window.gameState || {});
+    st.innerText = `Статус: ход ${gs.turn || 0} — ${gs.date ? new Date(gs.date).toLocaleDateString() : '-'}`;
+  }
+
+  // Game control
   newGame() {
-    this.scene.stop('MapScene');
-    this.scene.stop('BootScene');
-    this.scene.start('BootScene');
-    document.getElementById('status').innerText = 'Статус: Нова игра';
+    if (confirm('Стартираш нова игра? Това ще презареди сцените.')) {
+      // simple approach: reload page to reset state
+      localStorage.removeItem('svb_save');
+      localStorage.removeItem('svb_gameState');
+      localStorage.removeItem('svb_expeditions');
+      location.reload();
+    }
   }
 
   saveGame() {
-    const dyn = this.registry.get('dynasties') || [];
     try {
+      const dyn = this.registry ? this.registry.get('dynasties') : [];
       const save = { dynasties: dyn };
-      // include council state if present
       if (window.Council && window.Council.data) save.council = window.Council.data;
+      if (window.Explore && window.Explore.getExpeditions) save.expeditions = window.Explore.getExpeditions();
+      if (window.TurnManager && window.TurnManager.getState) save.gameState = window.TurnManager.getState();
       localStorage.setItem('svb_save', JSON.stringify(save));
       alert('Играта е запазена в localStorage');
     } catch (e) {
@@ -101,13 +135,13 @@ class UIScene extends Phaser.Scene {
       const raw = localStorage.getItem('svb_save');
       if (!raw) { alert('Няма запазена игра'); return; }
       const save = JSON.parse(raw);
-      if (save.dynasties) this.registry.set('dynasties', save.dynasties);
-      if (save.council && window.Council) {
-        window.Council.initFromData(save.council, this.registry);
-        window.Council.saveToRegistry();
-      }
+      if (save.dynasties && this.registry) this.registry.set('dynasties', save.dynasties);
+      if (save.council && window.Council) { window.Council.initFromData(save.council, this.registry); window.Council.saveToRegistry(); }
+      if (save.expeditions && window.Explore) { window.Explore.expeditions = save.expeditions; window.Explore._persist(); }
+      if (save.gameState && window.TurnManager) { window.TurnManager.turn = save.gameState.turn || 0; window.TurnManager.setDate(save.gameState.date || new Date().toISOString()); }
       this.renderDynasties();
       this.renderCouncilPanel();
+      this.renderExploreList();
       alert('Играта е заредена');
     } catch (e) {
       console.error('Load failed', e);
@@ -115,45 +149,113 @@ class UIScene extends Phaser.Scene {
     }
   }
 
-  // Council integration
-  initCouncil() {
-    // try registry first
-    const regCouncil = this.registry.get('council');
-    if (regCouncil && window.Council) {
-      window.Council.initFromData(regCouncil, this.registry);
+  onNextTurn() {
+    if (window.TurnManager && typeof window.TurnManager.nextTurn === 'function') {
+      const res = window.TurnManager.nextTurn();
+      this.updateStatus();
+      // refresh UI parts that depend on per-turn changes
       this.renderCouncilPanel();
+      this.renderExploreList();
+      this.renderDynasties();
+      console.log('Next turn result', res);
+    } else {
+      alert('TurnManager не е наличен.');
+    }
+  }
+
+  // Dynasties and rulers
+  renderDynasties() {
+    const dyn = this.registry ? this.registry.get('dynasties') : [];
+    const container = document.getElementById('dynasty-list');
+    container.innerHTML = '';
+    if (!Array.isArray(dyn) || dyn.length === 0) {
+      container.innerHTML = '<div class="panel">Няма заредени династии</div>';
       return;
     }
-
-    // try to load data/council.json via cache (BootScene loaded it into registry? if not, fetch)
-    const cached = this.registry.get('dynasties'); // ensure dynasties exist
-    // attempt to fetch data/council.json if not in registry
-    fetch('data/council.json').then(r => {
-      if (!r.ok) throw new Error('no council file');
-      return r.json();
-    }).then(json => {
-      if (json && json.council && window.Council) {
-        window.Council.initFromData(json.council, this.registry);
-        window.Council.saveToRegistry();
-        this.renderCouncilPanel();
-      }
-    }).catch(() => {
-      // fallback: if no external council file, try to create from dynasties
-      if (Array.isArray(cached) && cached.length > 0 && window.Council) {
-        window.Council.electRepresentativesFromDynasties(cached, 'first');
-        window.Council.saveToRegistry();
-        this.renderCouncilPanel();
-      }
+    dyn.forEach(d => {
+      const el = document.createElement('div');
+      el.className = 'dynasty-item';
+      el.innerText = d.name || d.id || '—';
+      el.addEventListener('click', () => this.showRulerDetail(d));
+      container.appendChild(el);
     });
   }
 
+  showRulerDetail(dyn) {
+    const detail = document.getElementById('ruler-detail');
+    const rulers = Array.isArray(dyn.rulers) ? dyn.rulers : [];
+    const first = rulers[0] || null;
+    const name = dyn.name || dyn.id;
+    let html = `<div class="panel"><strong>${name}</strong><br>Основател: ${dyn.founder || '-'}<br>Владетели: ${rulers.length}</div>`;
+    if (first) {
+      html += `<div style="margin-top:8px;" class="panel">
+        <strong>Примерен владетел</strong><br>
+        ${first.name || first.id} <br>
+        <div style="margin-top:8px;">
+          <span class="button" id="inspect-ruler">Преглед</span>
+          <span class="button secondary" id="start-exp-from-ruler">Експедиция с този владетел</span>
+        </div>
+        <div id="ruler-inv" style="margin-top:8px;"></div>
+      </div>`;
+    }
+    detail.innerHTML = html;
+    const inspectBtn = document.getElementById('inspect-ruler');
+    const expBtn = document.getElementById('start-exp-from-ruler');
+    if (inspectBtn) inspectBtn.addEventListener('click', () => this.renderRulerInventory(first));
+    if (expBtn) expBtn.addEventListener('click', () => {
+      if (!first || !first.id) { alert('Няма валиден владетел'); return; }
+      // prefill leader select and open explore panel
+      document.getElementById('explore-leader').value = first.id;
+      if (document.getElementById('explore-panel').style.display === 'none') this.toggleExplorePanel();
+    });
+  }
+
+  renderRulerInventory(ruler) {
+    const invEl = document.getElementById('ruler-inv');
+    if (!ruler) { invEl.innerHTML = '<div class="panel small">Няма владетел</div>'; return; }
+    ruler.inventory = ruler.inventory || Array(12).fill(null);
+    let html = '<div style="display:flex;flex-wrap:wrap;gap:6px;">';
+    ruler.inventory.forEach((it, idx) => {
+      html += `<div class="dynasty-item" style="min-width:80px; text-align:center;">
+        <div style="font-size:12px">${it || '—'}</div>
+        <div style="margin-top:6px;"><span class="button small" data-slot="${idx}" data-ruler="${ruler.id}">Премести</span></div>
+      </div>`;
+    });
+    html += '</div>';
+    invEl.innerHTML = html;
+    // attach handlers for move/drop (simple: remove item)
+    invEl.querySelectorAll('span.button.small').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        const slot = Number(btn.getAttribute('data-slot'));
+        const rid = btn.getAttribute('data-ruler');
+        if (!rid) return;
+        // find ruler and clear slot
+        const dyn = this.registry ? this.registry.get('dynasties') : [];
+        for (const d of dyn) {
+          if (!Array.isArray(d.rulers)) continue;
+          const r = d.rulers.find(rr => rr.id === rid);
+          if (r) {
+            r.inventory = r.inventory || Array(12).fill(null);
+            r.inventory[slot] = null;
+            if (this.registry) this.registry.set('dynasties', dyn);
+            this.renderRulerInventory(r);
+            this.renderDynasties();
+            break;
+          }
+        }
+      });
+    });
+  }
+
+  // Council
   toggleCouncilPanel() {
     const panel = document.getElementById('council-panel');
     panel.style.display = (panel.style.display === 'none' || panel.style.display === '') ? 'block' : 'none';
+    this.renderCouncilPanel();
   }
 
   renderCouncilPanel() {
-    const members = (window.Council && window.Council.getMembers()) || [];
+    const members = (window.Council && window.Council.getMembers && window.Council.getMembers()) || [];
     const container = document.getElementById('council-members');
     const logEl = document.getElementById('council-log');
     container.innerHTML = '';
@@ -170,7 +272,7 @@ class UIScene extends Phaser.Scene {
       container.appendChild(el);
     });
 
-    const logs = (window.Council && window.Council.getLog(30)) || [];
+    const logs = (window.Council && window.Council.getLog && window.Council.getLog(30)) || [];
     logEl.innerHTML = logs.map(l => {
       const t = new Date(l.time).toLocaleString();
       if (l.type === 'proposal') return `${t} — Предложение: ${l.proposal.title || l.proposal.id}`;
@@ -195,7 +297,6 @@ class UIScene extends Phaser.Scene {
   }
 
   onHold() {
-    // take last proposal from council log or ask user to define
     const logs = (window.Council && window.Council.getLog(50)) || [];
     const lastProposalLog = logs.find(l => l.type === 'proposal');
     let proposal = lastProposalLog ? lastProposalLog.proposal : null;
@@ -220,13 +321,112 @@ class UIScene extends Phaser.Scene {
   }
 
   onReelect() {
-    // re-elect representatives from current dynasties (first by default)
-    const dyn = this.registry.get('dynasties') || [];
+    const dyn = this.registry ? this.registry.get('dynasties') : [];
     if (!Array.isArray(dyn) || dyn.length === 0) { alert('Няма заредени династии'); return; }
     if (!window.Council) { alert('Съветът не е инициализиран'); return; }
     window.Council.electRepresentativesFromDynasties(dyn, 'first');
     window.Council.saveToRegistry();
     this.renderCouncilPanel();
     alert('Представителите са преназначени (първи владетел от всяка династия).');
+  }
+
+  // Explore panel
+  toggleExplorePanel() {
+    const panel = document.getElementById('explore-panel');
+    panel.style.display = (panel.style.display === 'none' || panel.style.display === '') ? 'block' : 'none';
+    this.populateExploreLeaders();
+    this.renderExploreList();
+  }
+
+  populateExploreLeaders() {
+    const sel = document.getElementById('explore-leader');
+    sel.innerHTML = '';
+    const dyn = this.registry ? this.registry.get('dynasties') : [];
+    if (!Array.isArray(dyn)) return;
+    // collect rulers
+    const rulers = [];
+    dyn.forEach(d => {
+      if (Array.isArray(d.rulers)) {
+        d.rulers.forEach(r => rulers.push({ id: r.id || r.name, name: `${r.name || r.id} (${d.name || d.id})` }));
+      }
+    });
+    rulers.forEach(r => {
+      const opt = document.createElement('option');
+      opt.value = r.id;
+      opt.innerText = r.name;
+      sel.appendChild(opt);
+    });
+  }
+
+  onStartExpedition() {
+    const leader = document.getElementById('explore-leader').value;
+    const duration = Number(document.getElementById('explore-duration').value) || 8;
+    if (!leader) { alert('Избери владетел'); return; }
+    if (!window.Explore) { alert('Explore manager не е наличен'); return; }
+    const exp = window.Explore.startExpedition({ leader_ruler_id: leader, duration_turns: duration });
+    this.renderExploreList();
+    alert('Експедицията е стартирана: ' + exp.id);
+  }
+
+  renderExploreList() {
+    const list = document.getElementById('explore-list');
+    list.innerHTML = '';
+    if (!window.Explore) { list.innerHTML = '<div class="panel small">Explore manager не е наличен</div>'; return; }
+    const exps = window.Explore.getExpeditions() || [];
+    if (exps.length === 0) { list.innerHTML = '<div class="panel small">Няма активни експедиции</div>'; return; }
+    exps.forEach(e => {
+      const el = document.createElement('div');
+      el.className = 'panel';
+      el.style.display = 'flex';
+      el.style.flexDirection = 'column';
+      el.style.gap = '6px';
+      el.innerHTML = `
+        <div style="display:flex;justify-content:space-between;align-items:center;">
+          <div><strong>${e.id}</strong> — лидер: ${e.leader_ruler_id || '-'} — статус: ${e.status} — прогрес: ${e.progress}/${e.duration_turns}</div>
+          <div style="display:flex;gap:6px;">
+            <span class="button small" data-action="view" data-id="${e.id}">Преглед</span>
+            <span class="button small" data-action="abort" data-id="${e.id}">Прекрати</span>
+          </div>
+        </div>
+        <div id="log-${e.id}" class="small" style="max-height:120px;overflow:auto;"></div>
+      `;
+      list.appendChild(el);
+
+      // render log
+      const logEl = document.getElementById(`log-${e.id}`);
+      if (logEl) {
+        logEl.innerHTML = (e.log || []).slice(0, 50).map(l => {
+          const t = new Date(l.time).toLocaleString();
+          return `${t} — ${l.text || JSON.stringify(l.result || {})}`;
+        }).join('<br>');
+      }
+    });
+
+    // attach handlers
+    list.querySelectorAll('span.button.small').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const id = btn.getAttribute('data-id');
+        const action = btn.getAttribute('data-action');
+        if (action === 'view') {
+          const e = window.Explore.getExpeditionById(id);
+          if (!e) { alert('Експедицията не е намерена'); return; }
+          const txt = `Експедиция ${e.id}\nЛидер: ${e.leader_ruler_id}\nСтатус: ${e.status}\nПрогрес: ${e.progress}/${e.duration_turns}\n\nЛог:\n` + (e.log || []).map(l => `${new Date(l.time).toLocaleString()} — ${l.text}`).join('\n');
+          alert(txt);
+        } else if (action === 'abort') {
+          if (!confirm('Сигурни ли сте, че искате да прекратите експедицията?')) return;
+          window.Explore.abortExpedition(id, 'aborted by player');
+          this.renderExploreList();
+        }
+      });
+    });
+  }
+}
+
+// register scene if Phaser exists
+if (typeof Phaser !== 'undefined' && window.game && window.game.scene) {
+  try {
+    window.game.scene.add('UIScene', UIScene, true);
+  } catch (e) {
+    // scene may already be added by main.js
   }
 }
