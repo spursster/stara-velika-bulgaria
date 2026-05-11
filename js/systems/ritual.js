@@ -2,7 +2,7 @@ import { state, save } from '../core/state.js';
 export function renderPantheon(content, update){
   const data = window.GAME_DATA.GODS;
   content.innerHTML = `<div class="card">
-    <h2>Пантеон на Тангра</h2>
+    <h2>Българските Богове</h2>
     <p class="small">Извърши ритуал за 100 злато. Призоваваш бог, трупаш благосклонност.</p>
     <button class="btn" id="ritual">Ритуал (100💰)</button>
     <div id="ritual-log" style="margin-top:10px"></div>
