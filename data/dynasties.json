@@ -1,0 +1,208 @@
+{
+  "dulo": {
+    "id": "dulo",
+    "name": "Дуло",
+    "founder": "Авитохол",
+    "coords": {"x":120,"y":120},
+    "traits": [],
+    "rulers": [
+      {"id":"zabergan","name":"Заберган","years":"550-558","portrait":"assets/portraits/zabergan.png","relations":{}},
+      {"id":"sandilh","name":"Сандилх","years":"550-560","portrait":"assets/portraits/sandilh.png","relations":{}},
+      {"id":"askal","name":"Аскал","years":"580-610","portrait":"assets/portraits/askal.png","relations":{}},
+      {"id":"alburi","name":"Албури","years":"600-630","portrait":"assets/portraits/alburi.png","relations":{}},
+      {"id":"avitohol","name":"Авитохол","years":"153-353","portrait":"assets/portraits/avitohol.png","relations":{}},
+      {"id":"irnik","name":"Ирник","years":"353-453","portrait":"assets/portraits/irnik.png","relations":{}},
+      {"id":"gostun","name":"Гостун","years":"453-455","portrait":"assets/portraits/gostun.png","relations":{}},
+      {"id":"kurt_kubrat","name":"Курт Кубрат","years":"632-665","portrait":"assets/portraits/kubrat.png","relations":{}},
+      {"id":"batbayan","name":"Батбаян","years":"665-668","portrait":"assets/portraits/batbayan.png","relations":{}},
+      {"id":"kotrak","name":"Котраг","years":"665-700","portrait":"assets/portraits/kotrag.png","relations":{}},
+      {"id":"asparuh","name":"Аспарух","years":"681-701","portrait":"assets/portraits/asparuh.png","relations":{}},
+      {"id":"tervel","name":"Тервел","years":"701-721","portrait":"assets/portraits/tervel.png","relations":{}},
+      {"id":"sevar","name":"Севар","years":"738-753","portrait":"assets/portraits/sevar.png","relations":{}},
+      {"id":"krum","name":"Крум","years":"803-814","portrait":"assets/portraits/krum.png","relations":{}},
+      {"id":"omurtag","name":"Омуртаг","years":"814-831","portrait":"assets/portraits/omurtag.png","relations":{}},
+      {"id":"boris_i","name":"Борис I","years":"852-889","portrait":"assets/portraits/boris_i.png","relations":{}},
+      {"id":"simeon","name":"Симеон Велики","years":"893-927","portrait":"assets/portraits/simeon.png","relations":{}},
+      {"id":"petar_i","name":"Петър I","years":"927-969","portrait":"assets/portraits/petar_i.png","relations":{}},
+      {"id":"irhan","name":"Ирхан","years":"700-765","portrait":"assets/portraits/irhan.png","relations":{}},
+      {"id":"tukkey","name":"Туккей","years":"765-815","portrait":"assets/portraits/tukkey.png","relations":{}},
+      {"id":"urus_aidar","name":"Урус-Айдар","years":"815-865","portrait":"assets/portraits/urus_aidar.png","relations":{}},
+      {"id":"gabdulla_jilki","name":"Габдулла Джилки","years":"865-882","portrait":"assets/portraits/gabdulla_jilki.png","relations":{}},
+      {"id":"bat_ugor_mumin","name":"Бат-Угор Мумин","years":"882-895","portrait":"assets/portraits/bat_ugor_mumin.png","relations":{}},
+      {"id":"almash_djafar","name":"Алмъш Джафар","years":"895-925","portrait":"assets/portraits/almash_djafar.png","relations":{}},
+      {"id":"mikael_yalkau","name":"Микаил Ялкау Балтавар","years":"930-943","portrait":"assets/portraits/mikael_yalkau.png","relations":{}},
+      {"id":"mohammed","name":"Мохаммед","years":"943-976","portrait":"assets/portraits/mohammed.png","relations":{}},
+      {"id":"timar_mumin","name":"Тимар Мумин","years":"981-1004","portrait":"assets/portraits/timar_mumin.png","relations":{}},
+      {"id":"gabdula_chelbir","name":"Габдула Челбир","years":"1178-1225","portrait":"assets/portraits/gabdula_chelbir.png","relations":{}},
+      {"id":"mir_gazi","name":"Мир-Гази","years":"1225-1229","portrait":"assets/portraits/mir_gazi.png","relations":{}},
+      {"id":"altnbek","name":"Алтънбек","years":"1229-1236","portrait":"assets/portraits/altnbek.png","relations":{}}
+    ]
+  },
+  "komitopuli": {
+    "id": "komitopuli",
+    "name": "Комитопули",
+    "founder": "Никола",
+    "coords": {"x":240,"y":160},
+    "traits": [],
+    "rulers": [
+      {"id":"samuil","name":"Самуил","years":"997-1014","portrait":"assets/portraits/samuil.png","relations":{}},
+      {"id":"gavril_radomir","name":"Гаврил Радомир","years":"1014-1015","portrait":"assets/portraits/gavril_radomir.png","relations":{}},
+      {"id":"ivan_vladislav","name":"Иван Владислав","years":"1015-1018","portrait":"assets/portraits/ivan_vladislav.png","relations":{}},
+      {"id":"presian_ii","name":"Пресиян II","years":"1018","portrait":"assets/portraits/presian_ii.png","relations":{}}
+    ]
+  },
+  "asenevtsi": {
+    "id": "asenevtsi",
+    "name": "Асеневци",
+    "founder": "Асен I",
+    "coords": {"x":360,"y":140},
+    "traits": [],
+    "rulers": [
+      {"id":"petar_iv","name":"Петър IV","years":"","portrait":"assets/portraits/petar_iv.png","relations":{}},
+      {"id":"ivan_asen_i","name":"Иван Асен I","years":"","portrait":"assets/portraits/ivan_asen_i.png","relations":{}},
+      {"id":"kaloyan","name":"Калоян","years":"","portrait":"assets/portraits/kaloyan.png","relations":{}},
+      {"id":"ivan_asen_ii","name":"Иван Асен II","years":"1218-1241","portrait":"assets/portraits/ivan_asen_ii.png","relations":{}},
+      {"id":"konstantin_tih","name":"Константин Тих","years":"","portrait":"assets/portraits/konstantin_tih.png","relations":{}},
+      {"id":"ivaylo","name":"Ивайло","years":"","portrait":"assets/portraits/ivaylo.png","relations":{}}
+    ]
+  },
+  "terter": {
+    "id": "terter",
+    "name": "Тертер",
+    "founder": "Георги I Тертер",
+    "coords": {"x":480,"y":180},
+    "traits": [],
+    "rulers": [
+      {"id":"georgi_i_terter","name":"Георги I Тертер","years":"1280-1292","portrait":"assets/portraits/georgi_i_terter.png","relations":{}},
+      {"id":"todor_svetoslav","name":"Тодор Светослав Тертер","years":"1300-1322","portrait":"assets/portraits/todor_svetoslav.png","relations":{}},
+      {"id":"georgi_ii_terter","name":"Георги II Тертер","years":"1322-1323","portrait":"assets/portraits/georgi_ii_terter.png","relations":{}}
+    ]
+  },
+  "smilets": {
+    "id": "smilets",
+    "name": "Смилец",
+    "founder": "Смилец",
+    "coords": {"x":560,"y":220},
+    "traits": [],
+    "rulers": [
+      {"id":"smilets","name":"Смилец","years":"1292-1298","portrait":"assets/portraits/smilets.png","relations":{}},
+      {"id":"ivan_ii","name":"Иван II","years":"1298-1299","portrait":"assets/portraits/ivan_ii.png","relations":{}}
+    ]
+  },
+  "shishman": {
+    "id": "shishman",
+    "name": "Шишмановци",
+    "founder": "Шишман",
+    "coords": {"x":640,"y":200},
+    "traits": [],
+    "rulers": [
+      {"id":"mihail_iii_shishman","name":"Михаил III Шишман Асен","years":"1323-1330","portrait":"assets/portraits/mihail_iii_shishman.png","relations":{}},
+      {"id":"ivan_aleksandar","name":"Иван Александър","years":"1331-1371","portrait":"assets/portraits/ivan_aleksandar.png","relations":{}},
+      {"id":"ivan_shishman","name":"Иван Шишман","years":"1371-1395","portrait":"assets/portraits/ivan_shishman.png","relations":{}},
+      {"id":"ivan_sratzimir","name":"Иван Срацимир","years":"1356-1396","portrait":"assets/portraits/ivan_sratzimir.png","relations":{}}
+    ]
+  },
+  "makedoni": {
+    "id": "makedoni",
+    "name": "Македони",
+    "founder": "Филип II",
+    "coords": {"x":760,"y":140},
+    "traits": [],
+    "rulers": [
+      {"id":"karan","name":"Каран","years":"808-778","portrait":"assets/portraits/karan.png","relations":{}},
+      {"id":"perdika_i","name":"Пердика I","years":"","portrait":"assets/portraits/perdika_i.png","relations":{}},
+      {"id":"aleksandar_i","name":"Александър I","years":"","portrait":"assets/portraits/aleksandar_i.png","relations":{}},
+      {"id":"perdika_ii","name":"Пердика II","years":"","portrait":"assets/portraits/perdika_ii.png","relations":{}},
+      {"id":"arhelai_i","name":"Архелай I","years":"","portrait":"assets/portraits/arhelai_i.png","relations":{}},
+      {"id":"aminta_iii","name":"Аминта III","years":"","portrait":"assets/portraits/aminta_iii.png","relations":{}},
+      {"id":"filip_ii","name":"Филип II","years":"359-336","portrait":"assets/portraits/filip_ii.png","relations":{}},
+      {"id":"aleksandar_iii","name":"Александър III Велики","years":"336-323","portrait":"assets/portraits/aleksandar_iii.png","relations":{}},
+      {"id":"filip_iii","name":"Филип III","years":"","portrait":"assets/portraits/filip_iii.png","relations":{}},
+      {"id":"aleksandar_iv","name":"Александър IV","years":"","portrait":"assets/portraits/aleksandar_iv.png","relations":{}}
+    ]
+  },
+  "ptolomei": {
+    "id": "ptolomei",
+    "name": "Птоломеи",
+    "founder": "Птолемей I",
+    "coords": {"x":880,"y":160},
+    "traits": [],
+    "rulers": [
+      {"id":"ptolemy_i","name":"Птолемей I Сотер","years":"303-282 пр.Хр.","portrait":"assets/portraits/ptolemy_i.png","relations":{}},
+      {"id":"ptolemy_ii","name":"Птолемей II Филаделф","years":"285-246","portrait":"assets/portraits/ptolemy_ii.png","relations":{}},
+      {"id":"ptolemy_iii","name":"Птолемей III Евергет","years":"246-221","portrait":"assets/portraits/ptolemy_iii.png","relations":{}},
+      {"id":"ptolemy_iv","name":"Птолемей IV Филопатор","years":"221-203","portrait":"assets/portraits/ptolemy_iv.png","relations":{}},
+      {"id":"ptolemy_v","name":"Птолемей V Епифан","years":"203-181","portrait":"assets/portraits/ptolemy_v.png","relations":{}},
+      {"id":"kleopatra_vii","name":"Клеопатра VII","years":"51-30 пр.Хр.","portrait":"assets/portraits/kleopatra_vii.png","relations":{}}
+    ]
+  },
+  "odrisi": {
+    "id": "odrisi",
+    "name": "Одриси",
+    "founder": "Терес I",
+    "coords": {"x":200,"y":320},
+    "traits": [],
+    "rulers": [
+      {"id":"teres_i","name":"Терес I","years":"480-445","portrait":"assets/portraits/teres_i.png","relations":{}},
+      {"id":"sitalk","name":"Ситалк","years":"431-424","portrait":"assets/portraits/sitalk.png","relations":{}},
+      {"id":"sevt_i","name":"Севт I","years":"424-396","portrait":"assets/portraits/sevt_i.png","relations":{}},
+      {"id":"kotis_i","name":"Котис I","years":"384-360","portrait":"assets/portraits/kotis_i.png","relations":{}},
+      {"id":"sevt_iii","name":"Севт III","years":"324-312","portrait":"assets/portraits/sevt_iii.png","relations":{}}
+    ]
+  },
+  "besarab": {
+    "id": "besarab",
+    "name": "Бесараб",
+    "founder": "Басараб I",
+    "coords": {"x":360,"y":320},
+    "traits": [],
+    "rulers": [
+      {"id":"ivanko_i_besarab","name":"Иванко I Бесараб","years":"1310-1352","portrait":"assets/portraits/ivanko_i_besarab.png","relations":{}},
+      {"id":"mircho_i_stari","name":"Мирчо I Стари","years":"1386-1418","portrait":"assets/portraits/mircho_i_stari.png","relations":{}},
+      {"id":"vlad_ii_dracul","name":"Влад II Дракул","years":"1436-1447","portrait":"assets/portraits/vlad_ii_dracul.png","relations":{}},
+      {"id":"vlad_iii_cepes","name":"Влад III Цепеш","years":"1456-1462","portrait":"assets/portraits/vlad_iii_cepes.png","relations":{}},
+      {"id":"mihai_ii","name":"Михай II Храбри","years":"1593-1600","portrait":"assets/portraits/mihai_ii.png","relations":{}}
+    ]
+  },
+  "osman": {
+    "id": "osman",
+    "name": "Османци Дуло",
+    "founder": "Осман I",
+    "coords": {"x":520,"y":320},
+    "traits": [],
+    "rulers": [
+      {"id":"osman_i","name":"Осман I Гази","years":"1299-1324","portrait":"assets/portraits/osman_i.png","relations":{}},
+      {"id":"orhan","name":"Орхан","years":"1324-1362","portrait":"assets/portraits/orhan.png","relations":{}},
+      {"id":"murad_i","name":"Мурад I","years":"1362-1389","portrait":"assets/portraits/murad_i.png","relations":{}},
+      {"id":"bayazid_i","name":"Баязид I","years":"1389-1402","portrait":"assets/portraits/bayazid_i.png","relations":{}},
+      {"id":"mehmed_i","name":"Мехмед I","years":"1413-1421","portrait":"assets/portraits/mehmed_i.png","relations":{}},
+      {"id":"murad_ii","name":"Мурад II","years":"1421-1451","portrait":"assets/portraits/murad_ii.png","relations":{}},
+      {"id":"mehmed_ii","name":"Мехмед II Завоевателя","years":"1451-1481","portrait":"assets/portraits/mehmed_ii.png","relations":{}},
+      {"id":"selim_i","name":"Селим I","years":"1512-1520","portrait":"assets/portraits/selim_i.png","relations":{}},
+      {"id":"suleiman","name":"Сюлейман Великолепни","years":"1520-1566","portrait":"assets/portraits/suleiman.png","relations":{}}
+    ]
+  },
+  "vokil": {
+    "id": "vokil",
+    "name": "Вокил",
+    "founder": "Кормисош",
+    "coords": {"x":640,"y":360},
+    "traits": [],
+    "rulers": [
+      {"id":"kormisosh","name":"Кормисош","years":"753-756","portrait":"assets/portraits/kormisosh.png","relations":{}},
+      {"id":"vineh","name":"Винех","years":"756-762","portrait":"assets/portraits/vineh.png","relations":{}}
+    ]
+  },
+  "ugain": {
+    "id": "ugain",
+    "name": "Угаин",
+    "founder": "Телец",
+    "coords": {"x":760,"y":360},
+    "traits": [],
+    "rulers": [
+      {"id":"telec","name":"Телец","years":"762-764","portrait":"assets/portraits/telec.png","relations":{}},
+      {"id":"sabin","name":"Сабин","years":"764-766","portrait":"assets/portraits/sabin.png","relations":{}},
+      {"id":"umor","name":"Умор","years":"766","portrait":"assets/portraits/umor.png","relations":{}}
+    ]
+  }
+}
