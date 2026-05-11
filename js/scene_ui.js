@@ -1,9 +1,6 @@
 // js/scene_ui.js
-// UIScene с топбар, странични панели, нотификации и Ledger.
-// Заменете съществуващия файл с този код.
-
+// UIScene с топбар, странични панели, нотификации и Ledger
 (function(){
-  // --- minimal CSS injection for layout and CK-like look ---
   const css = `
   #ui-root { font-family: Arial, Helvetica, sans-serif; color:#e6eef6; }
   .topbar { display:flex; align-items:center; gap:12px; padding:8px 12px; background:linear-gradient(180deg,#071226,#0b1b2b); border-bottom:1px solid rgba(255,255,255,0.03); }
@@ -26,7 +23,6 @@
   style.innerText = css;
   document.head.appendChild(style);
 
-  // --- NotificationManager (global) ---
   window.NotificationManager = window.NotificationManager || (function(){
     const queue = [];
     function push(n) { queue.unshift(Object.assign({ id: 'n_' + Date.now(), time: new Date().toISOString() }, n)); renderBadge(); renderPanel(); }
@@ -41,19 +37,15 @@
       const panel = document.getElementById('notif-panel');
       if (!panel) return;
       panel.innerHTML = '<strong>Нотификации</strong><div style="height:8px"></div>' + (queue.length === 0 ? '<div class="panel small">Няма нотификации</div>' : queue.map(n=>`<div class="notif-item panel"><div style="display:flex;justify-content:space-between;"><div><strong>${n.title||'Събитие'}</strong><div style="font-size:12px;color:#bcd2ea">${new Date(n.time).toLocaleString()}</div></div><div><button class="button small" data-id="${n.id}" data-action="dismiss">X</button></div></div><div style="margin-top:6px">${n.text||''}</div></div>`).join(''));
-      // attach dismiss handlers
       panel.querySelectorAll('button[data-action="dismiss"]').forEach(b=>b.addEventListener('click', ()=>dismiss(b.getAttribute('data-id'))));
     }
-    // expose
     return { push, all, clear, dismiss, renderBadge, renderPanel };
   })();
 
-  // --- UIScene definition ---
   class UIScene extends Phaser.Scene {
     constructor() { super({ key: 'UIScene', active: true }); }
     preload() {}
     create() {
-      // ensure ui-root
       this.root = document.getElementById('ui-root');
       if (!this.root) {
         this.root = document.createElement('div');
@@ -61,7 +53,6 @@
         document.body.appendChild(this.root);
       }
 
-      // build topbar + layout + panels + ledger + notif panel
       this.root.innerHTML = `
         <div class="topbar">
           <div style="display:flex;gap:12px;align-items:center;">
@@ -136,7 +127,6 @@
         </div>
       `;
 
-      // bind topbar buttons
       document.getElementById('btn-notifications').addEventListener('click', ()=> {
         const p = document.getElementById('notif-panel');
         p.style.display = (p.style.display === 'none' || p.style.display === '') ? 'block' : 'none';
@@ -145,29 +135,19 @@
       document.getElementById('btn-ledger').addEventListener('click', ()=> openLedger('events'));
       document.getElementById('btn-save').addEventListener('click', ()=> this.saveGame());
       document.getElementById('btn-next').addEventListener('click', ()=> this.onNextTurn());
-
-      // bind explore controls
       document.getElementById('explore-start').addEventListener('click', ()=> this.onStartExpedition());
       document.getElementById('explore-refresh').addEventListener('click', ()=> this.renderExploreList());
-
-      // test item buttons
       document.getElementById('give-test-item').addEventListener('click', ()=> this.onGiveTestItem());
       document.getElementById('clear-test-items').addEventListener('click', ()=> this.onClearTestItems());
-
-      // ledger close and tabs
       document.getElementById('ledger-close').addEventListener('click', ()=> closeLedger());
       document.querySelectorAll('#ledger-tabs button').forEach(b=>b.addEventListener('click', ()=> renderLedgerTab(b.getAttribute('data-tab'))));
 
-      // references
       this.registry = (window.game && window.game.registry) ? window.game.registry : null;
-
-      // initial render
       this.populateExploreLeaders();
       this.renderExploreList();
       this.renderDynasties();
       this.renderRulerPlaceholder();
 
-      // init managers if available
       if (window.TurnManager && typeof window.TurnManager.init === 'function') {
         try { window.TurnManager.init({ registry: this.registry }); } catch(e) {}
       }
@@ -175,16 +155,7 @@
         try { window.Explore.init({ registry: this.registry }); } catch(e) {}
       }
 
-      // hook: when Explore finds items or events, push notification
-      // We add a simple hook by wrapping Explore.onTurn if exists
-      if (window.Explore && typeof window.Explore.onTurn === 'function') {
-        // no-op: Explore already handles logs; we will not override onTurn
-      }
-
-      // periodic UI updater
       this.time.addEvent({ delay: 1000, loop: true, callback: () => this.updateStatus() });
-
-      // render initial notification badge/panel
       window.NotificationManager.renderBadge();
       window.NotificationManager.renderPanel();
     }
@@ -196,7 +167,6 @@
       document.getElementById('res-troops').innerText = (this.registry && this.registry.get('troops')) ? this.registry.get('troops') : '0';
     }
 
-    // Game control
     saveGame() {
       try {
         const dyn = this.registry ? this.registry.get('dynasties') : [];
@@ -218,7 +188,6 @@
         this.renderExploreList();
         this.renderDynasties();
         this.renderRulerPlaceholder();
-        // push notifications for expedition events found this turn
         if (window.Explore) {
           const exps = window.Explore.getExpeditions() || [];
           exps.forEach(e => {
@@ -234,7 +203,6 @@
       }
     }
 
-    // Dynasties and rulers
     renderDynasties() {
       const dyn = this.registry ? this.registry.get('dynasties') : [];
       const container = document.getElementById('dynasty-list');
@@ -253,7 +221,6 @@
     }
 
     renderRulerPlaceholder() {
-      // if no specific ruler selected, show first dynasty's first ruler
       const dyn = this.registry ? this.registry.get('dynasties') : [];
       const first = (dyn && dyn[0]) ? dyn[0] : null;
       if (first) this.showRulerDetail(first);
@@ -293,7 +260,6 @@
         this.renderRulerInventory(first);
         this.renderDynasties();
       });
-      // render inventory immediately
       if (first) this.renderRulerInventory(first);
     }
 
@@ -315,7 +281,6 @@
       });
       html += '</div>';
       invEl.innerHTML = html;
-      // attach handlers
       invEl.querySelectorAll('button[data-slot]').forEach(btn => {
         btn.addEventListener('click', () => {
           const slot = Number(btn.getAttribute('data-slot'));
@@ -358,7 +323,6 @@
       });
     }
 
-    // Explore panel
     populateExploreLeaders() {
       const sel = document.getElementById('explore-leader');
       sel.innerHTML = '';
@@ -420,7 +384,6 @@
         }
       });
 
-      // attach handlers
       list.querySelectorAll('button[data-action]').forEach(btn => {
         btn.addEventListener('click', () => {
           const id = btn.getAttribute('data-id');
@@ -439,7 +402,6 @@
       });
     }
 
-    // Test item helpers
     onGiveTestItem() {
       const sel = document.getElementById('explore-leader');
       let leader = sel && sel.value ? sel.value : null;
@@ -472,7 +434,6 @@
     }
   }
 
-  // --- Ledger helpers (global functions used by UI) ---
   function openLedger(tab='events') {
     const modal = document.getElementById('ledger-modal');
     if (!modal) return;
@@ -505,19 +466,14 @@
     }
   }
 
-  // register scene if Phaser exists
   if (typeof Phaser !== 'undefined' && window.game && window.game.scene) {
     try {
       window.game.scene.add('UIScene', UIScene, true);
-    } catch (e) {
-      // scene may already be added by main.js
-    }
+    } catch (e) {}
   } else {
-    // If Phaser not present yet, expose UIScene for later registration
     window.UISceneClass = UIScene;
   }
 
-  // expose ledger helpers globally for buttons
   window.openLedger = openLedger;
   window.closeLedger = closeLedger;
   window.renderLedgerTab = renderLedgerTab;
