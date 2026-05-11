@@ -1,1 +1,32 @@
-[{"id": "sword", "name_bg": "Меч"}]
+[
+  {
+    "id": "sword_bulgar",
+    "name_bg": "Прабългарски меч",
+    "slot": "weapon"
+  },
+  {
+    "id": "helm_khan",
+    "name_bg": "Шлем на Кана",
+    "slot": "helm"
+  },
+  {
+    "id": "shield_dulo",
+    "name_bg": "Щит Дуло",
+    "slot": "shield"
+  },
+  {
+    "id": "armor_scale",
+    "name_bg": "Люспеста броня",
+    "slot": "armor"
+  },
+  {
+    "id": "ring_tangra",
+    "name_bg": "Пръстен на Тангра",
+    "slot": "artifact1"
+  },
+  {
+    "id": "amulet_madara",
+    "name_bg": "Амулет Мадара",
+    "slot": "artifact2"
+  }
+]
