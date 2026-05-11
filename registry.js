@@ -1,42 +1,23 @@
+// registry.js — глобален регистър за данни
+
 window.Registry = (function () {
-  const state = {
-    year: GameConfig.startYear,
-    turn: 1,
-    language: GameConfig.defaultLanguage,
-
-    dynasties: [],
-    rulers: [],
-    civilizations: [],
-    items: [],
-    abilities: [],
-    units: [],
-    gods: [],
-    rituals: [],
-    creatures: [],
-    disasters: [],
-    events: [],
-
-    council: [],
-    notifications: [],
-    armies: [],
-    expeditions: [],
-
-    // настройки за автоматичен режим
-    npcAutomation: true,
-  };
+  const store = {};
 
   return {
-    get(key) {
-      return state[key];
-    },
     set(key, value) {
-      state[key] = value;
+      store[key] = value;
     },
-    patch(partial) {
-      Object.assign(state, partial);
+    get(key) {
+      return store[key];
     },
-    dump() {
-      return JSON.parse(JSON.stringify(state));
+    has(key) {
+      return Object.prototype.hasOwnProperty.call(store, key);
     },
+    remove(key) {
+      delete store[key];
+    },
+    clear() {
+      for (const k in store) delete store[k];
+    }
   };
 })();
