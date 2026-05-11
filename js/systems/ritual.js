@@ -41,22 +41,23 @@ export function renderPantheon(content, update){
   renderGods();
 }
 
-export function renderDynasties() {
+export async function renderDynasties() {
   const el = document.getElementById('dynasties');
   if(!el) return;
-  fetch('./data/dynasties.json')
-    .then(r=>r.json())
-    .then(d=>{
-      el.innerHTML = '<h2>Български Династии</h2>' + 
-        Object.values(d).map(dy=>
-          `<div class="card"><h3>${dy.name}</h3><p>${dy.rulers.map(r=>r.name+' ('+r.years+')').join(', ')}</p></div>`
-        ).join('');
-      // направи бутона да работи
-      document.querySelector('[data-tab="dynasties"]').onclick = ()=>{
-        document.querySelectorAll('.tab, main').forEach(t=>t.style.display='none');
-        el.style.display='block';
-        document.querySelectorAll('nav button').forEach(b=>b.classList.remove('active'));
-        document.querySelector('[data-tab="dynasties"]').classList.add('active');
-      };
-    });
+  try {
+    const r = await fetch('./data/dynasties.json?v=' + Date.now());
+    const data = await r.json();
+    const keys = Object.keys(data);
+    alert('Намерени династии: ' + keys.length); // трябва да е 13
+
+    el.innerHTML = '<h2>Български Династии (' + keys.length + ')</h2>';
+    for(const k of keys){
+      const d = data[k];
+      const rulers = d.rulers.map(x=>x.name).join(', ');
+      el.innerHTML += `<div class="card"><h3>${d.name}</h3><p>${rulers}</p></div>`;
+    }
+  } catch(e) {
+    alert('Грешка: ' + e.message);
+  }
+}
 }
