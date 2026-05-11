@@ -175,12 +175,6 @@
         try { window.Explore.init({ registry: this.registry }); } catch(e) {}
       }
 
-      // hook: when Explore finds items or events, push notification
-      // We add a simple hook by wrapping Explore.onTurn if exists
-      if (window.Explore && typeof window.Explore.onTurn === 'function') {
-        // no-op: Explore already handles logs; we will not override onTurn
-      }
-
       // periodic UI updater
       this.time.addEvent({ delay: 1000, loop: true, callback: () => this.updateStatus() });
 
