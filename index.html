@@ -2,55 +2,52 @@
 <html lang="bg">
 <head>
   <meta charset="UTF-8" />
-  <title>Old Great Bulgaria</title>
+  <title>Stara Velika Bulgaria</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <link rel="stylesheet" href="css/style.css" />
 </head>
+
 <body>
   <div id="app" class="app-root">
+
+    <!-- TOP BAR -->
     <header id="topbar"></header>
 
+    <!-- MAIN LAYOUT -->
     <main class="layout">
+
+      <!-- LEFT PANEL (Dynasties, Council, Characters) -->
       <aside id="panel-left" class="panel-left"></aside>
 
+      <!-- MAP SCENE (Central map) -->
       <section id="map-scene" class="map-scene"></section>
 
+      <!-- RIGHT PANEL (Expeditions, Details, Events) -->
       <aside id="panel-right" class="panel-right"></aside>
+
     </main>
 
+    <!-- BOTTOM BAR (Turn, Year, Actions) -->
     <div id="bottom-bar" class="bottom-bar"></div>
 
+    <!-- MODALS -->
     <div id="modals-root"></div>
+
   </div>
 
-  <script src="js/config.js"></script>
-  <script src="js/registry.js"></script>
-  <script src="js/i18n.js"></script>
-  <script src="js/turn_manager.js"></script>
-  <script src="js/event_engine.js"></script>
+  <!-- SCRIPTS -->
+  <script src="config.js"></script>
+  <script src="registry.js"></script>
+  <script src="i18n.js"></script>
+  <script src="turn_manager.js"></script>
+  <script src="ui_layout.js"></script>
 
-  <script src="js/systems/dynasties.js"></script>
-  <script src="js/systems/rulers.js"></script>
-  <script src="js/systems/inventory.js"></script>
-  <script src="js/systems/abilities.js"></script>
-  <script src="js/systems/units.js"></script>
-  <script src="js/systems/combat.js"></script>
-  <script src="js/systems/rituals.js"></script>
-  <script src="js/systems/gods.js"></script>
-  <script src="js/systems/diplomacy.js"></script>
-  <script src="js/systems/disasters.js"></script>
-  <script src="js/systems/ai_npc.js"></script>
+  <!-- UI PANELS -->
+  <script src="ui_panels/topbar.js"></script>
+  <script src="ui_panels/dynasties_panel.js"></script>
+  <script src="ui_panels/map_scene.js"></script>
 
-  <script src="js/ui_layout.js"></script>
-  <script src="js/ui_panels/topbar.js"></script>
-  <script src="js/ui_panels/dynasties_panel.js"></script>
-  <script src="js/ui_panels/map_scene.js"></script>
-  <script src="js/ui_panels/expeditions_panel.js"></script>
-  <script src="js/ui_panels/notifications_panel.js"></script>
-  <script src="js/ui_panels/ledger_modal.js"></script>
-  <script src="js/ui_panels/character_panel.js"></script>
-  <script src="js/ui_panels/council_panel.js"></script>
-
-  <script src="js/main.js"></script>
+  <!-- MAIN -->
+  <script src="main.js"></script>
 </body>
 </html>
