@@ -59,32 +59,21 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 </script>
 
-  <script>
-async function showDynasties() {
-  const el = document.getElementById('dynasties');
-  if(!el) return;
-  const data = await fetch('./data/dynasties.json?v='+Date.now()).then(r=>r.json());
-  let html = '<h2>Български Династии</h2>';
-  for(const key in data){
-    const d = data[key];
-    html += `<div class="card"><h3>${d.name}</h3><p>Родоначалник: ${d.founder}</p><p>${d.rulers.map(r=>r.name+' ('+r.years+')').join(', ')}</p></div>`;
-  }
-  el.innerHTML = html;
-}
-
-document.addEventListener('DOMContentLoaded', () => {
-  showDynasties();
-  const btn = document.querySelector('[data-tab="dynasties"]');
-  if(btn){
-    btn.onclick = () => {
-      document.querySelectorAll('nav button').forEach(b=>b.classList.remove('active'));
-      btn.classList.add('active');
-      document.getElementById('content').style.display='none';
-      document.querySelectorAll('.tab').forEach(t=>t.style.display='none');
-      document.getElementById('dynasties').style.display='block';
-    };
-  }
-});
+<script>
+fetch('./data/dynasties.json?v='+Date.now())
+ .then(r=>r.json())
+ .then(d=>{
+    const el = document.getElementById('dynasties');
+    if(!el) return;
+    let h = '<h2>Български Династии</h2>';
+    for(const k in d){
+      h += '<div class="card"><h3>'+d[k].name+'</h3><p>'+d[k].rulers.map(x=>x.name).join(', ')+'</p></div>';
+    }
+    el.innerHTML = h;
+    el.style.display = 'block'; // показва го веднага
+  });
 </script>
+</body>
+</html>
 </body>
 </html>
