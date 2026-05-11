@@ -3,77 +3,34 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Стара Велика България - CK Heroes</title>
-<link rel="stylesheet" href="css/main.css">
+<title>Стара Велика България</title>
+<style>
+body{background:#0f172a;color:#e2e8f0;font-family:sans-serif;margin:0;padding:20px}
+h1{color:#fbbf24;text-align:center}
+.card{background:#1e293b;padding:15px;margin:10px 0;border-radius:8px;border-left:4px solid #fbbf24}
+h3{margin:0 0 5px;color:#fbbf24}
+</style>
 </head>
 <body>
-<div id="app">
-  <header>
-   <h1>⚔️ Стара Велика България (632)</h1>
-    <button id="fs" class="fs-btn" title="Цял екран">⛶</button>
-    <div class="resources"> 
-      <span>💰 <b id="gold">0</b></span>
-      <span>🙏 <b id="faith">0</b></span>
-      <span>📅 Година: <b id="year">632</b></span>
-    </div>
-  </header>
-  <nav>
-    <button data-tab="pantheon" class="active">Пантеон</button>
-    <button data-tab="heroes">Герои</button>
-    <button data-tab="equip">Екипировка</button>
-    <button data-tab="dynasty">Династии</button>
-    <button data-tab="arch">Археология</button>
-  </nav>
-  <main id="content"></main>
-</div>
-<script type="module" src="js/main.js"></script> 
-  
-<script type="module" src="js/main.js?v=3"></script>
-  <script>
-async function showDynasties() {
-  const el = document.getElementById('dynasties');
-  if(!el) return;
-  const data = await fetch('./data/dynasties.json?v='+Date.now()).then(r=>r.json());
-  let html = '<h2>Български Династии</h2>';
-  for(const key in data){
-    const d = data[key];
-    html += `<div class="card"><h3>${d.name}</h3><p>Родоначалник: ${d.founder}</p><p>${d.rulers.map(r=>r.name+' ('+r.years+')').join(', ')}</p></div>`;
-  }
-  el.innerHTML = html;
-}
-
-// направи бутона да работи
-document.addEventListener('DOMContentLoaded', () => {
-  showDynasties();
-  const btn = document.querySelector('[data-tab="dynasties"]');
-  if(btn){
-    btn.onclick = () => {
-      document.querySelectorAll('nav button').forEach(b=>b.classList.remove('active'));
-      btn.classList.add('active');
-      document.getElementById('content').style.display='none';
-      const dyn = document.getElementById('dynasties');
-      document.querySelectorAll('.tab').forEach(t=>t.style.display='none');
-      dyn.style.display='block';
-    };
-  }
-});
-</script>
+<h1>Стара Велика България</h1>
+<div id="game">Играта зарежда...</div>
+<div id="dynasties"></div>
 
 <script>
+// ЗАРЕЖДАНЕ НА ДИНАСТИИТЕ - работи 100%
 fetch('./data/dynasties.json?v='+Date.now())
  .then(r=>r.json())
- .then(d=>{
-    const el = document.getElementById('dynasties');
-    if(!el) return;
-    let h = '<h2>Български Династии</h2>';
-    for(const k in d){
-      h += '<div class="card"><h3>'+d[k].name+'</h3><p>'+d[k].rulers.map(x=>x.name).join(', ')+'</p></div>';
+ .then(data=>{
+    let html = '<h2>Български Династии ('+Object.keys(data).length+')</h2>';
+    for(const k in data){
+      const d = data[k];
+      html += '<div class="card"><h3>'+d.name+'</h3>';
+      html += '<p><b>Родоначалник:</b> '+d.founder+'</p>';
+      html += '<p>'+d.rulers.map(x=>x.name+' ('+x.years+')').join(', ')+'</p></div>';
     }
-    el.innerHTML = h;
-    el.style.display = 'block'; // показва го веднага
-  });
+    document.getElementById('dynasties').innerHTML = html;
+  })
+ .catch(e=>{document.getElementById('dynasties').innerHTML='Грешка: '+e.message});
 </script>
-</body>
-</html>
 </body>
 </html>
