@@ -1,5 +1,5 @@
 import { loadData, initGame } from './core/game.js';
-import { renderDynasties } from './systems/ritual.js';
+import { renderDynasties } from './systems/ritual.js?v=3';
 window.addEventListener('DOMContentLoaded', async () => {
   await loadData();
   initGame();
