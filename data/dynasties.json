@@ -1,0 +1,14 @@
+[
+  {
+    "id": "dulo",
+    "name": "Дуло",
+    "crest": "https://raw.githubusercontent.com/spursster/stara-velika-bulgaria/main/assets/crests/dulo.png",
+    "rulers": ["avitochol", "irnik"]
+  },
+  {
+    "id": "krum",
+    "name": "Крумова династия",
+    "crest": "https://raw.githubusercontent.com/spursster/stara-velika-bulgaria/main/assets/crests/krum.png",
+    "rulers": ["krum", "omurtag"]
+  }
+]
