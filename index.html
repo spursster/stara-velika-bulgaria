@@ -27,6 +27,15 @@
   <main id="content"></main>
 </div>
 <script type="module" src="js/main.js"></script> 
+  <script>
+fetch('./data/dynasties.json?v='+Date.now())
+  .then(r=>r.json())
+  .then(d=>{
+    alert('ТЕСТ: намерих '+Object.keys(d).length+' династии');
+    document.getElementById('dynasties').innerHTML = '<h2>'+Object.keys(d).join(', ')+'</h2>';
+  })
+  .catch(e=>alert('ТЕСТ грешка: '+e.message));
+</script>
 <script type="module" src="js/main.js?v=3"></script>
 </body>
 </html>
