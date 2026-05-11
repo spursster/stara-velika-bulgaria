@@ -1,63 +1,42 @@
-import { state, save } from '../core/state.js';
-export function renderPantheon(content, update){
-  const data = window.GAME_DATA.GODS;
-  content.innerHTML = `<div class="card">
-    <h2>Българските Богове</h2>
-    <p class="small">Извърши ритуал за 100 злато. Призоваваш бог, трупаш благосклонност.</p>
-    <button class="btn" id="ritual">Ритуал (100💰)</button>
-    <div id="ritual-log" style="margin-top:10px"></div>
-  </div>
-  <div class="card"><h3>Богове (${data.length})</h3><div class="grid" id="gods"></div></div>`;
-  
-  document.getElementById('ritual').onclick = ()=>{
-    if(state.gold < 100){ alert('Няма злато'); return; }
-    state.gold -= 100;
-    const god = data[Math.floor(Math.random()*data.length)];
-    const sg = state.gods.find(g=>g.id===god.id);
-    sg.favor += Math.floor(Math.random()*15)+5;
-    if(!sg.unlocked && sg.favor>20) sg.unlocked=true;
-    state.faith += 1;
-    // chance hero
-    if(Math.random()<0.3){
-      const hero = window.GAME_DATA.HEROES[Math.floor(Math.random()*window.GAME_DATA.HEROES.length)];
-      if(!state.warriors.find(w=>w.id===hero.id)){
-        state.warriors.push({...hero, lvl:1});
-        document.getElementById('ritual-log').innerHTML = `✨ ${god.name_bg} те благослови! Призован: <b>${hero.name_bg}</b>`;
-      } else {
-        document.getElementById('ritual-log').innerHTML = `✨ ${god.name_bg}: +${sg.favor} благосклонност`;
-      }
-    } else {
-      document.getElementById('ritual-log').innerHTML = `✨ ${god.name_bg}: +${sg.favor} благосклонност`;
-    }
-    update(); save(); renderGods();
-  };
-  
-  function renderGods(){
-    document.getElementById('gods').innerHTML = data.map(g=>{
-      const sg = state.gods.find(s=>s.id===g.id);
-      return `<div class="item">${g.name_bg}<br><span class="small">${sg.unlocked?'✓':''} ${sg.favor}</span></div>`
-    }).join('');
-  }
-  renderGods();
-}
+// systems/ritual.js
 
 export async function renderDynasties() {
   const el = document.getElementById('dynasties');
-  if(!el) return;
+  if (!el) {
+    alert('Няма #dynasties елемент');
+    return;
+  }
+
   try {
     const r = await fetch('./data/dynasties.json?v=' + Date.now());
     const data = await r.json();
     const keys = Object.keys(data);
+
     alert('Намерени династии: ' + keys.length); // трябва да е 13
 
-    el.innerHTML = '<h2>Български Династии (' + keys.length + ')</h2>';
-    for(const k of keys){
+    let html = '<h2>Български Династии (' + keys.length + ')</h2>';
+
+    for (const k of keys) {
       const d = data[k];
-      const rulers = d.rulers.map(x=>x.name).join(', ');
-      el.innerHTML += `<div class="card"><h3>${d.name}</h3><p>${rulers}</p></div>`;
+      const rulers = d.rulers.map(x => x.name).join(', ');
+      html += `<div class="card"><h3>${d.name}</h3><p>${rulers}</p></div>`;
     }
+
+    el.innerHTML = html;
+
+    // направи таба да работи
+    const btn = document.querySelector('[data-tab="dynasties"]');
+    if (btn) {
+      btn.onclick = () => {
+        document.querySelectorAll('.tab, main').forEach(t => t.style.display = 'none');
+        el.style.display = 'block';
+        document.querySelectorAll('nav button').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+      };
+    }
+
   } catch(e) {
     alert('Грешка: ' + e.message);
+    el.innerHTML = '<p>Грешка: ' + e.message + '</p>';
   }
-}
 }
