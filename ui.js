@@ -54,6 +54,7 @@ function updateCharacterUI(hero) {
         ${inventoryHTML}
         <div class="actions">
             <button onclick="levelUpCurrentHero()">Тренировка (Level Up)</button>
+            <button onclick="simulateBattle(window.currentHero, 'Ромеи')">⚔️ Нападни Ромеите</button>
         </div>
     `;
 }
