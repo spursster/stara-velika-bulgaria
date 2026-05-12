@@ -22,14 +22,17 @@
 
     <!-- SCRIPTS -->
     <script src="data/i18n/i18n.js"></script>
-    <script src="data/registry.js"></script>
+<script src="data/registry.js"></script>
+<script src="data/gameconfig.js"></script>
+<script src="lib/utils.js"></script>
 
-    <script src="ui_panels/topbar.js"></script>
-    <script src="ui_panels/dynasties_panel.js"></script>
-    <script src="ui_panels/map_scene.js"></script>
-    <script src="ui_panels/notifications_panel.js"></script>
+<script src="ui_panels/topbar.js"></script>
+<script src="ui_panels/dynasties_panel.js"></script>
+<script src="ui_panels/map_scene.js"></script>
+<script src="ui_panels/notifications_panel.js"></script>
 
-    <script src="main.js"></script>
+<script src="lib/assets_loader.js"></script>
+<script src="main.js"></script>
 
     <!-- debug overlay: показва JS грешки директно в страницата -->
 <style id="debug-style">
@@ -76,6 +79,10 @@
     };
   })();
 </script>
+<section id="topbar"></section>
+<section id="panel-left"></section>
+<section id="map-scene"></section>
+<section id="panel-right"></section>
 
 
 </body>
