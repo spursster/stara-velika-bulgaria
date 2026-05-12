@@ -1,43 +1,20 @@
-let currentGameYear = -480; // Началото: Терес I
-let timeSpeed = 1; // Колко години минават на един "ход"
+window.currentGameYear = -480;
 
 function advanceYear(hero) {
-    if (!hero.isAlive) {
-        alert("Трябва да изберете наследник или да рестартирате!");
-        return;
-      }  
-    currentGameYear += timeSpeed;
-
-    // Викаме функцията за стареене
-    handleAging(hero);
+    if (!hero || !hero.isAlive) return;
+    window.currentGameYear += 1;
+    window.handleAging(hero);
     
-    // Обновяване на дисплея за годината
     const dateDisplay = document.getElementById('game-date');
     if (dateDisplay) {
-        let yearText = currentGameYear < 0 ? 
-            Math.abs(currentGameYear) + " пр.н.е." : 
-            currentGameYear + " н.е.";
-        dateDisplay.innerText = `Година: ${yearText}`;
+        let y = window.currentGameYear;
+        dateDisplay.innerText = `Година: ${y < 0 ? Math.abs(y) + ' пр.н.е.' : y + ' н.е.'}`;
     }
 
-    // На всеки 5 години се случва логично случайно събитие (Точка 3)
-    if (currentGameYear % 5 === 0) {
-        const eventText = window.triggerRandomEvent(hero);
-        const eventLog = document.getElementById('event-log');
-        if (eventLog) {
-            const p = document.createElement('p');
-            p.innerText = `📜 [${currentGameYear}] ${eventText}`;
-            eventLog.prepend(p);
-        }
+    if (window.currentGameYear % 5 === 0) {
+        const log = document.getElementById('event-log');
+        if (log) log.innerHTML = `<p>📜 Година ${window.currentGameYear}: Мирна година.</p>` + log.innerHTML;
     }
-
-    // Логика за стареене (може да се добави по-късно)
-    checkEraChange();
+    updateCharacterUI(hero);
 }
-
-function checkEraChange() {
-    if (currentGameYear === 0) console.log("Новата ера започна!");
-    if (currentGameYear >= 2100) console.log("Навлизане в ерата на Космическата колонизация!");
-}
-
 window.advanceYear = advanceYear;
