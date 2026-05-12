@@ -5,34 +5,82 @@
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Stara Velika Bulgaria</title>
   <meta name="description" content="Stara Velika Bulgaria - игра" />
+
   <style>
-    html,body{height:100%;margin:0;font-family:Arial,Helvetica,sans-serif;background:#f5f5f5}
-    #topbar{height:48px;background:#2c3e50;color:#fff;display:flex;align-items:center;padding:0 12px;box-sizing:border-box}
-    #layout{display:flex;height:calc(100% - 48px)}
-    #panel-left,#panel-right{width:260px;background:#ecf0f1;overflow:auto;padding:10px;box-sizing:border-box}
-    #map-scene{flex:1;background:#fff;overflow:hidden;position:relative}
-    .topbar-btn{font-size:13px}
+    html,body{
+      height:100%;
+      margin:0;
+      font-family:Arial,Helvetica,sans-serif;
+      background:#f5f5f5;
+    }
+    #topbar{
+      height:48px;
+      background:#2c3e50;
+      color:#fff;
+      display:flex;
+      align-items:center;
+      padding:0 12px;
+      box-sizing:border-box;
+    }
+    #layout{
+      display:flex;
+      height:calc(100% - 48px);
+    }
+    #panel-left,#panel-right{
+      width:260px;
+      background:#ecf0f1;
+      overflow:auto;
+      padding:10px;
+      box-sizing:border-box;
+    }
+    #map-scene{
+      flex:1;
+      background:#fff;
+      overflow:hidden;
+      position:relative;
+    }
   </style>
 </head>
+
 <body>
+
   <!-- UI containers -->
   <header id="topbar" role="banner"></header>
+
   <div id="layout" role="main">
     <aside id="panel-left" aria-label="Ляв панел"></aside>
     <section id="map-scene" aria-label="Карта и сцена"></section>
     <aside id="panel-right" aria-label="Десен панел"></aside>
   </div>
 
-  <!-- debug overlay: показва JS грешки директно в страницата -->
-  <style id="debug-style">
-    #debug-overlay{position:fixed;left:0;right:0;bottom:0;max-height:40vh;overflow:auto;background:rgba(0,0,0,0.9);color:#fff;font-family:monospace;padding:10px;z-index:99999;font-size:13px}
-    #debug-overlay h4{margin:0 0 6px 0;font-weight:700}
-    #debug-overlay pre{white-space:pre-wrap;margin:0}
+  <!-- Debug overlay -->
+  <style>
+    #debug-overlay{
+      position:fixed;
+      left:0; right:0; bottom:0;
+      max-height:40vh;
+      overflow:auto;
+      background:rgba(0,0,0,0.9);
+      color:#fff;
+      font-family:monospace;
+      padding:10px;
+      z-index:99999;
+      font-size:13px;
+      display:none;
+    }
+    #debug-overlay h4{
+      margin:0 0 6px 0;
+      font-weight:700;
+    }
+    #debug-overlay pre{
+      white-space:pre-wrap;
+      margin:0;
+    }
   </style>
 
-  <div id="debug-overlay" aria-hidden="false" role="status" style="display:none">
+  <div id="debug-overlay">
     <h4>JavaScript Errors</h4>
-    <pre id="debug-log">Няма логове още</pre>
+    <pre id="debug-log">No errors yet</pre>
   </div>
 
   <script>
@@ -42,32 +90,56 @@
 
       function show(msg) {
         overlay.style.display = 'block';
-        logEl.textContent = (logEl.textContent === 'Няма логове още' ? '' : logEl.textContent + '\n\n') + msg;
+        logEl.textContent =
+          (logEl.textContent === 'No errors yet' ? '' : logEl.textContent + '\n\n') + msg;
       }
 
       window.addEventListener('error', function (e) {
-        const msg = 'Error: ' + (e.message || e.error) + '\nFile: ' + (e.filename || 'unknown') + ':' + (e.lineno || '?') + '\nStack: ' + (e.error && e.error.stack ? e.error.stack : 'no stack');
+        const msg =
+          'Error: ' + (e.message || e.error) +
+          '\nFile: ' + (e.filename || 'unknown') + ':' + (e.lineno || '?') +
+          '\nStack: ' + (e.error && e.error.stack ? e.error.stack : 'no stack');
         show(msg);
       });
 
       window.addEventListener('unhandledrejection', function (e) {
-        const reason = e.reason && e.reason.stack ? e.reason.stack : (typeof e.reason === 'object' ? JSON.stringify(e.reason) : String(e.reason));
+        const reason =
+          e.reason && e.reason.stack
+            ? e.reason.stack
+            : (typeof e.reason === 'object'
+                ? JSON.stringify(e.reason)
+                : String(e.reason));
         show('Unhandled Rejection: ' + reason);
       });
 
-      const origConsoleError = console.error;
+      const origError = console.error;
       console.error = function () {
         try {
-          const args = Array.from(arguments).map(a => {
-            try { return (typeof a === 'object' ? JSON.stringify(a) : String(a)); } catch (e) { return String(a); }
-          }).join(' ');
+          const args = Array.from(arguments)
+            .map(a => {
+              try { return typeof a === 'object' ? JSON.stringify(a) : String(a); }
+              catch { return String(a); }
+            })
+            .join(' ');
           show('Console.error: ' + args);
-        } catch (err) {
-          show('Console.error (failed to stringify)');
-        }
-        origConsoleError.apply(console, arguments);
+        } catch {}
+        origError.apply(console, arguments);
       };
     })();
   </script>
 
-  <!-- scripts: задължителен ред -->
+  <!-- Core data + logic -->
+  <script src="data/i18n/i18n.js"></script>
+  <script src="data/registry.js"></script>
+  <script src="data/gameconfig.js"></script>
+  <script src="lib/utils.js"></script>
+
+  <!-- UI panels -->
+  <script src="ui_panels/topbar.js"></script>
+  <script src="ui_panels/dynasties_panel.js"></script>
+  <script src="ui_panels/map_scene.js"></script>
+  <script src="ui_panels/notifications_panel.js"></script>
+
+  <!-- Assets + bootstrap -->
+  <script src="lib/assets_loader.js"></script>
+  <script src="data/bootstrap.js">
