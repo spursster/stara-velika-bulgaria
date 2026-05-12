@@ -99,3 +99,4 @@
     init();
   }
 })();
+<script src="main.js?v=12"></script>
