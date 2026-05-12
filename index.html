@@ -1,20 +1,59 @@
-<!doctype html>
-<html lang="en">
+<!DOCTYPE html>
+<html lang="bg">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Stara Velika Bulgaria</title>
-  <link rel="stylesheet" href="./styles.css" />
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Стара Велика България - Империята на Българите</title>
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <div id="app">
-    <h1>Stara Velika Bulgaria</h1>
-    <div id="status">Loading…</div>
-    <div id="content"></div>
-    <div class="footer small">Built with care</div>
-  </div>
 
-  <script src="./lib/utils.js?v=33"></script>
-  <script src="./lib/main.js?v=33"></script>
+    <div id="game-container">
+        <!-- Ляво: Карта и събития -->
+        <div id="main-view">
+            <header>
+                <h1>💡 Одриско царство - Начало</h1>
+                <p id="game-date">Година: 480 пр.н.е.</p>
+            </header>
+            
+            <div id="world-map">
+                <!-- Тук ще се визуализира картата -->
+                <p>Изследване на териториите...</p>
+            </div>
+
+            <div id="event-log">
+                <p>ℹ️ Добре дошли, Владетелю. Твоят род започва своя път.</p>
+            </div>
+        </div>
+
+        <!-- Дясно: Панел на владетеля и Инвентар -->
+        <aside id="character-panel">
+            <!-- Този контейнер се пълни динамично от ui.js -->
+            <p>Зареждане на владетел...</p>
+        </aside>
+    </div>
+
+    <!-- Зареждане на скриптовете в правилната последователност -->
+    <script src="database.js"></script>
+    <script src="logic.js"></script>
+    <script src="ui.js"></script>
+
+    <script>
+        // Стартиране на играта с първия владетел
+        window.onload = () => {
+            // Създаваме Терес I от Одриската династия (от базата данни)
+            const startHero = new Character("Терес", "Одриси");
+            
+            // Визуализираме го в интерфейса
+            updateCharacterUI(startHero);
+            
+            // Глобална функция за тестване на Level Up от бутона
+            window.levelUpCurrentHero = () => {
+                startHero.levelUp();
+                updateCharacterUI(startHero);
+                console.log("Нивото е вдигнато!");
+            };
+        };
+    </script>
 </body>
 </html>
