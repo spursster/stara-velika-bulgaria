@@ -1,39 +1,119 @@
-const dynastyData = {
-    "Odrysians": {
-        founder: "Teres I",
-        startYear: -480,
+const historicalData = {
+    "Одриси": {
+        founder: "Терес I",
         rulers: [
-            { name: "Teres I", reign: [-480, -445], stats: { command: 8, diplomacy: 7 } },
-            { name: "Sitalkas", reign: [-431, -424], stats: { command: 10, diplomacy: 6 } },
-            { name: "Seuthes I", reign: [-424, -396], stats: { command: 7, diplomacy: 8 } },
-            { name: "Kotys I", reign: [-384, -360], stats: { command: 9, diplomacy: 7 } },
-            { name: "Seuthes III", reign: [-324, -312], stats: { command: 8, diplomacy: 9 } }
+            { name: "Терес I", reign: [-480, -445] },
+            { name: "Ситалк", reign: [-431, -424] },
+            { name: "Севт I", reign: [-424, -396] },
+            { name: "Котис I", reign: [-384, -360] },
+            { name: "Севт III", reign: [-324, -312] }
         ]
     },
-    "Macedons": {
-        founder: "Philip II",
+    "Македони": {
+        founder: "Филип II",
         rulers: [
-            { name: "Karan", reign: [-808, -778] },
-            { name: "Philip II", reign: [-359, -336], stats: { command: 10, diplomacy: 9 } },
-            { name: "Alexander III the Great", reign: [-336, -323], stats: { command: 11, diplomacy: 8 } }
+            { name: "Каран", reign: [-808, -778] },
+            { name: "Филип II", reign: [-359, -336] },
+            { name: "Александър III Велики", reign: [-336, -323] }
         ]
     },
-    "Dulo": {
-        founder: "Avitohol",
+    "Птоломеи": {
+        founder: "Птолемей I Сотер",
         rulers: [
-            { name: "Avitohol", reign: [153, 353], traits: ["Legendary", "Long-Lived"] },
-            { name: "Irnik", reign: [353, 453] },
-            { name: "Kurt Kubrat", reign: [632, 665] },
-            { name: "Asparuh", reign: [681, 701] },
-            { name: "Tervel", reign: [701, 721], title: "Caesar" },
-            { name: "Simeon the Great", reign: [893, 927], title: "Tsar" }
+            { name: "Птолемей I Сотер", reign: [-303, -282] },
+            { name: "Птолемей II Филаделф", reign: [-285, -246] },
+            { name: "Клеопатра VII", reign: [-51, -30] }
         ]
     },
-    "Bessarab": {
-        founder: "Basarab I",
+    "Дуло": {
+        founder: "Авитохол",
         rulers: [
-            { name: "Vlad III Tepes", reign: [1456, 1462], stats: { command: 10, fear: 10 } }
+            { name: "Авитохол", reign: [153, 353] },
+            { name: "Ирник", reign: [353, 453] },
+            { name: "Гостун", reign: [453, 455] },
+            { name: "Заберган", reign: [550, 558] },
+            { name: "Курт Кубрат", reign: [632, 665] },
+            { name: "Аспарух", reign: [681, 701] },
+            { name: "Тервел", reign: [701, 721] },
+            { name: "Крум", reign: [803, 814] },
+            { name: "Симеон Велики", reign: [893, 927] }
+        ]
+    },
+    "Волжка линия": {
+        parent: "Дуло",
+        rulers: [
+            { name: "Ирхан", reign: [700, 765] },
+            { name: "Алмъш Джафар", reign: [895, 925] },
+            { name: "Габдула Челбир", reign: [1178, 1225] }
+        ]
+    },
+    "Комитопули": {
+        founder: "Никола",
+        rulers: [
+            { name: "Самуил", reign: [997, 1014] },
+            { name: "Гаврил Радомир", reign: [1014, 1015] },
+            { name: "Иван Владислав", reign: [1015, 1018] }
+        ]
+    },
+    "Асеневци": {
+        founder: "Асен I",
+        rulers: [
+            { name: "Иван Асен I", reign: [1186, 1196] },
+            { name: "Калоян", reign: [1197, 1207] },
+            { name: "Иван Асен II", reign: [1218, 1241] }
+        ]
+    },
+    "Тертер": {
+        founder: "Георги I Тертер",
+        rulers: [
+            { name: "Георги I Тертер", reign: [1280, 1292] },
+            { name: "Тодор Светослав Тертер", reign: [1300, 1322] }
+        ]
+    },
+    "Смилец": {
+        founder: "Смилец",
+        rulers: [
+            { name: "Смилец", reign: [1292, 1298] }
+        ]
+    },
+    "Шишмановци": {
+        founder: "Шишман",
+        rulers: [
+            { name: "Михаил III Шишман Асен", reign: [1323, 1330] },
+            { name: "Иван Александър", reign: [1331, 1371] },
+            { name: "Иван Шишман", reign: [1371, 1395] }
+        ]
+    },
+    "Бесараб": {
+        founder: "Басараб I",
+        rulers: [
+            { name: "Влад III Цепеш", reign: [1456, 1462] },
+            { name: "Мирчо I Стари", reign: [1386, 1418] }
+        ]
+    },
+    "Османци Дуло": {
+        founder: "Осман I",
+        rulers: [
+            { name: "Осман I Гази", reign: [1299, 1324] },
+            { name: "Мехмед II Завоевателя", reign: [1451, 1481] },
+            { name: "Сюлейман Великолепни", reign: [1520, 1566] }
+        ]
+    },
+    "Вокил": {
+        founder: "Кормисош",
+        rulers: [
+            { name: "Кормисош", reign: [753, 756] },
+            { name: "Винех", reign: [756, 762] }
+        ]
+    },
+    "Угаин": {
+        founder: "Телец",
+        rulers: [
+            { name: "Телец", reign: [762, 764] },
+            { name: "Умор", reign: [766, 766] }
         ]
     }
-    // Тук ще добавим останалите 13 династии...
 };
+
+// Правим данните достъпни за другите файлове
+window.historicalData = historicalData;
