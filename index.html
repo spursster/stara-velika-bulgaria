@@ -11,70 +11,13 @@
     <h1>Stara Velika Bulgaria</h1>
     <div id="status">Loading…</div>
     <div id="content"></div>
+    <div class="footer small">Built with care</div>
   </div>
 
   <!-- Non-module utils (provides window.fetchJsonNoCache, window.safeGet, window.logError) -->
   <script src="./lib/utils.js?v=33"></script>
 
-  <!-- Main app script (plain script that uses window.* helpers) -->
-  <script>
-    (function () {
-      const statusEl = document.getElementById('status');
-      const contentEl = document.getElementById('content');
-
-      function showError(msg) {
-        statusEl.textContent = 'Error: ' + msg;
-        if (window.logError) window.logError(msg);
-      }
-
-      async function init() {
-        try {
-          statusEl.textContent = 'Loading dynasties…';
-          const dynUrl = './data/dynasties.json?v=33';
-          const regionsUrl = './data/map_regions.json?v=33';
-
-          const [dynasties, regions] = await Promise.all([
-            window.fetchJsonNoCache(dynUrl),
-            window.fetchJsonNoCache(regionsUrl)
-          ]);
-
-          statusEl.textContent = 'Loaded';
-          render(dynasties, regions);
-        } catch (e) {
-          showError(e.message || e);
-        }
-      }
-
-      function render(dynasties, regions) {
-        const dList = document.createElement('ul');
-        dynasties.forEach(d => {
-          const li = document.createElement('li');
-          li.textContent = d.name + ' (' + (d.startYear || '?') + '–' + (d.endYear || '?') + ')';
-          dList.appendChild(li);
-        });
-
-        const rList = document.createElement('ul');
-        (regions && regions.regions || []).forEach(r => {
-          const li = document.createElement('li');
-          li.textContent = r.name + ' — ' + (r.properties && r.properties.type || 'unknown');
-          rList.appendChild(li);
-        });
-
-        contentEl.innerHTML = '';
-        const h1 = document.createElement('h2');
-        h1.textContent = 'Dynasties';
-        contentEl.appendChild(h1);
-        contentEl.appendChild(dList);
-
-        const h2 = document.createElement('h2');
-        h2.textContent = 'Map Regions';
-        contentEl.appendChild(h2);
-        contentEl.appendChild(rList);
-      }
-
-      // Start
-      init();
-    })();
-  </script>
+  <!-- App initializer (plain script) -->
+  <script src="./lib/main.js?v=33"></script>
 </body>
 </html>
