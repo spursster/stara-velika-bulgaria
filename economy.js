@@ -1,13 +1,20 @@
-window.gameGold = 500; // Начален капитал
+window.gameGold = 500; 
 
 function calculateYearlyIncome(hero) {
-    // Базов данък + бонус от нивото на владетеля
-    let income = 50 + (hero.level * 10);
+    // Базов доход от нивото на владетеля
+    let baseIncome = 50 + (hero.level * 10);
     
-    // Армията изисква поддръжка (колкото по-голяма е, толкова повече струва)
+    // Доходите от завладените региони (Мизия, Тракия и др.)
+    let regionIncome = 0;
+    if (typeof window.getRegionIncome === 'function') {
+        regionIncome = window.getRegionIncome();
+    }
+    
+    // Разходи за поддръжка на войската
     let upkeep = Math.floor(hero.armySize / 20);
     
-    let totalNet = income - upkeep;
+    // Чиста печалба
+    let totalNet = baseIncome + regionIncome - upkeep;
     window.gameGold += totalNet;
 
     return totalNet;
