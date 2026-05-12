@@ -43,6 +43,7 @@ window.updateCharacterUI = function(hero) {
             <button onclick="window.levelUpCurrentHero()" style="padding: 10px; cursor: pointer; background: #d4af37; border: none; font-weight: bold;">🏋️ Тренировка</button>
             <button onclick="window.handleBattleClick()" style="padding: 10px; cursor: pointer; background: #c0392b; color: white; border: none; font-weight: bold;">⚔️ Битка</button>
             <button onclick="window.handleRitualClick()" style="padding: 10px; cursor: pointer; background: #8e44ad; color: white; border: none; font-weight: bold;">🔥 Ритуал</button>
+            <button onclick="window.handleMarriageClick()" style="padding: 10px; cursor: pointer; background: #e67e22; color: white; border: none; font-weight: bold;">💍 Сватба</button>
         </div>
     `;
 
