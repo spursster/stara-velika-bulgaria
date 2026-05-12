@@ -65,7 +65,6 @@ li{
   line-height:1.4;
 }
 
-/* Responsive layout for lists */
 @media (min-width:720px){
   #content{
     display:flex;
@@ -77,7 +76,6 @@ li{
   }
 }
 
-/* Small utility classes */
 .center{display:flex;align-items:center;justify-content:center}
 .btn{
   display:inline-block;
