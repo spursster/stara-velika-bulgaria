@@ -7,7 +7,14 @@
     "description": "Founding dynasty of the First Bulgarian Empire under Khan Asparuh."
   },
   {
-    "id": "krum",
+    "id": "khan-kubrat",
+    "name": "Dulo/Old Great Bulgaria",
+    "startYear": 632,
+    "endYear": 668,
+    "description": "Predecessor polities and ruling house associated with Kubrat and the Old Great Bulgaria period."
+  },
+  {
+    "id": "khan-krum",
     "name": "Krum Dynasty",
     "startYear": 803,
     "endYear": 814,
@@ -19,5 +26,12 @@
     "startYear": 814,
     "endYear": 831,
     "description": "Consolidation and building projects under Khan Omurtag."
+  },
+  {
+    "id": "boris-michael",
+    "name": "Boris-Michael Era",
+    "startYear": 852,
+    "endYear": 889,
+    "description": "Christianization and major cultural shifts during the reign of Boris I and his successors."
   }
 ]
