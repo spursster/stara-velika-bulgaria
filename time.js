@@ -2,7 +2,14 @@ let currentGameYear = -480; // Началото: Терес I
 let timeSpeed = 1; // Колко години минават на един "ход"
 
 function advanceYear(hero) {
+    if (!hero.isAlive) {
+        alert("Трябва да изберете наследник или да рестартирате!");
+        return;
+      }  
     currentGameYear += timeSpeed;
+
+    // Викаме функцията за стареене
+    handleAging(hero);
     
     // Обновяване на дисплея за годината
     const dateDisplay = document.getElementById('game-date');
