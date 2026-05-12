@@ -16,6 +16,16 @@ function updateCharacterUI(hero) {
     const uiContainer = document.getElementById('character-panel');
     if (!uiContainer) return;
 
+    // Добавяне на списък с божества в интерфейса
+    if (hero.divineUnits.length > 0) {
+        let divineHTML = '<h4>🌟 Божествени покровители:</h4><ul>';
+        hero.divineUnits.forEach(unit => {
+            divineHTML += `<li>${unit.name} (${unit.stats.type}) - Ниво: ${unit.level}</li>`;
+        });
+        divineHTML += '</ul>';
+        uiContainer.innerHTML += divineHTML;
+    }
+
     // Генериране на HTML за инвентара
     let inventoryHTML = '<div class="inventory-grid">';
     
