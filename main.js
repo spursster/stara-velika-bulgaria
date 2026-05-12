@@ -31,7 +31,7 @@
   async function init() {
     try {
       statusEl.textContent = 'Loading dynasties…';
-      const dynUrl = './data/dynasties.json?v=33';
+      const dynUrl = './dynasties.json?v=33';
       const regionsUrl = './data/map_regions.json?v=33';
 
       if (!window.fetchJsonNoCache) {
