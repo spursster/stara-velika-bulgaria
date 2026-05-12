@@ -14,6 +14,19 @@ window.updateCharacterUI = function(hero) {
     const uiContainer = document.getElementById('character-panel');
     if (!uiContainer || !hero) return;
 
+    // Добавяне на секция за Казарми
+    let barracksHTML = `
+        <div class="barracks-section" style="margin-top: 20px; border-top: 1px solid #444; padding-top: 10px;">
+            <h4 style="color: #d4af37;">⚔️ Казарми (Наемане на родове)</h4>
+            <div style="display: flex; flex-direction: column; gap: 5px;">
+                <button onclick="window.handleRecruit('ЛЕКА_ПЕХОТА')" style="font-size: 11px;">Пехота (100🪙)</button>
+                <button onclick="window.handleRecruit('КОННИЦА')" style="font-size: 11px;">Конница (300🪙)</button>
+                <button onclick="window.handleRecruit('СТРЕЛЦИ')" style="font-size: 11px;">Стрелци (150🪙)</button>
+            </div>
+        </div>
+    `;
+    uiContainer.innerHTML += barracksHTML;
+
     let inventoryHTML = '<div class="inventory-grid" style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 5px; margin: 15px 0;">';
     INVENTORY_SLOTS.forEach(slot => {
         const item = hero.inventory[slot.id];
