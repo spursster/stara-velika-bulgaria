@@ -1,5 +1,8 @@
 // data/i18n/i18n.js
-window.I18N = (function () {
+// Надежден I18N shim: винаги дефинира window.I18N и връща безопасни стойности.
+(function (global) {
+  if (global.I18N) return;
+
   const translations = {
     bg: {
       "ui.year": "Година",
@@ -11,9 +14,12 @@ window.I18N = (function () {
       "ui.map": "Карта",
       "ui.unclaimed": "Непретендирани",
       "ui.notifications": "Известия",
-      // примерни имена (можеш да ги разшириш)
+      // примерни династични имена и региони, разширявай при нужда
       "dynasty.dulo": "Дуло",
-      "dynasty.krum": "Крумова династия"
+      "dynasty.krum": "Крумова династия",
+      "region.mizia": "Мизия",
+      "region.thrace": "Тракия",
+      "region.scythia": "Скития"
     },
     en: {
       "ui.year": "Year",
@@ -30,25 +36,40 @@ window.I18N = (function () {
 
   let current = 'bg';
 
-  return {
+  function safeString(v) {
+    if (v === null || v === undefined) return '';
+    return String(v);
+  }
+
+  const I18N = {
     loadLanguage(lang) {
       return new Promise((resolve) => {
         if (!lang) lang = current;
         if (!translations[lang]) lang = 'bg';
         current = lang;
-        // симулираме async зареждане за съвместимост с await
-        setTimeout(() => resolve({ lang: current }), 0);
+        // синхронно задаваме и връщаме promise за съвместимост
+        resolve({ lang: current });
       });
     },
     t(key, fallback) {
+      if (!key) return fallback || '';
       const dict = translations[current] || {};
-      return dict[key] || fallback || key;
+      const val = dict.hasOwnProperty(key) ? dict[key] : (fallback !== undefined ? fallback : key);
+      return safeString(val);
     },
     getCurrent() {
       return current;
     },
     addTranslations(lang, obj) {
       translations[lang] = Object.assign({}, translations[lang] || {}, obj);
+    },
+    // помощна функция за бърз fallback при липсващи ключове
+    ensure(key, defaultText) {
+      if (!translations[current]) translations[current] = {};
+      if (!translations[current].hasOwnProperty(key)) translations[current][key] = defaultText;
+      return translations[current][key];
     }
   };
-})();
+
+  global.I18N = I18N;
+})(window);
