@@ -96,3 +96,13 @@ window.handleMarriageClick = function() {
         window.proposeMarriage(window.currentHero, 'Ромеи'); // За момента тестваме с Ромеите
     }
 };
+
+window.handleRecruit = function(unitKey) {
+    if (window.currentHero) {
+        const msg = window.recruitUnit(window.currentHero, unitKey);
+        const log = document.getElementById('event-log');
+        if (log) {
+            log.innerHTML = `<p><strong>[Армия]</strong> ${msg}</p>` + log.innerHTML;
+        }
+    }
+};
