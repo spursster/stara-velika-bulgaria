@@ -1,3 +1,4 @@
+window.currentHero = null;
 // Регистратор за имената, за да следим повторенията (Точка 2)
 let nameRegistry = {};
 
