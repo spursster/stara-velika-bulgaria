@@ -1,9 +1,9 @@
 // main.js
-// Минимален, безопасен bootstrap за стартиране на UI и диагностика.
-// Замени текущия main.js с този файл, презареди страницата (Ctrl+F5) и провери.
+// Minimal, safe bootstrap to restore UI and allow diagnostics.
+// Replace your current main.js with this, then hard-reload (Ctrl+F5).
 
 (function () {
-  // safety: дефинираме минимални shim-ове ако липсват
+  // Safety shims
   if (!window.I18N) {
     window.I18N = { t: function (k, f) { return f || k || ''; }, loadLanguage: function (l) { return Promise.resolve({lang:l||'bg'}); } };
   }
@@ -11,7 +11,7 @@
     window.Registry = {
       _store: Object.create(null),
       set(k,v){ this._store[k]=v; },
-      get(k){ return this._store.hasOwnProperty(k) ? this._store[k] : undefined; },
+      get(k){ return Object.prototype.hasOwnProperty.call(this._store, k) ? this._store[k] : undefined; },
       on(){ return function(){}; },
       keys(){ return Object.keys(this._store); }
     };
@@ -20,7 +20,7 @@
     window.GameConfig = { startYear: 680 };
   }
 
-  // helper: safe DOM create
+  // Helper to create elements
   function el(tag, props, text) {
     var e = document.createElement(tag);
     if (props) Object.keys(props).forEach(function(k){ e[k]=props[k]; });
@@ -28,7 +28,7 @@
     return e;
   }
 
-  // restore from localStorage if savegame exists (non-destructive)
+  // Restore Registry from localStorage savegame if present (non-destructive)
   try {
     var raw = localStorage.getItem('sv_stara_vb_v1');
     if (raw) {
@@ -44,7 +44,7 @@
     }
   } catch (e) { console.warn('localStorage unavailable', e); }
 
-  // ensure topbar container exists
+  // Ensure required containers exist
   function ensureContainers() {
     if (!document.getElementById('topbar')) {
       var header = el('header', { id: 'topbar', role: 'banner' });
@@ -52,9 +52,9 @@
     }
     if (!document.getElementById('layout')) {
       var layout = el('div', { id: 'layout', role: 'main', style: 'display:flex;height:calc(100% - 48px)' });
-      var left = el('aside', { id: 'panel-left', 'aria-label': 'Ляв панел', style: 'width:260px;background:#ecf0f1;padding:10px;box-sizing:border-box' });
-      var scene = el('section', { id: 'map-scene', 'aria-label': 'Карта и сцена', style: 'flex:1;background:#fff;overflow:hidden;position:relative' });
-      var right = el('aside', { id: 'panel-right', 'aria-label': 'Десен панел', style: 'width:260px;background:#ecf0f1;padding:10px;box-sizing:border-box' });
+      var left = el('aside', { id: 'panel-left', 'aria-label': 'Left panel', style: 'width:260px;background:#ecf0f1;padding:10px;box-sizing:border-box' });
+      var scene = el('section', { id: 'map-scene', 'aria-label': 'Map and scene', style: 'flex:1;background:#fff;overflow:hidden;position:relative' });
+      var right = el('aside', { id: 'panel-right', 'aria-label': 'Right panel', style: 'width:260px;background:#ecf0f1;padding:10px;box-sizing:border-box' });
       layout.appendChild(left);
       layout.appendChild(scene);
       layout.appendChild(right);
@@ -64,7 +64,7 @@
 
   ensureContainers();
 
-  // safe render of topbar if ui_panels/topbar.js failed or missing
+  // Safe topbar render (works if ui_panels/topbar.js failed)
   function safeTopbarRender() {
     try {
       var top = document.getElementById('topbar');
@@ -130,7 +130,6 @@
         window.Registry.set('year', next);
       });
 
-      // listen for registry changes
       if (typeof window.Registry.on === 'function') {
         try {
           window.Registry.on('year', function (v) {
@@ -144,25 +143,19 @@
     }
   }
 
-  // minimal left/right content so page is not empty
+  // Populate simple panel content so page is not empty
   function populatePanels() {
     try {
       var left = document.getElementById('panel-left');
       var right = document.getElementById('panel-right');
       var scene = document.getElementById('map-scene');
-      if (left) {
-        left.innerHTML = '<h3>Династии</h3><div id="dyn-list">Зареждане...</div>';
-      }
-      if (right) {
-        right.innerHTML = '<h3>Информация</h3><div id="info">Няма данни</div>';
-      }
-      if (scene) {
-        scene.innerHTML = '<div style="padding:12px;color:#333">Карта и сцена ще се заредят тук.</div>';
-      }
+      if (left) left.innerHTML = '<h3>Dynasties</h3><div id="dyn-list">Loading...</div>';
+      if (right) right.innerHTML = '<h3>Info</h3><div id="info">No data</div>';
+      if (scene) scene.innerHTML = '<div style="padding:12px;color:#333">Map and scene will load here.</div>';
     } catch (e) { console.error('populatePanels failed', e); }
   }
 
-  // try to load data JSONs (best-effort, non-blocking)
+  // Non-blocking JSON loader
   function tryLoadJSON(url, cb) {
     try {
       fetch(url, {cache: 'no-store'}).then(function (r) {
@@ -179,16 +172,15 @@
     }
   }
 
-  // initialize
+  // Initialize
   try {
     safeTopbarRender();
     populatePanels();
 
-    // non-blocking loads
     tryLoadJSON('data/dynasties.json', function (err, data) {
       var el = document.getElementById('dyn-list');
       if (err) {
-        if (el) el.textContent = 'Неуспешно зареждане на dynasties.json';
+        if (el) el.textContent = 'Failed to load dynasties.json';
         return;
       }
       if (el) {
@@ -204,10 +196,9 @@
     tryLoadJSON('data/map_regions.json', function (err, data) {
       var scene = document.getElementById('map-scene');
       if (err) {
-        if (scene) scene.innerHTML = '<div style="padding:12px;color:#900">Неуспешно зареждане на map_regions.json</div>';
+        if (scene) scene.innerHTML = '<div style="padding:12px;color:#900">Failed to load map_regions.json</div>';
         return;
       }
-      // show simple markers
       if (scene) {
         var wrap = document.createElement('div');
         wrap.style.padding = '12px';
