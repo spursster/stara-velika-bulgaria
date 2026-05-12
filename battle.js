@@ -1,53 +1,37 @@
-// Функция за симулиране на битка
-function simulateBattle(hero, enemyCivName) {
-    const enemy = window.worldCivs[enemyCivName];
-    if (!enemy) return "Непознат враг!";
+window.simulateBattle = function(hero, enemyName) {
+    if (!hero || !hero.isAlive) return;
 
-    console.log(`⚔️ БИТКА: ${hero.name} срещу ${enemyCivName}`);
+    let enemyPower = 200 + (hero.level * 50);
+    let heroPower = hero.armySize + (hero.level * 20);
+    
+    const log = document.getElementById('event-log');
+    let message = "";
 
-    // Изчисляване на силата на врага (базирано на технологичното им ниво)
-    let enemyPower = enemy.techLevel * 50;
-    let heroPower = hero.armySize + (hero.level * 10);
-
-    // Бонус от божествени единици (всяко божество дава огромен бонус)
-    hero.divineUnits.forEach(unit => {
-        heroPower += unit.stats.power * 2;
-    });
-
-    // Резултат от битката
-    let logMessage = "";
     if (heroPower > enemyPower) {
-        const loot = Math.floor(Math.random() * 100);
-        logMessage = `🏆 ПОБЕДА! Легионите на ${hero.name} разгромиха ${enemyCivName}. Плячка: ${loot} злато.`;
-        hero.levelUp(); // Победителите вдигат ниво
-    } else if (heroPower === enemyPower) {
-        logMessage = `🤝 РАВЕНСТВО! Двете армии се оттеглиха с тежки загуби.`;
-    } else {
-
-        if (heroPower > enemyPower) {
-    // ... старата логика за златото ...
-    window.dropRandomLoot(hero); // <--- Добавяме това!
-    hero.levelUp();
-}
-        // Проверка за божествено спасение (Точка 6)
-        if (hero.divineUnits.length > 0) {
-            logMessage = `🛡️ ЗАГУБА, но божествените единици защитиха владетеля от гибел!`;
-        } else {
-            hero.isAlive = false;
-            logMessage = `💀 КАТАСТРОФА! ${hero.name} падна в битка срещу ${enemyCivName}.`;
+        message = `<span style="color: #2ecc71;">⚔️ Победа! Ромеите отстъпиха пред мощта на рода ${hero.dynasty}.</span>`;
+        window.gameGold += 300;
+        
+        // Шанс за завладяване на нов регион
+        const possibleRegions = ["Мизия", "Тракия", "Македония", "Панония"];
+        const unowned = possibleRegions.filter(r => !window.playerRegions.includes(r));
+        
+        if (unowned.length > 0 && Math.random() > 0.5) {
+            const newReg = unowned[Math.floor(Math.random() * unowned.length)];
+            window.captureRegion(hero, newReg);
         }
+        
+        // Шанс за плячка (артефакт)
+        if (typeof window.dropRandomLoot === 'function') {
+            window.dropRandomLoot(hero);
+        }
+    } else {
+        message = `<span style="color: #e74c3c;">⚔️ Поражение! Твоята войска бе разбита от ромейските легиони.</span>`;
+        hero.armySize = Math.floor(hero.armySize * 0.5);
     }
 
-    // Обновяване на събитията в интерфейса
-    const eventLog = document.getElementById('event-log');
-    if (eventLog) {
-        const newEvent = document.createElement('p');
-        newEvent.innerHTML = `<strong>[Година ${window.gameYear || ''}]</strong> ${logMessage}`;
-        eventLog.prepend(newEvent);
+    if (log) {
+        log.innerHTML = `<div style="border-bottom: 1px solid #444; padding: 5px;">${message}</div>` + log.innerHTML;
     }
-
-    updateCharacterUI(hero);
-    return logMessage;
-}
-
-window.simulateBattle = simulateBattle;
+    
+    window.updateCharacterUI(hero);
+};
