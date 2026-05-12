@@ -2,64 +2,34 @@
 <html lang="bg">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Стара Велика България - Империята на Българите</title>
+    <title>Стара Велика България</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-
     <div id="game-container">
-        <!-- Ляво: Карта и събития -->
         <div id="main-view">
             <header>
-                <h1>💡 Одриско царство - Начало</h1>
+                <h1 id="game-title">💡 Велика България</h1>
                 <p id="game-date">Година: 480 пр.н.е.</p>
             </header>
-            
-            <div id="world-map">
-                <!-- Тук ще се визуализира картата -->
-                <p>Изследване на териториите...</p>
-            </div>
-
-            <div id="event-log">
-                <p>ℹ️ Добре дошли, Владетелю. Твоят род започва своя път.</p>
-            </div>
+            <div id="world-map"> КАРТА </div>
+            <div id="event-log">ℹ️ Добре дошли, Владетелю.</div>
         </div>
-
-        <!-- Дясно: Панел на владетеля и Инвентар -->
-        <aside id="character-panel">
-            <!-- Този контейнер се пълни динамично от ui.js -->
-            <p>Зареждане на владетел...</p>
-        </aside>
+        <aside id="character-panel"> Зареждане... </aside>
     </div>
 
-    <!-- Зареждане на скриптовете в правилната последователност -->
-     <!-- Добави това преди останалите скриптове -->
-     <!-- Увери се, че редът е ТОЧНО този, за да работят зависимостите -->
-<script src="world_data.js"></script>
-<script src="database.js"></script>
-<script src="items.js"></script>
-<script src="logic.js"></script>
-<script src="ui.js"></script>
-<script src="time.js"></script>
-<script src="battle.js"></script>
-    
+    <script src="world_data.js"></script>
+    <script src="database.js"></script>
+    <script src="items.js"></script>
+    <script src="logic.js"></script>
+    <script src="ui.js"></script>
+    <script src="time.js"></script>
+    <script src="battle.js"></script>
 
     <script>
-        // Стартиране на играта с първия владетел
         window.onload = () => {
-            // Създаваме Терес I от Одриската династия (от базата данни)
-            const startHero = new Character("Терес", "Одриси");
-            
-            // Визуализираме го в интерфейса
-            updateCharacterUI(startHero);
-            
-            // Глобална функция за тестване на Level Up от бутона
-            window.levelUpCurrentHero = () => {
-                startHero.levelUp();
-                updateCharacterUI(startHero);
-                console.log("Нивото е вдигнато!");
-            };
+            window.currentHero = new Character("Терес", "Одриси");
+            updateCharacterUI(window.currentHero);
         };
     </script>
 </body>
