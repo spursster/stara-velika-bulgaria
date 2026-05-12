@@ -78,3 +78,8 @@ window.handleRitualClick = function() {
         window.updateCharacterUI(window.currentHero);
     }
 };
+window.handleMarriageClick = function() {
+    if (window.currentHero) {
+        window.proposeMarriage(window.currentHero, 'Ромеи'); // За момента тестваме с Ромеите
+    }
+};
