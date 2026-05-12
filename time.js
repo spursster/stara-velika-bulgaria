@@ -3,6 +3,8 @@ window.currentGameYear = -480;
 function advanceYear(hero) {
     if (!hero || !hero.isAlive) return;
     window.currentGameYear += 1;
+    let netIncome = window.calculateYearlyIncome(hero);
+    window.updateGoldDisplay();
     window.handleAging(hero);
     
     const dateDisplay = document.getElementById('game-date');
