@@ -113,3 +113,57 @@ function calculateDamage(attacker, defender) {
     let baseDamage = attacker.armySize || attacker.power || 10;
     return baseDamage;
 }
+
+// Глобална променлива за текущия активен владетел
+window.currentHero = null;
+
+// Разширяваме класа Character с нови свойства за възраст
+// (Провери дали в конструктора на Character в твоя logic.js имаш тези редове, ако не - добави ги)
+/*
+    this.age = 20; 
+    this.maxAge = 60 + Math.floor(Math.random() * 40); // Всеки живее различно (60-100г.)
+*/
+
+function handleAging(hero) {
+    if (!hero.isAlive) return;
+
+    hero.age += 1; // Всяко натискане на "Следваща година" добавя възраст
+
+    // Проверка за естествена смърт
+    if (hero.age >= hero.maxAge) {
+        hero.isAlive = false;
+        const log = document.getElementById('event-log');
+        if (log) {
+            const p = document.createElement('p');
+            p.innerHTML = `💀 <strong>Владетелят ${hero.name} почина на ${hero.age} години.</strong>`;
+            log.prepend(p);
+        }
+        processInheritance(hero);
+    }
+}
+
+function processInheritance(oldHero) {
+    let newHeroName = oldHero.name.split(' ')[0]; // Взимаме само името без цифрата
+    let dynasty = oldHero.dynasty;
+
+    // Създаваме новия наследник (Точка 2 - Автоматично ще стане "Име II", "Име III" и т.н.)
+    const successor = new Character(newHeroName, dynasty);
+    
+    // Наследникът получава част от опита и армията на баща си
+    successor.level = Math.max(1, Math.floor(oldHero.level / 2));
+    successor.armySize = Math.floor(oldHero.armySize * 0.8);
+    
+    // Прехвърляне на инвентара (Семейни реликви)
+    successor.inventory = { ...oldHero.inventory };
+
+    window.currentHero = successor;
+    
+    const log = document.getElementById('event-log');
+    if (log) {
+        const p = document.createElement('p');
+        p.innerHTML = `👑 <strong>Да живее ${successor.name}! Новият владетел пое престола.</strong>`;
+        log.prepend(p);
+    }
+
+    updateCharacterUI(successor);
+}
