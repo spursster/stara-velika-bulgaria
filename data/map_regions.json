@@ -1,17 +1,19 @@
 [
   {
-    "id": "moesia",
+    "id": 1,
+    "key": "mizia",
     "name": "Мизия",
-    "owner": "dulo"
+    "coords": [120, 210],
+    "color": "#2980b9",
+    "meta": { "population": 0 }
   },
   {
-    "id": "thracia",
+    "id": 2,
+    "key": "thrace",
     "name": "Тракия",
-    "owner": "krum"
-  },
-  {
-    "id": "scythia",
-    "name": "Скития",
-    "owner": null
+    "coords": [320, 410],
+    "color": "#f39c12",
+    "meta": { "population": 0 }
   }
 ]
+
