@@ -71,3 +71,45 @@ class Character {
 
 // Експортиране или глобално дефиниране за браузъра
 window.Character = Character;
+
+// Дефиниция на Божествените единици (Точка 6)
+const divineBeings = {
+    "Тангра": { type: "Небесен дух", power: 100, isDivine: true },
+    "Бендида": { type: "Велика богиня", power: 85, isDivine: true },
+    "Залмоксис": { type: "Безсмъртен пророк", power: 90, isDivine: true },
+    "Сабазий": { type: "Небесен конник", power: 80, isDivine: true }
+};
+
+// Функция за Ритуал на древните богове
+function performAncientRitual(hero) {
+    if (hero.level < 10) {
+        return "ℹ️ Твоето ниво е твърде ниско за такъв мощен ритуал. Трябва ти ниво 10.";
+    }
+
+    const deityNames = Object.keys(divineBeings);
+    const chosenDeityName = deityNames[Math.floor(Math.random() * deityNames.length)];
+    const deityData = divineBeings[chosenDeityName];
+
+    // Създаваме обекта на божеството
+    const deityInstance = {
+        name: chosenDeityName,
+        level: 1,
+        stats: deityData,
+        experience: 0
+    };
+
+    hero.divineUnits.push(deityInstance);
+    return `💡 РИТУАЛЪТ Е УСПЕШЕН! ${chosenDeityName} се присъедини към твоите легиони!`;
+}
+
+// Бойна логика за щети (Механика на неуязвимост)
+function calculateDamage(attacker, defender) {
+    // Ако защитникът е Божество, а атакуващият не е Легендарен или друго Божество
+    if (defender.isDivine && !attacker.isLegendary && !attacker.isDivine) {
+        console.log("🛡️ Атаката премина през божеството без да го нарани!");
+        return 0; // Пълна неуязвимост
+    }
+    
+    let baseDamage = attacker.armySize || attacker.power || 10;
+    return baseDamage;
+}
