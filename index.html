@@ -31,5 +31,52 @@
 
     <script src="main.js"></script>
 
+    <!-- debug overlay: показва JS грешки директно в страницата -->
+<style id="debug-style">
+  #debug-overlay{position:fixed;left:0;right:0;bottom:0;max-height:40vh;overflow:auto;background:rgba(0,0,0,0.9);color:#fff;font-family:monospace;padding:10px;z-index:99999;font-size:13px}
+  #debug-overlay h4{margin:0 0 6px 0;font-weight:700}
+  #debug-overlay pre{white-space:pre-wrap;margin:0}
+</style>
+
+<div id="debug-overlay" aria-hidden="false" role="status" style="display:none">
+  <h4>JavaScript Errors</h4>
+  <pre id="debug-log">Няма логове още</pre>
+</div>
+
+<script>
+  (function () {
+    const overlay = document.getElementById('debug-overlay');
+    const logEl = document.getElementById('debug-log');
+
+    function show(msg) {
+      overlay.style.display = 'block';
+      logEl.textContent = (logEl.textContent === 'Няма логове още' ? '' : logEl.textContent + '\n\n') + msg;
+    }
+
+    window.addEventListener('error', function (e) {
+      const msg = 'Error: ' + (e.message || e.error) + '\\nFile: ' + (e.filename || 'unknown') + ':' + (e.lineno || '?') + '\\nStack: ' + (e.error && e.error.stack ? e.error.stack : 'no stack');
+      show(msg);
+    });
+
+    window.addEventListener('unhandledrejection', function (e) {
+      const reason = e.reason && e.reason.stack ? e.reason.stack : JSON.stringify(e.reason);
+      show('Unhandled Rejection: ' + reason);
+    });
+
+    // прихваща console.error
+    const origConsoleError = console.error;
+    console.error = function () {
+      try {
+        const args = Array.from(arguments).map(a => (typeof a === 'object' ? JSON.stringify(a) : String(a))).join(' ');
+        show('Console.error: ' + args);
+      } catch (err) {
+        show('Console.error (failed to stringify)');
+      }
+      origConsoleError.apply(console, arguments);
+    };
+  })();
+</script>
+
+
 </body>
 </html>
