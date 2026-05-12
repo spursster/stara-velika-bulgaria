@@ -1,18 +1,57 @@
-[
-  {
-    "id": 1,
-    "key": "dulo",
-    "name": "Дуло",
-    "startYear": 680,
-    "color": "#c0392b",
-    "description": "Тестова династия за демонстрация"
-  },
-  {
-    "id": 2,
-    "key": "krum",
-    "name": "Крумова династия",
-    "startYear": 803,
-    "color": "#27ae60",
-    "description": "Примерна династия"
+// ui_panels/dynasties_panel.js
+// Safe, clean, compatible with new Registry + main.js
+
+(function () {
+  const panel = document.getElementById('panel-left');
+  if (!panel) return;
+
+  function renderLoading() {
+    panel.innerHTML = `
+      <h3>Dynasties</h3>
+      <div id="dyn-list">Loading...</div>
+    `;
   }
-]
+
+  function renderError() {
+    panel.innerHTML = `
+      <h3>Dynasties</h3>
+      <div id="dyn-list" style="color:#900">Failed to load dynasties.json</div>
+    `;
+  }
+
+  function renderList(list) {
+    panel.innerHTML = `
+      <h3>Dynasties</h3>
+      <div id="dyn-list"></div>
+    `;
+    const container = document.getElementById('dyn-list');
+
+    if (!list || !Array.isArray(list) || list.length === 0) {
+      container.textContent = "No dynasties found";
+      return;
+    }
+
+    list.forEach(d => {
+      const item = document.createElement('div');
+      item.style.marginBottom = "6px";
+      item.textContent = `${d.name || d.key || "—"} (${d.startYear || "-"})`;
+      container.appendChild(item);
+    });
+  }
+
+  // Initial render
+  renderLoading();
+
+  // Load JSON
+  fetch("data/dynasties.json", { cache: "no-store" })
+    .then(r => {
+      if (!r.ok) throw new Error("HTTP " + r.status);
+      return r.json();
+    })
+    .then(json => renderList(json))
+    .catch(err => {
+      console.error("Error loading dynasties.json:", err);
+      renderError();
+    });
+
+})();
