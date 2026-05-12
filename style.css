@@ -1,0 +1,122 @@
+/* Основен дизайн и цветове */
+body {
+    margin: 0;
+    padding: 0;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background-color: #1a1a1a;
+    color: #e0e0e0;
+    display: flex;
+    justify-content: center;
+    height: 100vh;
+}
+
+#game-container {
+    display: grid;
+    grid-template-columns: 2fr 1fr; /* 2 части за картата, 1 част за героя */
+    width: 100%;
+    max-width: 1400px;
+    background-color: #262626;
+    border: 2px solid #444;
+}
+
+/* Лява част: Карта и история */
+#main-view {
+    padding: 20px;
+    border-right: 2px solid #444;
+    display: flex;
+    flex-direction: column;
+}
+
+header h1 {
+    color: #d4af37; /* Златист цвят за титлите */
+    margin: 0;
+}
+
+#world-map {
+    flex-grow: 1;
+    background-color: #0d0d0d;
+    border: 1px solid #d4af37;
+    margin: 20px 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-image: url('assets/map_placeholder.png'); /* По-късно ще добавим истинска карта */
+    background-size: cover;
+}
+
+#event-log {
+    height: 150px;
+    background: #111;
+    padding: 10px;
+    border: 1px solid #333;
+    overflow-y: auto;
+    font-style: italic;
+}
+
+/* Дясна част: Панел на владетеля */
+#character-panel {
+    padding: 20px;
+    background-color: #2d2d2d;
+}
+
+.hero-header {
+    text-align: center;
+    border-bottom: 1px solid #d4af37;
+    padding-bottom: 10px;
+}
+
+/* Мрежата за 9-те слота на инвентара (Heroes III стил) */
+.inventory-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr); /* 3 колони */
+    gap: 10px;
+    margin-top: 20px;
+}
+
+.inventory-slot {
+    aspect-ratio: 1 / 1;
+    background-color: #3d3d3d;
+    border: 1px solid #555;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.7rem;
+    cursor: pointer;
+    transition: background 0.3s;
+}
+
+.inventory-slot:hover {
+    background-color: #4d4d4d;
+    border-color: #d4af37;
+}
+
+.slot-label {
+    color: #888;
+    margin-bottom: 5px;
+}
+
+.item-visual {
+    color: #fff;
+    font-weight: bold;
+}
+
+/* Бутони */
+.actions {
+    margin-top: 30px;
+    text-align: center;
+}
+
+button {
+    background-color: #d4af37;
+    color: #000;
+    border: none;
+    padding: 10px 20px;
+    font-weight: bold;
+    cursor: pointer;
+    border-radius: 3px;
+}
+
+button:hover {
+    background-color: #f1c40f;
+}
