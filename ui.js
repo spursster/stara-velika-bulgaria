@@ -41,25 +41,72 @@ function updateCharacterUI(hero) {
     
     inventoryHTML += '</div>';
 
-    // Попълване на целия панел с информация за владетеля
+   // Основна функция за визуализиране на панела на персонажа
+function updateCharacterUI(hero) {
+    const uiContainer = document.getElementById('character-panel');
+    if (!uiContainer) return;
+
+    window.currentHero = hero; // Подсигуряваме, че текущият герой е достъпен глобално
+
+    let inventoryHTML = '<div class="inventory-grid">';
+    INVENTORY_SLOTS.forEach(slot => {
+        const item = hero.inventory[slot.id];
+        inventoryHTML += `
+            <div class="inventory-slot" id="slot-${slot.id}">
+                <span class="slot-label">${slot.label}</span>
+                <div class="item-visual">${item ? item.name : '---'}</div>
+            </div>
+        `;
+    });
+    inventoryHTML += '</div>';
+
     uiContainer.innerHTML = `
         <div class="hero-header">
             <h2>${hero.name}</h2>
-            <p>Династия: ${hero.dynasty}</p>
-            <p>Ранг на войската: <strong>${hero.armyRank}</strong> (${hero.armySize} воини)</p>
+            <p>Династия: <strong>${hero.dynasty}</strong></p>
+            <p>Възраст: ${hero.age} г. / Макс: ${hero.maxAge} г.</p>
+            <p>Войска: <strong>${hero.armyRank}</strong> (${hero.armySize} души)</p>
             <p>Ниво: ${hero.level}</p>
         </div>
-        <hr>
-        <h4>Инвентар (Heroes III стил)</h4>
-        ${inventoryHTML}
-        <div class="actions">
-            <button onclick="levelUpCurrentHero()">Тренировка (Level Up)</button>
-            
-           <button onclick="advanceYear(window.currentHero)">⌛ Следваща година</button>
-            
-            <button onclick="simulateBattle(window.currentHero, 'Ромеи')">⚔️ Нападни Ромеите</button>
+        
+        <div class="inventory-section">
+            <h4>🛡️ Инвентар (9 слота)</h4>
+            ${inventoryHTML}
+        </div>
+
+        <div class="actions-grid">
+            <h4>📜 Управление</h4>
+            <button onclick="advanceYear(window.currentHero)">⌛ Следваща година</button>
+            <button onclick="levelUpCurrentHero()">🏋️ Тренировка</button>
+            <button onclick="handleBattleClick()">⚔️ Нападни Ромеите</button>
+            <button onclick="handleRitualClick()">🔥 Древен Ритуал</button>
         </div>
     `;
+
+    // Показване на божествата, ако има такива
+    if (hero.divineUnits && hero.divineUnits.length > 0) {
+        let divineHTML = '<div class="divine-section"><h4>🌟 Божества:</h4><ul>';
+        hero.divineUnits.forEach(unit => {
+            divineHTML += `<li>${unit.name} - ${unit.stats.type}</li>`;
+        });
+        divineHTML += '</ul></div>';
+        uiContainer.innerHTML += divineHTML;
+    }
+}
+
+// Помощни функции за бутоните, за да не се обърква кода
+function handleBattleClick() {
+    if (window.currentHero) {
+        window.simulateBattle(window.currentHero, 'Ромеи');
+    }
+}
+
+function handleRitualClick() {
+    if (window.currentHero) {
+        const result = window.performAncientRitual(window.currentHero);
+        alert(result);
+        updateCharacterUI(window.currentHero);
+    }
 }
 
 // Функция за обработка на клик върху слот
