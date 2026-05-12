@@ -11,6 +11,7 @@
     #layout{display:flex;height:calc(100% - 48px)}
     #panel-left,#panel-right{width:260px;background:#ecf0f1;overflow:auto;padding:10px;box-sizing:border-box}
     #map-scene{flex:1;background:#fff;overflow:hidden;position:relative}
+    .topbar-btn{font-size:13px}
   </style>
 </head>
 <body>
@@ -45,19 +46,21 @@
       }
 
       window.addEventListener('error', function (e) {
-        const msg = 'Error: ' + (e.message || e.error) + '\\nFile: ' + (e.filename || 'unknown') + ':' + (e.lineno || '?') + '\\nStack: ' + (e.error && e.error.stack ? e.error.stack : 'no stack');
+        const msg = 'Error: ' + (e.message || e.error) + '\nFile: ' + (e.filename || 'unknown') + ':' + (e.lineno || '?') + '\nStack: ' + (e.error && e.error.stack ? e.error.stack : 'no stack');
         show(msg);
       });
 
       window.addEventListener('unhandledrejection', function (e) {
-        const reason = e.reason && e.reason.stack ? e.reason.stack : JSON.stringify(e.reason);
+        const reason = e.reason && e.reason.stack ? e.reason.stack : (typeof e.reason === 'object' ? JSON.stringify(e.reason) : String(e.reason));
         show('Unhandled Rejection: ' + reason);
       });
 
       const origConsoleError = console.error;
       console.error = function () {
         try {
-          const args = Array.from(arguments).map(a => (typeof a === 'object' ? JSON.stringify(a) : String(a))).join(' ');
+          const args = Array.from(arguments).map(a => {
+            try { return (typeof a === 'object' ? JSON.stringify(a) : String(a)); } catch (e) { return String(a); }
+          }).join(' ');
           show('Console.error: ' + args);
         } catch (err) {
           show('Console.error (failed to stringify)');
@@ -73,12 +76,12 @@
   <script src="data/gameconfig.js"></script>
   <script src="lib/utils.js"></script>
 
+  <!-- UI панели (трябва да се зареждат след registry и i18n) -->
   <script src="ui_panels/topbar.js"></script>
   <script src="ui_panels/dynasties_panel.js"></script>
   <script src="ui_panels/map_scene.js"></script>
   <script src="ui_panels/notifications_panel.js"></script>
 
+  <!-- assets и bootstrap преди main -->
   <script src="lib/assets_loader.js"></script>
-  <script src="main.js"></script>
-</body>
-</html>
+  <script src="data/bootstrap.js">
