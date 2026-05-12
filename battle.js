@@ -23,6 +23,12 @@ function simulateBattle(hero, enemyCivName) {
     } else if (heroPower === enemyPower) {
         logMessage = `🤝 РАВЕНСТВО! Двете армии се оттеглиха с тежки загуби.`;
     } else {
+
+        if (heroPower > enemyPower) {
+    // ... старата логика за златото ...
+    window.dropRandomLoot(hero); // <--- Добавяме това!
+    hero.levelUp();
+}
         // Проверка за божествено спасение (Точка 6)
         if (hero.divineUnits.length > 0) {
             logMessage = `🛡️ ЗАГУБА, но божествените единици защитиха владетеля от гибел!`;
