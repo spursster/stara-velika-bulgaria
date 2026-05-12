@@ -1,0 +1,99 @@
+/* Basic styles for Stara Velika Bulgaria */
+:root{
+  --bg:#f7f7f7;
+  --card:#ffffff;
+  --muted:#666;
+  --accent:#7a5cfa;
+  --gap:16px;
+  --radius:8px;
+  --max-width:980px;
+  --font-sans: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+}
+
+*{box-sizing:border-box}
+html,body{height:100%}
+body{
+  margin:0;
+  font-family:var(--font-sans);
+  background:linear-gradient(180deg,#fbfcff 0%,var(--bg) 100%);
+  color:#222;
+  -webkit-font-smoothing:antialiased;
+  -moz-osx-font-smoothing:grayscale;
+  padding:24px;
+  display:flex;
+  justify-content:center;
+  align-items:flex-start;
+}
+
+#app{
+  width:100%;
+  max-width:var(--max-width);
+  background:var(--card);
+  border-radius:var(--radius);
+  box-shadow:0 6px 20px rgba(30,30,60,0.08);
+  padding:24px;
+  margin-bottom:24px;
+}
+
+h1{
+  margin:0 0 8px 0;
+  font-size:1.6rem;
+  letter-spacing:0.2px;
+}
+
+#status{
+  color:var(--muted);
+  font-size:0.95rem;
+  margin-bottom:12px;
+}
+
+#content h2{
+  margin-top:18px;
+  margin-bottom:8px;
+  font-size:1.05rem;
+  color:#111;
+}
+
+ul{
+  margin:0 0 var(--gap) 18px;
+  padding:0;
+  color:#222;
+}
+
+li{
+  margin:6px 0;
+  line-height:1.4;
+}
+
+/* Responsive layout for lists */
+@media (min-width:720px){
+  #content{
+    display:flex;
+    gap:24px;
+    align-items:flex-start;
+  }
+  #content > div{
+    flex:1 1 0;
+  }
+}
+
+/* Small utility classes */
+.center{display:flex;align-items:center;justify-content:center}
+.btn{
+  display:inline-block;
+  padding:8px 12px;
+  border-radius:6px;
+  background:var(--accent);
+  color:#fff;
+  text-decoration:none;
+  font-weight:600;
+  border:none;
+  cursor:pointer;
+}
+.small{font-size:0.9rem;color:var(--muted)}
+.footer{
+  margin-top:18px;
+  font-size:0.85rem;
+  color:var(--muted);
+  text-align:right;
+}
