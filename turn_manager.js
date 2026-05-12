@@ -14,3 +14,4 @@ window.TurnManager = (function () {
 
   return { nextTurn };
 })();
+<script src="main.js?v=12"></script>
