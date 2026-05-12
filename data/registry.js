@@ -1,71 +1,77 @@
 // data/registry.js
-// Прост, надежден глобален Registry за споделяне на данни между модули.
-// Поддържа set/get/has/remove/clear и възможност за слушатели (optional).
+// Reliable global Registry with get/set/on/keys and basic safety.
 (function (global) {
-  if (global.Registry) return; // ако вече е дефиниран, не презаписваме
+  if (global.Registry && typeof global.Registry.get === 'function') return;
 
-  const store = Object.create(null);
-  const listeners = Object.create(null);
-
-  function notify(key, value) {
-    const list = listeners[key];
-    if (!list) return;
-    for (let i = 0; i < list.length; i++) {
-      try { list[i](value); } catch (e) { console.error('Registry listener error', e); }
-    }
+  function createEmitter() {
+    const listeners = Object.create(null);
+    return {
+      on(key, fn) {
+        if (typeof key === 'function') {
+          fn = key; key = '__all__';
+        }
+        listeners[key] = listeners[key] || [];
+        listeners[key].push(fn);
+        return function off() {
+          const arr = listeners[key];
+          if (!arr) return;
+          const idx = arr.indexOf(fn);
+          if (idx >= 0) arr.splice(idx, 1);
+        };
+      },
+      emit(key, value) {
+        (listeners[key] || []).slice().forEach(fn => {
+          try { fn(value); } catch (e) { console.error('Registry listener error', e); }
+        });
+        (listeners['__all__'] || []).slice().forEach(fn => {
+          try { fn(key, value); } catch (e) { console.error('Registry global listener error', e); }
+        });
+      }
+    };
   }
+
+  const emitter = createEmitter();
+  const store = Object.create(null);
 
   const Registry = {
     set(key, value) {
-      store[key] = value;
-      notify(key, value);
-      return value;
-    },
-    get(key, defaultValue) {
-      return Object.prototype.hasOwnProperty.call(store, key) ? store[key] : defaultValue;
-    },
-    has(key) {
-      return Object.prototype.hasOwnProperty.call(store, key);
-    },
-    remove(key) {
-      if (Object.prototype.hasOwnProperty.call(store, key)) {
-        delete store[key];
-        notify(key, undefined);
-        return true;
+      try {
+        store[key] = value;
+        emitter.emit(key, value);
+      } catch (e) {
+        console.error('Registry.set failed', e);
       }
-      return false;
     },
-    clear() {
-      for (const k in store) if (Object.prototype.hasOwnProperty.call(store, k)) delete store[k];
+    get(key) {
+      try {
+        return Object.prototype.hasOwnProperty.call(store, key) ? store[key] : undefined;
+      } catch (e) {
+        console.error('Registry.get failed', e);
+        return undefined;
+      }
+    },
+    on(key, fn) {
+      if (typeof key === 'string' || typeof key === 'number') {
+        return emitter.on(String(key), fn);
+      }
+      return emitter.on(key);
     },
     keys() {
-      return Object.keys(store);
+      try { return Object.keys(store); } catch (e) { return []; }
     },
-    // Слушатели: useful за асинхронно зареждане на данни
-    on(key, fn) {
-      if (typeof fn !== 'function') return;
-      listeners[key] = listeners[key] || [];
-      listeners[key].push(fn);
-      // ако вече има стойност, извикваме веднага
-      if (Object.prototype.hasOwnProperty.call(store, key)) {
-        try { fn(store[key]); } catch (e) { console.error('Registry listener error', e); }
-      }
-      return function off() {
-        const arr = listeners[key];
-        if (!arr) return;
-        const idx = arr.indexOf(fn);
-        if (idx >= 0) arr.splice(idx, 1);
-      };
-    },
-    off(key, fn) {
-      const arr = listeners[key];
-      if (!arr) return false;
-      const idx = arr.indexOf(fn);
-      if (idx >= 0) { arr.splice(idx, 1); return true; }
-      return false;
+    dump() {
+      try { return JSON.parse(JSON.stringify(store)); } catch (e) { return Object.assign({}, store); }
     }
   };
 
-  // Експонираме глобално
+  // Load any initial registry snapshot if provided
+  try {
+    if (global.__INITIAL_REGISTRY && typeof global.__INITIAL_REGISTRY === 'object') {
+      Object.keys(global.__INITIAL_REGISTRY).forEach(k => {
+        Registry.set(k, global.__INITIAL_REGISTRY[k]);
+      });
+    }
+  } catch (e) { /* ignore */ }
+
   global.Registry = Registry;
 })(window);
