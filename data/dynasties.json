@@ -1,14 +1,18 @@
 [
   {
-    "id": "dulo",
+    "id": 1,
+    "key": "dulo",
     "name": "Дуло",
-    "crest": "https://raw.githubusercontent.com/spursster/stara-velika-bulgaria/main/assets/crests/dulo.png",
-    "rulers": ["avitochol", "irnik"]
+    "startYear": 680,
+    "color": "#c0392b",
+    "description": "Тестова династия за демонстрация"
   },
   {
-    "id": "krum",
+    "id": 2,
+    "key": "krum",
     "name": "Крумова династия",
-    "crest": "https://raw.githubusercontent.com/spursster/stara-velika-bulgaria/main/assets/crests/krum.png",
-    "rulers": ["krum", "omurtag"]
+    "startYear": 803,
+    "color": "#27ae60",
+    "description": "Примерна династия"
   }
 ]
