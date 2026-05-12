@@ -1,19 +1,29 @@
-[
-  {
-    "id": 1,
-    "key": "mizia",
-    "name": "Мизия",
-    "coords": [120, 210],
-    "color": "#2980b9",
-    "meta": { "population": 0 }
-  },
-  {
-    "id": 2,
-    "key": "thrace",
-    "name": "Тракия",
-    "coords": [320, 410],
-    "color": "#f39c12",
-    "meta": { "population": 0 }
-  }
-]
-
+{
+  "version": 1,
+  "regions": [
+    {
+      "id": "region-1",
+      "name": "Danubian Plain",
+      "properties": {
+        "type": "plain",
+        "color": "#cfe8a9"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[[25.0,44.0],[26.0,44.0],[26.0,43.0],[25.0,43.0],[25.0,44.0]]]
+      }
+    },
+    {
+      "id": "region-2",
+      "name": "Balkan Mountains",
+      "properties": {
+        "type": "mountain",
+        "color": "#d9d0c1"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[[24.0,43.5],[25.0,43.5],[25.0,42.5],[24.0,42.5],[24.0,43.5]]]
+      }
+    }
+  ]
+}
