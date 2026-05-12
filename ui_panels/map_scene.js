@@ -1,5 +1,5 @@
 // ui_panels/map_scene.js
-// Safe, minimal map panel compatible with new main.js
+// Safe, versioned, compatible with new main.js + index.html
 
 (function () {
   const scene = document.getElementById('map-scene');
@@ -41,8 +41,8 @@
   // Initial
   renderLoading();
 
-  // Load JSON
-  fetch("data/map_regions.json", { cache: "no-store" })
+  // Load JSON with versioning to bypass GitHub cache
+  fetch("data/map_regions.json?v=33", { cache: "no-store" })
     .then(r => {
       if (!r.ok) throw new Error("HTTP " + r.status);
       return r.json();
