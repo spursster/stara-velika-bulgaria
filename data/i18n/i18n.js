@@ -2,17 +2,29 @@
 window.I18N = (function () {
   const translations = {
     bg: {
-      "topbar.year": "Година",
-      "topbar.new_game": "Нова игра",
-      "topbar.save": "Запази",
-      "topbar.next_turn": "Следващ ход"
-      // добави още ключове, ако имаш нужда
+      "ui.year": "Година",
+      "ui.newGame": "Нова игра",
+      "ui.save": "Запази",
+      "ui.nextTurn": "Следващ ход",
+      "ui.dynasties": "Династии",
+      "ui.rulers": "Владетели",
+      "ui.map": "Карта",
+      "ui.unclaimed": "Непретендирани",
+      "ui.notifications": "Известия",
+      // примерни имена (можеш да ги разшириш)
+      "dynasty.dulo": "Дуло",
+      "dynasty.krum": "Крумова династия"
     },
     en: {
-      "topbar.year": "Year",
-      "topbar.new_game": "New Game",
-      "topbar.save": "Save",
-      "topbar.next_turn": "Next Turn"
+      "ui.year": "Year",
+      "ui.newGame": "New Game",
+      "ui.save": "Save",
+      "ui.nextTurn": "Next Turn",
+      "ui.dynasties": "Dynasties",
+      "ui.rulers": "Rulers",
+      "ui.map": "Map",
+      "ui.unclaimed": "Unclaimed",
+      "ui.notifications": "Notifications"
     }
   };
 
@@ -22,10 +34,9 @@ window.I18N = (function () {
     loadLanguage(lang) {
       return new Promise((resolve) => {
         if (!lang) lang = current;
-        // ако нямаш превод за езика, fallback на bg
         if (!translations[lang]) lang = 'bg';
         current = lang;
-        // симулираме async зареждане (съвместим с await в main.js)
+        // симулираме async зареждане за съвместимост с await
         setTimeout(() => resolve({ lang: current }), 0);
       });
     },
@@ -36,7 +47,6 @@ window.I18N = (function () {
     getCurrent() {
       return current;
     },
-    // помощна функция за добавяне/разширяване на преводи
     addTranslations(lang, obj) {
       translations[lang] = Object.assign({}, translations[lang] || {}, obj);
     }
