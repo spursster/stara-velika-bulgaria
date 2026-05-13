@@ -2,6 +2,7 @@
  * МОДУЛ: ГЛАВНА ЛОГИКА - Велика България
  */
 window.initNewGame = function() {
+    // Начални данни за Кан-а, съобразени с античността
     window.currentHero = {
         name: "Аспарух",
         dynasty: "Дуло",
@@ -10,7 +11,9 @@ window.initNewGame = function() {
         heroPower: 100
     };
 
-    window.gameTime = { year: 681, seasonIndex: 0 };
+    // ФИКС: Синхронизация с датата от index.html
+    window.gameTime = { year: 480, seasonIndex: 0, era: "пр.н.е." };
+    
     window.playerRegions = ["Долна Мизия"];
     window.currentSpouse = null;
     window.playerInventory = [];
@@ -18,9 +21,11 @@ window.initNewGame = function() {
     // Първо зареждаме данните, после UI
     if (window.initDiplomacy) window.initDiplomacy();
     if (window.updateCharacterUI) window.updateCharacterUI(window.currentHero);
+    
+    // Обновяване на времето веднага при старт
     if (window.updateTimeUI) window.updateTimeUI();
     
-    window.logEvent(`Кан ${window.currentHero.name} започна своето управление!`, "royal");
+    window.logEvent(`Кан ${window.currentHero.name} започна своето управление в античните земи!`, "royal");
 };
 
 /**
