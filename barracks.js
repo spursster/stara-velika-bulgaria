@@ -1,67 +1,96 @@
-const unitTypes = {
-    "ЛЕКА_ПЕХОТА": { 
-        name: { bg: "Леки пехотинци", en: "Light Infantry", ru: "Легкая пехота" }, 
-        cost: 100, 
-        power: 15, 
-        description: { 
-            bg: "Бързи и евтини за поддръжка.", 
-            en: "Fast and cheap to maintain.", 
-            ru: "Быстрые и дешевые в обслуживании." 
-        } 
+/**
+ * МОДУЛ: КАЗАРМА И ВОЕННИ ЕДИНИЦИ
+ * Управлява типовете войски и техните сезонни бонуси.
+ */
+
+window.unitTypes = {
+    "пехота": {
+        nameBG: "Тежка Пехота",
+        nameUS: "Heavy Infantry",
+        cost: 10,
+        power: 15,
+        seasonBonus: "Зима", // По-ефективни при отбрана в сняг
+        icon: "🛡️"
     },
-    "КОННИЦА": { 
-        name: { bg: "Елитна конница", en: "Elite Cavalry", ru: "Элитная конница" }, 
-        cost: 300, 
-        power: 50, 
-        description: { 
-            bg: "Основната ударна мощ на античните българи.", 
-            en: "The main striking force of the Ancient Bulgarians.", 
-            ru: "Основная ударная сила античных булгар." 
-        } 
+    "конница": {
+        nameBG: "Стрелкова Конница",
+        nameUS: "Horse Archers",
+        cost: 20,
+        power: 25,
+        seasonBonus: "Лято", // Бонус за мобилност в сухи условия
+        icon: "🏹"
     },
-    "СТРЕЛЦИ": { 
-        name: { bg: "Стрелци с лък", en: "Archers", ru: "Лучники" }, 
-        cost: 150, 
-        power: 25, 
-        description: { 
-            bg: "Осигуряват поддръжка от разстояние.", 
-            en: "Provide support from a distance.", 
-            ru: "Обеспечивают поддержку с расстояния." 
-        } 
+    "гвардия": {
+        nameBG: "Владетелска Гвардия",
+        nameUS: "Royal Guard",
+        cost: 50,
+        power: 60,
+        seasonBonus: "Пролет", // Бонус при начало на кампаниите
+        icon: "👑"
     }
 };
 
-function recruitUnit(hero, unitKey) {
-    const lang = window.gameLang || 'bg';
-    const unit = unitTypes[unitKey];
+window.buyUnits = function() {
+    const lang = window.gameLang;
+    const hero = window.currentHero;
     
-    // Локализирани системни съобщения
-    const msg = {
-        invalid: { bg: "Невалидна единица.", en: "Invalid unit.", ru: "Неверный юнит." },
-        success: { bg: `⚔️ Успешно наехте ${unit ? unit.name[lang] : ''}! Твоята мощ нарасна.`, en: `⚔️ Successfully recruited ${unit ? unit.name[lang] : ''}! Your power grew.`, ru: `⚔️ Успешно наняты ${unit ? unit.name[lang] : ''}! Ваша мощь возросла.` },
-        noGold: { bg: "🪙 Нямаш достатъчно злато.", en: "🪙 Not enough gold.", ru: "🪙 Недостаточно золота." }
-    };
+    // Генериране на меню за избор
+    let menuText = lang === "BG" ? "Изберете тип войска за наемане:\n" : "Select unit type to recruit:\n";
+    const keys = Object.keys(window.unitTypes);
+    
+    keys.forEach((key, index) => {
+        const unit = window.unitTypes[key];
+        const name = lang === "BG" ? unit.nameBG : unit.nameUS;
+        menuText += `${index + 1}. ${unit.icon} ${name} (Цена: ${unit.cost} 💰, Мощ: ${unit.power})\n`;
+    });
 
-    if (!unit) return msg.invalid[lang];
+    let choice = prompt(menuText);
+    let selectedKey = keys[parseInt(choice) - 1];
 
-    if (window.gameGold >= unit.cost) {
-        window.gameGold -= unit.cost;
-        hero.armySize += unit.power * 2; 
-        
-        // Подсигуряваме, че методът съществува в Character обекта
-        if (typeof hero.updateRank === 'function') {
-            hero.updateRank(); 
+    if (selectedKey) {
+        const unit = window.unitTypes[selectedKey];
+        let amount = prompt(lang === "BG" ? `Колко единици ${unit.nameBG} ще наемете?` : `How many ${unit.nameUS} units?`);
+        amount = parseInt(amount);
+
+        if (amount > 0 && hero.gold >= (unit.cost * amount)) {
+            hero.gold -= unit.cost * amount;
+            
+            // Добавяне към общата мощ и численост
+            hero.armySize += amount;
+            hero.heroPower += (unit.power * amount);
+
+            const successMsg = lang === "BG" 
+                ? `Наети са ${amount} единици ${unit.nameBG}. Общата бойна мощ нарасна!` 
+                : `Recruited ${amount} units of ${unit.nameUS}. Total power increased!`;
+            
+            window.logEvent(successMsg, "success");
+            window.updateCharacterUI(hero);
+        } else {
+            const failMsg = lang === "BG" ? "Недостатъчно злато или невалидно количество!" : "Not enough gold or invalid amount!";
+            window.logEvent(failMsg, "info");
         }
-        
-        // Синхронизация с другите модули
-        window.updateGoldDisplay();
-        window.updateCharacterUI(hero);
-        
-        return msg.success[lang];
-    } else {
-        return msg.noGold[lang];
     }
-}
+};
 
-window.unitTypes = unitTypes;
-window.recruitUnit = recruitUnit;
+/**
+ * Изчислява сезонния модификатор за битка.
+ * Вика се автоматично от battle.js преди сблъсък.
+ */
+window.getSeasonModifier = function() {
+    const currentSeason = window.gameTime.seasons[window.gameTime.seasonIndex].nameUS;
+    let modifier = 1.0;
+
+    // Логика: Конницата на Тертер е по-силна през Лятото
+    if (window.currentHero.dynasty === "Тертер" && currentSeason === "Summer") {
+        modifier += 0.2; // +20% бонус
+    }
+    
+    // Общ сезонен бонус за климат
+    if (currentSeason === "Winter") {
+        modifier -= 0.1; // Зимата винаги е по-трудно за походи
+    }
+
+    return modifier;
+};
+
+console.log("Модул Barracks.js е зареден с поддръжка на сезони и типове войски.");
