@@ -1,34 +1,66 @@
-.profile-container {
+/* Глобални стилове */
+body { 
+    background-color: #050505; 
+    color: #eee; 
+    font-family: 'Montserrat', sans-serif; 
+    margin: 0; 
+    overflow: hidden; 
+}
+
+/* Адаптивен контейнер */
+#game-container {
     display: flex;
-    justify-content: space-between;
-    align-items: flex-end;
-    margin-bottom: 20px;
-    padding: 10px;
+    height: calc(100vh - 110px);
+    width: 100%;
 }
 
-.profile-card {
-    width: 120px;
-    text-align: center;
+/* Ляв панел - Десктоп версия */
+#left-sidebar {
+    width: 250px;
+    background: #0a0a0a;
+    border-right: 1px solid #333;
+    padding: 15px;
+    overflow-y: auto;
+    transition: width 0.3s ease;
 }
 
-.profile-info {
-    font-size: 10px;
-    color: #d4af37;
-    margin-bottom: 5px;
-    text-transform: uppercase;
+/* Основна зона - Десктоп версия */
+#game-main-area {
+    flex: 1;
+    padding: 20px;
+    background: radial-gradient(circle, #1a1a1a 0%, #050505 100%);
+    overflow-y: auto;
+    position: relative;
 }
 
-.profile-icon {
-    width: 100px;
-    height: 100px;
-    border: 2px solid #d4af37;
-    background: #1a1a1a;
-    margin: 0 auto;
-    background-size: cover;
-}
+/* МОБИЛНА ОПТИМИЗАЦИЯ (Екрани под 768px) */
+@media (max-width: 768px) {
+    #game-container {
+        flex-direction: column; /* Панелите се подреждат един под друг */
+    }
 
-.profile-name {
-    font-size: 14px;
-    font-weight: bold;
-    margin-top: 5px;
+    #left-sidebar {
+        width: 100%; /* Заема цялата широчина */
+        height: auto;
+        max-height: 200px; /* Ограничаваме височината, за да не пречи */
+        border-right: none;
+        border-bottom: 1px solid #333;
+        padding: 10px;
+        box-sizing: border-box;
+    }
+
+    #game-main-area {
+        width: 100%;
+        padding: 10px;
+        box-sizing: border-box;
+    }
+
+    #action-bar {
+        font-size: 11px; /* По-малък шрифт за мобилни */
+    }
+
+    .top-btn {
+        padding: 5px 8px;
+        font-size: 14px;
+    }
 }
