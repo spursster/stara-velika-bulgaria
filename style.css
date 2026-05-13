@@ -107,3 +107,12 @@ body {
 }
 
 .clickable-name { cursor: pointer; color: #d4af37; }
+.language-switcher {
+    display: flex;
+    justify-content: center;
+    gap: 15px;
+    margin-bottom: 10px;
+    font-size: 20px;
+}
+.flag { cursor: pointer; transition: transform 0.2s; }
+.flag:hover { transform: scale(1.2); }
