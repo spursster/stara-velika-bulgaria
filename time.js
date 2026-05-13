@@ -4,7 +4,6 @@ window.timeSpeed = 1;
 function advanceYear(hero) {
     // 1. Проверка дали владетелят е жив преди ход
     if (!hero || !hero.isAlive) {
-        console.log("Владетелят не е в състояние да управлява.");
         return;
     }
 
@@ -14,7 +13,6 @@ function advanceYear(hero) {
     // 3. Икономика: Автоматично събиране на данъци и поддръжка
     if (typeof window.calculateYearlyIncome === 'function') {
         window.calculateYearlyIncome(hero);
-        window.updateGoldDisplay();
     }
 
     // 4. Стареене: Увеличаване на възрастта и проверка за наследство
@@ -27,19 +25,33 @@ function advanceYear(hero) {
         window.triggerRandomEvent(hero);
     }
 
-    // 6. Визуално обновяване на датата
+    // 6. Визуално обновяване на датата с превод
     const dateDisplay = document.getElementById('game-date');
     if (dateDisplay) {
+        const lang = window.gameLang || 'bg';
         let y = window.currentGameYear;
-        // Използваме "пр.н.е." и "н.е." за коректно летоброене
-        dateDisplay.innerText = `Година: ${y < 0 ? Math.abs(y) + ' пр.н.е.' : y + ' н.е.'}`;
+        let yearText = "";
+        
+        // Локализация на летоброенето
+        const suffix = {
+            bg: y < 0 ? " пр.н.е." : " н.е.",
+            en: y < 0 ? " BC" : " AD",
+            ru: y < 0 ? " до н.э." : " н.э."
+        };
+        
+        const label = {
+            bg: "Година: ",
+            en: "Year: ",
+            ru: "Год: "
+        };
+
+        dateDisplay.innerText = `${label[lang]}${Math.abs(y)}${suffix[lang]}`;
     }
 
-    // 7. Обновяване на целия интерфейс, за да се отразят промените веднага
+    // 7. Обновяване на целия интерфейс
     if (typeof window.updateCharacterUI === 'function') {
         window.updateCharacterUI(hero);
     }
 }
 
-// Глобално излагане на функцията
 window.advanceYear = advanceYear;
