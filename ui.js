@@ -10,13 +10,11 @@ window.updateCharacterUI = function(hero) {
     const uiContainer = document.getElementById('character-panel');
     if (!uiContainer || !hero) return;
 
-    // Ако владетелят е починал, показваме менюто за наследници и спираме дотук
     if (!hero.isAlive) {
         window.showSuccessionMenu();
         return;
     }
 
-    // Генериране на инвентар
     let inventoryHTML = '<div class="inventory-grid" style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 5px; margin: 10px 0;">';
     INVENTORY_SLOTS.forEach(slot => {
         const item = hero.inventory[slot.id];
@@ -28,18 +26,26 @@ window.updateCharacterUI = function(hero) {
     });
     inventoryHTML += '</div>';
 
-    // Списък с региони
+    // Секция за Богове (Древнобългарска митология)
+    let divineHTML = '';
+    if (hero.divineUnits && hero.divineUnits.length > 0) {
+        divineHTML = '<div style="margin: 10px 0; border: 1px dashed #d4af37; padding: 5px; font-size: 11px;"><strong>🌟 Благословии:</strong> ';
+        divineHTML += hero.divineUnits.map(u => u.name).join(", ");
+        divineHTML += '</div>';
+    }
+
     const regionsList = window.playerRegions ? window.playerRegions.join(", ") : "Няма";
 
-    // Основен интерфейс
     uiContainer.innerHTML = `
         <div style="text-align: center; border-bottom: 2px solid #d4af37; padding-bottom: 10px; margin-bottom: 15px;">
             <h2 style="color: #d4af37; margin: 0;">${hero.name}</h2>
-            <small style="color: #ffd700;">Род ${hero.dynasty} | Черта: ${hero.trait || 'Балансиран'}</small>
+            <small style="color: #ffd700;">Род ${hero.dynasty} | ${hero.trait || 'Балансиран'}</small>
             <p style="margin: 5px 0;">Възраст: ${hero.age} г. | Ниво: ${hero.level}</p>
             <p style="margin: 5px 0; color: #aaa;">${hero.armyRank} (${hero.armySize} бойци)</p>
             <p style="margin: 5px 0; font-size: 12px; color: #2ecc71; font-weight: bold;">🚩 Земи: ${regionsList}</p>
         </div>
+
+        ${divineHTML}
 
         <h4 style="color: #d4af37; margin: 10px 0 5px 0;">🛡️ ИНВЕНТАР</h4>
         ${inventoryHTML}
@@ -49,7 +55,7 @@ window.updateCharacterUI = function(hero) {
             <button onclick="window.advanceYear(window.currentHero)" style="background: #444; color: white; border: none; padding: 8px; cursor: pointer;">⌛ Година +1</button>
             <button onclick="window.levelUpCurrentHero()" style="background: #444; color: white; border: none; padding: 8px; cursor: pointer;">🏋️ Тренировка</button>
             <button onclick="window.handleBattleClick()" style="background: #721c24; color: white; border: none; padding: 8px; cursor: pointer;">⚔️ Битка</button>
-            <button onclick="window.handleMarriageClick()" style="background: #1e7e34; color: white; border: none; padding: 8px; cursor: pointer;">💍 Брак</button>
+            <button onclick="window.handleRitualClick()" style="background: #8e44ad; color: white; border: none; padding: 8px; cursor: pointer;">🔥 Ритуал</button>
         </div>
 
         <h4 style="color: #d4af37; margin: 20px 0 5px 0;">⚔️ КАЗАРМИ</h4>
@@ -61,7 +67,15 @@ window.updateCharacterUI = function(hero) {
     `;
 };
 
-// Функция за показване на менюто за наследници
+// Функция за Ритуала
+window.handleRitualClick = function() {
+    if (window.currentHero && typeof window.performAncientRitual === 'function') {
+        const result = window.performAncientRitual(window.currentHero);
+        alert(result);
+        window.updateCharacterUI(window.currentHero);
+    }
+};
+
 window.showSuccessionMenu = function() {
     const uiContainer = document.getElementById('character-panel');
     if (!uiContainer || !window.potentialSuccessors) return;
@@ -69,38 +83,27 @@ window.showSuccessionMenu = function() {
     let successorsHTML = `
         <div style="background: #111; padding: 15px; border: 2px solid #d4af37; border-radius: 8px; margin-top: 10px;">
             <h3 style="color: #d4af37; text-align: center; margin-top: 0;">👑 Наследство</h3>
-            <p style="font-size: 11px; text-align: center; color: #ccc;">Владетелят завърши земния си път. Избери кой от синовете му ще поеме тежестта на короната:</p>
             <div style="display: flex; flex-direction: column; gap: 8px;">
     `;
 
     window.potentialSuccessors.forEach((s, index) => {
         successorsHTML += `
-            <button onclick="window.selectSuccessor(${index})" style="background: #222; color: white; border: 1px solid #d4af37; padding: 10px; cursor: pointer; text-align: left; border-radius: 4px; transition: 0.3s;">
+            <button onclick="window.selectSuccessor(${index})" style="background: #222; color: white; border: 1px solid #d4af37; padding: 10px; cursor: pointer; text-align: left;">
                 <strong style="color: #ffd700;">${s.name}</strong><br>
-                <small style="color: #aaa;">Черта: ${s.trait}</small>
-            </button>
-        `;
+                <small>Черта: ${s.trait}</small>
+            </button>`;
     });
-
     successorsHTML += `</div></div>`;
     uiContainer.innerHTML = successorsHTML;
 };
 
-// Функция за избор на наследник
 window.selectSuccessor = function(index) {
     const chosen = window.potentialSuccessors[index];
     if (window.familyLegacy) chosen.inventory = { ...window.familyLegacy };
-    
     window.currentHero = chosen;
     window.updateCharacterUI(chosen);
-    
-    const log = document.getElementById('event-log');
-    if (log) {
-        log.innerHTML = `<div style="background: #1e1e1e; border-left: 4px solid #ffd700; padding: 5px; margin-bottom: 10px;">📜 <strong>Нова ера:</strong> ${chosen.name} пое властта. Нека духът на предците го води!</div>` + log.innerHTML;
-    }
 };
 
-// Други помощни функции
 window.levelUpCurrentHero = function() {
     if (window.currentHero) {
         window.currentHero.levelUp();
