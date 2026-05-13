@@ -1,5 +1,5 @@
 /**
- * МОДУЛ: ГЛАВНА ЛОГИКА - Велика България (Икономическа версия)
+ * МОДУЛ: ГЛАВНА ЛОГИКА - Велика България
  */
 
 window.advanceTurn = function() {
@@ -8,20 +8,18 @@ window.advanceTurn = function() {
         if (window.gameTime.seasonIndex > 3) {
             window.gameTime.seasonIndex = 0;
             window.gameTime.year++;
-            checkSuccession(); // Проверка за наследяване
+            checkSuccession();
         }
         if (window.updateTimeUI) window.updateTimeUI();
     }
 
     if (window.currentHero) {
-        // Използваме новия икономически модул
-        const econ = window.calculateEconomy();
-        
-        if (window.logEvent) {
-            window.logEvent(`Сезонен отчет: Приход +${econ.income} 💰, Издръжка -${econ.expenses} 💰.`, "action");
+        // Икономика
+        if (window.calculateEconomy) {
+            window.calculateEconomy();
         }
 
-        // Проверка за случайни събития
+        // Събития
         if (window.triggerRandomEvent) {
             window.triggerRandomEvent();
         }
@@ -30,34 +28,37 @@ window.advanceTurn = function() {
     }
 };
 
-function checkSuccession() {
-    // Вероятност за смяна на владетеля при края на годината (според историческите династии)
-    if (Math.random() < 0.03) {
-        if (window.logEvent) window.logEvent(`Кан ${window.currentHero.name} предаде властта на наследника си.`, "death");
-        window.initNewGame();
-    }
-}
-
 window.initNewGame = function() {
     const dynasties = Object.keys(window.bulgarianDynasties || {});
-    const randomDynName = dynasties[Math.floor(Math.random() * dynasties.length)];
-    const dynastyData = window.bulgarianDynasties[randomDynName];
-    const randomRuler = dynastyData.rulers[Math.floor(Math.random() * dynastyData.rulers.length)];
+    const randomDynName = dynasties.length > 0 ? dynasties[Math.floor(Math.random() * dynasties.length)] : "Дуло";
+    const randomRuler = window.bulgarianDynasties[randomDynName].rulers[0];
 
     window.currentHero = {
         name: randomRuler.name,
         dynasty: randomDynName,
         gold: 1000,
         armySize: 200,
-        heroPower: 70,
-        xp: 0
+        heroPower: 70
     };
     
-    window.playerInventory = [];
-    window.playerRegions = ["Долна Мизия"]; // Начален регион
+    window.currentSpouse = null; // Нулиране на брак
     window.spouseRegions = [];
+    window.playerRegions = ["Долна Мизия"];
+    window.playerInventory = [];
+    window.newArtifactsCount = 0;
     
-    if (window.updateCharacterUI) window.updateCharacterUI(window.currentHero);
+    window.updateCharacterUI(window.currentHero);
+};
+
+window.toggleFullScreen = function() {
+    const elem = document.documentElement;
+    if (!document.fullscreenElement && !document.webkitFullscreenElement) {
+        if (elem.requestFullscreen) elem.requestFullscreen();
+        else if (elem.webkitRequestFullscreen) elem.webkitRequestFullscreen();
+    } else {
+        if (document.exitFullscreen) document.exitFullscreen();
+        else if (document.webkitExitFullscreen) document.webkitExitFullscreen();
+    }
 };
 
 window.onload = () => window.initNewGame();
