@@ -6,15 +6,11 @@ window.toggleFullScreen = function() {
     const elem = document.documentElement;
     if (!document.fullscreenElement && !document.mozFullScreenElement && 
         !document.webkitFullscreenElement && !document.msFullscreenElement) {
-        if (elem.requestFullscreen) { elem.requestFullscreen(); }
-        else if (elem.msRequestFullscreen) { elem.msRequestFullscreen(); }
-        else if (elem.mozRequestFullScreen) { elem.mozRequestFullScreen(); }
-        else if (elem.webkitRequestFullscreen) { elem.webkitRequestFullscreen(Element.ALLOW_KEYBOARD_INPUT); }
+        if (elem.requestFullscreen) elem.requestFullscreen();
+        else if (elem.webkitRequestFullscreen) elem.webkitRequestFullscreen();
     } else {
-        if (document.exitFullscreen) { document.exitFullscreen(); }
-        else if (document.msExitFullscreen) { document.msExitFullscreen(); }
-        else if (document.mozCancelFullScreen) { document.mozCancelFullScreen(); }
-        else if (document.webkitExitFullscreen) { document.webkitExitFullscreen(); }
+        if (document.exitFullscreen) document.exitFullscreen();
+        else if (document.webkitExitFullscreen) document.webkitExitFullscreen();
     }
 };
 
@@ -30,16 +26,19 @@ window.advanceTurn = function() {
     }
 
     if (window.currentHero) {
-        const totalRegions = window.playerRegions.length + (window.spouseRegions ? window.spouseRegions.length : 0);
-        const income = 50 + (totalRegions * 10);
+        const totalReg = (window.playerRegions ? window.playerRegions.length : 0) + (window.spouseRegions ? window.spouseRegions.length : 0);
+        const income = 50 + (totalReg * 10);
         window.currentHero.gold += income;
         
+        // Шанс за артефакт (10%)
         if (Math.random() < 0.10 && typeof window.acquireArtifact === "function") {
-            const artKeys = Object.keys(window.artifactsDatabase);
-            const randomArt = artKeys[Math.floor(Math.random() * artKeys.length)];
-            if (!window.playerInventory.find(i => i.id === randomArt)) {
-                window.newArtifactsCount++;
-                window.acquireArtifact(randomArt);
+            const artKeys = Object.keys(window.artifactsDatabase || {});
+            if (artKeys.length > 0) {
+                const randomArt = artKeys[Math.floor(Math.random() * artKeys.length)];
+                if (!window.playerInventory.find(i => i.id === randomArt)) {
+                    window.newArtifactsCount++;
+                    window.acquireArtifact(randomArt);
+                }
             }
         }
         window.updateCharacterUI(window.currentHero);
@@ -48,13 +47,13 @@ window.advanceTurn = function() {
 
 function checkSuccession() {
     if (Math.random() < 0.02) {
-        if (window.logEvent) window.logEvent(`Кан ${window.currentHero.name} се пресели в отвъдното.`, "death");
+        if (window.logEvent) window.logEvent(`Кан ${window.currentHero.name} напусна този свят.`, "death");
         window.initNewGame();
     }
 }
 
 window.initNewGame = function() {
-    const dynasties = Object.keys(window.bulgarianDynasties);
+    const dynasties = Object.keys(window.bulgarianDynasties || { "Род": { rulers: [{name: "Неизвестен"}] } });
     const randomDynName = dynasties[Math.floor(Math.random() * dynasties.length)];
     const dynastyData = window.bulgarianDynasties[randomDynName];
     const randomRuler = dynastyData.rulers[Math.floor(Math.random() * dynastyData.rulers.length)];
@@ -68,12 +67,13 @@ window.initNewGame = function() {
         xp: 0
     };
     
-    window.playerInventory = [];
-    window.newArtifactsCount = 0;
+    window.playerInventory = []; // Важно: празна съкровищница
+    window.newArtifactsCount = 0; // Важно: нулев индикатор
     window.playerRegions = ["Долна Мизия"];
     window.spouseRegions = [];
     
     window.updateCharacterUI(window.currentHero);
+    if (window.updateTimeUI) window.updateTimeUI();
 };
 
 window.onload = () => window.initNewGame();
