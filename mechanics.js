@@ -26,6 +26,7 @@ window.performAncientRitual = function(hero) {
 
 window.performAncientRitual = function(hero) {
     if (!hero || !hero.isAlive) return "Няма владетел.";
+    if (!hero.divineUnits) hero.divineUnits = [];
     
     const gods = [
         { name: "Тангра", effect: "Сила на конницата" },
@@ -35,9 +36,11 @@ window.performAncientRitual = function(hero) {
     
     // Избираме произволен бог
     const god = gods[Math.floor(Math.random() * gods.length)];
+
     
     // Проверка дали вече имаме тази благословия
     const alreadyBlessed = hero.divineUnits.some(u => u.name === god.name);
+    const alreadyBlessed = hero.divineUnits.find(g => g.name === god.name);
     
     if (!alreadyBlessed) {
         hero.divineUnits.push(god);
