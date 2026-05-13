@@ -1,110 +1,93 @@
 /**
- * МОДУЛ: БИТКИ И ЕКСПАНЗИЯ (Пълна версия)
- * Управлява военните конфликти, завладяването на провинции и сезонните бонуси.
- * Всички резултати се записват в централната хроника (events.js).
+ * МОДУЛ: БИТКИ - Велика България
  */
 
 window.startBattle = function() {
+    const mainArea = document.getElementById('game-main-area');
+    if (!mainArea) return;
+
+    // Генериране на случаен враг (съседни родове или чужди сили)
+    const enemies = ["Авари", "Хазари", "Ромеи", "Местни враждебни родове"];
+    const enemyName = enemies[Math.floor(Math.random() * enemies.length)];
+    const enemyArmy = Math.floor(window.currentHero.armySize * (0.5 + Math.random()));
+    const enemyPower = Math.floor(Math.random() * 80);
+
+    // Създаване на боен интерфейс
+    const battleOverlay = document.createElement('div');
+    battleOverlay.id = "battle-screen";
+    battleOverlay.style.cssText = `
+        position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+        background: #050505; z-index: 1500; padding: 20px; box-sizing: border-box;
+        display: flex; flex-direction: column; align-items: center; justify-content: center;
+        border: 2px solid #ff4d4d;
+    `;
+
+    battleOverlay.innerHTML = `
+        <h2 style="font-family: 'Cinzel'; color: #ff4d4d;">ГОЛЯМА БИТКА</h2>
+        <div style="display: flex; width: 100%; justify-content: space-around; margin: 30px 0;">
+            <div style="text-align: center;">
+                <div style="font-size: 50px;">🏇</div>
+                <div style="font-family: 'Cinzel'; color: #d4af37;">КАН ${window.currentHero.name.toUpperCase()}</div>
+                <div>Войска: ${window.currentHero.armySize}</div>
+                <div>Мощ: ${window.currentHero.heroPower}</div>
+            </div>
+            <div style="font-size: 40px; align-self: center;">VS</div>
+            <div style="text-align: center;">
+                <div style="font-size: 50px;">🏹</div>
+                <div style="font-family: 'Cinzel'; color: #ff4d4d;">${enemyName.toUpperCase()}</div>
+                <div>Войска: ${enemyArmy}</div>
+                <div>Мощ: ${enemyPower}</div>
+            </div>
+        </div>
+        <div id="battle-log" style="width: 80%; height: 100px; background: #111; border: 1px solid #333; padding: 10px; font-size: 12px; overflow-y: auto; margin-bottom: 20px;">
+            Войските се подреждат в боен ред...
+        </div>
+        <button id="resolve-battle-btn" onclick="window.resolveBattle(${enemyArmy}, ${enemyPower}, '${enemyName}')" style="
+            padding: 15px 40px; background: #7b1a1a; color: white; border: none; 
+            font-family: 'Cinzel'; cursor: pointer; font-size: 18px;
+        ">ВЛЕЗ В БОЙ!</button>
+    `;
+
+    mainArea.appendChild(battleOverlay);
+};
+
+window.resolveBattle = function(eArmy, ePower, eName) {
     const hero = window.currentHero;
-    const lang = window.gameLang;
+    const log = document.getElementById('battle-log');
+    const btn = document.getElementById('resolve-battle-btn');
+    btn.disabled = true;
 
-    // 1. Проверка за минимална численост на войската
-    if (hero.armySize < 10) {
-        const warning = lang === "BG" 
-            ? "⚠️ Твърде малко воини за поход! Наемете войска в Казармата." 
-            : "⚠️ Too few warriors for a campaign! Recruit troops in the Barracks.";
-        window.logEvent(warning, "info");
-        return;
-    }
+    // Изчисляване на бойна сила
+    const playerStrength = hero.armySize + (hero.heroPower * 2);
+    const enemyStrength = eArmy + (ePower * 2);
 
-    // 2. Дефиниране на врага (Ромеи или други местни родове)
-    const enemyNamesBG = ["Ромейски легион", "Стратиг на Румелия", "Отряд на Скитите", "Бунтовнически род"];
-    const enemyNamesUS = ["Roman Legion", "Strategos of Rumelia", "Scythian Warband", "Rebel Clan"];
-    
-    const enemyList = lang === "BG" ? enemyNamesBG : enemyNamesUS;
-    const enemyName = enemyList[Math.floor(Math.random() * enemyList.length)];
-    
-    // Силата на врага е динамична спрямо текущата мощ на играча
-    const enemyPower = Math.floor(Math.random() * (hero.heroPower * 1.2)) + 20;
+    setTimeout(() => {
+        let resultMsg = "";
+        let style = "";
 
-    // 3. Калкулиране на бойната мощ на играча
-    // А) Базов династичен бонус (mechanics.js)
-    let totalAttackPower = window.applyPerk(hero.heroPower, "power", hero.dynasty);
-
-    // Б) Сезонен модификатор (barracks.js)
-    const seasonMod = (typeof window.getSeasonModifier === "function") ? window.getSeasonModifier() : 1.0;
-    totalAttackPower *= seasonMod;
-
-    // 4. Логика на битката
-    let battleMessage = "";
-    let statusType = "";
-
-    if (totalAttackPower >= enemyPower) {
-        // --- ПОБЕДА ---
-        statusType = "war";
-        const rewardGold = 150 + Math.floor(Math.random() * 200);
-        const xpGain = 30;
-        
-        hero.gold += rewardGold;
-        hero.xp += xpGain;
-        
-        // Опит за завладяване на нова територия
-        const newProvince = window.discoverNewProvince();
-        
-        if (newProvince) {
-            window.playerRegions.push(newProvince);
-            if (lang === "BG") {
-                battleMessage = `⚔️ Велика победа! Кан ${hero.name} разгроми ${enemyName} и присъедини ${newProvince} към Империята! Плячка: ${rewardGold} 💰.`;
-            } else {
-                battleMessage = `⚔️ Great victory! Kan ${hero.name} crushed ${enemyName} and annexed ${newProvince}! Loot: ${rewardGold} 💰.`;
-            }
+        if (playerStrength >= enemyStrength) {
+            const loot = Math.floor(eArmy * 0.5);
+            hero.gold += loot;
+            hero.xp += 20;
+            resultMsg = `ПОБЕДА! Разгромихте ${eName}. Плячка: ${loot} 💰.`;
+            style = "royal";
+            if (window.logEvent) window.logEvent(`Славна победа над ${eName}!`, "royal");
         } else {
-            if (lang === "BG") {
-                battleMessage = `⚔️ Победа! ${enemyName} отстъпи пред вашата мощ. Плячка: ${rewardGold} 💰. Всички близки земи са вече ваши!`;
-            } else {
-                battleMessage = `⚔️ Victory! ${enemyName} retreated before your might. Loot: ${rewardGold} 💰. All nearby lands are already yours!`;
-            }
+            const losses = Math.floor(hero.armySize * 0.3);
+            hero.armySize -= losses;
+            resultMsg = `ПОРАЖЕНИЕ! ${eName} ви принудиха да отстъпите. Загуби: ${losses} воини.`;
+            style = "death";
+            if (window.logEvent) window.logEvent(`Горчиво поражение от ${eName}.`, "death");
         }
-    } else {
-        // --- ПОРАЖЕНИЕ ---
-        statusType = "info";
-        const loss = Math.floor(hero.armySize * 0.15); // Загуба на 15% от войската
-        hero.armySize -= loss;
+
+        log.innerHTML = `<b style="color: #d4af37;">${resultMsg}</b>`;
         
-        // Намаляване на общата мощ поради загубите
-        hero.heroPower = Math.max(50, hero.heroPower - (loss * 2));
-
-        if (lang === "BG") {
-            battleMessage = `💀 Тежко поражение! ${enemyName} прекърши нашите редици. Загубихме ${loss} воини в битката.`;
-        } else {
-            battleMessage = `💀 Defeat! ${enemyName} broke our lines. We lost ${loss} warriors in battle.`;
-        }
-    }
-
-    // 5. Записване на резултата в Имперската Хроника
-    window.logEvent(battleMessage, statusType);
-
-    // 6. Обновяване на интерфейса (ui.js)
-    window.updateCharacterUI(hero);
+        // Бутон за изход
+        btn.innerText = "Продължи";
+        btn.disabled = false;
+        btn.onclick = () => {
+            document.getElementById('battle-screen').remove();
+            window.updateCharacterUI(hero);
+        };
+    }, 1500);
 };
-
-/**
- * Генерира име на нова провинция, която все още не е в списъка на играча.
- */
-window.discoverNewProvince = function() {
-    const allProvinces = [
-        "Мизия", "Тракия", "Македония", "Бесарабия", 
-        "Панония", "Добруджа", "Вардар", "Струма", "Родопи", 
-        "Загоре", "Епир", "Тесалия", "Далмация"
-    ];
-    
-    // Филтрираме само провинциите, които играчът НЕ притежава
-    const available = allProvinces.filter(p => !window.playerRegions.includes(p));
-    
-    if (available.length === 0) return null;
-    
-    // Избираме случайна от останалите
-    return available[Math.floor(Math.random() * available.length)];
-};
-
-console.log("Battle.js: Пълният модул е зареден и синхронизиран с Хрониката и Сезоните.");
