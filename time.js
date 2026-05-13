@@ -1,86 +1,74 @@
 /**
  * МОДУЛ: ВРЕМЕ, СЕЗОНИ И ЕПОХИ
- * Управлява цикъла на годините и прехода между историческите периоди.
+ * Управлява цикъла на ходовете (3 месеца) и историческите периоди.
  */
 
 window.gameTime = {
-    currentYear: -480, // Започваме от 480 г. пр.н.е.
-    era: "Antiquity",  // Текуща епоха
+    year: -480, // 480 пр.н.е.
+    era: "Antiquity",
     seasonIndex: 0,
     seasons: [
         { nameBG: "Пролет", nameUS: "Spring", icon: "🌱" },
         { nameBG: "Лято", nameUS: "Summer", icon: "☀️" },
         { nameBG: "Есен", nameUS: "Autumn", icon: "🍂" },
         { nameBG: "Зима", nameUS: "Winter", icon: "❄️" }
-    ],
-    // Граници на епохите
-    eraBenchmarks: {
-        medieval: 476 // Преход към Средновековие (сл.н.е.)
-    }
+    ]
 };
 
-/**
- * Основна функция за превъртане на времето.
- * Вика се при всяко голямо действие (битка, строеж, дипломация).
- */
-window.advanceTime = function() {
+window.advanceTurn = function() {
     const time = window.gameTime;
-    const lang = window.gameLang;
 
     // 1. Напредване на сезона
     time.seasonIndex++;
-    if (time.seasonIndex >= time.seasons.length) {
+    if (time.seasonIndex >= 4) {
         time.seasonIndex = 0;
-        time.currentYear++; // Нова година
+        time.year++;
     }
 
-    // 2. Проверка за смяна на епохата
-    checkEraTransition();
+    // 2. Проверка за преход към Средновековие
+    if (time.year >= 476 && time.era === "Antiquity") {
+        time.era = "Medieval";
+        const transitionMsg = window.gameLang === "BG" 
+            ? "📜 ЕПОХАЛНА ПРОМЯНА: Навлизаме в Средновековието!" 
+            : "📜 ERA TRANSITION: Entering the Medieval age!";
+        window.logEvent(transitionMsg, "success");
+    }
 
-    // 3. Обновяване на UI
-    updateTimeUI();
+    // 3. Икономически приход на всеки ход
+    if (typeof window.calculateYearlyIncome === "function") {
+        const econ = window.calculateYearlyIncome();
+        window.logEvent(econ.log, "success");
+    }
+
+    // 4. Случайно събитие
+    if (typeof window.generateRandomEvent === "function") {
+        window.generateRandomEvent();
+    }
+
+    // 5. Обновяване на интерфейса
+    window.updateTimeUI();
+    window.updateCharacterUI(window.currentHero);
 };
 
-function checkEraTransition() {
-    const time = window.gameTime;
-    
-    // Ако годината премине 476 г. (след новата ера)
-    if (time.currentYear >= time.eraBenchmarks.medieval && time.era === "Antiquity") {
-        time.era = "Medieval";
-        const msg = window.gameLang === "BG" 
-            ? "📜 ЕПОХАЛНА ПРОМЯНА: Светът навлиза в Средновековието! Старите родове се превръщат в мощни феодални династии." 
-            : "📜 ERA TRANSITION: The world enters the Medieval period! Old clans transform into powerful feudal dynasties.";
-        
-        window.logEvent(msg, "success");
-        
-        // Бонус при смяна на епохата
-        window.currentHero.gold += 1000;
-        window.currentHero.xp += 100;
-    }
-}
-
-function updateTimeUI() {
+window.updateTimeUI = function() {
     const time = window.gameTime;
     const season = time.seasons[time.seasonIndex];
     const lang = window.gameLang;
 
-    // Форматиране на годината (пр.н.е. или сл.н.е.)
-    let yearDisplay = "";
-    if (time.currentYear < 0) {
-        yearDisplay = Math.abs(time.currentYear) + (lang === "BG" ? " г. пр.н.е." : " BC");
-    } else {
-        yearDisplay = time.currentYear + (lang === "BG" ? " г. сл.н.е." : " AD");
-    }
+    let yearText = Math.abs(time.year) + (time.year < 0 
+        ? (lang === "BG" ? " пр.н.е." : " BC") 
+        : (lang === "BG" ? " сл.н.е." : " AD"));
 
-    const eraDisplay = lang === "BG" 
+    const seasonName = lang === "BG" ? season.nameBG : season.nameUS;
+    const eraName = lang === "BG" 
         ? (time.era === "Antiquity" ? "Античност" : "Средновековие")
         : time.era;
 
-    // Поставяме информацията в хедъра на играта
-    const timeElement = document.getElementById("game-stats-time");
-    if (timeElement) {
-        timeElement.innerHTML = `${season.icon} ${yearDisplay} | ${eraDisplay}`;
+    const displayStr = `${season.icon} ${seasonName}, ${yearText} | ${eraName}`;
+    
+    // Обновяваме елемента в index.html
+    const timeElem = document.getElementById('current-time-info');
+    if (timeElem) {
+        timeElem.innerText = displayStr;
     }
-}
-
-console.log("Time.js: Системата за сезони и еволюция на епохите е активна.");
+};
