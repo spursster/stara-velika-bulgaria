@@ -1,11 +1,16 @@
 window.simulateBattle = function(hero, enemyName) {
     if (!hero || !hero.isAlive) return;
 
-    // Подсигуряване, че масивът с региони съществува
+    // Използваме текущия език
+    const lang = window.gameLang || 'bg';
+    const t = window.translations[lang];
+
+    // Подсигуряване на регионите
     if (!window.playerRegions) {
         window.playerRegions = ["Одриско царство"];
     }
 
+    // Изчисляване на мощта
     let enemyPower = 200 + (hero.level * 50);
     let heroPower = hero.armySize + (hero.level * 20);
     
@@ -13,16 +18,19 @@ window.simulateBattle = function(hero, enemyName) {
     let message = "";
 
     if (heroPower > enemyPower) {
-        message = `<span style="color: #2ecc71;">⚔️ Победа! Ромеите отстъпиха пред мощта на рода ${hero.dynasty}.</span>`;
+        // Победа: Използваме ромейските (Rhomaioi) като врагове
+        const winText = {
+            bg: `⚔️ Победа! Ромеите отстъпиха пред мощта на рода ${hero.dynasty}.`,
+            en: `⚔️ Victory! The Rhomaioi retreated before the might of clan ${hero.dynasty}.`,
+            ru: `⚔️ Победа! Ромеи отступили пред мощью рода ${hero.dynasty}.`
+        };
+        
+        message = `<span style="color: #2ecc71;">${winText[lang]}</span>`;
         window.gameGold += 300;
         
-        // Шанс за завладяване на нов регион
+        // Логика за завладяване на нови региони
         const possibleRegions = ["Мизия", "Тракия", "Македония", "Панония"];
-        
-        // Проверка: филтрираме само региони, които още не притежаваме
-        const unowned = possibleRegions.filter(r => {
-            return window.playerRegions && !window.playerRegions.includes(r);
-        });
+        const unowned = possibleRegions.filter(r => !window.playerRegions.includes(r));
         
         if (unowned.length > 0 && Math.random() > 0.5) {
             const newReg = unowned[Math.floor(Math.random() * unowned.length)];
@@ -35,13 +43,22 @@ window.simulateBattle = function(hero, enemyName) {
             window.dropRandomLoot(hero);
         }
     } else {
-        message = `<span style="color: #e74c3c;">⚔️ Поражение! Твоята войска бе разбита от ромейските легиони.</span>`;
+        // Поражение
+        const lossText = {
+            bg: `⚔️ Поражение! Твоята войска бе разбита от ромейските легиони.`,
+            en: `⚔️ Defeat! Your army was crushed by the Rhomaioi legions.`,
+            ru: `⚔️ Поражение! Ваше войско было разбито ромейскими легионами.`
+        };
+        
+        message = `<span style="color: #e74c3c;">${lossText[lang]}</span>`;
         hero.armySize = Math.floor(hero.armySize * 0.5);
     }
 
+    // Обновяване на лога и интерфейса
     if (log) {
         log.innerHTML = `<div style="border-bottom: 1px solid #444; padding: 5px;">${message}</div>` + log.innerHTML;
     }
     
+    window.updateGoldDisplay();
     window.updateCharacterUI(hero);
 };
