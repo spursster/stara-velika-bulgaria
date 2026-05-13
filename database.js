@@ -91,7 +91,7 @@ const historicalData = {
             { name: "Мирчо I Стари", reign: [1386, 1418] }
         ]
     },
-    "Османци Дуло": {
+    "Османци": {
         founder: "Осман I",
         rulers: [
             { name: "Осман I Гази", reign: [1299, 1324] },
@@ -115,5 +115,4 @@ const historicalData = {
     }
 };
 
-// Правим данните достъпни за другите файлове
 window.historicalData = historicalData;
