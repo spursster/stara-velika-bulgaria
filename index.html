@@ -8,27 +8,41 @@
 </head>
 <body>
     <div id="game-container">
-        <h1 style="text-align: center; color: #d4af37; margin: 10px 0;">EPIC BULGARIA</h1>
+        <h1 style="text-align: center; color: #d4af37; margin: 10px 0;">💡 EPIC BULGARIA</h1>
         
-        <!-- Топ бар със статистики -->
-        <div class="top-bar">
-            <span>📅 <span id="game-year">1</span> г.</span>
-            <span>🪙 <span id="game-gold">500</span></span>
+        <!-- Панел за смяна на език -->
+        <div class="language-selector" style="text-align: center; margin-bottom: 10px;">
+            <button onclick="window.setLanguage('bg')">BG</button>
+            <button onclick="window.setLanguage('en')">EN</button>
+            <button onclick="window.setLanguage('ru')">RU</button>
         </div>
 
-        <!-- Събития - преместени нагоре по твое желание -->
+        <!-- Топ бар със статистики (Синхронизирани ID-та) -->
+        <div class="top-bar">
+            <span id="year-display">📅 1 г.</span>
+            <span id="gold-display">🪙 500</span>
+        </div>
+
+        <!-- Лог за събития -->
         <div id="event-log"></div>
 
         <!-- Основен панел на героя и регионите -->
         <div id="character-panel"></div>
+
+        <!-- Бутон за преминаване на времето -->
+        <div style="text-align: center; margin-top: 15px;">
+            <button id="advance-year-btn" class="action-btn">ℹ️ Следваща Година</button>
+        </div>
     </div>
 
-<!-- Първо зареждаме данните и логиката -->
+<!-- 1. Данни и Основа -->
 <script src="logic.js"></script>
 <script src="world_data.js"></script>
 <script src="database.js"></script>
+<script src="regions.js"></script>
+<script src="items.js"></script>
 
-<!-- След това механиките -->
+<!-- 2. Механики и Логика -->
 <script src="mechanics.js"></script>
 <script src="economy.js"></script>
 <script src="barracks.js"></script>
@@ -37,12 +51,29 @@
 <script src="diplomacy.js"></script>
 <script src="time.js"></script>
 
-<!-- Накрая интерфейса, който използва горните функции -->
+<!-- 3. Интерфейс -->
 <script src="ui.js"></script>
-    <script>
-        // Инициализация на играта
+
+<script>
+    // Пълна инициализация при зареждане
+    window.addEventListener('load', () => {
+        // Създаваме владетел с титла Кан
         window.currentHero = new window.Character("Терес", "Одриси", "Войнолюбец");
+        
+        // Свързваме бутона за времето
+        const timeBtn = document.getElementById('advance-year-btn');
+        if (timeBtn) {
+            timeBtn.addEventListener('click', () => {
+                if (typeof window.advanceYear === 'function') {
+                    window.advanceYear(window.currentHero);
+                }
+            });
+        }
+
+        // Първоначално изчертаване на интерфейса
         window.updateCharacterUI(window.currentHero);
-    </script>
+        window.updateGoldDisplay();
+    });
+</script>
 </body>
 </html>
