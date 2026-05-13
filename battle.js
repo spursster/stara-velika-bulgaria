@@ -1,64 +1,69 @@
-window.simulateBattle = function(hero, enemyName) {
-    if (!hero || !hero.isAlive) return;
+/**
+ * МОДУЛ: БИТКИ И ЕКСПАНЗИЯ
+ * Този файл управлява военните конфликти и завладяването на нови провинции.
+ */
 
-    // Използваме текущия език
-    const lang = window.gameLang || 'bg';
-    const t = window.translations[lang];
-
-    // Подсигуряване на регионите
-    if (!window.playerRegions) {
-        window.playerRegions = ["Одриско царство"];
+window.startBattle = function() {
+    // 1. Проверка за налична армия
+    if (window.currentHero.armySize < 10) {
+        alert("Нямаш достатъчно войска за поход!");
+        return;
     }
 
-    // Изчисляване на мощта
-    let enemyPower = 200 + (hero.level * 50);
-    let heroPower = hero.armySize + (hero.level * 20);
-    
-    const log = document.getElementById('event-log');
-    let message = "";
+    // 2. Дефиниране на враг (Ромеи)
+    const enemyNames = ["Генерал на Ромеите", "Стратиг от Румелия", "Екзарх на Изтока"];
+    const enemyName = enemyNames[Math.floor(Math.random() * enemyNames.length)];
+    const enemyPower = Math.floor(Math.random() * (window.currentHero.heroPower * 1.5)) + 20;
 
-    if (heroPower > enemyPower) {
-        // Победа: Използваме ромейските (Rhomaioi) като врагове
-        const winText = {
-            bg: `⚔️ Победа! Ромеите отстъпиха пред мощта на рода ${hero.dynasty}.`,
-            en: `⚔️ Victory! The Rhomaioi retreated before the might of clan ${hero.dynasty}.`,
-            ru: `⚔️ Победа! Ромеи отступили пред мощью рода ${hero.dynasty}.`
-        };
+    // 3. Изчисляване на бонус от Династията (от mechanics.js)
+    // Използваме твоите 13 бонуса
+    const playerAttackPower = window.applyPerk(window.currentHero.heroPower, "power", window.currentHero.dynasty);
+
+    // 4. Логика на битката
+    let battleResult = "";
+    let won = false;
+
+    if (playerAttackPower >= enemyPower) {
+        won = true;
+        const rewardGold = 150 + Math.floor(Math.random() * 200);
+        const xpGain = 25;
         
-        message = `<span style="color: #2ecc71;">${winText[lang]}</span>`;
-        window.gameGold += 300;
+        window.currentHero.gold += rewardGold;
+        window.currentHero.xp += xpGain;
         
-        // Логика за завладяване на нови региони
-        const possibleRegions = ["Мизия", "Тракия", "Македония", "Панония"];
-        const unowned = possibleRegions.filter(r => !window.playerRegions.includes(r));
-        
-        if (unowned.length > 0 && Math.random() > 0.5) {
-            const newReg = unowned[Math.floor(Math.random() * unowned.length)];
-            if (typeof window.captureRegion === 'function') {
-                window.captureRegion(hero, newReg);
-            }
-        }
-        
-        if (typeof window.dropRandomLoot === 'function') {
-            window.dropRandomLoot(hero);
+        // Завладяване на нова провинция
+        const newProvince = window.discoverNewProvince();
+        if (newProvince) {
+            window.playerRegions.push(newProvince);
+            battleResult = `Победа! Кан ${window.currentHero.name} разгроми ${enemyName}. Завладяна е нова провинция: ${newProvince}. Плячка: ${rewardGold} злато.`;
+        } else {
+            battleResult = `Победа! ${enemyName} отстъпи. Плячка: ${rewardGold} злато. Всички близки земи са вече твои!`;
         }
     } else {
-        // Поражение
-        const lossText = {
-            bg: `⚔️ Поражение! Твоята войска бе разбита от ромейските легиони.`,
-            en: `⚔️ Defeat! Your army was crushed by the Rhomaioi legions.`,
-            ru: `⚔️ Поражение! Ваше войско было разбито ромейскими легионами.`
-        };
-        
-        message = `<span style="color: #e74c3c;">${lossText[lang]}</span>`;
-        hero.armySize = Math.floor(hero.armySize * 0.5);
+        const loss = Math.floor(window.currentHero.armySize * 0.2);
+        window.currentHero.armySize -= loss;
+        battleResult = `Поражение! ${enemyName} се оказа по-силен. Загуби ${loss} воини.`;
     }
 
-    // Обновяване на лога и интерфейса
-    if (log) {
-        log.innerHTML = `<div style="border-bottom: 1px solid #444; padding: 5px;">${message}</div>` + log.innerHTML;
-    }
-    
-    window.updateGoldDisplay();
-    window.updateCharacterUI(hero);
+    // 5. Обновяване на UI чрез ui.js
+    alert(battleResult);
+    window.updateCharacterUI(window.currentHero);
 };
+
+/**
+ * Генерира име на нова провинция, която все още не е завладяна.
+ */
+window.discoverNewProvince = function() {
+    const allProvinces = [
+        "Северна Тракия", "Мизия", "Македония", "Бесарабия", 
+        "Панония", "Добруджа", "Арбанаси", "Вардар", "Струма"
+    ];
+    
+    // Филтрираме тези, които играчът вече владее
+    const available = allProvinces.filter(p => !window.playerRegions.includes(p));
+    
+    if (available.length === 0) return null;
+    return available[Math.floor(Math.random() * available.length)];
+};
+
+console.log("Модул Battle.js е зареден и готов.");
