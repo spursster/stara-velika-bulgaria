@@ -1,64 +1,80 @@
-const worldCivs = {
-    "Ромеи": { region: "Румелия/Анадола", techLevel: 5, relation: 50 },
-    "Перси": { region: "Близък Изток", techLevel: 5, relation: 40 },
-    "Франки": { region: "Западна Европа", techLevel: 3, relation: 30 },
-    "Хазари": { region: "Понтийска степ", techLevel: 4, relation: 20 }
+/**
+ * МОДУЛ: СВЕТОВНИ ДАННИ И ГЕОПОЛИТИКА
+ * Дефинира регионите, съседните държави и фракциите около 480 г. пр.н.е.
+ */
+
+window.worldData = {
+    // Основни държави (Фракции)
+    factions: {
+        "bulgarian_empire": {
+            nameBG: "Велика България",
+            nameUS: "Great Bulgaria",
+            rulerTitleBG: "Кан",
+            capitalBG: "Фанагория"
+        },
+        "rhomaioi_empire": {
+            nameBG: "Ромейска Империя (Rhomaioi)",
+            nameUS: "Roman Empire (Rhomaioi)",
+            relation: -20, // Враждебни
+            power: 500
+        },
+        "persian_empire": {
+            nameBG: "Персийска Империя",
+            nameUS: "Persian Empire",
+            relation: 0, // Неутрални
+            power: 1000
+        }
+    },
+
+    // Детайлни данни за провинциите
+    regions: {
+        "Северна Тракия": {
+            terrain: "Равнина",
+            resource: "Злато",
+            nativeClans: ["Одриси", "Беси"], // Използваме "родове/род" вместо племена
+            difficulty: 10
+        },
+        "Мизия": {
+            terrain: "Гора",
+            resource: "Дървесина",
+            nativeClans: ["Гети", "Кробизи"],
+            difficulty: 25
+        },
+        "Македония": {
+            terrain: "Планина",
+            resource: "Желязо",
+            nativeClans: ["Едони", "Пеони"],
+            difficulty: 40
+        },
+        "Добруджа": {
+            terrain: "Степ",
+            resource: "Коне",
+            nativeClans: ["Скити"],
+            difficulty: 30
+        }
+    },
+
+    // Конкурентни антични български родове (за дипломация и бракове)
+    majorClans: [
+        "Дуло", "Вокил", "Ерми", "Угаин", "Куригир", 
+        "Чака", "Тертер", "Шишман", "Смилец", "Асен", 
+        "Батоя", "Тихомир", "Македони"
+    ]
 };
 
-const eventTemplates = [
-    {
-        id: "expedition_discovery",
-        text: {
-            bg: "Владетелю, твоят пратеник се завърна от далечна експедиция в {location}!",
-            en: "Ruler, your envoy has returned from a long expedition in {location}!",
-            ru: "Властелин, ваш посланник вернулся из далекой экспедиции в {location}!"
-        },
-        chance: 0.1,
-        requirements: { armyRank: "Рота" }
-    },
-    {
-        id: "royal_wedding",
-        text: {
-            bg: "Предложение за династичен брак от {civilization}. Това ще заздрави връзките ни.",
-            en: "A proposal for a dynastic marriage from {civilization}. This will strengthen our ties.",
-            ru: "Предложение о династическом браке от {civilization}. Это укрепит наши связи."
-        },
-        chance: 0.2,
-        requirements: { level: 5 }
-    },
-    {
-        id: "espionage_report",
-        text: {
-            bg: "Нашите шпиони в {civilization} докладват за нови технологии!",
-            en: "Our spies in {civilization} report on new technologies!",
-            ru: "Наши шпионы в {civilization} докладывают о новых технологиях!"
-        },
-        chance: 0.15,
-        requirements: { level: 3 }
-    }
-];
-
-function triggerWorldEvent(hero) {
-    const lang = window.gameLang || 'bg';
-    const civNames = Object.keys(worldCivs);
-    const randomCiv = civNames[Math.floor(Math.random() * civNames.length)];
-    const randomEvent = eventTemplates[Math.floor(Math.random() * eventTemplates.length)];
-
-    if (hero.level >= (randomEvent.requirements.level || 0)) {
-        let eventText = randomEvent.text[lang]
-            .replace("{civilization}", randomCiv)
-            .replace("{location}", lang === 'bg' ? "Кавказ" : "Caucasus"); 
-
-        return eventText;
-    }
+/**
+ * Функция за проверка на съседни фракции при битка
+ */
+window.getNeighborInfo = function(regionName) {
+    const region = window.worldData.regions[regionName];
+    if (!region) return "Неизвестна земя";
     
-    const peaceMsg = { 
-        bg: "Мирна година в държавата.", 
-        en: "A peaceful year in the state.", 
-        ru: "Мирный год в государстве." 
-    };
-    return peaceMsg[lang];
-}
+    const lang = window.gameLang;
+    const clans = region.nativeClans.join(", ");
+    
+    return lang === "BG" 
+        ? `Регионът се владее от родове: ${clans}. Ресурс: ${region.resource}.` 
+        : `Region ruled by clans: ${clans}. Resource: ${region.resource}.`;
+};
 
-window.worldCivs = worldCivs;
-window.triggerWorldEvent = triggerWorldEvent;
+console.log("World_data.js: Геополитическата карта за 480 г. пр.н.е. е заредена.");
