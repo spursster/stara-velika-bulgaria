@@ -1,49 +1,63 @@
+// Функция за наемане на войска
+window.recruitUnit = function(hero, type) {
+    const costs = { 'ЛЕКА_ПЕХОТА': 100, 'КОННИЦА': 300, 'СТРЕЛЦИ': 150 };
+    const sizes = { 'ЛЕКА_ПЕХОТА': 50, 'КОННИЦА': 30, 'СТРЕЛЦИ': 40 };
+
+    if (window.gameGold >= costs[type]) {
+        window.gameGold -= costs[type];
+        hero.armySize += sizes[type];
+        hero.updateRank();
+        return `Успешно наехте ${type}. Армията ви нарасна!`;
+    } return "Нямате достатъчно злато!";
+};
+
+// Функция за брак
+window.proposeMarriage = function(hero, faction) {
+    const success = Math.random() > 0.5;
+    if (success) {
+        window.gameGold += 200;
+        return `Дипломатически брак с ${faction} е сключен! Зестра: 200🪙`;
+    } return `Предложението за брак към ${faction} беше отхвърлено.`;
+};
+
+// Битка срещу Ромеите
 window.simulateBattle = function(hero, enemyName) {
-    if (!hero || !hero.isAlive) return;
-
-    const winChance = 0.5 + (hero.level * 0.02);
-    const win = Math.random() < winChance;
+    const win = Math.random() < (0.5 + hero.level * 0.02);
     const log = document.getElementById('event-log');
-
     if (win) {
-        let rewardMsg = "Победа! Врагът е разбит.";
-        
-        // Автоматично завладяване при победа
+        let msg = "Победа над Ромеите!";
         if (window.availableProvinces.length > 0) {
-            const newProvince = window.availableProvinces.shift(); 
-            window.playerRegions.push(newProvince);
-            rewardMsg = `Победа! Завладяхте провинция **${newProvince.name}**! Виж новата карта на екрана.`;
+            const p = window.availableProvinces.shift();
+            window.playerRegions.push(p);
+            msg += ` Завладяхте ${p.name}!`;
         }
-
         hero.levelUp();
-        if (log) log.innerHTML = `<p style="color: #2ecc71;">⚔️ ${rewardMsg}</p>` + log.innerHTML;
+        log.innerHTML += `<p style="color:#2ecc71;">⚔️ ${msg}</p>`;
     } else {
-        hero.armySize = Math.floor(hero.armySize * 0.7);
-        // Използваме "ромейски" за периода
-        if (log) log.innerHTML = `<p style="color: #e74c3c;">⚔️ Поражение! Ромейската войска отблъсна атаката.</p>` + log.innerHTML;
+        hero.armySize = Math.floor(hero.armySize * 0.8);
+        log.innerHTML += `<p style="color:#e74c3c;">⚔️ Поражение от Ромеите!</p>`;
     }
     window.updateCharacterUI(hero);
 };
 
+// Ритуал и Благословии
 window.performAncientRitual = function(hero) {
-    if (!hero || !hero.isAlive) return "Няма жив владетел.";
-    if (!hero.divineUnits) hero.divineUnits = [];
-
-    // Използваме антична българска митология
-    const gods = [
-        { name: "Тангра", effect: "Небесна сила" },
-        { name: "Бендида", effect: "Великата майка" },
-        { name: "Залмоксис", effect: "Безсмъртие" }
-    ];
-    
+    const gods = [{name:"Тангра", gift:"Небесна мощ"}, {name:"Бендида", gift:"Плодородие"}, {name:"Залмоксис", gift:"Безсмъртие"}];
     const god = gods[Math.floor(Math.random() * gods.length)];
-    const alreadyBlessed = hero.divineUnits.find(g => g.name === god.name);
-    
-    if (!alreadyBlessed) {
+    if (!hero.divineUnits.find(g => g.name === god.name)) {
         hero.divineUnits.push(god);
-        if (typeof window.updateCharacterUI === 'function') window.updateCharacterUI(hero);
-        return `Боговете се отзоваха! ${god.name} дари рода ${hero.dynasty} със своята благословия.`;
+        return `Бог ${god.name} ви дари с ${god.gift}!`;
+    } return `${god.name} вече ви е благословил.`;
+};
+
+window.advanceYear = function(hero) {
+    window.gameYear += 1;
+    window.gameGold += 150; // Годишен данък
+    if (hero.age >= hero.maxAge) {
+        hero.isAlive = false;
+        window.showSuccessionMenu();
     } else {
-        return `${god.name} вече бди над теб, владетелю.`;
+        hero.age += 1;
     }
+    window.updateCharacterUI(hero);
 };
