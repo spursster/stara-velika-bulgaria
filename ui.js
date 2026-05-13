@@ -15,14 +15,13 @@ window.updateCharacterUI = function(hero) {
         return;
     }
 
-    // ЛОГИКА ЗА БОГОВЕ: Генериране на текст за активните благословии
+    // Визуализация на активните богове
     let divineStatusHTML = "";
     if (hero.divineUnits && hero.divineUnits.length > 0) {
         const godsNames = hero.divineUnits.map(g => `<span style="color: #8e44ad; font-weight: bold;">${g.name}</span>`).join(", ");
-        divineStatusHTML = `<p style="margin: 5px 0; font-size: 13px;">🌟 Благословии: ${godsNames}</p>`;
+        divineStatusHTML = `<p style="margin: 5px 0; font-size: 13px; color: #ffd700;">🌟 Благословии: ${godsNames}</p>`;
     }
 
-    // Инвентар
     let inventoryHTML = '<div class="inventory-grid" style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 5px; margin: 10px 0;">';
     INVENTORY_SLOTS.forEach(slot => {
         const item = hero.inventory[slot.id];
@@ -39,11 +38,11 @@ window.updateCharacterUI = function(hero) {
     uiContainer.innerHTML = `
         <div style="text-align: center; border-bottom: 2px solid #d4af37; padding-bottom: 10px; margin-bottom: 15px;">
             <h2 style="color: #d4af37; margin: 0;">${hero.name}</h2>
-            <small style="color: #ffd700;">Род ${hero.dynasty} | ${hero.trait || 'Балансиран'}</small>
+            <small style="color: #ffd700;">Род ${hero.dynasty} | ${hero.trait}</small>
             <p style="margin: 5px 0;">Възраст: ${hero.age} г. | Ниво: ${hero.level}</p>
             <p style="margin: 5px 0; color: #aaa;">${hero.armyRank} (${hero.armySize} бойци)</p>
-            <p style="margin: 5px 0; font-size: 12px; color: #2ecc71; font-weight: bold;">🚩 Земи: ${regionsList}</p>
-            ${divineStatusHTML} <!-- ТУК СЕ ПОЯВЯВАТ БОГОВЕТЕ -->
+            <p style="margin: 5px 0; font-size: 12px; color: #2ecc71;">🚩 Земи: ${regionsList}</p>
+            ${divineStatusHTML}
         </div>
 
         <h4 style="color: #d4af37; margin: 10px 0 5px 0;">🛡️ ИНВЕНТАР</h4>
@@ -72,45 +71,27 @@ window.handleRitualClick = function() {
         const result = window.performAncientRitual(window.currentHero);
         const log = document.getElementById('event-log');
         if (log) log.innerHTML = `<p style="color: #8e44ad;"><strong>[Ритуал]</strong> ${result}</p>` + log.innerHTML;
-        window.updateCharacterUI(window.currentHero);
     }
 };
 
 window.handleBattleClick = () => window.simulateBattle(window.currentHero, 'Ромеи');
 window.handleMarriageClick = () => window.proposeMarriage(window.currentHero, 'Ромеи');
-
-window.levelUpCurrentHero = function() {
-    if (window.currentHero) {
-        window.currentHero.levelUp();
-        window.updateCharacterUI(window.currentHero);
-    }
-};
-
-window.handleRecruit = function(type) {
-    if (window.currentHero && typeof window.recruitUnit === 'function') {
-        const msg = window.recruitUnit(window.currentHero, type);
-        const log = document.getElementById('event-log');
-        if (log) log.innerHTML = `<p style="color: #ffd700; font-size: 12px;">[Армия] ${msg}</p>` + log.innerHTML;
-    }
+window.levelUpCurrentHero = () => { window.currentHero.levelUp(); window.updateCharacterUI(window.currentHero); };
+window.handleRecruit = (type) => { 
+    const msg = window.recruitUnit(window.currentHero, type);
+    const log = document.getElementById('event-log');
+    if (log) log.innerHTML = `<p style="color: #ffd700; font-size: 12px;">[Армия] ${msg}</p>` + log.innerHTML;
 };
 
 window.showSuccessionMenu = function() {
     const uiContainer = document.getElementById('character-panel');
-    if (!uiContainer || !window.potentialSuccessors) return;
-
-    let successorsHTML = `
-        <div style="background: #111; padding: 15px; border: 2px solid #d4af37; border-radius: 8px;">
-            <h3 style="color: #d4af37; text-align: center;">👑 Наследство</h3>
-            <div style="display: flex; flex-direction: column; gap: 8px;">
-    `;
+    let successorsHTML = `<div style="background: #111; padding: 15px; border: 2px solid #d4af37;">
+        <h3 style="color: #d4af37; text-align: center;">👑 Наследство</h3><div style="display: flex; flex-direction: column; gap: 8px;">`;
     window.potentialSuccessors.forEach((s, index) => {
-        successorsHTML += `
-            <button onclick="window.selectSuccessor(${index})" style="background: #222; color: white; border: 1px solid #d4af37; padding: 10px; cursor: pointer; text-align: left;">
-                <strong>${s.name}</strong><br><small>Черта: ${s.trait}</small>
-            </button>`;
+        successorsHTML += `<button onclick="window.selectSuccessor(${index})" style="background: #222; color: white; border: 1px solid #d4af37; padding: 10px; cursor: pointer; text-align: left;">
+            <strong>${s.name}</strong><br><small>Черта: ${s.trait}</small></button>`;
     });
-    successorsHTML += `</div></div>`;
-    uiContainer.innerHTML = successorsHTML;
+    uiContainer.innerHTML = successorsHTML + `</div></div>`;
 };
 
 window.selectSuccessor = function(index) {
