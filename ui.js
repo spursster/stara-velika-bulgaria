@@ -1,13 +1,12 @@
 /**
- * МОДУЛ: ИНТЕРФЕЙС
- * Визуализира профилите на Канът и съпругата му, както и контролите за управление.
+ * МОДУЛ: ИНТЕРФЕЙС (Обновен)
+ * Визуализира профилите, управлението и времевата линия.
  */
 
 window.updateCharacterUI = function(hero) {
     const charPanel = document.getElementById('character-panel');
     if (!charPanel) return;
 
-    // Генериране на HTML за съпругата (ляв профил)
     const spouseHTML = window.currentSpouse ? `
         <div class="profile-card" style="text-align: center; width: 120px;">
             <div class="profile-info" style="font-size: 10px; color: #d4af37;">${window.currentSpouse.dynasty}</div>
@@ -22,7 +21,6 @@ window.updateCharacterUI = function(hero) {
         </div>
     `;
 
-    // Генериране на HTML за Кана (десен профил)
     const kanHTML = `
         <div class="profile-card" style="text-align: center; width: 120px;">
             <div class="profile-info" style="font-size: 10px; color: #d4af37;">${hero.dynasty}</div>
@@ -50,15 +48,14 @@ window.updateCharacterUI = function(hero) {
                 <button class="action-btn" style="background: #8e44ad; color: white; border: none; padding: 10px; cursor: pointer; font-size: 12px;">РИТУАЛ</button>
             </div>
         </div>
-
-        <h3 class="section-title" style="margin-top: 20px; font-family: 'Cinzel', serif; font-size: 16px;">⚔️ КАЗАРМА</h3>
-        <div id="barracks-preview" style="background: #111; border: 1px solid #333; padding: 10px; text-align: center;">
-            <p style="margin: 5px 0;">👥 Войски: ${hero.armySize}</p>
-            <button onclick="window.buyUnits()" style="width: 100%; background: #333; color: #d4af37; border: 1px solid #d4af37; padding: 8px; cursor: pointer; font-size: 12px;">НАЕМИ ОЩЕ</button>
-        </div>
     `;
-
+    
     window.updateRegionsSidebar();
+};
+
+window.updateTimeDisplay = function(timeStr, eraStr) {
+    const timeElem = document.getElementById('current-time-info');
+    if (timeElem) timeElem.innerText = `${timeStr} | ${eraStr}`;
 };
 
 window.updateRegionsSidebar = function() {
