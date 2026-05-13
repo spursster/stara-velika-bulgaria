@@ -16,13 +16,26 @@ window.updateCharacterUI = function(hero) {
         return;
     }
 
-    // Главният панел сега показва само най-важното
+  // Генериране на слотовете за провинции
+    let provincesHTML = '<div class="provinces-container">';
+    window.playerRegions.forEach(reg => {
+        provincesHTML += `
+            <div class="province-slot">
+                <div class="province-name">${reg.name}</div>
+                <img src="${reg.img}" class="province-img" alt="${reg.name}">
+            </div>`;
+    });
+    provincesHTML += '</div>';
+
     uiContainer.innerHTML = `
         <div style="text-align: center; border-bottom: 1px solid #444; padding-bottom: 10px; margin-bottom: 15px;">
-            <h2 class="clickable-name" onclick="window.toggleCharacterModal(true)" title="Виж профила">👑 ${hero.name}</h2>
+            <h2 class="clickable-name" onclick="window.toggleCharacterModal(true)">👑 Кан ${hero.name}</h2>
             <small style="color: #ffd700;">Род ${hero.dynasty} | ${hero.trait}</small>
             <p style="margin: 5px 0; color: #aaa; font-size: 13px;">${hero.armyRank} (${hero.armySize} бойци)</p>
         </div>
+
+        <h4 style="color: #d4af37; margin: 10px 0 5px 0; text-align: center;">🗺️ ТЕРИТОРИИ</h4>
+        ${provincesHTML}
 
         <h4 style="color: #d4af37; margin: 15px 0 5px 0;">📜 УПРАВЛЕНИЕ</h4>
         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
