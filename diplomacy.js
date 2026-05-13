@@ -51,34 +51,49 @@ window.openMarriageMenu = function(clan) {
         return;
     }
     if (window.clanRelations[clan] < 60) {
-        alert(`Род ${clan} изисква поне 60% доверие за съюз чрез брак!`);
+        alert(`Род ${clan} изисква поне 60% доверие за брак!`);
         return;
     }
     
-    // Дефиниране на зестра според династията
+    // Пълна карта на зестрите според всички династии
     const dowryMap = {
         "Дуло": "Стара Велика България",
         "Вокил": "Панония",
         "Угаин": "Малка Скития",
-        "Крумова династия": "Тракия",
-        "Птолемеи": "Египетски земи",
         "Комитопули": "Македония",
         "Асеневци": "Загоре",
-        "Тертеровци": "Добруджа"
+        "Тертер": "Добруджа",
+        "Смилец": "Крън",
+        "Шишмановци": "Видинско деспотство",
+        "Македони": "Беломорие",
+        "Птоломеи": "Египет",
+        "Одриси": "Севтполис",
+        "Бесараб": "Влахия",
+        "Османци Дуло": "Мала Азия"
     };
 
     const region = dowryMap[clan] || "Нови земи";
-    
     window.currentSpouse = { name: "Княгиня", dynasty: clan };
     
-    // ВАЖНО: Добавяне на територията към списъка на играча
     if (!window.playerRegions.includes(region)) {
         window.playerRegions.push(region);
     }
     
     window.clanRelations[clan] = 100;
-    window.logEvent(`Сключен брак с род ${clan}. Присъединена територия: ${region}!`, "royal");
+    window.logEvent(`Сключен брак с род ${clan}! Присъединена територия: ${region}.`, "royal");
     
-    if (document.getElementById('diplomacy-screen')) document.getElementById('diplomacy-screen').remove();
+    document.getElementById('diplomacy-screen').remove();
     window.updateCharacterUI(window.currentHero);
+};
+
+window.sendGift = function(clan) {
+    if (window.currentHero.gold >= 100) {
+        window.currentHero.gold -= 100;
+        window.clanRelations[clan] = Math.min(100, window.clanRelations[clan] + 15);
+        if (document.getElementById('diplomacy-screen')) {
+            document.getElementById('diplomacy-screen').remove();
+            window.openDiplomacy();
+        }
+        window.updateCharacterUI(window.currentHero);
+    }
 };
