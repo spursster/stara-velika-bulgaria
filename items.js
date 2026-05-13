@@ -1,73 +1,53 @@
-const lootTable = [
-    {
-        id: "iron_helmet",
-        name: { bg: "Железен шлем", en: "Iron Helmet", ru: "Железный шлем" },
-        slot: "head",
-        bonus: { armyPower: 5 },
-        rarity: { bg: "Обикновен", en: "Common", ru: "Обычный" }
-    },
-    {
-        id: "golden_amulet",
-        name: { bg: "Златен амулет на Одрисите", en: "Golden Odrysian Amulet", ru: "Золотой амулет Одрисов" },
-        slot: "neck",
-        bonus: { diplomacy: 10 },
-        rarity: { bg: "Рядък", en: "Rare", ru: "Редкий" }
-    },
-    {
-        id: "kubrat_sword",
-        name: { bg: "Мечът на Кан Кубрат", en: "Sword of Kan Kubrat", ru: "Меч Кана Кубрата" },
-        slot: "mainHand",
-        bonus: { armyPower: 50, isLegendary: true },
-        rarity: { bg: "Легендарен", en: "Legendary", ru: "Легендарный" }
-    },
-    {
-        id: "thracian_shield",
-        name: { bg: "Пелта (Античен щит)", en: "Pelta (Ancient Shield)", ru: "Пелта (Античный щит)" },
-        slot: "offHand",
-        bonus: { defense: 15 },
-        rarity: { bg: "Необикновен", en: "Uncommon", ru: "Необычный" }
-    },
-    {
-        id: "royal_boots",
-        name: { bg: "Царски ботуши", en: "Royal Boots", ru: "Царские сапоги" },
-        slot: "feet",
-        bonus: { speed: 5 },
-        rarity: { bg: "Обикновен", en: "Common", ru: "Обычный" }
-    },
-    {
-        id: "tangra_ring",
-        name: { bg: "Пръстен на Тангра", en: "Ring of Tangra", ru: "Кольцо Тангры" },
-        slot: "ring1",
-        bonus: { divinePower: 20 },
-        rarity: { bg: "Епичен", en: "Epic", ru: "Эпический" }
-    }
-];
+/**
+ * МОДУЛ: АРТЕФАКТИ (Items & Artifacts)
+ * Управлява ценните предмети, открити от владетеля.
+ */
 
-function dropRandomLoot(hero) {
-    const lang = window.gameLang || 'bg';
-    const item = lootTable[Math.floor(Math.random() * lootTable.length)];
-    
-    // Автоматично екипиране, ако слотът е празен
-    if (!hero.inventory[item.slot]) {
-        hero.inventory[item.slot] = item;
-        const log = document.getElementById('event-log');
-        
-        if (log) {
-            const msg = {
-                bg: `🎁 <strong>Намерен артефакт:</strong> ${item.name[lang]} е екипиран!`,
-                en: `🎁 <strong>Artifact found:</strong> ${item.name[lang]} is equipped!`,
-                ru: `🎁 <strong>Артефакт найден:</strong> ${item.name[lang]} экипирован!`
-            };
-            
-            const p = document.createElement('p');
-            p.innerHTML = msg[lang];
-            log.prepend(p);
-        }
-        
-        if (typeof window.updateCharacterUI === "function") {
-            window.updateCharacterUI(hero);
-        }
+window.artifactsDatabase = {
+    "gold_mask": {
+        id: "gold_mask",
+        name: "Златна маска на владетел",
+        description: "Величествена маска, символ на царска власт и божествен произход.",
+        bonus: { heroPower: 20, xp: 50 },
+        icon: "🎭"
+    },
+    "bronze_sword": {
+        id: "bronze_sword",
+        name: "Бронзов меч от Балей",
+        description: "Древен меч, изкован с майсторство от бронзовата епоха.",
+        bonus: { heroPower: 35 },
+        icon: "🗡️"
+    },
+    "silver_phiale": {
+        id: "silver_phiale",
+        name: "Сребърна фиала",
+        description: "Ритуална чаша, използвана за скрепяване на съюзи между родовете.",
+        bonus: { gold: 100, xp: 30 },
+        icon: "🏺"
     }
-}
+};
 
-window.dropRandomLoot = dropRandomLoot;
+window.playerInventory = [];
+
+/**
+ * Функция за придобиване на артефакт
+ */
+window.acquireArtifact = function(artifactId) {
+    const item = window.artifactsDatabase[artifactId];
+    if (item) {
+        // Проверка дали вече го имаме (за уникални предмети)
+        if (window.playerInventory.find(i => i.id === artifactId)) return;
+
+        window.playerInventory.push(item);
+        
+        // Прилагане на бонусите към Кана
+        if (item.bonus.heroPower) window.currentHero.heroPower += item.bonus.heroPower;
+        if (item.bonus.gold) window.currentHero.gold += item.bonus.gold;
+        if (item.bonus.xp) window.currentHero.xp += item.bonus.xp;
+
+        if (window.logEvent) {
+            window.logEvent(`Открит артефакт: ${item.name}!`, "royal");
+        }
+        window.updateCharacterUI(window.currentHero);
+    }
+};
