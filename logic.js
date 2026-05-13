@@ -54,5 +54,25 @@ function processInheritance(oldHero) {
     }
 }
 
+// Добави/Обнови това в logic.js
+window.handleAging = function(hero) {
+    if (!hero || !hero.isAlive) return;
+
+    hero.age += 1; // Владетелят остарява с 1 година
+
+    // Проверка за смърт при достигане на maxAge
+    if (hero.age >= hero.maxAge) {
+        hero.isAlive = false;
+        const log = document.getElementById('event-log');
+        if (log) {
+            log.innerHTML = `<p style="color: #e74c3c; font-weight: bold;">💀 Владетелят ${hero.name} напусна този свят на ${hero.age} години.</p>` + log.innerHTML;
+        }
+        // Задействане на наследството
+        if (typeof window.processInheritance === 'function') {
+            window.processInheritance(hero);
+        }
+    }
+};
+
 window.Character = Character;
 window.processInheritance = processInheritance;
