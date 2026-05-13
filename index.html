@@ -23,9 +23,22 @@
         <div id="character-panel"></div>
     </div>
 
-    <script src="logic.js"></script>
-    <script src="mechanics.js"></script>
-    <script src="ui.js"></script>
+<!-- Първо зареждаме данните и логиката -->
+<script src="logic.js"></script>
+<script src="world_data.js"></script>
+<script src="database.js"></script>
+
+<!-- След това механиките -->
+<script src="mechanics.js"></script>
+<script src="economy.js"></script>
+<script src="barracks.js"></script>
+<script src="events.js"></script>
+<script src="battle.js"></script>
+<script src="diplomacy.js"></script>
+<script src="time.js"></script>
+
+<!-- Накрая интерфейса, който използва горните функции -->
+<script src="ui.js"></script>
     <script>
         // Инициализация на играта
         window.currentHero = new window.Character("Терес", "Одриси", "Войнолюбец");
