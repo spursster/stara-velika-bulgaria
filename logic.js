@@ -23,4 +23,31 @@ window.initNewGame = function() {
     window.logEvent(`Кан ${window.currentHero.name} започна своето управление!`, "royal");
 };
 
+/**
+ * ФУНКЦИЯ ЗА СЛЕДВАЩ ХОД - Свързва бутона ⏳ с всички модули
+ */
+window.advanceTurn = function() {
+    if (!window.currentHero) return;
+
+    // 1. Напредване на времето (през time.js)
+    if (window.processTime) {
+        window.processTime();
+    }
+
+    // 2. Икономика и приходи (през economy.js)
+    if (window.calculateEconomy) {
+        window.calculateEconomy();
+    }
+
+    // 3. Активиране на събитията (от твоя events.js)
+    if (window.triggerRandomEvent) {
+        window.triggerRandomEvent();
+    }
+
+    // 4. Обновяване на интерфейса (през ui.js)
+    if (window.updateCharacterUI) {
+        window.updateCharacterUI(window.currentHero);
+    }
+};
+
 window.onload = () => window.initNewGame();
