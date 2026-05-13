@@ -1,14 +1,15 @@
 window.currentHero = null;
+window.gameGold = 500;
 // Началният регион на Одриското царство (Антични българи)
 window.playerRegions = [
-    { name: "Северна Тракия", img: "https://placehold.co/200x150/222/d4af37?text=Thracia" }
+    { name: "Северна Тракия", img: "https://r.jina.ai/i/65f1a2b3c4d5e6f7a8b9c0d1.png" }
 ];
 
 // База данни с възможни провинции за завладяване
 window.availableProvinces = [
-    { name: "Мизия", img: "https://placehold.co/200x150/222/d4af37?text=Moesia" },
-    { name: "Македония", img: "https://placehold.co/200x150/222/d4af37?text=Macedonia" },
-    { name: "Хемус", img: "https://placehold.co/200x150/222/d4af37?text=Haemus" },
+    { name: "Мизия", img: "https://r.jina.ai/i/76g2b3c4d5e6f7a8b9c0d1e2.png" },
+    { name: "Македония", img: "https://r.jina.ai/i/98i4d5e6f7a8b9c0d1e2f3g4.png" },
+    { name: "Хемус", img: "https://r.jina.ai/i/87h3c4d5e6f7a8b9c0d1e2f3.png" },
     { name: "Панония", img: "https://placehold.co/200x150/222/d4af37?text=Pannonia" },
     { name: "Сарматия", img: "https://placehold.co/200x150/222/d4af37?text=Sarmatia" }
 ];
