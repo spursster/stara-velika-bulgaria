@@ -12,7 +12,7 @@
     <!-- ГОРНА ЛЕНТА -->
     <header id="top-bar" style="background: #111; border-bottom: 2px solid #d4af37; padding: 10px 20px; display: flex; justify-content: space-between; align-items: center;">
         <div id="time-container" style="font-family: 'Cinzel', serif; color: #d4af37;">
-            <span id="current-time-info">🌱 480 пр.н.е. | Античност</span>
+            <span id="current-time-info">🌱 Пролет, 480 пр.н.е. | Античност</span>
         </div>
         
         <div id="resources" style="display: flex; gap: 20px;">
@@ -20,9 +20,16 @@
             <div title="Армия">⚔️ <span id="army-total">100</span></div>
         </div>
 
-        <div id="language-selector">
-            <button onclick="window.setLanguage('BG')">🇧🇬</button>
-            <button onclick="window.setLanguage('US')">🇺🇸</button>
+        <div id="controls-right" style="display: flex; align-items: center; gap: 15px;">
+            <!-- БУТОН ЗА ЦЯЛ ЕКРАН -->
+            <button onclick="window.toggleFullScreen()" style="background: none; border: 1px solid #333; color: #d4af37; cursor: pointer; padding: 5px 10px; border-radius: 3px; font-size: 14px;" title="Цял екран">
+                ⛶
+            </button>
+            
+            <div id="language-selector">
+                <button onclick="window.setLanguage('BG')" style="background:none; border:none; cursor:pointer;">🇧🇬</button>
+                <button onclick="window.setLanguage('US')" style="background:none; border:none; cursor:pointer;">🇺🇸</button>
+            </div>
         </div>
     </header>
 
@@ -37,11 +44,11 @@
         <!-- ЦЕНТРАЛНА ЗОНА: Хроника -->
         <section id="game-main-area" style="flex: 1; padding: 20px; display: flex; flex-direction: column; background: radial-gradient(circle, #1a1a1a 0%, #050505 100%);">
             <h3 class="section-title" style="font-family: 'Cinzel', serif; text-align: center; color: #d4af37;">📜 ИМПЕРСКА ХРОНИКА</h3>
-            <div id="events-center" style="flex: 1; overflow-y: auto;"></div>
+            <div id="events-center" style="flex: 1; overflow-y: auto; padding: 10px;"></div>
         </section>
 
-        <!-- ДЕСЕН ПАНЕЛ: Управление -->
-        <aside id="right-sidebar" style="width: 300px; background: #0a0a0a; border-left: 1px solid #333; padding: 15px; overflow-y: auto;">
+        <!-- ДЕСЕН ПАНЕЛ: Управление и Казарма -->
+        <aside id="right-sidebar" style="width: 320px; background: #0a0a0a; border-left: 1px solid #333; padding: 15px; overflow-y: auto;">
             <div id="character-panel"></div>
         </aside>
 
