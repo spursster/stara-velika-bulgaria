@@ -4,7 +4,7 @@ class Character {
     constructor(name, dynasty, trait = "Балансиран") {
         this.name = name;
         this.dynasty = dynasty;
-        this.trait = trait; // Нови черти: Войнолюбец, Търговец, Дипломат
+        this.trait = trait;
         this.level = 1;
         this.age = 20;
         this.maxAge = 60 + Math.floor(Math.random() * 40);
@@ -12,7 +12,9 @@ class Character {
         this.armySize = 100;
         this.armyRank = "Отряд";
         this.inventory = { head: null, neck: null, body: null, mainHand: null, offHand: null, ring1: null, ring2: null, feet: null, relic: null };
-        this.divineUnits = [];
+        
+        // Инициализиране на масива за благословии от боговете
+        this.divineUnits = []; 
         
         this.applyTraitBonuses();
     }
@@ -37,42 +39,25 @@ class Character {
     }
 }
 
-function processInheritance(oldHero) {
-    // Генерираме трима потенциални наследници с различни черти
+window.handleAging = function(hero) {
+    if (!hero || !hero.isAlive) return;
+    hero.age += 1;
+    if (hero.age >= hero.maxAge) {
+        hero.isAlive = false;
+        const log = document.getElementById('event-log');
+        if (log) log.innerHTML = `<p style="color: #e74c3c;">💀 Владетелят ${hero.name} напусна този свят.</p>` + log.innerHTML;
+        window.processInheritance(hero);
+    }
+};
+
+window.processInheritance = function(oldHero) {
     window.potentialSuccessors = [
         new Character(`${oldHero.name} II`, oldHero.dynasty, "Войнолюбец"),
         new Character(`${oldHero.name} Млади`, oldHero.dynasty, "Търговец"),
         new Character(`Кан ${oldHero.name}`, oldHero.dynasty, "Дипломат")
     ];
-    
-    // Прехвърляме предметите в семейната хазна (за момента ги държим в window)
     window.familyLegacy = { ...oldHero.inventory };
-    
-    // Показваме избора в интерфейса
-    if (typeof window.showSuccessionMenu === 'function') {
-        window.showSuccessionMenu();
-    }
-}
-
-// Добави/Обнови това в logic.js
-window.handleAging = function(hero) {
-    if (!hero || !hero.isAlive) return;
-
-    hero.age += 1; // Владетелят остарява с 1 година
-
-    // Проверка за смърт при достигане на maxAge
-    if (hero.age >= hero.maxAge) {
-        hero.isAlive = false;
-        const log = document.getElementById('event-log');
-        if (log) {
-            log.innerHTML = `<p style="color: #e74c3c; font-weight: bold;">💀 Владетелят ${hero.name} напусна този свят на ${hero.age} години.</p>` + log.innerHTML;
-        }
-        // Задействане на наследството
-        if (typeof window.processInheritance === 'function') {
-            window.processInheritance(hero);
-        }
-    }
+    if (typeof window.showSuccessionMenu === 'function') window.showSuccessionMenu();
 };
 
 window.Character = Character;
-window.processInheritance = processInheritance;
