@@ -5,75 +5,54 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Epic Bulgaria</title>
     <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&display=swap" rel="stylesheet">
 </head>
 <body>
-    <div id="game-container">
-        <h1 style="text-align: center; color: #d4af37; margin: 10px 0;">💡 EPIC BULGARIA</h1>
-        
-        <!-- Панел за смяна на език -->
-        <div class="language-selector" style="text-align: center; margin-bottom: 10px;">
-            <button onclick="window.setLanguage('bg')">BG</button>
-            <button onclick="window.setLanguage('en')">EN</button>
-            <button onclick="window.setLanguage('ru')">RU</button>
-        </div>
+    <div id="main-layout">
+        <!-- Ляв страничен панел за региони -->
+        <aside id="regions-sidebar">
+            <h3 class="section-title">🗺️ ВЛАДЕНИЯ</h3>
+            <div id="provinces-list" class="provinces-grid">
+                <!-- Тук ui.js ще вмъква регионите -->
+            </div>
+        </aside>
 
-        <!-- Топ бар със статистики (Синхронизирани ID-та) -->
-        <div class="top-bar">
-            <span id="year-display">📅 1 г.</span>
-            <span id="gold-display">🪙 500</span>
-        </div>
+        <!-- Централен контейнер на играта -->
+        <div id="game-container">
+            <h1 class="main-title">EPIC BULGARIA</h1>
+            
+            <div class="top-bar">
+                <span id="year-display">📅 -479 г. г.</span>
+                <span id="gold-display">🪙 750</span>
+            </div>
 
-        <!-- Лог за събития -->
-        <div id="event-log"></div>
+            <div id="event-log"></div>
 
-        <!-- Основен панел на героя и регионите -->
-        <div id="character-panel"></div>
+            <div class="language-switcher">
+                <span class="flag" onclick="window.setLanguage('bg')">BG</span>
+                <span class="flag" onclick="window.setLanguage('en')">US</span>
+                <span class="flag" onclick="window.setLanguage('ru')">RU</span>
+            </div>
 
-        <!-- Бутон за преминаване на времето -->
-        <div style="text-align: center; margin-top: 15px;">
-            <button id="advance-year-btn" class="action-btn">ℹ️ Следваща Година</button>
+            <div id="character-panel">
+                <!-- Тук ui.js ще вмъква Кан и бутоните -->
+            </div>
         </div>
     </div>
 
-<!-- 1. Данни и Основа -->
-<script src="logic.js"></script>
-<script src="world_data.js"></script>
-<script src="database.js"></script>
-<script src="regions.js"></script>
-<script src="items.js"></script>
-
-<!-- 2. Механики и Логика -->
-<script src="mechanics.js"></script>
-<script src="economy.js"></script>
-<script src="barracks.js"></script>
-<script src="events.js"></script>
-<script src="battle.js"></script>
-<script src="diplomacy.js"></script>
-<script src="time.js"></script>
-
-<!-- 3. Интерфейс -->
-<script src="ui.js"></script>
-
-<script>
-    // Пълна инициализация при зареждане
-    window.addEventListener('load', () => {
-        // Създаваме владетел с титла Кан
-        window.currentHero = new window.Character("Терес", "Одриси", "Войнолюбец");
-        
-        // Свързваме бутона за времето
-        const timeBtn = document.getElementById('advance-year-btn');
-        if (timeBtn) {
-            timeBtn.addEventListener('click', () => {
-                if (typeof window.advanceYear === 'function') {
-                    window.advanceYear(window.currentHero);
-                }
-            });
-        }
-
-        // Първоначално изчертаване на интерфейса
-        window.updateCharacterUI(window.currentHero);
-        window.updateGoldDisplay();
-    });
-</script>
+    <!-- Скриптовете остават същите, заредени в правилния ред -->
+    <script src="logic.js"></script>
+    <script src="world_data.js"></script>
+    <script src="database.js"></script>
+    <script src="regions.js"></script>
+    <script src="items.js"></script>
+    <script src="mechanics.js"></script>
+    <script src="economy.js"></script>
+    <script src="barracks.js"></script>
+    <script src="events.js"></script>
+    <script src="battle.js"></script>
+    <script src="diplomacy.js"></script>
+    <script src="time.js"></script>
+    <script src="ui.js"></script>
 </body>
 </html>
