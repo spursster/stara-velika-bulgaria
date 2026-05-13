@@ -73,7 +73,7 @@ window.triggerRandomEvent = function(hero) {
     const event = window.randomEvents[Math.floor(Math.random() * window.randomEvents.length)];
     const effectMessages = event.effect(hero);
     
-    const log = document.getElementById('event-log'); // Увери се, че това ID съществува в HTML
+    const log = document.getElementById('event-log');
     if (log) {
         const lang = window.gameLang || 'bg';
         const eventHTML = `
@@ -85,12 +85,15 @@ window.triggerRandomEvent = function(hero) {
         `;
         log.innerHTML = eventHTML + log.innerHTML;
         
-        // Ограничаваме лога до последните 5 събития, за да не препълваме екрана
         if (log.children.length > 5) {
             log.removeChild(log.lastChild);
         }
     }
 
+    // Обновяваме златото и UI веднага след събитието
+    if (typeof window.updateGoldDisplay === "function") {
+        window.updateGoldDisplay();
+    }
     if (typeof window.updateCharacterUI === "function") {
         window.updateCharacterUI(hero);
     }
