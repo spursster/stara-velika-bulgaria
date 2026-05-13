@@ -1,63 +1,45 @@
-// Функция за наемане на войска
+window.setLanguage = function(lang) {
+    window.gameLang = lang;
+    window.updateCharacterUI(window.currentHero);
+};
+
+window.toggleFullScreen = function() {
+    if (!document.fullscreenElement) {
+        document.documentElement.requestFullscreen();
+    } else if (document.exitFullscreen) {
+        document.exitFullscreen();
+    }
+};
+
 window.recruitUnit = function(hero, type) {
     const costs = { 'ЛЕКА_ПЕХОТА': 100, 'КОННИЦА': 300, 'СТРЕЛЦИ': 150 };
     const sizes = { 'ЛЕКА_ПЕХОТА': 50, 'КОННИЦА': 30, 'СТРЕЛЦИ': 40 };
-
     if (window.gameGold >= costs[type]) {
         window.gameGold -= costs[type];
         hero.armySize += sizes[type];
-        hero.updateRank();
-        return `Успешно наехте ${type}. Армията ви нарасна!`;
-    } return "Нямате достатъчно злато!";
+        return true;
+    } return false;
 };
 
-// Функция за брак
-window.proposeMarriage = function(hero, faction) {
-    const success = Math.random() > 0.5;
-    if (success) {
-        window.gameGold += 200;
-        return `Дипломатически брак с ${faction} е сключен! Зестра: 200🪙`;
-    } return `Предложението за брак към ${faction} беше отхвърлено.`;
-};
-
-// Битка срещу Ромеите
-window.simulateBattle = function(hero, enemyName) {
-    const win = Math.random() < (0.5 + hero.level * 0.02);
-    const log = document.getElementById('event-log');
+window.simulateBattle = function(hero) {
+    const win = Math.random() > 0.4;
     if (win) {
-        let msg = "Победа над Ромеите!";
         if (window.availableProvinces.length > 0) {
-            const p = window.availableProvinces.shift();
-            window.playerRegions.push(p);
-            msg += ` Завладяхте ${p.name}!`;
+            window.playerRegions.push(window.availableProvinces.shift());
         }
         hero.levelUp();
-        log.innerHTML += `<p style="color:#2ecc71;">⚔️ ${msg}</p>`;
-    } else {
-        hero.armySize = Math.floor(hero.armySize * 0.8);
-        log.innerHTML += `<p style="color:#e74c3c;">⚔️ Поражение от Ромеите!</p>`;
+        return "Victory!";
     }
-    window.updateCharacterUI(hero);
+    hero.armySize = Math.floor(hero.armySize * 0.8);
+    return "Defeat!";
 };
 
-// Ритуал и Благословии
 window.performAncientRitual = function(hero) {
-    const gods = [{name:"Тангра", gift:"Небесна мощ"}, {name:"Бендида", gift:"Плодородие"}, {name:"Залмоксис", gift:"Безсмъртие"}];
+    const gods = [{bg: "Тангра", en: "Tangra", ru: "Тангра"}, {bg: "Бендида", en: "Bendis", ru: "Бендида"}];
     const god = gods[Math.floor(Math.random() * gods.length)];
-    if (!hero.divineUnits.find(g => g.name === god.name)) {
+    if (!hero.divineUnits.find(g => g.bg === god.bg)) {
         hero.divineUnits.push(god);
-        return `Бог ${god.name} ви дари с ${god.gift}!`;
-    } return `${god.name} вече ви е благословил.`;
-};
-
-window.advanceYear = function(hero) {
-    window.gameYear += 1;
-    window.gameGold += 150; // Годишен данък
-    if (hero.age >= hero.maxAge) {
-        hero.isAlive = false;
-        window.showSuccessionMenu();
-    } else {
-        hero.age += 1;
+        return god[window.gameLang];
     }
-    window.updateCharacterUI(hero);
+    return null;
 };
