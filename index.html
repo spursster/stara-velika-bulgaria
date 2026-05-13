@@ -3,56 +3,87 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Epic Bulgaria</title>
+    <title>Велика България - Епична Стратегия</title>
+    <!-- Използваме Cinzel за автентично усещане на античност и средновековие -->
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Montserrat:wght@300;400;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
-    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&display=swap" rel="stylesheet">
 </head>
-<body>
-    <div id="main-layout">
-        <!-- Ляв страничен панел за региони -->
-        <aside id="regions-sidebar">
-            <h3 class="section-title">🗺️ ВЛАДЕНИЯ</h3>
-            <div id="provinces-list" class="provinces-grid">
-                <!-- Тук ui.js ще вмъква регионите -->
+<body style="background-color: #050505; color: #eee; font-family: 'Montserrat', sans-serif; margin: 0; overflow: hidden;">
+
+    <!-- ГОРНА ЛЕНТА: Ресурси и Епоха -->
+    <header id="top-bar" style="background: #111; border-bottom: 2px solid #d4af37; padding: 10px 20px; display: flex; justify-content: space-between; align-items: center;">
+        <div id="empire-status">
+            <span id="current-year" style="font-family: 'Cinzel', serif; color: #d4af37; font-weight: bold;">681 г.</span>
+            <span id="epoch-name" style="margin-left: 15px; font-size: 12px; color: #888;">АНТИЧНОСТ</span>
+        </div>
+        
+        <div id="resources" style="display: flex; gap: 20px;">
+            <div title="Злато">💰 <span id="gold-amount">750</span></div>
+            <div title="Армия">⚔️ <span id="army-total">100</span></div>
+        </div>
+
+        <div id="language-selector">
+            <button onclick="window.setLanguage('BG')" style="background:none; border:none; cursor:pointer;">🇧🇬</button>
+            <button onclick="window.setLanguage('US')" style="background:none; border:none; cursor:pointer;">🇺🇸</button>
+            <button onclick="window.setLanguage('RU')" style="background:none; border:none; cursor:pointer;">🇷🇺</button>
+        </div>
+    </header>
+
+    <main id="game-container" style="display: flex; height: calc(100vh - 55px);">
+        
+        <!-- ЛЯВ ПАНЕЛ: Владения (Провинции) -->
+        <aside id="left-sidebar" style="width: 250px; background: #0a0a0a; border-right: 1px solid #333; padding: 15px; overflow-y: auto;">
+            <h3 class="section-title" style="font-family: 'Cinzel', serif; color: #d4af37; border-bottom: 1px solid #d4af37; padding-bottom: 5px;">ВЛАДЕНИЯ</h3>
+            <div id="provinces-list">
+                <!-- Тук ui.js ще чертае провинциите (по 2 на ред според op2_2.png) -->
             </div>
         </aside>
 
-        <!-- Централен контейнер на играта -->
-        <div id="game-container">
-            <h1 class="main-title">EPIC BULGARIA</h1>
-            
-            <div class="top-bar">
-                <span id="year-display">📅 -479 г. г.</span>
-                <span id="gold-display">🪙 750</span>
+        <!-- ЦЕНТРАЛНА ЗОНА: Имперска Хроника (Events) -->
+        <section id="game-main-area" style="flex: 1; padding: 20px; display: flex; flex-direction: column; background: radial-gradient(circle, #1a1a1a 0%, #050505 100%);">
+            <h3 class="section-title" style="font-family: 'Cinzel', serif; text-align: center; color: #d4af37; letter-spacing: 2px;">📜 ИМПЕРСКА ХРОНИКА</h3>
+            <div id="events-center" style="flex: 1; overflow-y: auto; padding-right: 10px;">
+                <!-- Тук events.js ще добавя събитията в реално време -->
+                <div class="event-entry" style="border-left: 3px solid #d4af37; background: rgba(255,255,255,0.05); padding: 15px; text-align: center;">
+                    <p style="font-family: 'Cinzel', serif;">Добре дошли, Владетелю. Твоята история започва сега.</p>
+                </div>
             </div>
+        </section>
 
-            <div id="event-log"></div>
-
-            <div class="language-switcher">
-                <span class="flag" onclick="window.setLanguage('bg')">BG</span>
-                <span class="flag" onclick="window.setLanguage('en')">US</span>
-                <span class="flag" onclick="window.setLanguage('ru')">RU</span>
-            </div>
-
+        <!-- ДЕСЕН ПАНЕЛ: Управление и Семейство -->
+        <aside id="right-sidebar" style="width: 300px; background: #0a0a0a; border-left: 1px solid #333; padding: 15px; overflow-y: auto;">
             <div id="character-panel">
-                <!-- Тук ui.js ще вмъква Кан и бутоните -->
+                <!-- Тук ui.js ще чертае Канът (вдясно) и съпругата (вляво) -->
             </div>
-        </div>
-    </div>
+        </aside>
 
-    <!-- Скриптовете остават същите, заредени в правилния ред -->
-    <script src="logic.js"></script>
-    <script src="world_data.js"></script>
+    </main>
+
+    <!-- ИНИЦИАЛИЗАЦИЯ НА ВСИЧКИ 15 МОДУЛА -->
     <script src="database.js"></script>
-    <script src="regions.js"></script>
-    <script src="items.js"></script>
     <script src="mechanics.js"></script>
+    <script src="time.js"></script>
+    <script src="world_data.js"></script>
     <script src="economy.js"></script>
     <script src="barracks.js"></script>
-    <script src="events.js"></script>
     <script src="battle.js"></script>
+    <script src="regions.js"></script>
     <script src="diplomacy.js"></script>
-    <script src="time.js"></script>
+    <script src="events.js"></script>
+    <script src="items.js"></script>
+    <script src="logic.js"></script>
     <script src="ui.js"></script>
+
+    <script>
+        // Глобална функция за смяна на езика, която обновява целия UI
+        window.setLanguage = function(lang) {
+            window.gameLang = lang;
+            console.log("Language changed to: " + lang);
+            if(window.updateCharacterUI && window.currentHero) {
+                window.updateCharacterUI(window.currentHero);
+            }
+            window.logEvent(lang === 'BG' ? "Езикът е сменен на Български" : "Language switched to English", "info");
+        };
+    </script>
 </body>
 </html>
