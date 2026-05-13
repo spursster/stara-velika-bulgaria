@@ -10,19 +10,24 @@ window.advanceTurn = function() {
             window.gameTime.year++;
             checkSuccession();
         }
-        window.updateTimeUI();
+        if (window.updateTimeUI) window.updateTimeUI();
     }
 
     if (window.currentHero) {
-        const totalControlledRegions = window.playerRegions.length + (window.spouseRegions ? window.spouseRegions.length : 0);
-        const income = 50 + (totalControlledRegions * 10);
+        const totalRegions = window.playerRegions.length + (window.spouseRegions ? window.spouseRegions.length : 0);
+        const income = 50 + (totalRegions * 10);
         window.currentHero.gold += income;
         
-        // 5% шанс за намиране на случаен артефакт при всеки ход
-        if (Math.random() < 0.05 && typeof window.acquireArtifact === "function") {
+        // 10% шанс за намиране на артефакт при ход
+        if (Math.random() < 0.10 && typeof window.acquireArtifact === "function") {
             const artKeys = Object.keys(window.artifactsDatabase);
             const randomArt = artKeys[Math.floor(Math.random() * artKeys.length)];
-            window.acquireArtifact(randomArt);
+            
+            // Проверка дали вече го имаме, преди да увеличим баджа
+            if (!window.playerInventory.find(i => i.id === randomArt)) {
+                window.newArtifactsCount++;
+                window.acquireArtifact(randomArt);
+            }
         }
 
         window.updateCharacterUI(window.currentHero);
@@ -31,7 +36,7 @@ window.advanceTurn = function() {
 
 function checkSuccession() {
     if (Math.random() < 0.02) {
-        window.logEvent(`Кан ${window.currentHero.name} приключи своя земен път.`, "death");
+        window.logEvent(`Кан ${window.currentHero.name} предаде земното си царство на предците.`, "death");
         window.initNewGame();
     }
 }
@@ -51,21 +56,12 @@ window.initNewGame = function() {
         xp: 0
     };
     
-    window.currentSpouse = null;
-    window.playerRegions = ["Мизия"];
+    window.playerInventory = [];
+    window.newArtifactsCount = 0;
+    window.playerRegions = ["Долна Мизия"];
     window.spouseRegions = [];
-    window.playerInventory = []; // Нулиране на инвентара при нова игра
     
-    if (window.updateTimeUI) window.updateTimeUI();
     window.updateCharacterUI(window.currentHero);
-};
-
-window.toggleFullScreen = function() {
-    if (!document.fullscreenElement) {
-        document.documentElement.requestFullscreen();
-    } else if (document.exitFullscreen) {
-        document.exitFullscreen();
-    }
 };
 
 window.onload = () => window.initNewGame();
