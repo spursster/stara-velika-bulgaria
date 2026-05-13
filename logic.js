@@ -26,34 +26,41 @@ window.advanceTurn = function() {
     }
 
     if (window.currentHero) {
+        // Икономическа логика
         const totalReg = (window.playerRegions ? window.playerRegions.length : 0) + (window.spouseRegions ? window.spouseRegions.length : 0);
-        const income = 50 + (totalReg * 10);
+        const income = 50 + (totalReg * 15);
         window.currentHero.gold += income;
         
-        // Шанс за артефакт (10%)
-        if (Math.random() < 0.10 && typeof window.acquireArtifact === "function") {
+        // 1. ПРОВЕРКА ЗА СЛУЧАЙНО СЪБИТИЕ (Ново!)
+        if (window.triggerRandomEvent) {
+            window.triggerRandomEvent();
+        }
+
+        // 2. АВТОМАТИЧНО НАМИРАНЕ НА АРТЕФАКТИ (Рядко)
+        if (Math.random() < 0.05 && window.acquireArtifact) {
             const artKeys = Object.keys(window.artifactsDatabase || {});
-            if (artKeys.length > 0) {
-                const randomArt = artKeys[Math.floor(Math.random() * artKeys.length)];
-                if (!window.playerInventory.find(i => i.id === randomArt)) {
-                    window.newArtifactsCount++;
-                    window.acquireArtifact(randomArt);
-                }
+            const randomArt = artKeys[Math.floor(Math.random() * artKeys.length)];
+            if (!window.playerInventory.find(i => i.id === randomArt)) {
+                window.newArtifactsCount++;
+                window.acquireArtifact(randomArt);
             }
         }
+
         window.updateCharacterUI(window.currentHero);
     }
 };
 
 function checkSuccession() {
-    if (Math.random() < 0.02) {
-        if (window.logEvent) window.logEvent(`Кан ${window.currentHero.name} напусна този свят.`, "death");
+    // Вероятност за смяна на владетеля при края на годината
+    if (Math.random() < 0.03) {
+        if (window.logEvent) window.logEvent(`Кан ${window.currentHero.name} приключи земния си път. Вечна слава!`, "death");
         window.initNewGame();
     }
 }
 
 window.initNewGame = function() {
-    const dynasties = Object.keys(window.bulgarianDynasties || { "Род": { rulers: [{name: "Неизвестен"}] } });
+    // Вземане на данни от династиите
+    const dynasties = Object.keys(window.bulgarianDynasties || { "Дуло": { rulers: [{name: "Авитохол"}] } });
     const randomDynName = dynasties[Math.floor(Math.random() * dynasties.length)];
     const dynastyData = window.bulgarianDynasties[randomDynName];
     const randomRuler = dynastyData.rulers[Math.floor(Math.random() * dynastyData.rulers.length)];
@@ -61,19 +68,20 @@ window.initNewGame = function() {
     window.currentHero = {
         name: randomRuler.name,
         dynasty: randomDynName,
-        gold: 750,
-        armySize: 100,
-        heroPower: 50,
+        gold: 800,
+        armySize: 150,
+        heroPower: 60,
         xp: 0
     };
     
-    window.playerInventory = []; // Важно: празна съкровищница
-    window.newArtifactsCount = 0; // Важно: нулев индикатор
+    window.playerInventory = [];
+    window.newArtifactsCount = 0;
     window.playerRegions = ["Долна Мизия"];
     window.spouseRegions = [];
     
-    window.updateCharacterUI(window.currentHero);
+    if (window.updateCharacterUI) window.updateCharacterUI(window.currentHero);
     if (window.updateTimeUI) window.updateTimeUI();
 };
 
+// Старт на играта
 window.onload = () => window.initNewGame();
