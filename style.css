@@ -1,7 +1,7 @@
 body {
     background-color: #0c0c0c;
     color: #eee;
-    font-family: 'Cinzel', serif; /* Или подобен античен шрифт */
+    font-family: 'Cinzel', serif; /* Античен шрифт за Велика България */
     margin: 0;
     padding: 10px;
     display: flex;
@@ -26,7 +26,7 @@ body {
     font-weight: bold;
 }
 
-/* Контейнер за Събития - преместен нагоре */
+/* Контейнер за Събития - Новите събития най-отгоре */
 #event-log {
     height: 120px;
     overflow-y: auto;
@@ -37,7 +37,7 @@ body {
     margin-bottom: 15px;
     border-radius: 5px;
     display: flex;
-    flex-direction: column-reverse; /* Новите събития най-отгоре */
+    flex-direction: column-reverse; 
 }
 
 /* Адаптивна мрежа за провинции */
@@ -47,14 +47,14 @@ body {
     margin-bottom: 20px;
 }
 
-/* 2 колони за мобилни устройства по подразбиране */
+/* 2 колони за мобилни устройства */
 @media (max-width: 600px) {
     .provinces-container {
         grid-template-columns: repeat(2, 1fr);
     }
 }
 
-/* 3 колони за лаптоп/компютър */
+/* 3 колони за по-големи екрани */
 @media (min-width: 601px) {
     .provinces-container {
         grid-template-columns: repeat(3, 1fr);
@@ -83,7 +83,7 @@ body {
     display: block;
 }
 
-/* Модален прозорец */
+/* Модален прозорец за Кан и артефакти */
 .modal-overlay {
     display: none;
     position: fixed;
@@ -106,7 +106,12 @@ body {
     border-radius: 10px;
 }
 
-.clickable-name { cursor: pointer; color: #d4af37; }
+.clickable-name { 
+    cursor: pointer; 
+    color: #d4af37; 
+    text-decoration: underline;
+}
+
 .language-switcher {
     display: flex;
     justify-content: center;
@@ -114,5 +119,12 @@ body {
     margin-bottom: 10px;
     font-size: 20px;
 }
-.flag { cursor: pointer; transition: transform 0.2s; }
-.flag:hover { transform: scale(1.2); }
+
+.flag { 
+    cursor: pointer; 
+    transition: transform 0.2s; 
+}
+
+.flag:hover { 
+    transform: scale(1.2); 
+}
