@@ -1,149 +1,89 @@
-/* Основен дизайн и цветове */
 body {
+    background-color: #0c0c0c;
+    color: #eee;
+    font-family: 'Cinzel', serif; /* Или подобен античен шрифт */
     margin: 0;
-    padding: 0;
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    background-color: #1a1a1a;
-    color: #e0e0e0;
+    padding: 10px;
     display: flex;
-    justify-content: center;
-    height: 100vh;
+    flex-direction: column;
+    align-items: center;
 }
 
 #game-container {
-    display: grid;
-    grid-template-columns: 2fr 1fr; /* 2 части за картата, 1 част за героя */
     width: 100%;
-    max-width: 1400px;
-    background-color: #262626;
-    border: 2px solid #444;
+    max-width: 500px;
 }
 
-/* Лява част: Карта и история */
-#main-view {
-    padding: 20px;
-    border-right: 2px solid #444;
+/* Статистики най-отгоре */
+.top-bar {
     display: flex;
-    flex-direction: column;
-}
-
-header h1 {
-    color: #d4af37; /* Златист цвят за титлите */
-    margin: 0;
-}
-
-#world-map {
-    flex-grow: 1;
-    background-color: #0d0d0d;
+    justify-content: space-between;
+    background: #1a1a1a;
+    padding: 10px;
     border: 1px solid #d4af37;
-    margin: 20px 0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background-image: url('assets/map_placeholder.png'); /* По-късно ще добавим истинска карта */
-    background-size: cover;
-}
-
-#event-log {
-    height: 150px;
-    background: #111;
-    padding: 10px;
-    border: 1px solid #333;
-    overflow-y: auto;
-    font-style: italic;
-}
-
-/* Дясна част: Панел на владетеля */
-#character-panel {
-    padding: 20px;
-    background-color: #2d2d2d;
-}
-
-.hero-header {
-    text-align: center;
-    border-bottom: 1px solid #d4af37;
-    padding-bottom: 10px;
-}
-
-/* Мрежата за 9-те слота на инвентара (Heroes III стил) */
-.inventory-grid {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr); /* 3 колони */
-    gap: 10px;
-    margin-top: 20px;
-}
-
-.inventory-slot {
-    aspect-ratio: 1 / 1;
-    background-color: #3d3d3d;
-    border: 1px solid #555;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    font-size: 0.7rem;
-    cursor: pointer;
-    transition: background 0.3s;
-}
-
-.inventory-slot:hover {
-    background-color: #4d4d4d;
-    border-color: #d4af37;
-}
-
-.slot-label {
-    color: #888;
-    margin-bottom: 5px;
-}
-
-.item-visual {
-    color: #fff;
-    font-weight: bold;
-}
-
-/* Бутони */
-.actions {
-    margin-top: 30px;
-    text-align: center;
-}
-
-button {
-    background-color: #d4af37;
-    color: #000;
-    border: none;
-    padding: 10px 20px;
-    font-weight: bold;
-    cursor: pointer;
-    border-radius: 3px;
-}
-
-button:hover {
-    background-color: #f1c40f;
-}
-
-.actions-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 10px;
-    margin-top: 20px;
-    border-top: 1px solid #444;
-    padding-top: 10px;
-}
-
-.actions-grid h4 {
-    grid-column: span 2;
-    margin-bottom: 5px;
-}
-
-.divine-section {
-    margin-top: 15px;
-    background: rgba(212, 175, 55, 0.1);
-    padding: 10px;
     border-radius: 5px;
-    border: 1px gold dashed;
+    margin-bottom: 10px;
+    font-weight: bold;
 }
 
-/* Модален прозорец за профила на владетеля */
+/* Контейнер за Събития - преместен нагоре */
+#event-log {
+    height: 120px;
+    overflow-y: auto;
+    background: #111;
+    border: 1px solid #444;
+    padding: 10px;
+    font-size: 13px;
+    margin-bottom: 15px;
+    border-radius: 5px;
+    display: flex;
+    flex-direction: column-reverse; /* Новите събития най-отгоре */
+}
+
+/* Адаптивна мрежа за провинции */
+.provinces-container {
+    display: grid;
+    gap: 10px;
+    margin-bottom: 20px;
+}
+
+/* 2 колони за мобилни устройства по подразбиране */
+@media (max-width: 600px) {
+    .provinces-container {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+/* 3 колони за лаптоп/компютър */
+@media (min-width: 601px) {
+    .provinces-container {
+        grid-template-columns: repeat(3, 1fr);
+    }
+}
+
+.province-slot {
+    background: #1a1a1a;
+    border: 1px solid #d4af37;
+    border-radius: 4px;
+    overflow: hidden;
+    text-align: center;
+}
+
+.province-name {
+    font-size: 10px;
+    font-weight: bold;
+    color: #d4af37;
+    padding: 4px;
+    background: #222;
+}
+
+.province-img {
+    width: 100%;
+    height: auto;
+    display: block;
+}
+
+/* Модален прозорец */
 .modal-overlay {
     display: none;
     position: fixed;
@@ -151,88 +91,19 @@ button:hover {
     left: 0;
     width: 100%;
     height: 100%;
-    background: rgba(0, 0, 0, 0.85);
-    z-index: 1000;
+    background: rgba(0,0,0,0.9);
+    z-index: 2000;
     justify-content: center;
     align-items: center;
 }
 
 .character-modal {
     background: #1a1a1a;
-    border: 3px solid #d4af37;
-    border-radius: 10px;
-    width: 90%;
-    max-width: 400px;
+    border: 2px solid #d4af37;
+    width: 85%;
+    max-width: 350px;
     padding: 20px;
-    position: relative;
-    box-shadow: 0 0 20px rgba(212, 175, 55, 0.3);
-    color: #eee;
+    border-radius: 10px;
 }
 
-.close-modal {
-    position: absolute;
-    top: 10px;
-    right: 15px;
-    font-size: 24px;
-    color: #d4af37;
-    cursor: pointer;
-}
-
-.modal-header {
-    text-align: center;
-    border-bottom: 2px solid #d4af37;
-    padding-bottom: 10px;
-    margin-bottom: 15px;
-}
-
-.clickable-name {
-    cursor: pointer;
-    transition: 0.3s;
-}
-
-.clickable-name:hover {
-    color: #ffd700;
-    text-shadow: 0 0 10px rgba(255, 215, 0, 0.5);
-}
-
-/* Слотове за провинции */
-.provinces-container {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
-    gap: 10px;
-    margin-top: 15px;
-    padding: 10px;
-    background: #111;
-    border-radius: 8px;
-    border: 1px solid #333;
-}
-
-.province-slot {
-    background: #1a1a1a;
-    border: 1px solid #d4af37;
-    border-radius: 5px;
-    overflow: hidden;
-    text-align: center;
-    transition: transform 0.2s;
-}
-
-.province-slot:hover {
-    transform: scale(1.05);
-}
-
-.province-name {
-    font-size: 11px;
-    font-weight: bold;
-    color: #d4af37;
-    padding: 5px;
-    background: #222;
-    border-bottom: 1px solid #333;
-    text-transform: uppercase;
-}
-
-.province-img {
-    width: 100%;
-    height: 80px;
-    object-fit: cover;
-    filter: sepia(0.5) contrast(1.2); /* Придава ретро атласен вид */
-}
+.clickable-name { cursor: pointer; color: #d4af37; }
