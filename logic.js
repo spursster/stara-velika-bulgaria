@@ -1,4 +1,8 @@
-// Клас за персонаж
+/**
+ * МОДУЛ: ГЛАВНА ЛОГИКА
+ * Инициализира играта със случаен старт и управлява обекта на героя.
+ */
+
 class Character {
     constructor(name, dynasty, role, years = "") {
         this.name = name;
@@ -13,17 +17,16 @@ class Character {
     }
 }
 
-// Функция за инициализация на нова игра със случайна династия
 window.initNewGame = function() {
+    // 1. Избор на случайна династия от базата данни
     const dynasties = Object.keys(window.bulgarianDynasties);
     const randomDynastyName = dynasties[Math.floor(Math.random() * dynasties.length)];
     const dynastyData = window.bulgarianDynasties[randomDynastyName];
     
-    // Избиране на случаен владетел от избраната династия
+    // 2. Избор на случаен владетел (Кан) от рода
     const allRulers = [...dynastyData.rulers, ...(dynastyData.branchRulers || [])];
     const randomRuler = allRulers[Math.floor(Math.random() * allRulers.length)];
 
-    // Създаване на текущия герой (Кан)
     window.currentHero = new Character(
         randomRuler.name, 
         randomDynastyName, 
@@ -31,18 +34,17 @@ window.initNewGame = function() {
         randomRuler.years
     );
     
-    // Празно състояние за съпруга до сключване на брак
     window.currentSpouse = null;
-    
-    // Начална провинция
     window.playerRegions = ["Северна Тракия"]; 
     
-    // Обновяване на интерфейса
+    // 3. Начално установяване на времето и езика
+    window.gameLang = "BG";
+    window.updateTimeUI();
     window.updateCharacterUI(window.currentHero);
-    console.log(`Старт: Кан ${randomRuler.name} от род ${randomDynastyName}`);
+    
+    window.logEvent(`Начало на управлението на Кан ${window.currentHero.name} от род ${window.currentHero.dynasty}.`, "royal");
 };
 
-// При зареждане на страницата
 window.onload = () => {
     window.initNewGame();
 };
