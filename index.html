@@ -9,33 +9,41 @@
 </head>
 <body>
 
-    <header id="top-bar" style="background: #111; border-bottom: 2px solid #d4af37; padding: 0 15px; display: flex; justify-content: space-between; align-items: center; height: 60px;">
+    <!-- ГЛАВЕН ХЕДЪР (Върнати функции) -->
+    <header id="top-bar" style="background: #111; border-bottom: 2px solid #d4af37; padding: 0 10px; display: flex; justify-content: space-between; align-items: center; height: 60px;">
         <div id="time-container" style="font-family: 'Cinzel', serif; color: #d4af37;">
-            <div id="current-time-info" style="font-size: 12px;">🌱 Пролет, 480 пр.н.е.</div>
+            <div id="current-time-info" style="font-size: 13px;">🌱 Пролет, 480 пр.н.е.</div>
+            <div style="font-size: 9px; opacity: 0.6;">АНТИЧНОСТ</div>
         </div>
         
-        <div style="display: flex; gap: 5px;">
-            <button class="top-btn next-turn-btn" onclick="window.advanceTurn()">⏳</button>
+        <div id="main-controls" style="display: flex; gap: 5px;">
+            <button class="top-btn" onclick="window.advanceTurn()" title="Следващ ход">⏳</button>
+            <button class="top-btn" onclick="window.startBattle()" title="Битка">⚔️</button>
+            <button class="top-btn" onclick="window.openMarriageMenu()" title="Брак">💍</button>
             <button class="top-btn" onclick="window.toggleFullScreen()">⛶</button>
         </div>
 
-        <div style="font-family: 'Cinzel', serif; font-size: 14px;">
-            💰 <span id="gold-amount" style="color: #ffd700;">750</span>
+        <div style="font-family: 'Cinzel', serif; font-size: 14px; color: #ffd700;">
+            💰 <span id="gold-amount">750</span>
         </div>
     </header>
 
+    <!-- ACTION BAR -->
     <div id="action-bar" style="background: #0a0a0a; border-bottom: 1px solid #333; display: flex; justify-content: space-around; align-items: center; height: 50px;">
-        <button onclick="window.buyUnits()" style="background:none; border:none; color:#d4af37; font-family:'Cinzel'; font-size:12px; cursor:pointer;">🛡️ ОБУЧЕНИЕ</button>
-        <div style="display: flex; gap: 10px; font-size: 12px; font-family: 'Cinzel';">
-            <span title="Мощ">⚔️ <span id="hero-power-val">50</span></span>
-            <span title="Войска">🛡️ <span id="army-val">100</span></span>
+        <button onclick="window.buyUnits()" style="background:none; border:none; color:#d4af37; font-family:'Cinzel'; font-size:11px; cursor:pointer;">🛡️ ОБУЧЕНИЕ</button>
+        
+        <div style="display: flex; gap: 15px; font-size: 12px; font-family: 'Cinzel';">
+            <span>⚔️ <span id="hero-power-val" style="color:#ff4d4d;">50</span></span>
+            <span>🛡️ <span id="army-val">100</span></span>
         </div>
+
         <div style="position: relative; cursor: pointer;" onclick="window.toggleTreasury()">
             <span style="font-size: 20px;">🏺</span>
             <div id="new-item-badge" style="display: none; position: absolute; top: -5px; right: -8px; background: #ff4d4d; color: white; font-size: 10px; border-radius: 50%; padding: 2px 6px; border: 1px solid white;">0</div>
         </div>
     </div>
 
+    <!-- ОСНОВЕН КОНТЕЙНЕР (Запазва хоризонталната логика) -->
     <main id="game-container">
         <aside id="left-sidebar">
             <div id="provinces-list"></div>
@@ -44,16 +52,18 @@
         <section id="game-main-area">
             <div id="events-center"></div>
             
-            <div id="treasury-overlay" style="display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); z-index: 100; padding: 20px; border: 1px solid #d4af37; box-sizing: border-box;">
+            <!-- МОДАЛ СЪКРОВИЩНИЦА -->
+            <div id="treasury-overlay" style="display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.98); z-index: 100; padding: 20px; border: 1px solid #d4af37; box-sizing: border-box;">
                 <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #333; padding-bottom: 10px;">
-                    <h2 style="font-family: 'Cinzel'; color: #d4af37; font-size: 18px;">🏺 СЪКРОВИЩНИЦА</h2>
-                    <button onclick="window.toggleTreasury()" style="background:none; border:none; color:#d4af37; font-size:20px;">✕</button>
+                    <h2 style="font-family: 'Cinzel'; color: #d4af37; font-size: 18px; margin:0;">🏺 СЪКРОВИЩНИЦА</h2>
+                    <button onclick="window.toggleTreasury()" style="background:none; border:none; color:#d4af37; font-size:24px;">✕</button>
                 </div>
-                <div id="treasury-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(90px, 1fr)); gap: 10px; margin-top: 20px;"></div>
+                <div id="treasury-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); gap: 15px; margin-top: 20px;"></div>
             </div>
         </section>
     </main>
 
+    <!-- СИНХРОНИЗИРАНИ СКРИПТОВЕ -->
     <script src="database.js"></script>
     <script src="mechanics.js"></script>
     <script src="time.js"></script>
