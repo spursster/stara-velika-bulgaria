@@ -1,87 +1,95 @@
 /**
  * МОДУЛ: ИНТЕРФЕЙС - Велика България
- * Визуализира профилите и поддържа статистиката на файловете.
+ * Управлява Династичното дърво на владенията в левия панел.
  */
 
 window.updateCharacterUI = function(hero) {
-    const charPanel = document.getElementById('character-panel');
-    if (!charPanel) return;
+    // 1. ОБНОВЯВАНЕ НА ЛЕВИЯ ПАНЕЛ (Владетел + Региони по Династии)
+    const leftSidebar = document.getElementById('provinces-list');
+    if (leftSidebar) {
+        let htmlContent = "";
 
-    // Визуализация на съпругата (ако има такава)
-    const spouseHTML = window.currentSpouse ? `
-        <div style="text-align: center; width: 110px;">
-            <div style="font-size: 10px; color: #d4af37; font-family: 'Cinzel', serif;">${window.currentSpouse.dynasty}</div>
-            <div style="border: 1px solid #d4af37; background: #111; width: 90px; height: 90px; margin: 0 auto; border-radius: 5px; display: flex; align-items: center; justify-content: center; font-size: 35px;">👸</div>
-            <div style="font-size: 13px; margin-top: 5px;">${window.currentSpouse.name}</div>
-        </div>
-    ` : `
-        <div style="opacity: 0.2; text-align: center; width: 110px;">
-            <div style="font-size: 10px; font-family: 'Cinzel', serif;">Търси се съпруга</div>
-            <div style="border: 1px dashed #444; width: 90px; height: 90px; margin: 0 auto; border-radius: 5px; display: flex; align-items: center; justify-content: center; font-size: 25px;">💍</div>
-        </div>
-    `;
-
-    // Визуализация на владетеля (Кан)
-    const kanHTML = `
-        <div style="text-align: center; width: 110px;">
-            <div style="font-size: 10px; color: #d4af37; font-family: 'Cinzel', serif;">${hero.dynasty}</div>
-            <div style="border: 2px solid #d4af37; background: #111; width: 90px; height: 90px; margin: 0 auto; border-radius: 5px; display: flex; align-items: center; justify-content: center; font-size: 35px;">🏇</div>
-            <div style="font-size: 13px; margin-top: 5px;">Кан ${hero.name}</div>
-        </div>
-    `;
-
-    charPanel.innerHTML = `
-        <!-- ПАНЕЛ ДИНАСТИЯ -->
-        <div style="display: flex; justify-content: space-around; align-items: center; margin-bottom: 25px; padding: 15px; background: rgba(212, 175, 55, 0.05); border-radius: 5px; border: 1px solid rgba(212, 175, 55, 0.1);">
-            ${spouseHTML}
-            ${kanHTML}
-        </div>
-
-        <!-- КАЗАРМА (Barracks) -->
-        <h3 style="font-family: 'Cinzel', serif; font-size: 15px; border-bottom: 1px solid #333; padding-bottom: 5px; color: #d4af37; margin-top: 0;">⚔️ КАЗАРМА</h3>
-        <div style="background: #111; padding: 15px; border: 1px solid #222; border-radius: 5px; margin-bottom: 20px;">
-            <div style="display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 13px;">
-                <span>Бойна мощ:</span>
-                <b style="color: #ff4d4d;">${hero.heroPower}</b>
+        // СЕКЦИЯ: ВЛАДЕТЕЛ (КАН) - Винаги най-отгоре
+        htmlContent += `
+            <div style="text-align: center; padding: 15px; background: rgba(212, 175, 55, 0.1); border: 1px solid #d4af37; border-radius: 5px; margin-bottom: 10px;">
+                <div style="font-size: 10px; color: #d4af37; font-family: 'Cinzel', serif;">РОД ${hero.dynasty.toUpperCase()}</div>
+                <div style="font-size: 40px; margin: 5px 0;">🏇</div>
+                <div style="font-size: 14px; font-weight: bold; color: #eee;">Кан ${hero.name}</div>
             </div>
-            <div style="display: flex; justify-content: space-between; margin-bottom: 12px; font-size: 13px;">
-                <span>Численост:</span>
-                <b>${hero.armySize} воини</b>
+        `;
+
+        // СЕКЦИЯ: РЕГИОНИ НА КАНА (Директни владения)
+        htmlContent += `<div style="font-size: 10px; color: #555; margin: 5px 0 5px 5px; font-family: 'Cinzel', serif;">ЗЕМИ НА РОДА:</div>`;
+        window.playerRegions.forEach(reg => {
+            htmlContent += `
+                <div style="border: 1px solid #222; background: #0a0a0a; padding: 8px; margin-bottom: 5px; border-left: 3px solid #d4af37; font-size: 12px;">
+                    <b>${reg}</b>
+                </div>
+            `;
+        });
+
+        // СЕКЦИЯ: СЪПРУГА И НЕЙНИТЕ РЕГИОНИ (Ако има брак)
+        if (window.currentSpouse) {
+            htmlContent += `
+                <div style="margin-top: 20px; text-align: center; padding: 10px; background: rgba(123, 26, 26, 0.1); border: 1px solid #7b1a1a; border-radius: 5px; cursor: pointer;" onclick="window.showSpouseDetails()">
+                    <div style="font-size: 10px; color: #ff6b6b; font-family: 'Cinzel', serif;">РОД ${window.currentSpouse.dynasty.toUpperCase()}</div>
+                    <div style="font-size: 30px;">👸</div>
+                    <div style="font-size: 12px; font-weight: bold;">${window.currentSpouse.name}</div>
+                </div>
+            `;
+            
+            // Тук ще се показват регионите на нейната династия (ако има такива под неин контрол)
+            htmlContent += `<div style="font-size: 10px; color: #555; margin: 5px 0 5px 5px; font-family: 'Cinzel', serif;">ЗЕМИ НА СЪЮЗНИЯ РОД:</div>`;
+            if (window.spouseRegions && window.spouseRegions.length > 0) {
+                window.spouseRegions.forEach(reg => {
+                    htmlContent += `
+                        <div style="border: 1px solid #222; background: #0a0a0a; padding: 8px; margin-bottom: 5px; border-left: 3px solid #7b1a1a; font-size: 12px; opacity: 0.8;">
+                            <b>${reg}</b>
+                        </div>
+                    `;
+                });
+            } else {
+                htmlContent += `<div style="font-size: 10px; color: #333; padding-left: 10px;">Няма териториални претенции</div>`;
+            }
+        }
+
+        leftSidebar.innerHTML = htmlContent;
+    }
+
+    // 2. ОБНОВЯВАНЕ НА ДЕСНИЯ ПАНЕЛ (ИНФОРМАЦИЯ И КАЗАРМА)
+    const rightPanel = document.getElementById('character-panel');
+    if (rightPanel) {
+        rightPanel.innerHTML = `
+            <h3 style="font-family: 'Cinzel', serif; font-size: 15px; border-bottom: 1px solid #333; padding-bottom: 5px; color: #d4af37;">⚔️ ВОЕНЕН СТАТУС</h3>
+            <div style="background: #111; padding: 15px; border: 1px solid #222; border-radius: 5px; margin-bottom: 20px;">
+                <div style="display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 13px;">
+                    <span>Бойна мощ:</span>
+                    <b style="color: #ff4d4d;">${hero.heroPower}</b>
+                </div>
+                <div style="display: flex; justify-content: space-between; margin-bottom: 12px; font-size: 13px;">
+                    <span>Армия:</span>
+                    <b>${hero.armySize} воини</b>
+                </div>
+                <button onclick="window.buyUnits()" style="width: 100%; background: transparent; color: #d4af37; border: 1px solid #d4af37; padding: 8px; cursor: pointer; font-size: 11px; font-family: 'Cinzel', serif;">ОБУЧЕНИЕ</button>
             </div>
-            <button onclick="window.buyUnits()" style="width: 100%; background: transparent; color: #d4af37; border: 1px solid #d4af37; padding: 8px; cursor: pointer; font-size: 11px; font-family: 'Cinzel', serif; transition: 0.3s;">ОБУЧЕНИЕ НА ВОЙСКИ</button>
-        </div>
 
-        <!-- СТАТИСТИКА -->
-        <div style="background: rgba(0,0,0,0.5); padding: 12px; border: 1px solid #1a1a1a; font-size: 12px; border-radius: 4px;">
-            <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
-                <span>🌟 Престиж на рода:</span>
-                <span style="color: #eee;">${hero.xp}</span>
+            <div style="background: rgba(0,0,0,0.5); padding: 12px; border: 1px solid #1a1a1a; font-size: 12px; border-radius: 4px;">
+                <div style="display: flex; justify-content: space-between;">
+                    <span>🌟 Престиж:</span>
+                    <span style="color: #eee;">${hero.xp}</span>
+                </div>
             </div>
-        </div>
-    `;
+        `;
+    }
 
-    // Синхронизация с горната лента (Header)
-    const goldDisplay = document.getElementById('gold-amount');
-    const armyDisplay = document.getElementById('army-total');
-    
-    if (goldDisplay) goldDisplay.innerText = hero.gold;
-    if (armyDisplay) armyDisplay.innerText = hero.armySize;
-
-    window.updateRegionsSidebar();
+    // Синхронизация на ресурсите горе
+    document.getElementById('gold-amount').innerText = hero.gold;
+    document.getElementById('army-total').innerText = hero.armySize;
 };
 
-window.updateRegionsSidebar = function() {
-    const sidebar = document.getElementById('provinces-list');
-    if (!sidebar) return;
-    
-    if (window.playerRegions && window.playerRegions.length > 0) {
-        sidebar.innerHTML = window.playerRegions.map(reg => `
-            <div style="border: 1px solid #222; background: #050505; padding: 10px; margin-bottom: 8px; border-left: 2px solid #d4af37; font-size: 12px;">
-                <b style="color: #d4af37; font-family: 'Cinzel', serif;">${reg}</b>
-                <div style="font-size: 10px; color: #555;">Род ${window.currentHero.dynasty}</div>
-            </div>
-        `).join('');
-    } else {
-        sidebar.innerHTML = "<div style='font-size: 11px; color: #444;'>Няма открити владения.</div>";
+// Функция за детайли при клик върху съпругата
+window.showSpouseDetails = function() {
+    if (window.currentSpouse) {
+        window.logEvent(`Съпруга: ${window.currentSpouse.name} от рода ${window.currentSpouse.dynasty}. Този брак осигурява легитимност над съюзните земи.`, "royal");
     }
 };
