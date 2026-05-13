@@ -5,56 +5,55 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Велика България - Игра</title>
     <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Montserrat:wght@300;400;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="style.css">
 </head>
 <body style="background-color: #050505; color: #eee; font-family: 'Montserrat', sans-serif; margin: 0; overflow: hidden;">
 
-    <!-- ГОРНА ЛЕНТА -->
-    <header id="top-bar" style="background: #111; border-bottom: 2px solid #d4af37; padding: 10px 20px; display: flex; justify-content: space-between; align-items: center;">
-        <div id="time-container" style="font-family: 'Cinzel', serif; color: #d4af37;">
-            <span id="current-time-info">🌱 Пролет, 480 пр.н.е. | Античност</span>
+    <!-- ГОРНА ЛЕНТА: КОМАНДЕН ЦЕНТЪР -->
+    <header id="top-bar" style="background: #111; border-bottom: 2px solid #d4af37; padding: 5px 20px; display: flex; justify-content: space-between; align-items: center; height: 60px;">
+        
+        <!-- ВРЕМЕ И ГОДИНИ -->
+        <div id="time-container" style="font-family: 'Cinzel', serif; color: #d4af37; min-width: 200px;">
+            <div id="current-time-info" style="font-size: 14px;">🌱 Пролет, 480 пр.н.е.</div>
+            <div style="font-size: 10px; letter-spacing: 1px; opacity: 0.8;">ЕПОХА: АНТИЧНОСТ</div>
         </div>
         
-        <div id="resources" style="display: flex; gap: 20px;">
-            <div title="Злато">💰 <span id="gold-amount">750</span></div>
-            <div title="Армия">⚔️ <span id="army-total">100</span></div>
+        <!-- БУТОНИ ЗА УПРАВЛЕНИЕ (НОВО МЯСТО) -->
+        <div id="main-controls" style="display: flex; gap: 10px; align-items: center;">
+            <button onclick="window.advanceTurn()" style="background: #d4af37; color: black; border: none; padding: 8px 15px; cursor: pointer; font-family: 'Cinzel', serif; font-weight: bold; border-radius: 3px; font-size: 12px;">СЛЕДВАЩ ХОД</button>
+            <button onclick="window.startBattle()" style="background: #7b1a1a; color: white; border: none; padding: 8px 15px; cursor: pointer; font-family: 'Cinzel', serif; border-radius: 3px; font-size: 12px;">БИТКА</button>
+            <button onclick="window.openMarriageMenu()" style="background: #1a7b3a; color: white; border: none; padding: 8px 15px; cursor: pointer; font-family: 'Cinzel', serif; border-radius: 3px; font-size: 12px;">БРАК</button>
         </div>
 
-        <div id="controls-right" style="display: flex; align-items: center; gap: 15px;">
-            <!-- БУТОН ЗА ЦЯЛ ЕКРАН -->
-            <button onclick="window.toggleFullScreen()" style="background: none; border: 1px solid #333; color: #d4af37; cursor: pointer; padding: 5px 10px; border-radius: 3px; font-size: 14px;" title="Цял екран">
-                ⛶
-            </button>
+        <!-- РЕСУРСИ И СИСТЕМНИ -->
+        <div style="display: flex; align-items: center; gap: 20px;">
+            <div style="display: flex; gap: 15px; font-size: 14px;">
+                <div title="Злато">💰 <span id="gold-amount">750</span></div>
+                <div title="Армия">⚔️ <span id="army-total">100</span></div>
+            </div>
             
-            <div id="language-selector">
+            <div style="display: flex; gap: 10px; border-left: 1px solid #333; padding-left: 15px;">
+                <button onclick="window.toggleFullScreen()" style="background: none; border: 1px solid #333; color: #d4af37; cursor: pointer; padding: 5px 8px; border-radius: 3px;" title="Цял екран">⛶</button>
                 <button onclick="window.setLanguage('BG')" style="background:none; border:none; cursor:pointer;">🇧🇬</button>
-                <button onclick="window.setLanguage('US')" style="background:none; border:none; cursor:pointer;">🇺🇸</button>
             </div>
         </div>
     </header>
 
-    <main id="game-container" style="display: flex; height: calc(100vh - 55px);">
-        
-        <!-- ЛЯВ ПАНЕЛ: Провинции -->
+    <main id="game-container" style="display: flex; height: calc(100vh - 60px);">
         <aside id="left-sidebar" style="width: 250px; background: #0a0a0a; border-right: 1px solid #333; padding: 15px; overflow-y: auto;">
-            <h3 class="section-title" style="font-family: 'Cinzel', serif; color: #d4af37;">ВЛАДЕНИЯ</h3>
+            <h3 style="font-family: 'Cinzel', serif; color: #d4af37; font-size: 16px;">ВЛАДЕНИЯ</h3>
             <div id="provinces-list"></div>
         </aside>
 
-        <!-- ЦЕНТРАЛНА ЗОНА: Хроника -->
         <section id="game-main-area" style="flex: 1; padding: 20px; display: flex; flex-direction: column; background: radial-gradient(circle, #1a1a1a 0%, #050505 100%);">
-            <h3 class="section-title" style="font-family: 'Cinzel', serif; text-align: center; color: #d4af37;">📜 ИМПЕРСКА ХРОНИКА</h3>
             <div id="events-center" style="flex: 1; overflow-y: auto; padding: 10px;"></div>
         </section>
 
-        <!-- ДЕСЕН ПАНЕЛ: Управление и Казарма -->
         <aside id="right-sidebar" style="width: 320px; background: #0a0a0a; border-left: 1px solid #333; padding: 15px; overflow-y: auto;">
             <div id="character-panel"></div>
         </aside>
-
     </main>
 
-    <!-- СКРИПТОВЕ -->
+    <!-- ВКЛЮЧВАНЕ НА ВСИЧКИ ФАЙЛОВЕ (СПИСЪК ПО ИНСТРУКЦИЯ) -->
     <script src="database.js"></script>
     <script src="mechanics.js"></script>
     <script src="time.js"></script>
