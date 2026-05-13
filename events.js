@@ -1,100 +1,74 @@
-window.randomEvents = [
-    {
-        title: { bg: "🛡️ Ромейска делегация", en: "🛡️ Rhomaioi Delegation", ru: "🛡️ Ромейская делегация" },
-        text: { 
-            bg: "Пратеници от Румелия предлагат дарове в замяна на мир.", 
-            en: "Envoys from Rumelia offer gifts in exchange for peace.", 
-            ru: "Посланники из Румелии предлагают дары в обмен на мир." 
-        },
-        effect: (hero) => {
-            window.gameGold += 200;
-            return {
-                bg: "Получихте 200 злато като дар.",
-                en: "Received 200 gold as a gift.",
-                ru: "Получили 200 золота в дар."
-            };
-        }
-    },
-    {
-        title: { bg: "🌾 Богата реколта", en: "🌾 Bountiful Harvest", ru: "🌾 Богатый урожай" },
-        text: { 
-            bg: "Земите на рода ви дадоха изобилен плод тази година.", 
-            en: "The lands of your clan gave abundant fruit this year.", 
-            ru: "Земли вашего рода дали обильный плод в этом году." 
-        },
-        effect: (hero) => {
-            window.gameGold += 100;
-            return {
-                bg: "Хамбарите са пълни. +100 злато.",
-                en: "The granaries are full. +100 gold.",
-                ru: "Амбары полны. +100 золота."
-            };
-        }
-    },
-    {
-        title: { bg: "⚔️ Набег на степни кланове", en: "⚔️ Steppe Clans Raid", ru: "⚔️ Набег степных кланов" },
-        text: { 
-            bg: "Вражески отряди нападнаха пограничните села.", 
-            en: "Enemy squads attacked the border villages.", 
-            ru: "Вражеские отряды напали на пограничные села." 
-        },
-        effect: (hero) => {
-            const loss = Math.floor(hero.armySize * 0.1);
-            hero.armySize -= loss;
-            return {
-                bg: `Загубихте ${loss} воини в защитата.`,
-                en: `Lost ${loss} warriors in defense.`,
-                ru: `Потеряли ${loss} воинов в защите.`
-            };
-        }
-    },
-    {
-        title: { bg: "✨ Древно предсказание", en: "✨ Ancient Prophecy", ru: "✨ Древнее предсказание" },
-        text: { 
-            bg: "Местен жрец вижда величие в очите на владетеля.", 
-            en: "A local priest sees greatness in the ruler's eyes.", 
-            ru: "Местный жрец видит величие в глазах правителя." 
-        },
-        effect: (hero) => {
-            hero.level += 1;
-            hero.armySize += 100;
-            return {
-                bg: "Вашият авторитет нарасна. +1 Ниво.",
-                en: "Your authority has grown. +1 Level.",
-                ru: "Ваш авторитет вырос. +1 Уровень."
-            };
-        }
+/**
+ * МОДУЛ: СЪБИТИЯ И ЛОГ
+ * Управлява хрониката на събитията в центъра на екрана, без изскачащи прозорци.
+ */
+
+window.gameLog = [];
+
+window.logEvent = function(message, type = "info") {
+    // 1. Добавяне на новото събитие в началото на масива
+    const timestamp = new Date().toLocaleTimeString();
+    window.gameLog.unshift({ message, type, time: timestamp });
+
+    // 2. Ограничаване на лога до последните 10 събития за яснота
+    if (window.gameLog.length > 10) {
+        window.gameLog.pop();
     }
-];
 
-window.triggerRandomEvent = function(hero) {
-    if (Math.random() > 0.4) return; // 40% шанс за събитие
+    // 3. Извикване на функцията за рендериране в центъра
+    window.renderEventsCenter();
+};
 
-    const event = window.randomEvents[Math.floor(Math.random() * window.randomEvents.length)];
-    const effectMessages = event.effect(hero);
-    
-    const log = document.getElementById('event-log');
-    if (log) {
-        const lang = window.gameLang || 'bg';
-        const eventHTML = `
-            <div style="border-left: 3px solid #d4af37; padding: 10px; margin: 10px 0; background: rgba(34, 34, 34, 0.9); border-radius: 0 5px 5px 0;">
-                <strong style="color: #d4af37; display: block; margin-bottom: 5px;">${event.title[lang]}</strong>
-                <p style="margin: 0 0 5px 0; font-size: 13px; color: #eee;">${event.text[lang]}</p>
-                <em style="color: #ffd700; font-size: 12px; display: block;">${effectMessages[lang]}</em>
+window.renderEventsCenter = function() {
+    const eventContainer = document.getElementById('events-center');
+    if (!eventContainer) return;
+
+    // Генериране на HTML за всяко събитие
+    eventContainer.innerHTML = window.gameLog.map(event => {
+        let color = "#d4af37"; // Стандартно златно
+        if (event.type === "war") color = "#ff4d4d"; // Червено за битки
+        if (event.type === "success") color = "#4dff4d"; // Зелено за успехи
+        if (event.type === "royal") color = "#bb86fc"; // Лилаво за династични събития
+
+        return `
+            <div class="event-entry" style="
+                border-left: 3px solid ${color};
+                background: rgba(255, 255, 255, 0.05);
+                margin-bottom: 10px;
+                padding: 10px;
+                animation: fadeIn 0.5s ease;
+                font-family: 'Cinzel', serif;
+            ">
+                <small style="color: #888; font-size: 10px;">[${event.time}]</small>
+                <p style="margin: 5px 0 0 0; color: #eee; font-size: 14px;">${event.message}</p>
             </div>
         `;
-        log.innerHTML = eventHTML + log.innerHTML;
-        
-        if (log.children.length > 5) {
-            log.removeChild(log.lastChild);
-        }
-    }
-
-    // Обновяваме златото и UI веднага след събитието
-    if (typeof window.updateGoldDisplay === "function") {
-        window.updateGoldDisplay();
-    }
-    if (typeof window.updateCharacterUI === "function") {
-        window.updateCharacterUI(hero);
-    }
+    }).join('');
 };
+
+/**
+ * Генерира произволно историческо събитие базирано на епохата.
+ */
+window.generateRandomEvent = function() {
+    const eventsBG = [
+        { msg: "Ромейски пратеници пристигнаха с предложения за мир.", type: "royal" },
+        { msg: "Богат урожай в Мизия - хазната се пълни!", type: "success" },
+        { msg: "Забелязани са вражески отряди по границата на Румелия.", type: "war" },
+        { msg: "Родът Дуло организира големи конни състезания.", type: "royal" },
+        { msg: "Странстващ монах разказва за древни български реликви.", type: "info" }
+    ];
+
+    const eventsUS = [
+        { msg: "Roman envoys arrived with peace proposals.", type: "royal" },
+        { msg: "Rich harvest in Moesia - the treasury is filling up!", type: "success" },
+        { msg: "Enemy scouts spotted near the Rumelia border.", type: "war" },
+        { msg: "House Dulo organizes grand horse races.", type: "royal" }
+    ];
+
+    const list = window.gameLang === "BG" ? eventsBG : eventsUS;
+    const random = list[Math.floor(Math.random() * list.length)];
+    
+    window.logEvent(random.msg, random.type);
+};
+
+console.log("Модул Events.js е зареден. Хрониката е готова за центъра на екрана.");
