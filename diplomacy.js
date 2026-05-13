@@ -1,76 +1,60 @@
 /**
- * МОДУЛ: ДИПЛОМАЦИЯ И ДИНАСТИЧНИ БРАКОВЕ
- * Управлява връзките между 13-те рода и запълва семейния профил.
+ * МОДУЛ: ДИПЛОМАЦИЯ - Велика България
  */
 
-window.openMarriageMenu = function() {
-    if (window.currentSpouse) {
-        let msg = window.gameLang === "BG" ? "Вече имате съпруга!" : "You already have a spouse!";
-        alert(msg);
-        return;
-    }
-
-    // Списък с потенциални съпруги от други български родове
-    const candidateNames = ["Мария", "Елена", "Десислава", "Тамара", "Анна", "Теодора"];
-    const dynasties = Object.keys(window.bulgarianDynasties).filter(d => d !== window.currentHero.dynasty);
-    
-    // Генериране на 3 случайни предложения
-    let options = "";
-    let proposals = [];
-
-    for (let i = 0; i < 3; i++) {
-        let name = candidateNames[Math.floor(Math.random() * candidateNames.length)];
-        let dynasty = dynasties[Math.floor(Math.random() * dynasties.length)];
-        proposals.push({ name, dynasty });
-        options += `${i + 1}. ${name} от род ${dynasty}\n`;
-    }
-
-    let choice = prompt(
-        (window.gameLang === "BG" ? "Изберете съпруга за заздравяване на Империята:\n" : "Choose a spouse to strengthen the Empire:\n") + options
-    );
-
-    if (choice >= 1 && choice <= 3) {
-        window.proposeMarriage(proposals[choice - 1]);
-    }
+window.clanRelations = {
+    "Дуло": 100,
+    "Вокил": 50,
+    "Угаин": 40,
+    "Ерми": 60
 };
 
-window.proposeMarriage = function(spouseData) {
-    // Шанс за успех базиран на бонуса на род Вокил (+20% успех)
-    let successChance = 0.7;
-    if (window.currentHero.dynasty === "Вокил") {
-        successChance = window.applyPerk(successChance, "diplo", "Вокил");
-    }
+window.openDiplomacy = function() {
+    const mainArea = document.getElementById('game-main-area');
+    if (!mainArea) return;
 
-    if (Math.random() <= successChance) {
-        window.currentSpouse = {
-            name: spouseData.name,
-            dynasty: spouseData.dynasty,
-            icon: "assets/queen_icon.png"
-        };
+    const diplomacyScreen = document.createElement('div');
+    diplomacyScreen.id = "diplomacy-screen";
+    diplomacyScreen.style.cssText = `
+        position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+        background: #080808; z-index: 1500; padding: 20px; box-sizing: border-box;
+        border: 2px solid #d4af37; color: #eee;
+    `;
 
-        // Бонус към престиж/злато при сключване на брак
-        window.currentHero.gold += 200;
-        
-        let successMsg = window.gameLang === "BG" 
-            ? `Сключен е династичен брак! ${window.currentSpouse.name} от род ${window.currentSpouse.dynasty} сега е ваша съпруга.` 
-            : `A dynastic marriage is sealed! ${window.currentSpouse.name} of house ${window.currentSpouse.dynasty} is now your spouse.`;
-        
-        alert(successMsg);
+    let clansHTML = Object.keys(window.clanRelations).map(clan => `
+        <div style="display: flex; justify-content: space-between; align-items: center; padding: 10px; border-bottom: 1px solid #222;">
+            <div>
+                <b style="color: #d4af37; font-family: 'Cinzel';">Род ${clan}</b>
+                <div style="font-size: 10px;">Отношения: ${window.clanRelations[clan]}%</div>
+            </div>
+            <div>
+                <button onclick="window.sendGift('${clan}')" style="background: #1a1a1a; color: #d4af37; border: 1px solid #d4af37; padding: 5px 10px; cursor: pointer; font-size: 11px;">Дари злато (-100 💰)</button>
+            </div>
+        </div>
+    `).join('');
+
+    diplomacyScreen.innerHTML = `
+        <div style="display: flex; justify-content: space-between;">
+            <h2 style="font-family: 'Cinzel'; color: #d4af37; margin: 0;">СЪВЕТ НА РОДОВЕТЕ</h2>
+            <button onclick="document.getElementById('diplomacy-screen').remove()" style="background: none; border: none; color: #ff4d4d; cursor: pointer; font-size: 20px;">✕</button>
+        </div>
+        <p style="font-size: 13px; margin: 15px 0;">Укрепвайте връзките с другите български родове, за да си осигурите подкрепа в трудни времена.</p>
+        <div style="margin-top: 20px;">${clansHTML}</div>
+    `;
+
+    mainArea.appendChild(diplomacyScreen);
+};
+
+window.sendGift = function(clan) {
+    const hero = window.currentHero;
+    if (hero.gold >= 100) {
+        hero.gold -= 100;
+        window.clanRelations[clan] = Math.min(100, window.clanRelations[clan] + 15);
+        if (window.logEvent) window.logEvent(`Изпратихте дарове на род ${clan}. Отношенията се подобриха.`, "action");
+        document.getElementById('diplomacy-screen').remove();
+        window.openDiplomacy(); // Refresh
+        window.updateCharacterUI(hero);
     } else {
-        let failMsg = window.gameLang === "BG"
-            ? "Предложението за брак беше отхвърлено. Родът търси по-изгоден съюз."
-            : "The marriage proposal was rejected. The house seeks a better alliance.";
-        alert(failMsg);
+        alert("Нямате достатъчно злато!");
     }
-
-    // Незабавно обновяване на интерфейса, за да се появи иконата отляво
-    window.updateCharacterUI(window.currentHero);
 };
-
-window.sendEnvoy = function() {
-    // Бъдеща функционалност за дипломация с Румелия (Ромеите)
-    let msg = window.gameLang === "BG" ? "Пратеникът замина за Константинопол..." : "The envoy has left for Constantinople...";
-    alert(msg);
-};
-
-console.log("Модул Diplomacy.js е зареден. Системата за бракове е активна.");
