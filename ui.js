@@ -15,6 +15,13 @@ window.updateCharacterUI = function(hero) {
         return;
     }
 
+    // ЛОГИКА ЗА БОГОВЕ: Генериране на текст за активните благословии
+    let divineStatusHTML = "";
+    if (hero.divineUnits && hero.divineUnits.length > 0) {
+        const godsNames = hero.divineUnits.map(g => `<span style="color: #8e44ad; font-weight: bold;">${g.name}</span>`).join(", ");
+        divineStatusHTML = `<p style="margin: 5px 0; font-size: 13px;">🌟 Благословии: ${godsNames}</p>`;
+    }
+
     // Инвентар
     let inventoryHTML = '<div class="inventory-grid" style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 5px; margin: 10px 0;">';
     INVENTORY_SLOTS.forEach(slot => {
@@ -27,7 +34,6 @@ window.updateCharacterUI = function(hero) {
     });
     inventoryHTML += '</div>';
 
-    // Региони
     const regionsList = window.playerRegions ? window.playerRegions.join(", ") : "Няма";
 
     uiContainer.innerHTML = `
@@ -37,6 +43,7 @@ window.updateCharacterUI = function(hero) {
             <p style="margin: 5px 0;">Възраст: ${hero.age} г. | Ниво: ${hero.level}</p>
             <p style="margin: 5px 0; color: #aaa;">${hero.armyRank} (${hero.armySize} бойци)</p>
             <p style="margin: 5px 0; font-size: 12px; color: #2ecc71; font-weight: bold;">🚩 Земи: ${regionsList}</p>
+            ${divineStatusHTML} <!-- ТУК СЕ ПОЯВЯВАТ БОГОВЕТЕ -->
         </div>
 
         <h4 style="color: #d4af37; margin: 10px 0 5px 0;">🛡️ ИНВЕНТАР</h4>
@@ -60,17 +67,12 @@ window.updateCharacterUI = function(hero) {
     `;
 };
 
-// Хендлър за ритуали (с проверка)
 window.handleRitualClick = function() {
-    if (window.currentHero) {
-        if (typeof window.performAncientRitual === 'function') {
-            const result = window.performAncientRitual(window.currentHero);
-            const log = document.getElementById('event-log');
-            if (log) log.innerHTML = `<p style="color: #8e44ad;"><strong>[Ритуал]</strong> ${result}</p>` + log.innerHTML;
-            window.updateCharacterUI(window.currentHero);
-        } else {
-            console.error("Функцията performAncientRitual не е намерена!");
-        }
+    if (window.currentHero && typeof window.performAncientRitual === 'function') {
+        const result = window.performAncientRitual(window.currentHero);
+        const log = document.getElementById('event-log');
+        if (log) log.innerHTML = `<p style="color: #8e44ad;"><strong>[Ритуал]</strong> ${result}</p>` + log.innerHTML;
+        window.updateCharacterUI(window.currentHero);
     }
 };
 
@@ -92,7 +94,6 @@ window.handleRecruit = function(type) {
     }
 };
 
-// Меню за наследници
 window.showSuccessionMenu = function() {
     const uiContainer = document.getElementById('character-panel');
     if (!uiContainer || !window.potentialSuccessors) return;
