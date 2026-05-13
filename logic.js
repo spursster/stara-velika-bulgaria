@@ -45,3 +45,15 @@ class Character {
 }
 
 window.Character = Character;
+
+window.gameLang = 'bg';
+window.translations = {
+    bg: { title: "EPIC BULGARIA", year: "г.", gold: "злато", army: "воини", recruit: "КАЗАРМА", infra: "УПРАВЛЕНИЕ", battle: "Битка", marriage: "Брак", ritual: "Ритуал", train: "Тренировка", yearPlus: "Година +1", inf: "Пехота", cav: "Конница", arc: "Стрелци" },
+    en: { title: "EPIC BULGARIA", year: "AD", gold: "gold", army: "warriors", recruit: "BARRACKS", infra: "MANAGEMENT", battle: "Battle", marriage: "Marriage", ritual: "Ritual", train: "Train", yearPlus: "Year +1", inf: "Infantry", cav: "Cavalry", arc: "Archers" },
+    ru: { title: "EPIC BULGARIA", year: "г.", gold: "золото", army: "воины", recruit: "КАЗАРМА", infra: "УПРАВЛЕНИЕ", battle: "Битва", marriage: "Брак", ritual: "Ритуал", train: "Тренировка", yearPlus: "Год +1", inf: "Пехота", cav: "Конница", arc: "Лучники" }
+};
+
+window.setLanguage = function(lang) {
+    window.gameLang = lang;
+    window.updateCharacterUI(window.currentHero);
+};
