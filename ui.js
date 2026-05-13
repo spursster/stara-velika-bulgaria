@@ -16,7 +16,9 @@ window.updateCharacterUI = function(hero) {
             </div>
         `;
 
-        window.playerRegions.forEach(reg => {
+        // Подсигуряваме, че имаме масив с региони
+        const regions = window.playerRegions || [];
+        regions.forEach(reg => {
             treeHTML += `<div style="border: 1px solid #222; background: #0c0c0c; padding: 8px; margin-bottom: 4px; border-left: 3px solid #d4af37; font-size: 10px;"><b>${reg}</b></div>`;
         });
 
@@ -28,7 +30,8 @@ window.updateCharacterUI = function(hero) {
                     <div style="font-size: 10px; font-weight: bold;">${window.currentSpouse.name}</div>
                 </div>
             `;
-            window.spouseRegions.forEach(reg => {
+            const sRegions = window.spouseRegions || [];
+            sRegions.forEach(reg => {
                 treeHTML += `<div style="border: 1px solid #222; background: #0c0c0c; padding: 8px; margin-bottom: 4px; border-left: 3px solid #7b1a1a; font-size: 10px; opacity: 0.8;"><b>${reg}</b></div>`;
             });
         }
@@ -40,19 +43,49 @@ window.updateCharacterUI = function(hero) {
     if(document.getElementById('army-val')) document.getElementById('army-val').innerText = hero.armySize;
     if(document.getElementById('gold-amount')) document.getElementById('gold-amount').innerText = hero.gold;
 
-    // 3. БАДЖ ЗА НОВИ ПРЕДМЕТИ
+    // 3. БАДЖ ЗА НОВИ ПРЕДМЕТИ (Показва се само ако има нови)
     const badge = document.getElementById('new-item-badge');
-    if (window.newArtifactsCount > 0) {
-        badge.innerText = window.newArtifactsCount;
-        badge.style.display = "block";
-    } else {
-        badge.style.display = "none";
+    if (badge) {
+        if (window.newArtifactsCount > 0) {
+            badge.innerText = window.newArtifactsCount;
+            badge.style.display = "block";
+        } else {
+            badge.style.display = "none";
+        }
     }
 };
 
-/**
- * Обновяване на времето (за да се вижда годината)
- */
+window.toggleTreasury = function() {
+    const overlay = document.getElementById('treasury-overlay');
+    if (!overlay) return;
+
+    // Превключване на видимостта
+    if (overlay.style.display === "none" || overlay.style.display === "") {
+        overlay.style.display = "block";
+        window.newArtifactsCount = 0; // Нулираме индикатора, защото играчът ги „вижда“
+        window.updateCharacterUI(window.currentHero);
+        
+        // Попълване на решетката
+        const grid = document.getElementById('treasury-grid');
+        if (grid) {
+            const inventory = window.playerInventory || [];
+            if (inventory.length > 0) {
+                grid.innerHTML = inventory.map(item => `
+                    <div style="background: #111; border: 1px solid #d4af37; padding: 15px; text-align: center; border-radius: 8px;">
+                        <div style="font-size: 35px; margin-bottom: 5px;">${item.icon}</div>
+                        <div style="font-size: 10px; font-weight: bold; color: #d4af37; font-family: 'Cinzel';">${item.name}</div>
+                        <div style="font-size: 8px; color: #888; margin-top: 5px;">+${item.bonus.heroPower || 0} Мощ</div>
+                    </div>
+                `).join('');
+            } else {
+                grid.innerHTML = "<p style='color: #444; font-size: 12px; grid-column: 1/-1; text-align: center;'>Съкровищницата е празна. Търсете древни предмети по време на събития.</p>";
+            }
+        }
+    } else {
+        overlay.style.display = "none";
+    }
+};
+
 window.updateTimeUI = function() {
     const timeDisplay = document.getElementById('current-time-info');
     if (timeDisplay && window.gameTime) {
