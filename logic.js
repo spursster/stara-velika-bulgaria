@@ -1,6 +1,6 @@
 /**
  * МОДУЛ: ГЛАВНА ЛОГИКА - Велика България
- * Инициализира играта и управлява системните функции.
+ * Управлява ходовете, наследяването и системните функции.
  */
 
 class Character {
@@ -15,71 +15,73 @@ class Character {
     }
 }
 
-// Поправена функция за следващ ход (3 месеца на ход)
+// Глобални променливи за текущото състояние
+window.currentHero = null;
+window.currentSpouse = null;
+window.playerRegions = [];
+window.spouseRegions = []; // Региони на рода на съпругата
+
 window.advanceTurn = function() {
     if (window.gameTime) {
-        // Напредване на сезоните
+        // Напредване на сезоните (всеки ход е 3 месеца)
         window.gameTime.seasonIndex++;
         if (window.gameTime.seasonIndex > 3) {
             window.gameTime.seasonIndex = 0;
-            window.gameTime.year++; // Напредване на годината
+            window.gameTime.year++;
+            
+            // Проверка за събития при смяна на годината (наследяване)
+            checkSuccession();
         }
-        
-        // Обновяване на интерфейса за време
-        if (typeof window.updateTimeUI === "function") {
-            window.updateTimeUI();
-        }
+        window.updateTimeUI();
     }
 
-    // Икономически приход за новия сезон
     if (window.currentHero) {
-        const baseIncome = 50;
-        const regionBonus = (window.playerRegions ? window.playerRegions.length : 1) * 10;
-        const totalIncome = baseIncome + regionBonus;
+        // Икономика: Базов приход + бонус от всички региони под контрол
+        const totalControlledRegions = window.playerRegions.length + (window.spouseRegions ? window.spouseRegions.length : 0);
+        const income = 50 + (totalControlledRegions * 10);
+        window.currentHero.gold += income;
         
-        window.currentHero.gold += totalIncome;
-        
-        // Логване на събитието в хрониката
-        if (typeof window.logEvent === "function") {
-            window.logEvent(`Нов сезон. Приходи в хазната: +${totalIncome} злато.`, "economy");
-        }
-        
-        // Обновяване на целия интерфейс
+        window.logEvent(`Сезонна ревизия: +${income} злато в хазната.`, "economy");
         window.updateCharacterUI(window.currentHero);
     }
 };
 
+function checkSuccession() {
+    // Шанс за естествена смърт на владетеля (напр. 2% годишно)
+    if (Math.random() < 0.02) {
+        window.logEvent(`Кан ${window.currentHero.name} напусна този свят. Земите се разпределят според волята на родовите старейшини.`, "death");
+        window.initNewGame(); // Генерира нов владетел и преразпределя земите
+    }
+}
+
 window.initNewGame = function() {
-    // Избор на династия и владетел без титлата "хан"
+    // Избор на нова династия от базата данни
     const dynasties = Object.keys(window.bulgarianDynasties);
     const randomDynName = dynasties[Math.floor(Math.random() * dynasties.length)];
     const dynastyData = window.bulgarianDynasties[randomDynName];
     const randomRuler = dynastyData.rulers[Math.floor(Math.random() * dynastyData.rulers.length)];
 
+    // Създаване на новия Кан
     window.currentHero = new Character(randomRuler.name, randomDynName, "Владетел");
     window.currentSpouse = null;
-    window.playerRegions = ["Северна Тракия"]; // Използване на родове вместо племена
+    window.playerRegions = ["Мизия"]; // Начален регион за новия Кан
+    window.spouseRegions = [];
     
-    window.updateTimeUI();
+    if (window.updateTimeUI) window.updateTimeUI();
     window.updateCharacterUI(window.currentHero);
-    
-    if (typeof window.logEvent === "function") {
-        window.logEvent(`Кан ${window.currentHero.name} пое управлението на рода ${window.currentHero.dynasty}.`, "royal");
-    }
 };
 
 window.toggleFullScreen = function() {
     if (!document.fullscreenElement) {
-        document.documentElement.requestFullscreen().catch(err => {
-            console.error(`Грешка при превключване: ${err.message}`);
-        });
-    } else {
-        if (document.exitFullscreen) {
-            document.exitFullscreen();
-        }
+        document.documentElement.requestFullscreen();
+    } else if (document.exitFullscreen) {
+        document.exitFullscreen();
     }
 };
 
+// Инициализация при зареждане
 window.onload = () => {
-    window.initNewGame();
+    if (typeof window.initNewGame === "function") {
+        window.initNewGame();
+    }
 };
