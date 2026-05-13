@@ -1,18 +1,28 @@
 /**
- * МОДУЛ: БИТКИ - Велика България
+ * МОДУЛ: БИТКИ - Велика България (Обновен с подкрепа от родове)
  */
 
 window.startBattle = function() {
     const mainArea = document.getElementById('game-main-area');
     if (!mainArea) return;
 
-    // Генериране на случаен враг (съседни родове или чужди сили)
-    const enemies = ["Авари", "Хазари", "Ромеи", "Местни враждебни родове"];
-    const enemyName = enemies[Math.floor(Math.random() * enemies.length)];
-    const enemyArmy = Math.floor(window.currentHero.armySize * (0.5 + Math.random()));
-    const enemyPower = Math.floor(Math.random() * 80);
+    // Проверка за съюзническа помощ
+    let allyBonus = 0;
+    let allyMessage = "Нямате съюзници в тази битка.";
+    
+    for (let clan in window.clanRelations) {
+        if (window.clanRelations[clan] > 80) {
+            allyBonus += 40;
+            allyMessage = `Род ${clan} изпрати свои конници на ваша страна! (+40 Мощ)`;
+            break; 
+        }
+    }
 
-    // Създаване на боен интерфейс
+    const enemies = ["Авари", "Хазари", "Ромеи"];
+    const enemyName = enemies[Math.floor(Math.random() * enemies.length)];
+    const enemyArmy = Math.floor(window.currentHero.armySize * (0.6 + Math.random()));
+    const enemyPower = Math.floor(Math.random() * 70);
+
     const battleOverlay = document.createElement('div');
     battleOverlay.id = "battle-screen";
     battleOverlay.style.cssText = `
@@ -23,71 +33,59 @@ window.startBattle = function() {
     `;
 
     battleOverlay.innerHTML = `
-        <h2 style="font-family: 'Cinzel'; color: #ff4d4d;">ГОЛЯМА БИТКА</h2>
-        <div style="display: flex; width: 100%; justify-content: space-around; margin: 30px 0;">
+        <h2 style="font-family: 'Cinzel'; color: #ff4d4d;">БОЙНО ПОЛЕ</h2>
+        <p style="font-size: 11px; color: #d4af37;">${allyMessage}</p>
+        <div style="display: flex; width: 100%; justify-content: space-around; margin: 20px 0;">
             <div style="text-align: center;">
-                <div style="font-size: 50px;">🏇</div>
+                <div style="font-size: 40px;">🏇</div>
                 <div style="font-family: 'Cinzel'; color: #d4af37;">КАН ${window.currentHero.name.toUpperCase()}</div>
-                <div>Войска: ${window.currentHero.armySize}</div>
-                <div>Мощ: ${window.currentHero.heroPower}</div>
+                <div>Сила: ${window.currentHero.armySize + window.currentHero.heroPower + allyBonus}</div>
             </div>
-            <div style="font-size: 40px; align-self: center;">VS</div>
+            <div style="font-size: 30px; align-self: center;">VS</div>
             <div style="text-align: center;">
-                <div style="font-size: 50px;">🏹</div>
+                <div style="font-size: 40px;">🏹</div>
                 <div style="font-family: 'Cinzel'; color: #ff4d4d;">${enemyName.toUpperCase()}</div>
-                <div>Войска: ${enemyArmy}</div>
-                <div>Мощ: ${enemyPower}</div>
+                <div>Сила: ${enemyArmy + enemyPower}</div>
             </div>
         </div>
-        <div id="battle-log" style="width: 80%; height: 100px; background: #111; border: 1px solid #333; padding: 10px; font-size: 12px; overflow-y: auto; margin-bottom: 20px;">
-            Войските се подреждат в боен ред...
+        <div id="battle-log" style="width: 85%; height: 80px; background: #111; border: 1px solid #333; padding: 10px; font-size: 11px; overflow-y: auto; margin-bottom: 15px;">
+            Войските са в очакване на вашата заповед...
         </div>
-        <button id="resolve-battle-btn" onclick="window.resolveBattle(${enemyArmy}, ${enemyPower}, '${enemyName}')" style="
-            padding: 15px 40px; background: #7b1a1a; color: white; border: none; 
-            font-family: 'Cinzel'; cursor: pointer; font-size: 18px;
-        ">ВЛЕЗ В БОЙ!</button>
+        <button id="resolve-battle-btn" onclick="window.resolveBattle(${enemyArmy}, ${enemyPower}, '${enemyName}', ${allyBonus})" style="
+            padding: 12px 35px; background: #7b1a1a; color: white; border: none; 
+            font-family: 'Cinzel'; cursor: pointer;
+        ">АТАКУВАЙ!</button>
     `;
 
     mainArea.appendChild(battleOverlay);
 };
 
-window.resolveBattle = function(eArmy, ePower, eName) {
+window.resolveBattle = function(eArmy, ePower, eName, aBonus) {
     const hero = window.currentHero;
     const log = document.getElementById('battle-log');
     const btn = document.getElementById('resolve-battle-btn');
     btn.disabled = true;
 
-    // Изчисляване на бойна сила
-    const playerStrength = hero.armySize + (hero.heroPower * 2);
-    const enemyStrength = eArmy + (ePower * 2);
+    const playerTotal = hero.armySize + hero.heroPower + aBonus;
+    const enemyTotal = eArmy + ePower;
 
     setTimeout(() => {
-        let resultMsg = "";
-        let style = "";
-
-        if (playerStrength >= enemyStrength) {
-            const loot = Math.floor(eArmy * 0.5);
+        if (playerTotal >= enemyTotal) {
+            const loot = Math.floor(eArmy * 0.4);
             hero.gold += loot;
-            hero.xp += 20;
-            resultMsg = `ПОБЕДА! Разгромихте ${eName}. Плячка: ${loot} 💰.`;
-            style = "royal";
-            if (window.logEvent) window.logEvent(`Славна победа над ${eName}!`, "royal");
+            hero.xp += 15;
+            log.innerHTML = `<b style="color: #d4af37;">СЛАВНА ПОБЕДА! Плячка: ${loot} 💰.</b>`;
         } else {
-            const losses = Math.floor(hero.armySize * 0.3);
+            const losses = Math.floor(hero.armySize * 0.25);
             hero.armySize -= losses;
-            resultMsg = `ПОРАЖЕНИЕ! ${eName} ви принудиха да отстъпите. Загуби: ${losses} воини.`;
-            style = "death";
-            if (window.logEvent) window.logEvent(`Горчиво поражение от ${eName}.`, "death");
+            log.innerHTML = `<b style="color: #ff4d4d;">ОТСТЪПЛЕНИЕ! Загубихте ${losses} воини.</b>`;
         }
-
-        log.innerHTML = `<b style="color: #d4af37;">${resultMsg}</b>`;
         
-        // Бутон за изход
-        btn.innerText = "Продължи";
+        btn.innerText = "Към управлението";
         btn.disabled = false;
         btn.onclick = () => {
             document.getElementById('battle-screen').remove();
             window.updateCharacterUI(hero);
         };
-    }, 1500);
+    }, 1200);
 };
