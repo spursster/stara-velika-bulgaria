@@ -18,3 +18,8 @@ function convertToRoman(num) {
     }
     return res;
 }
+
+window.performAncientRitual = function(hero) {
+    // логика за ритуала тук
+    return "Извършихте ритуал за благословията на древните богове!";
+};
