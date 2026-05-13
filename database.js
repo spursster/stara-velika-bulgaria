@@ -4,31 +4,41 @@
 
 window.bulgarianDynasties = {
     "Дуло": {
-        origin: "Древен български род",
-        rulers: [
-            { name: "Авитохол", start: 153, end: 453 },
-            { name: "Ирник", start: 453, end: 603 },
-            { name: "Кубрат", start: 632, end: 665 },
-            { name: "Аспарух", start: 681, end: 701 }
-        ]
+        origin: "Първата велика българска династия",
+        rulers: ["Авитохол", "Ирник", "Кубрат", "Аспарух", "Тервел"]
     },
     "Вокил": {
-        origin: "Български род",
-        rulers: [
-            { name: "Кормисош", start: 753, end: 756 },
-            { name: "Винех", start: 756, end: 760 }
-        ]
+        origin: "Древен български род",
+        rulers: ["Кормисош", "Винех"]
     },
     "Угаин": {
         origin: "Български род",
-        rulers: [
-            { name: "Телец", start: 760, end: 763 }
-        ]
+        rulers: ["Телец"]
+    },
+    "Крумова династия": {
+        origin: "Династия на мощта",
+        rulers: ["Крум", "Омуртаг", "Борис I", "Симеон Велики"]
+    },
+    "Птолемеи": {
+        origin: "Род от Сотер, роден в днешна България",
+        rulers: ["Птолемей I Сотер", "Птолемей II"]
+    },
+    "Комитопули": {
+        origin: "Защитниците на българската чест",
+        rulers: ["Самуил", "Гаврил Радомир", "Иван Владислав"]
+    },
+    "Тертеровци": {
+        origin: "Български владетелски род",
+        rulers: ["Георги I Тертер", "Тодор Светослав"]
+    },
+    "Асеневци": {
+        origin: "Възродителите на държавата",
+        rulers: ["Асен", "Петър", "Калоян", "Иван Асен II"]
     }
 };
 
 window.artifactsDatabase = {
-    "sword_of_kubrat": { name: "Мечът на Кубрат", icon: "🗡️", bonus: { heroPower: 25 } },
-    "gold_ring": { name: "Пръстен на моща", icon: "💍", bonus: { heroPower: 10 } },
-    "ancient_shield": { name: "Щит на предците", icon: "🛡️", bonus: { heroPower: 15 } }
+    "sword_of_kubrat": { id: "sword_of_kubrat", name: "Мечът на Кубрат", icon: "🗡️", bonus: { heroPower: 40 } },
+    "gold_mask": { id: "gold_mask", name: "Златна маска", icon: "🎭", bonus: { heroPower: 30 } },
+    "scepter": { id: "scepter", name: "Царски скиптър", icon: "🔱", bonus: { heroPower: 25 } }
 };
