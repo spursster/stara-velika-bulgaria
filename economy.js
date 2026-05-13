@@ -3,25 +3,16 @@
  */
 
 window.calculateEconomy = function() {
-    const hero = window.currentHero;
-    let totalIncome = 50; // Базов доход от столицата
-    let totalMaintenance = Math.floor(hero.armySize * 0.1); // Разход за поддръжка на войската
+    if (!window.currentHero) return;
 
-    // Доход от всички региони (твоите и на съпругата)
-    const allRegions = [...(window.playerRegions || []), ...(window.spouseRegions || [])];
+    // Всеки регион (от битка или брак) носи злато
+    const regionIncome = (window.playerRegions || []).length * 50;
+    const baseIncome = 100;
     
-    allRegions.forEach(regName => {
-        if (window.worldRegions[regName]) {
-            totalIncome += window.worldRegions[regName].income;
-        }
-    });
+    const totalIncome = baseIncome + regionIncome;
+    window.currentHero.gold += totalIncome;
 
-    const netProfit = totalIncome - totalMaintenance;
-    hero.gold += netProfit;
-
-    return {
-        income: totalIncome,
-        expenses: totalMaintenance,
-        profit: netProfit
-    };
+    if (window.logEvent) {
+        window.logEvent(`Сезонен доход: +${totalIncome} злато от твоите владения.`, "action");
+    }
 };
