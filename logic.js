@@ -2,6 +2,22 @@
  * МОДУЛ: ГЛАВНА ЛОГИКА - Велика България
  */
 
+window.toggleFullScreen = function() {
+    const elem = document.documentElement;
+    if (!document.fullscreenElement && !document.mozFullScreenElement && 
+        !document.webkitFullscreenElement && !document.msFullscreenElement) {
+        if (elem.requestFullscreen) { elem.requestFullscreen(); }
+        else if (elem.msRequestFullscreen) { elem.msRequestFullscreen(); }
+        else if (elem.mozRequestFullScreen) { elem.mozRequestFullScreen(); }
+        else if (elem.webkitRequestFullscreen) { elem.webkitRequestFullscreen(Element.ALLOW_KEYBOARD_INPUT); }
+    } else {
+        if (document.exitFullscreen) { document.exitFullscreen(); }
+        else if (document.msExitFullscreen) { document.msExitFullscreen(); }
+        else if (document.mozCancelFullScreen) { document.mozCancelFullScreen(); }
+        else if (document.webkitExitFullscreen) { document.webkitExitFullscreen(); }
+    }
+};
+
 window.advanceTurn = function() {
     if (window.gameTime) {
         window.gameTime.seasonIndex++;
@@ -18,25 +34,21 @@ window.advanceTurn = function() {
         const income = 50 + (totalRegions * 10);
         window.currentHero.gold += income;
         
-        // 10% шанс за намиране на артефакт при ход
         if (Math.random() < 0.10 && typeof window.acquireArtifact === "function") {
             const artKeys = Object.keys(window.artifactsDatabase);
             const randomArt = artKeys[Math.floor(Math.random() * artKeys.length)];
-            
-            // Проверка дали вече го имаме, преди да увеличим баджа
             if (!window.playerInventory.find(i => i.id === randomArt)) {
                 window.newArtifactsCount++;
                 window.acquireArtifact(randomArt);
             }
         }
-
         window.updateCharacterUI(window.currentHero);
     }
 };
 
 function checkSuccession() {
     if (Math.random() < 0.02) {
-        window.logEvent(`Кан ${window.currentHero.name} предаде земното си царство на предците.`, "death");
+        if (window.logEvent) window.logEvent(`Кан ${window.currentHero.name} се пресели в отвъдното.`, "death");
         window.initNewGame();
     }
 }
