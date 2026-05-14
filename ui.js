@@ -1,6 +1,7 @@
 /**
  * МОДУЛ: ИНТЕРФЕЙС - Велика България
- * Синхронизиран: Визуализация на 50 региона, 13 династии и СИСТЕМА ЗА СЪБИТИЯ.
+ * Промяна: Родовете (Съвет на Родовете) са преместени под владетеля в левия панел.
+ * Десният панел е освободен изцяло за събития и известия.
  */
 
 window.updateCharacterUI = function(hero) {
@@ -12,14 +13,39 @@ window.updateCharacterUI = function(hero) {
         const clanIcon = currentClanData ? `<img src="${currentClanData.icon}" style="width:20px; vertical-align:middle; margin-right:5px;">` : '🏇';
         const marriageIcon = window.currentSpouse ? ' <span title="Сключен династичен съюз" style="cursor:help;">💍</span>' : '';
 
+        // 1. СЕКЦИЯ: УПРАВЛЯВАЩ КАН
         let treeHTML = `
             <div style="text-align: center; padding: 10px; background: rgba(212, 175, 55, 0.1); border: 1px solid #d4af37; border-radius: 5px; margin-bottom: 15px;">
-                <div style="font-size: 9px; color: #d4af37;">УПРАВЛЯВАЩ РОД: ${hero.dynasty.toUpperCase()}</div>
+                <div style="font-size: 9px; color: #d4af37;">ВЕЛИК КАН</div>
                 <div style="font-size: 25px; margin: 5px 0;">${clanIcon}</div>
-                <div style="font-size: 12px; font-weight: bold; color: #fff;">Кан ${hero.name}${marriageIcon}</div>
+                <div style="font-size: 12px; font-weight: bold; color: #fff;">${hero.name}${marriageIcon}</div>
+                <div style="font-size: 8px; color: #666; margin-top: 2px;">род ${hero.dynasty}</div>
             </div>
-            <div style="font-size: 10px; color: #d4af37; font-family: 'Cinzel'; margin-bottom: 5px;">ВЛАДЕНИЯ И УПРАВИТЕЛИ:</div>
         `;
+
+        // 2. НОВА СЕКЦИЯ: СЪВЕТ НА РОДОВЕТЕ (Преместено от десния панел)
+        const joinedClansNames = window.recalculateClanHierarchy ? window.recalculateClanHierarchy() : [];
+        if (joinedClansNames.length > 1) { // Показваме секцията само ако има присъединени други родове
+            treeHTML += `<div style="font-size: 10px; color: #d4af37; font-family: 'Cinzel'; margin-bottom: 8px; border-bottom: 1px solid #333;">СЪВЕТ НА РОДОВЕТЕ:</div>`;
+            
+            joinedClansNames.forEach(name => {
+                if (name === hero.dynasty) return; // Пропускаме главния род тук, защото е горе
+                const clan = window.worldData.clans[name];
+                
+                treeHTML += `
+                    <div style="display: flex; align-items: center; padding: 5px; background: rgba(255,255,255,0.03); border: 1px solid #222; margin-bottom: 4px; border-radius: 3px;">
+                        <img src="${clan.icon}" style="width: 18px; height: 18px; margin-right: 8px; opacity: 0.9;" onerror="this.src='assets/icons/clans/default.png'">
+                        <div style="flex-grow: 1;">
+                            <div style="font-size: 9px; color: #fff;">${clan.leader}</div>
+                            <div style="font-size: 7px; color: #666;">род ${name}</div>
+                        </div>
+                    </div>
+                `;
+            });
+        }
+
+        // 3. СЕКЦИЯ: ВЛАДЕНИЯ И УПРАВИТЕЛИ
+        treeHTML += `<div style="font-size: 10px; color: #d4af37; font-family: 'Cinzel'; margin: 15px 0 8px 0; border-bottom: 1px solid #333;">ВЛАДЕНИЯ:</div>`;
 
         const regions = window.playerRegions || [];
         regions.forEach(regName => {
@@ -28,7 +54,7 @@ window.updateCharacterUI = function(hero) {
             if (!regData) {
                 treeHTML += `
                     <div style="border: 1px solid #444; background: #1a0000; padding: 6px; margin-bottom: 3px; font-size: 10px; color: #ff6b6b;">
-                        ⚠️ ${regName} (Непозната земя)
+                        ⚠️ ${regName}
                     </div>`;
                 return;
             }
@@ -41,7 +67,7 @@ window.updateCharacterUI = function(hero) {
                     <img src="${regClanIcon}" style="width:14px; margin-right:8px; opacity: 0.8;" onerror="this.src='assets/icons/clans/default.png'">
                     <div style="flex-grow: 1;">
                         <div style="color: #fff;">${regName}</div>
-                        <div style="font-size: 7px; color: #666;">Ресурс: ${regData.resource}</div>
+                        <div style="font-size: 7px; color: #666;">${regData.resource}</div>
                     </div>
                 </div>`;
         });
@@ -49,8 +75,18 @@ window.updateCharacterUI = function(hero) {
         leftSidebar.innerHTML = treeHTML;
     }
 
-    window.renderClanHierarchy();
+    // ПОЧИСТВАНЕ НА ДЕСНИЯ ПАНЕЛ: Остава празен за събитията
+    const rightPanel = document.getElementById('events-center');
+    if (rightPanel) {
+        rightPanel.innerHTML = `
+            <div style="height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; opacity: 0.2;">
+                <div style="font-family: 'Cinzel'; color: #d4af37; font-size: 10px; letter-spacing: 2px;">ВЕЛИКО ОБЕДИНЕНИЕ</div>
+                <div style="font-size: 30px; margin-top: 10px;">🛡️</div>
+            </div>
+        `;
+    }
 
+    // Обновяване на ресурсите в горния панел
     const elements = { 
         'gold-amount': hero.gold, 
         'army-val': hero.armySize, 
@@ -60,38 +96,6 @@ window.updateCharacterUI = function(hero) {
         const el = document.getElementById(id);
         if (el) el.innerText = elements[id];
     }
-};
-
-window.renderClanHierarchy = function() {
-    const rightPanel = document.getElementById('events-center');
-    if (!rightPanel) return;
-
-    const joinedClansNames = window.recalculateClanHierarchy ? window.recalculateClanHierarchy() : [];
-    
-    let html = `<div style="font-family: 'Cinzel'; color: #d4af37; font-size: 12px; margin-bottom: 10px; border-bottom: 1px solid #333; padding-bottom: 5px; text-align:center;">ВЕЛИКО ОБЕДИНЕНИЕ</div>`;
-    
-    joinedClansNames.forEach(name => {
-        const clan = window.worldData.clans[name];
-        const isRuler = name === window.currentHero.dynasty;
-        
-        html += `
-            <div style="display: flex; align-items: center; padding: 8px; background: ${isRuler ? 'rgba(212,175,55,0.1)' : '#0a0a0a'}; border: 1px solid ${isRuler ? '#d4af37' : '#222'}; margin-bottom: 5px; border-radius: 3px;">
-                <img src="${clan.icon}" style="width: 24px; height: 24px; margin-right: 10px;" onerror="this.src='assets/icons/clans/default.png'">
-                <div style="flex-grow: 1;">
-                    <div style="font-size: 11px; color: #fff; font-weight: bold;">${clan.leader}</div>
-                    <div style="font-size: 8px; color: #aaa;">Род ${name}</div>
-                </div>
-                <div style="font-size: 10px; color: #d4af37;">${clan.regionsOwned} 🏰</div>
-            </div>
-        `;
-    });
-
-    const missingCount = Math.max(0, 13 - joinedClansNames.length);
-    for(let i=0; i < missingCount; i++) {
-        html += `<div style="height: 40px; border: 1px dashed #333; margin-bottom: 5px; opacity: 0.3; display: flex; align-items: center; justify-content: center; font-size: 8px; color: #555;">ТЪРСИ СЪЮЗНИК...</div>`;
-    }
-
-    rightPanel.innerHTML = html;
 };
 
 /**
