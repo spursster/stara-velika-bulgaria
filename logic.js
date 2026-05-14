@@ -3,7 +3,7 @@
  */
 window.initNewGame = function() {
     // 1. Дефиниране на началните данни
-    // Използваме "Кан" като титла в логиката (съгласно инструкциите)
+    // Използваме "Кан" като титла в логиката
     window.currentHero = {
         name: "Аспарух", 
         dynasty: "Дуло",
@@ -38,7 +38,7 @@ window.initNewGame = function() {
         if (window.logEvent) {
             window.logEvent(`Кан ${window.currentHero.name} пое властта.`, "royal");
         }
-    }, 50);
+    }, 50); // Изчакване за готовност на DOM
 };
 
 /**
@@ -62,13 +62,13 @@ window.advanceTurn = function() {
         window.triggerRandomEvent();
     }
 
-    // 4. Обновяване на интерфейса
+    // 4. Обновяване на интерфейса - гарантира визуална точност
     if (window.updateCharacterUI) {
         window.updateCharacterUI(window.currentHero);
     }
 };
 
-// Сигурен старт на играта
+// Сигурен старт на играта съобразно състоянието на документа
 if (document.readyState === 'complete') {
     window.initNewGame();
 } else {
