@@ -1,25 +1,41 @@
-// suggestions.js
+/**
+ * МОДУЛ: КНИГА НА ПРЕДЛОЖЕНИЯТА (Marquee)
+ * Пази последните 15 съобщения и ги върти в лентата.
+ */
 
-// 1. Масивът, който пази последните 15 съобщения
+// 1. Начален списък със съобщения (Книга на мъдростта)
 window.suggestionBook = [
     "Кан Кубрат: Когато сте заедно, сте непобедими като снопа пръчки!",
-    "Предложение: Да се добави пазар в Крим за повече злато.",
     "Старейшина: Внимавай с хазарите на изток, Кане.",
-    // тук ще добавим останалите до 15...
+    "Предложение: Да се построят нови конюшни в Крим.",
+    "Хроника: Годината е благодатна, реколтата ще е богата.",
+    "Съвет: Дипломацията често е по-силна от меча."
 ];
 
 /**
- * ФУНКЦИЯ ЗА ДОБАВЯНЕ НА НОВО СЪОБЩЕНИЕ
+ * Функция за добавяне на ново предложение
  */
 window.addPlayerSuggestion = function(text) {
-    // Добавяме новото съобщение най-отпред
-    window.suggestionBook.unshift(text);
+    window.suggestionBook.unshift(text); // Добавя най-отгоре
 
-    // Ако станат повече от 15, премахваме най-старото (последното)
     if (window.suggestionBook.length > 15) {
-        window.suggestionBook.pop();
+        window.suggestionBook.pop(); // Пази само последните 15
     }
 
-    // Извикваме функцията, която пренаписва текста в движещата се лента
-    window.updateMarquee();
+    window.updateMarquee(); // Обновява визуално лентата
 };
+
+/**
+ * ФУНКЦИЯТА, КОЯТО ЛИПСВАШЕ: Обновява текста в HTML
+ */
+window.updateMarquee = function() {
+    const marqueeContainer = document.getElementById('marquee-text');
+    if (marqueeContainer) {
+        // Обединяваме всички съобщения с разделител " *** "
+        const fullText = window.suggestionBook.join(" &nbsp;&nbsp;&nbsp; *** &nbsp;&nbsp;&nbsp; ");
+        marqueeContainer.innerHTML = fullText;
+    }
+};
+
+// Инициализация при зареждане
+window.updateMarquee();
