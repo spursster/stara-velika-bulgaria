@@ -44,14 +44,67 @@ window.worldData = {
         "Одриси": { icon: "assets/icons/clans/odrisi.png", isJoined: false, regionsOwned: 0, leader: "Терес" }
     },
 
-    // Детайлни данни за провинциите
+   // Детайлни данни за провинциите - 50 региона
     regions: {
-        "Северна Тракия": { terrain: "Равнина", resource: "Злато", nativeClans: ["Одриси", "Беси"], difficulty: 10 },
-        "Мизия": { terrain: "Гора", resource: "Дървесина", nativeClans: ["Гети", "Кробизи"], difficulty: 25 },
-        "Македония": { terrain: "Планина", resource: "Желязо", nativeClans: ["Едони", "Пеони"], difficulty: 40 },
-        "Добруджа": { terrain: "Степ", resource: "Коне", nativeClans: ["Скити"], difficulty: 30 },
-        "Панония": { terrain: "Равнина", resource: "Зърно", nativeClans: ["Вокил"], difficulty: 35 },
-        "Севтполис": { terrain: "Долина", resource: "Рози и Злато", nativeClans: ["Одриси"], difficulty: 15 }
+        // --- ЗОНА 1: БАЛКАНИ И ПРИДУНАВИЕ ---
+        "Мизия": { terrain: "Гора", resource: "Дървесина", nativeClans: ["Гети"], difficulty: 10 },
+        "Северна Тракия": { terrain: "Равнина", resource: "Злато", nativeClans: ["Одриси"], difficulty: 15 },
+        "Македония": { terrain: "Планина", resource: "Желязо", nativeClans: ["Македони"], difficulty: 25 },
+        "Добруджа": { terrain: "Степ", resource: "Коне", nativeClans: ["Куригир"], difficulty: 20 },
+        "Панония": { terrain: "Равнина", resource: "Зърно", nativeClans: ["Вокил"], difficulty: 30 },
+        "Илирия": { terrain: "Бряг", resource: "Кораби", nativeClans: ["Асеневци"], difficulty: 40 },
+        "Тесалия": { terrain: "Долина", resource: "Маслини", nativeClans: ["Македони"], difficulty: 35 },
+        "Дакия": { terrain: "Хълмове", resource: "Сол", nativeClans: ["Тертер"], difficulty: 35 },
+        "Родопи": { terrain: "Висока планина", resource: "Сребро", nativeClans: ["Одриси"], difficulty: 45 },
+        "Дардания": { terrain: "Планина", resource: "Руда", nativeClans: ["Комитопули"], difficulty: 40 },
+
+        // --- ЗОНА 2: ПРИЧЕРНОМОРИЕ И КАВКАЗ ---
+        "Крим": { terrain: "Бряг", resource: "Вино", nativeClans: ["Дуло"], difficulty: 20 },
+        "Боспор": { terrain: "Пристанище", resource: "Търговия", nativeClans: ["Дуло"], difficulty: 25 },
+        "Кубан": { terrain: "Степ", resource: "Коне", nativeClans: ["Куригир"], difficulty: 15 },
+        "Кавказ": { terrain: "Планина", resource: "Мед", nativeClans: ["Ерми"], difficulty: 50 },
+        "Колхида": { terrain: "Бряг", resource: "Злато", nativeClans: ["Птоломеи"], difficulty: 45 },
+        "Алания": { terrain: "Планина", resource: "Стомана", nativeClans: ["Ерми"], difficulty: 55 },
+        "Таврида": { terrain: "Степ", resource: "Добитък", nativeClans: ["Дуло"], difficulty: 15 },
+        "Херсонес": { terrain: "Град", resource: "Изкуство", nativeClans: ["Птоломеи"], difficulty: 30 },
+        "Иберия Кавказка": { terrain: "Планина", resource: "Скъпоценни камъни", nativeClans: ["Ерми"], difficulty: 60 },
+        "Меотия": { terrain: "Блатиста степ", resource: "Риба", nativeClans: ["Куригир"], difficulty: 10 },
+
+        // --- ЗОНА 3: МАЛА АЗИЯ И ИЗТОК ---
+        "Витиния": { terrain: "Хълмове", resource: "Коприна", nativeClans: ["Птоломеи"], difficulty: 50 },
+        "Фригия": { terrain: "Плато", resource: "Вълна", nativeClans: ["Птоломеи"], difficulty: 45 },
+        "Лидия": { terrain: "Долина", resource: "Електрон", nativeClans: ["Одриси"], difficulty: 55 },
+        "Кападокия": { terrain: "Скали", resource: "Коне", nativeClans: ["Угаин"], difficulty: 60 },
+        "Понт": { terrain: "Планина", resource: "Мед", nativeClans: ["Македони"], difficulty: 50 },
+        "Галатия": { terrain: "Плато", resource: "Наемници", nativeClans: ["Тертер"], difficulty: 45 },
+        "Киликия": { terrain: "Бряг", resource: "Кедър", nativeClans: ["Шишмановци"], difficulty: 65 },
+        "Армения": { terrain: "Висока планина", resource: "Обсидиан", nativeClans: ["Ерми"], difficulty: 70 },
+        "Асирия": { terrain: "Пустиня", resource: "Масла", nativeClans: ["Угаин"], difficulty: 75 },
+        "Месопотамия": { terrain: "Реки", resource: "Подправки", nativeClans: ["Смилец"], difficulty: 80 },
+
+        // --- ЗОНА 4: СТЕПИ И ЦЕНТРАЛНА АЗИЯ ---
+        "Волжка степ": { terrain: "Степ", resource: "Кожа", nativeClans: ["Дуло"], difficulty: 10 },
+        "Хиркания": { terrain: "Джунгла", resource: "Тигри", nativeClans: ["Угаин"], difficulty: 65 },
+        "Бактрия": { terrain: "Планина", resource: "Лапис лазули", nativeClans: ["Дуло"], difficulty: 85 },
+        "Согдиана": { terrain: "Пустиня", resource: "Кервани", nativeClans: ["Дуло"], difficulty: 90 },
+        "Сарматия": { terrain: "Степ", resource: "Желязо", nativeClans: ["Куригир"], difficulty: 30 },
+        "Скития": { terrain: "Степ", resource: "Лукове", nativeClans: ["Куригир"], difficulty: 25 },
+        "Масагети": { terrain: "Пустинна степ", resource: "Злато", nativeClans: ["Угаин"], difficulty: 75 },
+        "Хорезъм": { terrain: "Оазис", resource: "Памук", nativeClans: ["Смилец"], difficulty: 80 },
+        "Партия": { terrain: "Планина", resource: "Катафракти", nativeClans: ["Угаин"], difficulty: 85 },
+        "Мерв": { terrain: "Оазис", resource: "Плодове", nativeClans: ["Смилец"], difficulty: 70 },
+
+        // --- ЗОНА 5: ЦЕНТРАЛНА ЕВРОПА И ОСТРОВИ ---
+        "Трансилвания": { terrain: "Гора", resource: "Сол", nativeClans: ["Комитопули"], difficulty: 40 },
+        "Моравия": { terrain: "Равнина", resource: "Желязо", nativeClans: ["Шишмановци"], difficulty: 50 },
+        "Бохемия": { terrain: "Гора", resource: "Сребро", nativeClans: ["Шишмановци"], difficulty: 55 },
+        "Норик": { terrain: "Алпи", resource: "Стомана", nativeClans: ["Вокил"], difficulty: 60 },
+        "Реция": { terrain: "Алпи", resource: "Кехлибар", nativeClans: ["Вокил"], difficulty: 65 },
+        "Венетия": { terrain: "Блато", resource: "Стъкло", nativeClans: ["Асеневци"], difficulty: 70 },
+        "Епир": { terrain: "Планина", resource: "Добитък", nativeClans: ["Македони"], difficulty: 35 },
+        "Пелопонес": { terrain: "Хълмове", resource: "Маслини", nativeClans: ["Македони"], difficulty: 45 },
+        "Кипър": { terrain: "Остров", resource: "Мед", nativeClans: ["Птоломеи"], difficulty: 50 },
+        "Родос": { terrain: "Остров", resource: "Колоси", nativeClans: ["Птоломеи"], difficulty: 55 }
     },
 
     majorClans: [
