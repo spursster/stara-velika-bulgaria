@@ -2,15 +2,17 @@
  * МОДУЛ: ГЛАВНА ЛОГИКА - Велика България
  */
 window.initNewGame = function() {
-    // 1. Първо дефинираме всички данни (Гръбнакът)
+    // 1. Дефиниране на началните данни
+    // Използваме "Кан" като титла в логиката (съгласно инструкциите)
     window.currentHero = {
-        name: "Аспарух",
+        name: "Аспарух", 
         dynasty: "Дуло",
         gold: 1500,
         armySize: 300,
         heroPower: 100
     };
 
+    // Начало: 480 г. пр.н.е. (Античност)
     window.gameTime = { year: 480, seasonIndex: 0, era: "пр.н.е." };
     window.playerRegions = ["Долна Мизия"];
     window.currentSpouse = null;
@@ -19,7 +21,7 @@ window.initNewGame = function() {
     // 2. Инициализираме външните модули
     if (window.initDiplomacy) window.initDiplomacy();
 
-    // 3. ФИКС: Изчакваме 50 милисекунди, за да сме сигурни, че DOM е готов
+    // 3. Синхронизация с UI и активиране на Съветника
     setTimeout(() => {
         if (window.updateCharacterUI) {
             window.updateCharacterUI(window.currentHero);
@@ -27,7 +29,15 @@ window.initNewGame = function() {
         if (window.updateTimeUI) {
             window.updateTimeUI();
         }
-        window.logEvent(`Кан ${window.currentHero.name} започна своето управление в античните земи!`, "royal");
+        
+        // ИНТЕГРАЦИЯ: Съветникът приветства играча вместо обикновен лог
+        if (window.showAdvisorMsg) {
+            window.showAdvisorMsg(`Приветствам Ви, Велики Кане! Вашето управление над античните земи започва в година 480 пр.н.е. Родът ${window.currentHero.dynasty} очаква Вашите заповеди.`);
+        }
+        
+        if (window.logEvent) {
+            window.logEvent(`Кан ${window.currentHero.name} пое властта.`, "royal");
+        }
     }, 50);
 };
 
@@ -37,28 +47,28 @@ window.initNewGame = function() {
 window.advanceTurn = function() {
     if (!window.currentHero) return;
 
-    // 1. Напредване на времето (през time.js)
+    // 1. Напредване на времето
     if (window.processTime) {
         window.processTime();
     }
 
-    // 2. Икономика и приходи (през economy.js)
+    // 2. Икономика и приходи
     if (window.calculateEconomy) {
         window.calculateEconomy();
     }
 
-    // 3. Активиране на събитията (от твоя events.js)
+    // 3. Активиране на събитията
     if (window.triggerRandomEvent) {
         window.triggerRandomEvent();
     }
 
-    // 4. Обновяване на интерфейса (през ui.js)
+    // 4. Обновяване на интерфейса
     if (window.updateCharacterUI) {
         window.updateCharacterUI(window.currentHero);
     }
 };
 
-// Използваме по-сигурен начин за стартиране
+// Сигурен старт на играта
 if (document.readyState === 'complete') {
     window.initNewGame();
 } else {
