@@ -1,77 +1,128 @@
 /**
- * МОДУЛ: СВЕТОВНИ ДАННИ И ГЕОПОЛИТИКА - Велика България
- * Синхронизиран: Добавяне на статус за присъединяване и икони на родовете.
+ * МОДУЛ: СЪБИТИЯ - Велика България
+ * Управлява динамичните сценарии и историческите избори.
  */
 
-window.worldData = {
-    // Основни държави (Фракции)
-    factions: {
-        "bulgarian_empire": {
-            nameBG: "Велика България",
-            nameUS: "Great Bulgaria",
-            rulerTitleBG: "Кан",
-            capitalBG: "Фанагория"
-        },
-        "rhomaioi_empire": {
-            nameBG: "Ромейска Империя (Rhomaioi)",
-            nameUS: "Roman Empire (Rhomaioi)",
-            relation: -20,
-            power: 500
-        },
-        "persian_empire": {
-            nameBG: "Персийска Империя",
-            nameUS: "Persian Empire",
-            relation: 0,
-            power: 1000
-        }
+window.eventsDatabase = [
+    {
+        id: "council_of_elders",
+        title: "Съвет на старейшините",
+        text: "Старейшините на водещите български родове се събраха. Те настояват за преразпределение на пасищата в Мизия.",
+        condition: (hero) => hero.gold > 300,
+        options: [
+            {
+                text: "Дай им право на управление (-150 💰, +10 Мощ)",
+                action: (hero) => {
+                    hero.gold -= 150;
+                    hero.heroPower += 10;
+                    return "Родовете признават вашата щедрост и авторитет.";
+                }
+            },
+            {
+                text: "Наложи волята си (0 💰, -5 Мощ)",
+                action: (hero) => {
+                    hero.heroPower -= 5;
+                    return "Старейшините си тръгват с гняв в очите.";
+                }
+            }
+        ]
     },
+    {
+        id: "ancient_monument_discovery",
+        title: "Свещена находка",
+        text: "Вашите конници откриха древен паметник на предците в новозавладените земи. Вътре блестят предмети от миналото.",
+        condition: () => true,
+        options: [
+            {
+                text: "Проучи паметника (Шанс за артефакт)",
+                action: (hero) => {
+                    if (window.acquireArtifact) {
+                        const artKeys = Object.keys(window.artifactsDatabase);
+                        const rand = artKeys[Math.floor(Math.random() * artKeys.length)];
+                        window.acquireArtifact(rand);
+                    }
+                    return "Открихте предмет, принадлежал на велики предци!";
+                }
+            },
+            {
+                text: "Остави го непокътнат (+5 Престиж)",
+                action: (hero) => {
+                    hero.xp += 5;
+                    return "Показахте почит към духовете на предците.";
+                }
+            }
+        ]
+    }
+];
 
-    // Данни за родовете с икони и статус на присъединяване (isJoined)
-    // В началото само управляващият род (напр. Дуло) е присъединен (true)
-    clans: {
-        "Дуло": { icon: "assets/icons/clans/dulo.png", isJoined: true, regionsControlled: 1 },
-        "Вокил": { icon: "assets/icons/clans/vokil.png", isJoined: false, regionsControlled: 0 },
-        "Ерми": { icon: "assets/icons/clans/ermi.png", isJoined: false, regionsControlled: 0 },
-        "Угаин": { icon: "assets/icons/clans/ugain.png", isJoined: false, regionsControlled: 0 },
-        "Куригир": { icon: "assets/icons/clans/kurigir.png", isJoined: false, regionsControlled: 0 },
-        "Комитопули": { icon: "assets/icons/clans/komitopuli.png", isJoined: false, regionsControlled: 0 },
-        "Асеневци": { icon: "assets/icons/clans/asenevci.png", isJoined: false, regionsControlled: 0 },
-        "Тертер": { icon: "assets/icons/clans/terter.png", isJoined: false, regionsControlled: 0 },
-        "Смилец": { icon: "assets/icons/clans/smilec.png", isJoined: false, regionsControlled: 0 },
-        "Шишмановци": { icon: "assets/icons/clans/shishmanovci.png", isJoined: false, regionsControlled: 0 },
-        "Македони": { icon: "assets/icons/clans/makedoni.png", isJoined: false, regionsControlled: 0 },
-        "Птоломеи": { icon: "assets/icons/clans/ptolomey.png", isJoined: false, regionsControlled: 0 },
-        "Одриси": { icon: "assets/icons/clans/odrisi.png", isJoined: false, regionsControlled: 0 }
-    },
-
-    regions: {
-        "Северна Тракия": { terrain: "Равнина", resource: "Злато", nativeClans: ["Одриси", "Беси"], difficulty: 10 },
-        "Мизия": { terrain: "Гора", resource: "Дървесина", nativeClans: ["Гети", "Кробизи"], difficulty: 25 },
-        "Македония": { terrain: "Планина", resource: "Желязо", nativeClans: ["Едони", "Пеони"], difficulty: 40 },
-        "Добруджа": { terrain: "Степ", resource: "Коне", nativeClans: ["Скити"], difficulty: 30 },
-        "Панония": { terrain: "Равнина", resource: "Зърно", nativeClans: ["Вокил"], difficulty: 35 },
-        "Севтполис": { terrain: "Долина", resource: "Рози и Злато", nativeClans: ["Одриси"], difficulty: 15 }
-    },
-
-    majorClans: [
-        "Дуло", "Вокил", "Ерми", "Угаин", "Куригир", "Комитопули", 
-        "Асеневци", "Тертер", "Смилец", "Шишмановци", "Македони", "Птоломеи", "Одриси"
-    ]
+window.triggerRandomEvent = function() {
+    const hero = window.currentHero;
+    const availableEvents = window.eventsDatabase.filter(ev => ev.condition(hero));
+    
+    // 25% шанс да се случи събитие при всеки ход
+    if (availableEvents.length > 0 && Math.random() < 0.25) {
+        const event = availableEvents[Math.floor(Math.random() * availableEvents.length)];
+        window.showEventModal(event);
+    }
 };
 
-/**
- * Обновява броя региони за всеки род в реално време (за йерархията в десния панел)
- */
-window.updateClanPowerSync = function() {
-    // Тази функция ще се извиква след превземане на земя или брак
-    // Тя ще преброява колко региона в window.playerRegions принадлежат на кой род
-    console.log("Йерархията на родовете е преизчислена.");
+window.showEventModal = function(event) {
+    const mainArea = document.getElementById('game-main-area');
+    if (!mainArea) return;
+
+    const modal = document.createElement('div');
+    modal.id = "event-modal";
+    // Стилът е направен да бъде четим и на мобилни устройства
+    modal.style.cssText = `
+        position: absolute; top: 15%; left: 5%; width: 90%; 
+        background: #000; border: 2px solid #d4af37; padding: 20px; 
+        z-index: 2000; box-shadow: 0 0 30px rgba(0,0,0,1);
+        box-sizing: border-box; color: #eee;
+    `;
+
+    const optionsHTML = event.options.map((opt, index) => `
+        <button onclick="window.handleEventChoice(${index})" style="
+            display: block; width: 100%; padding: 12px; margin-top: 10px;
+            background: #1a1a1a; color: #d4af37; border: 1px solid #d4af37; 
+            cursor: pointer; font-family: 'Montserrat'; text-align: left; font-size: 13px;
+        ">${opt.text}</button>
+    `).join('');
+
+    modal.innerHTML = `
+        <h3 style="font-family: 'Cinzel'; color: #d4af37; margin-top: 0; font-size: 18px;">${event.title}</h3>
+        <p style="font-size: 14px; line-height: 1.4;">${event.text}</p>
+        <div style="margin-top: 20px;">${optionsHTML}</div>
+    `;
+    
+    window.activeEvent = event;
+    mainArea.appendChild(modal);
 };
 
-window.getRegionReport = function(regionName) {
-    const region = window.worldData.regions[regionName];
-    if (!region) return;
-    const clans = region.nativeClans.join(", ");
-    const report = `Земята ${regionName} се владее от родове: ${clans}. Тук изобилства ресурсът: ${region.resource}.`;
-    if (window.showAdvisorMsg) window.showAdvisorMsg(report);
+window.handleEventChoice = function(index) {
+    const event = window.activeEvent;
+    const choice = event.options[index];
+    const resultMsg = choice.action(window.currentHero);
+    
+    const modal = document.getElementById('event-modal');
+    if (modal) modal.remove();
+    
+    if (window.logEvent) {
+        window.logEvent(`${event.title}: ${resultMsg}`, "action");
+    }
+    window.updateCharacterUI(window.currentHero);
+};
+
+window.logEvent = function(message, type) {
+    const center = document.getElementById('events-center');
+    if (!center) return;
+
+    const dateStr = window.gameTime ? `${window.gameTime.year} пр.н.е.` : "";
+    const entry = document.createElement('div');
+    entry.style.cssText = `
+        padding: 10px; margin-bottom: 8px; 
+        border-left: 4px solid ${type === 'death' ? '#ff4d4d' : '#d4af37'};
+        background: rgba(255,255,255,0.05); font-size: 12px;
+    `;
+    entry.innerHTML = `<small style="color: #888;">${dateStr}</small><br>${message}`;
+    center.prepend(entry);
 };
