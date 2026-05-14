@@ -185,3 +185,29 @@ window.showAdvisorMsg = function(msg) {
     window.eventHistory.push({ title: "ВЕСТ ОТ СЪВЕТНИКА", text: msg });
     window.updateCharacterUI(window.currentHero);
 };
+
+
+/**
+ * Функция за изпращане на предложение от играча към движещата се лента
+ */
+window.submitSuggestion = function() {
+    const inputField = document.getElementById('player-suggestion-text');
+    const text = inputField.value.trim();
+
+    if (text.length > 3) {
+        // Извикваме функцията от suggestions.js
+        if (window.addPlayerSuggestion) {
+            // Добавяме името на текущия Кан за тежест
+            const fullEntry = `${window.currentHero.name}: ${text}`;
+            window.addPlayerSuggestion(fullEntry);
+            
+            // Изчистваме полето и даваме обратна връзка
+            inputField.value = '';
+            if (window.showAdvisorMsg) {
+                window.showAdvisorMsg("Твоето предложение бе вписано в Книгата на старейшините!");
+            }
+        }
+    } else {
+        alert("Предложението е твърде кратко!");
+    }
+};
