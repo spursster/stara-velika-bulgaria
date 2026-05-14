@@ -1,5 +1,5 @@
 /**
- * МОДУЛ: ДИПЛОМАЦИЯ - Велика България (Синхронизиран - Версия със Съветник)
+ * МОДУЛ: ДИПЛОМАЦИЯ - Велика България (Финална прецизна версия)
  */
 window.clanRelations = {};
 
@@ -19,7 +19,7 @@ window.openDiplomacy = function() {
     const mainArea = document.getElementById('game-main-area');
     if (!mainArea) return;
 
-    // Първо инициализираме, ако по някаква причина списъкът е празен
+    // Инициализираме, ако е празно
     if (Object.keys(window.clanRelations).length === 0) window.initDiplomacy();
 
     const screen = document.createElement('div');
@@ -36,25 +36,24 @@ window.openDiplomacy = function() {
                 <b style="color: #d4af37; font-family: 'Cinzel';">Род ${clan}</b>
                 <div style="font-size: 10px; color: #ccc;">Доверие: ${window.clanRelations[clan]}%</div>
             </div>
-            <div>
-                <button onclick="window.sendGift('${clan}')" style="background: #1a1a1a; color: #d4af37; border: 1px solid #d4af37; padding: 5px; cursor: pointer; font-size: 10px;">🎁 Дарове</button>
-                <button onclick="window.openMarriageMenu('${clan}')" style="background: #7b1a1a; color: #fff; border: none; padding: 5px; cursor: pointer; font-size: 10px; margin-left: 5px;">💍 Брак</button>
+            <div style="display: flex; gap: 5px;">
+                <button onclick="window.sendGift('${clan}')" style="background: #1a1a1a; color: #d4af37; border: 1px solid #d4af37; padding: 5px 10px; cursor: pointer; font-size: 10px;">🎁 Дар</button>
+                <button onclick="window.openMarriageMenu('${clan}')" style="background: #7b1a1a; color: #fff; border: none; padding: 5px 10px; cursor: pointer; font-size: 10px;">💍 Брак</button>
             </div>
         </div>
     `).join('');
 
     screen.innerHTML = `
-        <div style="display: flex; justify-content: space-between;">
+        <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #d4af37; padding-bottom: 10px; margin-bottom: 15px;">
             <h2 style="font-family: 'Cinzel'; color: #d4af37; margin: 0;">ВЕЛИКИ РОДОВЕ</h2>
-            <button onclick="document.getElementById('diplomacy-screen').remove()" style="color: #ff4d4d; background:none; border:none; cursor:pointer; font-size:20px;">✕</button>
+            <button onclick="document.getElementById('diplomacy-screen').remove(); if(window.updateCharacterUI) window.updateCharacterUI(window.currentHero);" style="color: #ff4d4d; background:none; border:none; cursor:pointer; font-size:20px;">✕</button>
         </div>
-        <p style="font-size: 11px; color: #888; margin-bottom: 15px;">Сключете съюз чрез брак, за да разширите владенията си.</p>
-        <div style="margin-top: 15px;">${clansHTML}</div>
+        <div style="margin-top: 5px;">${clansHTML}</div>
     `;
     mainArea.appendChild(screen);
 };
 
-// Функция за изпращане на дарове (повишава доверието)
+// Функция за ДАРОВЕ - без нея не можеш да стигнеш 60% за брак!
 window.sendGift = function(clan) {
     const cost = 200;
     if (window.currentHero.gold >= cost) {
@@ -62,15 +61,17 @@ window.sendGift = function(clan) {
         window.clanRelations[clan] = Math.min(100, window.clanRelations[clan] + 15);
         
         if (window.showAdvisorMsg) {
-            window.showAdvisorMsg(`Изпратихме златни дарове на род ${clan}. Тяхното доверие към нас нарасна!`);
+            window.showAdvisorMsg(`Изпратихме златни дарове на род ${clan}. Доверието им нарасна на ${window.clanRelations[clan]}%!`);
         }
         
-        // Опресняваме менюто, за да видим новия процент
-        document.getElementById('diplomacy-screen').remove();
+        // Опресняване на екрана, за да се види промяната
+        const screen = document.getElementById('diplomacy-screen');
+        if (screen) screen.remove();
         window.openDiplomacy();
+        
         if (window.updateCharacterUI) window.updateCharacterUI(window.currentHero);
     } else {
-        if (window.showAdvisorMsg) window.showAdvisorMsg("Велики Кане, хазната е празна! Нужни са 200 златници за достоен дар.");
+        if (window.showAdvisorMsg) window.showAdvisorMsg("Хазната е празна, Велики Кане! Нужни са 200 злато за достоен дар.");
     }
 };
 
@@ -78,12 +79,12 @@ window.openMarriageMenu = function(clan) {
     if (!clan) return;
 
     if (window.currentSpouse) { 
-        if (window.showAdvisorMsg) window.showAdvisorMsg("Велики Кане, Вие вече имате съпруга. Не подобава на владетел да нарушава клетвата си!");
+        if (window.showAdvisorMsg) window.showAdvisorMsg("Вече сте сключили свещен династичен съюз!");
         return; 
     }
 
     if (window.clanRelations[clan] < 60) { 
-        if (window.showAdvisorMsg) window.showAdvisorMsg(`Родът ${clan} все още не ни се доверява достатъчно. Изпратете дарове, докато достигнете 60% доверие.`);
+        if (window.showAdvisorMsg) window.showAdvisorMsg(`Род ${clan} изисква поне 60% доверие. Изпратете още дарове!`);
         return; 
     }
     
@@ -104,12 +105,12 @@ window.openMarriageMenu = function(clan) {
     window.clanRelations[clan] = 100;
 
     if (window.showAdvisorMsg) {
-        window.showAdvisorMsg(`Славни дни! Сключен е съюз с род ${clan}. Като зестра към владенията ни се присъединява ${region}.`);
+        window.showAdvisorMsg(`Славна сватба! Род ${clan} се присъединява към нас. Получаваме ${region} като зестра.`);
     }
     
-    if (window.logEvent) window.logEvent(`Сключен брак с род ${clan}! Зестра: ${region}.`, "royal");
+    if (window.logEvent) window.logEvent(`Династичен съюз с род ${clan}. Зестра: ${region}`, "royal");
     
-    // Затваряме менюто и обновяваме всичко
+    // ПРЕЦИЗНО ЗАТВАРЯНЕ И ОБНОВЯВАНЕ
     const screen = document.getElementById('diplomacy-screen');
     if (screen) screen.remove();
     if (window.updateCharacterUI) window.updateCharacterUI(window.currentHero);
