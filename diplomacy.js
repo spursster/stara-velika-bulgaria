@@ -1,20 +1,19 @@
 /**
- * МОДУЛ: ДИПЛОМАЦИЯ - Велика България
+ * МОДУЛ: ДИПЛОМАЦИЯ - Велика България (Синхронизиран - 13 Рода)
  */
 window.clanRelations = {};
 
 window.initDiplomacy = function() {
-    // Дефинираме списъка директно тук, за да не зависим от външни грешки в database.js
-    const dynasties = [
-        "Дуло", "Вокил", "Угаин", "Комитопули", "Асеневци", "Тертер", 
-        "Смилец", "Шишмановци", "Македони", "Птоломеи", "Одриси", "Бесараб"
+    // Вземаме всички 13 рода от mechanics или database
+    const allClans = [
+        "Дуло", "Вокил", "Ерми", "Угаин", "Куригир", "Комитопули", 
+        "Асеневци", "Тертер", "Смилец", "Шишмановци", "Македони", "Птоломеи", "Одриси"
     ];
     
-    // ФИКС: Използваме сигурен цикъл
-    for (let i = 0; i < dynasties.length; i++) {
-        let dyn = dynasties[i];
-        window.clanRelations[dyn] = (window.currentHero && dyn === window.currentHero.dynasty) ? 100 : 40;
-    }
+    allClans.forEach(clan => {
+        // 100% доверие за собствения род, 40% за останалите
+        window.clanRelations[clan] = (window.currentHero && clan === window.currentHero.dynasty) ? 100 : 40;
+    });
 };
 
 window.openDiplomacy = function() {
@@ -53,24 +52,25 @@ window.openDiplomacy = function() {
 };
 
 window.openMarriageMenu = function(clan) {
-    if (!clan) {
-        window.openDiplomacy();
-        return;
-    }
-    if (window.currentSpouse) {
-        alert("Вече имате сключен династичен съюз!");
-        return;
-    }
-    if (window.clanRelations[clan] < 60) {
-        alert(`Род ${clan} изисква поне 60% доверие за брак!`);
-        return;
-    }
+    if (!clan) { window.openDiplomacy(); return; }
+    if (window.currentSpouse) { alert("Вече имате сключен династичен съюз!"); return; }
+    if (window.clanRelations[clan] < 60) { alert(`Род ${clan} изисква поне 60% доверие за брак!`); return; }
     
+    // ФИКС: Вече има точно 13 съответствия за зестра
     const dowryMap = {
-        "Дуло": "Стара Велика България", "Вокил": "Панония", "Угаин": "Малка Скития",
-        "Комитопули": "Македония", "Асеневци": "Загоре", "Тертер": "Добруджа",
-        "Смилец": "Крън", "Шишмановци": "Видинско деспотство", "Македони": "Беломорие",
-        "Птоломеи": "Египет", "Одриси": "Севтполис", "Бесараб": "Влахия"
+        "Дуло": "Стара Велика България",
+        "Вокил": "Панония",
+        "Ерми": "Причерноморие", // Липсващият род е добавен
+        "Угаин": "Малка Скития",
+        "Куригир": "Днепър",
+        "Комитопули": "Македония",
+        "Асеневци": "Загоре",
+        "Тертер": "Добруджа",
+        "Смилец": "Крън",
+        "Шишмановци": "Видин",
+        "Македони": "Беломорие",
+        "Птоломеи": "Египет",
+        "Одриси": "Севтполис"
     };
 
     const region = dowryMap[clan] || "Нови земи";
@@ -81,24 +81,9 @@ window.openMarriageMenu = function(clan) {
     }
     
     window.clanRelations[clan] = 100;
-    
-    if (window.logEvent) {
-        window.logEvent(`Сключен брак с род ${clan}! Присъединена територия: ${region}.`, "royal");
-    }
+    if (window.logEvent) window.logEvent(`Сключен брак с род ${clan}! Зестра: ${region}.`, "royal");
     
     const screen = document.getElementById('diplomacy-screen');
     if (screen) screen.remove();
-    
     if (window.updateCharacterUI) window.updateCharacterUI(window.currentHero);
-};
-
-window.sendGift = function(clan) {
-    if (window.currentHero && window.currentHero.gold >= 100) {
-        window.currentHero.gold -= 100;
-        window.clanRelations[clan] = Math.min(100, window.clanRelations[clan] + 15);
-        const screen = document.getElementById('diplomacy-screen');
-        if (screen) screen.remove();
-        window.openDiplomacy();
-        if (window.updateCharacterUI) window.updateCharacterUI(window.currentHero);
-    }
 };
