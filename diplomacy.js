@@ -1,11 +1,9 @@
 /**
- * МОДУЛ: ДИПЛОМАЦИЯ - Велика България (FINAL FIX)
+ * МОДУЛ: ДИПЛОМАЦИЯ - Велика България (FINAL STABLE VERSION)
  */
 
-// 1. Подсигуряваме обекта с отношенията
 window.clanRelations = window.clanRelations || {};
 
-// 2. Функция за инициализация (извиква се от logic.js или автоматично)
 window.initDiplomacy = function() {
     const allClans = [
         "Дуло", "Вокил", "Ерми", "Угаин", "Куригир", "Комитопули", 
@@ -15,31 +13,21 @@ window.initDiplomacy = function() {
     allClans.forEach(clan => {
         if (window.currentHero && clan === window.currentHero.dynasty) {
             window.clanRelations[clan] = 100;
-        } else {
-            window.clanRelations[clan] = window.clanRelations[clan] || 40;
+        } else if (!window.clanRelations[clan]) {
+            window.clanRelations[clan] = 40;
         }
     });
 };
 
-// 3. ГЛАВНА ФУНКЦИЯ - ТОВА ОТВАРЯ ПРОЗОРЕЦА
 window.openDiplomacy = function() {
-    // Проверка за контейнера, където се рисува играта
     const mainArea = document.getElementById('game-main-area');
-    if (!mainArea) {
-        console.error("Грешка: Не е намерен елемент с id='game-main-area'!");
-        return;
-    }
+    if (!mainArea) return;
 
-    // Ако не сме заредили родовете, правим го сега
-    if (Object.keys(window.clanRelations).length === 0) {
-        window.initDiplomacy();
-    }
+    if (Object.keys(window.clanRelations).length === 0) window.initDiplomacy();
 
-    // Премахваме стария прозорец, за да не се дублират
     const oldScreen = document.getElementById('diplomacy-screen');
     if (oldScreen) oldScreen.remove();
 
-    // Създаваме новия прозорец
     const screen = document.createElement('div');
     screen.id = "diplomacy-screen";
     screen.style.cssText = `
@@ -48,18 +36,17 @@ window.openDiplomacy = function() {
         box-sizing: border-box; border: 2px solid #d4af37; overflow-y: auto; color: white;
     `;
 
-    // Генерираме списъка с родове
     let clansHTML = "";
-    for (let clan in window.clanRelations) {
+    for (let clanName in window.clanRelations) {
         clansHTML += `
         <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px; border-bottom: 1px solid #333;">
             <div>
-                <b style="color: #d4af37; font-family: 'Cinzel';">Род ${clan}</b>
-                <div style="font-size: 11px; color: #aaa;">Доверие: ${window.clanRelations[clan]}%</div>
+                <b style="color: #d4af37; font-family: 'Cinzel';">Род ${clanName}</b>
+                <div style="font-size: 11px; color: #aaa;">Доверие: ${window.clanRelations[clanName]}%</div>
             </div>
             <div style="display: flex; gap: 8px;">
-                <button onclick="window.sendGift('${clan}')" style="background: #1a1a1a; color: #d4af37; border: 1px solid #d4af37; padding: 6px 10px; cursor: pointer; font-size: 11px;">🎁 Дар</button>
-                <button onclick="window.openMarriageMenu('${clan}')" style="background: #7b1a1a; color: #fff; border: none; padding: 6px 10px; cursor: pointer; font-size: 11px;">💍 Брак</button>
+                <button onclick="window.sendGift('${clanName}')" style="background: #1a1a1a; color: #d4af37; border: 1px solid #d4af37; padding: 6px 10px; cursor: pointer; font-size: 11px;">🎁 Дар</button>
+                <button onclick="window.openMarriageMenu('${clanName}')" style="background: #7b1a1a; color: #fff; border: none; padding: 6px 10px; cursor: pointer; font-size: 11px;">💍 Брак</button>
             </div>
         </div>`;
     }
@@ -75,8 +62,8 @@ window.openDiplomacy = function() {
     mainArea.appendChild(screen);
 };
 
-// 4. ФУНКЦИЯ ЗА ДАРОВЕ
 window.sendGift = function(clan) {
+    if (!window.currentHero) return;
     if (window.currentHero.gold >= 200) {
         window.currentHero.gold -= 200;
         window.clanRelations[clan] = Math.min(100, window.clanRelations[clan] + 15);
@@ -85,7 +72,6 @@ window.sendGift = function(clan) {
             window.showAdvisorMsg(`Изпратихме злато на род ${clan}. Доверието им е вече ${window.clanRelations[clan]}%.`);
         }
         
-        // Опресняваме екрана веднага
         window.openDiplomacy();
         if (window.updateCharacterUI) window.updateCharacterUI(window.currentHero);
     } else {
@@ -93,25 +79,59 @@ window.sendGift = function(clan) {
     }
 };
 
-// 5. ФУНКЦИЯ ЗА БРАК
 window.openMarriageMenu = function(clan) {
+    // 1. Проверка дали името на рода е предадено правилно
+    if (!clan || clan === 'undefined') return;
+
     if (window.currentSpouse) {
         if (window.showAdvisorMsg) window.showAdvisorMsg("Вече сте сключили съюз чрез брак!");
         return;
     }
+
     if (window.clanRelations[clan] < 60) {
-        if (window.showAdvisorMsg) window.showAdvisorMsg(`Род ${clan} изисква 60% доверие. Трябват ни още дарове!`);
+        if (window.showAdvisorMsg) window.showAdvisorMsg(`Род ${clan} изисква 60% доверие за съюз.`);
         return;
     }
 
-    const dowryMap = { "Дуло": "Стара Велика България", "Вокил": "Панония", "Ерми": "Причерноморие", "Угаин": "Малка Скития", "Куригир": "Днепър", "Комитопули": "Македония", "Асеневци": "Загоре", "Тертер": "Добруджа", "Смилец": "Крън", "Шишмановци": "Видин", "Македони": "Беломорие", "Птоломеи": "Египет", "Одриси": "Севтполис" };
+    // 2. Карта на зестрите (съответства на твоите 13 рода)
+    const dowryMap = { 
+        "Дуло": "Стара Велика България", 
+        "Вокил": "Панония", 
+        "Ерми": "Причерноморие", 
+        "Угаин": "Малка Скития", 
+        "Куригир": "Днепър", 
+        "Комитопули": "Македония", 
+        "Асеневци": "Загоре", 
+        "Тертер": "Добруджа", 
+        "Смилец": "Крън", 
+        "Шишмановци": "Видин", 
+        "Македони": "Беломорие", 
+        "Птоломеи": "Египет", 
+        "Одриси": "Севтполис" 
+    };
+
     const region = dowryMap[clan] || "Нова земя";
     
+    // 3. ЗАПИСВАНЕ НА ДАННИТЕ
     window.currentSpouse = { name: "Княгиня", dynasty: clan };
-    if (!window.playerRegions.includes(region)) window.playerRegions.push(region);
     
-    if (window.showAdvisorMsg) window.showAdvisorMsg(`Славна сватба с род ${clan}! Получаваме ${region}.`);
+    // Подсигуряваме, че масивът съществува, преди да добавим региона
+    if (!window.playerRegions) window.playerRegions = ["Долна Мизия"];
+    if (!window.playerRegions.includes(region)) {
+        window.playerRegions.push(region);
+    }
     
-    document.getElementById('diplomacy-screen').remove();
+    // Повишаваме доверието на рода до максимум
+    window.clanRelations[clan] = 100;
+
+    // 4. ИЗВЕСТИЕ ЧРЕЗ СЪВЕТНИКА
+    if (window.showAdvisorMsg) {
+        window.showAdvisorMsg(`Славна сватба! Род ${clan} се присъединява към нас. Получаваме ${region} като зестра.`);
+    }
+    
+    // 5. ОБНОВЯВАНЕ И ЗАТВАРЯНЕ
+    const screen = document.getElementById('diplomacy-screen');
+    if (screen) screen.remove();
+    
     if (window.updateCharacterUI) window.updateCharacterUI(window.currentHero);
 };
