@@ -9,14 +9,13 @@
 </head>
 <body>
 
-    <!-- ГЛАВЕН ХЕДЪР (Върнати функции) -->
     <header id="top-bar" style="background: #111; border-bottom: 2px solid #d4af37; padding: 0 10px; display: flex; justify-content: space-between; align-items: center; height: 60px;">
         <div id="time-container" style="font-family: 'Cinzel', serif; color: #d4af37;">
-            <div id="current-time-info" style="font-size: 13px;">🌱 Пролет, 480 пр.н.е.</div>
-            <div style="font-size: 9px; opacity: 0.6;">АНТИЧНОСТ</div>
+            <div id="current-time-info" style="font-size: 13px;">🌱 Пролет, 632 от н.е.</div>
+            <div style="font-size: 9px; opacity: 0.6;">СРЕДНОВЕКОВИЕ</div>
         </div>
         
-        <div id="main-controls" style="display: flex; gap: 5px;">
+        <div id="main-controls" class="controls" style="display: flex; gap: 5px;">
             <button class="top-btn" onclick="window.advanceTurn()" title="Следващ ход">⏳</button>
             <button class="top-btn" onclick="window.startBattle()" title="Битка">⚔️</button>
             <button class="top-btn" onclick="window.openMarriageMenu()" title="Брак">💍</button>
@@ -24,17 +23,16 @@
         </div>
 
         <div style="font-family: 'Cinzel', serif; font-size: 14px; color: #ffd700;">
-            💰 <span id="gold-amount">750</span>
+            💰 <span id="gold-amount">1500</span>
         </div>
     </header>
 
-    <!-- ACTION BAR -->
     <div id="action-bar" style="background: #0a0a0a; border-bottom: 1px solid #333; display: flex; justify-content: space-around; align-items: center; height: 50px;">
         <button onclick="window.buyUnits()" style="background:none; border:none; color:#d4af37; font-family:'Cinzel'; font-size:11px; cursor:pointer;">🛡️ ОБУЧЕНИЕ</button>
         
         <div style="display: flex; gap: 15px; font-size: 12px; font-family: 'Cinzel';">
-            <span>⚔️ <span id="hero-power-val" style="color:#ff4d4d;">50</span></span>
-            <span>🛡️ <span id="army-val">100</span></span>
+            <span>⚔️ <span id="hero-power-val" style="color:#ff4d4d;">150</span></span>
+            <span>🛡️ <span id="army-val">500</span></span>
         </div>
 
         <div style="position: relative; cursor: pointer;" onclick="window.toggleTreasury()">
@@ -43,16 +41,16 @@
         </div>
     </div>
 
-    <!-- ОСНОВЕН КОНТЕЙНЕР (Запазва хоризонталната логика) -->
     <main id="game-container">
         <aside id="left-sidebar">
             <div id="provinces-list"></div>
         </aside>
 
         <section id="game-main-area">
-            <div id="events-center"></div>
+            <div id="central-display" style="height: 100%; display: flex; justify-content: center; align-items: center; opacity: 0.1;">
+                 <img src="assets/icons/clans/default.png" style="width: 300px; filter: grayscale(1);" onerror="this.style.display='none'">
+            </div>
             
-            <!-- МОДАЛ СЪКРОВИЩНИЦА -->
             <div id="treasury-overlay" style="display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.98); z-index: 100; padding: 20px; border: 1px solid #d4af37; box-sizing: border-box;">
                 <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #333; padding-bottom: 10px;">
                     <h2 style="font-family: 'Cinzel'; color: #d4af37; font-size: 18px; margin:0;">🏺 СЪКРОВИЩНИЦА</h2>
@@ -61,9 +59,12 @@
                 <div id="treasury-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); gap: 15px; margin-top: 20px;"></div>
             </div>
         </section>
+
+        <aside id="right-sidebar" style="width: 280px; background: #0a0a0a; border-left: 1px solid #333; overflow-y: hidden;">
+            <div id="events-center"></div>
+        </aside>
     </main>
 
-    <!-- СИНХРОНИЗИРАНИ СКРИПТОВЕ -->
     <script src="database.js"></script>
     <script src="mechanics.js"></script>
     <script src="time.js"></script>
