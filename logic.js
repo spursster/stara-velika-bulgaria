@@ -1,6 +1,6 @@
 /**
  * МОДУЛ: ГЛАВНА ЛОГИКА - Велика България
- * Синхронизиран с 50 региона и автоматизирана икономика.
+ * Синхронизиран с 50 региона, автоматизирана икономика и система за ВЕСТИ.
  */
 window.initNewGame = function() {
     // 1. Дефиниране на началните данни за Кана
@@ -14,7 +14,7 @@ window.initNewGame = function() {
 
     window.gameTime = { year: 632, seasonIndex: 0, era: "от н.е." };
     
-    // ВАЖНО: Започваме от Крим, който съществува в world_data.js
+    // Начален регион
     window.playerRegions = ["Крим"]; 
     
     window.currentSpouse = null;
@@ -25,13 +25,13 @@ window.initNewGame = function() {
     // 2. Първоначална синхронизация със световните данни
     setTimeout(() => {
         if (window.worldData && window.worldData.clans[window.currentHero.dynasty]) {
-            // Родът Дуло получава контрол над началния регион
             window.worldData.clans[window.currentHero.dynasty].regionsOwned = window.playerRegions.length;
             window.worldData.clans[window.currentHero.dynasty].isJoined = true;
         }
 
         if (window.updateCharacterUI) window.updateCharacterUI(window.currentHero);
         
+        // Съобщението при започване влиза в Летописа
         if (window.showAdvisorMsg) {
             window.showAdvisorMsg(`Приветствам Ви, Велики Кане! Вашето управление започва в ${window.playerRegions[0]}. Родът ${window.currentHero.dynasty} очаква Вашите заповеди.`);
         }
@@ -39,17 +39,24 @@ window.initNewGame = function() {
 };
 
 /**
- * ФУНКЦИЯ ЗА СЛУЧАЙНИ СЪБИТИЯ
+ * ФУНКЦИЯ ЗА СЛУЧАЙНИ СЪБИТИЯ (Обновена за системата Вести)
  */
 window.triggerRandomEvent = function() {
-    if (!window.eventsDatabase || !window.showEventModal) return;
+    if (!window.eventsDatabase) return;
 
     // Филтрираме събитията, чиито условия са изпълнени
     const availableEvents = window.eventsDatabase.filter(ev => ev.condition(window.currentHero));
 
     if (availableEvents.length > 0) {
         const randomIndex = Math.floor(Math.random() * availableEvents.length);
-        window.showEventModal(availableEvents[randomIndex]);
+        const selectedEvent = availableEvents[randomIndex];
+        
+        // ВАЖНО: Добавяме в опашката вместо директно показване
+        if (window.eventQueue) {
+            window.eventQueue.push(selectedEvent);
+            // Опресняваме брояча на бутона
+            if (window.updateNotificationBadge) window.updateNotificationBadge();
+        }
     }
 };
 
@@ -57,7 +64,6 @@ window.triggerRandomEvent = function() {
  * ФУНКЦИЯ ЗА ПРИСЪЕДИНЯВАНЕ НА РЕГИОН
  */
 window.conquerRegion = function(regionName) {
-    // Вземаме данните от обекта worldData
     const regionData = window.worldData.regions[regionName];
     
     if (!regionData) {
@@ -68,7 +74,6 @@ window.conquerRegion = function(regionName) {
     if (!window.playerRegions.includes(regionName)) {
         window.playerRegions.push(regionName);
         
-        // Увеличаваме влиянието на местните родове
         regionData.nativeClans.forEach(clanName => {
             if (window.worldData.clans[clanName]) {
                 window.worldData.clans[clanName].regionsOwned += 1;
@@ -78,6 +83,7 @@ window.conquerRegion = function(regionName) {
         if (window.recalculateClanHierarchy) window.recalculateClanHierarchy();
         if (window.updateCharacterUI) window.updateCharacterUI(window.currentHero);
         
+        // Вестта за нова земя влиза в Летописа
         if (window.showAdvisorMsg) window.showAdvisorMsg(`Слава на Кана! Земята ${regionName} вече е под наш контрол.`);
     }
 };
@@ -91,11 +97,12 @@ window.advanceTurn = function() {
     // 2. Изчисляване на икономиката при всеки ход
     if (window.calculateEconomy) window.calculateEconomy();
     
-    // 3. Проверка за събития (лидери и дипломация)
+    // 3. Проверка за събития (добавят се в опашката)
     window.triggerRandomEvent();
 
-    // 4. Опресняване на интерфейса
+    // 4. Опресняване на интерфейса и брояча на вестите
     if (window.updateCharacterUI) window.updateCharacterUI(window.currentHero);
+    if (window.updateNotificationBadge) window.updateNotificationBadge();
 };
 
 // Автоматично стартиране
