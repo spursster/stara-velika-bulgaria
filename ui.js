@@ -37,7 +37,7 @@ window.updateCharacterUI = function(hero) {
         leftSidebar.innerHTML = treeHTML;
     }
 
-    // Синхронизация на ресурсите в хедъра (проверка за ID-та от index.html)
+    // Синхронизация на ресурсите в хедъра
     const goldElem = document.getElementById('gold-amount');
     const armyElem = document.getElementById('army-val');
     const powerElem = document.getElementById('hero-power-val');
@@ -47,8 +47,39 @@ window.updateCharacterUI = function(hero) {
     if (powerElem) powerElem.innerText = hero.heroPower;
 };
 
-// Функция за изчистване на главната зона при нови екрани
+// Функция за изчистване на главната зона
 window.clearMainArea = function() {
     const mainArea = document.getElementById('game-main-area');
     if (mainArea) mainArea.innerHTML = '';
+};
+
+/**
+ * ПЕРСОНАЛИЗИРАНО СЪОБЩЕНИЕ ОТ СЪВЕТНИКА (Замества стандартния alert)
+ */
+window.showAdvisorMsg = function(text) {
+    const oldMsg = document.getElementById('advisor-msg');
+    if (oldMsg) oldMsg.remove();
+
+    const msgBox = document.createElement('div');
+    msgBox.id = 'advisor-msg';
+    msgBox.style.cssText = `
+        position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
+        background: #0a0a0a; border: 2px solid #d4af37; color: #eee;
+        padding: 25px; z-index: 9999; width: 320px; text-align: center;
+        box-shadow: 0 0 30px rgba(0,0,0,0.9); font-family: 'Cinzel', serif;
+        border-radius: 4px;
+    `;
+
+    msgBox.innerHTML = `
+        <div style="font-size: 40px; margin-bottom: 15px;">📜</div>
+        <div style="color: #d4af37; font-size: 11px; margin-bottom: 10px; letter-spacing: 1.5px; border-bottom: 1px solid #333; padding-bottom: 5px;">СЪВЕТНИКА ВИ КАЗА ЧЕ:</div>
+        <div style="font-size: 14px; margin-bottom: 25px; line-height: 1.5; color: #fff;">${text}</div>
+        <button onclick="this.parentElement.remove()" style="
+            background: #d4af37; color: #000; border: none; padding: 10px;
+            cursor: pointer; font-family: 'Cinzel'; font-weight: bold; width: 100%;
+            transition: 0.3s;
+        ">СЛУШАМ, ВЕЛИКИ КАНЕ</button>
+    `;
+
+    document.body.appendChild(msgBox);
 };
