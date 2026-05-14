@@ -74,3 +74,46 @@ if (document.readyState === 'complete') {
 } else {
     window.onload = () => window.initNewGame();
 }
+
+/**
+ * ЛОГИКА ЗА СЛУЧАЙНИ СЪБИТИЯ
+ * Избира събитие, чиито условия са изпълнени.
+ */
+window.triggerRandomEvent = function() {
+    if (!window.eventsDatabase || !window.showEventModal) return;
+
+    // Филтрираме само събитията, чиито условия (condition) са изпълнени в момента
+    const availableEvents = window.eventsDatabase.filter(ev => ev.condition(window.currentHero));
+
+    if (availableEvents.length > 0) {
+        // Избираме случайно едно от наличните събития
+        const randomIndex = Math.floor(Math.random() * availableEvents.length);
+        const selectedEvent = availableEvents[randomIndex];
+        
+        // Показваме го на екрана
+        window.showEventModal(selectedEvent);
+    }
+};
+
+/**
+ * ФУНКЦИЯ ЗА ПРЕВЗЕМАНЕ НА РЕГИОН
+ * Използвайте тази функция, за да сте сигурни, че имената съвпадат и йерархията се обновява.
+ */
+window.conquerRegion = function(regionName) {
+    if (!window.playerRegions.includes(regionName)) {
+        window.playerRegions.push(regionName);
+        
+        // Намираме кой род е местен за този регион и му добавяме мощ
+        for (let clanName in window.worldData.clans) {
+            const regionData = window.worldData.regions[regionName];
+            if (regionData && regionData.nativeClans.includes(clanName)) {
+                window.worldData.clans[clanName].regionsOwned += 1;
+            }
+        }
+        
+        if (window.recalculateClanHierarchy) window.recalculateClanHierarchy();
+        if (window.updateCharacterUI) window.updateCharacterUI(window.currentHero);
+        
+        window.showAdvisorMsg(`Слава, Велики Кане! ${regionName} вече е под Ваша власт.`);
+    }
+};
