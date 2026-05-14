@@ -1,10 +1,10 @@
 /**
  * МОДУЛ: СВЕТОВНИ ДАННИ И ГЕОПОЛИТИКА - Велика България
- * Синхронизиран: Добавяне на статус за присъединяване, икони и мощ на родовете.
+ * Синхронизиран: 50 региона, корекция на липсващи данни и йерархия на родовете.
  */
 
 window.worldData = {
-    // Основни държави (Фракции) - Ромеи и Перси
+    // Основни държави (Фракции)
     factions: {
         "bulgarian_empire": {
             nameBG: "Велика България",
@@ -26,8 +26,7 @@ window.worldData = {
         }
     },
 
-    // ДАННИ ЗА РОДОВЕТЕ: Икони, статус на обединение и притежавани земи
-    // Само първият род (Дуло) започва като присъединен (isJoined: true)
+    // ДАННИ ЗА РОДОВЕТЕ
     clans: {
         "Дуло": { icon: "assets/icons/clans/dulo.png", isJoined: true, regionsOwned: 1, leader: "Кан Кубрат" },
         "Вокил": { icon: "assets/icons/clans/vokil.png", isJoined: false, regionsOwned: 0, leader: "Кормисош" },
@@ -44,11 +43,11 @@ window.worldData = {
         "Одриси": { icon: "assets/icons/clans/odrisi.png", isJoined: false, regionsOwned: 0, leader: "Терес" }
     },
 
-   // Детайлни данни за провинциите - 50 региона
+    // Детайлни данни за провинциите - 50 региона
     regions: {
         // --- ЗОНА 1: БАЛКАНИ И ПРИДУНАВИЕ ---
         "Мизия": { terrain: "Гора", resource: "Дървесина", nativeClans: ["Гети"], difficulty: 10 },
-        "Северна Тракия": { terrain: "Равнина", resource: "Злато", nativeClans: ["Одриси"], difficulty: 15 },
+        "Тракия": { terrain: "Равнина", resource: "Злато", nativeClans: ["Одриси", "Беси"], difficulty: 15 },
         "Македония": { terrain: "Планина", resource: "Желязо", nativeClans: ["Македони"], difficulty: 25 },
         "Добруджа": { terrain: "Степ", resource: "Коне", nativeClans: ["Куригир"], difficulty: 20 },
         "Панония": { terrain: "Равнина", resource: "Зърно", nativeClans: ["Вокил"], difficulty: 30 },
@@ -59,6 +58,7 @@ window.worldData = {
         "Дардания": { terrain: "Планина", resource: "Руда", nativeClans: ["Комитопули"], difficulty: 40 },
 
         // --- ЗОНА 2: ПРИЧЕРНОМОРИЕ И КАВКАЗ ---
+        "Стара Велика България": { terrain: "Степ", resource: "Коне", nativeClans: ["Дуло", "Куригир"], difficulty: 5 },
         "Крим": { terrain: "Бряг", resource: "Вино", nativeClans: ["Дуло"], difficulty: 20 },
         "Боспор": { terrain: "Пристанище", resource: "Търговия", nativeClans: ["Дуло"], difficulty: 25 },
         "Кубан": { terrain: "Степ", resource: "Коне", nativeClans: ["Куригир"], difficulty: 15 },
@@ -113,22 +113,19 @@ window.worldData = {
     ]
 };
 
-/**
- * Преизчислява йерархията на присъединените родове спрямо броя на техните земи.
- * Извиква се при всяко разширение на територията.
- */
 window.recalculateClanHierarchy = function() {
     const joinedClans = window.worldData.majorClans
         .filter(name => window.worldData.clans[name].isJoined)
         .sort((a, b) => window.worldData.clans[b].regionsOwned - window.worldData.clans[a].regionsOwned);
-    
-    console.log("Нова йерархия на обединението:", joinedClans);
     return joinedClans;
 };
 
 window.getRegionReport = function(regionName) {
     const region = window.worldData.regions[regionName];
-    if (!region) return;
+    if (!region) {
+        console.error(`Регионът "${regionName}" не е намерен в базата данни.`);
+        return;
+    }
     const clans = region.nativeClans.join(", ");
     const report = `Земята ${regionName} се владее от родове: ${clans}. Тук изобилства ресурсът: ${region.resource}.`;
     if (window.showAdvisorMsg) window.showAdvisorMsg(report);
