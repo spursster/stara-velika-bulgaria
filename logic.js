@@ -1,34 +1,39 @@
 /**
  * МОДУЛ: ГЛАВНА ЛОГИКА - Велика България
+ * Синхронизиран със Стъпка 2: 50 региона и автоматично разширение.
  */
 window.initNewGame = function() {
+    // 1. Дефиниране на началните данни за Кана
     window.currentHero = {
-        name: "Аспарух", 
+        name: "Кубрат", 
         dynasty: "Дуло",
         gold: 1500,
-        armySize: 300,
-        heroPower: 100
+        armySize: 500,
+        heroPower: 150
     };
 
-    window.gameTime = { year: 480, seasonIndex: 0, era: "пр.н.е." };
+    window.gameTime = { year: 632, seasonIndex: 0, era: "от н.е." };
     
-    // ВАЖНО: Използваме точното име от world_data.js
-    window.playerRegions = ["Мизия"]; 
+    // ВАЖНО: Вече започваме от центъра на Стара Велика България
+    window.playerRegions = ["Стара Велика България"]; 
     
     window.currentSpouse = null;
     window.playerInventory = [];
 
     if (window.initDiplomacy) window.initDiplomacy();
 
+    // 2. Първоначална синхронизация със световните данни
     setTimeout(() => {
         if (window.worldData && window.worldData.clans[window.currentHero.dynasty]) {
+            // Родът Дуло получава контрол над началния регион
             window.worldData.clans[window.currentHero.dynasty].regionsOwned = window.playerRegions.length;
+            window.worldData.clans[window.currentHero.dynasty].isJoined = true;
         }
 
         if (window.updateCharacterUI) window.updateCharacterUI(window.currentHero);
         
         if (window.showAdvisorMsg) {
-            window.showAdvisorMsg(`Приветствам Ви, Велики Кане! Вашето управление започва. Родът ${window.currentHero.dynasty} очаква Вашите заповеди.`);
+            window.showAdvisorMsg(`Приветствам Ви, Велики Кане! Вашето управление започва в ${window.playerRegions[0]}. Родът ${window.currentHero.dynasty} очаква Вашите заповеди.`);
         }
     }, 100); 
 };
@@ -39,7 +44,6 @@ window.initNewGame = function() {
 window.triggerRandomEvent = function() {
     if (!window.eventsDatabase || !window.showEventModal) return;
 
-    // Филтрираме събитията, чиито условия са изпълнени
     const availableEvents = window.eventsDatabase.filter(ev => ev.condition(window.currentHero));
 
     if (availableEvents.length > 0) {
@@ -49,33 +53,34 @@ window.triggerRandomEvent = function() {
 };
 
 /**
- * ФУНКЦИЯ ЗА ПРИСЪЕДИНЯВАНЕ НА РЕГИОН (Безопасна)
+ * ФУНКЦИЯ ЗА ПРИСЪЕДИНЯВАНЕ НА РЕГИОН
+ * Вече напълно синхронизирана с 50-те региона в world_data.js
  */
 window.conquerRegion = function(regionName) {
-    // 1. Проверка дали името съществува в базата данни
     const regionData = window.worldData.regions[regionName];
     
     if (!regionData) {
-        console.error(`ВНИМАНИЕ: Регион "${regionName}" не съществува! Използвайте "Северна Тракия", "Мизия" или "Панония".`);
-        if (window.showAdvisorMsg) window.showAdvisorMsg(`Кан ${window.currentHero.name}, нашите карти не познават земя на име ${regionName}.`);
+        console.error(`ГРЕШКА: Регион "${regionName}" не съществува в базата данни.`);
+        if (window.showAdvisorMsg) window.showAdvisorMsg(`Кан ${window.currentHero.name}, нашите карти не познават земя на име ${regionName}. Проверете името в списъка с региони.`);
         return;
     }
 
-    // 2. Добавяне само ако вече не е притежаван
     if (!window.playerRegions.includes(regionName)) {
         window.playerRegions.push(regionName);
         
-        // Автоматично присъединяваме родния за региона род, ако има такъв
+        // Увеличаваме влиянието на родовете, които са местни за тази земя
         regionData.nativeClans.forEach(clanName => {
             if (window.worldData.clans[clanName]) {
                 window.worldData.clans[clanName].regionsOwned += 1;
+                console.log(`Родът ${clanName} засилва влиянието си в Обединението.`);
             }
         });
 
+        // Преизчисляваме кой род е най-силен след новата придобивка
         if (window.recalculateClanHierarchy) window.recalculateClanHierarchy();
         if (window.updateCharacterUI) window.updateCharacterUI(window.currentHero);
         
-        console.log(`Успешно присъединена земя: ${regionName}`);
+        if (window.showAdvisorMsg) window.showAdvisorMsg(`Слава на Кана! Земята ${regionName} вече е част от нашите владения.`);
     }
 };
 
@@ -85,12 +90,13 @@ window.advanceTurn = function() {
     if (window.processTime) window.processTime();
     if (window.calculateEconomy) window.calculateEconomy();
     
-    // Активираме проверка за събития при всеки ход
+    // Проверка за събития при всеки ход
     window.triggerRandomEvent();
 
     if (window.updateCharacterUI) window.updateCharacterUI(window.currentHero);
 };
 
+// Автоматично стартиране при зареждане
 if (document.readyState === 'complete') {
     window.initNewGame();
 } else {
