@@ -1,6 +1,6 @@
 /**
  * МОДУЛ: ИНТЕРФЕЙС - Велика България
- * Синхронизиран със Стъпка 3: Визуализация на 50 региона и 13 династии.
+ * Синхронизиран: Визуализация на 50 региона, 13 династии и СИСТЕМА ЗА СЪБИТИЯ.
  */
 
 window.updateCharacterUI = function(hero) {
@@ -26,7 +26,6 @@ window.updateCharacterUI = function(hero) {
             const regData = window.worldData.regions[regName];
             
             if (!regData) {
-                // Тази част вече не би трябвало да се задейства след Стъпка 1
                 treeHTML += `
                     <div style="border: 1px solid #444; background: #1a0000; padding: 6px; margin-bottom: 3px; font-size: 10px; color: #ff6b6b;">
                         ⚠️ ${regName} (Непозната земя)
@@ -34,7 +33,6 @@ window.updateCharacterUI = function(hero) {
                 return;
             }
 
-            // Намираме кой присъединен род управлява тази земя (или самият Кан)
             const managingClanName = regData.nativeClans.find(c => window.worldData.clans[c] && window.worldData.clans[c].isJoined) || hero.dynasty;
             const regClanIcon = window.worldData.clans[managingClanName]?.icon || "";
 
@@ -51,10 +49,8 @@ window.updateCharacterUI = function(hero) {
         leftSidebar.innerHTML = treeHTML;
     }
 
-    // Обновяване на десния панел (Йерархия на родовете)
     window.renderClanHierarchy();
 
-    // Обновяване на ресурсите в горния панел
     const elements = { 
         'gold-amount': hero.gold, 
         'army-val': hero.armySize, 
@@ -70,7 +66,6 @@ window.renderClanHierarchy = function() {
     const rightPanel = document.getElementById('events-center');
     if (!rightPanel) return;
 
-    // Използваме функцията от world_data.js за подредба по мощ
     const joinedClansNames = window.recalculateClanHierarchy ? window.recalculateClanHierarchy() : [];
     
     let html = `<div style="font-family: 'Cinzel'; color: #d4af37; font-size: 12px; margin-bottom: 10px; border-bottom: 1px solid #333; padding-bottom: 5px; text-align:center;">ВЕЛИКО ОБЕДИНЕНИЕ</div>`;
@@ -91,11 +86,54 @@ window.renderClanHierarchy = function() {
         `;
     });
 
-    // Показваме празни слотове до запълване на всички 13 династии
     const missingCount = Math.max(0, 13 - joinedClansNames.length);
     for(let i=0; i < missingCount; i++) {
         html += `<div style="height: 40px; border: 1px dashed #333; margin-bottom: 5px; opacity: 0.3; display: flex; align-items: center; justify-content: center; font-size: 8px; color: #555;">ТЪРСИ СЪЮЗНИК...</div>`;
     }
 
     rightPanel.innerHTML = html;
+};
+
+/**
+ * СИСТЕМА ЗА МОДАЛНИ ПРОЗОРЦИ (СЪБИТИЯ)
+ */
+window.showEventModal = function(event) {
+    if (!event) return;
+
+    let modal = document.getElementById('event-modal');
+    if (!modal) {
+        modal = document.createElement('div');
+        modal.id = 'event-modal';
+        modal.style = "position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.9); display:flex; justify-content:center; align-items:center; z-index:9999; font-family: 'Cinzel', serif;";
+        document.body.appendChild(modal);
+    }
+
+    let optionsHTML = event.options.map((opt, index) => `
+        <button onclick="window.handleEventChoice(${index})" style="display:block; width:100%; padding:15px; margin-top:10px; background:#111; border:1px solid #d4af37; color:#d4af37; cursor:pointer; font-family:'Cinzel'; transition: 0.3s; font-size: 12px;" onmouseover="this.style.background='#d4af37'; this.style.color='#000'" onmouseout="this.style.background='#111'; this.style.color='#d4af37'">
+            ${opt.text}
+        </button>
+    `).join('');
+
+    modal.innerHTML = `
+        <div style="background:#050505; border:2px solid #d4af37; padding:40px; max-width:550px; width:90%; text-align:center; box-shadow: 0 0 30px rgba(212,175,55,0.2);">
+            <h2 style="color:#d4af37; margin-top:0; border-bottom:1px solid #d4af37; padding-bottom:15px; letter-spacing: 2px;">${event.title.toUpperCase()}</h2>
+            <p style="color:#e0e0e0; line-height:1.7; margin:25px 0; font-size: 14px;">${event.text}</p>
+            <div id="event-options">${optionsHTML}</div>
+        </div>
+    `;
+
+    modal.style.display = 'flex';
+
+    window.handleEventChoice = function(choiceIndex) {
+        const option = event.options[choiceIndex];
+        const resultText = option.action(window.currentHero);
+        
+        modal.innerHTML = `
+            <div style="background:#050505; border:2px solid #d4af37; padding:40px; max-width:550px; width:90%; text-align:center;">
+                <h2 style="color:#d4af37; letter-spacing: 2px;">СЛУЧИ СЕ:</h2>
+                <p style="color:#fff; margin:25px 0; font-size: 15px; line-height:1.6;">${resultText}</p>
+                <button onclick="document.getElementById('event-modal').style.display='none'; window.updateCharacterUI(window.currentHero);" style="padding:12px 30px; background:#d4af37; border:none; color:#000; cursor:pointer; font-weight:bold; font-family:'Cinzel'; letter-spacing: 1px;">Продължи</button>
+            </div>
+        `;
+    };
 };
