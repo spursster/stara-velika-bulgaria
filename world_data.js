@@ -1,10 +1,10 @@
 /**
- * МОДУЛ: СВЕТОВНИ ДАННИ И ГЕОПОЛИТИКА
- * Дефинира регионите, съседните държави и фракциите около 480 г. пр.н.е.
+ * МОДУЛ: СВЕТОВНИ ДАННИ И ГЕОПОЛИТИКА - Велика България
+ * Синхронизиран: Добавяне на статус за присъединяване, икони и мощ на родовете.
  */
 
 window.worldData = {
-    // Основни държави (Фракции) - Използваме "Ромеи", а не "Византийци"
+    // Основни държави (Фракции) - Ромеи и Перси
     factions: {
         "bulgarian_empire": {
             nameBG: "Велика България",
@@ -15,58 +15,45 @@ window.worldData = {
         "rhomaioi_empire": {
             nameBG: "Ромейска Империя (Rhomaioi)",
             nameUS: "Roman Empire (Rhomaioi)",
-            relation: -20, // Враждебни
+            relation: -20,
             power: 500
         },
         "persian_empire": {
             nameBG: "Персийска Империя",
             nameUS: "Persian Empire",
-            relation: 0, // Неутрални
+            relation: 0,
             power: 1000
         }
     },
 
-    // Детайлни данни за провинциите - Синхронизирани със зестрите от diplomacy.js
-    regions: {
-        "Северна Тракия": {
-            terrain: "Равнина",
-            resource: "Злато",
-            nativeClans: ["Одриси", "Беси"], // Използваме "родове/род"
-            difficulty: 10
-        },
-        "Мизия": {
-            terrain: "Гора",
-            resource: "Дървесина",
-            nativeClans: ["Гети", "Кробизи"],
-            difficulty: 25
-        },
-        "Македония": {
-            terrain: "Планина",
-            resource: "Желязо",
-            nativeClans: ["Едони", "Пеони"],
-            difficulty: 40
-        },
-        "Добруджа": {
-            terrain: "Степ",
-            resource: "Коне",
-            nativeClans: ["Скити"],
-            difficulty: 30
-        },
-        "Панония": {
-            terrain: "Равнина",
-            resource: "Зърно",
-            nativeClans: ["Вокил"],
-            difficulty: 35
-        },
-        "Севтполис": {
-            terrain: "Долина",
-            resource: "Рози и Злато",
-            nativeClans: ["Одриси"],
-            difficulty: 15
-        }
+    // ДАННИ ЗА РОДОВЕТЕ: Икони, статус на обединение и притежавани земи
+    // Само първият род (Дуло) започва като присъединен (isJoined: true)
+    clans: {
+        "Дуло": { icon: "assets/icons/clans/dulo.png", isJoined: true, regionsOwned: 1, leader: "Кан Кубрат" },
+        "Вокил": { icon: "assets/icons/clans/vokil.png", isJoined: false, regionsOwned: 0, leader: "Кормисош" },
+        "Ерми": { icon: "assets/icons/clans/ermi.png", isJoined: false, regionsOwned: 0, leader: "Гостун" },
+        "Угаин": { icon: "assets/icons/clans/ugain.png", isJoined: false, regionsOwned: 0, leader: "Телец" },
+        "Куригир": { icon: "assets/icons/clans/kurigir.png", isJoined: false, regionsOwned: 0, leader: "Ирник" },
+        "Комитопули": { icon: "assets/icons/clans/komitopuli.png", isJoined: false, regionsOwned: 0, leader: "Никола" },
+        "Асеневци": { icon: "assets/icons/clans/asenevci.png", isJoined: false, regionsOwned: 0, leader: "Асен" },
+        "Тертер": { icon: "assets/icons/clans/terter.png", isJoined: false, regionsOwned: 0, leader: "Георги" },
+        "Смилец": { icon: "assets/icons/clans/smilec.png", isJoined: false, regionsOwned: 0, leader: "Смилец" },
+        "Шишмановци": { icon: "assets/icons/clans/shishmanovci.png", isJoined: false, regionsOwned: 0, leader: "Михаил" },
+        "Македони": { icon: "assets/icons/clans/makedoni.png", isJoined: false, regionsOwned: 0, leader: "Василий" },
+        "Птоломеи": { icon: "assets/icons/clans/ptolomey.png", isJoined: false, regionsOwned: 0, leader: "Птоломей I" },
+        "Одриси": { icon: "assets/icons/clans/odrisi.png", isJoined: false, regionsOwned: 0, leader: "Терес" }
     },
 
-    // ПЪЛЕН СПИСЪК С 13-ТЕ ВЕЛИКИ РОДА (Синхронизиран с diplomacy.js и mechanics.js)
+    // Детайлни данни за провинциите
+    regions: {
+        "Северна Тракия": { terrain: "Равнина", resource: "Злато", nativeClans: ["Одриси", "Беси"], difficulty: 10 },
+        "Мизия": { terrain: "Гора", resource: "Дървесина", nativeClans: ["Гети", "Кробизи"], difficulty: 25 },
+        "Македония": { terrain: "Планина", resource: "Желязо", nativeClans: ["Едони", "Пеони"], difficulty: 40 },
+        "Добруджа": { terrain: "Степ", resource: "Коне", nativeClans: ["Скити"], difficulty: 30 },
+        "Панония": { terrain: "Равнина", resource: "Зърно", nativeClans: ["Вокил"], difficulty: 35 },
+        "Севтполис": { terrain: "Долина", resource: "Рози и Злато", nativeClans: ["Одриси"], difficulty: 15 }
+    },
+
     majorClans: [
         "Дуло", "Вокил", "Ерми", "Угаин", "Куригир", "Комитопули", 
         "Асеневци", "Тертер", "Смилец", "Шишмановци", "Македони", "Птоломеи", "Одриси"
@@ -74,23 +61,22 @@ window.worldData = {
 };
 
 /**
- * Функция за проверка на информация за регион (Интегрирана със Съветника)
+ * Преизчислява йерархията на присъединените родове спрямо броя на техните земи.
+ * Извиква се при всяко разширение на територията.
  */
-window.getRegionReport = function(regionName) {
-    const region = window.worldData.regions[regionName];
-    if (!region) {
-        if (window.showAdvisorMsg) window.showAdvisorMsg("Велики Кане, нашите съгледвачи нямат данни за тези земи.");
-        return;
-    }
+window.recalculateClanHierarchy = function() {
+    const joinedClans = window.worldData.majorClans
+        .filter(name => window.worldData.clans[name].isJoined)
+        .sort((a, b) => window.worldData.clans[b].regionsOwned - window.worldData.clans[a].regionsOwned);
     
-    const clans = region.nativeClans.join(", ");
-    const report = `Земята ${regionName} се владее от родове: ${clans}. Тук изобилства ресурсът: ${region.resource}. Трудност на похода: ${region.difficulty}.`;
-    
-    if (window.showAdvisorMsg) {
-        window.showAdvisorMsg(report);
-    } else {
-        console.log(report);
-    }
+    console.log("Нова йерархия на обединението:", joinedClans);
+    return joinedClans;
 };
 
-console.log("World_data.js: Геополитическата карта за 480 г. пр.н.е. е заредена.");
+window.getRegionReport = function(regionName) {
+    const region = window.worldData.regions[regionName];
+    if (!region) return;
+    const clans = region.nativeClans.join(", ");
+    const report = `Земята ${regionName} се владее от родове: ${clans}. Тук изобилства ресурсът: ${region.resource}.`;
+    if (window.showAdvisorMsg) window.showAdvisorMsg(report);
+};
