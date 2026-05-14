@@ -1,5 +1,5 @@
 /**
- * МОДУЛ: ДИПЛОМАЦИЯ - Велика България (Синхронизирана версия)
+ * МОДУЛ: ДИПЛОМАЦИЯ - Велика България (Обновена версия)
  */
 window.clanRelations = {};
 
@@ -23,7 +23,6 @@ window.openDiplomacy = function() {
     const screen = document.createElement('div');
     screen.id = "diplomacy-screen";
     
-    // Използваме фиксирано позициониране и висок z-index за мобилна съвместимост
     screen.style.cssText = `
         position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
         background: rgba(5,5,5,0.98); z-index: 10000; padding: 20px; box-sizing: border-box;
@@ -51,7 +50,7 @@ window.openDiplomacy = function() {
         </div>
         <div style="flex-grow: 1;">${clansHTML}</div>
     `;
-    document.body.appendChild(screen); // Добавяме към body за мобилна стабилност
+    document.body.appendChild(screen);
 };
 
 window.sendGift = function(clan) {
@@ -59,7 +58,6 @@ window.sendGift = function(clan) {
         window.currentHero.gold -= 200;
         window.clanRelations[clan] = Math.min(100, window.clanRelations[clan] + 15);
         
-        // Показваме вестта в Летописа
         if (window.showAdvisorMsg) window.showAdvisorMsg(`Изпратихме дарове на род ${clan}. Доверието им нарасна!`);
         
         window.openDiplomacy();
@@ -82,6 +80,35 @@ window.openMarriageMenu = function(clan) {
         return; 
     }
     
+    // Изпълняваме брачната логика (използва се от getRandomMarriage)
+    window.applyMarriageEffects(clan);
+    
+    const screen = document.getElementById('diplomacy-screen');
+    if (screen) screen.remove();
+};
+
+/**
+ * АВТОМАТИЧЕН ИЗБОР НА СЪПРУГА (За събития от Старейшините)
+ */
+window.getRandomMarriage = function() {
+    if (window.currentSpouse) return "Вече сте сключили династичен съюз.";
+
+    const allClans = [
+        "Дуло", "Вокил", "Ерми", "Угаин", "Куригир", "Комитопули", 
+        "Асеневци", "Тертер", "Смилец", "Шишмановци", "Македони", "Птоломеи", "Одриси"
+    ];
+    
+    // Избираме случаен род, различен от този на играча
+    const availableClans = allClans.filter(clan => clan !== window.currentHero.dynasty);
+    const randomClan = availableClans[Math.floor(Math.random() * availableClans.length)];
+    
+    return window.applyMarriageEffects(randomClan);
+};
+
+/**
+ * ПРИЛАГАНЕ НА ЕФЕКТИТЕ ОТ БРАКА (Споделена логика)
+ */
+window.applyMarriageEffects = function(clan) {
     const dowryMap = {
         "Дуло": "Стара Велика България", "Вокил": "Панония", "Ерми": "Причерноморие",
         "Угаин": "Малка Скития", "Куригир": "Днепър", "Комитопули": "Македония",
@@ -99,18 +126,19 @@ window.openMarriageMenu = function(clan) {
     
     window.clanRelations[clan] = 100;
 
-    // СИНХРОНИЗАЦИЯ С ЛЕТОПИСА
     const marriageMsg = `Сключен бе свещен съюз с род ${clan}. Зестра: ${region}. Родовете се сплотяват! 💍`;
+    
+    // Запис в летописа
     if (window.eventHistory) {
         window.eventHistory.push({ title: "ДИНАСТИЧЕН БРАК", text: marriageMsg });
     }
 
-    // Добавяне в движещата се лента
+    // Лента със съобщения
     if (window.addPlayerSuggestion) {
         window.addPlayerSuggestion(`ВЕСТ: ${marriageMsg}`);
     }
     
-    const screen = document.getElementById('diplomacy-screen');
-    if (screen) screen.remove();
     if (window.updateCharacterUI) window.updateCharacterUI(window.currentHero);
+    
+    return marriageMsg;
 };
