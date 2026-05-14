@@ -4,7 +4,7 @@
  */
 
 window.worldData = {
-    // Основни държави (Фракции)
+    // Основни държави (Фракции) - Използваме "Ромеи", а не "Византийци"
     factions: {
         "bulgarian_empire": {
             nameBG: "Велика България",
@@ -26,12 +26,12 @@ window.worldData = {
         }
     },
 
-    // Детайлни данни за провинциите
+    // Детайлни данни за провинциите - Синхронизирани със зестрите от diplomacy.js
     regions: {
         "Северна Тракия": {
             terrain: "Равнина",
             resource: "Злато",
-            nativeClans: ["Одриси", "Беси"], // Използваме "родове/род" вместо племена
+            nativeClans: ["Одриси", "Беси"], // Използваме "родове/род"
             difficulty: 10
         },
         "Мизия": {
@@ -51,30 +51,46 @@ window.worldData = {
             resource: "Коне",
             nativeClans: ["Скити"],
             difficulty: 30
+        },
+        "Панония": {
+            terrain: "Равнина",
+            resource: "Зърно",
+            nativeClans: ["Вокил"],
+            difficulty: 35
+        },
+        "Севтполис": {
+            terrain: "Долина",
+            resource: "Рози и Злато",
+            nativeClans: ["Одриси"],
+            difficulty: 15
         }
     },
 
-    // Конкурентни антични български родове (за дипломация и бракове)
+    // ПЪЛЕН СПИСЪК С 13-ТЕ ВЕЛИКИ РОДА (Синхронизиран с diplomacy.js и mechanics.js)
     majorClans: [
-        "Дуло", "Вокил", "Ерми", "Угаин", "Куригир", 
-        "Чака", "Тертер", "Шишман", "Смилец", "Асен", 
-        "Батоя", "Тихомир", "Македони"
+        "Дуло", "Вокил", "Ерми", "Угаин", "Куригир", "Комитопули", 
+        "Асеневци", "Тертер", "Смилец", "Шишмановци", "Македони", "Птоломеи", "Одриси"
     ]
 };
 
 /**
- * Функция за проверка на съседни фракции при битка
+ * Функция за проверка на информация за регион (Интегрирана със Съветника)
  */
-window.getNeighborInfo = function(regionName) {
+window.getRegionReport = function(regionName) {
     const region = window.worldData.regions[regionName];
-    if (!region) return "Неизвестна земя";
+    if (!region) {
+        if (window.showAdvisorMsg) window.showAdvisorMsg("Велики Кане, нашите съгледвачи нямат данни за тези земи.");
+        return;
+    }
     
-    const lang = window.gameLang;
     const clans = region.nativeClans.join(", ");
+    const report = `Земята ${regionName} се владее от родове: ${clans}. Тук изобилства ресурсът: ${region.resource}. Трудност на похода: ${region.difficulty}.`;
     
-    return lang === "BG" 
-        ? `Регионът се владее от родове: ${clans}. Ресурс: ${region.resource}.` 
-        : `Region ruled by clans: ${clans}. Resource: ${region.resource}.`;
+    if (window.showAdvisorMsg) {
+        window.showAdvisorMsg(report);
+    } else {
+        console.log(report);
+    }
 };
 
 console.log("World_data.js: Геополитическата карта за 480 г. пр.н.е. е заредена.");
