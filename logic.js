@@ -2,7 +2,6 @@
  * МОДУЛ: ГЛАВНА ЛОГИКА - Велика България
  */
 window.initNewGame = function() {
-    // 1. Дефиниране на началните данни
     window.currentHero = {
         name: "Аспарух", 
         dynasty: "Дуло",
@@ -13,25 +12,20 @@ window.initNewGame = function() {
 
     window.gameTime = { year: 480, seasonIndex: 0, era: "пр.н.е." };
     
-    // КОРЕКЦИЯ: Използваме име на регион, който съществува в world_data.js
+    // ВАЖНО: Използваме точното име от world_data.js
     window.playerRegions = ["Мизия"]; 
     
     window.currentSpouse = null;
     window.playerInventory = [];
 
-    // 2. Инициализираме външните модули
     if (window.initDiplomacy) window.initDiplomacy();
 
-    // 3. Синхронизация с UI
     setTimeout(() => {
-        // Първо се уверяваме, че данните за началния регион са отразени в мощта на рода
         if (window.worldData && window.worldData.clans[window.currentHero.dynasty]) {
             window.worldData.clans[window.currentHero.dynasty].regionsOwned = window.playerRegions.length;
         }
 
-        if (window.updateCharacterUI) {
-            window.updateCharacterUI(window.currentHero);
-        }
+        if (window.updateCharacterUI) window.updateCharacterUI(window.currentHero);
         
         if (window.showAdvisorMsg) {
             window.showAdvisorMsg(`Приветствам Ви, Велики Кане! Вашето управление започва. Родът ${window.currentHero.dynasty} очаква Вашите заповеди.`);
@@ -41,16 +35,42 @@ window.initNewGame = function() {
 
 /**
  * ФУНКЦИЯ ЗА СЛУЧАЙНИ СЪБИТИЯ
- * Вече проверява условията и показва модалния прозорец
  */
 window.triggerRandomEvent = function() {
     if (!window.eventsDatabase || !window.showEventModal) return;
 
+    // Филтрираме събитията, чиито условия са изпълнени
     const availableEvents = window.eventsDatabase.filter(ev => ev.condition(window.currentHero));
 
     if (availableEvents.length > 0) {
         const randomIndex = Math.floor(Math.random() * availableEvents.length);
         window.showEventModal(availableEvents[randomIndex]);
+    }
+};
+
+/**
+ * ФУНКЦИЯ ЗА ПРИСЪЕДИНЯВАНЕ НА РЕГИОН (Безопасна)
+ */
+window.conquerRegion = function(regionName) {
+    // Проверка дали регионът съществува в базата данни
+    if (!window.worldData.regions[regionName]) {
+        console.error(`Грешка: Регионът "${regionName}" не съществува в world_data.js!`);
+        return;
+    }
+
+    if (!window.playerRegions.includes(regionName)) {
+        window.playerRegions.push(regionName);
+        
+        // Актуализираме броя земи за рода-собственик
+        const regData = window.worldData.regions[regionName];
+        regData.nativeClans.forEach(clanName => {
+            if (window.worldData.clans[clanName]) {
+                window.worldData.clans[clanName].regionsOwned += 1;
+            }
+        });
+
+        if (window.recalculateClanHierarchy) window.recalculateClanHierarchy();
+        if (window.updateCharacterUI) window.updateCharacterUI(window.currentHero);
     }
 };
 
@@ -60,12 +80,10 @@ window.advanceTurn = function() {
     if (window.processTime) window.processTime();
     if (window.calculateEconomy) window.calculateEconomy();
     
-    // Сега събитията ще се задействат при всеки ход, ако условията са изпълнени
+    // Активираме проверка за събития при всеки ход
     window.triggerRandomEvent();
 
-    if (window.updateCharacterUI) {
-        window.updateCharacterUI(window.currentHero);
-    }
+    if (window.updateCharacterUI) window.updateCharacterUI(window.currentHero);
 };
 
 if (document.readyState === 'complete') {
