@@ -232,3 +232,23 @@ window.logMarriageEvent = function(partnerName) {
     // Обновяваме интерфейса, за да се появи веднага в десния панел
     window.updateCharacterUI(window.currentHero);
 };
+window.toggleFullScreen = function() {
+    if (!document.fullscreenElement) {
+        // Опит за влизане в цял екран
+        if (document.documentElement.requestFullscreen) {
+            document.documentElement.requestFullscreen();
+        } else if (document.documentElement.mozRequestFullScreen) { // Firefox
+            document.documentElement.mozRequestFullScreen();
+        } else if (document.documentElement.webkitRequestFullscreen) { // Chrome, Safari, Opera
+            document.documentElement.webkitRequestFullscreen();
+        } else if (document.documentElement.msRequestFullscreen) { // IE/Edge
+            document.documentElement.msRequestFullscreen();
+        }
+    } else {
+        // Излизане от цял екран
+        if (document.exitFullscreen) {
+            document.exitFullscreen();
+        }
+    }
+};
+
