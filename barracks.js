@@ -6,13 +6,11 @@ window.openBarracks = function() {
     const mainArea = document.getElementById('game-main-area');
     if (!mainArea) return;
 
-    // Вземаме актуалните данни за героя
     const hero = window.currentHero;
     if (!hero) return;
 
-    // Вземаме бонуса за цена от механиките (напр. Куригир дават 0.8)
+    // Изчисляваме цената
     const costModifier = window.getPerkValue ? window.getPerkValue('armyCost') : 1.0;
-    
     const baseCost = 100;
     const finalCost = Math.floor(baseCost * costModifier);
     const amount = 50;
@@ -21,7 +19,7 @@ window.openBarracks = function() {
         <div id="barracks-screen" style="padding:20px; background: rgba(10,10,10,0.95); border: 1px solid #d4af37; border-radius: 5px; position: relative;">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
                 <h2 style="font-family:'Cinzel'; color:#d4af37; margin: 0;">ВОЕНЕН СТАН</h2>
-                <button onclick="window.clearMainArea()" style="background:none; border:none; color:#ff4d4d; cursor:pointer; font-size:18px;">✕</button>
+                <button onclick="document.getElementById('barracks-screen').remove()" style="background:none; border:none; color:#ff4d4d; cursor:pointer; font-size:18px;">✕</button>
             </div>
             
             <p style="font-size: 14px; color: #ccc;">Тук събирате своите конници за предстоящите походи.</p>
@@ -29,7 +27,7 @@ window.openBarracks = function() {
             <div style="background:#1a1a1a; padding:15px; border-left: 3px solid #d4af37; margin-bottom:20px;">
                 <b style="color:#fff;">Обучение на тежка конница</b><br>
                 <span style="font-size:12px; color:#888;">Брой: ${amount} воини</span><br>
-                <span style="font-size:12px; color:#d4af37;">Цена: ${finalCost} злато ${costModifier < 1 ? '(Родова отстъпка!)' : ''}</span>
+                <span style="font-size:12px; color:#d4af37;">Цена: <span id="display-cost">${finalCost}</span> злато ${costModifier < 1 ? '(Родова отстъпка!)' : ''}</span>
             </div>
 
             <button onclick="window.buyUnits(${finalCost}, ${amount})" 
@@ -45,25 +43,32 @@ window.openBarracks = function() {
 };
 
 window.buyUnits = function(cost, amount) {
-    // Вземаме героя директно от глобалния обект при всяко натискане
     const hero = window.currentHero;
     if (!hero) return;
 
-    // Стриктна проверка на златото
-    if (Number(hero.gold) >= Number(cost)) {
-        hero.gold -= Number(cost);
-        hero.armySize += Number(amount);
+    // Уверяваме се, че cost и amount са числа
+    const numericCost = Number(cost);
+    const numericAmount = Number(amount);
+
+    if (isNaN(numericCost)) {
+        console.error("Грешка: Цената не е дефинирана правилно!");
+        return;
+    }
+
+    if (Number(hero.gold) >= numericCost) {
+        hero.gold -= numericCost;
+        hero.armySize += numericAmount;
         
         if (window.logEvent) {
-            window.logEvent(`Обучени са ${amount} нови конници. Разход: ${cost} 💰`, "action");
+            window.logEvent(`Обучени са ${numericAmount} нови конници. Разход: ${numericCost} 💰`, "action");
         }
         
-        // 1. Първо обновяваме UI на целия екран (хедъра)
+        // Обновяване на всички интерфейси
         if (window.updateCharacterUI) window.updateCharacterUI(hero);
         
-        // 2. След това преначертаваме менюто на казармата, за да се види новото злато там
+        // Преначертаваме прозореца на казармата, за да се види новото злато
         window.openBarracks(); 
     } else {
-        alert(`Недостиг на злато! Имате ${hero.gold}, а са нужни ${cost}.`);
+        alert(`Недостиг на злато! Имате ${hero.gold}, а са нужни ${numericCost}.`);
     }
 };
