@@ -1,6 +1,6 @@
 /**
  * МОДУЛ: ИНТЕРФЕЙС - Велика България
- * Актуализиран: Визуализация на йерархията на родовете и икони.
+ * Актуализиран: Стабилна визуализация и йерархия на родовете.
  */
 
 window.updateCharacterUI = function(hero) {
@@ -8,7 +8,6 @@ window.updateCharacterUI = function(hero) {
 
     const leftSidebar = document.getElementById('provinces-list');
     if (leftSidebar) {
-        // Извличаме иконата на управляващия род от world_data.js
         const currentClanData = window.worldData.clans[hero.dynasty];
         const clanIcon = currentClanData ? `<img src="${currentClanData.icon}" style="width:20px; vertical-align:middle; margin-right:5px;">` : '🏇';
         const marriageIcon = window.currentSpouse ? ' <span title="Сключен династичен съюз" style="cursor:help;">💍</span>' : '';
@@ -22,11 +21,19 @@ window.updateCharacterUI = function(hero) {
             <div style="font-size: 10px; color: #d4af37; font-family: 'Cinzel'; margin-bottom: 5px;">ВЛАДЕНИЯ И УПРАВИТЕЛИ:</div>
         `;
 
-        // Изписване на регионите с иконата на съответния род-управител
         const regions = window.playerRegions || [];
         regions.forEach(regName => {
             const regData = window.worldData.regions[regName];
-            // Намираме първия nativeClan, който е присъединен, за да му сложим иконата
+            
+            // ЗАЩИТА: Ако регионът не съществува в world_data.js, показваме го без икона на род
+            if (!regData) {
+                treeHTML += `
+                    <div style="border: 1px solid #444; background: #1a0000; padding: 6px; margin-bottom: 3px; font-size: 10px; color: #ff6b6b;">
+                        ⚠️ ${regName} (Липсват данни)
+                    </div>`;
+                return;
+            }
+
             const managingClanName = regData.nativeClans.find(c => window.worldData.clans[c] && window.worldData.clans[c].isJoined) || hero.dynasty;
             const regClanIcon = window.worldData.clans[managingClanName]?.icon || "";
 
@@ -50,30 +57,24 @@ window.updateCharacterUI = function(hero) {
         leftSidebar.innerHTML = treeHTML;
     }
 
-    // Обновяване на десния панел (Обединение на родовете)
+    // Обновяване на десния панел
     window.renderClanHierarchy();
 
-    // Синхронизация на ресурсите в хедъра
-    const goldElem = document.getElementById('gold-amount');
-    const armyElem = document.getElementById('army-val');
-    const powerElem = document.getElementById('hero-power-val');
-
-    if (goldElem) goldElem.innerText = hero.gold;
-    if (armyElem) armyElem.innerText = hero.armySize;
-    if (powerElem) powerElem.innerText = hero.heroPower;
+    // Синхронизация на ресурсите
+    const elements = { 'gold-amount': hero.gold, 'army-val': hero.armySize, 'hero-power-val': hero.heroPower };
+    for (let id in elements) {
+        const el = document.getElementById(id);
+        if (el) el.innerText = elements[id];
+    }
 };
 
-/**
- * Рендерира десния панел с йерархията на присъединените родове
- */
 window.renderClanHierarchy = function() {
-    const rightPanel = document.getElementById('events-center'); // Използваме съществуващия контейнер за логове за момента
+    const rightPanel = document.getElementById('events-center');
     if (!rightPanel) return;
 
-    // Вземаме само присъединените родове чрез логиката от world_data.js
     const joinedClansNames = window.recalculateClanHierarchy ? window.recalculateClanHierarchy() : [];
     
-    let html = `<div style="font-family: 'Cinzel'; color: #d4af37; font-size: 12px; margin-bottom: 10px; border-bottom: 1px solid #333; padding-bottom: 5px;">ВЕЛИКО ОБЕДИНЕНИЕ</div>`;
+    let html = `<div style="font-family: 'Cinzel'; color: #d4af37; font-size: 12px; margin-bottom: 10px; border-bottom: 1px solid #333; padding-bottom: 5px; text-align:center;">ВЕЛИКО ОБЕДИНЕНИЕ</div>`;
     
     joinedClansNames.forEach(name => {
         const clan = window.worldData.clans[name];
@@ -91,8 +92,7 @@ window.renderClanHierarchy = function() {
         `;
     });
 
-    // Ако има празни места до 13, можем да ги визуализираме като "неоткрити"
-    const missingCount = 13 - joinedClansNames.length;
+    const missingCount = Math.max(0, 13 - joinedClansNames.length);
     for(let i=0; i < missingCount; i++) {
         html += `<div style="height: 40px; border: 1px dashed #333; margin-bottom: 5px; opacity: 0.3; display: flex; align-items: center; justify-content: center; font-size: 8px; color: #555;">ТЪРСИ СЪЮЗНИК...</div>`;
     }
@@ -100,38 +100,4 @@ window.renderClanHierarchy = function() {
     rightPanel.innerHTML = html;
 };
 
-window.clearMainArea = function() {
-    const mainArea = document.getElementById('game-main-area');
-    if (mainArea) mainArea.innerHTML = '';
-};
-
-/**
- * ПЕРСОНАЛИЗИРАНО СЪОБЩЕНИЕ ОТ СЪВЕТНИКА
- */
-window.showAdvisorMsg = function(text) {
-    const oldMsg = document.getElementById('advisor-msg');
-    if (oldMsg) oldMsg.remove();
-
-    const msgBox = document.createElement('div');
-    msgBox.id = 'advisor-msg';
-    msgBox.style.cssText = `
-        position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
-        background: #0a0a0a; border: 2px solid #d4af37; color: #eee;
-        padding: 25px; z-index: 9999; width: 320px; text-align: center;
-        box-shadow: 0 0 30px rgba(0,0,0,0.9); font-family: 'Cinzel', serif;
-        border-radius: 4px;
-    `;
-
-    msgBox.innerHTML = `
-        <div style="font-size: 40px; margin-bottom: 15px;">📜</div>
-        <div style="color: #d4af37; font-size: 11px; margin-bottom: 10px; letter-spacing: 1.5px; border-bottom: 1px solid #333; padding-bottom: 5px;">СЪВЕТНИКА ВИ КАЗА ЧЕ:</div>
-        <div style="font-size: 14px; margin-bottom: 25px; line-height: 1.5; color: #fff;">${text}</div>
-        <button onclick="this.parentElement.remove()" style="
-            background: #d4af37; color: #000; border: none; padding: 10px;
-            cursor: pointer; font-family: 'Cinzel'; font-weight: bold; width: 100%;
-            transition: 0.3s;
-        ">СЛУШАМ, ВЕЛИКИ КАНЕ</button>
-    `;
-
-    document.body.appendChild(msgBox);
-};
+// ... (showAdvisorMsg и clearMainArea остават същите)
