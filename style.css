@@ -177,3 +177,27 @@ body {
     font-size: 16px; 
     transition: 0.3s; 
 }
+
+/* Пълно прекриване за бойното поле */
+#battle-screen {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    width: 100vw !important;
+    height: 100vh !important;
+    background: #000 !important;
+    z-index: 100000 !important; /* Над летописа и над всичко останало */
+    display: none; /* Ще се активира от скрипта */
+    flex-direction: column;
+    overflow-y: auto;
+}
+
+/* Корекция за мобилни бутони в битката */
+@media (max-width: 768px) {
+    #battle-screen {
+        padding: 10px;
+    }
+    .battle-unit-slot {
+        zoom: 0.8; /* Свива единиците, за да се виждат на малък екран */
+    }
+}
