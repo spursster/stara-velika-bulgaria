@@ -68,6 +68,11 @@ window.buyUnits = function() {
         // 2. Преначертаваме прозореца на казармата с новото злато
         window.openBarracks(); 
     } else {
-        alert(`Недостиг на злато! Вашето злато: ${hero.gold}, нужна сума: ${finalCost}`);
+        // ИНТЕГРАЦИЯ СЪС СЪВЕТНИКА: Заместваме стария alert
+        if (window.showAdvisorMsg) {
+            window.showAdvisorMsg(`Велики Кане, хазната е празна! Разполагате само с ${hero.gold} злато, а обучението на тези воини изисква ${finalCost}.`);
+        } else {
+            alert(`Недостиг на злато! Вашето злато: ${hero.gold}, нужна сума: ${finalCost}`);
+        }
     }
 };
