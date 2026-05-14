@@ -39,7 +39,7 @@ window.eventsDatabase = [
                     hero.xp += 15;
                     window.worldData.clans["Вокил"].isJoined = true;
                     // Обновяваме броя земи за йерархията
-                    window.worldData.clans["Вокил"].regionsOwned = 1; 
+                    window.worldData.clans["Вокил"].regionsOwned = 1;
                     if (window.recalculateClanHierarchy) window.recalculateClanHierarchy();
                     return "Кормисош от Вокил се присъедини към теб. Йерархията на родовете се промени!";
                 }
@@ -69,7 +69,4 @@ window.eventsDatabase = [
             }
         ]
     }
-    // Тук могат да се добавят останалите 10 рода по същия модел
 ];
-
-// ... (останалата част от функциите за модални прозорци и логване остава непроменена)
