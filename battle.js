@@ -1,9 +1,14 @@
 /**
- * МОДУЛ: БИТКИ - Велика България (Синхронизиран - Версия със Съветник)
+ * МОДУЛ: БИТКИ - Велика България (Синхронизиран - Мобилен Фикс)
  */
 window.startBattle = function() {
-    const mainArea = document.getElementById('game-main-area');
-    if (!mainArea) return;
+    // Вече не търсим mainArea, а добавяме директно към body за абсолютен приоритет
+    let battleScreen = document.getElementById('battle-screen');
+    if (!battleScreen) {
+        battleScreen = document.createElement('div');
+        battleScreen.id = 'battle-screen';
+        document.body.appendChild(battleScreen);
+    }
 
     const enemies = [
         { name: "Ромеи", region: "Тракия", powerMult: 1.1 },
@@ -15,8 +20,10 @@ window.startBattle = function() {
     const enemy = enemies[Math.floor(Math.random() * enemies.length)];
     const enemyArmy = Math.floor(window.currentHero.armySize * (enemy.powerMult + Math.random() * 0.2));
 
-    mainArea.innerHTML = `
-        <div id="battle-screen" style="position:absolute; top:0; left:0; width:100%; height:100%; background:#050505; z-index:2000; padding:20px; box-sizing:border-box; border:2px solid #7b1a1a;">
+    // Показваме екрана и прилагаме стила за целия екран
+    battleScreen.style.display = 'flex';
+    battleScreen.innerHTML = `
+        <div class="modal-content" style="width: 100%; max-width: 600px; padding: 20px;">
             <h2 style="text-align:center; font-family:'Cinzel'; color:#ff4d4d; margin-bottom:20px;">ВОЕНЕН СЪВЕТ</h2>
             <div id="battle-details" style="background:#111; border:1px solid #333; padding:15px; height:220px; overflow-y:auto; margin-bottom:15px; font-family: 'Cinzel'; border-left: 4px solid #7b1a1a;">
                 <p style="color: #d4af37;">Нашите съгледвачи докладват!</p>
@@ -26,17 +33,26 @@ window.startBattle = function() {
             <div style="display:flex; gap:10px;">
                 <button id="battle-action-btn" onclick="window.processBattle(${enemyArmy}, '${enemy.name}', '${enemy.region}')" 
                     style="flex:1; padding:15px; background:#7b1a1a; color:white; border:none; cursor:pointer; font-family:'Cinzel'; font-weight:bold;">АТАКУВАЙ!</button>
-                <button id="battle-retreat-btn" onclick="document.getElementById('battle-screen').remove(); window.updateCharacterUI(window.currentHero);" 
+                <button id="battle-retreat-btn" onclick="window.closeBattle();" 
                     style="flex:1; padding:15px; background:#333; color:white; border:none; cursor:pointer; font-family:'Cinzel';">ОТСТЪПИ</button>
             </div>
         </div>
     `;
 };
 
+window.closeBattle = function() {
+    const battleScreen = document.getElementById('battle-screen');
+    if (battleScreen) {
+        battleScreen.style.display = 'none';
+        battleScreen.innerHTML = '';
+    }
+    if (window.updateCharacterUI) window.updateCharacterUI(window.currentHero);
+};
+
 window.processBattle = function(eArmy, eName, eRegion) {
     const hero = window.currentHero;
     const details = document.getElementById('battle-details');
-    const btnContainer = document.querySelector('#battle-screen div:last-child');
+    const btnContainer = document.querySelector('#battle-screen .modal-content div:last-child');
     
     if (!details || !btnContainer) return;
 
@@ -56,7 +72,7 @@ window.processBattle = function(eArmy, eName, eRegion) {
     }
 
     btnContainer.innerHTML = `
-        <button onclick="document.getElementById('battle-screen').remove(); window.updateCharacterUI(window.currentHero);" 
+        <button onclick="window.closeBattle();" 
             style="width:100%; padding:15px; background:#d4af37; color:#000; border:none; cursor:pointer; font-family:'Cinzel'; font-weight:bold;">
             ПРОДЪЛЖИ НАПРЕД
         </button>
