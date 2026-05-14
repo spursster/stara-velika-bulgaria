@@ -52,18 +52,21 @@ window.triggerRandomEvent = function() {
  * ФУНКЦИЯ ЗА ПРИСЪЕДИНЯВАНЕ НА РЕГИОН (Безопасна)
  */
 window.conquerRegion = function(regionName) {
-    // Проверка дали регионът съществува в базата данни
-    if (!window.worldData.regions[regionName]) {
-        console.error(`Грешка: Регионът "${regionName}" не съществува в world_data.js!`);
+    // 1. Проверка дали името съществува в базата данни
+    const regionData = window.worldData.regions[regionName];
+    
+    if (!regionData) {
+        console.error(`ВНИМАНИЕ: Регион "${regionName}" не съществува! Използвайте "Северна Тракия", "Мизия" или "Панония".`);
+        if (window.showAdvisorMsg) window.showAdvisorMsg(`Кан ${window.currentHero.name}, нашите карти не познават земя на име ${regionName}.`);
         return;
     }
 
+    // 2. Добавяне само ако вече не е притежаван
     if (!window.playerRegions.includes(regionName)) {
         window.playerRegions.push(regionName);
         
-        // Актуализираме броя земи за рода-собственик
-        const regData = window.worldData.regions[regionName];
-        regData.nativeClans.forEach(clanName => {
+        // Автоматично присъединяваме родния за региона род, ако има такъв
+        regionData.nativeClans.forEach(clanName => {
             if (window.worldData.clans[clanName]) {
                 window.worldData.clans[clanName].regionsOwned += 1;
             }
@@ -71,6 +74,8 @@ window.conquerRegion = function(regionName) {
 
         if (window.recalculateClanHierarchy) window.recalculateClanHierarchy();
         if (window.updateCharacterUI) window.updateCharacterUI(window.currentHero);
+        
+        console.log(`Успешно присъединена земя: ${regionName}`);
     }
 };
 
