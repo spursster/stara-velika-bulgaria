@@ -211,3 +211,24 @@ window.submitSuggestion = function() {
         alert("Предложението е твърде кратко!");
     }
 };
+
+/**
+ * ФУНКЦИЯ ЗА ЗАПИСВАНЕ НА БРАК В ЛЕТОПИСА
+ */
+window.logMarriageEvent = function(partnerName) {
+    const marriageMsg = `Сключен бе свещен съюз между ${window.currentHero.name} и ${partnerName}. Родовете се сплотяват под общо знаме! 💍`;
+    
+    // Добавяме събитието в историята (Летописа)
+    window.eventHistory.push({ 
+        title: "ДИНАСТИЧЕН БРАК", 
+        text: marriageMsg 
+    });
+
+    // Изпращаме вестта и към движещата се лента (Marquee)
+    if (window.addPlayerSuggestion) {
+        window.addPlayerSuggestion(`ВЕСТ: ${marriageMsg}`);
+    }
+
+    // Обновяваме интерфейса, за да се появи веднага в десния панел
+    window.updateCharacterUI(window.currentHero);
+};
