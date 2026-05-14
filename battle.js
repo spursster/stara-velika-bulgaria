@@ -1,11 +1,10 @@
 /**
- * МОДУЛ: БИТКИ - Велика България (Синхронизиран - Версия 2.0)
+ * МОДУЛ: БИТКИ - Велика България (Синхронизиран - Версия със Съветник)
  */
 window.startBattle = function() {
     const mainArea = document.getElementById('game-main-area');
     if (!mainArea) return;
 
-    // Списък с антични противници и техните територии (480 г. пр.н.е.)
     const enemies = [
         { name: "Ромеи", region: "Тракия", powerMult: 1.1 },
         { name: "Перси", region: "Мала Азия", powerMult: 1.3 },
@@ -42,7 +41,6 @@ window.processBattle = function(eArmy, eName, eRegion) {
     
     if (!details || !btnContainer) return;
 
-    // Използваме бонуса от механиките
     const dynastyPowerBonus = window.getPerkValue ? window.getPerkValue('power') : 1.0;
     const playerStr = (hero.armySize + (hero.heroPower * 2)) * dynastyPowerBonus;
     const enemyStr = eArmy;
@@ -75,7 +73,6 @@ window.processBattle = function(eArmy, eName, eRegion) {
 
     details.innerHTML = battleResultHTML;
 
-    // ПРЕВРЪЩАМЕ БУТОНИТЕ В ЕДИН ЗА ИЗХОД
     btnContainer.innerHTML = `
         <button onclick="document.getElementById('battle-screen').remove()" 
             style="width:100%; padding:15px; background:#d4af37; color:#000; border:none; cursor:pointer; font-family:'Cinzel'; font-weight:bold;">
