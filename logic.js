@@ -1,7 +1,7 @@
 /**
  * МОДУЛ: ГЛАВНА ЛОГИКА - Велика България
- * СТАТУС: ОБНОВЕН (Пълна синхронизация с Експедиции и Артефакти)
- * Файлове в проекта: 16
+ * СТАТУС: ОБНОВЕН (Пълна интеграция с rpg_system.js - Безсмъртие и XP)
+ * Статистика на файловете в проекта: 16
  */
 
 window.initNewGame = function() {
@@ -11,14 +11,13 @@ window.initNewGame = function() {
         gold: 1500,
         armySize: 500,
         heroPower: 150,
-        age: 60,
+        age: 60, // Остава постоянна базова стойност, без стареене
         techLevel: 1
     };
 
     window.gameTime = { 
-        year: 1, 
-        seasonIndex: 0, 
-        era: "от н.е.",
+        year: 1, \n        seasonIndex: 0, 
+        era: \"от н.е.\",
         turn: 1 
     };
     
@@ -31,25 +30,39 @@ window.initNewGame = function() {
         });
     }
 
+    // Инициализираме RPG статуса на главния герой веднага при старт
+    if (window.initializeHeroRPGData) {
+        window.initializeHeroRPGData(window.currentHero);
+    }
+
     if (window.updateCharacterUI) window.updateCharacterUI(window.currentHero);
     if (window.updateTimeUI) window.updateTimeUI();
     if (window.showAdvisorMsg) window.showAdvisorMsg("Летоброенето започва от 1 г. от н.е.");
     
-    // Първоначално изчертаване на бутона за мисии, ако има активна такава
     if (window.renderExpeditionButton) window.renderExpeditionButton();
 };
 
 window.advanceTurn = function() {
     if (!window.currentHero) return;
 
-    // 1. Обработка на времето
-    if (window.processTime) window.processTime();
+    // 1. Обработка на времето БЕЗ СТАРЕЕНЕ + ДОБАВЯНЕ НА ХОД XP
     window.gameTime.turn++;
+    if (window.gameTime.seasonIndex === 3) {
+        window.gameTime.seasonIndex = 0;
+        window.gameTime.year++;
+    } else {
+        window.gameTime.seasonIndex++;
+    }
+
+    // Главният владетел получава опит за управление на държавата всеки ход
+    if (window.gainHeroXP) {
+        window.gainHeroXP(window.currentHero, 5);
+        if (window.checkAndAssignClass) window.checkAndAssignClass(window.currentHero);
+    }
 
     // 2. Икономика и приходи
     let seasonalBonus = (window.gameTime.seasonIndex === 2) ? 200 : 100; 
     
-    // Модификатор от артефакти (например Одриски ритон или Окото на Ра дават процентен бонус към златото)
     let goldArtifactModifier = 0;
     if (window.playerInventory && window.playerInventory.length > 0) {
         window.playerInventory.forEach(item => {
@@ -74,13 +87,11 @@ window.advanceTurn = function() {
     // 4. АКТИВИРАНЕ НА СЛУЧАЙНИ СЪБИТИЯ
     if (window.triggerRandomEvent) window.triggerRandomEvent();
 
-    // 5. АКТИВИРАНЕ НА ЕКСПЕДИЦИИ И КУЕСТОВЕ (Синхронизирано)
-    if (window.checkForQuest) {
-        window.checkForQuest();
+    // 5. НАПРЕДЪК НА АКТИВНИТЕ ЕКСПЕДИЦИИ (Интегриран в advanceTurn)
+    if (window.updateExpeditionSystem) {
+        window.updateExpeditionSystem();
     }
 
-    // 6. Обновяване на интерфейса
+    // 6. Опресняване на интерфейса
     if (window.updateCharacterUI) window.updateCharacterUI(window.currentHero);
 };
-
-window.onload = () => window.initNewGame();
