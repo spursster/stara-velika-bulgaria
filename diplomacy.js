@@ -1,5 +1,5 @@
 /**
- * МОДУЛ: ДИПЛОМАЦИЯ - Велика България (Обновена версия за АВТОНОМНО УПРАВЛЕНИЕ)
+ * МОДУЛ: ДИПЛОМАЦИЯ - Велика България (Синхронизиран с 51 региона)
  */
 window.clanRelations = {};
 
@@ -17,31 +17,29 @@ window.initDiplomacy = function() {
 
 /**
  * АВТОНОМНА ДИПЛОМАЦИЯ (AI)
- * Позволява на лидерите на родовете да действат автоматично спрямо Кан (играча).
  */
 window.processClanDiplomacyAutomation = function() {
     if (!window.worldData || !window.worldData.clans) return;
 
     Object.keys(window.worldData.clans).forEach(clanName => {
-        // Пропускаме рода на играча
         if (window.currentHero && window.currentHero.dynasty === clanName) return;
 
         let clan = window.worldData.clans[clanName];
 
-        // 1. АВТОНОМНИ ДАРОВЕ: Ако родът е богат (над 800 злато), може да ти изпрати дар
-        if (clan.gold > 800 && Math.random() < 0.15) { // 15% шанс на ход
+        // 1. АВТОНОМНИ ДАРОВЕ: Ако родът е богат (над 800 злато)
+        if (clan.gold > 800 && Math.random() < 0.15) {
             clan.gold -= 200;
             window.clanRelations[clanName] = Math.min(100, window.clanRelations[clanName] + 10);
             
             if (window.showAdvisorMsg) {
-                window.showAdvisorMsg(`ДАРЕНИЕ: Родът ${clanName} изпрати ценни дарове на Кан ${window.currentHero.name}! Доверието расте. 🎁`);
+                window.showAdvisorMsg(`ДАРЕНИЕ: Родът ${clanName} изпрати ценни дарове на Кан ${window.currentHero.name}! 🎁`);
             }
         }
 
-        // 2. ДИНАСТИЧЕН ИНТЕРЕС: Ако доверието е ниско, те могат да станат агресивни
+        // 2. ДИНАСТИЧЕН ИНТЕРЕС: При ниско доверие
         if (window.clanRelations[clanName] < 20 && Math.random() < 0.1) {
             if (window.showAdvisorMsg) {
-                window.showAdvisorMsg(`ПРЕДУПРЕЖДЕНИЕ: Лидерът на род ${clanName} изразява недоволство от Вашето управление! ⚠️`);
+                window.showAdvisorMsg(`ПРЕДУПРЕЖДЕНИЕ: Род ${clanName} изразява недоволство! ⚠️`);
             }
         }
     });
@@ -66,21 +64,21 @@ window.openDiplomacy = function() {
     let clansHTML = Object.keys(window.clanRelations).map(clan => `
         <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px; border-bottom: 1px solid #222;">
             <div>
-                <b style="color: #d4af37; font-family: 'Cinzel';">Род ${clan}</b>
+                <b style="color: #d4af37;">Род ${clan}</b>
                 <div style="font-size: 10px;">Доверие: ${window.clanRelations[clan]}%</div>
                 <div style="font-size: 9px; color: #888;">Лидер: ${window.worldData.clans[clan].leader}</div>
             </div>
             <div>
-                <button onclick="window.sendGift('${clan}')" style="background: #1a1a1a; color: #d4af37; border: 1px solid #d4af37; padding: 5px; cursor: pointer; font-size: 10px;">Дарове</button>
-                <button onclick="window.openMarriageMenu('${clan}')" style="background: #7b1a1a; color: #fff; border: none; padding: 5px; cursor: pointer; font-size: 10px; margin-left: 5px;">💍 Брак</button>
+                <button onclick="window.sendGift('${clan}')" style="background: #1a1a1a; color: #d4af37; border: 1px solid #d4af37; padding: 5px; cursor: pointer;">Дарове</button>
+                <button onclick="window.openMarriageMenu('${clan}')" style="background: #7b1a1a; color: #fff; border: none; padding: 5px; cursor: pointer; margin-left: 5px;">💍 Брак</button>
             </div>
         </div>
     `).join('');
 
     screen.innerHTML = `
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-            <h2 style="font-family: 'Cinzel'; color: #d4af37; margin: 0;">ВЕЛИКИ РОДОВЕ</h2>
-            <button onclick="document.getElementById('diplomacy-screen').remove()" style="color: #ff4d4d; background:none; border:none; cursor:pointer; font-size:24px; padding: 10px;">✕</button>
+            <h2 style="color: #d4af37; margin: 0;">ВЕЛИКИ РОДОВЕ</h2>
+            <button onclick="document.getElementById('diplomacy-screen').remove()" style="color: #ff4d4d; background:none; border:none; cursor:pointer; font-size:24px;">✕</button>
         </div>
         <div style="flex-grow: 1;">${clansHTML}</div>
     `;
@@ -91,60 +89,65 @@ window.sendGift = function(clan) {
     if (window.currentHero.gold >= 200) {
         window.currentHero.gold -= 200;
         window.clanRelations[clan] = Math.min(100, window.clanRelations[clan] + 15);
-        
-        if (window.showAdvisorMsg) window.showAdvisorMsg(`Изпратихме дарове на род ${clan}. Доверието им нарасна!`);
-        
+        if (window.showAdvisorMsg) window.showAdvisorMsg(`Изпратихме дарове на род ${clan}.`);
         window.openDiplomacy();
         if (window.updateCharacterUI) window.updateCharacterUI(window.currentHero);
     } else {
-        if (window.showAdvisorMsg) window.showAdvisorMsg("Нямаме достатъчно злато за дарове!");
+        if (window.showAdvisorMsg) window.showAdvisorMsg("Нямаме злато!");
     }
 };
 
 window.openMarriageMenu = function(clan) {
     if (!clan || clan === 'undefined') { window.openDiplomacy(); return; }
     if (window.currentSpouse) { 
-        if (window.showAdvisorMsg) window.showAdvisorMsg("Велики Кане, Вие вече сте сключили съюз чрез брак!");
+        if (window.showAdvisorMsg) window.showAdvisorMsg("Вече имате сключен брак!");
         return; 
     }
     if (window.clanRelations[clan] < 60) { 
-        if (window.showAdvisorMsg) window.showAdvisorMsg(`Родът ${clan} изисква поне 60% доверие за брак!`);
+        if (window.showAdvisorMsg) window.showAdvisorMsg(`Родът ${clan} изисква 60% доверие!`);
         return; 
     }
-    
     window.applyMarriageEffects(clan);
     const screen = document.getElementById('diplomacy-screen');
     if (screen) screen.remove();
 };
 
-window.getRandomMarriage = function() {
-    if (window.currentSpouse) return "Вече сте сключили династичен съюз.";
-    const availableClans = window.worldData.majorClans.filter(clan => clan !== window.currentHero.dynasty);
-    const randomClan = availableClans[Math.floor(Math.random() * availableClans.length)];
-    return window.applyMarriageEffects(randomClan);
-};
-
 window.applyMarriageEffects = function(clan) {
+    // СИНХРОНИЗИРАНА ЗЕСТРА С 51 РЕГИОНА
     const dowryMap = {
-        "Дуло": "Стара Велика България", "Вокил": "Панония", "Ерми": "Причерноморие",
-        "Угаин": "Малка Скития", "Куригир": "Днепър", "Комитопули": "Македония",
-        "Асеневци": "Загоре", "Тертер": "Добруджа", "Смилец": "Крън",
-        "Шишмановци": "Видин", "Македони": "Беломорие", "Птоломеи": "Египет", "Одриси": "Севтполис"
+        "Дуло": "Стара Велика България",
+        "Вокил": "Панония",
+        "Ерми": "Кавказ",
+        "Угаин": "Кападокия",
+        "Куригир": "Добруджа",
+        "Комитопули": "Дардания",
+        "Асеневци": "Илирия",
+        "Тертер": "Дакия",
+        "Смилец": "Месопотамия",
+        "Шишмановци": "Киликия",
+        "Македони": "Македония",
+        "Птоломеи": "Кипър",
+        "Одриси": "Тракия"
     };
 
-    const region = dowryMap[clan] || "Нови земи";
+    const region = dowryMap[clan] || "Мизия";
     window.currentSpouse = { name: "Княгиня", dynasty: clan };
     
     if (!window.playerRegions) window.playerRegions = [];
     if (!window.playerRegions.includes(region)) {
         window.playerRegions.push(region);
+        // Обновяваме собствеността в worldData
+        if (window.worldData.clans[clan]) {
+            window.worldData.clans[clan].regionsOwned += 1;
+            window.worldData.clans[clan].isJoined = true;
+        }
     }
     
     window.clanRelations[clan] = 100;
-    const marriageMsg = `Сключен бе свещен съюз с род ${clan}. Зестра: ${region}. Родовете се сплотяват! 💍`;
+    const marriageMsg = `Сключен бе свещен съюз с род ${clan}. Зестра: ${region}. 💍`;
     
-    if (window.eventHistory) window.eventHistory.push({ title: "ДИНАСТИЧЕН БРАК", text: marriageMsg });
-    if (window.addPlayerSuggestion) window.addPlayerSuggestion(`ВЕСТ: ${marriageMsg}`);
+    if (window.showAdvisorMsg) window.showAdvisorMsg(marriageMsg);
+    if (window.recalculateClanHierarchy) window.recalculateClanHierarchy();
     if (window.updateCharacterUI) window.updateCharacterUI(window.currentHero);
     
     return marriageMsg;
