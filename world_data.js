@@ -1,6 +1,6 @@
 /**
  * МОДУЛ: СВЕТОВНИ ДАННИ И ГЕОПОЛИТИКА - Велика България
- * Синхронизиран: 50 региона, автоматизация на ресурсите за 13-те рода.
+ * Синхронизиран: 51 региона, автоматизация на ресурсите за 13-те рода.
  */
 
 window.worldData = {
@@ -43,11 +43,11 @@ window.worldData = {
         "Одриси": { icon: "assets/icons/clans/odrisi.png", isJoined: false, regionsOwned: 1, leader: "Терес", gold: 650, armySize: 220 }
     },
 
-    // Детайлни данни за провинциите - 50 региона
+    // Детайлни данни за провинциите - 51 региона
     regions: {
         // --- ЗОНА 1: БАЛКАНИ И ПРИДУНАВИЕ ---
-        "Мизия": { terrain: "Гора", resource: "Дървесина", nativeClans: ["Гети"], difficulty: 10 },
-        "Тракия": { terrain: "Равнина", resource: "Злато", nativeClans: ["Одриси", "Беси"], difficulty: 15 },
+        "Мизия": { terrain: "Гора", resource: "Дървесина", nativeClans: ["Куригир"], difficulty: 10 },
+        "Тракия": { terrain: "Равнина", resource: "Злато", nativeClans: ["Одриси"], difficulty: 15 },
         "Македония": { terrain: "Планина", resource: "Желязо", nativeClans: ["Македони"], difficulty: 25 },
         "Добруджа": { terrain: "Степ", resource: "Коне", nativeClans: ["Куригир"], difficulty: 20 },
         "Панония": { terrain: "Равнина", resource: "Зърно", nativeClans: ["Вокил"], difficulty: 30 },
