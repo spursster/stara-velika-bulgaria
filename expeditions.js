@@ -1,6 +1,6 @@
 /**
  * МОДУЛ: ВЕЛИКИТЕ ЕКСПЕДИЦИИ НА СВЕТА - Велика България
- * СТАТУС: ИЗЦЯЛО СЛУЧАЙНИ ВОДАЧИ ОТ ВСИЧКИ РОДОВЕ (БЕЗ ОГРАНИЧЕНИЕ) + МОБИЛНА ОПТИМИЗАЦИЯ
+ * СТАТУС: ФИКСИРАНО ПРИКЛЮЧВАНЕ С РЪЧЕН БУТОН ЗА ПРИЕМАНЕ НА НАГРАДИТЕ + МОБИЛЕН ИНТЕРФЕЙС
  * Статистика на файловете в проекта: 16
  */
 
@@ -106,7 +106,7 @@ if (window.legendaryQuests.length === 0) {
 }
 
 /**
- * ФУНКЦИЯ ЗА СВИКВАНЕ НА ВОДАЧИ ОТ АБСОЛЮТНО ВСИЧКИ ДИНАСТИИ В DATABASE.JS
+ * СВИКВАНЕ НА ВОДАЧИ ОТ АБСОЛЮТНО ВСИЧКИ ДИНАСТИИ В DATABASE.JS
  */
 window.rerollExpeditionLeaders = function() {
     const cost = 200;
@@ -115,41 +115,31 @@ window.rerollExpeditionLeaders = function() {
         return;
     }
     
-    // Събираме абсолютно всички родове от базата данни
     let availablePool = [];
-    
     if (window.bulgarianDynasties && Object.keys(window.bulgarianDynasties).length > 0) {
         Object.keys(window.bulgarianDynasties).forEach(dynastyName => {
             let dynData = window.bulgarianDynasties[dynastyName];
             if (dynData && dynData.rulers) {
                 dynData.rulers.forEach(rName => {
-                    // Изключваме текущия визуално избран главен герой, за да няма пълно дублиране
                     if (rName !== window.currentHero.name) {
-                        availablePool.push({
-                            name: rName,
-                            dynasty: dynastyName
-                        });
+                        availablePool.push({ name: rName, dynasty: dynastyName });
                     }
                 });
             }
         });
     }
 
-    // Защитен fallback, ако базата данни случайно не е прочетена
     if (availablePool.length === 0) {
         availablePool = [
             { name: "Аспарух", dynasty: "Дуло" },
             { name: "Тервел", dynasty: "Дуло" },
-            { name: "Самуил", dynasty: "Комитопули" },
-            { name: "Иван Асен II", dynasty: "Асеневци" },
-            { name: "Роман", dynasty: "Комитопули" }
+            { name: "Самуил", dynasty: "Комитопули" }
         ];
     }
 
     window.currentHero.gold -= cost;
     window.mightyLeaders = [];
 
-    // Избираме 3 напълно случайни владетели от абсолютно различни династии
     for (let i = 0; i < 3; i++) {
         if (availablePool.length === 0) break;
         let randIdx = Math.floor(Math.random() * availablePool.length);
@@ -171,7 +161,7 @@ window.rerollExpeditionLeaders = function() {
 };
 
 /**
- * ИНТЕРФЕЙС НА ПАЛАТАТА - НАПЪЛНО АДАПТИВЕН ЗА ТЕЛЕФОНИ
+ * ИНТЕРФЕЙС НА ПАЛАТАТА - МОБИЛНО ОПТИМИЗИРАН С БУТОНИ ЗА ЗАВЪРШВАНЕ
  */
 window.openExpeditionCenter = function() {
     let modal = document.getElementById('expedition-center-modal');
@@ -179,7 +169,6 @@ window.openExpeditionCenter = function() {
 
     modal = document.createElement('div');
     modal.id = 'expedition-center-modal';
-    
     modal.style.cssText = `
         position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
         width: 95%; max-width: 860px; height: 85vh; background: #121212; border: 2px solid #d4af37;
@@ -218,29 +207,59 @@ window.openExpeditionCenter = function() {
     body.className = 'exp-flex-body';
     body.style.cssText = `display: flex; flex: 1; overflow: hidden;`;
 
-    // ЛЯВА ЧАСТ: Мисии
+    // ЛЯВА ЧАСТ: Списък с Мисии
     const questList = document.createElement('div');
     questList.className = 'exp-left-pane';
     questList.style.cssText = `width: 55%; padding: 12px; overflow-y: auto; border-right: 1px solid #333; background: #161616; box-sizing: border-box;`;
     
     window.legendaryQuests.forEach((q, idx) => {
-        const activeInstance = window.activeExpeditions.find(e => e.title === q.title);
+        // Проверяваме дали мисията в момента е активна
+        const activeIdx = window.activeExpeditions.findIndex(e => e.title === q.title);
         const qCard = document.createElement('div');
         qCard.style.cssText = `background: #222; border: 1px solid #444; padding: 10px; margin-bottom: 10px; border-radius: 4px;`;
 
-        if (activeInstance) {
-            let pct = Math.floor((activeInstance.currentProgress / activeInstance.duration) * 100);
-            qCard.style.border = "1px solid #00ffcc";
-            qCard.style.background = "#152220";
-            qCard.innerHTML = `
-                <h3 style="margin:0 0 4px 0; color:#00ffcc; font-size:1em;">${q.title}</h3>
-                <div style="font-size:0.8em; color:#fff; margin-bottom:4px;"><b>Водач:</b> ${activeInstance.leader.name} (${activeInstance.leader.dynasty})</div>
-                <div style="font-size:0.8em; color:#ffd700; margin-bottom:6px;">⏳ Оставащи ходове: <b>${activeInstance.duration - activeInstance.currentProgress} х.</b></div>
-                <div style="width:100%; background:#222; height:6px; border-radius:3px; overflow:hidden;">
-                    <div style="width:${pct}%; background:#00ffcc; height:100%;"></div>
-                </div>
-            `;
+        if (activeIdx !== -1) {
+            const activeInstance = window.activeExpeditions[activeIdx];
+            let isDone = activeInstance.currentProgress >= activeInstance.duration;
+            let pct = Math.min(Math.floor((activeInstance.currentProgress / activeInstance.duration) * 100), 100);
+            
+            if (isDone) {
+                // ВИЗУАЛИЗАЦИЯ ЗА ЗАВЪРШЕНА МИСИЯ (Бутон за ръчно приемане)
+                qCard.style.border = "2px solid #ffd700";
+                qCard.style.background = "linear-gradient(135deg, #221a02, #111)";
+                qCard.innerHTML = `
+                    <h3 style="margin:0 0 4px 0; color:#ffd700; font-size:1em;">🎉 ГОТОВА: ${q.title}</h3>
+                    <div style="font-size:0.8em; color:#fff; margin-bottom:4px;"><b>Водач:</b> ${activeInstance.leader.name} (${activeInstance.leader.dynasty})</div>
+                    <div style="font-size:0.85em; color:#00ffcc; font-weight:bold; margin-bottom:8px;">✅ Експедицията се завърна успешно!</div>
+                `;
+                
+                const claimBtn = document.createElement('button');
+                claimBtn.className = 'exp-card-btn';
+                claimBtn.innerText = "ПРИЕМИ ЕКСПЕДИЦИЯТА";
+                claimBtn.style.cssText = `
+                    width: 100%; background: #4caf50; color: white; border: none; padding: 10px;
+                    font-weight: bold; font-size: 0.85em; cursor: pointer; border-radius: 4px; text-transform: uppercase;
+                    box-shadow: 0 0 10px rgba(76,175,80,0.5);
+                `;
+                claimBtn.onclick = () => {
+                    window.completeSpecificExpedition(activeIdx);
+                };
+                qCard.appendChild(claimBtn);
+            } else {
+                // ВИЗУАЛИЗАЦИЯ ЗА МИСИЯ В ПРОЦЕС НА ИЗПЪЛНЕНИЕ
+                qCard.style.border = "1px solid #00ffcc";
+                qCard.style.background = "#152220";
+                qCard.innerHTML = `
+                    <h3 style="margin:0 0 4px 0; color:#00ffcc; font-size:1em;">${q.title}</h3>
+                    <div style="font-size:0.8em; color:#fff; margin-bottom:4px;"><b>Водач:</b> ${activeInstance.leader.name} (${activeInstance.leader.dynasty})</div>
+                    <div style="font-size:0.8em; color:#ffd700; margin-bottom:6px;">⏳ Оставащи ходове: <b>${activeInstance.duration - activeInstance.currentProgress} х.</b></div>
+                    <div style="width:100%; background:#222; height:6px; border-radius:3px; overflow:hidden;">
+                        <div style="width:${pct}%; background:#00ffcc; height:100%;"></div>
+                    </div>
+                `;
+            }
         } else {
+            // СВОБОДНА МИСИЯ, КОЯТО МОЖЕ ДА СЕ СТАРТИРА
             qCard.innerHTML = `
                 <h3 style="margin:0 0 4px 0; color:#ffd700; font-size:1em;">${q.title}</h3>
                 <div style="font-size:0.75em; color:#00ffcc; margin-bottom:4px;">📍 Направление: ${q.destination} | ⏳ ${q.duration} х.</div>
@@ -268,7 +287,7 @@ window.openExpeditionCenter = function() {
     });
     body.appendChild(questList);
 
-    // ДЯСНА ЧАСТ: Избор на водач от всички възможни родове
+    // ДЯСНА ЧАСТ: Водачи
     const leaderPanel = document.createElement('div');
     leaderPanel.className = 'exp-right-pane';
     leaderPanel.style.cssText = `width: 45%; padding: 12px; background: #111; overflow-y: auto; display:flex; flex-direction:column; box-sizing: border-box;`;
@@ -280,7 +299,6 @@ window.openExpeditionCenter = function() {
     const leadersContainer = document.createElement('div');
     leadersContainer.style.cssText = `flex:1;`;
 
-    // Главният герой
     const mainHero = window.currentHero;
     const isHeroRunning = window.activeExpeditions.some(e => e.leader && e.leader.name === mainHero.name);
     const hRadio = document.createElement('div');
@@ -296,7 +314,6 @@ window.openExpeditionCenter = function() {
     `;
     leadersContainer.appendChild(hRadio);
 
-    // Велможи от произволни династии
     if (window.mightyLeaders && window.mightyLeaders.length > 0) {
         window.mightyLeaders.forEach((ml, mIdx) => {
             const isLeaderRunning = window.activeExpeditions.some(e => e.leader && e.leader.name === ml.name);
@@ -388,36 +405,48 @@ window.startSelectedExpedition = function(questIndex, leader) {
     window.renderExpeditionButton();
 };
 
+/**
+ * АВТОМАТИЧНО ОБНОВЯВАНЕ ПРИ ВСЕКИ ХОД (Не трие автоматично мисията, а я маркира за приемане)
+ */
 window.updateExpeditionSystem = function() {
     if (window.activeExpeditions.length === 0) return;
 
     for (let i = window.activeExpeditions.length - 1; i >= 0; i--) {
         let exp = window.activeExpeditions[i];
-        exp.currentProgress++;
+        
+        // Напредваме само ако мисията не е достигнала тавана си
+        if (exp.currentProgress < exp.duration) {
+            exp.currentProgress++;
 
-        if (window.gainHeroXP) {
-            window.gainHeroXP(exp.leader, 15);
-        }
-
-        let stepInterval = Math.floor(exp.duration / exp.steps.length) || 1;
-        if (exp.currentProgress % stepInterval === 0) {
-            let stepIdx = Math.floor(exp.currentProgress / stepInterval) - 1;
-            if (stepIdx >= 0 && stepIdx < exp.steps.length) {
-                window.showAdvisorMsg(`🌍 [Мисия] ${exp.leader.name} (${exp.leader.dynasty}) в ${exp.destination}: ${exp.steps[stepIdx]}`);
+            if (window.gainHeroXP) {
+                window.gainHeroXP(exp.leader, 15);
             }
-        }
 
-        if (exp.currentProgress >= exp.duration) {
-            window.completeSpecificExpedition(i);
+            let stepInterval = Math.floor(exp.duration / exp.steps.length) || 1;
+            if (exp.currentProgress % stepInterval === 0) {
+                let stepIdx = Math.floor(exp.currentProgress / stepInterval) - 1;
+                if (stepIdx >= 0 && stepIdx < exp.steps.length) {
+                    window.showAdvisorMsg(`🌍 [Мисия] ${exp.leader.name} в ${exp.destination}: ${exp.steps[stepIdx]}`);
+                }
+            }
+            
+            // Когато завърши в същия ход, изпращаме съобщение на съветника
+            if (exp.currentProgress >= exp.duration) {
+                window.showAdvisorMsg(`🎉 Експедицията на ${exp.leader.name} в "${exp.title}" приключи! Отворете Палатата за награда.`);
+            }
         }
     }
 
+    // Ако прозорецът е отворен, го преначертаваме веднага, за да се види новия бутон
     if (document.getElementById('expedition-center-modal')) {
         window.openExpeditionCenter();
     }
     window.renderExpeditionButton();
 };
 
+/**
+ * РЪЧНО ИЗВИКВАНЕ ПРИ КЛИКВАНЕ ВЪРХУ БУТОНА „ПРИЕМИ ЕКСПЕДИЦИЯТА“
+ */
 window.completeSpecificExpedition = function(index) {
     const exp = window.activeExpeditions[index];
     if (!exp) return;
@@ -441,25 +470,23 @@ window.completeSpecificExpedition = function(index) {
 
     window.showMysticModal(`Успешен Край!`, finalContent, "triumph");
 
-    if (hero) {
-        if(hero.name === window.currentHero.name) {
-            window.currentHero.gold += goldReward;
-            window.currentHero.heroPower += powerReward;
-        } else {
-            window.currentHero.gold += goldReward; 
-            hero.heroPower += powerReward;
-        }
+    // Добавяме златото и силата глобално към играча
+    window.currentHero.gold += goldReward;
+    if (hero.name === window.currentHero.name) {
+        window.currentHero.heroPower += powerReward;
+    } else {
+        hero.heroPower += powerReward;
     }
 
     if (exp.reward.item && window.acquireArtifact) {
         window.acquireArtifact(exp.reward.item);
     }
 
+    // ОФИЦИАЛНО ПРЕМАХВАМЕ МИСИЯТА И ОСВОБОЖДАВАМЕ СЛОТА ЕДИНСТВЕНО СЛЕД КЛИК
     window.activeExpeditions.splice(index, 1);
     
-    if (document.getElementById('expedition-center-modal')) {
-        window.openExpeditionCenter();
-    }
+    // Обновяваме отворения прозорец и UI бутоните веднага
+    window.openExpeditionCenter();
     window.renderExpeditionButton();
     if (window.updateCharacterUI) window.updateCharacterUI(window.currentHero);
 };
@@ -540,7 +567,10 @@ window.renderExpeditionButton = function() {
     }
 
     if (window.activeExpeditions.length > 0) {
-        let shortStatus = window.activeExpeditions.map(e => `• ${e.title.substring(0,10)}... (${e.duration - e.currentProgress}х)`).join(' | ');
+        let shortStatus = window.activeExpeditions.map(e => {
+            let left = e.duration - e.currentProgress;
+            return `• ${e.title.substring(0,10)}... (${left <= 0 ? 'Готова' : left + 'х'})`;
+        }).join(' | ');
         btn.innerHTML = `🌍 Мисии (${window.activeExpeditions.length}/3) <br><span style="font-size: 10px; color: #00ffcc; font-family: Arial;">${shortStatus}</span>`;
         btn.style.background = "linear-gradient(135deg, #1f4037, #99f2c8)";
         btn.style.color = "#fff";
