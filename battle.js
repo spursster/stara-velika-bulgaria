@@ -1,7 +1,7 @@
 /**
  * МОДУЛ: БИТКИ - Велика България
- * СТАТУС: ФИНАЛНА СИНХРОНИЗАЦИЯ (13 Рода & 51 региона)
- * Включва родови модификатори и система за завладяване на земи.
+ * СТАТУС: ФИНАЛНА СИНХРОНИЗАЦИЯ (13 Рода, 51 региона & Артефакти)
+ * Включва родови модификатори, система за завладяване на земи и бонуси от съкровищницата.
  */
 
 window.startBattle = function() {
@@ -59,14 +59,26 @@ window.processBattle = function(eArmy, eName, eRegion) {
     
     if (!details || !controls) return;
 
+    // --- СИНХРОНИЗАЦИЯ С ИНВЕНТАР / АРТЕФАКТИ ---
+    let artifactBonusPower = 0;
+    if (window.playerInventory && window.playerInventory.length > 0) {
+        window.playerInventory.forEach(item => {
+            if (item.bonus && item.bonus.heroPower) {
+                // Всяка единица мощ от намерен артефакт се умножава по 5 на бойното поле
+                artifactBonusPower += item.bonus.heroPower * 5;
+            }
+        });
+    }
+
     // ПРИЛАГАНЕ НА РОДОВИ БОНУСИ
     let dynastyPowerBonus = window.getPerkValue ? window.getPerkValue('power') : 1.0;
     
-    // Специални бонуси
-    if (hero.dynasty === "Скити") dynastyPowerBonus *= 1.1; // Допълнителен бонус за конница
+    // Специални бонуси за родовете
+    if (hero.dynasty === "Скити") dynastyPowerBonus *= 1.1; 
     if (hero.dynasty === "Македони") dynastyPowerBonus *= 1.05;
 
-    const playerStr = (hero.armySize + (hero.heroPower * 2)) * dynastyPowerBonus;
+    // Изчисляване на крайната мощ, включително силата на артефактите ни
+    const playerStr = ((hero.armySize + (hero.heroPower * 2)) + artifactBonusPower) * dynastyPowerBonus;
     const enemyStr = eArmy;
 
     if (playerStr >= enemyStr) {
@@ -77,11 +89,17 @@ window.processBattle = function(eArmy, eName, eRegion) {
         // Завладяване на региона
         if (window.conquerRegion) window.conquerRegion(eRegion);
 
-        details.innerHTML = `
+        let victoryText = `
             <h3 style="color: #4CAF50;">ВЕЛИКА ПОБЕДА!</h3>
             <p>Врагът ${eName} е разбит при ${eRegion}!</p>
             <p>Плячка: <b>${loot}</b> 💰</p>
         `;
+        
+        if (artifactBonusPower > 0) {
+            victoryText += `<p style="color: #ffd700; font-size: 0.9em;">🛡️ Родовите артефакти Ви осигуриха допълнително +${artifactBonusPower} мощ в боя!</p>`;
+        }
+        
+        details.innerHTML = victoryText;
     } else {
         // ПОРАЖЕНИЕ
         const losses = Math.floor(hero.armySize * 0.3);
