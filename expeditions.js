@@ -1,11 +1,46 @@
 /**
  * МОДУЛ: ВЕЛИКИТЕ ЕКСПЕДИЦИИ НА СВЕТА - Велика България
- * СТАТУС: ФИКСИРАНО ПРИКЛЮЧВАНЕ С РЪЧЕН БУТОН ЗА ПРИЕМАНЕ НА НАГРАДИТЕ + МОБИЛЕН ИНТЕРФЕЙС
+ * СТАТУС: ФИКСИРАН ТУПЕ ГРЕШКА (AUTOMATIC IN-LINE FALLBACK FOR SHOWMYSTICMODAL) + РЪЧЕН БУТОН ЗА НАГРАДИ
  * Статистика на файловете в проекта: 16
  */
 
 window.activeExpeditions = window.activeExpeditions || [];
 window.legendaryQuests = window.legendaryQuests || [];
+
+// АВТОМАТИЧЕН ЗАЩИТЕН FALLBACK АКО ОСТАНАЛИТЕ ФАЙЛОВЕ НЕМАТ РАЗПИСАНА SHOWMYSTICMODAL
+if (typeof window.showMysticModal !== 'function') {
+    window.showMysticModal = function(title, content, type) {
+        let fallbackModal = document.getElementById('mystic-fallback-modal');
+        if (fallbackModal) fallbackModal.remove();
+
+        fallbackModal = document.createElement('div');
+        fallbackModal.id = 'mystic-fallback-modal';
+        
+        let borderColors = {
+            triumph: '#4caf50',
+            expedition: '#d4af37'
+        };
+        let currentBorder = borderColors[type] || '#d4af37';
+
+        fallbackModal.style.cssText = `
+            position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
+            width: 85%; max-width: 440px; background: #161616; border: 2px solid ${currentBorder};
+            box-shadow: 0 0 25px rgba(0,0,0,0.95); z-index: 40000; padding: 18px;
+            color: white; font-family: 'Georgia', serif; border-radius: 6px; text-align: center;
+            box-sizing: border-box;
+        `;
+
+        fallbackModal.innerHTML = `
+            <h3 style="margin: 0 0 10px 0; color: ${currentBorder}; text-transform: uppercase; font-size:1.1em; letter-spacing:0.5px;">${title}</h3>
+            <div style="font-size: 0.9em; line-height: 1.4; color: #ddd; margin-bottom: 15px; text-align: left;">${content}</div>
+            <button onclick="document.getElementById('mystic-fallback-modal').remove()" style="
+                width: 100%; background: ${currentBorder}; color: ${type === 'triumph' ? 'white' : 'black'};
+                border: none; padding: 10px; font-weight: bold; cursor: pointer; text-transform: uppercase; border-radius: 4px; font-size:0.85em;
+            ">Приеми</button>
+        `;
+        document.body.appendChild(fallbackModal);
+    };
+}
 
 // Времеви масив за заредените водачи в Палатата
 window.mightyLeaders = window.mightyLeaders || [
@@ -213,7 +248,6 @@ window.openExpeditionCenter = function() {
     questList.style.cssText = `width: 55%; padding: 12px; overflow-y: auto; border-right: 1px solid #333; background: #161616; box-sizing: border-box;`;
     
     window.legendaryQuests.forEach((q, idx) => {
-        // Проверяваме дали мисията в момента е активна
         const activeIdx = window.activeExpeditions.findIndex(e => e.title === q.title);
         const qCard = document.createElement('div');
         qCard.style.cssText = `background: #222; border: 1px solid #444; padding: 10px; margin-bottom: 10px; border-radius: 4px;`;
@@ -406,7 +440,7 @@ window.startSelectedExpedition = function(questIndex, leader) {
 };
 
 /**
- * АВТОМАТИЧНО ОБНОВЯВАНЕ ПРИ ВСЕКИ ХОД (Не трие автоматично мисията, а я маркира за приемане)
+ * АВТОМАТИЧНО ОБНОВЯВАНЕ ПРИ ВСЕКИ ХОД
  */
 window.updateExpeditionSystem = function() {
     if (window.activeExpeditions.length === 0) return;
@@ -414,7 +448,6 @@ window.updateExpeditionSystem = function() {
     for (let i = window.activeExpeditions.length - 1; i >= 0; i--) {
         let exp = window.activeExpeditions[i];
         
-        // Напредваме само ако мисията не е достигнала тавана си
         if (exp.currentProgress < exp.duration) {
             exp.currentProgress++;
 
@@ -430,14 +463,12 @@ window.updateExpeditionSystem = function() {
                 }
             }
             
-            // Когато завърши в същия ход, изпращаме съобщение на съветника
             if (exp.currentProgress >= exp.duration) {
                 window.showAdvisorMsg(`🎉 Експедицията на ${exp.leader.name} в "${exp.title}" приключи! Отворете Палатата за награда.`);
             }
         }
     }
 
-    // Ако прозорецът е отворен, го преначертаваме веднага, за да се види новия бутон
     if (document.getElementById('expedition-center-modal')) {
         window.openExpeditionCenter();
     }
@@ -470,7 +501,6 @@ window.completeSpecificExpedition = function(index) {
 
     window.showMysticModal(`Успешен Край!`, finalContent, "triumph");
 
-    // Добавяме златото и силата глобално към играча
     window.currentHero.gold += goldReward;
     if (hero.name === window.currentHero.name) {
         window.currentHero.heroPower += powerReward;
@@ -482,10 +512,9 @@ window.completeSpecificExpedition = function(index) {
         window.acquireArtifact(exp.reward.item);
     }
 
-    // ОФИЦИАЛНО ПРЕМАХВАМЕ МИСИЯТА И ОСВОБОЖДАВАМЕ СЛОТА ЕДИНСТВЕНО СЛЕД КЛИК
+    // Изтриване на мисията СЛЕД успешен сигурен клик
     window.activeExpeditions.splice(index, 1);
     
-    // Обновяваме отворения прозорец и UI бутоните веднага
     window.openExpeditionCenter();
     window.renderExpeditionButton();
     if (window.updateCharacterUI) window.updateCharacterUI(window.currentHero);
