@@ -1,74 +1,72 @@
 /**
  * МОДУЛ: ГЛАВНА ЛОГИКА - Велика България
- * СТАТУС: КОРИГИРАН (Старт: 480 пр.н.е.)
+ * СТАТУС: ФИНАЛНА СИНХРОНИЗАЦИЯ (Старт: 480 пр.н.е.)
  */
 
 window.initNewGame = function() {
-    // 1. Данни за Кана
+    // 1. Инициализация на Кан
     window.currentHero = {
         name: "Кубрат", 
         dynasty: "Дуло",
         gold: 1500,
         armySize: 500,
         heroPower: 150,
-        age: 60
+        age: 60,
+        techLevel: 1
     };
 
-    // 2. Време и Сезони (пр.н.е. логика)
+    // 2. ВРЕМЕ - Стриктно от 480 пр.н.е.
     window.gameTime = { 
-        year: -480, 
+        year: 480, 
         seasonIndex: 0, 
-        seasons: ["Пролет", "Лято", "Есен", "Зима"],
-        era: "АНТИЧНОСТ",
+        era: "пр.н.е.",
         turn: 1 
     };
     
     window.playerRegions = ["Крим"];
     
-    // Инициализация на рода в световните данни
+    // Инициализация на 13-те рода
     window.activeDynasties = {};
     if (window.bulgarianDynasties) {
         Object.keys(window.bulgarianDynasties).forEach(name => {
-            window.activeDynasties[name] = { power: 100, gold: 500, regionsOwned: 1 };
+            window.activeDynasties[name] = { power: 100, gold: 500, regions: 1 };
         });
     }
 
-    console.log("Логика: Зареждане на играта от 480 пр.н.е.");
+    console.log("Играта започна от 480 пр.н.е.");
+    
+    // Първоначално обновяване
     if (window.updateCharacterUI) window.updateCharacterUI(window.currentHero);
+    if (window.updateTimeUI) window.updateTimeUI();
 };
 
-window.processTime = function() {
-    if (!window.gameTime) return;
-
-    window.gameTime.seasonIndex++;
-    if (window.gameTime.seasonIndex > 3) {
-        window.gameTime.seasonIndex = 0;
-        window.gameTime.year++; 
-        if (window.currentHero) window.currentHero.age++;
-    }
-
-    // Определяне на Ерата спрямо годината
-    let yr = window.gameTime.year;
-    if (yr > 2100) window.gameTime.era = "КОСМИЧЕСКА ЕРА";
-    else if (yr > 1900) window.gameTime.era = "ИНДУСТРИАЛНА ЕРА";
-    else if (yr > 632) window.gameTime.era = "СРЕДНОВЕКОВИЕ";
-    else window.gameTime.era = "АНТИЧНОСТ";
-};
-
+/**
+ * ГЛАВЕН ЦИКЪЛ НА ХОДА
+ */
 window.advanceTurn = function() {
     if (!window.currentHero) return;
 
-    window.processTime();
+    // 1. Напредване на времето (вика функцията от time.js)
+    if (window.processTime) {
+        window.processTime();
+    }
+    
     window.gameTime.turn++;
 
-    // Икономически бонус
-    let seasonalBonus = (window.gameTime.seasonIndex === 2) ? 200 : 100;
+    // 2. Икономика (Сезонен приход)
+    let seasonalBonus = (window.gameTime.seasonIndex === 2) ? 200 : 100; 
     window.currentHero.gold += (window.playerRegions.length * seasonalBonus);
 
+    // 3. AI Конкуренция
+    Object.keys(window.activeDynasties).forEach(dyn => {
+        if (dyn !== window.currentHero.dynasty) {
+            window.activeDynasties[dyn].gold += 50;
+            if (Math.random() > 0.9) window.activeDynasties[dyn].regions += 1;
+        }
+    });
+
+    // 4. Опресняване на интерфейса
     if (window.updateCharacterUI) window.updateCharacterUI(window.currentHero);
 };
 
-// Стартиране
-window.onload = () => {
-    window.initNewGame();
-};
+window.onload = () => window.initNewGame();
