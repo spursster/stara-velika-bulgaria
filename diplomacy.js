@@ -1,5 +1,5 @@
 /**
- * МОДУЛ: ДИПЛОМАЦИЯ - Велика България (Обновена версия)
+ * МОДУЛ: ДИПЛОМАЦИЯ - Велика България (Обновена версия за АВТОНОМНО УПРАВЛЕНИЕ)
  */
 window.clanRelations = {};
 
@@ -10,7 +10,40 @@ window.initDiplomacy = function() {
     ];
     
     allClans.forEach(clan => {
+        // Начално доверие: 100 за твоя род, 40 за останалите
         window.clanRelations[clan] = (window.currentHero && clan === window.currentHero.dynasty) ? 100 : 40;
+    });
+};
+
+/**
+ * АВТОНОМНА ДИПЛОМАЦИЯ (AI)
+ * Позволява на лидерите на родовете да действат автоматично спрямо Кан (играча).
+ */
+window.processClanDiplomacyAutomation = function() {
+    if (!window.worldData || !window.worldData.clans) return;
+
+    Object.keys(window.worldData.clans).forEach(clanName => {
+        // Пропускаме рода на играча
+        if (window.currentHero && window.currentHero.dynasty === clanName) return;
+
+        let clan = window.worldData.clans[clanName];
+
+        // 1. АВТОНОМНИ ДАРОВЕ: Ако родът е богат (над 800 злато), може да ти изпрати дар
+        if (clan.gold > 800 && Math.random() < 0.15) { // 15% шанс на ход
+            clan.gold -= 200;
+            window.clanRelations[clanName] = Math.min(100, window.clanRelations[clanName] + 10);
+            
+            if (window.showAdvisorMsg) {
+                window.showAdvisorMsg(`ДАРЕНИЕ: Родът ${clanName} изпрати ценни дарове на Кан ${window.currentHero.name}! Доверието расте. 🎁`);
+            }
+        }
+
+        // 2. ДИНАСТИЧЕН ИНТЕРЕС: Ако доверието е ниско, те могат да станат агресивни
+        if (window.clanRelations[clanName] < 20 && Math.random() < 0.1) {
+            if (window.showAdvisorMsg) {
+                window.showAdvisorMsg(`ПРЕДУПРЕЖДЕНИЕ: Лидерът на род ${clanName} изразява недоволство от Вашето управление! ⚠️`);
+            }
+        }
     });
 };
 
@@ -35,6 +68,7 @@ window.openDiplomacy = function() {
             <div>
                 <b style="color: #d4af37; font-family: 'Cinzel';">Род ${clan}</b>
                 <div style="font-size: 10px;">Доверие: ${window.clanRelations[clan]}%</div>
+                <div style="font-size: 9px; color: #888;">Лидер: ${window.worldData.clans[clan].leader}</div>
             </div>
             <div>
                 <button onclick="window.sendGift('${clan}')" style="background: #1a1a1a; color: #d4af37; border: 1px solid #d4af37; padding: 5px; cursor: pointer; font-size: 10px;">Дарове</button>
@@ -69,45 +103,27 @@ window.sendGift = function(clan) {
 
 window.openMarriageMenu = function(clan) {
     if (!clan || clan === 'undefined') { window.openDiplomacy(); return; }
-
     if (window.currentSpouse) { 
         if (window.showAdvisorMsg) window.showAdvisorMsg("Велики Кане, Вие вече сте сключили съюз чрез брак!");
         return; 
     }
-
     if (window.clanRelations[clan] < 60) { 
         if (window.showAdvisorMsg) window.showAdvisorMsg(`Родът ${clan} изисква поне 60% доверие за брак!`);
         return; 
     }
     
-    // Изпълняваме брачната логика (използва се от getRandomMarriage)
     window.applyMarriageEffects(clan);
-    
     const screen = document.getElementById('diplomacy-screen');
     if (screen) screen.remove();
 };
 
-/**
- * АВТОМАТИЧЕН ИЗБОР НА СЪПРУГА (За събития от Старейшините)
- */
 window.getRandomMarriage = function() {
     if (window.currentSpouse) return "Вече сте сключили династичен съюз.";
-
-    const allClans = [
-        "Дуло", "Вокил", "Ерми", "Угаин", "Куригир", "Комитопули", 
-        "Асеневци", "Тертер", "Смилец", "Шишмановци", "Македони", "Птоломеи", "Одриси"
-    ];
-    
-    // Избираме случаен род, различен от този на играча
-    const availableClans = allClans.filter(clan => clan !== window.currentHero.dynasty);
+    const availableClans = window.worldData.majorClans.filter(clan => clan !== window.currentHero.dynasty);
     const randomClan = availableClans[Math.floor(Math.random() * availableClans.length)];
-    
     return window.applyMarriageEffects(randomClan);
 };
 
-/**
- * ПРИЛАГАНЕ НА ЕФЕКТИТЕ ОТ БРАКА (Споделена логика)
- */
 window.applyMarriageEffects = function(clan) {
     const dowryMap = {
         "Дуло": "Стара Велика България", "Вокил": "Панония", "Ерми": "Причерноморие",
@@ -125,19 +141,10 @@ window.applyMarriageEffects = function(clan) {
     }
     
     window.clanRelations[clan] = 100;
-
     const marriageMsg = `Сключен бе свещен съюз с род ${clan}. Зестра: ${region}. Родовете се сплотяват! 💍`;
     
-    // Запис в летописа
-    if (window.eventHistory) {
-        window.eventHistory.push({ title: "ДИНАСТИЧЕН БРАК", text: marriageMsg });
-    }
-
-    // Лента със съобщения
-    if (window.addPlayerSuggestion) {
-        window.addPlayerSuggestion(`ВЕСТ: ${marriageMsg}`);
-    }
-    
+    if (window.eventHistory) window.eventHistory.push({ title: "ДИНАСТИЧЕН БРАК", text: marriageMsg });
+    if (window.addPlayerSuggestion) window.addPlayerSuggestion(`ВЕСТ: ${marriageMsg}`);
     if (window.updateCharacterUI) window.updateCharacterUI(window.currentHero);
     
     return marriageMsg;
