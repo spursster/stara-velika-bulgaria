@@ -1,69 +1,54 @@
 /**
- * МОДУЛ: ВРЕМЕ И ЛЕТОБРОЕНЕ - Велика България
- * СТАТУС: ФИНАЛНА СИНХРОНИЗАЦИЯ
- * Управлява смяната на сезоните и годишните цикли.
+ * МОДУЛ: ИНТЕРФЕЙС - Велика България
  */
 
-window.seasons = ["🌱 Пролет", "☀️ Лято", "🍂 Есен", "❄️ Зима"];
+window.eventQueue = [];    
+window.eventHistory = [];  
 
-/**
- * ГЛАВНА ФУНКЦИЯ ЗА НАПРЕДВАНЕ НА ВРЕМЕТО
- */
-window.processTime = function() {
-    if (!window.gameTime) {
-        // Дефолтни начални стойности, ако не са зададени
-        window.gameTime = { year: 632, seasonIndex: 0, era: "от н.е." };
+window.updateCharacterUI = function(hero) {
+    if (!hero) return;
+
+    // --- 1. ЛЯВ ПАНЕЛ ---
+    const leftSidebar = document.getElementById('provinces-list');
+    if (leftSidebar) {
+        leftSidebar.innerHTML = `
+            <div style="text-align: center; padding: 10px; background: rgba(212, 175, 55, 0.1); border: 1px solid #d4af37; border-radius: 5px; margin-bottom: 15px;">
+                <h3 style="margin: 0; color: #d4af37;">ВЛАДЕТЕЛ</h3>
+                <div style="font-size: 1.2em; margin-top: 5px;">Кан ${hero.name}</div>
+                <div style="font-size: 0.85em; color: #aaa;">Род: ${hero.dynasty} | ${hero.age} г.</div>
+            </div>
+            <div style="margin-bottom: 20px;">
+                <h4 style="color: #d4af37; border-bottom: 1px solid #444; padding-bottom: 5px;">СЪВЕТ НА СТАРЕЙШИНИТЕ</h4>
+                <div style="font-size: 0.9em; max-height: 150px; overflow-y: auto; background: rgba(0,0,0,0.3); padding: 5px;">
+                    ${Object.keys(window.activeDynasties || {}).map(clanName => {
+                        const clan = window.activeDynasties[clanName];
+                        const isPlayer = clanName === hero.dynasty;
+                        return `
+                            <div style="display: flex; justify-content: space-between; margin-bottom: 4px; color: ${isPlayer ? '#d4af37' : '#fff'}">
+                                <span>${isPlayer ? '👑 ' : ''}${clanName}</span>
+                                <span style="font-size: 0.8em;">${clan.regions || 0} зем.</span>
+                            </div>
+                        `;
+                    }).join('')}
+                </div>
+            </div>
+        `;
     }
 
-    // 1. Напредване на сезона
-    window.gameTime.seasonIndex++;
+    // --- 2. ГОРЕН ПАНЕЛ (Ресурси) ---
+    const goldEl = document.getElementById('stat-gold') || document.getElementById('gold-amount');
+    const armyEl = document.getElementById('stat-army') || document.getElementById('army-val');
+    const powerEl = document.getElementById('stat-power') || document.getElementById('hero-power-val');
 
-    // 2. Проверка за смяна на годината (след Зима идва Пролет на следващата година)
-    if (window.gameTime.seasonIndex > 3) {
-        window.gameTime.seasonIndex = 0;
-        
-        // Логика за годините: пр.н.е. намаляват, от н.е. растат
-        if (window.gameTime.era === "пр.н.е.") {
-            window.gameTime.year--;
-            // Ако достигнем година 0 пр.н.е., преминаваме в 1 г. от н.е.
-            if (window.gameTime.year <= 0) {
-                window.gameTime.year = 1;
-                window.gameTime.era = "от н.е.";
-            }
-        } else {
-            window.gameTime.year++;
-        }
-
-        // Годишно съобщение в Летописа
-        if (window.showAdvisorMsg) {
-            window.showAdvisorMsg(`Настъпи нова година — ${window.gameTime.year} ${window.gameTime.era}. Нека боговете бдят над родовете!`);
-        }
-    }
-
-    // 3. Обновяване на интерфейса
-    window.updateTimeUI();
+    if (goldEl) goldEl.innerText = Math.floor(hero.gold);
+    if (armyEl) armyEl.innerText = hero.armySize;
+    if (powerEl) powerEl.innerText = hero.heroPower;
+    
+    // Викаме времето от time.js
+    if (window.updateTimeUI) window.updateTimeUI();
 };
 
-/**
- * ВИЗУАЛИЗАЦИЯ НА ВРЕМЕТО
- */
-window.updateTimeUI = function() {
-    // Търсим елемента в горния панел (stat-time или current-time-info)
-    const timeDisplay = document.getElementById('stat-time') || document.getElementById('current-time-info');
-    if (!timeDisplay || !window.gameTime) return;
-
-    const seasonName = window.seasons[window.gameTime.seasonIndex];
-    const year = window.gameTime.year;
-    const era = window.gameTime.era;
-
-    // Форматиране на изгледа: "☀️ Лято, 632 г. от н.е."
-    timeDisplay.innerText = `${seasonName}, ${year} г. ${era}`;
-};
-
-/**
- * ПОМОЩНА ФУНКЦИЯ ЗА ВЗЕМАНЕ НА ТЕКУЩ СЕЗОН (за икономика/битки)
- */
-window.getCurrentSeason = function() {
-    if (!window.gameTime) return "Пролет";
-    return window.seasons[window.gameTime.seasonIndex].split(' ')[1];
+window.showAdvisorMsg = function(msg) {
+    window.eventHistory.push({ title: "Летопис", text: msg });
+    window.updateCharacterUI(window.currentHero);
 };
