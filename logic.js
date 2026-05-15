@@ -1,6 +1,6 @@
 /**
  * МОДУЛ: ГЛАВНА ЛОГИКА - Велика България
- * СТАТУС: ФИНАЛНА СИНХРОНИЗАЦИЯ (Интеграция с events.js и time.js)
+ * СТАТУС: КОРИГИРАН (Старт: 1 г. пр.н.е.)
  */
 
 window.initNewGame = function() {
@@ -15,9 +15,9 @@ window.initNewGame = function() {
         techLevel: 1
     };
 
-    // 2. ВРЕМЕ - Стриктно от 480 пр.н.е.
+    // 2. ВРЕМЕ - Коригирано да започва от 1 г. пр.н.е.
     window.gameTime = { 
-        year: 480, 
+        year: 1, 
         seasonIndex: 0, 
         era: "пр.н.е.",
         turn: 1 
@@ -25,7 +25,7 @@ window.initNewGame = function() {
     
     window.playerRegions = ["Крим"];
     
-    // Инициализация на 13-те рода
+    // Инициализация на родове
     window.activeDynasties = {};
     if (window.bulgarianDynasties) {
         Object.keys(window.bulgarianDynasties).forEach(name => {
@@ -33,13 +33,13 @@ window.initNewGame = function() {
         });
     }
 
-    console.log("Играта започна от 480 пр.н.е.");
+    console.log("Играта започна от 1 г.");
     
-    // Първоначално обновяване на всички модули
+    // Първоначално обновяване с леко забавяне за синхронизация
     setTimeout(() => {
         if (window.updateCharacterUI) window.updateCharacterUI(window.currentHero);
         if (window.updateTimeUI) window.updateTimeUI();
-    }, 100);
+    }, 200);
 };
 
 /**
@@ -48,14 +48,14 @@ window.initNewGame = function() {
 window.advanceTurn = function() {
     if (!window.currentHero) return;
 
-    // 1. Напредване на времето (от time.js)
+    // 1. Напредване на времето (вика функцията от time.js)
     if (window.processTime) {
         window.processTime();
     }
     
     window.gameTime.turn++;
 
-    // 2. Икономика (Сезонен приход)
+    // 2. Икономика
     let seasonalBonus = (window.gameTime.seasonIndex === 2) ? 200 : 100; 
     window.currentHero.gold += (window.playerRegions.length * seasonalBonus);
 
@@ -69,18 +69,15 @@ window.advanceTurn = function() {
         });
     }
 
-    // 4. СЛУЧАЙНИ СЪБИТИЯ (Интеграция с events.js)
+    // 4. Случайни събития
     if (window.triggerRandomEvent) {
         window.triggerRandomEvent();
     }
 
     // 5. Опресняване на интерфейса
-    if (window.updateCharacterUI) {
-        window.updateCharacterUI(window.currentHero);
-    }
+    if (window.updateCharacterUI) window.updateCharacterUI(window.currentHero);
 };
 
-// Стартиране на логиката при пълно зареждане на прозореца
 window.onload = () => {
     window.initNewGame();
 };
