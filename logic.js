@@ -85,3 +85,39 @@ window.advanceTurn = function() {
 };
 
 window.onload = () => window.initNewGame();
+
+/** * НАДГРАЖДАНЕ: window.processTime (Запазваме всичко старо)
+ */
+window.processTime = function() {
+    if (!window.gameTime) return;
+
+    // 1. Сезонен цикъл (3 месеца = 1 ход)
+    window.gameTime.seasonIndex++;
+    
+    if (window.gameTime.seasonIndex > 3) {
+        window.gameTime.seasonIndex = 0;
+        window.gameTime.year++;
+        
+        // 2. Добавяме остаряване (Надграждане)
+        if (window.currentHero) window.currentHero.age = (window.currentHero.age || 60) + 1;
+    }
+
+    // 3. Еволюция на епохите (От античност до далечно бъдеще)
+    if (window.gameTime.year > 2100) {
+        window.gameTime.era = "КОСМИЧЕСКА ЕРА"; // Колонизация на планети
+    } else if (window.gameTime.year > 1900) {
+        window.gameTime.era = "ИНДУСТРИАЛНА ЕРА";
+    } else if (window.gameTime.year > 1000) {
+        window.gameTime.era = "СРЕДНОВЕКОВИЕ";
+    } else {
+        window.gameTime.era = "АНТИЧНОСТ";
+    }
+};
+
+// Поправка на началните данни, за да включват възраст и ера
+const originalInit = window.initNewGame;
+window.initNewGame = function() {
+    originalInit(); // Изпълняваме оригиналния код
+    window.currentHero.age = 60; // Добавяме липсващото свойство
+    window.gameTime.era = "АНТИЧНОСТ";
+};
