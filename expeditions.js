@@ -559,7 +559,8 @@ window.toggleRulerInventory = function() {
 };
 
 /**
- * ОПРЕСНЯВАНЕ НА ПЛАВАЩИЯ БУТОН ЗА ЕКСПЕДИЦИИ НА ЕКРАНА
+/**
+ * ОПРЕСНЯВАНЕ НА ПЛАВАЩИЯ БУТОН ЗА ЕКСПЕДИЦИИ НА ЕКРАНА (ПОВДИГНАТ НАГОРЕ)
  */
 window.renderExpeditionButton = function() {
     let btn = document.getElementById('btn-expeditions');
@@ -567,7 +568,7 @@ window.renderExpeditionButton = function() {
         btn = document.createElement('button');
         btn.id = 'btn-expeditions';
         btn.style.cssText = `
-            position: fixed; bottom: 20px; right: 20px; padding: 12px 24px;
+            position: fixed; bottom: 80px; right: 20px; padding: 12px 24px;
             background: linear-gradient(135deg, #8a2387, #e94057); color: white;
             font-weight: bold; border: 2px solid #ffd700; border-radius: 30px;
             cursor: pointer; box-shadow: 0 5px 15px rgba(0,0,0,0.5); z-index: 10000;
