@@ -1,12 +1,15 @@
 /**
- * МОДУЛ: ДИПЛОМАЦИЯ - Велика България (Синхронизиран с 51 региона)
+ * МОДУЛ: ДИПЛОМАЦИЯ - Велика България
+ * СТАТУС: ФИНАЛНА СИНХРОНИЗАЦИЯ (13 Рода & 51 региона)
+ * Включва система за автономни дарове и управление на династични съюзи.
  */
 window.clanRelations = {};
 
 window.initDiplomacy = function() {
+    // Пълен списък с 13-те рода
     const allClans = [
-        "Дуло", "Вокил", "Ерми", "Угаин", "Куригир", "Комитопули", 
-        "Асеневци", "Тертер", "Смилец", "Шишмановци", "Македони", "Птоломеи", "Одриси"
+        "Дуло", "Комитопули", "Асеневци", "Тертер", "Даки", "Уния Траки", 
+        "Шишмановци", "Македони", "Птоломеи", "Одриси", "Бесараб", "Османци Дуло", "Скити"
     ];
     
     allClans.forEach(clan => {
@@ -17,6 +20,7 @@ window.initDiplomacy = function() {
 
 /**
  * АВТОНОМНА ДИПЛОМАЦИЯ (AI)
+ * Лидерите действат спрямо Кан (играча) на всеки ход.
  */
 window.processClanDiplomacyAutomation = function() {
     if (!window.worldData || !window.worldData.clans) return;
@@ -36,10 +40,10 @@ window.processClanDiplomacyAutomation = function() {
             }
         }
 
-        // 2. ДИНАСТИЧЕН ИНТЕРЕС: При ниско доверие
+        // 2. ДИНАСТИЧЕН ИНТЕРЕС: При много ниско доверие
         if (window.clanRelations[clanName] < 20 && Math.random() < 0.1) {
             if (window.showAdvisorMsg) {
-                window.showAdvisorMsg(`ПРЕДУПРЕЖДЕНИЕ: Род ${clanName} изразява недоволство! ⚠️`);
+                window.showAdvisorMsg(`ПРЕДУПРЕЖДЕНИЕ: Род ${clanName} изразява недоволство от Вашата политика! ⚠️`);
             }
         }
     });
@@ -104,7 +108,7 @@ window.openMarriageMenu = function(clan) {
         return; 
     }
     if (window.clanRelations[clan] < 60) { 
-        if (window.showAdvisorMsg) window.showAdvisorMsg(`Родът ${clan} изисква 60% доверие!`);
+        if (window.showAdvisorMsg) window.showAdvisorMsg(`Родът ${clan} изисква поне 60% доверие за съюз!`);
         return; 
     }
     window.applyMarriageEffects(clan);
@@ -113,21 +117,21 @@ window.openMarriageMenu = function(clan) {
 };
 
 window.applyMarriageEffects = function(clan) {
-    // СИНХРОНИЗИРАНА ЗЕСТРА С 51 РЕГИОНА
+    // СИНХРОНИЗИРАНА ЗЕСТРА СЪС СЪОТВЕТНИТЕ РЕГИОНИ НА РОДОВЕТЕ
     const dowryMap = {
         "Дуло": "Стара Велика България",
-        "Вокил": "Панония",
-        "Ерми": "Кавказ",
-        "Угаин": "Кападокия",
-        "Куригир": "Добруджа",
         "Комитопули": "Дардания",
         "Асеневци": "Илирия",
-        "Тертер": "Дакия",
-        "Смилец": "Месопотамия",
-        "Шишмановци": "Киликия",
+        "Тертер": "Галатия",
+        "Даки": "Дакия",
+        "Уния Траки": "Мизия",
+        "Шишмановци": "Месопотамия",
         "Македони": "Македония",
         "Птоломеи": "Кипър",
-        "Одриси": "Тракия"
+        "Одриси": "Тракия",
+        "Бесараб": "Добруджа",
+        "Османци Дуло": "Витиния",
+        "Скити": "Сарматия"
     };
 
     const region = dowryMap[clan] || "Мизия";
@@ -136,7 +140,7 @@ window.applyMarriageEffects = function(clan) {
     if (!window.playerRegions) window.playerRegions = [];
     if (!window.playerRegions.includes(region)) {
         window.playerRegions.push(region);
-        // Обновяваме собствеността в worldData
+        // Обновяваме собствеността
         if (window.worldData.clans[clan]) {
             window.worldData.clans[clan].regionsOwned += 1;
             window.worldData.clans[clan].isJoined = true;
@@ -144,7 +148,7 @@ window.applyMarriageEffects = function(clan) {
     }
     
     window.clanRelations[clan] = 100;
-    const marriageMsg = `Сключен бе свещен съюз с род ${clan}. Зестра: ${region}. 💍`;
+    const marriageMsg = `Сключен бе свещен съюз с род ${clan}. Зестра: регион ${region}. 💍`;
     
     if (window.showAdvisorMsg) window.showAdvisorMsg(marriageMsg);
     if (window.recalculateClanHierarchy) window.recalculateClanHierarchy();
