@@ -1,143 +1,87 @@
 /**
  * МОДУЛ: ГЛАВНА ЛОГИКА - Велика България
- * СТАТУС: ФИНАЛНА СИНХРОНИЗАЦИЯ (13 Рода & 51 региона)
- * Поддържа автоматизация на новите династии и стриктно спазване на титлата "Кан".
+ * СТАТУС: СИНХРОНИЗИРАН (Сезони, Стареене, Еволюция)
  */
 
 window.initNewGame = function() {
-    // 1. ДЕФИНИРАНЕ НА НАЧАЛНИТЕ ДАННИ ЗА КАНА
+    // 1. Инициализация на Глобалното състояние (Heroes 3 + CK)
     window.currentHero = {
         name: "Кубрат", 
         dynasty: "Дуло",
         gold: 1500,
         armySize: 500,
-        heroPower: 150
+        heroPower: 150,
+        age: 60,
+        techLevel: 1
     };
 
-    window.gameTime = { year: 632, seasonIndex: 0, era: "от н.е." };
+    // 2. ФУНКЦИЯ ВРЕМЕ (4 сезона = 1 година)
+    window.gameTime = { 
+        year: 632, 
+        seasonIndex: 0, // 0: Пролет, 1: Лято, 2: Есен, 3: Зима
+        seasons: ["Пролет", "Лято", "Есен", "Зима"],
+        turn: 1 
+    };
     
-    // Начален регион (Фанагория/Крим)
-    window.playerRegions = ["Крим"]; 
+    window.playerRegions = ["Крим"];
     
-    window.currentSpouse = null;
-    window.playerInventory = [];
+    // Инициализация на конкурентните 13 династии
+    window.activeDynasties = {};
+    if (window.bulgarianDynasties) {
+        Object.keys(window.bulgarianDynasties).forEach(name => {
+            window.activeDynasties[name] = { power: 100, gold: 500, regions: 1 };
+        });
+    }
 
-    // Инициализация на дипломатическите отношения за 13-те рода
-    if (window.initDiplomacy) window.initDiplomacy();
-
-    // 2. ПЪРВОНАЧАЛНА СИНХРОНИЗАЦИЯ
-    setTimeout(() => {
-        if (window.worldData && window.worldData.clans[window.currentHero.dynasty]) {
-            let myClan = window.worldData.clans[window.currentHero.dynasty];
-            myClan.regionsOwned = window.playerRegions.length;
-            myClan.isJoined = true;
-            myClan.gold = window.currentHero.gold;
-            myClan.armySize = window.currentHero.armySize;
-        }
-
-        if (window.updateCharacterUI) window.updateCharacterUI(window.currentHero);
-        
-        if (window.showAdvisorMsg) {
-            window.showAdvisorMsg(`Приветствам Ви, Велики Кане! Вашето управление започва в ${window.playerRegions[0]}. Родът ${window.currentHero.dynasty} очаква Вашите заповеди.`);
-        }
-    }, 100); 
+    console.log("Играта започна: " + window.gameTime.seasons[window.gameTime.seasonIndex] + ", " + window.gameTime.year + "г.");
+    if (window.updateCharacterUI) window.updateCharacterUI(window.currentHero);
 };
 
 /**
- * СИСТЕМА ЗА АВТОНОМНИ ДЕЙСТВИЯ (AI) НА 13-ТЕ РОДА
- * Лидерите на династиите действат автоматично според новата икономическа логика.
+ * ЛОГИКА ЗА НАПРЕДЪК НА ВРЕМЕТО (3 месеца на ход)
  */
-window.processClanAutomation = function() {
-    if (!window.worldData || !window.worldData.clans) return;
-
-    Object.keys(window.worldData.clans).forEach(clanName => {
-        // Пропускаме рода на играча
-        if (window.currentHero && window.currentHero.dynasty === clanName) return;
-
-        let clan = window.worldData.clans[clanName];
-
-        // 1. АВТОНОМНА ИКОНОМИКА: Приход спрямо регионите
-        clan.gold = (clan.gold || 0) + (clan.regionsOwned * 25);
-
-        // 2. АВТОНОМНО ВОЙСКОНАЕМАНЕ: Динамично спрямо рода
-        if (clan.gold >= 250) {
-            clan.armySize = (clan.armySize || 100) + 60;
-            clan.gold -= 250;
-        }
-
-        // 3. АВТОНОМНА ЕКСПАНЗИЯ: Опит за завземане на 51-те региона
-        if (clan.armySize > 350) {
-            if (Math.random() < 0.18) {
-                clan.regionsOwned += 1;
-                clan.armySize -= 40; 
-                
-                if (window.showAdvisorMsg) {
-                    window.showAdvisorMsg(`ВЕСТ: Лидерът ${clan.leader} от род ${clanName} завзе нови земи в името на своя род!`);
-                }
-            }
-        }
-    });
-
-    if (window.recalculateClanHierarchy) window.recalculateClanHierarchy();
-};
-
-/**
- * ФУНКЦИЯ ЗА ПРИСЪЕДИНЯВАНЕ НА РЕГИОН (ЗА ИГРАЧА)
- */
-window.conquerRegion = function(regionName) {
-    const regionData = window.worldData.regions[regionName];
+window.processTime = function() {
+    window.gameTime.seasonIndex++;
     
-    if (!regionData) {
-        console.error(`ГРЕШКА: Регион "${regionName}" не съществува.`);
-        return;
-    }
-
-    if (!window.playerRegions.includes(regionName)) {
-        window.playerRegions.push(regionName);
+    // Ако минат 4 сезона (1 година)
+    if (window.gameTime.seasonIndex > 3) {
+        window.gameTime.seasonIndex = 0;
+        window.gameTime.year++;
+        window.currentHero.age++; // Канът остарява с 1 година
         
-        // Актуализираме собствеността за рода на играча
-        if (window.worldData.clans[window.currentHero.dynasty]) {
-            window.worldData.clans[window.currentHero.dynasty].regionsOwned = window.playerRegions.length;
+        // Остаряване на конкурентните лидери
+        if (window.mightyLeaders) {
+            window.mightyLeaders.forEach(l => l.age++);
         }
-
-        if (window.recalculateClanHierarchy) window.recalculateClanHierarchy();
-        if (window.updateCharacterUI) window.updateCharacterUI(window.currentHero);
-        
-        if (window.showAdvisorMsg) window.showAdvisorMsg(`Слава на Кана! Земята ${regionName} вече е под наш контрол. 🏹`);
     }
+
+    // Проверка за технологична еволюция (от античност към бъдеще)
+    if (window.gameTime.year > 2100) window.gameTime.era = "Космическа Ера";
 };
 
 /**
  * ГЛАВЕН ЦИКЪЛ НА ХОДА
  */
 window.advanceTurn = function() {
-    if (!window.currentHero) return;
+    // 1. Време и Сезони
+    window.processTime();
+    window.gameTime.turn++;
 
-    // 1. Време
-    if (window.processTime) window.processTime();
-    
-    // 2. Икономика на играча
-    if (window.calculateEconomy) window.calculateEconomy();
+    // 2. Икономика (Сезонен приход)
+    let seasonalBonus = (window.gameTime.seasonIndex === 2) ? 200 : 100; // Повече злато през есента
+    window.currentHero.gold += (window.playerRegions.length * seasonalBonus);
 
-    // 3. AI на останалите 12 рода
-    window.processClanAutomation();
+    // 3. AI Конкуренция (Останалите 12 рода)
+    Object.keys(window.activeDynasties).forEach(dyn => {
+        if (dyn !== window.currentHero.dynasty) {
+            window.activeDynasties[dyn].gold += 50;
+            if (Math.random() > 0.9) window.activeDynasties[dyn].regions += 1;
+        }
+    });
 
-    // 4. AI Дипломация
-    if (window.processClanDiplomacyAutomation) {
-        window.processClanDiplomacyAutomation();
-    }
-    
-    // 5. Събития
-    if (window.triggerRandomEvent) window.triggerRandomEvent();
-
-    // 6. UI Опресняване
+    // 4. UI Опресняване (Използваме обновения UI.js)
     if (window.updateCharacterUI) window.updateCharacterUI(window.currentHero);
-    if (window.updateNotificationBadge) window.updateNotificationBadge();
+    if (window.updateActionBarUI) window.updateActionBarUI();
 };
 
-// Старт
-if (document.readyState === 'complete') {
-    window.initNewGame();
-} else {
-    window.onload = () => window.initNewGame();
-}
+window.onload = () => window.initNewGame();
