@@ -1,6 +1,6 @@
 /**
  * МОДУЛ: ИНТЕРФЕЙС - Велика България
- * СТАТУС: СИНХРОНИЗИРАН (Летопис + Ресурси)
+ * СТАТУС: СИНХРОНИЗИРАН (Летопис ограничен до последните 5 събития + Ресурси)
  */
 
 window.eventHistory = [];  
@@ -37,7 +37,7 @@ window.updateCharacterUI = function(hero) {
             <div id="history-log-container" style="border-top: 1px solid #333; padding-top: 10px;">
                 <h4 style="color: #d4af37; font-size: 11px; margin-bottom: 10px; letter-spacing: 1px;">ЛЕТОПИС</h4>
                 <div id="history-log" style="font-size: 10px; color: #aaa; max-height: 200px; overflow-y: auto; line-height: 1.4;">
-                    </div>
+                </div>
             </div>
         `;
     }
@@ -59,13 +59,19 @@ window.updateCharacterUI = function(hero) {
 
 /**
  * ДОБАВЯНЕ НА СЪОБЩЕНИЕ И ВИЗУАЛИЗАЦИЯ
+ * Ограничено до точно 5 събития за поддържане на чист интерфейс.
  */
 window.showAdvisorMsg = function(msg) {
     const year = window.gameTime ? window.gameTime.year : 1;
     const era = window.gameTime ? window.gameTime.era : "от н.е.";
     
+    // Новите събития се добавят най-отгоре в масива
     window.eventHistory.unshift({ text: msg, time: `${year} ${era}` });
-    if (window.eventHistory.length > 15) window.eventHistory.pop();
+    
+    // СИНХРОНИЗАЦИЯ: Пазим само последните 5 записа в Летописа
+    if (window.eventHistory.length > 5) {
+        window.eventHistory.pop(); // Премахва най-старото събитие
+    }
     
     window.renderHistory();
 };
@@ -74,8 +80,8 @@ window.renderHistory = function() {
     const logEl = document.getElementById('history-log');
     if (logEl) {
         logEl.innerHTML = window.eventHistory.map(event => `
-            <div style="margin-bottom: 8px; border-bottom: 1px solid #222; padding-bottom: 4px;">
-                <span style="color: #d4af37;">[${event.time}]</span> ${event.text}
+            <div style="margin-bottom: 8px; border-bottom: 1px solid #222; padding-bottom: 4px; animation: fadeIn 0.3s ease;">
+                <span style="color: #d4af37;">[${event.time} г.]:</span> ${event.text}
             </div>
         `).join('');
     }
