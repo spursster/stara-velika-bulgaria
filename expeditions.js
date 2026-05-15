@@ -1,10 +1,12 @@
 /**
  * МОДУЛ: ВЕЛИКИТЕ ЕКСПЕДИЦИИ НА СВЕТА - Велика България
  * СТАТУС: ЛЕГЕНДАРЕН (Персонализиран мистичен интерфейс - Пакет 1-5)
- * Файлове в проекта: 16
+ * НАДГРАЖДАНЕ: Поддръжка на 3 паралелни мисии, случайни водачи от DB и 9 слота RPG инвентар
+ * Файлове в проекта: 15
  */
 
-window.activeExpedition = null;
+// Променяме от единичен обект към масив за поддръжка на до 3 активни мисии
+window.activeExpeditions = window.activeExpeditions || [];
 window.legendaryQuests = window.legendaryQuests || [];
 
 // Обединена база данни с всички епични мисии (Пакети 1, 2, 3, 4 и 5)
@@ -84,7 +86,7 @@ const allCoreQuests = [
     {
         title: "Портите на Александър: Железният проход",
         destination: "Каспийски порти (Дербент)",
-        description: "Легендата разказва, че Александър Велики е затворил демонични орди зад железни порти. Трябва да ги открием и да подсилим стражата.",
+        description: "Легендата разказват, че Александър Велики е затворил демонични орди зад железни порти. Трябва да ги открием и да подсилим стражата.",
         duration: 9,
         steps: [
             "Прекосяване на Кавказките хребети в жестока снежна буря.",
@@ -192,7 +194,7 @@ const allCoreQuests = [
             "Преминаване през Гренландия сред айсберги, високи колкото планини.",
             "Акостиране в Лабрадор, където срещате местни родове, рисуващи телата си в червено."
         ],
-        final: "Връщате се с непознати плодове и кожа от бяла мечка. Вашето име ще се помни в сагите!",
+        final: "Връщате се с непознати плодове и кожа от бяла мечка. Вашето имя ще се помни в сагите!",
         reward: { gold: 8000, power: 450, army: 0, item: "Томахавка от Метеоритно желязо" }
     },
     {
@@ -259,7 +261,7 @@ const allCoreQuests = [
         duration: 6,
         steps: [
             "Избор на най-високата и здрава отвесна скала над платото.",
-            "Борба със стихиите, докато каменоделците работят на голяма височина.",
+            "Борба со стихиите, докато каменоделците работят на голяма височина.",
             "Освещаване на релефа с кръвта на свещено животно.",
             "Поставяне на надписи, които ще разказват за делата на Кан {hero} векове наред."
         ],
@@ -373,129 +375,254 @@ window.showMysticModal = function(title, content, type = "info") {
 };
 
 /**
- * ОПАСНОСТИ ПО ПЪТЯ
+ * ПОМОЩНА ФУНКЦИЯ: Избор на случаен лидер от наличните династии в database.js
  */
-window.handleRandomTravelEvent = function() {
-    if (!window.activeExpedition) return;
+window.getRandomLeaderFromDB = function() {
+    if (!window.bulgarianDynasties) return { name: "Кубрат", dynasty: "Дуло", perks: ["Следотърсач"], inventory: [] };
+    
+    const dynastiesKeys = Object.keys(window.bulgarianDynasties);
+    const randomDynastyName = dynastiesKeys[Math.floor(Math.random() * dynastiesKeys.length)];
+    const dynastyData = window.bulgarianDynasties[randomDynastyName];
+    const randomRulerName = dynastyData.rulers[Math.floor(Math.random() * dynastyData.rulers.length)];
+    
+    // Ако случайно съвпадне с главния играч, избираме първия наличен за безопасност
+    if (window.currentHero && randomRulerName === window.currentHero.name) {
+        return { name: dynastyData.rulers[0] || "Ирник", dynasty: randomDynastyName, perks: ["Следотърсач"], inventory: [] };
+    }
 
-    if (Math.random() < 0.05) { // 5% шанс за инцидент на ход
+    return {
+        name: randomRulerName,
+        dynasty: randomDynastyName,
+        perks: ["Следотърсач"],
+        inventory: [] 
+    };
+};
+
+/**
+ * ОПАСНОСТИ ПО ПЪТЯ И ДИНАМИЧНО ОБУЧЕНИЕ/ТРОФЕИ
+ */
+window.handleRandomTravelEvent = function(exp) {
+    if (Math.random() < 0.06) { // 6% шанс на ход
         const events = [
-            { text: "Буря забавя напредъка ни!", delay: 2 },
-            { text: "Открихме пряк път през планината!", delay: -2 },
-            { text: "Местни хора ни дариха с храна.", bonus: "gold", val: 100 },
-            { text: "Болест повали част от ескорта.", bonus: "army", val: -20 }
+            { text: "овладя тайните на бързия преход.", action: "perk", val: "Бързоходец" },
+            { text: "преговаря с пустинни номади за сигурност.", action: "perk", val: "Мъдър Дипломат" },
+            { text: "откри ценен амулет сред руините.", action: "item", val: "🔮 Древен Амулет" },
+            { text: "залови благороден кон от диво стадо.", action: "item", val: "🐎 Боен Кон" }
         ];
         
         const ev = events[Math.floor(Math.random() * events.length)];
-        if (ev.delay) window.activeExpedition.duration += ev.delay;
-        if (ev.bonus === "gold") window.currentHero.gold += ev.val;
-        if (ev.bonus === "army") window.currentHero.armySize += ev.val;
-
-        if (window.showAdvisorMsg) window.showAdvisorMsg(`⚠️ ВНИМАНИЕ: ${ev.text}`);
+        
+        if (ev.action === "perk" && !exp.leader.perks.includes(ev.val)) {
+            exp.leader.perks.push(ev.val);
+            if (window.showAdvisorMsg) window.showAdvisorMsg(`✨ Кан ${exp.leader.name} научи умението [${ev.val}]!`);
+        } else if (ev.action === "item" && exp.leader.inventory.length < 9) {
+            exp.leader.inventory.push(ev.val);
+        }
     }
 };
 
 /**
- * СИСТЕМА ЗА ПРОГРЕС И ПРОВЕРКА НА МИСИИ
+ * СИСТЕМА ЗА ПРОГРЕС И ПРОВЕРКА НА МИСИИ (До 3 Едновременно)
  */
 window.updateExpeditionSystem = function() {
-    if (!window.activeExpedition) return;
+    // 1. Превъртаме прогреса на всички активни мисии
+    for (let i = window.activeExpeditions.length - 1; i >= 0; i--) {
+        let exp = window.activeExpeditions[i];
+        exp.progress++;
+        window.handleRandomTravelEvent(exp);
+        
+        const totalSteps = exp.steps.length;
+        const progressPercent = exp.progress / exp.duration;
+        const currentStepIndex = Math.floor(progressPercent * totalSteps);
+        
+        if (exp.progress % 4 === 0) {
+            let stepText = exp.steps[currentStepIndex] || "Пътешествието продължава през непознати земи...";
+            if (window.showAdvisorMsg) {
+                window.showAdvisorMsg(`🌍 [ЕКСПЕДИЦИЯ - ${exp.leader.name}]: ${stepText.replace("{hero}", exp.leader.name).replace("{dynasty}", exp.leader.dynasty)}`);
+            }
+        }
 
-    window.activeExpedition.progress++;
-    window.handleRandomTravelEvent();
-    
-    const totalSteps = window.activeExpedition.steps.length;
-    const progressPercent = window.activeExpedition.progress / window.activeExpedition.duration;
-    const currentStepIndex = Math.floor(progressPercent * totalSteps);
-    
-    if (window.activeExpedition.progress % 3 === 0) {
-        let stepText = window.activeExpedition.steps[currentStepIndex] || "Пътешествието продължава през непознати земи...";
-        if (window.showAdvisorMsg) {
-            window.showAdvisorMsg(`🌍 [ЕКСПЕДИЦИЯ]: ${stepText.replace("{hero}", window.currentHero.name)}`);
+        if (exp.progress >= exp.duration) {
+            window.completeSpecificExpedition(i);
         }
     }
-
-    if (window.activeExpedition.progress >= window.activeExpedition.duration) {
-        window.completeExpedition();
-    } else {
-        window.renderExpeditionButton();
-    }
+    
+    window.renderExpeditionButton();
 };
 
 window.checkForQuest = function() {
-    if (window.activeExpedition) {
-        window.updateExpeditionSystem();
-        return;
-    }
+    // Първо обновяваме прогреса на текущите мисии
+    window.updateExpeditionSystem();
 
-    if (Math.random() < 0.12) {
-        const quest = window.legendaryQuests[Math.floor(Math.random() * window.legendaryQuests.length)];
-        window.activeExpedition = JSON.parse(JSON.stringify(quest));
-        window.activeExpedition.progress = 0;
+    // Ако има по-малко от 3 активни мисии, има шанс за генериране на нова
+    if (window.activeExpeditions.length < 3) {
+        if (Math.random() < 0.12) {
+            const availableQuests = window.legendaryQuests.filter(q => 
+                !window.activeExpeditions.some(active => active.title === q.title)
+            );
 
-        window.showMysticModal(
-            quest.title, 
-            `<b>Дестинация:</b> ${quest.destination}<br><br>${quest.description.replace("{hero}", window.currentHero.name)}<br><br><span style='color: #888;'>Пътят ще отнеме ${quest.duration} хода под закрилата на Тангра.</span>`
-        );
-        window.renderExpeditionButton();
+            if (availableQuests.length > 0) {
+                const quest = availableQuests[Math.floor(Math.random() * availableQuests.length)];
+                let newExp = JSON.parse(JSON.stringify(quest));
+                
+                newExp.progress = 0;
+                newExp.leader = window.getRandomLeaderFromDB(); // Назначаваме водач от базата данни
+
+                window.activeExpeditions.push(newExp);
+
+                window.showMysticModal(
+                    newExp.title, 
+                    `<b>Водач:</b> Кан ${newExp.leader.name} (${newExp.leader.dynasty})<br><b>Дестинация:</b> ${newExp.destination}<br><br>${newExp.description.replace("{hero}", newExp.leader.name).replace("{dynasty}", newExp.leader.dynasty)}<br><br><span style='color: #888;'>Пътят ще отнеме ${newExp.duration} хода под закрилата на Тангра.</span>`
+                );
+            }
+        }
     }
+    
+    window.renderExpeditionButton();
 };
 
+/**
+ * ОПРЕСНЯВАНЕ НА ИНТЕРФЕЙСА В ЛЕВИЯ ПАНЕЛ
+ */
 window.renderExpeditionButton = function() {
     const sidebar = document.getElementById('left-sidebar');
     if (!sidebar) return;
 
-    let btn = document.getElementById('btn-expedition');
-    if (!window.activeExpedition) { if (btn) btn.remove(); return; }
-
-    if (!btn) {
-        btn = document.createElement('button');
-        btn.id = 'btn-expedition';
-        btn.style.cssText = `
-            width: 90%; margin: 10px auto; padding: 12px; background: #000;
-            border: 2px solid #d4af37; color: #ffd700; font-family: 'Cinzel', serif;
-            font-size: 10px; cursor: pointer; text-transform: uppercase;
-            box-shadow: 0 0 15px rgba(212,175,55,0.3); border-radius: 4px; display: block;
-        `;
-        sidebar.appendChild(btn);
+    let groupContainer = document.getElementById('expeditions-group-container');
+    if (!groupContainer) {
+        groupContainer = document.createElement('div');
+        groupContainer.id = 'expeditions-group-container';
+        groupContainer.style.cssText = "width: 100%; margin-top: 10px;";
+        sidebar.appendChild(groupContainer);
     }
 
-    const remaining = window.activeExpedition.duration - window.activeExpedition.progress;
-    btn.innerHTML = `🌍 ${window.activeExpedition.title}<br>
-                    <small style="color: #ff4d4d;">Остават: ${remaining} хода</small>`;
-    
-    btn.onclick = () => {
-        window.showMysticModal(
-            window.activeExpedition.title,
-            `<b>Дестинация:</b> ${window.activeExpedition.destination}<br><br>
-             <b>Прогрес:</b> ${window.activeExpedition.progress} от ${window.activeExpedition.duration} хода завършени.<br><br>
-             <span style='color: #ffd700;'>Вашите пратеници поддържат висок дух в името на Кан ${window.currentHero.name}!</span>`
-        );
-    };
+    groupContainer.innerHTML = "";
+
+    if (window.activeExpeditions.length === 0) {
+        return;
+    }
+
+    window.activeExpeditions.forEach((exp, index) => {
+        const remaining = exp.duration - exp.progress;
+        const btn = document.createElement('div');
+        btn.style.cssText = `
+            width: 90%; margin: 8px auto; padding: 10px; background: #000;
+            border: 1px solid #d4af37; color: #ffd700; font-family: 'Cinzel', serif;
+            box-shadow: 0 0 10px rgba(212,175,55,0.2); border-radius: 4px; text-align: left;
+        `;
+
+        btn.innerHTML = `
+            <div style="font-size: 9px; color: #fff; text-transform: uppercase; border-bottom: 1px dashed #444; padding-bottom: 3px; margin-bottom: 5px; cursor: pointer; letter-spacing: 0.5px;" 
+                 onclick="window.showLeaderRPGModal(${index})">
+                 👑 Кан ${exp.leader.name} (${exp.leader.dynasty})
+            </div>
+            <div style="font-size: 11px; font-weight: bold; cursor: pointer;" onclick="window.showLeaderRPGModal(${index})">🌍 ${exp.title}</div>
+            <div style="display: flex; justify-content: space-between; margin-top: 5px; font-size: 9px; color: #ff4d4d;">
+                <span>Остават: ${remaining} хода</span>
+                <span style="color: #4caf50;">${exp.progress}/${exp.duration}</span>
+            </div>
+        `;
+        groupContainer.appendChild(btn);
+    });
 };
 
-window.completeExpedition = function() {
-    const exp = window.activeExpedition;
-    const hero = window.currentHero;
+/**
+ * ДОСИЕ НА УЧАСТНИКА: 9 СЛОТА ИНВЕНТАР И СПОСОБНОСТИ
+ */
+window.showLeaderRPGModal = function(index) {
+    const exp = window.activeExpeditions[index];
+    if (!exp) return;
 
-    // Осигуряваме нулеви стойности по подразбиране, ако някоя награда липсва в обекта
+    let rpgModal = document.getElementById('rpg-leader-modal');
+    if (!rpgModal) {
+        rpgModal = document.createElement('div');
+        rpgModal.id = 'rpg-leader-modal';
+        rpgModal.style.cssText = `
+            position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+            background: rgba(0,0,0,0.85); z-index: 31000; display: flex;
+            align-items: center; justify-content: center; font-family: 'Cinzel', serif;
+        `;
+        document.body.appendChild(rpgModal);
+    }
+
+    // Решетка 3х3 за деветте слота инвентар
+    let slotsGridHTML = "";
+    for (let s = 0; s < 9; s++) {
+        const item = exp.leader.inventory[s];
+        slotsGridHTML += `
+            <div style="width: 52px; height: 52px; border: 1px solid #d4af37; background: rgba(255,255,255,0.02); display: flex; align-items: center; justify-content: center; font-size: 20px; position: relative;" title="${item || 'Празен слот'}">
+                ${item ? item.split(' ')[0] : ""}
+                <span style="position: absolute; bottom: 1px; right: 3px; font-size: 7px; color: #444;">${s+1}</span>
+            </div>
+        `;
+    }
+
+    rpgModal.innerHTML = `
+        <div style="width: 310px; background: radial-gradient(circle, #101010 0%, #050505 100%); border: 2px solid #d4af37; padding: 20px; box-shadow: 0 0 25px rgba(212,175,55,0.3); color: white;">
+            <div style="text-align: center; margin-bottom: 15px;">
+                <div style="font-size: 10px; color: #888; letter-spacing: 1px;">ДОСИЕ НА УЧАСТНИКА</div>
+                <div style="font-size: 16px; font-weight: bold; color: #d4af37; margin-top: 3px;">Кан ${exp.leader.name}</div>
+                <div style="font-size: 10px; color: #aaa;">Род ${exp.leader.dynasty}</div>
+            </div>
+
+            <div style="margin-bottom: 15px; background: rgba(0,0,0,0.4); padding: 8px; border: 1px solid #222; border-radius: 3px;">
+                <div style="font-size: 9px; color: #d4af37; font-weight: bold; margin-bottom: 4px; letter-spacing: 0.5px;">СПОСОБНОСТИ:</div>
+                <div style="font-size: 11px; color: #ccc; font-family: 'Lora', serif; line-height: 1.4;">
+                    ${exp.leader.perks.map(p => `⚡ ${p}`).join('<br>')}
+                </div>
+            </div>
+
+            <div style="margin-bottom: 20px;">
+                <div style="font-size: 9px; color: #d4af37; font-weight: bold; margin-bottom: 8px; text-align: center; letter-spacing: 0.5px;">РЪКОВОДЕН ИНВЕНТАР (9 СЛОТА)</div>
+                <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; width: 172px; margin: 0 auto;">
+                    ${slotsGridHTML}
+                </div>
+            </div>
+
+            <button onclick="document.getElementById('rpg-leader-modal').remove()" 
+                    style="width: 100%; padding: 10px; background: #000; color: #d4af37; border: 1px solid #d4af37; font-family: 'Cinzel', serif; font-size: 10px; cursor: pointer; text-transform: uppercase; letter-spacing: 1px;">
+                Затвори Олтара
+            </button>
+        </div>
+    `;
+    rpgModal.style.display = 'flex';
+};
+
+/**
+ * ЗАВЪРШВАНЕ НА МИСИЯТА ПО ОПРЕДЕЛЕН ИНДЕКС В МАСИВА
+ */
+window.completeSpecificExpedition = function(index) {
+    const exp = window.activeExpeditions[index];
+    if (!exp) return;
+
+    const hero = window.currentHero;
     const goldReward = exp.reward.gold || 0;
     const powerReward = exp.reward.power || 0;
     const armyReward = exp.reward.army || 0;
 
     let rewardSummary = `<span style="color: #ffd700;">+${goldReward}</span> 💰, <span style="color: #ff4d4d;">+${powerReward}</span> ⚔️, <span style="color: #4caf50;">+${armyReward}</span> 🏹`;
     
+    // Ако водачът е събрал допълнителни трофеи в слотовете си, ги прехвърляме
+    let extraLootText = "";
+    if (exp.leader.inventory.length > 0) {
+        extraLootText = `<br><br><b>Донесени трофеи от водача:</b> <span style="color: #4caf50;">${exp.leader.inventory.join(', ')}</span>`;
+    }
+
     const finalContent = `
-        ${exp.final.replace("{hero}", hero.name).replace("{dynasty}", hero.dynasty)}<br><br>
-        <b>Спечелени блага:</b> ${rewardSummary}<br>
-        <b>Донесен артефакт:</b> <span style="color: #ffd700;">${exp.reward.item || "Няма"}</span>
+        ${exp.final.replace("{hero}", exp.leader.name).replace("{dynasty}", exp.leader.dynasty)}<br><br>
+        <b>Спечелени блага за държавата:</b> ${rewardSummary}
+        ${extraLootText}<br>
+        <b>Донесен легендарен артефакт:</b> <span style="color: #ffd700;">${exp.reward.item || "Няма"}</span>
     `;
 
-    window.showMysticModal("Триумфално Завръщане!", finalContent, "triumph");
+    // Показваме красивия завършващ модален прозорец
+    window.showMysticModal(`Успешен Край на Експедицията!`, finalContent, "triumph");
 
-    hero.gold += goldReward;
-    hero.heroPower += powerReward;
-    hero.armySize += armyReward;
+    if (hero) {
+        hero.gold += goldReward;
+        hero.heroPower += powerReward;
+        hero.armySize += armyReward;
+    }
 
     if (exp.reward.item && window.acquireArtifact) {
         window.acquireArtifact(exp.reward.item); 
@@ -503,9 +630,17 @@ window.completeExpedition = function() {
         window.addItemToTreasury(exp.reward.item);
     }
 
-    window.activeExpedition = null;
+    // Изтриваме приключилата мисия от активния масив
+    window.activeExpeditions.splice(index, 1);
+    
     window.renderExpeditionButton();
     if (window.updateCharacterUI) window.updateCharacterUI(hero);
+};
+
+window.completeExpedition = function() {
+    if (window.activeExpeditions.length > 0) {
+        window.completeSpecificExpedition(0);
+    }
 };
 
 window.toggleRulerInventory = function() {
