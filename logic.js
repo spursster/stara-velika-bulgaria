@@ -100,3 +100,14 @@ window.advanceTurn = function() {
     if (window.updateCharacterUI) window.updateCharacterUI(window.currentHero);
     if (window.updateTimeUI) window.updateTimeUI();
 };
+
+// Автоматично стартиране на играта веднага след като браузърът зареди изцяло страницата
+window.addEventListener('DOMContentLoaded', () => {
+    // Малко изчакване (100ms), за да сме сигурни, че и ui.js, и mechanics.js също са заредени
+    setTimeout(() => {
+        if (window.initNewGame) {
+            window.initNewGame();
+            console.log("⚔️ Играта 'Велика България' беше инициализирана автоматично при старт!");
+        }
+    }, 100);
+});
