@@ -1,10 +1,11 @@
 /**
  * МОДУЛ: ГЛАВНА ЛОГИКА - Велика България
- * СТАТУС: СИНХРОНИЗИРАН (Сезони, Стареене, Еволюция)
+ * СТАТУС: КОРИГИРАН И НАДГРАДЕН (Сезони, Стареене, Еволюция)
+ * Този файл управлява времето, икономиката и конкуренцията между 13-те династии.
  */
 
 window.initNewGame = function() {
-    // 1. Инициализация на Глобалното състояние (Heroes 3 + CK)
+    // 1. Инициализация на състоянието на играча (Кан)
     window.currentHero = {
         name: "Кубрат", 
         dynasty: "Дуло",
@@ -15,96 +16,60 @@ window.initNewGame = function() {
         techLevel: 1
     };
 
-    // 2. ФУНКЦИЯ ВРЕМЕ (4 сезона = 1 година)
+    // 2. ФУНКЦИЯ ВРЕМЕ (1 ход = 3 месеца / 1 сезон)
     window.gameTime = { 
         year: 632, 
         seasonIndex: 0, // 0: Пролет, 1: Лято, 2: Есен, 3: Зима
         seasons: ["Пролет", "Лято", "Есен", "Зима"],
+        era: "АНТИЧНОСТ",
         turn: 1 
     };
     
     window.playerRegions = ["Крим"];
     
-    // Инициализация на конкурентните 13 династии
+    // 3. Инициализация на 13-те конкурентни династии от database.js
     window.activeDynasties = {};
     if (window.bulgarianDynasties) {
         Object.keys(window.bulgarianDynasties).forEach(name => {
-            window.activeDynasties[name] = { power: 100, gold: 500, regions: 1 };
+            window.activeDynasties[name] = { 
+                power: 100, 
+                gold: 500, 
+                regionsOwned: 1 
+            };
         });
     }
 
     console.log("Играта започна: " + window.gameTime.seasons[window.gameTime.seasonIndex] + ", " + window.gameTime.year + "г.");
-    if (window.updateCharacterUI) window.updateCharacterUI(window.currentHero);
-};
-
-/**
- * ЛОГИКА ЗА НАПРЕДЪК НА ВРЕМЕТО (3 месеца на ход)
- */
-window.processTime = function() {
-    window.gameTime.seasonIndex++;
     
-    // Ако минат 4 сезона (1 година)
-    if (window.gameTime.seasonIndex > 3) {
-        window.gameTime.seasonIndex = 0;
-        window.gameTime.year++;
-        window.currentHero.age++; // Канът остарява с 1 година
-        
-        // Остаряване на конкурентните лидери
-        if (window.mightyLeaders) {
-            window.mightyLeaders.forEach(l => l.age++);
-        }
+    // Първоначално опресняване на интерфейса
+    if (window.updateCharacterUI) {
+        window.updateCharacterUI(window.currentHero);
     }
-
-    // Проверка за технологична еволюция (от античност към бъдеще)
-    if (window.gameTime.year > 2100) window.gameTime.era = "Космическа Ера";
 };
 
 /**
- * ГЛАВЕН ЦИКЪЛ НА ХОДА
- */
-window.advanceTurn = function() {
-    // 1. Време и Сезони
-    window.processTime();
-    window.gameTime.turn++;
-
-    // 2. Икономика (Сезонен приход)
-    let seasonalBonus = (window.gameTime.seasonIndex === 2) ? 200 : 100; // Повече злато през есента
-    window.currentHero.gold += (window.playerRegions.length * seasonalBonus);
-
-    // 3. AI Конкуренция (Останалите 12 рода)
-    Object.keys(window.activeDynasties).forEach(dyn => {
-        if (dyn !== window.currentHero.dynasty) {
-            window.activeDynasties[dyn].gold += 50;
-            if (Math.random() > 0.9) window.activeDynasties[dyn].regions += 1;
-        }
-    });
-
-    // 4. UI Опресняване (Използваме обновения UI.js)
-    if (window.updateCharacterUI) window.updateCharacterUI(window.currentHero);
-    if (window.updateActionBarUI) window.updateActionBarUI();
-};
-
-window.onload = () => window.initNewGame();
-
-/** * НАДГРАЖДАНЕ: window.processTime (Запазваме всичко старо)
+ * ЛОГИКА ЗА НАПРЕДЪК НА ВРЕМЕТО (Извиква се на всеки ход)
  */
 window.processTime = function() {
     if (!window.gameTime) return;
 
-    // 1. Сезонен цикъл (3 месеца = 1 ход)
+    // 1. Напредък на сезона
     window.gameTime.seasonIndex++;
     
+    // 2. Проверка за нова година (след 4 сезона)
     if (window.gameTime.seasonIndex > 3) {
         window.gameTime.seasonIndex = 0;
         window.gameTime.year++;
         
-        // 2. Добавяме остаряване (Надграждане)
-        if (window.currentHero) window.currentHero.age = (window.currentHero.age || 60) + 1;
+        // Канът остарява с 1 година
+        if (window.currentHero) {
+            window.currentHero.age++;
+        }
     }
 
-    // 3. Еволюция на епохите (От античност до далечно бъдеще)
+    // 3. Еволюция на епохите спрямо годината
     if (window.gameTime.year > 2100) {
-        window.gameTime.era = "КОСМИЧЕСКА ЕРА"; // Колонизация на планети
+        window.gameTime.era = "КОСМИЧЕСКА ЕРА";
     } else if (window.gameTime.year > 1900) {
         window.gameTime.era = "ИНДУСТРИАЛНА ЕРА";
     } else if (window.gameTime.year > 1000) {
@@ -114,10 +79,46 @@ window.processTime = function() {
     }
 };
 
-// Поправка на началните данни, за да включват възраст и ера
-const originalInit = window.initNewGame;
-window.initNewGame = function() {
-    originalInit(); // Изпълняваме оригиналния код
-    window.currentHero.age = 60; // Добавяме липсващото свойство
-    window.gameTime.era = "АНТИЧНОСТ";
+/**
+ * ГЛАВЕН ЦИКЪЛ НА ХОДА (Изпълнява се при натискане на бутон "Следващ ход")
+ */
+window.advanceTurn = function() {
+    if (!window.currentHero) return;
+
+    // 1. Обработка на времето и епохите
+    window.processTime();
+    window.gameTime.turn++;
+
+    // 2. Икономика (Сезонен приход)
+    // Есента (index 2) носи бонус приход от реколта
+    let seasonalIncome = (window.gameTime.seasonIndex === 2) ? 200 : 100;
+    window.currentHero.gold += (window.playerRegions.length * seasonalIncome);
+
+    // 3. AI Конкуренция (Останалите 12 рода действат)
+    if (window.activeDynasties) {
+        Object.keys(window.activeDynasties).forEach(dyn => {
+            if (dyn !== window.currentHero.dynasty) {
+                window.activeDynasties[dyn].gold += 50;
+                // Малък шанс за завземане на нов регион от AI
+                if (Math.random() > 0.9) {
+                    window.activeDynasties[dyn].regionsOwned = (window.activeDynasties[dyn].regionsOwned || 1) + 1;
+                }
+            }
+        });
+    }
+
+    // 4. Опресняване на интерфейса (UI)
+    if (window.updateCharacterUI) {
+        window.updateCharacterUI(window.currentHero);
+    }
+    
+    // Ако има специфични функции за лентата с действия
+    if (window.updateActionBarUI) {
+        window.updateActionBarUI();
+    }
+};
+
+// Стартиране на играта при зареждане на прозореца
+window.onload = function() {
+    window.initNewGame();
 };
