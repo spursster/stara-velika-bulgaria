@@ -116,3 +116,35 @@ window.toggleTreasury = function() {
 };
 
 console.log("UI.js: Синхронизиран за конкуренция между 13 рода и сезонен цикъл.");
+
+/** * ПОПРАВКА: Синхронизация на ID-тата между UI и HTML
+ */
+const originalUpdateUI = window.updateCharacterUI;
+window.updateCharacterUI = function(hero) {
+    // Извикваме оригиналната функция
+    originalUpdateUI(hero); 
+
+    // ПОПРАВКА: Ако оригиналните ID-та не работят, насочваме към тези от index.html
+    const goldEl = document.getElementById('gold-amount'); // От index.html
+    const armyEl = document.getElementById('army-val');     // От index.html
+    const timeEl = document.getElementById('current-time-info'); // От index.html
+    const eraEl = document.getElementById('era-display');    // От index.html
+
+    if (goldEl) goldEl.innerText = Math.floor(hero.gold);
+    if (armyEl) armyEl.innerText = hero.armySize;
+    
+    if (timeEl && window.gameTime) {
+        const seasons = ["Пролет", "Лято", "Есен", "Зима"];
+        timeEl.innerText = `${seasons[window.gameTime.seasonIndex]}, ${window.gameTime.year} г.`;
+    }
+    
+    if (eraEl && window.gameTime) {
+        eraEl.innerText = window.gameTime.era;
+    }
+
+    // НАДГРАЖДАНЕ: Показваме възрастта в левия панел (без да трием нищо)
+    const rulerBox = document.querySelector('#provinces-list div');
+    if (rulerBox && !rulerBox.innerHTML.includes('години')) {
+        rulerBox.innerHTML += `<div style="font-size: 0.8em; color: #d4af37;">${hero.age} години</div>`;
+    }
+};
