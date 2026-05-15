@@ -30,11 +30,9 @@ window.initNewGame = function() {
         });
     }
 
-    // Стартово съобщение
-    setTimeout(() => {
-        if (window.updateCharacterUI) window.updateCharacterUI(window.currentHero);
-        if (window.showAdvisorMsg) window.showAdvisorMsg("Добре дошъл, Кане! Летоброенето започва от 1 г. от н.е.");
-    }, 300);
+    if (window.updateCharacterUI) window.updateCharacterUI(window.currentHero);
+    if (window.updateTimeUI) window.updateTimeUI();
+    if (window.showAdvisorMsg) window.showAdvisorMsg("Летоброенето започва от 1 г. от н.е.");
 };
 
 window.advanceTurn = function() {
@@ -43,19 +41,15 @@ window.advanceTurn = function() {
     if (window.processTime) window.processTime();
     window.gameTime.turn++;
 
-    // Икономика
     let seasonalBonus = (window.gameTime.seasonIndex === 2) ? 200 : 100; 
     window.currentHero.gold += (window.playerRegions.length * seasonalBonus);
 
-    // AI родове
-    if (window.activeDynasties) {
-        Object.keys(window.activeDynasties).forEach(dyn => {
-            if (dyn !== window.currentHero.dynasty) {
-                window.activeDynasties[dyn].gold += 50;
-                if (Math.random() > 0.9) window.activeDynasties[dyn].regions += 1;
-            }
-        });
-    }
+    Object.keys(window.activeDynasties).forEach(dyn => {
+        if (dyn !== window.currentHero.dynasty) {
+            window.activeDynasties[dyn].gold += 50;
+            if (Math.random() > 0.9) window.activeDynasties[dyn].regions += 1;
+        }
+    });
 
     // АКТИВИРАНЕ НА СЪБИТИЯ
     if (window.triggerRandomEvent) window.triggerRandomEvent();
