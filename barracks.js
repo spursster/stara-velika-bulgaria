@@ -1,5 +1,7 @@
 /**
- * МОДУЛ: КАЗАРМИ - Велика България (Синхронизиран и Коригиран)
+ * МОДУЛ: КАЗАРМИ (ВОЕНЕН СТАН) - Велика България
+ * СТАТУС: ФИНАЛНА СИНХРОНИЗАЦИЯ (13 Рода)
+ * Включва визуална синхронизация и динамично изчисляване на разходите.
  */
 
 window.openBarracks = function() {
@@ -9,70 +11,75 @@ window.openBarracks = function() {
     const hero = window.currentHero;
     if (!hero) return;
 
-    // Изчисляваме локално само за показване в интерфейса
+    // ИЗЧИСЛЯВАНЕ НА ЦЕНАТА СПРЯМО РОДОВИТЕ БОНУСИ
+    // Род "Даки" и др. имат намаление чрез getPerkValue('armyCost')
     const costModifier = window.getPerkValue ? window.getPerkValue('armyCost') : 1.0;
-    const baseCost = 100;
+    const baseCost = 250; // Базова цена за отряд
     const finalCost = Math.floor(baseCost * costModifier);
-    const amount = 50;
+    const amount = 100; // Численост на един отряд
 
     mainArea.innerHTML = `
-        <div id="barracks-screen" style="padding:20px; background: rgba(10,10,10,0.95); border: 1px solid #d4af37; border-radius: 5px; position: relative; border-left: 4px solid #d4af37;">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
-                <h2 style="font-family:'Cinzel'; color:#d4af37; margin: 0;">ВОЕНЕН СТАН</h2>
-                <button onclick="this.parentElement.parentElement.remove()" style="background:none; border:none; color:#ff4d4d; cursor:pointer; font-size:18px; font-weight:bold;">✕</button>
+        <div id="barracks-screen" style="padding:25px; background: rgba(5,5,5,0.95); border: 1px solid #d4af37; border-radius: 5px; border-left: 5px solid #d4af37; color: white;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 1px solid #333; padding-bottom: 10px;">
+                <h2 style="color: #d4af37; margin: 0; text-transform: uppercase; letter-spacing: 2px;">Военен Стан</h2>
+                <button onclick="document.getElementById('barracks-screen').remove()" style="background:none; border:none; color:#ff4d4d; cursor:pointer; font-size:20px;">✕</button>
             </div>
             
-            <p style="font-size: 14px; color: #ccc; font-family: 'Cinzel';">Тук събирате своите конници за предстоящите походи.</p>
-            
-            <div style="background:#1a1a1a; padding:15px; border: 1px solid #333; margin-bottom:20px;">
-                <b style="color:#fff; font-family: 'Cinzel';">Обучение на тежка конница</b><br>
-                <span style="font-size:12px; color:#888;">Брой: ${amount} воини</span><br>
-                <span style="font-size:13px; color:#d4af37; font-weight:bold;">Цена: ${finalCost} злато ${costModifier < 1 ? '(Родова отстъпка!)' : ''}</span>
+            <p style="font-style: italic; color: #ccc; margin-bottom: 25px;">
+                "Мечът решава споровете, които думите не могат. Подгответе вашите конници, Велики Кане!"
+            </p>
+
+            <div style="background: rgba(212,175,55,0.05); padding: 20px; border: 1px solid #444; border-radius: 4px; display: flex; align-items: center; justify-content: space-between;">
+                <div>
+                    <h3 style="margin: 0; color: #d4af37;">Българска Конница</h3>
+                    <p style="font-size: 0.9em; margin: 5px 0 0 0; color: #aaa;">Един отряд: +${amount} воини</p>
+                </div>
+                
+                <div style="text-align: right;">
+                    <div style="font-size: 1.2em; font-weight: bold; color: #fff; margin-bottom: 10px;">${finalCost} 💰</div>
+                    <button onclick="window.buyUnits(${finalCost}, ${amount})" 
+                            style="background: #d4af37; color: #000; border: none; padding: 10px 20px; font-weight: bold; cursor: pointer; border-radius: 3px; text-transform: uppercase;">
+                        Наеми Войска
+                    </button>
+                </div>
             </div>
 
-            <button onclick="window.buyUnits()" 
-                style="padding:15px; background:#d4af37; color:#000; border:none; cursor:pointer; font-family:'Cinzel'; font-weight:bold; width:100%; letter-spacing:1px;">
-                НАЕМИ ВОЙСКА
-            </button>
-            
-            <div style="margin-top:15px; padding: 10px; background: rgba(212,175,55,0.1); border-radius: 4px; text-align: center; border: 1px dashed #d4af37;">
-                <span style="font-size:11px; color:#aaa;">Вашата хазна: <b style="color:#d4af37;">${hero.gold} 💰</b></span>
+            <div style="margin-top: 30px; display: flex; justify-content: space-between; padding: 10px; background: #111; border: 1px solid #d4af37;">
+                <span style="font-size: 11px; color: #aaa;">ВАШАТА ХАЗНА: <b style="color: #d4af37;">${Math.floor(hero.gold)} 💰</b></span>
+                <span style="font-size: 11px; color: #aaa;">ТЕКУЩА АРМИЯ: <b style="color: #d4af37;">${hero.armySize} 🏹</b></span>
             </div>
         </div>
     `;
 };
 
-window.buyUnits = function() {
+/**
+ * ИЗПЪЛНЕНИЕ НА ПОКУПКАТА
+ */
+window.buyUnits = function(cost, amount) {
     const hero = window.currentHero;
     if (!hero) return;
 
-    // ПРЕЦИЗНО ИЗЧИСЛЕНИЕ ВЪТРЕ ВЪВ ФУНКЦИЯТА (за избягване на undefined)
-    const costModifier = window.getPerkValue ? window.getPerkValue('armyCost') : 1.0;
-    const baseCost = 100;
-    const finalCost = Math.floor(baseCost * costModifier);
-    const amount = 50;
-
-    const currentGold = Number(hero.gold);
-
-    if (currentGold >= finalCost) {
-        hero.gold = currentGold - finalCost;
-        hero.armySize = Number(hero.armySize) + amount;
+    if (hero.gold >= cost) {
+        hero.gold -= cost;
+        hero.armySize += amount;
         
-        if (window.logEvent) {
-            window.logEvent(`Обучени са ${amount} нови конници за ${finalCost} злато.`, "action");
+        // Актуализираме и данните в worldData за съответния род
+        if (window.worldData && window.worldData.clans[hero.dynasty]) {
+            window.worldData.clans[hero.dynasty].armySize = hero.armySize;
+            window.worldData.clans[hero.dynasty].gold = hero.gold;
+        }
+
+        // Запис в летописа
+        if (window.showAdvisorMsg) {
+            window.showAdvisorMsg(`УСПЕХ: Наети са нови ${amount} воини. Нашата мощ расте! ⚔️`);
         }
         
-        // 1. Обновяваме UI на главния екран
+        // Обновяване на всички интерфейси
         if (window.updateCharacterUI) window.updateCharacterUI(hero);
-        
-        // 2. Преначертаваме прозореца на казармата с новото злато
-        window.openBarracks(); 
+        window.openBarracks(); // Опресняваме прозореца на казармата
     } else {
-        // ИНТЕГРАЦИЯ СЪС СЪВЕТНИКА: Заместваме стария alert
         if (window.showAdvisorMsg) {
-            window.showAdvisorMsg(`Велики Кане, хазната е празна! Разполагате само с ${hero.gold} злато, а обучението на тези воини изисква ${finalCost}.`);
-        } else {
-            alert(`Недостиг на злато! Вашето злато: ${hero.gold}, нужна сума: ${finalCost}`);
+            window.showAdvisorMsg("ГРЕШКА: Хазната е празна! Не можем да платим на нови воини. 🪙");
         }
     }
 };
