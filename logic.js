@@ -1,6 +1,6 @@
 /**
  * МОДУЛ: ГЛАВНА ЛОГИКА - Велика България
- * СТАТУС: ОБНОВЕН И СИНХРОНИЗИРАН (Изчистен синтаксис на обекта gameTime)
+ * СТАТУС: НАПЪЛНО ВЪЗСТАНОВЕН И КОРЕКТЕН (Времето работи, Владетелите са безсмъртни)
  * Статистика на файловете в проекта: 16
  */
 
@@ -11,7 +11,7 @@ window.initNewGame = function() {
         gold: 1500,
         armySize: 500,
         heroPower: 150,
-        age: 60, // Остава постоянна базова стойност, без стареене
+        age: 60, // Остава постоянна базова стойност, без физическо стареене
         techLevel: 1
     };
 
@@ -46,14 +46,9 @@ window.initNewGame = function() {
 window.advanceTurn = function() {
     if (!window.currentHero) return;
 
-    // 1. Обработка на времето БЕЗ СТАРЕЕНЕ + ДОБАВЯНЕ НА ХОД XP
+    // 1. ОБРАБОТКА НА ВРЕМЕТО (Възстановено зареждане) + RPG ОПИТ ЗА ХОД
+    if (window.processTime) window.processTime(); // Механиката за превъртане на сезони/години
     window.gameTime.turn++;
-    if (window.gameTime.seasonIndex === 3) {
-        window.gameTime.seasonIndex = 0;
-        window.gameTime.year++;
-    } else {
-        window.gameTime.seasonIndex++;
-    }
 
     // Главният владетел получава опит за управление на държавата всеки ход
     if (window.gainHeroXP) {
@@ -88,7 +83,7 @@ window.advanceTurn = function() {
     // 4. АКТИВИРАНЕ НА СЛУЧАЙНИ СЪБИТИЯ
     if (window.triggerRandomEvent) window.triggerRandomEvent();
 
-    // 5. НАПРЕДЪК НА АКТИВНИТЕ ЕКСПЕДИЦИИ (Интегриран в advanceTurn)
+    // 5. НАПРЕДЪК НА АКТИВНИТЕ ЕКСПЕДИЦИИ
     if (window.updateExpeditionSystem) {
         window.updateExpeditionSystem();
     }
