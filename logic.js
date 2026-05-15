@@ -1,6 +1,6 @@
 /**
  * МОДУЛ: ГЛАВНА ЛОГИКА - Велика България
- * СТАТУС: ФИНАЛНА СИНХРОНИЗАЦИЯ (Старт: 480 пр.н.е.)
+ * СТАТУС: ФИНАЛНА СИНХРОНИЗАЦИЯ (Интеграция с events.js и time.js)
  */
 
 window.initNewGame = function() {
@@ -35,9 +35,11 @@ window.initNewGame = function() {
 
     console.log("Играта започна от 480 пр.н.е.");
     
-    // Първоначално обновяване
-    if (window.updateCharacterUI) window.updateCharacterUI(window.currentHero);
-    if (window.updateTimeUI) window.updateTimeUI();
+    // Първоначално обновяване на всички модули
+    setTimeout(() => {
+        if (window.updateCharacterUI) window.updateCharacterUI(window.currentHero);
+        if (window.updateTimeUI) window.updateTimeUI();
+    }, 100);
 };
 
 /**
@@ -46,7 +48,7 @@ window.initNewGame = function() {
 window.advanceTurn = function() {
     if (!window.currentHero) return;
 
-    // 1. Напредване на времето (вика функцията от time.js)
+    // 1. Напредване на времето (от time.js)
     if (window.processTime) {
         window.processTime();
     }
@@ -58,15 +60,27 @@ window.advanceTurn = function() {
     window.currentHero.gold += (window.playerRegions.length * seasonalBonus);
 
     // 3. AI Конкуренция
-    Object.keys(window.activeDynasties).forEach(dyn => {
-        if (dyn !== window.currentHero.dynasty) {
-            window.activeDynasties[dyn].gold += 50;
-            if (Math.random() > 0.9) window.activeDynasties[dyn].regions += 1;
-        }
-    });
+    if (window.activeDynasties) {
+        Object.keys(window.activeDynasties).forEach(dyn => {
+            if (dyn !== window.currentHero.dynasty) {
+                window.activeDynasties[dyn].gold += 50;
+                if (Math.random() > 0.9) window.activeDynasties[dyn].regions += 1;
+            }
+        });
+    }
 
-    // 4. Опресняване на интерфейса
-    if (window.updateCharacterUI) window.updateCharacterUI(window.currentHero);
+    // 4. СЛУЧАЙНИ СЪБИТИЯ (Интеграция с events.js)
+    if (window.triggerRandomEvent) {
+        window.triggerRandomEvent();
+    }
+
+    // 5. Опресняване на интерфейса
+    if (window.updateCharacterUI) {
+        window.updateCharacterUI(window.currentHero);
+    }
 };
 
-window.onload = () => window.initNewGame();
+// Стартиране на логиката при пълно зареждане на прозореца
+window.onload = () => {
+    window.initNewGame();
+};
