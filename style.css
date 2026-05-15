@@ -1,12 +1,9 @@
-/* ГЛАВЕН СТИЛ - ВЕЛИКА БЪЛГАРИЯ (FINAL MODERN EDITION) */
+/* ГЛАВЕН СТИЛ - ВЕЛИКА БЪЛГАРИЯ (FINAL MINIMAL) */
 
 :root {
     --gold: #d4af37;
-    --gold-glow: rgba(212, 175, 55, 0.4);
-    --royal-red: #7b1a1a;
+    --gold-glow: rgba(212, 175, 55, 0.3);
     --dark-bg: #050505;
-    --glass: rgba(15, 15, 15, 0.9);
-    --border: rgba(212, 175, 55, 0.2);
 }
 
 * { box-sizing: border-box; }
@@ -23,145 +20,115 @@ body {
     flex-direction: column;
 }
 
-/* СТРУКТУРА НА ЕКРАНА */
+/* СТРУКТУРА - ИЗЧИСТЕНА */
 #top-bar {
     height: 60px;
     background: #111;
-    border-bottom: 2px solid var(--gold);
+    border-bottom: 1px solid var(--gold);
     display: flex;
     justify-content: space-between;
     align-items: center;
     padding: 0 20px;
     z-index: 1000;
-    flex-shrink: 0;
-}
-
-#action-bar {
-    height: 50px;
-    background: #0a0a0a;
-    border-bottom: 1px solid #222;
-    display: flex;
-    justify-content: space-around;
-    align-items: center;
-    flex-shrink: 0;
 }
 
 #game-container {
     display: flex;
-    flex: 1; /* Заема пространството между баровете */
+    flex: 1;
     width: 100vw;
     overflow: hidden;
     background: radial-gradient(circle at center, #1a1a1a 0%, #050505 100%);
 }
 
-/* СТРАНИЧНИ ПАНЕЛИ */
-#left-sidebar {
-    width: 280px;
-    background: var(--glass);
-    backdrop-filter: blur(10px);
-    border-right: 1px solid var(--border);
-    overflow-y: auto;
-    padding: 15px;
+/* СКРИВАМЕ ИЗЛИШНИТЕ КОНТЕЙНЕРИ ЗА ВЕСТИ И СВЕДЕНИЯ */
+#right-sidebar, #provinces-list, #suggestion-input-block {
+    display: none !important;
 }
 
-#right-sidebar {
-    width: 300px;
-    background: var(--glass);
-    border-left: 1px solid var(--border);
-    display: flex;
-    flex-direction: column;
-}
-
-/* ЦЕНТРАЛНА ЗОНА */
+/* ГЛАВНА ЗОНА - ЗАЕМА ЦЕЛИЯ ЕКРАН */
 #game-main-area {
     flex: 1;
     position: relative;
-    overflow: hidden;
-}
-
-/* ДОЛНА ЛЕНТА С БУТОНИ - ФИКСИРАНА */
-#bottom-controls {
-    height: 70px;
-    background: #111;
-    border-top: 2px solid var(--gold);
     display: flex;
     justify-content: center;
     align-items: center;
-    gap: 30px;
-    flex-shrink: 0;
-    z-index: 2000;
 }
 
-/* БУТОНИ */
-.action-btn {
+/* ДОЛНА ЛЕНТА С ИКОНКИ - МИНИМАЛИСТИЧНА */
+#bottom-controls {
+    height: 90px;
+    background: transparent;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 20px;
+    z-index: 2000;
+    padding-bottom: 10px;
+}
+
+/* СТИЛ ЗА ИКОНКИТЕ-БУТОНИ */
+.icon-btn {
+    width: 60px;
+    height: 60px;
+    background: rgba(20, 20, 20, 0.9);
+    border: 1px solid var(--gold);
+    color: var(--gold);
+    font-size: 26px;
+    cursor: pointer;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    border-radius: 12px;
+    transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    backdrop-filter: blur(10px);
+}
+
+.icon-btn:hover {
+    transform: scale(1.15) translateY(-8px);
     background: var(--gold);
     color: #000;
-    border: none;
-    padding: 12px 35px;
-    font-family: 'Cinzel', serif;
-    font-weight: bold;
-    font-size: 14px;
-    cursor: pointer;
-    border-radius: 4px;
-    transition: all 0.3s ease;
-    box-shadow: 0 4px 10px rgba(0,0,0,0.5);
-    display: flex;
-    align-items: center;
-    gap: 10px;
+    box-shadow: 0 12px 25px var(--gold-glow);
 }
 
-.action-btn:hover {
-    background: #fff;
-    transform: translateY(-3px);
-    box-shadow: 0 6px 20px var(--gold-glow);
+.icon-btn:active {
+    transform: scale(0.95);
 }
 
-.action-btn:active { transform: translateY(0); }
-
-/* КАРТИ НА СЪБИТИЯТА */
-.event-card {
-    background: rgba(30, 30, 30, 0.6);
-    border-left: 4px solid var(--gold);
-    padding: 15px;
-    margin-bottom: 15px;
-    border-radius: 0 5px 5px 0;
-    font-size: 13px;
-    line-height: 1.4;
-    animation: fadeIn 0.5s ease;
+/* МАРКИРАЩА ЛЕНТА (MARQUEE) */
+#marquee-container {
+    background: rgba(0,0,0,0.5);
+    height: 30px;
+    border-bottom: 1px solid rgba(212, 175, 55, 0.2);
 }
 
-@keyframes fadeIn {
-    from { opacity: 0; transform: translateX(10px); }
-    to { opacity: 1; transform: translateX(0); }
-}
-
-/* ТРЕЗОР (OVERLAY) */
-#treasury-overlay {
-    backdrop-filter: blur(20px);
-    background: rgba(0, 0, 0, 0.95) !important;
-}
-
-/* МАРКИРАЩА ЛЕНТА */
 .marquee-style {
     color: var(--gold);
     font-family: 'Cinzel';
     font-size: 12px;
-    letter-spacing: 1px;
+    line-height: 30px;
+    white-space: nowrap;
 }
 
-/* МОБИЛНА ВЕРСИЯ */
-@media (max-width: 1024px) {
-    #left-sidebar, #right-sidebar { width: 220px; }
+/* ЕКРАН ЗА БИТКА (FULLSCREEN OVERLAY) */
+#battle-screen {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: #000;
+    z-index: 99999;
+    display: none;
 }
 
+/* МОБИЛНА ОПТИМИЗАЦИЯ */
 @media (max-width: 768px) {
-    #game-container { flex-direction: column; overflow-y: auto; }
-    #left-sidebar, #right-sidebar { width: 100%; height: auto; border: none; }
-    #bottom-controls { position: fixed; bottom: 0; width: 100%; }
+    #bottom-controls {
+        gap: 10px;
+    }
+    .icon-btn {
+        width: 50px;
+        height: 50px;
+        font-size: 20px;
+    }
 }
-
-/* СКРОЛБАРИ */
-::-webkit-scrollbar { width: 5px; }
-::-webkit-scrollbar-track { background: #000; }
-::-webkit-scrollbar-thumb { background: #333; border-radius: 5px; }
-::-webkit-scrollbar-thumb:hover { background: var(--gold); }
