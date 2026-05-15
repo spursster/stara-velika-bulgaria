@@ -1,6 +1,7 @@
 /**
  * МОДУЛ: ГЛАВНА ЛОГИКА - Велика България
- * СТАТУС: ОБНОВЕН (Интеграция на Expeditions)
+ * СТАТУС: ОБНОВЕН (Пълна синхронизация с Експедиции и Артефакти)
+ * Файлове в проекта: 16
  */
 
 window.initNewGame = function() {
@@ -33,6 +34,9 @@ window.initNewGame = function() {
     if (window.updateCharacterUI) window.updateCharacterUI(window.currentHero);
     if (window.updateTimeUI) window.updateTimeUI();
     if (window.showAdvisorMsg) window.showAdvisorMsg("Летоброенето започва от 1 г. от н.е.");
+    
+    // Първоначално изчертаване на бутона за мисии, ако има активна такава
+    if (window.renderExpeditionButton) window.renderExpeditionButton();
 };
 
 window.advanceTurn = function() {
@@ -44,7 +48,20 @@ window.advanceTurn = function() {
 
     // 2. Икономика и приходи
     let seasonalBonus = (window.gameTime.seasonIndex === 2) ? 200 : 100; 
-    window.currentHero.gold += (window.playerRegions.length * seasonalBonus);
+    
+    // Модификатор от артефакти (например Одриски ритон или Окото на Ра дават процентен бонус към златото)
+    let goldArtifactModifier = 0;
+    if (window.playerInventory && window.playerInventory.length > 0) {
+        window.playerInventory.forEach(item => {
+            if (item.bonus && item.bonus.goldBonus) {
+                goldArtifactModifier += item.bonus.goldBonus;
+            }
+        });
+    }
+    
+    let baseIncome = window.playerRegions.length * seasonalBonus;
+    let artifactExtraGold = Math.floor(baseIncome * (goldArtifactModifier / 100));
+    window.currentHero.gold += (baseIncome + artifactExtraGold);
 
     // 3. Логика за останалите родове
     Object.keys(window.activeDynasties).forEach(dyn => {
@@ -57,7 +74,7 @@ window.advanceTurn = function() {
     // 4. АКТИВИРАНЕ НА СЛУЧАЙНИ СЪБИТИЯ
     if (window.triggerRandomEvent) window.triggerRandomEvent();
 
-    // 5. АКТИВИРАНЕ НА ЕКСПЕДИЦИИ И КУЕСТОВЕ (Стъпка 3)
+    // 5. АКТИВИРАНЕ НА ЕКСПЕДИЦИИ И КУЕСТОВЕ (Синхронизирано)
     if (window.checkForQuest) {
         window.checkForQuest();
     }
