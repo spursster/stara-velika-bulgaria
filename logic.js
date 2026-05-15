@@ -1,6 +1,6 @@
 /**
  * МОДУЛ: ГЛАВНА ЛОГИКА - Велика България
- * Синхронизиран с 50 региона, автоматизирана икономика и система за ВЕСТИ.
+ * Синхронизиран с 50 региона, автоматизирана икономика и система за АВТОНОМНИ РОДОВЕ.
  */
 window.initNewGame = function() {
     // 1. Дефиниране на началните данни за Кана
@@ -39,37 +39,70 @@ window.initNewGame = function() {
 };
 
 /**
- * ФУНКЦИЯ ЗА СЛУЧАЙНИ СЪБИТИЯ (Обновена за системата Вести)
+ * СИСТЕМА ЗА АВТОНОМНИ ДЕЙСТВИЯ (AI) НА РОДОВЕТЕ
+ * Позволява на лидерите да действат автоматично според ресурсите си.
+ */
+window.processClanAutomation = function() {
+    if (!window.worldData || !window.worldData.clans) return;
+
+    Object.keys(window.worldData.clans).forEach(clanName => {
+        // Пропускаме рода на играча - той се управлява ръчно
+        if (window.currentHero && window.currentHero.dynasty === clanName) return;
+
+        let clan = window.worldData.clans[clanName];
+
+        // 1. АВТОНОМНА ИКОНОМИКА: Приход на злато според броя региони
+        clan.gold = (clan.gold || 0) + (clan.regionsOwned * 20);
+
+        // 2. АВТОНОМНО ВОЙСКОНАЕМАНЕ: Ако имат над 200 злато, купуват армия
+        if (clan.gold >= 200) {
+            clan.armySize = (clan.armySize || 100) + 50;
+            clan.gold -= 200;
+        }
+
+        // 3. АВТОНОМНА ЕКСПАНЗИЯ: Опит за завземане на неутрални територии
+        // Ако армията им е достатъчно голяма (напр. над 300)
+        if (clan.armySize > 300) {
+            // Тук в бъдеще ще добавим логика за избор на съседен регион от regions.js
+            // Засега симулираме успех при 20% шанс на ход за по-реалистично темпо
+            if (Math.random() < 0.2) {
+                clan.regionsOwned += 1;
+                if (window.showAdvisorMsg) {
+                    window.showAdvisorMsg(`ВЕСТ: Родът ${clanName} разшири влиянието си и завзе нови земи!`);
+                }
+            }
+        }
+    });
+
+    if (window.recalculateClanHierarchy) window.recalculateClanHierarchy();
+};
+
+/**
+ * ФУНКЦИЯ ЗА СЛУЧАЙНИ СЪБИТИЯ
  */
 window.triggerRandomEvent = function() {
     if (!window.eventsDatabase) return;
 
-    // Филтрираме събитията, чиито условия са изпълнени
     const availableEvents = window.eventsDatabase.filter(ev => ev.condition(window.currentHero));
 
     if (availableEvents.length > 0) {
         const randomIndex = Math.floor(Math.random() * availableEvents.length);
         const selectedEvent = availableEvents[randomIndex];
         
-        // ВАЖНО: Добавяме в опашката вместо директно показване
         if (window.eventQueue) {
             window.eventQueue.push(selectedEvent);
-            // Опресняваме брояча на бутона
             if (window.updateNotificationBadge) window.updateNotificationBadge();
         }
     }
 };
 
 /**
- * ФУНКЦИЯ ЗА ПРИСЪЕДИНЯВАНЕ НА РЕГИОН
+ * ФУНКЦИЯ ЗА ПРИСЪЕДИНЯВАНЕ НА РЕГИОН (ЗА ИГРАЧА)
  */
 window.conquerRegion = function(regionName) {
     const regionData = window.worldData.regions[regionName];
     
-    if (!regionData) {
-        console.error(`ГРЕШКА: Регион "${regionName}" не съществува в базата данни.`);
-        return;
-    }
+    if (!regionData) return;
 
     if (!window.playerRegions.includes(regionName)) {
         window.playerRegions.push(regionName);
@@ -83,7 +116,6 @@ window.conquerRegion = function(regionName) {
         if (window.recalculateClanHierarchy) window.recalculateClanHierarchy();
         if (window.updateCharacterUI) window.updateCharacterUI(window.currentHero);
         
-        // Вестта за нова земя влиза в Летописа
         if (window.showAdvisorMsg) window.showAdvisorMsg(`Слава на Кана! Земята ${regionName} вече е под наш контрол.`);
     }
 };
@@ -94,13 +126,16 @@ window.advanceTurn = function() {
     // 1. Напредване на времето
     if (window.processTime) window.processTime();
     
-    // 2. Изчисляване на икономиката при всеки ход
+    // 2. Изчисляване на икономиката на играча
     if (window.calculateEconomy) window.calculateEconomy();
+
+    // 3. АВТОМАТИЗАЦИЯ НА ДРУГИТЕ РОДОВЕ (Нова стъпка)
+    window.processClanAutomation();
     
-    // 3. Проверка за събития (добавят се в опашката)
+    // 4. Проверка за събития
     window.triggerRandomEvent();
 
-    // 4. Опресняване на интерфейса и брояча на вестите
+    // 5. Опресняване на интерфейса
     if (window.updateCharacterUI) window.updateCharacterUI(window.currentHero);
     if (window.updateNotificationBadge) window.updateNotificationBadge();
 };
