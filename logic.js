@@ -1,10 +1,9 @@
 /**
  * МОДУЛ: ГЛАВНА ЛОГИКА - Велика България
- * СТАТУС: КОРИГИРАН (Старт: 1 г. пр.н.е.)
+ * СТАТУС: КОРИГИРАН (Старт: 1 г. от н.е. + Events)
  */
 
 window.initNewGame = function() {
-    // 1. Инициализация на Кан
     window.currentHero = {
         name: "Кубрат", 
         dynasty: "Дуло",
@@ -15,17 +14,15 @@ window.initNewGame = function() {
         techLevel: 1
     };
 
-    // 2. ВРЕМЕ - Коригирано да започва от 1 г. пр.н.е.
     window.gameTime = { 
         year: 1, 
         seasonIndex: 0, 
-        era: "пр.н.е.",
+        era: "от н.е.",
         turn: 1 
     };
     
     window.playerRegions = ["Крим"];
     
-    // Инициализация на родове
     window.activeDynasties = {};
     if (window.bulgarianDynasties) {
         Object.keys(window.bulgarianDynasties).forEach(name => {
@@ -33,33 +30,24 @@ window.initNewGame = function() {
         });
     }
 
-    console.log("Играта започна от 1 г.");
-    
-    // Първоначално обновяване с леко забавяне за синхронизация
+    // Стартово съобщение
     setTimeout(() => {
         if (window.updateCharacterUI) window.updateCharacterUI(window.currentHero);
-        if (window.updateTimeUI) window.updateTimeUI();
-    }, 200);
+        if (window.showAdvisorMsg) window.showAdvisorMsg("Добре дошъл, Кане! Летоброенето започва от 1 г. от н.е.");
+    }, 300);
 };
 
-/**
- * ГЛАВЕН ЦИКЪЛ НА ХОДА
- */
 window.advanceTurn = function() {
     if (!window.currentHero) return;
 
-    // 1. Напредване на времето (вика функцията от time.js)
-    if (window.processTime) {
-        window.processTime();
-    }
-    
+    if (window.processTime) window.processTime();
     window.gameTime.turn++;
 
-    // 2. Икономика
+    // Икономика
     let seasonalBonus = (window.gameTime.seasonIndex === 2) ? 200 : 100; 
     window.currentHero.gold += (window.playerRegions.length * seasonalBonus);
 
-    // 3. AI Конкуренция
+    // AI родове
     if (window.activeDynasties) {
         Object.keys(window.activeDynasties).forEach(dyn => {
             if (dyn !== window.currentHero.dynasty) {
@@ -69,15 +57,10 @@ window.advanceTurn = function() {
         });
     }
 
-    // 4. Случайни събития
-    if (window.triggerRandomEvent) {
-        window.triggerRandomEvent();
-    }
+    // АКТИВИРАНЕ НА СЪБИТИЯ
+    if (window.triggerRandomEvent) window.triggerRandomEvent();
 
-    // 5. Опресняване на интерфейса
     if (window.updateCharacterUI) window.updateCharacterUI(window.currentHero);
 };
 
-window.onload = () => {
-    window.initNewGame();
-};
+window.onload = () => window.initNewGame();
