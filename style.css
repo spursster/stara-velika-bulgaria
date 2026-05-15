@@ -1,10 +1,12 @@
-/* ГЛАВЕН СТИЛ - ВЕЛИКА БЪЛГАРИЯ */
+/* ГЛАВЕН СТИЛ - ВЕЛИКА БЪЛГАРИЯ (FINAL MINIMAL) */
 
 :root {
     --gold: #d4af37;
     --gold-glow: rgba(212, 175, 55, 0.3);
     --dark-bg: #050505;
 }
+
+* { box-sizing: border-box; }
 
 body { 
     background-color: var(--dark-bg); 
@@ -18,6 +20,7 @@ body {
     flex-direction: column;
 }
 
+/* TOP BAR */
 #top-bar {
     height: 60px;
     background: #111;
@@ -25,20 +28,89 @@ body {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 0 10px;
+    padding: 0 20px;
     z-index: 1000;
 }
 
+#time-container { font-family: 'Cinzel', serif; color: var(--gold); }
+#current-time-info { font-size: 13px; }
+#era-display { font-size: 9px; opacity: 0.6; letter-spacing: 1px; }
+
+#dynasty-badge { text-align: center; }
+#current-clan-name { font-family: 'Cinzel'; color: #fff; font-size: 14px; text-shadow: 0 0 5px var(--gold); }
+#current-ruler-name { font-size: 10px; color: #aaa; }
+
+#gold-display { font-family: 'Cinzel', serif; font-size: 14px; color: #ffd700; }
+
+/* ACTION BAR СЪС СМАЛЕНИ ЛИДЕРИ И ВЪЗРАСТ */
 #action-bar {
     background: rgba(10,10,10,0.9);
     border-bottom: 1px solid #333;
     display: flex;
     justify-content: center;
     align-items: center;
-    height: 100px;
-    gap: 25px;
+    height: 80px;
+    gap: 15px;
 }
 
+.leader-wrapper {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.leader-icon.mini {
+    width: 35px;
+    height: 35px;
+    border: 1px solid rgba(212, 175, 55, 0.4);
+    border-radius: 50%;
+    overflow: hidden;
+    background: #111;
+}
+
+.leader-icon.mini img { width: 100%; height: 100%; object-fit: cover; }
+
+.leader-age {
+    font-size: 8px;
+    color: #aaa;
+    margin-top: 2px;
+    font-family: 'Montserrat', sans-serif;
+}
+
+.main-ruler-img.small {
+    width: 60px;
+    height: 60px;
+    border: 2px solid var(--gold);
+    border-radius: 50%;
+    background: #000;
+    box-shadow: 0 0 20px var(--gold-glow);
+}
+
+.main-ruler-age {
+    position: absolute;
+    bottom: 0;
+    right: -5px;
+    background: #7b1a1a;
+    color: #fff;
+    font-size: 9px;
+    padding: 1px 3px;
+    border-radius: 3px;
+    border: 1px solid var(--gold);
+}
+
+#ruler-name-tag {
+    background: var(--gold);
+    color: #000;
+    font-family: 'Cinzel';
+    font-size: 9px;
+    font-weight: bold;
+    padding: 1px 5px;
+    margin-top: 5px;
+    border-radius: 3px;
+}
+
+/* GAME CONTAINER */
 #game-container {
     display: flex;
     flex: 1;
@@ -54,43 +126,75 @@ body {
     flex-shrink: 0;
 }
 
+#provinces-list { padding: 10px; }
+#provinces-list h3 { font-family:'Cinzel'; font-size:12px; color:var(--gold); border-bottom:1px solid #333; padding-bottom:5px; }
+
+#stats-panel { padding: 10px; display: flex; flex-direction: column; gap: 10px; }
+.stat-item { font-family: 'Cinzel'; font-size: 11px; }
+.stat-item:first-child { color: #ff4d4d; }
+
+#treasury-trigger {
+    cursor: pointer;
+    background: #111;
+    padding: 10px;
+    border-radius: 4px;
+    border: 1px solid var(--gold);
+    text-align: center;
+    position: relative;
+}
+
+#new-item-badge {
+    display: none;
+    position: absolute;
+    top: -5px;
+    right: -5px;
+    background: #ff4d4d;
+    color: white;
+    font-size: 10px;
+    border-radius: 50%;
+    padding: 2px 6px;
+}
+
+/* MAIN AREA */
 #game-main-area {
     flex-grow: 1;
     background: radial-gradient(circle, #1a1a1a 0%, #050505 100%);
     position: relative;
 }
 
-/* СТИЛ ЗА ЛИДЕРИТЕ И ВЛАДЕТЕЛЯ */
-.leader-icon {
-    width: 50px;
-    height: 50px;
-    border: 1px solid rgba(212, 175, 55, 0.5);
-    border-radius: 50%;
-    overflow: hidden;
-    background: #111;
+#central-display {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    opacity: 0.15;
 }
 
-.main-ruler-img {
-    width: 90px;
-    height: 90px;
-    border: 3px solid var(--gold);
-    border-radius: 50%;
-    background: #000;
-    box-shadow: 0 0 20px var(--gold-glow);
+#dynasty-shield { width: 200px; filter: drop-shadow(0 0 10px #000); }
+#central-display h1 { font-family: 'Cinzel'; color: var(--gold); margin-top: 15px; font-size: 22px; letter-spacing: 4px; }
+
+/* TREASURY OVERLAY */
+#treasury-overlay {
+    display: none;
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0,0,0,0.98);
+    z-index: 100;
+    padding: 25px;
+    border: 2px solid #7b1a1a;
 }
 
-#ruler-name-tag {
-    background: var(--gold);
-    color: #000;
-    font-family: 'Cinzel';
-    font-size: 10px;
-    font-weight: bold;
-    padding: 2px 8px;
-    margin-top: 5px;
-    border-radius: 3px;
-}
+.overlay-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid var(--gold); padding-bottom: 10px; }
+.overlay-header h2 { font-family: 'Cinzel'; color: var(--gold); font-size: 18px; margin:0; }
+.close-btn { background:none; border:none; color:var(--gold); font-size:24px; cursor:pointer; }
 
-/* ДОЛНИ КОНТРОЛИ */
+#treasury-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); gap: 15px; margin-top: 20px; }
+
+/* BOTTOM CONTROLS */
 #bottom-controls {
     height: 90px;
     background: #111;
@@ -111,6 +215,9 @@ body {
     border-radius: 12px;
     cursor: pointer;
     transition: 0.3s;
+    display: flex;
+    justify-content: center;
+    align-items: center;
 }
 
 .icon-btn:hover {
@@ -119,6 +226,7 @@ body {
     transform: translateY(-5px);
 }
 
+/* BATTLE SCREEN */
 #battle-screen {
     position: fixed;
     top: 0;
@@ -128,4 +236,22 @@ body {
     background: #000;
     z-index: 100000;
     display: none;
+}
+
+/* ГАРАНЦИЯ ЗА ПРЕМАХВАНЕ НА SUGGESTIONS */
+#marquee-container, #suggestion-input-block, .marquee-style, #marquee-text {
+    display: none !important;
+    visibility: hidden !important;
+    height: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+}
+
+/* МОБИЛНА ОПТИМИЗАЦИЯ */
+@media (max-width: 768px) {
+    #left-sidebar { width: 130px; }
+    .icon-btn { width: 50px; height: 50px; font-size: 20px; }
+    #action-bar { gap: 8px; height: 70px; }
+    .leader-icon.mini { width: 30px; height: 30px; }
+    .main-ruler-img.small { width: 50px; height: 50px; }
 }
