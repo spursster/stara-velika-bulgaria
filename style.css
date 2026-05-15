@@ -1,13 +1,15 @@
-/* ГЛАВЕН СТИЛ - ВЕЛИКА БЪЛГАРИЯ (MODERN REBIRTH) */
+/* ГЛАВЕН СТИЛ - ВЕЛИКА БЪЛГАРИЯ (FINAL MODERN EDITION) */
 
 :root {
     --gold: #d4af37;
-    --gold-glow: rgba(212, 175, 55, 0.3);
+    --gold-glow: rgba(212, 175, 55, 0.4);
     --royal-red: #7b1a1a;
     --dark-bg: #050505;
-    --glass: rgba(15, 15, 15, 0.85);
+    --glass: rgba(15, 15, 15, 0.9);
     --border: rgba(212, 175, 55, 0.2);
 }
+
+* { box-sizing: border-box; }
 
 body { 
     background-color: var(--dark-bg); 
@@ -17,156 +19,149 @@ body {
     padding: 0;
     overflow: hidden; 
     height: 100vh;
-}
-
-/* ГЛАВЕН КОНТЕЙНЕР */
-#game-container {
-    display: flex;
-    height: calc(100vh - 110px); /* Минус Header (60px) и Action Bar (50px) */
-    width: 100vw;
-    background: url('assets/ui/map-bg.jpg') center/cover no-repeat; /* Ако имаш фонова карта */
-}
-
-/* HEADER МОДЕРНИЗАЦИЯ */
-#top-bar {
-    backdrop-filter: blur(10px);
-    box-shadow: 0 4px 15px rgba(0,0,0,0.5);
-    z-index: 1000;
-}
-
-/* ЛЯВ ПАНЕЛ (Glassmorphism) */
-#left-sidebar {
-    width: 260px; 
-    background: var(--glass);
-    backdrop-filter: blur(15px);
-    border-right: 1px solid var(--border);
-    padding: 15px;
-    overflow-y: auto;
-    transition: all 0.3s ease;
-}
-
-/* ЦЕНТРАЛНА ЗОНА */
-#game-main-area {
-    flex-grow: 1;
-    position: relative;
-    background: radial-gradient(circle at center, rgba(30,30,30,0.4) 0%, rgba(5,5,5,0.9) 100%);
     display: flex;
     flex-direction: column;
 }
 
-/* БУТОНИ - МОДЕРЕН ДИЗАЙН */
-button {
-    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-    text-transform: uppercase;
-    letter-spacing: 1px;
-    outline: none;
-}
-
-button:hover {
-    filter: brightness(1.2);
-    transform: translateY(-2px);
-    box-shadow: 0 5px 15px var(--gold-glow);
-}
-
-button:active {
-    transform: translateY(0);
-}
-
-.action-btn {
-    border-radius: 4px;
-    font-size: 12px;
-    padding: 10px 20px;
-    box-shadow: 0 0 10px rgba(0,0,0,0.5);
-}
-
-/* ЕКРАН ЗА БИТКА (OVERLAY) */
-#battle-screen {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100vw;
-    height: 100vh;
-    background: rgba(0, 0, 0, 0.95);
-    z-index: 9999;
-    display: none;
-    justify-content: center;
-    align-items: center;
-    backdrop-filter: blur(8px);
-}
-
-.modal-content {
+/* СТРУКТУРА НА ЕКРАНА */
+#top-bar {
+    height: 60px;
     background: #111;
-    border: 2px solid var(--gold);
-    padding: 40px;
-    border-radius: 10px;
-    box-shadow: 0 0 50px rgba(0,0,0,1), 0 0 20px var(--gold-glow);
-    text-align: center;
+    border-bottom: 2px solid var(--gold);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0 20px;
+    z-index: 1000;
+    flex-shrink: 0;
 }
 
-/* ЛЕТОПИС (ДЕСЕН ПАНЕЛ) */
-#events-center {
+#action-bar {
+    height: 50px;
+    background: #0a0a0a;
+    border-bottom: 1px solid #222;
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    flex-shrink: 0;
+}
+
+#game-container {
+    display: flex;
+    flex: 1; /* Заема пространството между баровете */
+    width: 100vw;
+    overflow: hidden;
+    background: radial-gradient(circle at center, #1a1a1a 0%, #050505 100%);
+}
+
+/* СТРАНИЧНИ ПАНЕЛИ */
+#left-sidebar {
+    width: 280px;
+    background: var(--glass);
+    backdrop-filter: blur(10px);
+    border-right: 1px solid var(--border);
+    overflow-y: auto;
     padding: 15px;
 }
 
-.event-card {
-    background: rgba(20, 20, 20, 0.7);
-    border-left: 4px solid var(--gold);
-    margin-bottom: 12px;
-    padding: 12px;
-    border-radius: 0 4px 4px 0;
-    animation: slideIn 0.4s ease-out;
+#right-sidebar {
+    width: 300px;
+    background: var(--glass);
+    border-left: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
 }
 
-@keyframes slideIn {
-    from { opacity: 0; transform: translateX(20px); }
+/* ЦЕНТРАЛНА ЗОНА */
+#game-main-area {
+    flex: 1;
+    position: relative;
+    overflow: hidden;
+}
+
+/* ДОЛНА ЛЕНТА С БУТОНИ - ФИКСИРАНА */
+#bottom-controls {
+    height: 70px;
+    background: #111;
+    border-top: 2px solid var(--gold);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 30px;
+    flex-shrink: 0;
+    z-index: 2000;
+}
+
+/* БУТОНИ */
+.action-btn {
+    background: var(--gold);
+    color: #000;
+    border: none;
+    padding: 12px 35px;
+    font-family: 'Cinzel', serif;
+    font-weight: bold;
+    font-size: 14px;
+    cursor: pointer;
+    border-radius: 4px;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.5);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.action-btn:hover {
+    background: #fff;
+    transform: translateY(-3px);
+    box-shadow: 0 6px 20px var(--gold-glow);
+}
+
+.action-btn:active { transform: translateY(0); }
+
+/* КАРТИ НА СЪБИТИЯТА */
+.event-card {
+    background: rgba(30, 30, 30, 0.6);
+    border-left: 4px solid var(--gold);
+    padding: 15px;
+    margin-bottom: 15px;
+    border-radius: 0 5px 5px 0;
+    font-size: 13px;
+    line-height: 1.4;
+    animation: fadeIn 0.5s ease;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateX(10px); }
     to { opacity: 1; transform: translateX(0); }
 }
 
-/* РОДОВА СЪКРОВИЩНИЦА (TREASURY) */
-#treasury-grid .artifact-slot {
-    background: rgba(40, 40, 40, 0.3);
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    padding: 10px;
-    text-align: center;
-    transition: 0.3s;
+/* ТРЕЗОР (OVERLAY) */
+#treasury-overlay {
+    backdrop-filter: blur(20px);
+    background: rgba(0, 0, 0, 0.95) !important;
 }
 
-#treasury-grid .artifact-slot:hover {
-    background: rgba(212, 175, 55, 0.1);
-    border-color: var(--gold);
-}
-
-/* МАРКИРАЩА ЛЕНТА (MARQUEE) */
+/* МАРКИРАЩА ЛЕНТА */
 .marquee-style {
     color: var(--gold);
-    font-size: 11px;
-    white-space: nowrap;
-    animation: marquee 20s linear infinite;
-    text-transform: uppercase;
-    font-family: 'Cinzel', serif;
+    font-family: 'Cinzel';
+    font-size: 12px;
+    letter-spacing: 1px;
 }
 
-@keyframes marquee {
-    0% { transform: translateX(100%); }
-    100% { transform: translateX(-100%); }
-}
-
-/* МОБИЛНИ КОРЕКЦИИ */
+/* МОБИЛНА ВЕРСИЯ */
 @media (max-width: 1024px) {
-    #left-sidebar { width: 200px; }
-    #right-sidebar { width: 220px; }
+    #left-sidebar, #right-sidebar { width: 220px; }
 }
 
 @media (max-width: 768px) {
-    #game-container { flex-direction: column; height: auto; overflow-y: auto; }
-    #left-sidebar, #right-sidebar { width: 100%; border: none; height: auto; }
-    #top-bar { height: auto; flex-wrap: wrap; padding: 10px; }
-    #bottom-controls { position: fixed; bottom: 0; width: 100%; z-index: 2000; }
+    #game-container { flex-direction: column; overflow-y: auto; }
+    #left-sidebar, #right-sidebar { width: 100%; height: auto; border: none; }
+    #bottom-controls { position: fixed; bottom: 0; width: 100%; }
 }
 
 /* СКРОЛБАРИ */
-::-webkit-scrollbar { width: 6px; }
-::-webkit-scrollbar-track { background: #050505; }
-::-webkit-scrollbar-thumb { background: #222; border-radius: 10px; }
+::-webkit-scrollbar { width: 5px; }
+::-webkit-scrollbar-track { background: #000; }
+::-webkit-scrollbar-thumb { background: #333; border-radius: 5px; }
 ::-webkit-scrollbar-thumb:hover { background: var(--gold); }
