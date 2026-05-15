@@ -1,14 +1,14 @@
 /**
  * МОДУЛ: ИНТЕРФЕЙС - Велика България
+ * СТАТУС: ИЗЧИСТЕН И СИНХРОНИЗИРАН
  */
 
-window.eventQueue = [];    
 window.eventHistory = [];  
 
 window.updateCharacterUI = function(hero) {
     if (!hero) return;
 
-    // --- 1. ЛЯВ ПАНЕЛ ---
+    // --- 1. ЛЯВ ПАНЕЛ (Владетел и Родове) ---
     const leftSidebar = document.getElementById('provinces-list');
     if (leftSidebar) {
         leftSidebar.innerHTML = `
@@ -18,15 +18,15 @@ window.updateCharacterUI = function(hero) {
                 <div style="font-size: 0.85em; color: #aaa;">Род: ${hero.dynasty} | ${hero.age} г.</div>
             </div>
             <div style="margin-bottom: 20px;">
-                <h4 style="color: #d4af37; border-bottom: 1px solid #444; padding-bottom: 5px;">СЪВЕТ НА СТАРЕЙШИНИТЕ</h4>
-                <div style="font-size: 0.9em; max-height: 150px; overflow-y: auto; background: rgba(0,0,0,0.3); padding: 5px;">
+                <h4 style="color: #d4af37; border-bottom: 1px solid #444; padding-bottom: 5px; letter-spacing: 1px;">СЪВЕТ НА РОДОВЕТЕ</h4>
+                <div style="font-size: 0.9em; max-height: 200px; overflow-y: auto; background: rgba(0,0,0,0.3); padding: 8px; border-radius: 4px;">
                     ${Object.keys(window.activeDynasties || {}).map(clanName => {
                         const clan = window.activeDynasties[clanName];
                         const isPlayer = clanName === hero.dynasty;
                         return `
-                            <div style="display: flex; justify-content: space-between; margin-bottom: 4px; color: ${isPlayer ? '#d4af37' : '#fff'}">
+                            <div style="display: flex; justify-content: space-between; margin-bottom: 6px; color: ${isPlayer ? '#d4af37' : '#fff'}">
                                 <span>${isPlayer ? '👑 ' : ''}${clanName}</span>
-                                <span style="font-size: 0.8em;">${clan.regions || 0} зем.</span>
+                                <span style="font-size: 0.85em; opacity: 0.8;">${clan.regions || 0} зем.</span>
                             </div>
                         `;
                     }).join('')}
@@ -36,19 +36,24 @@ window.updateCharacterUI = function(hero) {
     }
 
     // --- 2. ГОРЕН ПАНЕЛ (Ресурси) ---
-    const goldEl = document.getElementById('stat-gold') || document.getElementById('gold-amount');
-    const armyEl = document.getElementById('stat-army') || document.getElementById('army-val');
-    const powerEl = document.getElementById('stat-power') || document.getElementById('hero-power-val');
+    // Използваме само утвърдените ID-та от твоя HTML
+    const goldEl = document.getElementById('stat-gold');
+    const armyEl = document.getElementById('stat-army');
+    const powerEl = document.getElementById('stat-power');
 
     if (goldEl) goldEl.innerText = Math.floor(hero.gold);
     if (armyEl) armyEl.innerText = hero.armySize;
     if (powerEl) powerEl.innerText = hero.heroPower;
     
-    // Викаме времето от time.js
+    // Автоматично опресняване на времето от time.js
     if (window.updateTimeUI) window.updateTimeUI();
 };
 
+/**
+ * ДОБАВЯНЕ НА СЪОБЩЕНИЕ В ЛЕТОПИСА
+ */
 window.showAdvisorMsg = function(msg) {
-    window.eventHistory.push({ title: "Летопис", text: msg });
-    window.updateCharacterUI(window.currentHero);
+    window.eventHistory.push({ title: "Летопис", text: msg, time: new Date().toLocaleTimeString() });
+    // При нужда тук може да се добави код за визуализация в специален лог панел
+    console.log("Летопис: " + msg);
 };
