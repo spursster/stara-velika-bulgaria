@@ -1,12 +1,10 @@
-/* ГЛАВЕН СТИЛ - ВЕЛИКА БЪЛГАРИЯ (FINAL MINIMAL) */
+/* ГЛАВЕН СТИЛ - ВЕЛИКА БЪЛГАРИЯ */
 
 :root {
     --gold: #d4af37;
     --gold-glow: rgba(212, 175, 55, 0.3);
     --dark-bg: #050505;
 }
-
-* { box-sizing: border-box; }
 
 body { 
     background-color: var(--dark-bg); 
@@ -20,16 +18,25 @@ body {
     flex-direction: column;
 }
 
-/* СТРУКТУРА - ИЗЧИСТЕНА */
 #top-bar {
     height: 60px;
     background: #111;
-    border-bottom: 1px solid var(--gold);
+    border-bottom: 2px solid var(--gold);
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 0 20px;
+    padding: 0 10px;
     z-index: 1000;
+}
+
+#action-bar {
+    background: rgba(10,10,10,0.9);
+    border-bottom: 1px solid #333;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100px;
+    gap: 25px;
 }
 
 #game-container {
@@ -37,36 +44,63 @@ body {
     flex: 1;
     width: 100vw;
     overflow: hidden;
-    background: radial-gradient(circle at center, #1a1a1a 0%, #050505 100%);
 }
 
-/* СКРИВАМЕ ИЗЛИШНИТЕ КОНТЕЙНЕРИ ЗА ВЕСТИ И СВЕДЕНИЯ */
-#right-sidebar, #provinces-list, #suggestion-input-block {
-    display: none !important;
+#left-sidebar {
+    width: 250px; 
+    background: #0a0a0a;
+    border-right: 1px solid #333;
+    overflow-y: auto;
+    flex-shrink: 0;
 }
 
-/* ГЛАВНА ЗОНА - ЗАЕМА ЦЕЛИЯ ЕКРАН */
 #game-main-area {
-    flex: 1;
+    flex-grow: 1;
+    background: radial-gradient(circle, #1a1a1a 0%, #050505 100%);
     position: relative;
-    display: flex;
-    justify-content: center;
-    align-items: center;
 }
 
-/* ДОЛНА ЛЕНТА С ИКОНКИ - МИНИМАЛИСТИЧНА */
+/* СТИЛ ЗА ЛИДЕРИТЕ И ВЛАДЕТЕЛЯ */
+.leader-icon {
+    width: 50px;
+    height: 50px;
+    border: 1px solid rgba(212, 175, 55, 0.5);
+    border-radius: 50%;
+    overflow: hidden;
+    background: #111;
+}
+
+.main-ruler-img {
+    width: 90px;
+    height: 90px;
+    border: 3px solid var(--gold);
+    border-radius: 50%;
+    background: #000;
+    box-shadow: 0 0 20px var(--gold-glow);
+}
+
+#ruler-name-tag {
+    background: var(--gold);
+    color: #000;
+    font-family: 'Cinzel';
+    font-size: 10px;
+    font-weight: bold;
+    padding: 2px 8px;
+    margin-top: 5px;
+    border-radius: 3px;
+}
+
+/* ДОЛНИ КОНТРОЛИ */
 #bottom-controls {
     height: 90px;
-    background: transparent;
+    background: #111;
     display: flex;
     justify-content: center;
     align-items: center;
     gap: 20px;
-    z-index: 2000;
-    padding-bottom: 10px;
+    border-top: 1px solid var(--gold);
 }
 
-/* СТИЛ ЗА ИКОНКИТЕ-БУТОНИ */
 .icon-btn {
     width: 60px;
     height: 60px;
@@ -74,42 +108,17 @@ body {
     border: 1px solid var(--gold);
     color: var(--gold);
     font-size: 26px;
-    cursor: pointer;
-    display: flex;
-    justify-content: center;
-    align-items: center;
     border-radius: 12px;
-    transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-    backdrop-filter: blur(10px);
+    cursor: pointer;
+    transition: 0.3s;
 }
 
 .icon-btn:hover {
-    transform: scale(1.15) translateY(-8px);
     background: var(--gold);
     color: #000;
-    box-shadow: 0 12px 25px var(--gold-glow);
+    transform: translateY(-5px);
 }
 
-.icon-btn:active {
-    transform: scale(0.95);
-}
-
-/* МАРКИРАЩА ЛЕНТА (MARQUEE) */
-#marquee-container {
-    background: rgba(0,0,0,0.5);
-    height: 30px;
-    border-bottom: 1px solid rgba(212, 175, 55, 0.2);
-}
-
-.marquee-style {
-    color: var(--gold);
-    font-family: 'Cinzel';
-    font-size: 12px;
-    line-height: 30px;
-    white-space: nowrap;
-}
-
-/* ЕКРАН ЗА БИТКА (FULLSCREEN OVERLAY) */
 #battle-screen {
     position: fixed;
     top: 0;
@@ -117,18 +126,6 @@ body {
     width: 100vw;
     height: 100vh;
     background: #000;
-    z-index: 99999;
+    z-index: 100000;
     display: none;
-}
-
-/* МОБИЛНА ОПТИМИЗАЦИЯ */
-@media (max-width: 768px) {
-    #bottom-controls {
-        gap: 10px;
-    }
-    .icon-btn {
-        width: 50px;
-        height: 50px;
-        font-size: 20px;
-    }
 }
