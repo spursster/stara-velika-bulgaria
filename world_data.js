@@ -1,6 +1,6 @@
 /**
  * МОДУЛ: СВЕТОВНИ ДАННИ И ГЕОПОЛИТИКА - Велика България
- * Синхронизиран: 50 региона, корекция на липсващи данни и йерархия на родовете.
+ * Синхронизиран: 50 региона, автоматизация на ресурсите за 13-те рода.
  */
 
 window.worldData = {
@@ -26,21 +26,21 @@ window.worldData = {
         }
     },
 
-    // ДАННИ ЗА РОДОВЕТЕ
+    // ДАННИ ЗА РОДОВЕТЕ (С активирани ресурси за AI автоматизация)
     clans: {
-        "Дуло": { icon: "assets/icons/clans/dulo.png", isJoined: true, regionsOwned: 1, leader: "Кан Кубрат" },
-        "Вокил": { icon: "assets/icons/clans/vokil.png", isJoined: false, regionsOwned: 0, leader: "Кормисош" },
-        "Ерми": { icon: "assets/icons/clans/ermi.png", isJoined: false, regionsOwned: 0, leader: "Гостун" },
-        "Угаин": { icon: "assets/icons/clans/ugain.png", isJoined: false, regionsOwned: 0, leader: "Телец" },
-        "Куригир": { icon: "assets/icons/clans/kurigir.png", isJoined: false, regionsOwned: 0, leader: "Ирник" },
-        "Комитопули": { icon: "assets/icons/clans/komitopuli.png", isJoined: false, regionsOwned: 0, leader: "Никола" },
-        "Асеневци": { icon: "assets/icons/clans/asenevci.png", isJoined: false, regionsOwned: 0, leader: "Асен" },
-        "Тертер": { icon: "assets/icons/clans/terter.png", isJoined: false, regionsOwned: 0, leader: "Георги" },
-        "Смилец": { icon: "assets/icons/clans/smilec.png", isJoined: false, regionsOwned: 0, leader: "Смилец" },
-        "Шишмановци": { icon: "assets/icons/clans/shishmanovci.png", isJoined: false, regionsOwned: 0, leader: "Михаил" },
-        "Македони": { icon: "assets/icons/clans/makedoni.png", isJoined: false, regionsOwned: 0, leader: "Василий" },
-        "Птоломеи": { icon: "assets/icons/clans/ptolomey.png", isJoined: false, regionsOwned: 0, leader: "Птоломей I" },
-        "Одриси": { icon: "assets/icons/clans/odrisi.png", isJoined: false, regionsOwned: 0, leader: "Терес" }
+        "Дуло": { icon: "assets/icons/clans/dulo.png", isJoined: true, regionsOwned: 1, leader: "Кан Кубрат", gold: 1500, armySize: 500 },
+        "Вокил": { icon: "assets/icons/clans/vokil.png", isJoined: false, regionsOwned: 1, leader: "Кормисош", gold: 800, armySize: 300 },
+        "Ерми": { icon: "assets/icons/clans/ermi.png", isJoined: false, regionsOwned: 1, leader: "Гостун", gold: 700, armySize: 250 },
+        "Угаин": { icon: "assets/icons/clans/ugain.png", isJoined: false, regionsOwned: 1, leader: "Телец", gold: 600, armySize: 200 },
+        "Куригир": { icon: "assets/icons/clans/kurigir.png", isJoined: false, regionsOwned: 1, leader: "Ирник", gold: 900, armySize: 400 },
+        "Комитопули": { icon: "assets/icons/clans/komitopuli.png", isJoined: false, regionsOwned: 1, leader: "Никола", gold: 500, armySize: 150 },
+        "Асеневци": { icon: "assets/icons/clans/asenevci.png", isJoined: false, regionsOwned: 1, leader: "Асен", gold: 550, armySize: 180 },
+        "Тертер": { icon: "assets/icons/clans/terter.png", isJoined: false, regionsOwned: 1, leader: "Георги", gold: 400, armySize: 120 },
+        "Смилец": { icon: "assets/icons/clans/smilec.png", isJoined: false, regionsOwned: 1, leader: "Смилец", gold: 300, armySize: 100 },
+        "Шишмановци": { icon: "assets/icons/clans/shishmanovci.png", isJoined: false, regionsOwned: 1, leader: "Михаил", gold: 450, armySize: 140 },
+        "Македони": { icon: "assets/icons/clans/makedoni.png", isJoined: false, regionsOwned: 1, leader: "Василий", gold: 1000, armySize: 450 },
+        "Птоломеи": { icon: "assets/icons/clans/ptolomey.png", isJoined: false, regionsOwned: 1, leader: "Птоломей I", gold: 1200, armySize: 350 },
+        "Одриси": { icon: "assets/icons/clans/odrisi.png", isJoined: false, regionsOwned: 1, leader: "Терес", gold: 650, armySize: 220 }
     },
 
     // Детайлни данни за провинциите - 50 региона
@@ -118,15 +118,4 @@ window.recalculateClanHierarchy = function() {
         .filter(name => window.worldData.clans[name].isJoined)
         .sort((a, b) => window.worldData.clans[b].regionsOwned - window.worldData.clans[a].regionsOwned);
     return joinedClans;
-};
-
-window.getRegionReport = function(regionName) {
-    const region = window.worldData.regions[regionName];
-    if (!region) {
-        console.error(`Регионът "${regionName}" не е намерен в базата данни.`);
-        return;
-    }
-    const clans = region.nativeClans.join(", ");
-    const report = `Земята ${regionName} се владее от родове: ${clans}. Тук изобилства ресурсът: ${region.resource}.`;
-    if (window.showAdvisorMsg) window.showAdvisorMsg(report);
 };
