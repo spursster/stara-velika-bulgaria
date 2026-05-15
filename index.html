@@ -84,12 +84,12 @@
         </aside>
     </main>
 
-    <footer id="bottom-controls" style="background: #111; height: 50px; border-top: 2px solid #d4af37; display: flex; justify-content: center; gap: 20px; align-items: center;">
-       <button class="action-btn" onclick="window.advanceTurn()">⏳ СЛЕДВАЩ ХОД</button>
-    <button class="action-btn" onclick="window.startBattle()">⚔️ БИТКА</button>
-    <button class="action-btn" onclick="window.openMarriageMenu()">💍 БРАК</button>
-    <button class="action-btn" onclick="window.buyUnits()">🛡️ ОБУЧЕНИЕ</button>
-    </footer>
+ <footer id="bottom-controls">
+    <button class="icon-btn" onclick="window.advanceTurn()" title="Следващ ход">⏳</button>
+    <button class="icon-btn" onclick="window.startBattle()" title="Битка">⚔️</button>
+    <button class="icon-btn" onclick="window.openMarriageMenu()" title="Брак">💍</button>
+    <button class="icon-btn" onclick="window.buyUnits()" title="Обучение">🛡️</button>
+</footer>
 
     <script src="database.js"></script>
     <script src="mechanics.js"></script>
