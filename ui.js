@@ -1,6 +1,6 @@
 /**
  * МОДУЛ: ИНТЕРФЕЙС - Велика България
- * СТАТУС: ИЗЧИСТЕН И СИНХРОНИЗИРАН
+ * СТАТУС: СИНХРОНИЗИРАН (Летопис + Ресурси)
  */
 
 window.eventHistory = [];  
@@ -8,7 +8,7 @@ window.eventHistory = [];
 window.updateCharacterUI = function(hero) {
     if (!hero) return;
 
-    // --- 1. ЛЯВ ПАНЕЛ (Владетел и Родове) ---
+    // --- 1. ЛЯВ ПАНЕЛ (Владетел, Родове и Летопис) ---
     const leftSidebar = document.getElementById('provinces-list');
     if (leftSidebar) {
         leftSidebar.innerHTML = `
@@ -17,9 +17,10 @@ window.updateCharacterUI = function(hero) {
                 <div style="font-size: 1.2em; margin-top: 5px;">Кан ${hero.name}</div>
                 <div style="font-size: 0.85em; color: #aaa;">Род: ${hero.dynasty} | ${hero.age} г.</div>
             </div>
+            
             <div style="margin-bottom: 20px;">
                 <h4 style="color: #d4af37; border-bottom: 1px solid #444; padding-bottom: 5px; letter-spacing: 1px;">СЪВЕТ НА РОДОВЕТЕ</h4>
-                <div style="font-size: 0.9em; max-height: 200px; overflow-y: auto; background: rgba(0,0,0,0.3); padding: 8px; border-radius: 4px;">
+                <div style="font-size: 0.85em; max-height: 150px; overflow-y: auto; background: rgba(0,0,0,0.3); padding: 8px; border-radius: 4px;">
                     ${Object.keys(window.activeDynasties || {}).map(clanName => {
                         const clan = window.activeDynasties[clanName];
                         const isPlayer = clanName === hero.dynasty;
@@ -32,11 +33,16 @@ window.updateCharacterUI = function(hero) {
                     }).join('')}
                 </div>
             </div>
+
+            <div id="history-log-container" style="border-top: 1px solid #333; padding-top: 10px;">
+                <h4 style="color: #d4af37; font-size: 11px; margin-bottom: 10px; letter-spacing: 1px;">ЛЕТОПИС</h4>
+                <div id="history-log" style="font-size: 10px; color: #aaa; max-height: 200px; overflow-y: auto; line-height: 1.4;">
+                    </div>
+            </div>
         `;
     }
 
     // --- 2. ГОРЕН ПАНЕЛ (Ресурси) ---
-    // Използваме само утвърдените ID-та от твоя HTML
     const goldEl = document.getElementById('stat-gold');
     const armyEl = document.getElementById('stat-army');
     const powerEl = document.getElementById('stat-power');
@@ -45,15 +51,32 @@ window.updateCharacterUI = function(hero) {
     if (armyEl) armyEl.innerText = hero.armySize;
     if (powerEl) powerEl.innerText = hero.heroPower;
     
-    // Автоматично опресняване на времето от time.js
+    // Обновяваме Летописа при всяко опресняване на UI
+    window.renderHistory();
+
     if (window.updateTimeUI) window.updateTimeUI();
 };
 
 /**
- * ДОБАВЯНЕ НА СЪОБЩЕНИЕ В ЛЕТОПИСА
+ * ДОБАВЯНЕ НА СЪОБЩЕНИЕ И ВИЗУАЛИЗАЦИЯ
  */
 window.showAdvisorMsg = function(msg) {
-    window.eventHistory.push({ title: "Летопис", text: msg, time: new Date().toLocaleTimeString() });
-    // При нужда тук може да се добави код за визуализация в специален лог панел
-    console.log("Летопис: " + msg);
+    const year = window.gameTime ? window.gameTime.year : 1;
+    const era = window.gameTime ? window.gameTime.era : "от н.е.";
+    
+    window.eventHistory.unshift({ text: msg, time: `${year} ${era}` });
+    if (window.eventHistory.length > 15) window.eventHistory.pop();
+    
+    window.renderHistory();
+};
+
+window.renderHistory = function() {
+    const logEl = document.getElementById('history-log');
+    if (logEl) {
+        logEl.innerHTML = window.eventHistory.map(event => `
+            <div style="margin-bottom: 8px; border-bottom: 1px solid #222; padding-bottom: 4px;">
+                <span style="color: #d4af37;">[${event.time}]</span> ${event.text}
+            </div>
+        `).join('');
+    }
 };
