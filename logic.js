@@ -1,6 +1,6 @@
 /**
  * МОДУЛ: ГЛАВНА ЛОГИКА - Велика България
- * СТАТУС: НАПЪЛНО ВЪЗСТАНОВЕН И КОРЕКТЕН (Времето работи, Владетелите са безсмъртни)
+ * СТАТУС: ОБНОВЕН И СИНХРОНИЗИРАН (Времето е напълно фиксирано и автономно)
  * Статистика на файловете в проекта: 16
  */
 
@@ -46,9 +46,17 @@ window.initNewGame = function() {
 window.advanceTurn = function() {
     if (!window.currentHero) return;
 
-    // 1. ОБРАБОТКА НА ВРЕМЕТО (Възстановено зареждане) + RPG ОПИТ ЗА ХОД
-    if (window.processTime) window.processTime(); // Механиката за превъртане на сезони/години
+    // 1. АВТОНОМНА ОБРАБОТКА НА ВРЕМЕТО (Зарежда, върти и обновява UI без външна зависимост)
     window.gameTime.turn++;
+    if (window.gameTime.seasonIndex === 3) {
+        window.gameTime.seasonIndex = 0;
+        window.gameTime.year++;
+    } else {
+        window.gameTime.seasonIndex++;
+    }
+
+    // Извиква се външно само ако съществува в mechanics.js за допълнителни събития
+    if (window.processTime) window.processTime(); 
 
     // Главният владетел получава опит за управление на държавата всеки ход
     if (window.gainHeroXP) {
@@ -88,6 +96,7 @@ window.advanceTurn = function() {
         window.updateExpeditionSystem();
     }
 
-    // 6. Опресняване на интерфейса
+    // 6. ОПРЕСНЯВАНЕ НА ИНТЕРФЕЙСА (Задължително опресняване на героя и времето)
     if (window.updateCharacterUI) window.updateCharacterUI(window.currentHero);
+    if (window.updateTimeUI) window.updateTimeUI();
 };
