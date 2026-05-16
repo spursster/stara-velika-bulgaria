@@ -74,5 +74,4 @@ window.bulgarianDynasties = {
     }
 };
 
-// Списъкът Mighty Leaders вече е празен масив - играта ще зарежда динамично лидерите на база техния RPG прогрес!
 window.mightyLeaders = [];
