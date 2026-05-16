@@ -1,7 +1,7 @@
 /**
  * МОДУЛ: ВЕЛИКИТЕ ЕКСПЕДИЦИИ НА СВЕТА - Велика България
  * СТАТУС: НАПЪЛНО СИНХРОНИЗИРАН С RPG_SYSTEM.JS И ИЗПРАВЕН ИНВЕНТАР ЗА ВСИЧКИ ВЛАДЕТЕЛИ
- * СТАРТИРАНЕ: АВТОМАТИЧНО И НЕЗАВИСИМО
+ * КОРЕКЦИЯ: Изолиран текст на бутона в клас за мобилна оптимизация без премигване
  * Статистика на файловете в проекта: 16
  */
 
@@ -612,6 +612,9 @@ window.toggleRulerInventory = function() {
     window.toggleSpecificRulerInventory('main_hero');
 };
 
+/**
+ * РЕНДЕРИРАНЕ НА БУТОНА С ОПТИМИЗИРАН КЛАС ЗА МОБИЛНИ УСТРОЙСТВА
+ */
 window.renderExpeditionButton = function() {
     let btn = document.getElementById('btn-expeditions');
     if (!btn) {
@@ -633,11 +636,14 @@ window.renderExpeditionButton = function() {
             let left = e.duration - e.currentProgress;
             return `• ${e.title.substring(0,10)}... (${left <= 0 ? 'Готова' : left + 'х'})`;
         }).join(' | ');
-        btn.innerHTML = `🌍 Мисии (${window.activeExpeditions.length}/3) <br><span style="font-size: 10px; color: #00ffcc; font-family: Arial;">${shortStatus}</span>`;
+        
+        // Текстът е обвит в клас .expedition-btn-text, а статусът е в долен ред, който също се контролира лесно
+        btn.innerHTML = `🌍 <span class="expedition-btn-text">Мисии (${window.activeExpeditions.length}/3)</span><br><span class="expedition-btn-status" style="font-size: 10px; color: #00ffcc; font-family: Arial;">${shortStatus}</span>`;
         btn.style.background = "linear-gradient(135deg, #1f4037, #99f2c8)";
         btn.style.color = "#fff";
     } else {
-        btn.innerHTML = `🌍 Експедиции (0/3)`;
+        // Задължителен HTML клас около чистия текст, за да работи CSS правилото за скриване
+        btn.innerHTML = `🌍 <span class="expedition-btn-text">Експедиции (0/3)</span>`;
         btn.style.background = "linear-gradient(135deg, #8a2387, #e94057)";
         btn.style.color = "white";
     }
@@ -645,7 +651,6 @@ window.renderExpeditionButton = function() {
 
 /**
  * АВТОМАТИЧНО САМОЗАДЕЙСТВАНЕ ПРИ ЗАРЕЖДАНЕ
- * Подсигурява мигновено показване на бутона без блокиране от браузъра
  */
 (function() {
     if (typeof window.renderExpeditionButton === 'function') {
