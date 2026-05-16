@@ -1,14 +1,14 @@
 /**
  * МОДУЛ: ГЛАВНА ЛОГИКА - Велика България
- * СТАТУС: ОБНОВЕН СЪС СЛУЧАЕН ВЪРХОВЕН ЛИДЕР (13 Равноправни Династии)
+ * СТАТУС: ОБНОВЕН СЪС СЛУЧАЕН ВЪРХОВЕН ЛИДЕР (Фиксирана Синтактична Грешка)
  * При всяко стартиране Върховният владетел се избира напълно случайно от database.js!
  * Статистика на файловете в проекта: 16
  */
 
 window.initNewGame = function() {
     // 1. АЛГОРИТЪМ ЗА ИЗБОР НА СЛУЧАЕН ВЪРХОВЕН ВЛАДЕТЕЛ (От твоя окончателен списък)
-    let selectedName = "Кубрат"; // Fallback по подразбиране
-    let selectedDynasty = "Дуло"; // Fallback по подразбиране
+    let selectedName = "Кубрат"; // Fallback по подразбиране при грешка в базата данни
+    let selectedDynasty = "Дуло"; // Fallback по подразбиране при грешка в базата данни
 
     if (window.bulgarianDynasties) {
         const dynastiesKeys = Object.keys(window.bulgarianDynasties);
@@ -35,10 +35,11 @@ window.initNewGame = function() {
         techLevel: 1
     };
 
-    // 3. ИНИЦИАЛИЗАЦИЯ НА ВРЕМЕТО
+    // 3. ИНИЦИАЛИЗАЦИЯ НА ВРЕМЕТО (Фиксиран ред 41)
     window.gameTime = { 
         year: 1, 
-        seasonIndex: 0, \n        era: "от н.е.",
+        seasonIndex: 0, 
+        era: "от н.е.",
         turn: 1 
     };
     
@@ -98,7 +99,7 @@ window.nextTurn = function() {
     let artifactExtraGold = Math.floor(baseIncome * (goldArtifactModifier / 100));
     window.currentHero.gold += (baseIncome + artifactExtraGold);
 
-    // 3. ЛОГИКА ЗА ОСТАНАЛИТЕ РОДОВЕ
+    // 3. Логика за останалите родове
     Object.keys(window.activeDynasties).forEach(dyn => {
         if (dyn !== window.currentHero.dynasty) {
             window.activeDynasties[dyn].gold += 50;
@@ -114,7 +115,7 @@ window.nextTurn = function() {
         window.updateExpeditionSystem();
     }
 
-    // 6. ОПРЕСНЯВАНЕ НА ИНТЕРФЕЙСА
+    // 6. ОПРЕСНЯВАНЕ НА ИНТЕРФЕЙСА (Задължително опресняване на героя и времето)
     if (window.updateCharacterUI) window.updateCharacterUI(window.currentHero);
     if (window.updateTimeUI) window.updateTimeUI();
 };
