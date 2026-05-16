@@ -122,13 +122,27 @@
             </div>
         </section>
     </main>
-
-    <footer id="bottom-controls">
-        <button class="icon-btn" onclick="window.advanceTurn()" title="Следващ ход">⏳</button>
-        <button class="icon-btn" onclick="window.startBattle()" title="Битка">⚔️</button>
-        <button class="icon-btn" onclick="window.openMarriageMenu()" title="Брак">💍</button>
-        <button class="icon-btn" onclick="window.buyUnits()" title="Обучение">🛡️</button>
-    </footer>
+<!-- КОД ЗА ДОЛНАТА ЛЕНТА В INDEX.HTML -->
+<div id="bottom-controls">
+    <!-- Примерни предходни бутони (напр. Региони, Казарми, Пазар...) -->
+    <button class="icon-btn" onclick="window.openRegionsMap()">🗺️</button>
+    <button class="icon-btn" onclick="window.buyUnits()">🏹</button>
+    
+    <!-- БУТОН БИТКА -->
+    <button class="icon-btn" id="btn-battle" onclick="window.startBattle()">⚔️</button>
+    
+    <!-- БУТОН ЕКСПЕДИЦИЯ (МЕЖДУ БИТКА И БРАК) С ИНДИКАТОР НА ПРОЗРАЧЕН ФОН -->
+    <button class="icon-btn" id="btn-expeditions" onclick="window.openExpeditionsMenu()" title="Експедиции">
+        🧭
+        <div id="expedition-badge" class="mission-badge">0</div>
+    </button>
+    
+    <!-- БУТОН БРАК -->
+    <button class="icon-btn" id="btn-marriage" onclick="window.openMarriageMenu()">👑</button>
+    
+    <!-- Примерни следващи бутони (напр. Инвентар, Дипломация...) -->
+    <button class="icon-btn" onclick="window.openInventory()">🎒</button>
+</div>
 
    
     <script src="mechanics.js"></script>
