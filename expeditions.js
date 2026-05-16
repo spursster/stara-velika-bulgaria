@@ -1,6 +1,7 @@
 /**
  * МОДУЛ: ВЕЛИКИТЕ ЕКСПЕДИЦИИ НА СВЕТА - Велика България
- * СТАТУС: ОБНОВЕН (Динамично отключване на лидери, прогресивна фентъзи цена)
+ * СТАТУС: ОБНОВЕН И КОРИГИРАН (Синхронизиран с 13-те Равноправни Рода)
+ * Вградена е хардкор механика за отключване на нови лидери срещу 20 000 злато.
  * Статистика на файловете в проекта: 16
  */
 
@@ -26,7 +27,8 @@ if (typeof window.showMysticModal !== 'function') {
         let currentBorder = borderColors[type] || '#d4af37';
 
         fallbackModal.style.cssText = `
-            position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);\n            width: 85%; max-width: 440px; background: #161616; border: 2px solid ${currentBorder};
+            position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
+            width: 85%; max-width: 440px; background: #161616; border: 2px solid ${currentBorder};
             padding: 20px; color: white; border-radius: 10px; text-align: center;
             box-shadow: 0 0 25px rgba(0,0,0,0.8); z-index: 110000; font-family: sans-serif;
         `;
@@ -59,26 +61,26 @@ window.buyNewExpeditionLeader = function() {
         return;
     }
 
-    // Вземане на случаен владетел директно от базата данни (13 династии)
     if (!window.bulgarianDynasties) return;
     const dynastiesKeys = Object.keys(window.bulgarianDynasties);
     const randomDynasty = dynastiesKeys[Math.floor(Math.random() * dynastiesKeys.length)];
-    const rulersList = window.bulgarianDynasties[randomDynasty].rulers;
+    const rulersList = window.bulgarianDynadties ? window.bulgarianDynasties[randomDynasty].rulers : [];
+    
+    if (!rulersList || rulersList.length === 0) return;
     const randomRulerName = rulersList[Math.floor(Math.random() * rulersList.length)];
 
-    // Проверка дали този владетел вече не е активен (за избягване на дублиране)
+    // Избягване на дублиране на водачи
     let exists = window.mightyLeaders.some(l => l.name === randomRulerName) || window.currentHero.name === randomRulerName;
     if (exists) {
-        // Ако съществува, опитай пак автономно веднъж
         window.buyNewExpeditionLeader();
         return;
     }
 
-    // Уддържане на златото
+    // Удържане на златото
     window.currentHero.gold -= currentCost;
     window.unlockedLeadersCount++;
 
-    // Създаване на нов RPG лидер в палатата
+    // Създаване на новия водач
     let newLeader = {
         name: randomRulerName,
         dynasty: randomDynasty,
@@ -87,7 +89,6 @@ window.buyNewExpeditionLeader = function() {
         heroPower: 120
     };
 
-    // Активиране на RPG структурата му
     if (window.initializeHeroRPGData) {
         window.initializeHeroRPGData(newLeader);
     }
@@ -100,23 +101,26 @@ window.buyNewExpeditionLeader = function() {
         "triumph"
     );
 
-    // Преначертаване на прозореца
     window.openExpeditionCenter();
     if (window.updateCharacterUI) window.updateCharacterUI(window.currentHero);
 };
 
 /**
- * ОТВАРЯНЕ НА ЕКСПЕДИЦИОННИЯ ЦЕНТЪР (UI)
+ * ОТВАРЯНЕ НА ЕКСПЕДИЦИОННИЯ ЦЕНТЪР (UI) - ИЗЦЯЛО КОРЕКТИРАНА ФУНКЦИЯ
  */
 window.openExpeditionCenter = function() {
     let old = document.getElementById('expedition-modal');
     if (old) old.remove();
 
     // СИНХРОНИЗАЦИЯ: Подсигуряваме, че текущият Върховен владетел винаги фигурира в избора при липса на купени
-    let allAvailableLeaders = [...window.mightyLeaders];
-    let isCurrentHeroInList = allAvailableLeaders.some(l => l.name === window.currentHero.name);
-    if (!isCurrentHeroInList) {
-        allAvailableLeaders.unshift(window.currentHero);
+    let allAvailableLeaders = [];
+    if (window.mightyLeaders) allAvailableLeaders = [...window.mightyLeaders];
+    
+    if (window.currentHero) {
+        let isCurrentHeroInList = allAvailableLeaders.some(l => l.name === window.currentHero.name);
+        if (!isCurrentHeroInList) {
+            allAvailableLeaders.unshift(window.currentHero);
+        }
     }
 
     let modal = document.createElement('div');
@@ -148,13 +152,13 @@ window.openExpeditionCenter = function() {
         let status = "В Палатата (Свободен)";
         let isAssigned = window.activeExpeditions.some(e => e.leaderName === leader.name);
         if (isAssigned) status = "<span style='color:#e94057;'>На мисия в момента</span>";
-        if (leader.name === window.currentHero.name) status = "<span style='color:#ffd700;'>👑 Текущ Върховен Лидер</span>";
+        if (window.currentHero && leader.name === window.currentHero.name) status = "<span style='color:#ffd700;'>👑 Текущ Върховен Лидер</span>";
 
         html += `
             <div style="background:#222; border:1px solid #444; border-radius:6px; padding:15px; position:relative;">
                 <b style="font-size:16px; color:#fff;">${leader.name}</b><br>
                 <span style="font-size:12px; color:#aaa;">Род: ${leader.dynasty}</span><br>
-                <span style="font-size:12px; color:#ffd700;">RPG Ниво: ${leader.level || 1} (Класа: ${leader.currentClass || "Водач"})</span><br>
+                <span style="font-size:12px; color:#ffd700;">RPG Ниво: ${leader.level || 1}</span><br>
                 <span style="font-size:12px; color:#4caf50;">Сила: ${leader.heroPower || 120}</span><br>
                 <div style="margin-top:8px; font-size:11px; border-top:1px solid #333; padding-top:6px; color:#ddd;">Статус: ${status}</div>
             </div>
@@ -243,19 +247,18 @@ window.startQuest = function(questId) {
 };
 
 /**
- * АВТОНОМЕН НАПРЕДЪК НА ЕКСПЕДИЦИИТЕ (Извиква се при натискане на нов ход в logic.js)
+ * АВТОНОМЕН НАПРЕДЪК НА ЕКСПЕДИЦИИТЕ
  */
 window.updateExpeditionSystem = function() {
-    if (window.activeExpeditions.length === 0) return;
+    if (!window.activeExpeditions || window.activeExpeditions.length === 0) return;
 
     for (let i = window.activeExpeditions.length - 1; i >= 0; i--) {
         let exp = window.activeExpeditions[i];
         exp.currentProgress += 1;
 
         if (exp.currentProgress >= exp.duration) {
-            // Мисията завършва
             let roll = Math.random() * 100;
-            let targetLeader = (window.currentHero.name === exp.leaderName) ? window.currentHero : window.mightyLeaders.find(l => l.name === exp.leaderName);
+            let targetLeader = (window.currentHero && window.currentHero.name === exp.leaderName) ? window.currentHero : window.mightyLeaders.find(l => l.name === exp.leaderName);
 
             if (!targetLeader) {
                 window.activeExpeditions.splice(i, 1);
@@ -263,9 +266,8 @@ window.updateExpeditionSystem = function() {
             }
 
             if (roll < exp.risk) {
-                // Провал поради риска на мисията
                 let lostTroops = Math.floor(Math.random() * 80) + 20;
-                window.currentHero.armySize = Math.max(0, window.currentHero.armySize - lostTroops);
+                if (window.currentHero) window.currentHero.armySize = Math.max(0, window.currentHero.armySize - lostTroops);
 
                 window.showMysticModal(
                     "⚠️ Провал на Експедицията!",
@@ -273,10 +275,8 @@ window.updateExpeditionSystem = function() {
                     "expedition"
                 );
             } else {
-                // Успешна мисия
-                window.currentHero.gold += exp.goldReward;
+                if (window.currentHero) window.currentHero.gold += exp.goldReward;
                 
-                // Начисляване на RPG опит на конкретния владетел, водил мисията
                 if (window.gainExperience) {
                     window.gainExperience(targetLeader, exp.xpReward);
                 } else {
@@ -284,8 +284,8 @@ window.updateExpeditionSystem = function() {
                 }
 
                 window.showMysticModal(
-                    "🎉 Триумфално Завръщане!",
-                    `Владетелят <b>${exp.leaderName}</b> се завърна успешно от "<b>${exp.title}</b>"!<br> спечелени: <span style='color:#4caf50;'>+${exp.goldReward} злато</span> за съкровищницата и <span style='color:#ffd700;'>+${exp.xpReward} опит (XP)</span> за личния му прогрес!`,
+                    "🎉 ТРИУМФАЛНО ЗАВРЪЩАНЕ!",
+                    `Владетелят <b>${exp.leaderName}</b> се завърна успешно от "<b>${exp.title}</b>"!<br>Спечелени: <span style='color:#4caf50;'>+${exp.goldReward} злато</span> за съкровищницата и <span style='color:#ffd700;'>+${exp.xpReward} опит (XP)</span> за личния му прогрес!`,
                     "triumph"
                 );
             }
@@ -298,7 +298,7 @@ window.updateExpeditionSystem = function() {
 };
 
 /**
- * РЕНДЕРИРАНЕ НА МАЛКИЯ РЪЧЕН БУТОН НА ЕКРАНА
+ * РЕНДЕРИРАНЕ НА БУТОНА НА ЕКРАНА
  */
 window.renderExpeditionButton = function() {
     let btn = document.getElementById('btn-expeditions');
@@ -316,7 +316,7 @@ window.renderExpeditionButton = function() {
         document.body.appendChild(btn);
     }
 
-    if (window.activeExpeditions.length > 0) {
+    if (window.activeExpeditions && window.activeExpeditions.length > 0) {
         let shortStatus = window.activeExpeditions.map(e => {
             let left = e.duration - e.currentProgress;
             return `• ${e.title.substring(0,10)}... (${left <= 0 ? 'Готова' : left + 'х'})`;
@@ -327,5 +327,5 @@ window.renderExpeditionButton = function() {
     }
 };
 
-// Самоинициализация на визуалния бутон при зареждане на скрипта
+// Самоинициализация
 window.renderExpeditionButton();
