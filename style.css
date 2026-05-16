@@ -1,96 +1,83 @@
-/* ЕПИЧЕН ФОН НА ИГРАТА С ТЪМЕН ФИЛТЪР ЗА КОНТРАСТ */
-body {
+/* ==========================================================================
+   ФИГАТУРА НА ИГРАТА ВЕЛИКА БЪЛГАРИЯ - ФИНАЛЕН СТЪКЛЕН ДИЗАЙН С ЕПИЧЕН АРТ
+   ========================================================================== */
+
+/* ЕПИЧЕН ФОН НА ИГРАТА ОТ САМИЯ ВРЪХ С ТЪМЕН ФИЛТЪР */
+html, body {
+    margin: 0 !important;
+    padding: 0 !important;
+    height: 100vh !important;
     background: linear-gradient(rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.4)), 
                 url('https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEjJuReyp2P1EHVmb8i_LXu6AQhvvvByWOCKKl4sVeQTuIKnvmu0dZ64-jCPAw7hisWSrzei_lJeAS3tvQvYHuV5vKWGvc4ZRWsd5XZpgkX-KbUA0o9C2MMXiV1H0NGzVhJEj1iRxeT67HYEAe1VTmjmeI__JKiOCkz6hVVbo6O7gbqfsABylSvdnA-P7VAq/s3072/_d012d68d-c196-4d76-be3e-0a44b9f7ccfa.jpeg') !important;
     background-size: cover !important;
-    background-position: center !important;
+    background-position: center top !important;
     background-repeat: no-repeat !important;
     background-attachment: fixed !important;
-    margin: 0;
-    padding: 0;
-    height: 100vh;
-    overflow: hidden;
+    overflow: hidden !important;
 }
 
-/* Полупрозрачен матов ефект за левия панел, за да прозира артът зад него */
-#left-sidebar {
-    background: rgba(13, 13, 13, 0.75) !important;
+/* ⏳ СТЪКЛЕН ФОН И ЗЛАТНА РАМКА ЗА ВРЕМЕТО ГОРЕ ВЛЯВО ⏳ */
+#time-container {
+    background: rgba(20, 20, 20, 0.6) !important;
     backdrop-filter: blur(10px) !important;
     -webkit-backdrop-filter: blur(10px) !important;
+    border: 1px solid #d4af37 !important;
+    border-radius: 6px !important;
+    padding: 6px 12px !important;
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: center !important;
+}
+
+/* ЛЕВИЯТ ПАНЕЛ СТАВА ИЗЦЯЛО ПРОЗРАЧЕН ЗА ВЪТРЕШНИТЕ СЕКЦИИ */
+#left-sidebar, #left-panel {
+    background: transparent !important;
     border-right: 1px solid rgba(212, 175, 55, 0.2) !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
 }
 
-/* ГЛАВЕН СТИЛ - ВЕЛИКА БЪЛГАРИЯ (FINAL MINIMAL) */
-
-:root {
-    --gold: #d4af37;
-    --gold-glow: rgba(212, 175, 55, 0.3);
-    --dark-bg: #050505;
+/* СТЪКЛЕН ЕФЕКТ ЗА СЕКЦИИТЕ В ЛЯВО (ДВОРЕЦ, ЛЕТОПИС, ВОЕННА МОЩ) */
+.panel-section, .time-section, #provinces-list, #left-sidebar > div, #left-panel > div {
+    background: rgba(20, 20, 20, 0.6) !important;
+    backdrop-filter: blur(10px) !important;
+    -webkit-backdrop-filter: blur(10px) !important;
+    border: 1px solid #d4af37 !important;
+    border-radius: 8px !important;
+    padding: 12px !important;
+    margin-bottom: 15px !important;
+    box-sizing: border-box !important;
 }
 
-* { box-sizing: border-box; }
-
-body { 
-    background-color: var(--dark-bg); 
-    color: #eee; 
-    font-family: 'Montserrat', sans-serif; 
-    margin: 0; 
-    padding: 0;
-    overflow: hidden; 
-    height: 100vh;
-    display: flex;
-    flex-direction: column;
+/* 👑 ГОРЕН ХОРИЗОНТАЛЕН ПАНЕЛ ЗА ВЛАДЕТЕЛИТЕ (ЗА 4 НА ТЕЛЕФОН / 6 НА КОМПЮТЪР) 👑 */
+#ruler-card, .leader-card, .character-card, .top-leader-container, 
+[id*="leader"], [class*="leader-card"], [class*="ruler"] {
+    background: rgba(20, 20, 20, 0.6) !important;
+    backdrop-filter: blur(10px) !important;
+    -webkit-backdrop-filter: blur(10px) !important;
+    border: 1px solid #d4af37 !important;
+    border-radius: 10px !important;
+    margin: 15px auto !important;
+    padding: 12px 15px !important;
+    width: 92% !important;
+    max-width: 1200px !important;
+    display: flex !important;
+    flex-direction: row !important; 
+    justify-content: space-around !important;
+    align-items: center !important;
+    gap: 15px !important;
+    box-sizing: border-box !important;
 }
 
-/* BOTTOM CONTROLS */
-#bottom-controls {
-    height: 90px;
-    background: #111;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    gap: 12px; /* Намален от 20px за по-добро събиране */
-    border-top: 1px solid var(--gold);
-    padding: 0 10px;
+/* Изчистване на индивидуалните рамки вътре в галерията */
+.leader-avatar-wrapper, .avatar-container, [class*="avatar"] {
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
 }
 
-.icon-btn {
-    position: relative; /* За да може индикаторът да се позиционира правилно */
-    flex: 1; /* Кара бутоните да се свиват и разтягат равномерно */
-    max-width: 55px; /* Намален леко размер за телефон и компютър */
-    height: 55px; /* Намален леко размер */
-    background: rgba(20, 20, 20, 0.9);
-    border: 1px solid var(--gold);
-    color: var(--gold);
-    font-size: 22px; /* Леко намален шрифт */
-    border-radius: 12px;
-    cursor: pointer;
-    transition: 0.3s;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-}
-
-.icon-btn:hover {
-    background: var(--gold);
-    color: #000;
-    transform: translateY(-5px);
-}
-
-/* Стил за новия индикатор на експедициите */
-.mission-badge {
-    position: absolute;
-    top: -5px;
-    right: -5px;
-    background: rgba(0, 0, 0, 0.6); /* Прозрачен фон */
-    color: var(--gold);
-    border: 1px solid var(--gold);
-    border-radius: 50%;
-    width: 20px;
-    height: 20px;
-    font-size: 11px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-weight: bold;
+/* ТЕКСТОВИ СЕНКИ ЗА КРИСТАЛНА ЧЕТИМОСТ НАВСЯКЪДЕ */
+.leader-card div, .leader-card h3, [class*="leader"] span, #top-bar div, #top-bar span, 
+.panel-section h3, .panel-section div, h4, #left-sidebar span, #left-sidebar div {
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 1), 0 4px 8px rgba(0, 0, 0, 0.8) !important;
 }
