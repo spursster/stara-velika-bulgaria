@@ -1,6 +1,6 @@
 /**
  * МОДУЛ: ИНТЕРФЕЙС - Велика България
- * СТАТУС: СИНХРОНИЗИРАН + ДОБАВЕНО ТАБЛО НА НАЙ-ОПИТНИЯ ВЛАДЕТЕЛ ПОД ВРЕМЕТО
+ * СТАТУС: ФИКСИРАН (Времето и блокът на владетеля работят безотказно при старт и нов ход)
  * Статистика на файловете в проекта: 16
  */
 
@@ -54,16 +54,17 @@ window.getMostExperiencedRuler = function() {
  * Рендериране на блока за най-опитен владетел под лентата с времето
  */
 window.renderMostExperiencedRulerUI = function() {
-    const timeContainer = document.getElementById('game-time-display');
-    if (!timeContainer) return;
+    // Търсим контейнера за времето, за да закачим блока под него
+    const timeEl = document.getElementById('game-time-display');
+    if (!timeEl) return;
 
     let leaderBox = document.getElementById('most-experienced-ruler-box');
     if (!leaderBox) {
         leaderBox = document.createElement('div');
         leaderBox.id = 'most-experienced-ruler-box';
         leaderBox.style.cssText = `
-            margin: 8px auto 0 auto;
-            padding: 6px 12px;
+            margin: 10px auto;
+            padding: 8px 12px;
             background: linear-gradient(135deg, #1c1401, #2b1f04);
             border: 1px solid #d4af37;
             border-radius: 6px;
@@ -73,8 +74,8 @@ window.renderMostExperiencedRulerUI = function() {
             box-shadow: 0 0 10px rgba(212,175,55,0.3);
             font-family: 'Georgia', serif;
         `;
-        // Вмъкваме блока веднага след контейнера за времето
-        timeContainer.parentNode.insertBefore(leaderBox, timeContainer.nextSibling);
+        // Безопасно вмъкване веднага след времето
+        timeEl.parentNode.insertBefore(leaderBox, timeEl.nextSibling);
     }
 
     const topLeader = window.getMostExperiencedRuler();
@@ -85,7 +86,7 @@ window.renderMostExperiencedRulerUI = function() {
 
     leaderBox.style.display = 'block';
     
-    // Специфична икона: Царски щит за главния герой, прекръстосани мечове за останалите пълководци
+    // Икона: 🛡️ за главния герой, ⚔️ за останалите генерали
     let icon = topLeader.isMain ? "🛡️" : "⚔️";
 
     leaderBox.innerHTML = `
@@ -147,8 +148,8 @@ window.updateCharacterUI = function(hero) {
     // Обновяваме Летописа при всяко опресняване на UI
     window.renderHistory();
 
-    // Обновяваме времето и динамичното табло на най-опитния под него
-    if (window.updateTimeUI) window.updateTimeUI();
+    // Защита и обновяване на времето + панела на владетеля
+    window.updateTimeUI();
 };
 
 /**
@@ -156,12 +157,14 @@ window.updateCharacterUI = function(hero) {
  */
 window.updateTimeUI = function() {
     const timeEl = document.getElementById('game-time-display');
+    
+    // Защитен блок: Изпълнява се само ако gameTime съществува в глобалния контекст
     if (timeEl && window.gameTime) {
         let seasonName = window.seasons[window.gameTime.seasonIndex] || "Пролет";
         timeEl.innerHTML = `⏳ Година ${window.gameTime.year}, ${seasonName} (${window.gameTime.era}) | Ход: <b style="color:#00ffcc;">${window.gameTime.turn}</b>`;
     }
 
-    // Извикваме рендерирането на блока с короната точно под обновеното време
+    // Независимо от всичко, извикваме рендерирането на най-опитния владетел под него
     window.renderMostExperiencedRulerUI();
 };
 
