@@ -115,6 +115,11 @@ window.nextTurn = function() {
         window.updateExpeditionSystem();
     }
 
+    // ДОБАВИ ТОВА ТУК: Опресняване на графичния бадж на бутона
+if (window.updateExpeditionBadge) {
+    window.updateExpeditionBadge();
+}
+
     // 6. ОПРЕСНЯВАНЕ НА ИНТЕРФЕЙСА (Задължително опресняване на героя и времето)
     if (window.updateCharacterUI) window.updateCharacterUI(window.currentHero);
     if (window.updateTimeUI) window.updateTimeUI();
