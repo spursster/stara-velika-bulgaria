@@ -1,10 +1,14 @@
 /**
  * МОДУЛ: ИНТЕРФЕЙС - Велика България
- * СТАТУС: ФИКСИРАН (Опитът и нивата се опресняват динамично след експедиции и ходове)
+ * СТАТУС: НАПЪЛНО ЗАВЪРШЕН И СИНХРОНИЗИРАН (Нива и XP се изчисляват динамично от heroPower)
  * Статистика на файловете в проекта: 16
  */
 
 window.eventHistory = [];  
+
+if (!window.autoLevelState) {
+    window.autoLevelState = {};
+}
 
 /**
  * Глобална функция за превключване на Цял Екран (Full Screen)
@@ -29,34 +33,75 @@ window.toggleGameFullScreen = function() {
 };
 
 /**
- * Помощна функция за сигурно извличане на актуалното RPG ниво и опит
+ * Глобална функция за превключване на AUTO режима
+ */
+window.toggleAutoLevel = function(leaderName) {
+    window.autoLevelState[leaderName] = !window.autoLevelState[leaderName];
+    if (window.renderTop6LeadersUI) window.renderTop6LeadersUI();
+};
+
+/**
+ * ГЕНЕРАТОР НА RPG СТАТИСТИКИ: Изчислява виртуално ниво и XP прогрес на база реалния heroPower от играта
  */
 function getCalculatedLeaderStats(leader) {
-    if (!leader) return { level: 1, xp: 0, maxXp: 100 };
+    if (!leader) return { level: 1, xpPercent: 0 };
 
-    // Проверяваме дали играта записва опита в различни променливи (xp, experience, exp)
-    let currentXp = leader.xp || leader.experience || leader.exp || 0;
-    let currentLevel = leader.level || leader.lvl || 1;
+    // Взимаме реалната бойна мощ (ако липсва, приемаме база 100)
+    let power = leader.heroPower || 100;
 
-    // Автоматична RPG математика: ако опитът нарасне, но играта е пропуснала да вдигне нивото в обекта
-    // Формула: Всяко ниво изисква Ниво * 100 XP (1 ниво = 100, 2 ниво = 200 и т.н.)
-    let calculatedMaxXp = currentLevel * 100;
+    // Всяко ниво е на всеки 25 точки мощност над 100
+    // Ниво 1: 100-124 | Ниво 2: 125-149 | Ниво 3: 150-174 | Ниво 4: 175-199 | Ниво 5: 200-224 | Ниво 6: 225-249 | Ниво 7: 250+
+    let calculatedLevel = Math.max(1, Math.floor((power - 100) / 25) + 1);
     
-    // Ако натрупаният опит надхвърли нужния за нивото, преизчисляваме автоматично за интерфейса
-    if (currentXp >= calculatedMaxXp && calculatedMaxXp > 0) {
-        currentLevel = Math.floor(currentXp / 100) + 1;
-        calculatedMaxXp = currentLevel * 100;
-    }
+    // Намираме колко точки има събрани вътре в текущото ниво
+    let pointsInCurrentLevel = (power - 100) % 25;
+    if (power < 100) pointsInCurrentLevel = 0;
+
+    // Превръщаме остатъка в точен процент за синята прогрес лента (максимум 25 точки = 100%)
+    let percent = Math.min(100, Math.floor((pointsInCurrentLevel / 25) * 100));
+
+    // Записваме изчисленото ниво обратно в обекта, за да може другите ти системи да го четат, ако им трябва
+    leader.level = calculatedLevel;
 
     return {
-        level: currentLevel,
-        xp: currentXp,
-        maxXp: leader.maxXp || calculatedMaxXp
+        level: calculatedLevel,
+        xpPercent: percent
     };
 }
 
 /**
- * Функция за динамично генериране на Топ 6 най-опитни владетели
+ * AUTO-LEVEL ИЗПЪЛНИТЕЛ: Дава автоматичен бонус към ресурсите при засичане на качено ниво
+ */
+function checkAndExecuteAutoLevel(leader, currentLevel) {
+    if (!leader || !window.autoLevelState[leader.name]) return;
+
+    if (!leader.lastProcessedLevel) {
+        leader.lastProcessedLevel = currentLevel;
+        return;
+    }
+
+    // Ако изчисленото ниво е по-високо от последното записано
+    if (currentLevel > leader.lastProcessedLevel) {
+        let levelsGained = currentLevel - leader.lastProcessedLevel;
+        let currentClass = leader.currentClass || "Пълководец";
+
+        // Тъй като нивото се вдига от самата сила (heroPower), тук даваме допълнителни икономически/военни бонуси
+        if (currentClass === "Велик Кан") {
+            leader.gold = (leader.gold || 0) + (levelsGained * 300); // Бонус злато за държавата
+        } else {
+            leader.armySize = (leader.armySize || 0) + (levelsGained * 75); // Бонус нови воини към армията
+        }
+
+        if (window.showAdvisorMsg) {
+            window.showAdvisorMsg(`Кан ${leader.name} качи ниво и автоматично разпредели бонуси за род ${leader.dynasty}!`);
+        }
+
+        leader.lastProcessedLevel = currentLevel;
+    }
+}
+
+/**
+ * РЕНДЕРИРАНЕ НА ТОП 6 ЛЕНТАТА (Напълно защитена, без премигвания)
  */
 window.renderTop6LeadersUI = function() {
     let targetContainer = document.getElementById('game-time-display')?.parentNode || document.querySelector('.main-content') || document.body;
@@ -102,29 +147,26 @@ window.renderTop6LeadersUI = function() {
         }
     }
 
-    // Извличане и СИНХРОНИЗАЦИЯ на данните в реално време
     let allLeaders = [];
     if (window.currentHero) {
-        let stats = getCalculatedLeaderStats(window.currentHero);
+        let rpgStats = getCalculatedLeaderStats(window.currentHero);
         allLeaders.push({ 
             ...window.currentHero, 
             isMain: true, 
-            level: stats.level, 
-            xp: stats.xp, 
-            maxXp: stats.maxXp, 
+            level: rpgStats.level, 
+            xpPercent: rpgStats.xpPercent, 
             currentClass: window.currentHero.currentClass || "Велик Кан" 
         });
     }
     
     if (window.mightyLeaders && window.mightyLeaders.length > 0) {
         window.mightyLeaders.forEach(ml => { 
-            let stats = getCalculatedLeaderStats(ml);
+            let rpgStats = getCalculatedLeaderStats(ml);
             allLeaders.push({ 
                 ...ml, 
                 isMain: false, 
-                level: stats.level, 
-                xp: stats.xp, 
-                maxXp: stats.maxXp, 
+                level: rpgStats.level, 
+                xpPercent: rpgStats.xpPercent, 
                 currentClass: ml.currentClass || "Пълководец" 
             }); 
         });
@@ -136,32 +178,42 @@ window.renderTop6LeadersUI = function() {
     }
     leadersBar.style.display = 'flex';
 
-    // Сортиране по актуално преизчислено ниво и опит
-    allLeaders.sort((a, b) => (b.level !== a.level) ? (b.level - a.level) : (b.xp - a.xp));
+    allLeaders.sort((a, b) => b.level - a.level || b.xpPercent - a.xpPercent);
     const top6 = allLeaders.slice(0, 6);
     window.realMainHeroReference = window.currentHero;
 
     leadersBar.innerHTML = top6.map((leader, index) => {
         let icon = leader.isMain ? "🛡️" : "⚔️";
-        
-        // Изчисляване на реалния процент на прогреса
-        let xpPercent = leader.maxXp > 0 ? Math.min(100, Math.floor((leader.xp / leader.maxXp) * 100)) : 0;
-        
         let borderGlow = index === 0 ? "border: 2px solid #ffd700; box-shadow: 0 0 8px rgba(255,215,0,0.4);" : "border: 1px solid #d4af37;";
         let crownSize = index === 0 ? "18px" : "14px";
         let crownGlow = index === 0 ? "filter: drop-shadow(0 0 5px #ffd700);" : "opacity: 0.7;";
 
+        // Проверка и изпълнение на автоматичното разпределяне
+        checkAndExecuteAutoLevel(leader, leader.level);
+
+        let isAutoOn = window.autoLevelState[leader.name] || false;
+        let autoBtnBg = isAutoOn ? "#00ffcc" : "rgba(212,175,55,0.12)";
+        let autoBtnColor = isAutoOn ? "#000" : "#ffd700";
+        let autoBtnBorder = isAutoOn ? "1px solid #00ffcc" : "1px solid rgba(212,175,55,0.4)";
+
         return `
             <div class="leader-rpg-card" onclick="window.inspectSpecificRuler(${index}, ${JSON.stringify(leader).replace(/"/g, '&quot;')})" style="text-align: center; display: flex; flex-direction: column; align-items: center; cursor: pointer; transition: transform 0.2s; scroll-snap-align: start;" onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">
                 <div class="leader-name-text" style="font-size: 0.72em; font-weight: bold; color: #ffd700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 92px; line-height: 1.2;">${leader.name}</div>
-                <div class="leader-class-text" style="font-size: 0.58em; color: #aaa; margin-bottom: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 92px;">${leader.currentClass}</div>
-                <div style="position: relative; display: flex; flex-direction: column; align-items: center; margin-bottom: 4px;">
+                <div class="leader-class-text" style="font-size: 0.58em; color: #aaa; margin-bottom: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 92px;">${leader.currentClass}</div>
+                
+                <div style="position: relative; display: flex; flex-direction: column; align-items: center; margin-bottom: 3px;">
                     <div style="font-size: ${crownSize}; ${crownGlow}; line-height: 1; margin-bottom: -3px; z-index: 2;">👑</div>
-                    <div class="leader-avatar-box" style="width: 58px; height: 58px; background: rgba(0,0,0,0.5); border-radius: 8px; display: flex; justify-content: center; align-items: center; font-size: 24px; box-sizing: border-box; ${borderGlow}">${icon}</div>
+                    <div class="leader-avatar-box" style="width: 54px; height: 54px; background: rgba(0,0,0,0.5); border-radius: 8px; display: flex; justify-content: center; align-items: center; font-size: 22px; box-sizing: border-box; ${borderGlow}">${icon}</div>
                 </div>
-                <div style="font-size: 0.68em; font-weight: bold; color: #00ffcc; line-height: 1.1; margin-bottom: 2px;">Н. ${leader.level}</div>
+
+                <div style="font-size: 0.68em; font-weight: bold; color: #00ffcc; line-height: 1.1; margin-bottom: 3px;">Н. ${leader.level}</div>
+                
+                <button onclick="event.stopPropagation(); window.toggleAutoLevel('${leader.name}')" style="font-size: 8px; font-weight: bold; padding: 1px 5px; background: ${autoBtnBg}; color: ${autoBtnColor}; border: ${autoBtnBorder}; border-radius: 3px; cursor: pointer; margin-bottom: 5px; transition: all 0.15s;">
+                    AUTO
+                </button>
+
                 <div class="leader-xp-bar-container" style="width: 66px; height: 4px; background: #333; border-radius: 2px; overflow: hidden; border: 1px solid rgba(212,175,55,0.2); box-sizing: border-box;">
-                    <div style="width: ${xpPercent}%; height: 100%; background: linear-gradient(90deg, #00ccff, #00ffcc); transition: width 0.3s;"></div>
+                    <div style="width: ${leader.xpPercent}%; height: 100%; background: linear-gradient(90deg, #00ccff, #00ffcc);"></div>
                 </div>
             </div>
         `;
@@ -169,11 +221,15 @@ window.renderTop6LeadersUI = function() {
 };
 
 /**
- * Интелигентно превключване за инспектиране на инвентар
+ * ИНСПЕКТИРАНЕ НА ИНВЕНТАР (Напълно работещ с реални референции)
  */
 window.inspectSpecificRuler = function(index, leaderData) {
     if (!leaderData) return;
-    window.currentHero = leaderData;
+    
+    let realLeader = (leaderData.isMain) ? window.realMainHeroReference : window.mightyLeaders.find(l => l.name === leaderData.name);
+    if (!realLeader) realLeader = leaderData;
+
+    window.currentHero = realLeader;
 
     if (typeof window.toggleRulerInventory === 'function') {
         const existingModal = document.getElementById('inventory-modal');
@@ -197,44 +253,42 @@ window.inspectSpecificRuler = function(index, leaderData) {
                 }
                 ownerHeader.innerHTML = `
                     <span style="color: #ccc; font-size: 0.8em; letter-spacing: 1px;">ИНВЕНТАР НА:</span><br>
-                    <strong style="color: #ffd700; font-size: 1.1em;">Кан ${leaderData.name}</strong> 
-                    <span style="color: #00ffcc; font-size: 0.9em;">(Н. ${leaderData.level} ${leaderData.currentClass})</span>
+                    <strong style="color: #ffd700; font-size: 1.1em;">Кан ${realLeader.name}</strong> 
+                    <span style="color: #00ffcc; font-size: 0.9em;">(Н. ${realLeader.level} ${realLeader.currentClass || "Водач"})</span>
                 `;
 
                 const closeBtn = modal.querySelector("button");
                 if (closeBtn) {
                     closeBtn.onclick = function() {
                         if (modal) modal.remove();
-                        if (window.realMainHeroReference) {
-                            window.currentHero = window.realMainHeroReference;
-                        }
+                        if (window.realMainHeroReference) { window.currentHero = window.realMainHeroReference; }
                         if (window.updateCharacterUI) window.updateCharacterUI(window.currentHero);
                     };
                 }
             }
         }, 80);
-    } else {
-        alert(`Кан ${leaderData.name}\nРод ${leaderData.dynasty} [cite: 2026-02-03]\nНиво: ${leaderData.level}`);
     }
 };
 
 window.updateCharacterUI = function(hero) {
     if (!hero) return;
 
-    // --- 1. ЛЯВ ПАНЕЛ (Владетел, Родове, Full Screen и Летопис) ---
+    // Изчисляваме нивата локално при всяко обновяване
+    let stats = getCalculatedLeaderStats(hero);
+
     const leftSidebar = document.getElementById('provinces-list');
     if (leftSidebar) {
         leftSidebar.innerHTML = `
             <div style="text-align: center; padding: 10px; background: rgba(212, 175, 55, 0.1); border: 1px solid #d4af37; border-radius: 5px; margin-bottom: 15px;">
                 <h3 style="margin: 0; color: #d4af37;">ВЛАДЕТЕЛ</h3>
                 <div style="font-size: 1.2em; margin-top: 5px;">Кан ${hero.name}</div>
-                <div style="font-size: 0.85em; color: #aaa;">Род: ${hero.dynasty} | ${hero.age} г.</div>
+                <div style="font-size: 0.85em; color: #aaa;">Род: ${hero.dynasty} | ${hero.age} г. | Ниво ${stats.level}</div>
             </div>
             
             <div style="margin-bottom: 20px;">
                 <h4 style="color: #d4af37; border-bottom: 1px solid #444; padding-bottom: 5px; letter-spacing: 1px; display: flex; justify-content: space-between; align-items: center;">
                     <span>СЪВЕТ НА РОДОВЕТЕ</span>
-                    <span onclick="window.toggleGameFullScreen()" title="Цял Екран" style="cursor: pointer; font-size: 14px; padding: 2px 6px; background: rgba(212,175,55,0.15); border: 1px solid #d4af37; border-radius: 4px; transition: background 0.2s;" onmouseover="this.style.background='rgba(212,175,55,0.35)'" onmouseout="this.style.background='rgba(212,175,55,0.15)'">📺</span>
+                    <span onclick="window.toggleGameFullScreen()" title="Цял Екран" style="cursor: pointer; font-size: 14px; padding: 2px 6px; background: rgba(212,175,55,0.15); border: 1px solid #d4af37; border-radius: 4px;">📺</span>
                 </h4>
                 <div style="font-size: 0.85em; max-height: 150px; overflow-y: auto; background: rgba(0,0,0,0.3); padding: 8px; border-radius: 4px;">
                     ${Object.keys(window.activeDynasties || {}).map(clanName => {
@@ -257,7 +311,6 @@ window.updateCharacterUI = function(hero) {
         `;
     }
 
-    // --- 2. ГОРЕН ПАНЕЛ (Ресурси) ---
     const goldEl = document.getElementById('stat-gold');
     const armyEl = document.getElementById('stat-army');
     const powerEl = document.getElementById('stat-power');
@@ -267,16 +320,11 @@ window.updateCharacterUI = function(hero) {
     if (powerEl) powerEl.innerText = hero.heroPower;
     
     window.renderHistory();
-    
-    // ПРЕДИЗВИКВА СЕ ОПРЕСНЯВАНЕ: Чете новите преизчислени данни веднага
     window.renderTop6LeadersUI();
 
     if (window.updateTimeUI) window.updateTimeUI();
 };
 
-/**
- * ДОБАВЯНЕ НА СЪОБЩЕНИЕ И ВИЗУАЛИЗАЦИЯ
- */
 window.showAdvisorMsg = function(msg) {
     const year = window.gameTime ? window.gameTime.year : 1;
     const era = window.gameTime ? window.gameTime.era : "от н.е.";
