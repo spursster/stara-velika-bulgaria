@@ -1,13 +1,13 @@
 /**
  * МОДУЛ: ИНТЕРФЕЙС - Велика България
- * СТАТУС: НАДГРАДЕН (Добавен Full Screen бутон в Съвета на Родовете + Мобилен Топ 6)
+ * СТАТУС: НАДГРАДЕН (Добавено име на владетел в инвентара + Full Screen + Топ 6)
  * Статистика на файловете в проекта: 16
  */
 
 window.eventHistory = [];  
 
 /**
- * Глобална функция за превключване на Цял Екран (Full Screen) - Работи винаги
+ * Глобална функция за превключване на Цял Екран (Full Screen)
  */
 window.toggleGameFullScreen = function() {
     if (!document.fullscreenElement && 
@@ -15,19 +15,17 @@ window.toggleGameFullScreen = function() {
         !document.webkitFullscreenElement && 
         !document.msFullscreenElement) {
         
-        // Влизане в Full Screen режим
         const docEl = document.documentElement;
         if (docEl.requestFullscreen) {
             docEl.requestFullscreen();
-        } else if (docEl.mozRequestFullScreen) { // Firefox
+        } else if (docEl.mozRequestFullScreen) {
             docEl.mozRequestFullScreen();
-        } else if (docEl.webkitRequestFullscreen) { // Chrome, Safari & Opera
+        } else if (docEl.webkitRequestFullscreen) {
             docEl.webkitRequestFullscreen();
-        } else if (docEl.msRequestFullscreen) { // IE/Edge
+        } else if (docEl.msRequestFullscreen) {
             docEl.msRequestFullscreen();
         }
     } else {
-        // Излизане от Full Screen режим
         if (document.exitFullscreen) {
             document.exitFullscreen();
         } else if (document.mozCancelFullScreen) {
@@ -128,7 +126,7 @@ window.renderTop6LeadersUI = function() {
 };
 
 /**
- * Интелигентно превключване за инспектиране на инвентар
+ * Интелигентно превключване за инспектиране на инвентар с добавяне на името в прозореца
  */
 window.inspectSpecificRuler = function(index, leaderData) {
     if (!leaderData) return;
@@ -138,19 +136,52 @@ window.inspectSpecificRuler = function(index, leaderData) {
         const existingModal = document.getElementById('inventory-modal');
         if (existingModal) existingModal.remove();
 
+        // Отваряме базовия инвентар
         window.toggleRulerInventory();
 
+        // НАДГРАЖДАНЕ: Инжектираме заглавие с името на разглеждания водач най-отгоре в отворения инвентар
         setTimeout(() => {
-            const closeBtn = document.querySelector("#inventory-modal button");
-            if (closeBtn) {
-                closeBtn.onclick = function() {
-                    const modal = document.getElementById('inventory-modal');
-                    if (modal) modal.remove();
-                    if (window.realMainHeroReference) window.currentHero = window.realMainHeroReference;
-                    if (window.updateCharacterUI) window.updateCharacterUI(window.currentHero);
-                };
+            const modal = document.getElementById('inventory-modal');
+            if (modal) {
+                // Търсим или създаваме заглавен блок за притежателя на инвентара
+                let ownerHeader = document.getElementById('inventory-owner-title');
+                if (!ownerHeader) {
+                    ownerHeader = document.createElement('div');
+                    ownerHeader.id = 'inventory-owner-title';
+                    ownerHeader.style.cssText = `
+                        text-align: center;
+                        padding: 8px;
+                        margin: -5px auto 12px auto;
+                        background: rgba(212, 175, 55, 0.15);
+                        border: 1px solid #d4af37;
+                        border-radius: 6px;
+                        width: 90%;
+                        font-family: 'Georgia', serif;
+                        box-sizing: border-box;
+                    `;
+                    // Инжектираме го в началото на модалния прозорец
+                    modal.insertBefore(ownerHeader, modal.firstChild);
+                }
+                ownerHeader.innerHTML = `
+                    <span style="color: #ccc; font-size: 0.8em; letter-spacing: 1px;">ИНВЕНТАР НА:</span><br>
+                    <strong style="color: #ffd700; font-size: 1.1em;">Кан ${leaderData.name}</strong> 
+                    <span style="color: #00ffcc; font-size: 0.9em;">(Н. ${leaderData.level} ${leaderData.currentClass})</span>
+                `;
+
+                // Пренаписваме бутона за затваряне, за да върне фокуса на главния герой
+                const closeBtn = modal.querySelector("button");
+                if (closeBtn) {
+                    const originalClose = closeBtn.onclick;
+                    closeBtn.onclick = function() {
+                        if (modal) modal.remove();
+                        if (window.realMainHeroReference) {
+                            window.currentHero = window.realMainHeroReference;
+                        }
+                        if (window.updateCharacterUI) window.updateCharacterUI(window.currentHero);
+                    };
+                }
             }
-        }, 100);
+        }, 80);
     } else {
         alert(`Кан ${leaderData.name}\nРод ${leaderData.dynasty} [cite: 2026-02-03]\nНиво: ${leaderData.level}`);
     }
