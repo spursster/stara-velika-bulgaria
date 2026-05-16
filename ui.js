@@ -1,6 +1,6 @@
 /**
  * МОДУЛ: ИНТЕРФЕЙС - Велика България
- * СТАТУС: НАПЪЛНО ЗАВЪРШЕН И СИНХРОНИЗИРАН (Нива и XP се изчисляват динамично от heroPower)
+ * СТАТУС: КОРИГИРАН (Оправен бъг с грешно трупане на опит при експедиции)
  * Статистика на файловете в проекта: 16
  */
 
@@ -41,26 +41,22 @@ window.toggleAutoLevel = function(leaderName) {
 };
 
 /**
- * ГЕНЕРАТОР НА RPG СТАТИСТИКИ: Изчислява виртуално ниво и XP прогрес на база реалния heroPower от играта
+ * ГЕНЕРАТОР НА RPG СТАТИСТИКИ: Изчислява виртуално ниво и XP прогрес на база реалния heroPower
  */
 function getCalculatedLeaderStats(leader) {
     if (!leader) return { level: 1, xpPercent: 0 };
 
-    // Взимаме реалната бойна мощ (ако липсва, приемаме база 100)
     let power = leader.heroPower || 100;
 
-    // Всяко ниво е на всеки 25 точки мощност над 100
-    // Ниво 1: 100-124 | Ниво 2: 125-149 | Ниво 3: 150-174 | Ниво 4: 175-199 | Ниво 5: 200-224 | Ниво 6: 225-249 | Ниво 7: 250+
+    // Математика: Ниво на всеки 25 точки мощност над 100
     let calculatedLevel = Math.max(1, Math.floor((power - 100) / 25) + 1);
     
-    // Намираме колко точки има събрани вътре в текущото ниво
     let pointsInCurrentLevel = (power - 100) % 25;
     if (power < 100) pointsInCurrentLevel = 0;
 
-    // Превръщаме остатъка в точен процент за синята прогрес лента (максимум 25 точки = 100%)
     let percent = Math.min(100, Math.floor((pointsInCurrentLevel / 25) * 100));
 
-    // Записваме изчисленото ниво обратно в обекта, за да може другите ти системи да го четат, ако им трябва
+    // Важно: Записваме изчисленото ниво в самия оригинален обект
     leader.level = calculatedLevel;
 
     return {
@@ -70,7 +66,7 @@ function getCalculatedLeaderStats(leader) {
 }
 
 /**
- * AUTO-LEVEL ИЗПЪЛНИТЕЛ: Дава автоматичен бонус към ресурсите при засичане на качено ниво
+ * AUTO-LEVEL ИЗПЪЛНИТЕЛ: Автоматично разпределяне на бонуси при качено ниво
  */
 function checkAndExecuteAutoLevel(leader, currentLevel) {
     if (!leader || !window.autoLevelState[leader.name]) return;
@@ -80,16 +76,14 @@ function checkAndExecuteAutoLevel(leader, currentLevel) {
         return;
     }
 
-    // Ако изчисленото ниво е по-високо от последното записано
     if (currentLevel > leader.lastProcessedLevel) {
         let levelsGained = currentLevel - leader.lastProcessedLevel;
         let currentClass = leader.currentClass || "Пълководец";
 
-        // Тъй като нивото се вдига от самата сила (heroPower), тук даваме допълнителни икономически/военни бонуси
         if (currentClass === "Велик Кан") {
-            leader.gold = (leader.gold || 0) + (levelsGained * 300); // Бонус злато за държавата
+            leader.gold = (leader.gold || 0) + (levelsGained * 300);
         } else {
-            leader.armySize = (leader.armySize || 0) + (levelsGained * 75); // Бонус нови воини към армията
+            leader.armySize = (leader.armySize || 0) + (levelsGained * 75);
         }
 
         if (window.showAdvisorMsg) {
@@ -101,7 +95,7 @@ function checkAndExecuteAutoLevel(leader, currentLevel) {
 }
 
 /**
- * РЕНДЕРИРАНЕ НА ТОП 6 ЛЕНТАТА (Напълно защитена, без премигвания)
+ * РЕНДЕРИРАНЕ НА ТОП 6 ЛЕНТАТА (Регулирана да чете директно от живата памет)
  */
 window.renderTop6LeadersUI = function() {
     let targetContainer = document.getElementById('game-time-display')?.parentNode || document.querySelector('.main-content') || document.body;
@@ -147,11 +141,19 @@ window.renderTop6LeadersUI = function() {
         }
     }
 
+    // Правим дълбоко копиране на списъка, за да не повредим сортирането в ядрото на играта
     let allLeaders = [];
+    
+    // Добавяме главния герой директно от реалния window.currentHero
     if (window.currentHero) {
         let rpgStats = getCalculatedLeaderStats(window.currentHero);
         allLeaders.push({ 
-            ...window.currentHero, 
+            name: window.currentHero.name,
+            dynasty: window.currentHero.dynasty,
+            heroPower: window.currentHero.heroPower,
+            gold: window.currentHero.gold,
+            armySize: window.currentHero.armySize,
+            age: window.currentHero.age,
             isMain: true, 
             level: rpgStats.level, 
             xpPercent: rpgStats.xpPercent, 
@@ -159,11 +161,17 @@ window.renderTop6LeadersUI = function() {
         });
     }
     
+    // Добавяме останалите водачи директно от оригиналния ти глобален масив mightyLeaders
     if (window.mightyLeaders && window.mightyLeaders.length > 0) {
         window.mightyLeaders.forEach(ml => { 
             let rpgStats = getCalculatedLeaderStats(ml);
             allLeaders.push({ 
-                ...ml, 
+                name: ml.name,
+                dynasty: ml.dynasty,
+                heroPower: ml.heroPower,
+                gold: ml.gold,
+                armySize: ml.armySize,
+                age: ml.age,
                 isMain: false, 
                 level: rpgStats.level, 
                 xpPercent: rpgStats.xpPercent, 
@@ -178,18 +186,18 @@ window.renderTop6LeadersUI = function() {
     }
     leadersBar.style.display = 'flex';
 
+    // Сортираме за визуализацията
     allLeaders.sort((a, b) => b.level - a.level || b.xpPercent - a.xpPercent);
     const top6 = allLeaders.slice(0, 6);
-    window.realMainHeroReference = window.currentHero;
 
-    leadersBar.innerHTML = top6.map((leader, index) => {
+    leadersBar.innerHTML = top6.map((leader) => {
         let icon = leader.isMain ? "🛡️" : "⚔️";
-        let borderGlow = index === 0 ? "border: 2px solid #ffd700; box-shadow: 0 0 8px rgba(255,215,0,0.4);" : "border: 1px solid #d4af37;";
-        let crownSize = index === 0 ? "18px" : "14px";
-        let crownGlow = index === 0 ? "filter: drop-shadow(0 0 5px #ffd700);" : "opacity: 0.7;";
-
-        // Проверка и изпълнение на автоматичното разпределяне
-        checkAndExecuteAutoLevel(leader, leader.level);
+        
+        // Намираме съответния ОРИГИНАЛЕН обект в паметта, за да извършим AUTO-LEVEL върху него, а не върху копието!
+        let originalLeaderObj = leader.isMain ? window.currentHero : window.mightyLeaders.find(l => l.name === leader.name);
+        if (originalLeaderObj) {
+            checkAndExecuteAutoLevel(originalLeaderObj, leader.level);
+        }
 
         let isAutoOn = window.autoLevelState[leader.name] || false;
         let autoBtnBg = isAutoOn ? "#00ffcc" : "rgba(212,175,55,0.12)";
@@ -197,13 +205,13 @@ window.renderTop6LeadersUI = function() {
         let autoBtnBorder = isAutoOn ? "1px solid #00ffcc" : "1px solid rgba(212,175,55,0.4)";
 
         return `
-            <div class="leader-rpg-card" onclick="window.inspectSpecificRuler(${index}, ${JSON.stringify(leader).replace(/"/g, '&quot;')})" style="text-align: center; display: flex; flex-direction: column; align-items: center; cursor: pointer; transition: transform 0.2s; scroll-snap-align: start;" onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">
+            <div class="leader-rpg-card" onclick="window.inspectSpecificRulerByName('${leader.name}')" style="text-align: center; display: flex; flex-direction: column; align-items: center; cursor: pointer; transition: transform 0.2s; scroll-snap-align: start;" onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">
                 <div class="leader-name-text" style="font-size: 0.72em; font-weight: bold; color: #ffd700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 92px; line-height: 1.2;">${leader.name}</div>
                 <div class="leader-class-text" style="font-size: 0.58em; color: #aaa; margin-bottom: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 92px;">${leader.currentClass}</div>
                 
                 <div style="position: relative; display: flex; flex-direction: column; align-items: center; margin-bottom: 3px;">
-                    <div style="font-size: ${crownSize}; ${crownGlow}; line-height: 1; margin-bottom: -3px; z-index: 2;">👑</div>
-                    <div class="leader-avatar-box" style="width: 54px; height: 54px; background: rgba(0,0,0,0.5); border-radius: 8px; display: flex; justify-content: center; align-items: center; font-size: 22px; box-sizing: border-box; ${borderGlow}">${icon}</div>
+                    <div style="font-size: 14px; opacity: 0.7; line-height: 1; margin-bottom: -3px; z-index: 2;">👑</div>
+                    <div class="leader-avatar-box" style="width: 54px; height: 54px; background: rgba(0,0,0,0.5); border-radius: 8px; display: flex; justify-content: center; align-items: center; font-size: 22px; box-sizing: border-box; border: 1px solid #d4af37;">${icon}</div>
                 </div>
 
                 <div style="font-size: 0.68em; font-weight: bold; color: #00ffcc; line-height: 1.1; margin-bottom: 3px;">Н. ${leader.level}</div>
@@ -221,19 +229,25 @@ window.renderTop6LeadersUI = function() {
 };
 
 /**
- * ИНСПЕКТИРАНЕ НА ИНВЕНТАР (Напълно работещ с реални референции)
+ * ИНСПЕКТИРАНЕ НА ИНВЕНТАР ПО ИМЕ: Напълно защитено от презаписване на данни
  */
-window.inspectSpecificRuler = function(index, leaderData) {
-    if (!leaderData) return;
-    
-    let realLeader = (leaderData.isMain) ? window.realMainHeroReference : window.mightyLeaders.find(l => l.name === leaderData.name);
-    if (!realLeader) realLeader = leaderData;
+window.inspectSpecificRulerByName = function(name) {
+    let realLeader = null;
+    if (window.currentHero && window.currentHero.name === name) {
+        realLeader = window.currentHero;
+    } else if (window.mightyLeaders) {
+        realLeader = window.mightyLeaders.find(l => l.name === name);
+    }
 
-    window.currentHero = realLeader;
+    if (!realLeader) return;
 
     if (typeof window.toggleRulerInventory === 'function') {
         const existingModal = document.getElementById('inventory-modal');
         if (existingModal) existingModal.remove();
+
+        // Временно превключваме за инвентара
+        let previousHero = window.currentHero;
+        window.currentHero = realLeader;
 
         window.toggleRulerInventory();
 
@@ -254,14 +268,14 @@ window.inspectSpecificRuler = function(index, leaderData) {
                 ownerHeader.innerHTML = `
                     <span style="color: #ccc; font-size: 0.8em; letter-spacing: 1px;">ИНВЕНТАР НА:</span><br>
                     <strong style="color: #ffd700; font-size: 1.1em;">Кан ${realLeader.name}</strong> 
-                    <span style="color: #00ffcc; font-size: 0.9em;">(Н. ${realLeader.level} ${realLeader.currentClass || "Водач"})</span>
+                    <span style="color: #00ffcc; font-size: 0.9em;">(Н. ${realLeader.level})</span>
                 `;
 
                 const closeBtn = modal.querySelector("button");
                 if (closeBtn) {
                     closeBtn.onclick = function() {
                         if (modal) modal.remove();
-                        if (window.realMainHeroReference) { window.currentHero = window.realMainHeroReference; }
+                        window.currentHero = previousHero; // Връщаме главния герой безопасно
                         if (window.updateCharacterUI) window.updateCharacterUI(window.currentHero);
                     };
                 }
@@ -273,7 +287,6 @@ window.inspectSpecificRuler = function(index, leaderData) {
 window.updateCharacterUI = function(hero) {
     if (!hero) return;
 
-    // Изчисляваме нивата локално при всяко обновяване
     let stats = getCalculatedLeaderStats(hero);
 
     const leftSidebar = document.getElementById('provinces-list');
