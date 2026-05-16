@@ -1,17 +1,18 @@
 /**
  * МОДУЛ: ИНТЕРФЕЙС - Велика България
- * СТАТУС: НАДГРАДЕН (Интерактивна лента Топ 6 с кръгли медальони и инвентар под времето)
+ * СТАТУС: ФИКСИРАН (Лентата за Топ 6 се инжектира автономно и работи при всеки ход)
  * Статистика на файловете в проекта: 16
  */
 
 window.eventHistory = [];  
 
 /**
- * Функция за динамично генериране на Топ 6 най-опитни владетели с поддръжка на инвентар
+ * Функция за динамично генериране на Топ 6 най-опитни владетели
  */
 window.renderTop6LeadersUI = function() {
-    const timeEl = document.getElementById('game-time-display');
-    if (!timeEl) return; // Защита: Ако времето още не е заредено в HTML, изчакваме
+    // Намираме сигурен родителски контейнер - централния панел или самия body, за да не се чупи играта
+    let targetContainer = document.getElementById('game-time-display')?.parentNode || document.querySelector('.main-content') || document.body;
+    if (!targetContainer) return;
 
     let leadersBar = document.getElementById('top-6-leaders-bar');
     if (!leadersBar) {
@@ -33,11 +34,17 @@ window.renderTop6LeadersUI = function() {
             font-family: 'Georgia', serif;
             box-sizing: border-box;
         `;
-        // Безопасно инжектиране под времето
-        timeEl.parentNode.insertBefore(leadersBar, timeEl.nextSibling);
+        
+        // Инжектираме го на сигурно място - ако има време, под него, ако не - най-отгоре в контейнера
+        const timeEl = document.getElementById('game-time-display');
+        if (timeEl) {
+            timeEl.parentNode.insertBefore(leadersBar, timeEl.nextSibling);
+        } else {
+            targetContainer.insertBefore(leadersBar, targetContainer.firstChild);
+        }
     }
 
-    // Събиране на реалните водачи от играта
+    // Събиране на водачите от играта
     let allLeaders = [];
     if (window.currentHero) {
         allLeaders.push({ 
@@ -59,6 +66,7 @@ window.renderTop6LeadersUI = function() {
         });
     }
 
+    // Защита: Ако все още няма водачи, лентата остава скрита, докато не се появят
     if (allLeaders.length === 0) {
         leadersBar.style.display = 'none';
         return;
@@ -66,16 +74,12 @@ window.renderTop6LeadersUI = function() {
 
     leadersBar.style.display = 'flex';
 
-    // Сортиране по ниво и опит в низходящ ред
+    // Сортиране по ниво и опит
     allLeaders.sort((a, b) => (b.level !== a.level) ? (b.level - a.level) : (b.xp - a.xp));
-    
-    // Взимаме до 6 владетели
     const top6 = allLeaders.slice(0, 6);
     
-    // Запазваме референция към истинския главен герой в глобалния контекст
     window.realMainHeroReference = window.currentHero;
 
-    // Генериране на HTML съдържанието за медальоните
     leadersBar.innerHTML = top6.map((leader, index) => {
         let icon = leader.isMain ? "🛡️" : "⚔️";
         let crownSize = index === 0 ? "20px" : "16px";
@@ -117,8 +121,6 @@ window.renderTop6LeadersUI = function() {
  */
 window.inspectSpecificRuler = function(index, leaderData) {
     if (!leaderData) return;
-    
-    // Временно задаваме текущия разглеждан субект за инвентара
     window.currentHero = leaderData;
 
     if (typeof window.toggleRulerInventory === 'function') {
@@ -127,7 +129,6 @@ window.inspectSpecificRuler = function(index, leaderData) {
 
         window.toggleRulerInventory();
 
-        // Пренаписваме бутона за затваряне, за да върнем истинския играч
         setTimeout(() => {
             const closeBtn = document.querySelector("#inventory-modal button");
             if (closeBtn) {
@@ -135,7 +136,6 @@ window.inspectSpecificRuler = function(index, leaderData) {
                     const modal = document.getElementById('inventory-modal');
                     if (modal) modal.remove();
                     
-                    // Връщаме контрола на реалния водач
                     if (window.realMainHeroReference) {
                         window.currentHero = window.realMainHeroReference;
                     }
@@ -165,7 +165,7 @@ window.updateCharacterUI = function(hero) {
                 <h4 style="color: #d4af37; border-bottom: 1px solid #444; padding-bottom: 5px; letter-spacing: 1px;">СЪВЕТ НА РОДОВЕТЕ</h4>
                 <div style="font-size: 0.85em; max-height: 150px; overflow-y: auto; background: rgba(0,0,0,0.3); padding: 8px; border-radius: 4px;">
                     ${Object.keys(window.activeDynasties || {}).map(clanName => {
-                        const clan = window.activeDynachies ? window.activeDynasties[clanName] : { regions: 0 };
+                        const clan = window.activeDynasties[clanName];
                         const isPlayer = clanName === hero.dynasty;
                         return `
                             <div style="display: flex; justify-content: space-between; margin-bottom: 6px; color: ${isPlayer ? '#d4af37' : '#fff'}">
@@ -194,10 +194,9 @@ window.updateCharacterUI = function(hero) {
     if (armyEl) armyEl.innerText = hero.armySize;
     if (powerEl) powerEl.innerText = hero.heroPower;
     
-    // Обновяваме Летописа
     window.renderHistory();
 
-    // АВТОМАТИЧНО ОБНОВЯВАНЕ НА ЛЕНТАТА С ТОП 6
+    // ВИКА СЕ АВТОНОМНО - ВИНАГИ НАМИРА МЯСТО НА ЕКРАНА
     window.renderTop6LeadersUI();
 
     if (window.updateTimeUI) window.updateTimeUI();
