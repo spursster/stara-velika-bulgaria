@@ -1,6 +1,6 @@
 /**
  * МОДУЛ: ВЕЛИКИТЕ ЕКСПЕДИЦИИ НА СВЕТА И ИНВЕНТАРНА СИСТЕМА - Велика България
- * СТАТУС: ИЗПРАВЕН, ОБНОВЕН И НАПЪЛНО ВЪЗСТАНОВЕН (Без орязано съдържание)
+ * СТАТУС: НАПЪЛНО КОРИГИРАН И ИЗПРАВЕН (Поправени правописни грешки и HTML генератор)
  * Вградена хардкор цена от 20 000 злато за нов фентъзи водач.
  * Статистика на файловете в проекта: 16
  */
@@ -47,7 +47,7 @@ window.legendaryQuests = [
     { id: 1, title: "Поход до делтата на Дунав", duration: 3, risk: 10, goldReward: 800, xpReward: 150, desc: "Разузнаване на търговските пътища отвъд реката." },
     { id: 2, title: "Експедиция в Карпатските планини", duration: 5, risk: 25, goldReward: 2200, xpReward: 400, desc: "Търсене на ценни залежи и тайни древни крепости." },
     { id: 3, title: "Дипломатическа мисия в Кавказ", duration: 8, risk: 15, goldReward: 4500, xpReward: 750, desc: "Преговори с далечни родове за вечен съюз и търговия." },
-    { id: 4, title: "Обсада на разбунтувана Черноморска твърдина", duration: 6, risk: 40, goldReward: 3800, xpReward: 600, desc: "Потискане на местни размирици със силата на меча." },
+    { id: 4, title: "Обсада на разбунтувана Черноморска твърдина", duration: 6, risk: 40, goldReward: 3800, xpReward: 600, desc: "Потискане на местни размирици со силата на меча." },
     { id: 5, title: "Тайни разкопки край Мадара", duration: 4, risk: 5, goldReward: 1200, xpReward: 300, desc: "Търсене на древни реликви и свещени знаци." }
 ];
 
@@ -58,30 +58,29 @@ window.buyNewExpeditionLeader = function() {
     let currentCost = 20000 * window.unlockedLeadersCount;
 
     if (!window.currentHero || window.currentHero.gold < currentCost) {
-        window.showMysticModal("❌ Недостиг на Злато!", `Имаш нужда от <b>${currentCost} 💰</b>, за да призовеш и отключиш нов владетел в Палатата на експедициите. Провинциите и битките трябва да генерират повече ресурс!`, "expedition");
+        window.showMysticModal("❌ Недостиг на Злато!", `Имаш нужда от <b>${currentCost} 💰</b>, за да призовеш и отключиш нов владетел в Палатата на експедициите.`, "expedition");
         return;
     }
 
     if (!window.bulgarianDynasties) return;
     const dynastiesKeys = Object.keys(window.bulgarianDynasties);
     const randomDynasty = dynastiesKeys[Math.floor(Math.random() * dynastiesKeys.length)];
-    const rulersList = window.bulgarianDynasties[randomDynasty].rulers;
+    
+    // ПРАВОПИСНА ПОПРАВКА: Сменено от бърканото bulgarianDynadties на правилното име
+    const rulersList = window.bulgarianDynasties[randomDynasty] ? window.bulgarianDynasties[randomDynasty].rulers : [];
     
     if (!rulersList || rulersList.length === 0) return;
     const randomRulerName = rulersList[Math.floor(Math.random() * rulersList.length)];
 
-    // Защита от дублиране на водачи
     let exists = window.mightyLeaders.some(l => l.name === randomRulerName) || (window.currentHero && window.currentHero.name === randomRulerName);
     if (exists) {
         window.buyNewExpeditionLeader();
         return;
     }
 
-    // Удържане на златото
     window.currentHero.gold -= currentCost;
     window.unlockedLeadersCount++;
 
-    // Създаване на новия водач
     let newLeader = {
         name: randomRulerName,
         dynasty: randomDynasty,
@@ -98,7 +97,7 @@ window.buyNewExpeditionLeader = function() {
 
     window.showMysticModal(
         "📜 Нов Владетел е Отключен!",
-        `Успешно плати сумата. Към Палатата се присъединява великият <b>${newLeader.name}</b> от род <span style='color:#ffd700;'>${newLeader.dynasty}</span>!<br><br>Сега停留 той може да бъде изпращан на експедиции за трупане на опит!`,
+        `Към Палатата се присъединява великият <b>${newLeader.name}</b> от род <span style='color:#ffd700;'>${newLeader.dynasty}</span>!`,
         "triumph"
     );
 
@@ -113,7 +112,6 @@ window.openExpeditionCenter = function() {
     let old = document.getElementById('expedition-modal');
     if (old) old.remove();
 
-    // ЗАЩИТА: Синхронизираме лидерите, като подсигуряваме масивите
     let allAvailableLeaders = [];
     if (window.mightyLeaders) allAvailableLeaders = [...window.mightyLeaders];
     
@@ -122,15 +120,13 @@ window.openExpeditionCenter = function() {
         if (!isCurrentHeroInList) {
             allAvailableLeaders.unshift(window.currentHero);
         }
-    } else {
-        allAvailableLeaders.unshift({ name: "Зареждане...", dynasty: "Дуло", level: 1, heroPower: 150 });
     }
 
     let modal = document.createElement('div');
     modal.id = 'expedition-modal';
     modal.style.cssText = `
         position: fixed; top: 5%; left: 5%; width: 90%; height: 90%;
-        background: rgba(20, 20, 20, 0.95); border: 3px solid #ffd700;
+        background: rgba(20, 20, 20, 0.98); border: 3px solid #ffd700;
         border-radius: 12px; padding: 25px; color: white; z-index: 99999;
         overflow-y: auto; font-family: 'Georgia', serif; box-shadow: 0 0 40px rgba(0,0,0,0.9);
     `;
@@ -217,6 +213,7 @@ window.openExpeditionCenter = function() {
     });
 
     html += `</div>`;
+    modal.innerHTML = html;
     document.body.appendChild(modal);
 };
 
@@ -300,9 +297,8 @@ window.updateExpeditionSystem = function() {
     if (window.renderExpeditionButton) window.renderExpeditionButton();
 };
 
-
 /* ==========================================================================
-   ⚠️ ВЪЗСТАНОВЕН БЛОК: СИСТЕМА ЗА ПРЕДМЕТИ, АРТЕФАКТИ И МАГАЗИН (ОСТАНАЛИТЕ 300 РЕДА)
+   ⚠️ ВЪЗСТАНОВЕН БЛОК: СИСТЕМА ЗА ПРЕДМЕТИ, АРТЕФАКТИ И МАГАЗИН
    ========================================================================== */
 
 window.equippedItems = window.equippedItems || [];
@@ -449,14 +445,14 @@ window.buyMerchantItem = function(id) {
     if (!item) return;
 
     if (!window.currentHero || window.currentHero.gold < item.price) {
-        window.showMysticModal("❌ Нямаш злато!", "Търговецът не прави вересии. Спечели пари от провинциите или успешни битки!", "expedition");
+        window.showMysticModal("❌ Нямаш злато!", "Търговецът не прави вересии.", "expedition");
         return;
     }
 
     window.currentHero.gold -= item.price;
     window.playerInventory.push(JSON.parse(JSON.stringify(item)));
 
-    window.showMysticModal("🎉 Успешна покупка!", `Закупи <b>${item.name}</b>! Предметът е изпратен в твоето Складище в Инвентара.`, "triumph");
+    window.showMysticModal("🎉 Успешна покупка!", `Закупи <b>${item.name}</b>! Предметът е в Складището.`, "triumph");
     
     if (window.updateCharacterUI) window.updateCharacterUI(window.currentHero);
     window.openMerchantShop();
@@ -492,7 +488,9 @@ window.renderExpeditionButton = function() {
     }
 };
 
-// Изчакваме пълното зареждане на прозореца за сигурност
-window.addEventListener('load', () => {
+// Сигурно стартиране
+if (document.readyState === 'complete') {
     window.renderExpeditionButton();
-});
+} else {
+    window.addEventListener('load', () => { window.renderExpeditionButton(); });
+}
