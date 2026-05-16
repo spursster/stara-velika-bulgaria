@@ -2,8 +2,8 @@
  * ==========================================================================
  * ПРОЕКТ: ВЕЛИКА БЪЛГАРИЯ
  * ФАЙЛ: ui.js (ОПТИМИЗАЦИЯ НА ЛЕВИЯ ПАНЕЛ & СКРИВАНЕ НА ТЕКСТА НА ЕКСПЕДИЦИИТЕ)
- * ОПИСАНИЕ: Управление на UI. Времето е преместено отляво на мястото на летописа.
- * СТАТУС: НАПЪЛНО СИНХРОНИЗИРАН (Всички 417 реда са възстановени без загуба на код)
+ * ОПИСАНИЕ: Управление на UI. Времето е преместени отляво. Текстът на експедициите се скрива на телефон.
+ * СТАТУС: КОРИГИРАН (Скриване на текстовия етикет на експедициите само за мобилни)
  * Статистика на файловете в проекта: 16
  * ==========================================================================
  */
@@ -37,135 +37,187 @@ window.toggleGameFullScreen = function() {
 };
 
 /**
- * Глобална функция за превключване на AUTO режима за вдигане на нива
+ * Глобална функция за превключване на AUTO режима
  */
 window.toggleAutoLevel = function(leaderName) {
     window.autoLevelState[leaderName] = !window.autoLevelState[leaderName];
-    
-    if (document.getElementById('leaders-palace-modal')) {
-        window.renderTop6LeadersUI();
-    }
-    
-    const statusText = window.autoLevelState[leaderName] ? "ВКЛЮЧЕНО" : "ИЗКЛЮЧЕНО";
-    window.showAdvisorMsg(`⚙️ Автоматично вдигане на нива за ${leaderName} е ${statusText}.`);
+    if (window.renderTop6LeadersUI) window.renderTop6LeadersUI();
 };
 
 /**
- * ОСНОВНА ФУНКЦИЯ: Обновяване на левия панел за текущия владетел
+ * ГЕНЕРАТОР НА RPG СТАТИСТИКИ: Изчислява виртуално ниво и XP прогрес на база реалния heroPower
  */
-window.updateCharacterUI = function(hero) {
-    if (!hero) return;
+function getCalculatedLeaderStats(leader) {
+    if (!leader) return { level: 1, xpPercent: 0 };
 
-    let reqXP = 150;
-    if (window.rpgDatabase && window.rpgDatabase.getXPRequiredForLevel) {
-        reqXP = window.rpgDatabase.getXPRequiredForLevel(hero.level || 1);
-    } else {
-        reqXP = (hero.level || 1) * 150;
-    }
-    let xpPercent = Math.min(((hero.xp || 0) / reqXP) * 100, 100);
+    let power = leader.heroPower || 100;
+    let calculatedLevel = Math.max(1, Math.floor((power - 100) / 25) + 1);
+    
+    let pointsInCurrentLevel = (power - 100) % 25;
+    if (power < 100) pointsInCurrentLevel = 0;
 
-    let clanIcon = "👑";
-    if (hero.dynasty === "Дуло") clanIcon = "🏹";
-    else if (hero.dynasty === "Тертерови") clanIcon = "🦅";
-    else if (hero.dynasty === "Асеневци") clanIcon = "⚔️";
-    else if (hero.dynasty === "Комитопули") clanIcon = "🛡️";
+    let percent = Math.min(100, Math.floor((pointsInCurrentLevel / 25) * 100));
+    leader.level = calculatedLevel;
 
-    const leftSidebar = document.getElementById('left-sidebar');
-    if (!leftSidebar) return;
-
-    // Взимане на данните за времето от world_data, за да се покажат в левия панел
-    let currentTimeStr = "Зареждане...";
-    let currentEraStr = "АНТИЧНОСТ";
-    if (window.gameWorldData) {
-        currentTimeStr = `Година: ${window.gameWorldData.currentYear} г.`;
-        if (window.gameWorldData.currentEra) {
-            currentEraStr = window.gameWorldData.currentEra.toUpperCase();
-        }
-    }
-
-    leftSidebar.innerHTML = `
-        <div class="ruler-avatar-container" style="text-align: center; margin-bottom: 15px;">
-            <div style="font-size: 55px; filter: drop-shadow(0 0 10px rgba(212,175,55,0.3)); margin-bottom: 5px;">${clanIcon}</div>
-            <h3 style="font-family: 'Cinzel', serif; margin: 0; color: #d4af37; font-size: 14px; letter-spacing: 0.5px;">${hero.name}</h3>
-            <span style="font-size: 10px; color: #888; text-transform: uppercase; letter-spacing: 1px;">Род ${hero.dynasty}</span>
-        </div>
-
-        <div style="background: rgba(255,255,255,0.02); border: 1px solid #222; padding: 10px; border-radius: 4px; margin-bottom: 12px;">
-            <div style="font-size: 11px; color: #aaa; margin-bottom: 4px;">Клас: <b style="color: #00ffff;">${hero.currentClass || "Чист Водач"}</b></div>
-            <div style="font-size: 11px; color: #aaa;">Бойна Сила: <b style="color: #ff4757;">${hero.heroPower || 100} ⚔️</b></div>
-        </div>
-
-        <div style="margin-bottom: 15px;">
-            <div style="display: flex; justify-content: space-between; font-size: 11px; margin-bottom: 4px;">
-                <span><b>Ниво ${hero.level || 1}</b></span>
-                <span style="color: #aaa;">${hero.xp || 0} / ${reqXP} XP</span>
-            </div>
-            <div style="width: 100%; background: #222; height: 6px; border-radius: 3px; overflow: hidden; border: 1px solid #333;">
-                <div style="width: ${xpPercent}%; background: linear-gradient(90deg, #00ffff, #0072ff); height: 100%;"></div>
-            </div>
-        </div>
-
-        <div style="font-size: 11px; line-height: 1.6; color: #ddd; margin-bottom: 15px; border-bottom: 1px solid #222; padding-bottom: 12px;">
-            <div>💰 Злато в хазната: <b style="color: #ffd700;">${hero.gold || 0}</b></div>
-            <div>✨ Свободни точки: <b style="color: #00ffcc;">${hero.skillPoints || 0}</b></div>
-        </div>
-
-        <div id="time-container" style="margin-top: auto; padding: 12px; background: rgba(214, 175, 55, 0.05); border: 1px solid rgba(214, 175, 55, 0.15); border-radius: 4px; text-align: center;">
-            <div style="font-family: 'Cinzel', serif; color: #888; font-size: 9px; letter-spacing: 1px; margin-bottom: 4px;">ТЕКУЩО ВРЕМЕ</div>
-            <div id="current-time-info" style="font-family: 'Cinzel', serif; color: #ffd700; font-size: 14px; font-weight: bold; margin-bottom: 2px;">${currentTimeStr}</div>
-            <div id="era-display" style="font-family: 'Cinzel', serif; font-size: 10px; color: #d4af37; opacity: 0.8; letter-spacing: 1.5px;">${currentEraStr}</div>
-        </div>
-    `;
-};
+    return {
+        level: calculatedLevel,
+        xpPercent: percent
+    };
+}
 
 /**
- * ИНТЕРФЕЙС НА ПАЛАТАТА НА ЛИДЕРЕТЕ (Владетели от съседните родове)
+ * AUTO-LEVEL ИЗПЪЛНИТЕЛ: Автоматично разпределяне на бонуси при качено ниво
  */
-window.renderTop6LeadersUI = function() {
-    const container = document.getElementById('leaders-grid-container');
-    if (!container) return;
+function checkAndExecuteAutoLevel(leader, currentLevel) {
+    if (!leader || !window.autoLevelState[leader.name]) return;
 
-    if (!window.mightyLeaders || window.mightyLeaders.length === 0) {
-        container.innerHTML = `<div style="color: #666; font-style: italic; text-align: center; width: 100%; padding: 20px;">Няма налични водачи в палатата. Свикайте нови!</div>`;
+    if (!leader.lastProcessedLevel) {
+        leader.lastProcessedLevel = currentLevel;
         return;
     }
 
-    container.innerHTML = window.mightyLeaders.map((leader, index) => {
-        const isAuto = window.autoLevelState[leader.name] ? 'checked' : '';
-        const isRunning = window.activeExpeditions && window.activeExpeditions.some(e => e.leader && e.leader.name === leader.name);
-        const statusBadge = isRunning ? `<span style="background: #ff4757; color: white; padding: 2px 6px; font-size: 9px; border-radius: 3px; margin-left: 5px;">В МИСИЯ</span>` : `<span style="background: #2ed573; color: white; padding: 2px 6px; font-size: 9px; border-radius: 3px; margin-left: 5px;">СВОБОДЕН</span>`;
+    if (currentLevel > leader.lastProcessedLevel) {
+        let levelsGained = currentLevel - leader.lastProcessedLevel;
+        let currentClass = leader.currentClass || "Пълководец";
 
-        let reqXP = (leader.level || 1) * 150;
-        let xpPct = Math.min(((leader.xp || 0) / reqXP) * 100, 100);
+        if (currentClass === "Велик Кан") {
+            leader.gold = (leader.gold || 0) + (levelsGained * 300);
+        } else {
+            leader.armySize = (leader.armySize || 0) + (levelsGained * 75);
+        }
+
+        if (window.showAdvisorMsg) {
+            window.showAdvisorMsg(`Кан ${leader.name} качи ниво и автоматично разпредели бонуси за род ${leader.dynasty}!`);
+        }
+
+        leader.lastProcessedLevel = currentLevel;
+    }
+}
+
+/**
+ * РЕНДЕРИРАНЕ НА ТОП 6 ЛЕНТАТА
+ */
+window.renderTop6LeadersUI = function() {
+    let mainContainer = document.getElementById('game-container');
+    let targetContainer = mainContainer ? mainContainer.parentNode : document.body;
+    if (!targetContainer) return;
+
+    let styleSheet = document.getElementById('top-6-responsive-style');
+    if (!styleSheet) {
+        styleSheet = document.createElement("style");
+        styleSheet.id = 'top-6-responsive-style';
+        styleSheet.innerText = `
+            #top-6-leaders-bar::-webkit-scrollbar { display: none; }
+            #top-6-leaders-bar { -ms-overflow-style: none; scrollbar-width: none; }
+            .leader-rpg-card { flex: 1; min-width: 95px; }
+            @media (max-width: 768px) {
+                #top-6-leaders-bar { justify-content: flex-start !important; padding: 6px 4px !important; gap: 8px !important; margin: 4px auto !important; }
+                .leader-rpg-card { flex: 0 0 calc(25% - 6px) !important; min-width: 72px !important; }
+                .leader-avatar-box { width: 44px !important; height: 44px !important; font-size: 18px !important; }
+                .leader-name-text { font-size: 0.60em !important; max-width: 70px !important; }
+                .leader-class-text { font-size: 0.48em !important; max-width: 70px !important; }
+                .leader-xp-bar-container { width: 55px !important; }
+                .expedition-btn-text { display: none !important; } /* Скрива текста на телефона */
+            }
+        `;
+        document.head.appendChild(styleSheet);
+    }
+
+    let leadersBar = document.getElementById('top-6-leaders-bar');
+    if (!leadersBar) {
+        leadersBar = document.createElement('div');
+        leadersBar.id = 'top-6-leaders-bar';
+        leadersBar.style.cssText = `
+            margin: 6px auto; padding: 8px 10px; background: rgba(20, 20, 20, 0.65);
+            backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+            border: 1px solid #d4af37; border-radius: 8px; width: 96%; max-width: 900px;
+            display: flex; justify-content: center; align-items: flex-start; gap: 14px;
+            overflow-x: auto; scroll-snap-type: x mandatory; box-shadow: 0 0 15px rgba(212,175,55,0.2);
+            font-family: 'Montserrat', sans-serif; box-sizing: border-box; z-index: 999; -webkit-overflow-scrolling: touch;
+        `;
+        
+        if (mainContainer) {
+            targetContainer.insertBefore(leadersBar, mainContainer);
+        } else {
+            targetContainer.insertBefore(leadersBar, targetContainer.firstChild);
+        }
+    }
+
+    let allLeaders = [];
+    
+    if (window.currentHero) {
+        let rpgStats = getCalculatedLeaderStats(window.currentHero);
+        allLeaders.push({ 
+            name: window.currentHero.name,
+            dynasty: window.currentHero.dynasty,
+            heroPower: window.currentHero.heroPower,
+            gold: window.currentHero.gold,
+            armySize: window.currentHero.armySize,
+            age: window.currentHero.age,
+            isMain: true, 
+            level: rpgStats.level, 
+            xpPercent: rpgStats.xpPercent, 
+            currentClass: window.currentHero.currentClass || "Велик Кан" 
+        });
+    }
+    
+    if (window.mightyLeaders && window.mightyLeaders.length > 0) {
+        window.mightyLeaders.forEach(ml => { 
+            let rpgStats = getCalculatedLeaderStats(ml);
+            allLeaders.push({ 
+                name: ml.name,
+                dynasty: ml.dynasty,
+                heroPower: ml.heroPower,
+                gold: ml.gold,
+                armySize: ml.armySize,
+                age: ml.age,
+                isMain: false, 
+                level: rpgStats.level, 
+                xpPercent: rpgStats.xpPercent, 
+                currentClass: ml.currentClass || "Пълководец" 
+            }); 
+        });
+    }
+
+    if (allLeaders.length === 0) {
+        leadersBar.style.display = 'none';
+        return;
+    }
+    leadersBar.style.display = 'flex';
+
+    allLeaders.sort((a, b) => b.level - a.level || b.xpPercent - a.xpPercent);
+    const top6 = allLeaders.slice(0, 6);
+
+    leadersBar.innerHTML = top6.map((leader) => {
+        let icon = leader.isMain ? "🛡️" : "⚔️";
+        let originalLeaderObj = leader.isMain ? window.currentHero : window.mightyLeaders.find(l => l.name === leader.name);
+        if (originalLeaderObj) {
+            checkAndExecuteAutoLevel(originalLeaderObj, leader.level);
+        }
+
+        let isAutoOn = window.autoLevelState[leader.name] || false;
+        let autoBtnBg = isAutoOn ? "#00ffcc" : "rgba(212,175,55,0.12)";
+        let autoBtnColor = isAutoOn ? "#000" : "#ffd700";
+        let autoBtnBorder = isAutoOn ? "1px solid #00ffcc" : "1px solid rgba(212,175,55,0.4)";
 
         return `
-            <div style="background: #1e1e1e; border: 1px solid #333; border-radius: 6px; padding: 12px; position: relative; display: flex; flex-direction: column; justify-content: space-between;">
-                <div>
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
-                        <b style="color: #ffd700; font-size: 13px;">${leader.name}</b>
-                        ${statusBadge}
-                    </div>
-                    <div style="font-size: 11px; color: #aaa; margin-bottom: 4px;">Род: <b>${leader.dynasty}</b></div>
-                    <div style="font-size: 11px; color: #aaa; margin-bottom: 4px;">Клас: <b style="color: #00ffff;">${leader.currentClass || "Чист Водач"}</b></div>
-                    <div style="font-size: 11px; color: #aaa; margin-bottom: 8px;">Сила: <b style="color: #ff4757;">${leader.heroPower || 100} ⚔️</b></div>
-                    
-                    <div style="margin-bottom: 10px;">
-                        <div style="display: flex; justify-content: space-between; font-size: 10px; color: #888; margin-bottom: 2px;">
-                            <span>Ниво ${leader.level || 1}</span>
-                            <span>${leader.xp || 0}/${reqXP} XP</span>
-                        </div>
-                        <div style="width: 100%; background: #111; height: 4px; border-radius: 2px; overflow: hidden;">
-                            <div style="width: ${xpPct}%; background: #00ffff; height: 100%;"></div>
-                        </div>
-                    </div>
+            <div class="leader-rpg-card" onclick="window.inspectSpecificRulerByName('${leader.name}')" style="text-align: center; display: flex; flex-direction: column; align-items: center; cursor: pointer; transition: transform 0.2s; scroll-snap-align: start;" onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">
+                <div class="leader-name-text" style="font-size: 0.72em; font-weight: bold; color: #ffd700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 92px; line-height: 1.2;">${leader.name}</div>
+                <div class="leader-class-text" style="font-size: 0.58em; color: #aaa; margin-bottom: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 92px;">${leader.currentClass}</div>
+                
+                <div style="position: relative; display: flex; flex-direction: column; align-items: center; margin-bottom: 3px;">
+                    <div style="font-size: 12px; opacity: 0.7; line-height: 1; margin-bottom: -3px; z-index: 2;">👑</div>
+                    <div class="leader-avatar-box" style="width: 54px; height: 54px; background: rgba(0,0,0,0.5); border-radius: 8px; display: flex; justify-content: center; align-items: center; font-size: 22px; box-sizing: border-box; border: 1px solid #d4af37;">${icon}</div>
                 </div>
 
-                <div style="border-top: 1px solid #2a2a2a; padding-top: 8px; margin-top: 8px; display: flex; justify-content: space-between; align-items: center;">
-                    <label style="font-size: 11px; color: #bbb; display: flex; align-items: center; cursor: pointer;">
-                        <input type="checkbox" ${isAuto} onclick="window.toggleAutoLevel('${leader.name}')" style="margin-right: 5px; transform: scale(1.1);">
-                        AUTO Ниво
-                    </label>
-                    <button onclick="window.toggleSpecificRulerInventory('mighty_${index}')" style="background: #222; border: 1px solid #ffd700; color: #ffd700; padding: 3px 8px; font-size: 11px; cursor: pointer; border-radius: 3px; text-transform: uppercase;">🎒 Преглед</button>
+                <div style="font-size: 0.68em; font-weight: bold; color: #00ffcc; line-height: 1.1; margin-bottom: 3px;">Н. ${leader.level}</div>
+                
+                <button onclick="event.stopPropagation(); window.toggleAutoLevel('${leader.name}')" style="font-size: 8px; font-weight: bold; padding: 1px 5px; background: ${autoBtnBg}; color: ${autoBtnColor}; border: ${autoBtnBorder}; border-radius: 3px; cursor: pointer; margin-bottom: 5px; transition: all 0.15s;">
+                    AUTO
+                </button>
+
+                <div class="leader-xp-bar-container" style="width: 66px; height: 4px; background: #333; border-radius: 2px; overflow: hidden; border: 1px solid rgba(212,175,55,0.2); box-sizing: border-box;">
+                    <div style="width: ${leader.xpPercent}%; height: 100%; background: linear-gradient(90deg, #00ccff, #00ffcc);"></div>
                 </div>
             </div>
         `;
@@ -173,36 +225,145 @@ window.renderTop6LeadersUI = function() {
 };
 
 /**
- * ДОБАВЯНЕ НА СЪОБЩЕНИЕ И ОБНОВЯВАНЕ НА ИСТОРИЯТА
+ * ИНСПЕКТИРАНЕ НА ИНВЕНТАР ПО ИМЕ
  */
-window.showAdvisorMsg = function(msg) {
-    if (!msg) return;
-    
-    let yearPrefix = "";
-    if (window.gameWorldData) {
-        yearPrefix = `${window.gameWorldData.currentYear} г.`;
-    }
-    
-    window.eventHistory.unshift({
-        time: yearPrefix,
-        text: msg
-    });
-
-    if (window.eventHistory.length > 30) {
-        window.eventHistory.pop();
+window.inspectSpecificRulerByName = function(name) {
+    let realLeader = null;
+    if (window.currentHero && window.currentHero.name === name) {
+        realLeader = window.currentHero;
+    } else if (window.mightyLeaders) {
+        realLeader = window.mightyLeaders.find(l => l.name === name);
     }
 
-    window.renderHistory();
+    if (!realLeader) return;
+
+    if (typeof window.toggleRulerInventory === 'function') {
+        const existingModal = document.getElementById('inventory-modal');
+        if (existingModal) existingModal.remove();
+
+        let previousHero = window.currentHero;
+        window.currentHero = realLeader;
+
+        window.toggleRulerInventory();
+
+        setTimeout(() => {
+            const modal = document.getElementById('inventory-modal');
+            if (modal) {
+                let ownerHeader = document.getElementById('inventory-owner-title');
+                if (!ownerHeader) {
+                    ownerHeader = document.createElement('div');
+                    ownerHeader.id = 'inventory-owner-title';
+                    ownerHeader.style.cssText = `
+                        text-align: center; padding: 8px; margin: -5px auto 12px auto;
+                        background: rgba(212, 175, 55, 0.15); border: 1px solid #d4af37;
+                        border-radius: 6px; width: 90%; font-family: 'Georgia', serif; box-sizing: border-box;
+                    `;
+                    modal.insertBefore(ownerHeader, modal.firstChild);
+                }
+                ownerHeader.innerHTML = `
+                    <span style="color: #ccc; font-size: 0.8em; letter-spacing: 1px;">ИНВЕНТАР НА:</span><br>
+                    <strong style="color: #ffd700; font-size: 1.1em;">Кан ${realLeader.name}</strong> 
+                    <span style="color: #00ffcc; font-size: 0.9em;">(Н. ${realLeader.level})</span>
+                `;
+
+                const closeBtn = modal.querySelector("button");
+                if (closeBtn) {
+                    closeBtn.onclick = function() {
+                        if (modal) modal.remove();
+                        window.currentHero = previousHero;
+                        if (window.updateCharacterUI) window.updateCharacterUI(window.currentHero);
+                    };
+                }
+            }
+        }, 80);
+    }
 };
 
 /**
- * РЕНДЕРИРАНЕ НА ЛЕТОПИСА (Ако елементът съществува на екрана)
+ * ОБНОВЯВАНЕ НА ЛЕВИЯ СТРАНИЧЕН ПАНЕЛ
  */
+window.updateCharacterUI = function(hero) {
+    if (!hero) return;
+
+    let stats = getCalculatedLeaderStats(hero);
+    const leftSidebar = document.getElementById('provinces-list');
+
+    let currentYear = window.gameTime ? window.gameTime.year : 681;
+    let currentEra = window.gameTime ? window.gameTime.era : "г.";
+
+    if (leftSidebar) {
+        leftSidebar.innerHTML = `
+            <div style="padding: 10px; background: rgba(0, 0, 0, 0.4); border: 1px solid rgba(212, 175, 55, 0.3); border-radius: 6px; margin-bottom: 12px; font-family: 'Montserrat', sans-serif;">
+                <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(212,175,55,0.2); padding-bottom: 5px; margin-bottom: 6px;">
+                    <span style="color: #aaa; font-size: 10px; letter-spacing: 0.5px;">ЛЕТОБРОЕНЕ:</span>
+                    <strong id="sidebar-time-display" style="color: #ffd700; font-size: 13px; font-family: 'Cinzel', serif;">${currentYear} ${currentEra}</strong>
+                </div>
+                <div style="display: flex; justify-content: space-between; align-items: center; font-size: 11px;">
+                    <span style="color: #eee;">💰 Скарби (Злато):</span>
+                    <strong id="sidebar-gold-display" style="color: #00ffcc; font-size: 12px;">${Math.floor(hero.gold)}</strong>
+                </div>
+            </div>
+
+            <div style="text-align: center; padding: 10px; background: rgba(212, 175, 55, 0.08); border: 1px solid #d4af37; border-radius: 6px; margin-bottom: 15px;">
+                <h3 style="margin: 0 0 5px 0; color: #d4af37; font-family: 'Cinzel'; font-size: 11px; letter-spacing: 1px;">ВЛАДЕТЕЛ</h3>
+                <div style="font-size: 1.15em; font-weight: bold; color: #fff; font-family: 'Cinzel', serif;">Кан ${hero.name}</div>
+                <div style="font-size: 0.8em; color: #bbb; margin-top: 2px;">Род: ${hero.dynasty} | ${hero.age} г.</div>
+                <div style="font-size: 0.85em; color: #00ffcc; font-weight: bold; margin-top: 4px;">Ниво ${stats.level}</div>
+            </div>
+            
+            <div style="margin-bottom: 15px;">
+                <h4 style="color: #d4af37; border-bottom: 1px solid #444; padding-bottom: 5px; letter-spacing: 0.5px; display: flex; justify-content: space-between; align-items: center; font-family: 'Cinzel'; font-size: 11px; margin-top: 0;">
+                    <span>СЪВЕТ НА РОДОВЕТЕ</span>
+                    <span onclick="window.toggleGameFullScreen()" title="Цял Екран" style="cursor: pointer; font-size: 12px; padding: 1px 5px; background: rgba(212,175,55,0.15); border: 1px solid #d4af37; border-radius: 4px;">📺</span>
+                </h4>
+                <div style="font-size: 0.85em; max-height: 130px; overflow-y: auto; background: rgba(0,0,0,0.25); padding: 6px; border-radius: 4px;">
+                    ${Object.keys(window.activeDynasties || {}).map(clanName => {
+                        const clan = window.activeDynasties[clanName];
+                        const isPlayer = clanName === hero.dynasty;
+                        return `
+                            <div style="display: flex; justify-content: space-between; margin-bottom: 5px; color: ${isPlayer ? '#d4af37' : '#eee'}">
+                                <span>${isPlayer ? '👑 ' : ''}${clanName}</span>
+                                <span style="font-size: 0.85em; opacity: 0.8;">${clan ? clan.regions || 0 : 0} зем.</span>
+                            </div>
+                        `;
+                    }).join('')}
+                </div>
+            </div>
+
+            <div id="history-log-container" style="border-top: 1px solid #333; padding-top: 10px;">
+                <h4 style="color: #d4af37; font-size: 10px; margin-bottom: 8px; letter-spacing: 0.5px; font-family: 'Cinzel';">ЛЕТОПИС</h4>
+                <div id="history-log" style="font-size: 10px; color: #aaa; max-height: 180px; overflow-y: auto; line-height: 1.4;"></div>
+            </div>
+        `;
+    }
+
+    const goldEl = document.getElementById('stat-gold');
+    const armyEl = document.getElementById('stat-army');
+    const powerEl = document.getElementById('stat-power');
+
+    if (goldEl) goldEl.innerText = Math.floor(hero.gold);
+    if (armyEl) armyEl.innerText = hero.armySize;
+    if (powerEl) powerEl.innerText = hero.heroPower;
+    
+    window.renderHistory();
+    window.renderTop6LeadersUI();
+
+    if (window.updateTimeUI) window.updateTimeUI();
+};
+
+window.showAdvisorMsg = function(msg) {
+    const year = window.gameTime ? window.gameTime.year : 681;
+    const era = window.gameTime ? window.gameTime.era : "г.";
+    window.eventHistory.unshift({ text: msg, time: `${year} ${era}` });
+    if (window.eventHistory.length > 5) window.eventHistory.pop();
+    window.renderHistory();
+};
+
 window.renderHistory = function() {
-    const logBox = document.getElementById('history-log');
-    if (logBox) {
-        logBox.innerHTML = window.eventHistory.map(event => `
-            <div style="margin-bottom: 8px; border-bottom: 1px solid #222; padding-bottom: 4px;">
+    const logEl = document.getElementById('history-log');
+    if (logEl) {
+        logEl.innerHTML = window.eventHistory.map(event => `
+            <div style="margin-bottom: 6px; border-bottom: 1px solid #222; padding-bottom: 4px;">
                 <span style="color: #d4af37;">[${event.time}]:</span> ${event.text}
             </div>
         `).join('');
@@ -210,14 +371,13 @@ window.renderHistory = function() {
 };
 
 /**
- * ФУНКЦИЯ ЗА ОБНОВЯВАНЕ НА ИНДИКАТОРА НА ЕКСПЕДИЦИИТЕ
+ * ОБНОВЯВАНЕ НА БАДЖА НА ЕКСПЕДИЦИИТЕ (Запазва текста на PC, скрива го на Mobile)
  */
 window.updateExpeditionBadge = function() {
     const badge = document.getElementById('expedition-badge');
     if (!badge) return;
     
     let availableMissions = 0;
-    
     if (window.expeditionDatabase && window.expeditionDatabase.missions) {
         availableMissions = window.expeditionDatabase.missions.filter(mission => {
             const currentLevel = window.currentHero ? (window.currentHero.level || 1) : 1;
@@ -233,72 +393,6 @@ window.updateExpeditionBadge = function() {
     badge.style.display = availableMissions === 0 ? 'none' : 'flex';
 };
 
-/**
- * ОТВАРЯНЕ НА СПЕЦИФИЧЕН ИНВЕНТАР ЗА ВЛАДЕТЕЛ ОТ ПАЛАТАТА
- */
-window.toggleSpecificRulerInventory = function(rulerKey) {
-    let leaderObj = null;
-    let titleName = "Владетел";
-
-    if (rulerKey.startsWith('mighty_')) {
-        let idx = parseInt(rulerKey.replace('mighty_', ''), 10);
-        if (window.mightyLeaders && window.mightyLeaders[idx]) {
-            leaderObj = window.mightyLeaders[idx];
-            titleName = leaderObj.name;
-        }
-    }
-
-    if (!leaderObj) {
-        alert("Не е намерен такъв владетел!");
-        return;
-    }
-
-    let modal = document.getElementById('ruler-inventory-modal');
-    if (modal) modal.remove();
-
-    modal = document.createElement('div');
-    modal.id = 'ruler-inventory-modal';
-    modal.style.cssText = `
-        position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
-        width: 90%; max-width: 450px; background: #111; border: 2px solid #ffd700;
-        border-radius: 8px; color: #fff; padding: 15px; box-shadow: 0 0 25px rgba(0,0,0,0.8);
-        z-index: 11000; font-family: 'Montserrat', sans-serif;
-    `;
-
-    let invHtml = `<div style="text-align:center;color:#888;font-style:italic;padding:15px;">Инвентарът е празен</div>`;
-    if (leaderObj.inventory && leaderObj.inventory.length > 0) {
-        invHtml = `<div style="display:grid;grid-template-columns:repeat(4, 1fr);gap:10px;max-height:200px;overflow-y:auto;padding:5px;">`;
-        leaderObj.inventory.forEach((item, itemIdx) => {
-            let rarityColor = "#fff";
-            if (item.rarity === "rare") rarityColor = "#00ffff";
-            if (item.rarity === "epic") rarityColor = "#9b59b6";
-            if (item.rarity === "legendary") rarityColor = "#ff9f43";
-
-            invHtml += `
-                <div style="background:#222; border:1px solid #333; border-radius:4px; padding:5px; text-align:center; font-size:11px; position:relative;" title="${item.description || ''}">
-                    <div style="font-size:24px;margin-bottom:3px;">${item.icon || '📦'}</div>
-                    <div style="color:${rarityColor};font-weight:bold;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${item.name}</div>
-                    <div style="font-size:9px;color:#888;">x${item.count || 1}</div>
-                </div>
-            `;
-        });
-        invHtml += `</div>`;
-    }
-
-    modal.innerHTML = `
-        <div style="display:flex; justify-content:between; align-items:center; border-bottom:1px solid #333; padding-bottom:8px; margin-bottom:12px;">
-            <b style="color:#ffd700;font-family:'Cinzel';font-size:13px;">🎒 ИНВЕНТАР - ${titleName.toUpperCase()}</b>
-            <button onclick="document.getElementById('ruler-inventory-modal').remove()" style="background:none;border:none;color:#ff4757;font-size:16px;cursor:pointer;font-weight:bold;margin-left:auto;">✕</button>
-        </div>
-        ${invHtml}
-        <div style="margin-top:12px; text-align:right;">
-            <button onclick="document.getElementById('ruler-inventory-modal').remove()" style="background:#222; border:1px solid #555; color:#fff; padding:5px 12px; font-size:11px; cursor:pointer; border-radius:3px;">Затвори</button>
-        </div>
-    `;
-
-    document.body.appendChild(modal);
-};
-
 const UI = {
     init() {
         window.renderTop6LeadersUI();
@@ -310,11 +404,15 @@ const UI = {
         if (expBtn) {
             const badge = expBtn.querySelector('.mission-badge') || document.getElementById('expedition-badge');
             const badgeCount = badge ? badge.textContent : '3';
+            // Опаковаме текста в клас .expedition-btn-text, за да го контролираме чрез CSS медийни заявки
             expBtn.innerHTML = `🧭 <span class="expedition-btn-text" style="margin-left: 2px;">Експедиции</span> <div id="expedition-badge" class="mission-badge">${badgeCount}</div>`;
         }
     }
 };
 
+window.UI = UI;
+
 document.addEventListener('DOMContentLoaded', () => {
-    UI.init();
+    window.UI.init();
+    window.updateExpeditionBadge();
 });
