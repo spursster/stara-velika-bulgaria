@@ -1,28 +1,48 @@
 /**
  * МОДУЛ: ГЛАВНА ЛОГИКА - Велика България
- * СТАТУС: ОБНОВЕН И СИНХРОНИЗИРАН (Времето е напълно фиксирано и автономно)
+ * СТАТУС: ОБНОВЕН СЪС СЛУЧАЕН ВЪРХОВЕН ЛИДЕР (13 Равноправни Династии)
+ * При всяко стартиране Върховният владетел се избира напълно случайно от database.js!
  * Статистика на файловете в проекта: 16
  */
 
 window.initNewGame = function() {
+    // 1. АЛГОРИТЪМ ЗА ИЗБОР НА СЛУЧАЕН ВЪРХОВЕН ВЛАДЕТЕЛ (От твоя окончателен списък)
+    let selectedName = "Кубрат"; // Fallback по подразбиране
+    let selectedDynasty = "Дуло"; // Fallback по подразбиране
+
+    if (window.bulgarianDynasties) {
+        const dynastiesKeys = Object.keys(window.bulgarianDynasties);
+        if (dynastiesKeys.length > 0) {
+            // Избираме случайна династия от 13-те налични
+            selectedDynasty = dynastiesKeys[Math.floor(Math.random() * dynastiesKeys.length)];
+            const rulersList = window.bulgarianDynasties[selectedDynasty].rulers;
+            
+            if (rulersList && rulersList.length > 0) {
+                // Избираме случаен владетел от тази династия
+                selectedName = rulersList[Math.floor(Math.random() * rulersList.length)];
+            }
+        }
+    }
+
+    // 2. ИНИЦИАЛИЗАЦИЯ НА ВЪРХОВНИЯ ЛИДЕР С РАВНОПРАВНИ СТАТИСТИКИ
     window.currentHero = {
-        name: "Кубрат", 
-        dynasty: "Дуло",
+        name: selectedName, 
+        dynasty: selectedDynasty,
         gold: 1500,
         armySize: 500,
         heroPower: 150,
-        age: 60, // Остава постоянна базова стойност, без физическо стареене
+        age: 50, // Унифицирана базова стойност за старт
         techLevel: 1
     };
 
+    // 3. ИНИЦИАЛИЗАЦИЯ НА ВРЕМЕТО
     window.gameTime = { 
         year: 1, 
-        seasonIndex: 0, 
-        era: "от н.е.",
+        seasonIndex: 0, \n        era: "от н.е.",
         turn: 1 
     };
     
-    window.playerRegions = ["Крим"];
+    window.playerRegions = [["Крим"]];
     
     window.activeDynasties = {};
     if (window.bulgarianDynasties) {
@@ -38,39 +58,37 @@ window.initNewGame = function() {
 
     if (window.updateCharacterUI) window.updateCharacterUI(window.currentHero);
     if (window.updateTimeUI) window.updateTimeUI();
-    if (window.showAdvisorMsg) window.showAdvisorMsg("Летоброенето започва от 1 г. от н.е.");
     
-    if (window.renderExpeditionButton) window.renderExpeditionButton();
+    console.log(`👑 Играта започна с Върховен Лидер: ${window.currentHero.name} от род ${window.currentHero.dynasty}!`);
 };
 
-window.advanceTurn = function() {
-    if (!window.currentHero) return;
-
-    // 1. АВТОНОМНА ОБРАБОТКА НА ВРЕМЕТО (Зарежда, върти и обновява UI без външна зависимост)
-    window.gameTime.turn++;
-    if (window.gameTime.seasonIndex === 3) {
-        window.gameTime.seasonIndex = 0;
-        window.gameTime.year++;
-    } else {
-        window.gameTime.seasonIndex++;
-    }
-
-    // Извиква се външно само ако съществува в mechanics.js за допълнителни събития
-    if (window.processTime) window.processTime(); 
-
-    // Главният владетел получава опит за управление на държавата всеки ход
-    if (window.gainHeroXP) {
-        window.gainHeroXP(window.currentHero, 5);
-        if (window.checkAndAssignClass) window.checkAndAssignClass(window.currentHero);
-    }
-
-    // 2. Икономика и приходи
-    let seasonalBonus = (window.gameTime.seasonIndex === 2) ? 200 : 100; 
+/**
+ * ПРЕХВЪРЛЯНЕ НА ХОД (Клик на бутона "Следващ ход")
+ */
+window.nextTurn = function() {
+    // 1. НАПРЕДЪК НА ВРЕМЕТО
+    window.gameTime.turn += 1;
+    window.gameTime.seasonIndex += 1;
     
+    if (window.gameTime.seasonIndex > 3) {
+        window.gameTime.seasonIndex = 0;
+        window.gameTime.year += 1;
+    }
+
+    // Автономно извикване на механиките за родови промени и проверка за трона
+    if (window.processTime) {
+        window.processTime();
+    }
+
+    // 2. ИКОНОМИКА: ПРИХОДИ НА ИГРАЧА
+    let seasonalBonus = 200;
+    if (window.gameTime.seasonIndex === 1) seasonalBonus = 350; // Лято
+    if (window.gameTime.seasonIndex === 3) seasonalBonus = 100; // Зима
+
     let goldArtifactModifier = 0;
-    if (window.playerInventory && window.playerInventory.length > 0) {
-        window.playerInventory.forEach(item => {
-            if (item.bonus && item.bonus.goldBonus) {
+    if (window.equippedItems) {
+        window.equippedItems.forEach(item => {
+            if (item && item.bonus && item.bonus.goldBonus) {
                 goldArtifactModifier += item.bonus.goldBonus;
             }
         });
@@ -80,7 +98,7 @@ window.advanceTurn = function() {
     let artifactExtraGold = Math.floor(baseIncome * (goldArtifactModifier / 100));
     window.currentHero.gold += (baseIncome + artifactExtraGold);
 
-    // 3. Логика за останалите родове
+    // 3. ЛОГИКА ЗА ОСТАНАЛИТЕ РОДОВЕ
     Object.keys(window.activeDynasties).forEach(dyn => {
         if (dyn !== window.currentHero.dynasty) {
             window.activeDynasties[dyn].gold += 50;
@@ -96,18 +114,12 @@ window.advanceTurn = function() {
         window.updateExpeditionSystem();
     }
 
-    // 6. ОПРЕСНЯВАНЕ НА ИНТЕРФЕЙСА (Задължително опресняване на героя и времето)
+    // 6. ОПРЕСНЯВАНЕ НА ИНТЕРФЕЙСА
     if (window.updateCharacterUI) window.updateCharacterUI(window.currentHero);
     if (window.updateTimeUI) window.updateTimeUI();
 };
 
 // Автоматично стартиране на играта веднага след като браузърът зареди изцяло страницата
 window.addEventListener('DOMContentLoaded', () => {
-    // Малко изчакване (100ms), за да сме сигурни, че и ui.js, и mechanics.js също са заредени
-    setTimeout(() => {
-        if (window.initNewGame) {
-            window.initNewGame();
-            console.log("⚔️ Играта 'Велика България' беше инициализирана автоматично при старт!");
-        }
-    }, 100);
+    window.initNewGame();
 });
