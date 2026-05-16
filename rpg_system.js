@@ -1,7 +1,7 @@
 /**
  * МОДУЛ: ВЕЛИКАТА RPG СИСТЕМА - Велика България
- * СТАТУС: НАПЪЛНО СИНХРОНИЗИРАН И ИЗЧИСТЕН (Интеграция с UI без виртуални пресмятания)
- * Статистика на файловете в проекта: 16
+ * СТАТУС: НАПЪЛНО СИНХРОНИЗИРАН, ИЗЧИСТЕН И ИСТОРИЧЕСКИ ПРЕЦИЗЕН (Без забранени титли)
+ * Статистика на файловете in проекта: 16
  */
 
 window.rpgDatabase = window.rpgDatabase || {
@@ -85,14 +85,13 @@ window.rpgDatabase = window.rpgDatabase || {
  */
 window.initializeHeroRPGData = function(hero) {
     if (!hero) return;
-    if (hero.level !== undefined && hero.xp !== undefined) return; // Вече има инициализирани RPG данни
+    if (hero.level !== undefined && hero.xp !== undefined) return; // Вече има данни
 
     hero.level = 1;
     hero.xp = 0;
     hero.skillPoints = 0;
     hero.currentClass = hero.currentClass && hero.currentClass !== "Няма клас" ? hero.currentClass : "Чист Водач";
     
-    // Зануляване на дървото на уменията при първоначална регистрация
     if (!hero.skills) {
         hero.skills = {
             endurance: 0,
@@ -113,37 +112,31 @@ window.initializeHeroRPGData = function(hero) {
 window.gainHeroXP = function(hero, amount) {
     if (!hero) return;
     
-    // Подсигуряваме, че обектът има нужните полета преди промяната
     window.initializeHeroRPGData(hero);
 
     hero.xp += amount;
     let reqXP = window.rpgDatabase.getXPRequiredForLevel(hero.level);
     let leveledUp = false;
 
-    // Цикъл за качване на нива, ако опита надхвърли лимита
     while (hero.xp >= reqXP) {
         hero.xp -= reqXP;
         hero.level++;
-        hero.skillPoints += 2; // Добавяне на 2 свободни точки за разпределяне
-        hero.heroPower += 25;  // Бонус бойна мощ директно от качването на ниво
+        hero.skillPoints += 2; 
+        hero.heroPower += 25;  
         leveledUp = true;
         reqXP = window.rpgDatabase.getXPRequiredForLevel(hero.level);
     }
 
-    // Ако е пуснат AUTO режима за този конкретен герой, автоматично разпределяме точките му
     if (window.autoLevelState && window.autoLevelState[hero.name]) {
         window.autoAssignLeaderSkills(hero);
     } else {
-        // Проверяваме за еволюция в клас дори при ръчно разпределяне на точки по-късно
         window.checkAndAssignClass(hero);
     }
 
-    // Известяване в Летописа на играта
     if (leveledUp && window.showAdvisorMsg) {
         window.showAdvisorMsg(`✨ Кан ${hero.name} от род ${hero.dynasty} достигна НИВО ${hero.level}!`);
     }
 
-    // КРИТИЧНО ЗА СИНХРОНИЗАЦИЯТА: Насилствено опресняване на интерфейса, за да се отразят промените веднага
     if (window.renderTop6LeadersUI) window.renderTop6LeadersUI();
     if (window.updateCharacterUI && window.currentHero && window.currentHero.name === hero.name) {
         window.updateCharacterUI(window.currentHero);
@@ -151,7 +144,7 @@ window.gainHeroXP = function(hero, amount) {
 };
 
 /**
- * АВТОМАТИЧНО ОБУЧЕНИЕ НА СЛУЧАЙНИТЕ ВОДАЧИ (AI РАЗПРЕДЕЛЕНИЕ ИЛИ AUTO РЕЖИМ)
+ * АВТОМАТИЧНО ОБУЧЕНИЕ НА СЛУЧАЙНИТЕ ВОДАЧИ
  */
 window.autoAssignLeaderSkills = function(leader) {
     window.initializeHeroRPGData(leader);
@@ -173,12 +166,10 @@ window.autoAssignLeaderSkills = function(leader) {
 window.checkAndAssignClass = function(leader) {
     window.initializeHeroRPGData(leader);
     
-    // Филтрираме достъпните класове за съответната династия и ниво
     const availableClasses = window.rpgDatabase.classes.filter(c => {
         if (c.clan !== "Универсален" && c.clan !== leader.dynasty) return false;
         if (leader.level < c.reqLevel) return false;
         
-        // Проверка на изискванията за дървото на уменията
         for (let sk in c.reqSkill) {
             if ((leader.skills[sk] || 0) < c.reqSkill[sk]) return false;
         }
@@ -186,7 +177,6 @@ window.checkAndAssignClass = function(leader) {
     });
 
     if (availableClasses.length > 0) {
-        // Избираме най-престижния достъпен клас (с най-високо ниво)
         availableClasses.sort((a,b) => b.reqLevel - a.reqLevel);
         const newClass = availableClasses[0];
         
