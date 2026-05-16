@@ -356,3 +356,35 @@ window.renderHistory = function() {
         `).join('');
     }
 };
+
+/**
+ * ФУНКЦИЯ ЗА ОБНОВЯВАНЕ НА ИНДИКАТОРА НА ЕКСПЕДИЦИИТЕ
+ */
+window.updateExpeditionBadge = function() {
+    const badge = document.getElementById('expedition-badge');
+    if (!badge) return;
+    
+    let availableMissions = 0;
+    
+    // Проверка дали базата с мисии е заредена
+    if (window.expeditionDatabase && window.expeditionDatabase.missions) {
+        // Броим мисиите, които отговарят на нивото на героя и не са активни в момента
+        availableMissions = window.expeditionDatabase.missions.filter(mission => {
+            const meetsLevel = window.currentHero.level >= (mission.reqLevel || 0);
+            const isNotRunning = !window.activeExpeditions || !window.activeExpeditions.some(e => e.missionId === mission.id);
+            return meetsLevel && isNotRunning;
+        }).length;
+    } else {
+        // Алтернативен базов изглед, ако няма заредени мисии
+        availableMissions = Math.max(0, 3 - (window.activeExpeditions ? window.activeExpeditions.length : 0));
+    }
+    
+    badge.innerText = availableMissions;
+    
+    // Скриваме индикатора напълно, ако няма налични мисии
+    if (availableMissions === 0) {
+        badge.style.display = 'none';
+    } else {
+        badge.style.display = 'flex';
+    }
+};
