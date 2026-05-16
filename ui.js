@@ -1,9 +1,9 @@
 /**
  * ==========================================================================
  * ПРОЕКТ: ВЕЛИКА БЪЛГАРИЯ
- * ФАЙЛ: ui.js (ОПТИМИЗАЦИЯ НА ЛЕВИЯ ПАНЕЛ & ВРЕМЕТО)
- * ОПИСАНИЕ: Управление на UI. Времето и парите са преместени отляво.
- * СТАТУС: КОРИГИРАН (Премахнат надпис Династия владения, изчистен дизайн)
+ * ФАЙЛ: ui.js (ОПТИМИЗАЦИЯ НА ЛЕВИЯ ПАНЕЛ & СКРИВАНЕ НА ТЕКСТА НА ЕКСПЕДИЦИИТЕ)
+ * ОПИСАНИЕ: Управление на UI. Времето е преместени отляво. Текстът на експедициите се скрива на телефон.
+ * СТАТУС: КОРИГИРАН (Скриване на текстовия етикет на експедициите само за мобилни)
  * Статистика на файловете в проекта: 16
  * ==========================================================================
  */
@@ -117,6 +117,7 @@ window.renderTop6LeadersUI = function() {
                 .leader-name-text { font-size: 0.60em !important; max-width: 70px !important; }
                 .leader-class-text { font-size: 0.48em !important; max-width: 70px !important; }
                 .leader-xp-bar-container { width: 55px !important; }
+                .expedition-btn-text { display: none !important; } /* Скрива текста на телефона */
             }
         `;
         document.head.appendChild(styleSheet);
@@ -279,7 +280,7 @@ window.inspectSpecificRulerByName = function(name) {
 };
 
 /**
- * ОБНОВЯВАНЕ НА ЛЕВИЯ СТРАНИЧЕН ПАНЕЛ (Контейнер с Време, Пари и Владетел)
+ * ОБНОВЯВАНЕ НА ЛЕВИЯ СТРАНИЧЕН ПАНЕЛ
  */
 window.updateCharacterUI = function(hero) {
     if (!hero) return;
@@ -287,7 +288,6 @@ window.updateCharacterUI = function(hero) {
     let stats = getCalculatedLeaderStats(hero);
     const leftSidebar = document.getElementById('provinces-list');
 
-    // Извличане на текущите стойности за времето
     let currentYear = window.gameTime ? window.gameTime.year : 681;
     let currentEra = window.gameTime ? window.gameTime.era : "г.";
 
@@ -337,7 +337,6 @@ window.updateCharacterUI = function(hero) {
         `;
     }
 
-    // Синхронизация на хедър елементите, ако все още съществуват в HTML
     const goldEl = document.getElementById('stat-gold');
     const armyEl = document.getElementById('stat-army');
     const powerEl = document.getElementById('stat-power');
@@ -372,7 +371,7 @@ window.renderHistory = function() {
 };
 
 /**
- * ФУНКЦИЯ ЗА ОБНОВЯВАНЕ НА ИНДИКАТОРА НА ЕКСПЕДИЦИИТЕ
+ * ОБНОВЯВАНЕ НА БАДЖА НА ЕКСПЕДИЦИИТЕ (Запазва текста на PC, скрива го на Mobile)
  */
 window.updateExpeditionBadge = function() {
     const badge = document.getElementById('expedition-badge');
@@ -405,7 +404,8 @@ const UI = {
         if (expBtn) {
             const badge = expBtn.querySelector('.mission-badge') || document.getElementById('expedition-badge');
             const badgeCount = badge ? badge.textContent : '3';
-            expBtn.innerHTML = `🧭 <div id="expedition-badge" class="mission-badge">${badgeCount}</div>`;
+            // Опаковаме текста в клас .expedition-btn-text, за да го контролираме чрез CSS медийни заявки
+            expBtn.innerHTML = `🧭 <span class="expedition-btn-text" style="margin-left: 2px;">Експедиции</span> <div id="expedition-badge" class="mission-badge">${badgeCount}</div>`;
         }
     }
 };
