@@ -1,6 +1,6 @@
 /**
  * МОДУЛ: ИНТЕРФЕЙС - Велика България
- * СТАТУС: НАДГРАДЕН (Добавено име на владетел в инвентара + Full Screen + Топ 6)
+ * СТАТУС: ФИКСИРАН (Опитът и нивата се опресняват динамично след експедиции и ходове)
  * Статистика на файловете в проекта: 16
  */
 
@@ -16,27 +16,44 @@ window.toggleGameFullScreen = function() {
         !document.msFullscreenElement) {
         
         const docEl = document.documentElement;
-        if (docEl.requestFullscreen) {
-            docEl.requestFullscreen();
-        } else if (docEl.mozRequestFullScreen) {
-            docEl.mozRequestFullScreen();
-        } else if (docEl.webkitRequestFullscreen) {
-            docEl.webkitRequestFullscreen();
-        } else if (docEl.msRequestFullscreen) {
-            docEl.msRequestFullscreen();
-        }
+        if (docEl.requestFullscreen) { docEl.requestFullscreen(); } 
+        else if (docEl.mozRequestFullScreen) { docEl.mozRequestFullScreen(); } 
+        else if (docEl.webkitRequestFullscreen) { docEl.webkitRequestFullscreen(); } 
+        else if (docEl.msRequestFullscreen) { docEl.msRequestFullscreen(); }
     } else {
-        if (document.exitFullscreen) {
-            document.exitFullscreen();
-        } else if (document.mozCancelFullScreen) {
-            document.mozCancelFullScreen();
-        } else if (document.webkitExitFullscreen) {
-            document.webkitExitFullscreen();
-        } else if (document.msExitFullscreen) {
-            document.msExitFullscreen();
-        }
+        if (document.exitFullscreen) { document.exitFullscreen(); } 
+        else if (document.mozCancelFullScreen) { document.mozCancelFullScreen(); } 
+        else if (document.webkitExitFullscreen) { document.webkitExitFullscreen(); } 
+        else if (document.msExitFullscreen) { document.msExitFullscreen(); }
     }
 };
+
+/**
+ * Помощна функция за сигурно извличане на актуалното RPG ниво и опит
+ */
+function getCalculatedLeaderStats(leader) {
+    if (!leader) return { level: 1, xp: 0, maxXp: 100 };
+
+    // Проверяваме дали играта записва опита в различни променливи (xp, experience, exp)
+    let currentXp = leader.xp || leader.experience || leader.exp || 0;
+    let currentLevel = leader.level || leader.lvl || 1;
+
+    // Автоматична RPG математика: ако опитът нарасне, но играта е пропуснала да вдигне нивото в обекта
+    // Формула: Всяко ниво изисква Ниво * 100 XP (1 ниво = 100, 2 ниво = 200 и т.н.)
+    let calculatedMaxXp = currentLevel * 100;
+    
+    // Ако натрупаният опит надхвърли нужния за нивото, преизчисляваме автоматично за интерфейса
+    if (currentXp >= calculatedMaxXp && calculatedMaxXp > 0) {
+        currentLevel = Math.floor(currentXp / 100) + 1;
+        calculatedMaxXp = currentLevel * 100;
+    }
+
+    return {
+        level: currentLevel,
+        xp: currentXp,
+        maxXp: leader.maxXp || calculatedMaxXp
+    };
+}
 
 /**
  * Функция за динамично генериране на Топ 6 най-опитни владетели
@@ -85,12 +102,32 @@ window.renderTop6LeadersUI = function() {
         }
     }
 
+    // Извличане и СИНХРОНИЗАЦИЯ на данните в реално време
     let allLeaders = [];
     if (window.currentHero) {
-        allLeaders.push({ ...window.currentHero, isMain: true, level: window.currentHero.level || 1, xp: window.currentHero.xp || 0, maxXp: window.currentHero.maxXp || 100, currentClass: window.currentHero.currentClass || "Велик Кан" });
+        let stats = getCalculatedLeaderStats(window.currentHero);
+        allLeaders.push({ 
+            ...window.currentHero, 
+            isMain: true, 
+            level: stats.level, 
+            xp: stats.xp, 
+            maxXp: stats.maxXp, 
+            currentClass: window.currentHero.currentClass || "Велик Кан" 
+        });
     }
+    
     if (window.mightyLeaders && window.mightyLeaders.length > 0) {
-        window.mightyLeaders.forEach(ml => { allLeaders.push({ ...ml, isMain: false, level: ml.level || 1, xp: ml.xp || 0, maxXp: ml.maxXp || 100, currentClass: ml.currentClass || "Пълководец" }); });
+        window.mightyLeaders.forEach(ml => { 
+            let stats = getCalculatedLeaderStats(ml);
+            allLeaders.push({ 
+                ...ml, 
+                isMain: false, 
+                level: stats.level, 
+                xp: stats.xp, 
+                maxXp: stats.maxXp, 
+                currentClass: ml.currentClass || "Пълководец" 
+            }); 
+        });
     }
 
     if (allLeaders.length === 0) {
@@ -99,13 +136,17 @@ window.renderTop6LeadersUI = function() {
     }
     leadersBar.style.display = 'flex';
 
+    // Сортиране по актуално преизчислено ниво и опит
     allLeaders.sort((a, b) => (b.level !== a.level) ? (b.level - a.level) : (b.xp - a.xp));
     const top6 = allLeaders.slice(0, 6);
     window.realMainHeroReference = window.currentHero;
 
     leadersBar.innerHTML = top6.map((leader, index) => {
         let icon = leader.isMain ? "🛡️" : "⚔️";
-        let xpPercent = Math.min(100, Math.floor((leader.xp / (leader.maxXp || 100)) * 100));
+        
+        // Изчисляване на реалния процент на прогреса
+        let xpPercent = leader.maxXp > 0 ? Math.min(100, Math.floor((leader.xp / leader.maxXp) * 100)) : 0;
+        
         let borderGlow = index === 0 ? "border: 2px solid #ffd700; box-shadow: 0 0 8px rgba(255,215,0,0.4);" : "border: 1px solid #d4af37;";
         let crownSize = index === 0 ? "18px" : "14px";
         let crownGlow = index === 0 ? "filter: drop-shadow(0 0 5px #ffd700);" : "opacity: 0.7;";
@@ -119,14 +160,16 @@ window.renderTop6LeadersUI = function() {
                     <div class="leader-avatar-box" style="width: 58px; height: 58px; background: rgba(0,0,0,0.5); border-radius: 8px; display: flex; justify-content: center; align-items: center; font-size: 24px; box-sizing: border-box; ${borderGlow}">${icon}</div>
                 </div>
                 <div style="font-size: 0.68em; font-weight: bold; color: #00ffcc; line-height: 1.1; margin-bottom: 2px;">Н. ${leader.level}</div>
-                <div class="leader-xp-bar-container" style="width: 66px; height: 4px; background: #333; border-radius: 2px; overflow: hidden; border: 1px solid rgba(212,175,55,0.2); box-sizing: border-box;"><div style="width: ${xpPercent}%; height: 100%; background: linear-gradient(90deg, #00ccff, #00ffcc);"></div></div>
+                <div class="leader-xp-bar-container" style="width: 66px; height: 4px; background: #333; border-radius: 2px; overflow: hidden; border: 1px solid rgba(212,175,55,0.2); box-sizing: border-box;">
+                    <div style="width: ${xpPercent}%; height: 100%; background: linear-gradient(90deg, #00ccff, #00ffcc); transition: width 0.3s;"></div>
+                </div>
             </div>
         `;
     }).join('');
 };
 
 /**
- * Интелигентно превключване за инспектиране на инвентар с добавяне на името в прозореца
+ * Интелигентно превключване за инспектиране на инвентар
  */
 window.inspectSpecificRuler = function(index, leaderData) {
     if (!leaderData) return;
@@ -136,30 +179,20 @@ window.inspectSpecificRuler = function(index, leaderData) {
         const existingModal = document.getElementById('inventory-modal');
         if (existingModal) existingModal.remove();
 
-        // Отваряме базовия инвентар
         window.toggleRulerInventory();
 
-        // НАДГРАЖДАНЕ: Инжектираме заглавие с името на разглеждания водач най-отгоре в отворения инвентар
         setTimeout(() => {
             const modal = document.getElementById('inventory-modal');
             if (modal) {
-                // Търсим или създаваме заглавен блок за притежателя на инвентара
                 let ownerHeader = document.getElementById('inventory-owner-title');
                 if (!ownerHeader) {
                     ownerHeader = document.createElement('div');
                     ownerHeader.id = 'inventory-owner-title';
                     ownerHeader.style.cssText = `
-                        text-align: center;
-                        padding: 8px;
-                        margin: -5px auto 12px auto;
-                        background: rgba(212, 175, 55, 0.15);
-                        border: 1px solid #d4af37;
-                        border-radius: 6px;
-                        width: 90%;
-                        font-family: 'Georgia', serif;
-                        box-sizing: border-box;
+                        text-align: center; padding: 8px; margin: -5px auto 12px auto;
+                        background: rgba(212, 175, 55, 0.15); border: 1px solid #d4af37;
+                        border-radius: 6px; width: 90%; font-family: 'Georgia', serif; box-sizing: border-box;
                     `;
-                    // Инжектираме го в началото на модалния прозорец
                     modal.insertBefore(ownerHeader, modal.firstChild);
                 }
                 ownerHeader.innerHTML = `
@@ -168,10 +201,8 @@ window.inspectSpecificRuler = function(index, leaderData) {
                     <span style="color: #00ffcc; font-size: 0.9em;">(Н. ${leaderData.level} ${leaderData.currentClass})</span>
                 `;
 
-                // Пренаписваме бутона за затваряне, за да върне фокуса на главния герой
                 const closeBtn = modal.querySelector("button");
                 if (closeBtn) {
-                    const originalClose = closeBtn.onclick;
                     closeBtn.onclick = function() {
                         if (modal) modal.remove();
                         if (window.realMainHeroReference) {
@@ -236,6 +267,8 @@ window.updateCharacterUI = function(hero) {
     if (powerEl) powerEl.innerText = hero.heroPower;
     
     window.renderHistory();
+    
+    // ПРЕДИЗВИКВА СЕ ОПРЕСНЯВАНЕ: Чете новите преизчислени данни веднага
     window.renderTop6LeadersUI();
 
     if (window.updateTimeUI) window.updateTimeUI();
