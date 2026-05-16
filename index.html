@@ -160,10 +160,13 @@
         </section>
     </main>
 
-    <div id="bottom-controls">
+  <div id="bottom-controls">
         <button class="icon-btn" onclick="window.openRegionsMap()">🗺️</button>
         <button class="icon-btn" onclick="window.buyUnits()">🏹</button>
         <button class="icon-btn" id="btn-battle" onclick="window.startBattle()">⚔️</button>
+        
+        <button class="icon-btn" id="btn-events" onclick="window.openEventsMenu ? window.openEventsMenu() : (window.triggerRandomEvent ? window.triggerRandomEvent() : alert('Функцията за събития не е намерена!'))" title="Събития">📜</button>
+        
         <button class="icon-btn" id="btn-expeditions" onclick="window.openExpeditionsMenu()" title="Експедиции">
             🧭
             <div id="expedition-badge" class="mission-badge">3</div>
