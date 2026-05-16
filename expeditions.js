@@ -1,6 +1,7 @@
 /**
  * МОДУЛ: ВЕЛИКИТЕ ЕКСПЕДИЦИИ НА СВЕТА - Велика България
  * СТАТУС: НАПЪЛНО СИНХРОНИЗИРАН С RPG_SYSTEM.JS И ИЗПРАВЕН ИНВЕНТАР ЗА ВСИЧКИ ВЛАДЕТЕЛИ
+ * СТАРТИРАНЕ: АВТОМАТИЧНО И НЕЗАВИСИМО
  * Статистика на файловете в проекта: 16
  */
 
@@ -131,7 +132,7 @@ const allCoreQuests = [
             "Прекарване на три дни в пълна изолация в недрата на земята.",
             "Излизане от пещерата под звуците на свещени химни."
         ],
-        final: "Вашите пратеници се завръщат, носейки мистичното знание за отвъдния живот!",
+        final: "Вашите пратеници се завръщат, носят мистичното знание за отвъдния живот!",
         reward: { power: 250, army: 40, item: "Дакийски свещен нож" }
     }
 ];
@@ -338,7 +339,6 @@ window.openExpeditionCenter = function() {
     hRadio.style.cssText = `background: rgba(214,175,55,0.1); border: 1px solid #d4af37; padding: 8px; margin-bottom: 8px; border-radius: 4px; display:flex; justify-content:space-between; align-items:center; cursor:pointer;`;
     if (isHeroRunning) hRadio.style.opacity = "0.4";
     
-    // Лява секция за селекция
     let hInfoHtml = `
         <div style="display:flex; align-items:center;" onclick="if(!isHeroRunning) window.selectExpeditionLeader('main_hero')">
             <input type="radio" name="exp_leader_sel" id="exp_l_main" ${isHeroRunning ? 'disabled' : 'checked'} style="margin-right:10px; transform: scale(1.2);">
@@ -446,7 +446,7 @@ window.startSelectedExpedition = function(questIndex, leader) {
 };
 
 /**
- * АВТОМАТИЧНО ОБНОВЯВАНЕ ПРИ ВСЕКИ ХОД (ПОПРАВЕНО: Всеки водач трупа за себе си!)
+ * АВТОМАТИЧНО ОБНОВЯВАНЕ ПРИ ВСЕКИ ХОД
  */
 window.updateExpeditionSystem = function() {
     if (window.activeExpeditions.length === 0) return;
@@ -457,7 +457,6 @@ window.updateExpeditionSystem = function() {
         if (exp.currentProgress < exp.duration) {
             exp.currentProgress++;
 
-            // СИНХРОНИЗАЦИЯ: Трупане на малък текущ ход опит от експедицията за конкретния водач
             if (window.gainHeroXP) {
                 window.gainHeroXP(exp.leader, 15);
             }
@@ -493,12 +492,10 @@ window.completeSpecificExpedition = function(index) {
     const goldReward = exp.reward.gold || 0;
     const powerReward = exp.reward.power || 0;
 
-    // СИНХРОНИЗАЦИЯ: Бонус опитът отива точно в завърналия се водач
     if (window.gainHeroXP) {
         window.gainHeroXP(hero, 300);
     }
     
-    // Подсигуряваме еволюцията в класовете веднага при награждаване
     if (window.checkAndAssignClass) {
         window.checkAndAssignClass(hero);
     }
@@ -526,13 +523,11 @@ window.completeSpecificExpedition = function(index) {
         window.acquireArtifact(exp.reward.item);
     }
 
-    // Изтриване на мисията
     window.activeExpeditions.splice(index, 1);
     
     window.openExpeditionCenter();
     window.renderExpeditionButton();
     
-    // Насилствено опресняване на екраните
     if (window.renderTop6LeadersUI) window.renderTop6LeadersUI();
     if (window.updateCharacterUI) window.updateCharacterUI(window.currentHero);
 };
@@ -613,7 +608,6 @@ window.toggleSpecificRulerInventory = function(leaderKey) {
     document.body.appendChild(inventoryModal);
 };
 
-// За съвместимост със стария бутон
 window.toggleRulerInventory = function() {
     window.toggleSpecificRulerInventory('main_hero');
 };
@@ -645,5 +639,21 @@ window.renderExpeditionButton = function() {
     } else {
         btn.innerHTML = `🌍 Експедиции (0/3)`;
         btn.style.background = "linear-gradient(135deg, #8a2387, #e94057)";
+        btn.style.color = "white";
     }
 };
+
+/**
+ * АВТОМАТИЧНО САМОЗАДЕЙСТВАНЕ ПРИ ЗАРЕЖДАНЕ
+ * Подсигурява мигновено показване на бутона без блокиране от браузъра
+ */
+(function() {
+    if (typeof window.renderExpeditionButton === 'function') {
+        window.renderExpeditionButton();
+    }
+    setTimeout(() => {
+        if (typeof window.renderExpeditionButton === 'function') {
+            window.renderExpeditionButton();
+        }
+    }, 500);
+})();
