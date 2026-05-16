@@ -1,3 +1,25 @@
+/* ЕПИЧЕН ФОН НА ИГРАТА С ТЪМЕН ФИЛТЪР ЗА КОНТРАСТ */
+body {
+    background: linear-gradient(rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.4)), 
+                url('https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEjJuReyp2P1EHVmb8i_LXu6AQhvvvByWOCKKl4sVeQTuIKnvmu0dZ64-jCPAw7hisWSrzei_lJeAS3tvQvYHuV5vKWGvc4ZRWsd5XZpgkX-KbUA0o9C2MMXiV1H0NGzVhJEj1iRxeT67HYEAe1VTmjmeI__JKiOCkz6hVVbo6O7gbqfsABylSvdnA-P7VAq/s3072/_d012d68d-c196-4d76-be3e-0a44b9f7ccfa.jpeg') !important;
+    background-size: cover !important;
+    background-position: center !important;
+    background-repeat: no-repeat !important;
+    background-attachment: fixed !important;
+    margin: 0;
+    padding: 0;
+    height: 100vh;
+    overflow: hidden;
+}
+
+/* Полупрозрачен матов ефект за левия панел, за да прозира артът зад него */
+#left-sidebar {
+    background: rgba(13, 13, 13, 0.75) !important;
+    backdrop-filter: blur(10px) !important;
+    -webkit-backdrop-filter: blur(10px) !important;
+    border-right: 1px solid rgba(212, 175, 55, 0.2) !important;
+}
+
 /* ГЛАВЕН СТИЛ - ВЕЛИКА БЪЛГАРИЯ (FINAL MINIMAL) */
 
 :root {
