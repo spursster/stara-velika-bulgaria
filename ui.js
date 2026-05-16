@@ -1,6 +1,6 @@
 /**
  * МОДУЛ: ИНТЕРФЕЙС - Велика България
- * СТАТУС: ФИКСИРАН (Лентата за Топ 6 се инжектира автономно и работи при всеки ход)
+ * СТАТУС: МОБИЛНО ОПТИМИЗИРАН (Топ 6 лента с 4 видими заоблени карти на телефон, прогрес барове и инвентар)
  * Статистика на файловете в проекта: 16
  */
 
@@ -10,32 +10,83 @@ window.eventHistory = [];
  * Функция за динамично генериране на Топ 6 най-опитни владетели
  */
 window.renderTop6LeadersUI = function() {
-    // Намираме сигурен родителски контейнер - централния панел или самия body, за да не се чупи играта
     let targetContainer = document.getElementById('game-time-display')?.parentNode || document.querySelector('.main-content') || document.body;
     if (!targetContainer) return;
+
+    // Инжектираме CSS стилове за мобилна адаптивност, ако все още не съществуват
+    let styleSheet = document.getElementById('top-6-responsive-style');
+    if (!styleSheet) {
+        styleSheet = document.createElement("style");
+        styleSheet.id = 'top-6-responsive-style';
+        styleSheet.innerText = `
+            /* Скриване на системния скролбар за чист интерфейс */
+            #top-6-leaders-bar::-webkit-scrollbar { display: none; }
+            #top-6-leaders-bar { -ms-overflow-style: none; scrollbar-width: none; }
+            
+            /* Дефолтни карти за голям екран */
+            .leader-rpg-card {
+                flex: 1;
+                min-width: 95px;
+            }
+            
+            /* МОБИЛНА ОПТИМИЗАЦИЯ: Точно 4 иконки видими на екрана на телефон */
+            @media (max-width: 768px) {
+                #top-6-leaders-bar {
+                    justify-content: flex-start !important;
+                    padding: 8px 6px !important;
+                    gap: 10px !important;
+                }
+                .leader-rpg-card {
+                    /* Изчислява се така, че точно 4 карти да запълнят 100% от ширината, минус разстоянията */
+                    flex: 0 0 calc(25% - 8px) !important;
+                    min-width: 78px !important;
+                }
+                .leader-avatar-box {
+                    width: 50px !important;
+                    height: 50px !important;
+                    font-size: 20px !important;
+                }
+                .leader-name-text {
+                    font-size: 0.65em !important;
+                    max-width: 76px !important;
+                }
+                .leader-class-text {
+                    font-size: 0.52em !important;
+                    max-width: 76px !important;
+                }
+                .leader-xp-bar-container {
+                    width: 60px !important;
+                }
+            }
+        `;
+        document.head.appendChild(styleSheet);
+    }
 
     let leadersBar = document.getElementById('top-6-leaders-bar');
     if (!leadersBar) {
         leadersBar = document.createElement('div');
         leadersBar.id = 'top-6-leaders-bar';
         leadersBar.style.cssText = `
-            margin: 15px auto;
-            padding: 6px;
-            background: linear-gradient(180deg, #121212, #211902);
+            margin: 12px auto;
+            padding: 10px;
+            background: linear-gradient(180deg, #141414, #1f1802);
             border: 2px solid #d4af37;
             border-radius: 8px;
-            width: 95%;
-            max-width: 800px;
+            width: 96%;
+            max-width: 900px;
             display: flex;
             justify-content: center;
-            align-items: center;
-            gap: 12px;
+            align-items: flex-start;
+            gap: 14px;
+            overflow-x: auto;
+            scroll-snap-type: x mandatory;
             box-shadow: 0 0 20px rgba(212,175,55,0.3);
             font-family: 'Georgia', serif;
             box-sizing: border-box;
+            z-index: 999;
+            -webkit-overflow-scrolling: touch;
         `;
         
-        // Инжектираме го на сигурно място - ако има време, под него, ако не - най-отгоре в контейнера
         const timeEl = document.getElementById('game-time-display');
         if (timeEl) {
             timeEl.parentNode.insertBefore(leadersBar, timeEl.nextSibling);
@@ -44,14 +95,16 @@ window.renderTop6LeadersUI = function() {
         }
     }
 
-    // Събиране на водачите от играта
+    // Събиране на реалните водачи от играта
     let allLeaders = [];
     if (window.currentHero) {
         allLeaders.push({ 
             ...window.currentHero, 
             isMain: true,
             level: window.currentHero.level || 1,
-            xp: window.currentHero.xp || 0
+            xp: window.currentHero.xp || 0,
+            maxXp: window.currentHero.maxXp || 100,
+            currentClass: window.currentHero.currentClass || "Велик Кан"
         });
     }
     
@@ -61,12 +114,13 @@ window.renderTop6LeadersUI = function() {
                 ...ml, 
                 isMain: false,
                 level: ml.level || 1,
-                xp: ml.xp || 0
+                xp: ml.xp || 0,
+                maxXp: ml.maxXp || 100,
+                currentClass: ml.currentClass || "Пълководец"
             }); 
         });
     }
 
-    // Защита: Ако все още няма водачи, лентата остава скрита, докато не се появят
     if (allLeaders.length === 0) {
         leadersBar.style.display = 'none';
         return;
@@ -74,7 +128,7 @@ window.renderTop6LeadersUI = function() {
 
     leadersBar.style.display = 'flex';
 
-    // Сортиране по ниво и опит
+    // Сортиране по ниво и опит в низходящ ред
     allLeaders.sort((a, b) => (b.level !== a.level) ? (b.level - a.level) : (b.xp - a.xp));
     const top6 = allLeaders.slice(0, 6);
     
@@ -82,34 +136,48 @@ window.renderTop6LeadersUI = function() {
 
     leadersBar.innerHTML = top6.map((leader, index) => {
         let icon = leader.isMain ? "🛡️" : "⚔️";
-        let crownSize = index === 0 ? "20px" : "16px";
-        let glow = index === 0 ? "filter: drop-shadow(0 0 6px #ffd700);" : "";
+        let xpPercent = Math.min(100, Math.floor((leader.xp / (leader.maxXp || 100)) * 100));
+        let borderGlow = index === 0 ? "border: 2px solid #ffd700; box-shadow: 0 0 8px rgba(255,215,0,0.4);" : "border: 1px solid #d4af37;";
+        let crownSize = index === 0 ? "18px" : "14px";
+        let crownGlow = index === 0 ? "filter: drop-shadow(0 0 5px #ffd700);" : "opacity: 0.7;";
 
         return `
-            <div onclick="window.inspectSpecificRuler(${index}, ${JSON.stringify(leader).replace(/"/g, '&quot;')})" 
-                 style="text-align: center; display: flex; flex-direction: column; align-items: center; cursor: pointer; transition: transform 0.2s;" 
+            <div class="leader-rpg-card" 
+                 onclick="window.inspectSpecificRuler(${index}, ${JSON.stringify(leader).replace(/"/g, '&quot;')})" 
+                 style="text-align: center; display: flex; flex-direction: column; align-items: center; cursor: pointer; transition: transform 0.2s; scroll-snap-align: start;" 
                  onmouseover="this.style.transform='scale(1.05)'" 
                  onmouseout="this.style.transform='scale(1)'">
-                <div style="font-size: ${crownSize}; ${glow}; line-height: 1; margin-bottom: -4px; z-index: 2;">👑</div>
-                <div style="
-                    width: 70px;
-                    height: 70px;
-                    background: rgba(0,0,0,0.6);
-                    border: 2px solid ${index === 0 ? '#ffd700' : '#d4af37'};
-                    border-radius: 50%;
-                    display: flex;
-                    flex-direction: column;
-                    justify-content: center;
-                    align-items: center;
-                    box-shadow: ${index === 0 ? '0 0 10px rgba(255,215,0,0.4)' : '0 0 6px rgba(0,0,0,0.5)'};
-                    overflow: hidden;
-                    box-sizing: border-box;
-                    padding: 4px;
-                ">
-                    <div style="font-size: 20px; margin-bottom: 2px;">${icon}</div>
-                    <div style="font-size: 0.65em; font-weight: bold; color: #ffd700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 60px; line-height: 1.1;">${leader.name}</div>
-                    <div style="font-size: 0.58em; color: #ccc; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 60px; line-height: 1.1;">Род ${leader.dynasty} [cite: 2026-02-03]</div>
-                    <div style="font-size: 0.65em; font-weight: bold; color: #00ffcc; margin-top: 1px;">Н. ${leader.level}</div>
+                
+                <div class="leader-name-text" style="font-size: 0.72em; font-weight: bold; color: #ffd700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 92px; line-height: 1.2;">
+                    ${leader.name}
+                </div>
+                <div class="leader-class-text" style="font-size: 0.58em; color: #aaa; margin-bottom: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 92px;">
+                    ${leader.currentClass}
+                </div>
+
+                <div style="position: relative; display: flex; flex-direction: column; align-items: center; margin-bottom: 4px;">
+                    <div style="font-size: ${crownSize}; ${crownGlow}; line-height: 1; margin-bottom: -3px; z-index: 2;">👑</div>
+                    <div class="leader-avatar-box" style="
+                        width: 58px;
+                        height: 58px;
+                        background: rgba(0,0,0,0.5);
+                        border-radius: 8px;
+                        display: flex;
+                        justify-content: center;
+                        align-items: center;
+                        font-size: 24px;
+                        box-sizing: border-box;
+                        ${borderGlow}
+                    ">
+                        ${icon}
+                    </div>
+                </div>
+                
+                <div style="font-size: 0.68em; font-weight: bold; color: #00ffcc; line-height: 1.1; margin-bottom: 2px;">
+                    Н. ${leader.level}
+                </div>
+                <div class="leader-xp-bar-container" style="width: 66px; height: 4px; background: #333; border-radius: 2px; overflow: hidden; border: 1px solid rgba(212,175,55,0.2); box-sizing: border-box;">
+                    <div style="width: ${xpPercent}%; height: 100%; background: linear-gradient(90deg, #00ccff, #00ffcc);"></div>
                 </div>
             </div>
         `;
@@ -144,7 +212,7 @@ window.inspectSpecificRuler = function(index, leaderData) {
             }
         }, 100);
     } else {
-        alert(`Кан ${leaderData.name}\nРод ${leaderData.dynasty}\nНиво: ${leaderData.level}`);
+        alert(`Кан ${leaderData.name}\nРод ${leaderData.dynasty} [cite: 2026-02-03]\nНиво: ${leaderData.level}`);
     }
 };
 
@@ -196,7 +264,7 @@ window.updateCharacterUI = function(hero) {
     
     window.renderHistory();
 
-    // ВИКА СЕ АВТОНОМНО - ВИНАГИ НАМИРА МЯСТО НА ЕКРАНА
+    // Автоматично извикване при всяко опресняване
     window.renderTop6LeadersUI();
 
     if (window.updateTimeUI) window.updateTimeUI();
