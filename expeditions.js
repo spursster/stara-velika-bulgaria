@@ -1,6 +1,6 @@
 /**
  * МОДУЛ: ВЕЛИКИТЕ ЕКСПЕДИЦИИ НА СВЕТА И ИНВЕНТАРНА СИСТЕМА - Велика България
- * СТАТУС: НАПЪЛНО КОРИГИРАН И ИЗПРАВЕН (Поправени правописни грешки и HTML генератор)
+ * СТАТУС: ФИНАЛНО СИНХРОНИЗИРАН (Поправени нива, z-index на инвентара и advanceTurn мост)
  * Вградена хардкор цена от 20 000 злато за нов фентъзи водач.
  * Статистика на файловете в проекта: 16
  */
@@ -9,7 +9,16 @@ window.activeExpeditions = window.activeExpeditions || [];
 window.legendaryQuests = window.legendaryQuests || [];
 window.mightyLeaders = window.mightyLeaders || [];
 
-// Променлива за следене на отключените водачи в палатата (Започваме с 1 - текущия Върховен)
+// Автоматичен мост за Следващ ход (Поправка за ред 127 в index.html)
+window.advanceTurn = function() {
+    if (typeof window.nextTurn === 'function') {
+        window.nextTurn();
+    } else {
+        console.log("Връзката към window.nextTurn() в logic.js още не е готова.");
+    }
+};
+
+// Променлива за следене на отключените водачи в палатата
 window.unlockedLeadersCount = window.unlockedLeadersCount || 1;
 
 // АВТОМАТИЧЕН ЗАЩИТЕН FALLBACK АКО ОСТАНАЛИТЕ ФАЙЛОВЕ НЕМАТ РАЗПИСАНА SHOWMYSTICMODAL
@@ -31,7 +40,7 @@ if (typeof window.showMysticModal !== 'function') {
             position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
             width: 85%; max-width: 440px; background: #161616; border: 2px solid ${currentBorder};
             padding: 20px; color: white; border-radius: 10px; text-align: center;
-            box-shadow: 0 0 25px rgba(0,0,0,0.8); z-index: 110000; font-family: sans-serif;
+            box-shadow: 0 0 25px rgba(0,0,0,0.8); z-index: 210000; font-family: sans-serif;
         `;
         fallbackModal.innerHTML = `
             <h3 style="color:${currentBorder}; margin-top:0;">${title}</h3>
@@ -47,7 +56,7 @@ window.legendaryQuests = [
     { id: 1, title: "Поход до делтата на Дунав", duration: 3, risk: 10, goldReward: 800, xpReward: 150, desc: "Разузнаване на търговските пътища отвъд реката." },
     { id: 2, title: "Експедиция в Карпатските планини", duration: 5, risk: 25, goldReward: 2200, xpReward: 400, desc: "Търсене на ценни залежи и тайни древни крепости." },
     { id: 3, title: "Дипломатическа мисия в Кавказ", duration: 8, risk: 15, goldReward: 4500, xpReward: 750, desc: "Преговори с далечни родове за вечен съюз и търговия." },
-    { id: 4, title: "Обсада на разбунтувана Черноморска твърдина", duration: 6, risk: 40, goldReward: 3800, xpReward: 600, desc: "Потискане на местни размирици со силата на меча." },
+    { id: 4, title: "Обсада на разбунтувана Черноморска твърдина", duration: 6, risk: 40, goldReward: 3800, xpReward: 600, desc: "Потискане на местни размирици със силата на меча." },
     { id: 5, title: "Тайни разкопки край Мадара", duration: 4, risk: 5, goldReward: 1200, xpReward: 300, desc: "Търсене на древни реликви и свещени знаци." }
 ];
 
@@ -65,8 +74,6 @@ window.buyNewExpeditionLeader = function() {
     if (!window.bulgarianDynasties) return;
     const dynastiesKeys = Object.keys(window.bulgarianDynasties);
     const randomDynasty = dynastiesKeys[Math.floor(Math.random() * dynastiesKeys.length)];
-    
-    // ПРАВОПИСНА ПОПРАВКА: Сменено от бърканото bulgarianDynadties на правилното име
     const rulersList = window.bulgarianDynasties[randomDynasty] ? window.bulgarianDynasties[randomDynasty].rulers : [];
     
     if (!rulersList || rulersList.length === 0) return;
@@ -127,7 +134,7 @@ window.openExpeditionCenter = function() {
     modal.style.cssText = `
         position: fixed; top: 5%; left: 5%; width: 90%; height: 90%;
         background: rgba(20, 20, 20, 0.98); border: 3px solid #ffd700;
-        border-radius: 12px; padding: 25px; color: white; z-index: 99999;
+        border-radius: 12px; padding: 25px; color: white; z-index: 199999;
         overflow-y: auto; font-family: 'Georgia', serif; box-shadow: 0 0 40px rgba(0,0,0,0.9);
     `;
 
@@ -198,7 +205,7 @@ window.openExpeditionCenter = function() {
             allAvailableLeaders.forEach(leader => {
                 let isAssigned = window.activeExpeditions.some(e => e.leaderName === leader.name);
                 if (!isAssigned) {
-                    html += `<option value="${leader.name}">${leader.name} (${leader.dynasty})</option>`;
+                    html += `<option value="${leader.name}">${leader.name}</option>`;
                 }
             });
 
@@ -298,7 +305,7 @@ window.updateExpeditionSystem = function() {
 };
 
 /* ==========================================================================
-   ⚠️ ВЪЗСТАНОВЕН БЛОК: СИСТЕМА ЗА ПРЕДМЕТИ, АРТЕФАКТИ И МАГАЗИН
+   ⚠️ ВЪЗСТАНОВЕН БЛОК: СИСТЕМА ЗА ПРЕДМЕТИ, АРТЕФАКТИ И МАГАЗИН (УСИЛЕН Z-INDEX)
    ========================================================================== */
 
 window.equippedItems = window.equippedItems || [];
@@ -321,7 +328,7 @@ window.openInventory = function() {
     inventoryModal.style.cssText = `
         position: fixed; top: 10%; left: 10%; width: 80%; height: 80%;
         background: rgba(15,15,15,0.98); border: 2px solid #ffd700; color: white;
-        padding: 20px; z-index: 99999; overflow-y: auto; font-family: 'Georgia', serif;
+        padding: 20px; z-index: 250000; overflow-y: auto; font-family: 'Georgia', serif;
         border-radius: 8px; box-shadow: 0 0 30px rgba(0,0,0,0.9);
     `;
 
@@ -372,20 +379,16 @@ window.openInventory = function() {
 
 window.equipItem = function(index) {
     let item = window.playerInventory[index];
-    
     let alreadyEquippedSameType = window.equippedItems.some(i => i.type === item.type);
     if (alreadyEquippedSameType) {
-        window.showMysticModal("⚠️ Слотът е зает", `Вече имаш екипиран предмет от тип "${item.type}". Свали го първо!`, "expedition");
+        window.showMysticModal("⚠️ Слотът е зает", `Вече имаш екипиран предмет от тип "${item.type}".`, "expedition");
         return;
     }
-
     window.playerInventory.splice(index, 1);
     window.equippedItems.push(item);
-    
     if (window.currentHero && item.bonus.powerBonus) {
         window.currentHero.heroPower += item.bonus.powerBonus;
     }
-
     window.openInventory();
     if (window.updateCharacterUI) window.updateCharacterUI(window.currentHero);
 };
@@ -394,11 +397,9 @@ window.unequipItem = function(index) {
     let item = window.equippedItems[index];
     window.equippedItems.splice(index, 1);
     window.playerInventory.push(item);
-
     if (window.currentHero && item.bonus.powerBonus) {
         window.currentHero.heroPower = Math.max(0, window.currentHero.heroPower - item.bonus.powerBonus);
     }
-
     window.openInventory();
     if (window.updateCharacterUI) window.updateCharacterUI(window.currentHero);
 };
@@ -412,14 +413,14 @@ window.openMerchantShop = function() {
     shopModal.style.cssText = `
         position: fixed; top: 10%; left: 15%; width: 70%; height: 70%;
         background: rgba(20,15,10,0.98); border: 2px solid #38ef7d; color: white;
-        padding: 20px; z-index: 99999; overflow-y: auto; font-family: 'Georgia', serif;
+        padding: 20px; z-index: 250000; overflow-y: auto; font-family: 'Georgia', serif;
         border-radius: 8px; box-shadow: 0 0 35px rgba(0,0,0,0.9);
     `;
 
     let shopHtml = `<div style="display:grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap:15px;">`;
     window.availableMerchantItems.forEach(item => {
         shopHtml += `
-            <div style="background:#221a15; border:1px solid #664d3b; padding:15px; border-radius:5px; position:relative;">
+            <div style="background:#221a15; border:1px solid #664d3b; padding:15px; border-radius:5px;">
                 <b style="color:#38ef7d; font-size:15px;">${item.name}</b><br>
                 <small style="color:#ccc;">Тип: ${item.type}</small><br>
                 <p style="margin:5px 0; font-size:12px; min-height:30px;">${item.desc}</p>
@@ -451,8 +452,7 @@ window.buyMerchantItem = function(id) {
 
     window.currentHero.gold -= item.price;
     window.playerInventory.push(JSON.parse(JSON.stringify(item)));
-
-    window.showMysticModal("🎉 Успешна покупка!", `Закупи <b>${item.name}</b>! Предметът е в Складището.`, "triumph");
+    window.showMysticModal("🎉 Успешна покупка!", `Закупи ${item.name}! Предметът е в Складището.`, "triumph");
     
     if (window.updateCharacterUI) window.updateCharacterUI(window.currentHero);
     window.openMerchantShop();
@@ -488,7 +488,7 @@ window.renderExpeditionButton = function() {
     }
 };
 
-// Сигурно стартиране
+// Зареждане
 if (document.readyState === 'complete') {
     window.renderExpeditionButton();
 } else {
