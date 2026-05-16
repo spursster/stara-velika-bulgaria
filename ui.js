@@ -371,42 +371,28 @@ window.renderHistory = function() {
 };
 
 /**
- * ОБНОВЯВАНЕ НА БАДЖА НА ЕКСПЕДИЦИИТЕ (Запазва текста на PC, скрива го на Mobile)
+ * ФУНКЦИЯ ЗА ОБНОВЯВАНЕ НА ИНДИКАТОРА НА ЕКСПЕДИЦИИТЕ (САМО ЗА ЗАВЪРШЕНИ МИСИИ)
  */
 window.updateExpeditionBadge = function() {
     const badge = document.getElementById('expedition-badge');
     if (!badge) return;
     
-    let availableMissions = 0;
-    if (window.expeditionDatabase && window.expeditionDatabase.missions) {
-        availableMissions = window.expeditionDatabase.missions.filter(mission => {
-            const currentLevel = window.currentHero ? (window.currentHero.level || 1) : 1;
-            const meetsLevel = currentLevel >= (mission.reqLevel || 0);
-            const isNotRunning = !window.activeExpeditions || !window.activeExpeditions.some(e => e.missionId === mission.id);
-            return meetsLevel && isNotRunning;
+    let completedMissionsCount = 0;
+    
+    // Проверяваме дали има активни експедиции и броим само завършилите (готови)
+    if (window.activeExpeditions && window.activeExpeditions.length > 0) {
+        completedMissionsCount = window.activeExpeditions.filter(e => {
+            let leftTime = e.duration - e.currentProgress;
+            return leftTime <= 0; // Готова/Завършена мисия
         }).length;
-    } else {
-        availableMissions = Math.max(0, 3 - (window.activeExpeditions ? window.activeExpeditions.length : 0));
     }
     
-    badge.innerText = availableMissions;
-    badge.style.display = availableMissions === 0 ? 'none' : 'flex';
-};
-
-const UI = {
-    init() {
-        window.renderTop6LeadersUI();
-        if (window.currentHero) window.updateCharacterUI(window.currentHero);
-        this.cleanExpeditionButtonText();
-    },
-    cleanExpeditionButtonText() {
-        const expBtn = document.getElementById('btn-expeditions');
-        if (expBtn) {
-            const badge = expBtn.querySelector('.mission-badge') || document.getElementById('expedition-badge');
-            const badgeCount = badge ? badge.textContent : '3';
-            // Опаковаме текста в клас .expedition-btn-text, за да го контролираме чрез CSS медийни заявки
-            expBtn.innerHTML = `🧭 <span class="expedition-btn-text" style="margin-left: 2px;">Експедиции</span> <div id="expedition-badge" class="mission-badge">${badgeCount}</div>`;
-        }
+    // Показваме баджа само ако има поне 1 готова мисия за прибиране, иначе се скрива напълно
+    if (completedMissionsCount > 0) {
+        badge.innerText = completedMissionsCount;
+        badge.style.display = 'flex';
+    } else {
+        badge.style.display = 'none';
     }
 };
 
