@@ -1,6 +1,6 @@
 /**
  * МОДУЛ: ГЛАВНА ЛОГИКА - Велика България
- * СТАТУС: ОБНОВЕН СЪС СЛУЧАЕН ВЪРХОВЕН ЛИДЕР (Фиксирана Синтактична Грешка)
+ * СТАТУС: ОБНОВЕН СЪС СЛУЧАЕН ВЪРХОВЕН ЛИДЕР И СИНХРОНИЗАЦИЯ НА ХОДОВЕТЕ
  * При всяко стартиране Върховният владетел се избира напълно случайно от database.js!
  * Статистика на файловете в проекта: 16
  */
@@ -107,7 +107,7 @@ window.nextTurn = function() {
         }
     });
 
-    // 4. АКТИВИРАНЕ НА СЛУЧАЙНИ СЪБИТИЯ
+    // 4. АКТИВИРАНЕ НА СЛУЧАЙНИ СЪБИТИЯ (Стандартно автоматично извикване на нов ход)
     if (window.triggerRandomEvent) window.triggerRandomEvent();
 
     // 5. НАПРЕДЪК НА АКТИВНИТЕ ЕКСПЕДИЦИИ
@@ -119,6 +119,9 @@ window.nextTurn = function() {
     if (window.updateCharacterUI) window.updateCharacterUI(window.currentHero);
     if (window.updateTimeUI) window.updateTimeUI();
 };
+
+// 🎯 ЗАЩИТЕН МОСТ: Прикачваме същата функция и към advanceTurn, за да работи HTML бутонът ти безгрешно
+window.advanceTurn = window.nextTurn;
 
 // Автоматично стартиране на играта веднага след като браузърът зареди изцяло страницата
 window.addEventListener('DOMContentLoaded', () => {
