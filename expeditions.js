@@ -1,7 +1,7 @@
 /**
  * МОДУЛ: ВЕЛИКИТЕ ЕКСПЕДИЦИИ НА СВЕТА - Велика България
  * СТАТУС: НАПЪЛНО СИНХРОНИЗИРАН С RPG_SYSTEM.JS И ИЗПРАВЕН ИНВЕНТАР ЗА ВСИЧКИ ВЛАДЕТЕЛИ
- * КОРЕКЦИЯ: Добавен глобален мост към openExpeditionsMenu() за предотвратяване на грешки в index.html
+ * КОРЕКЦИЯ: Добавени глобални мостове към openExpeditionsMenu() и openInventory() за стабилност с index.html
  * Статистика на файловете в проекта: 16
  */
 
@@ -648,10 +648,14 @@ window.renderExpeditionButton = function() {
 };
 
 /**
- * ГЛОБАЛЕН МОСТ (ALIAS) ЗА ПОДСИГУРЯВАНЕ НА СТАРИ ОНКЛИК СЪБИТИЯ В INDEX.HTML
+ * ГЛОБАЛНИ МОСТОВЕ (ALIASES) ЗА ПОДСИГУРЯВАНЕ НА ОНКЛИК СЪБИТИЯТА В INDEX.HTML
  */
 window.openExpeditionsMenu = function() {
     window.openExpeditionCenter();
+};
+
+window.openInventory = function() {
+    window.toggleRulerInventory();
 };
 
 /**
