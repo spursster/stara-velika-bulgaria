@@ -8,26 +8,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Montserrat:wght@300;400;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
     <style>
-        /* МАКСИМАЛНО ИЗЧИСТВАНЕ НА КУТИЯТА ЗА ВЛАДЕТЕЛИТЕ (RPG TOP BAR) */
-        #ruler-card, .leader-card, .character-card, .top-leader-container, [id*="leader"], [class*="leader-card"], [class*="ruler"] {
-            background: transparent !important;
-            border: none !important;
-            box-shadow: none !important;
-        }
-
-        /* Премахване на рамката и фона около щита / иконата на владетеля */
-        .leader-avatar-wrapper, .avatar-container, [class*="avatar"], .leader-card img {
-            background: transparent !important;
-            border: none !important;
-            box-shadow: none !important;
-        }
-
-        /* Текстови сенки за перфектна четимост на имената на владетелите над новия заден фон */
-        #top-bar div, #top-bar span, .panel-section h3, .panel-section div, [class*="leader"] h3, [class*="leader"] div, [class*="leader"] span {
-            text-shadow: 0 2px 4px rgba(0, 0, 0, 1), 0 4px 8px rgba(0, 0, 0, 0.8) !important;
-        }
-
-        /* МОБИЛНА ОПТИМИЗАЦИЯ ЗА БУТОНИТЕ */
+        /* 📱 ОПТИМИЗИРАНА ДОЛНА ЛЕНТА ЗА 6 БУТОНА – БЕЗ ИЗЛИЗАНЕ ОТ ЕКРАНА 📱 */
         #bottom-controls {
             position: fixed !important;
             bottom: 0 !important;
@@ -36,35 +17,71 @@
             height: 70px !important;
             background: rgba(17, 17, 17, 0.85) !important;
             backdrop-filter: blur(10px) !important;
+            -webkit-backdrop-filter: blur(10px) !important;
             border-top: 2px solid #d4af37 !important;
             display: flex !important;
-            justify-content: space-around !important;
+            justify-content: space-between !important;
             align-items: center !important;
             z-index: 9999 !important;
-            padding-bottom: env(safe-area-inset-bottom);
+            padding: 0 4px !important;
+            box-sizing: border-box !important;
         }
 
+        /* АДАПТИВНИ И СИМЕТРИЧНИ БУТОНИ – СВИВАТ СЕ АВТОМАТИЧНО СПРЯМО ТЕЛЕФОНА */
         .icon-btn {
-            background: none;
-            border: 1px solid #333;
-            color: #d4af37;
-            font-size: 24px;
-            padding: 10px;
-            border-radius: 5px;
-            cursor: pointer;
-            flex: 1;
-            margin: 0 5px;
-            display: flex;
-            justify-content: center;
-            align-items: center;
+            background: rgba(20, 20, 20, 0.6) !important;
+            border: 1px solid #d4af37 !important;
+            color: #d4af37 !important;
+            font-size: 20px !important;
+            border-radius: 6px !important;
+            cursor: pointer !important;
+            flex: 1 !important;
+            min-width: 0 !important;
+            margin: 0 2px !important;
+            height: 48px !important;
+            display: flex !important;
+            justify-content: center !important;
+            align-items: center !important;
+            position: relative !important;
+            transition: background 0.2s, transform 0.1s !important;
+            box-sizing: border-box !important;
+        }
+
+        @media (max-width: 360px) {
+            .icon-btn {
+                font-size: 16px !important;
+                margin: 0 1px !important;
+            }
+        }
+
+        .icon-btn:hover {
+            background: rgba(212, 175, 55, 0.2) !important;
+        }
+
+        .icon-btn:active {
+            transform: scale(0.95) !important;
+        }
+
+        /* Подравняване на значката с числото върху иконката */
+        .mission-badge, #expedition-badge {
+            position: absolute !important;
+            top: 1px !important;
+            right: 1px !important;
+            background: #ff4d4d !important;
+            color: white !important;
+            font-size: 9px !important;
+            font-weight: bold !important;
+            border-radius: 50% !important;
+            padding: 1px 4px !important;
+            line-height: 1 !important;
         }
 
         /* КОРЕКЦИЯ НА ОСНОВНИЯ КОНТЕЙНЕР ЗА МОБИЛНИ */
         #game-container {
-            height: calc(100vh - 130px);
-            overflow: hidden;
-            display: flex;
-            margin-bottom: 70px; /* Място за фиксирания футер */
+            height: calc(100vh - 130px) !important;
+            overflow: hidden !important;
+            display: flex !important;
+            margin-bottom: 70px !important;
         }
 
         @media (max-width: 768px) {
@@ -84,9 +101,9 @@
     <div id="event-modal" style="display: none;"></div>
 
     <header id="top-bar" style="background: transparent; border-bottom: none; padding: 0 10px; display: flex; justify-content: space-between; align-items: center; height: 60px;">
-        <div id="time-container" style="font-family: 'Cinzel', serif; color: #d4af37;">
-            <div id="current-time-info" style="font-size: 13px;">Зареждане...</div>
-            <div id="era-display" style="font-size: 9px; opacity: 0.6; letter-spacing: 1px;">АНТИЧНОСТ</div>
+        <div id="time-container">
+            <div id="current-time-info" style="font-family: 'Cinzel', serif; color: #d4af37; font-size: 13px;">Зареждане...</div>
+            <div id="era-display" style="font-family: 'Cinzel', serif; font-size: 9px; color: #d4af37; opacity: 0.6; letter-spacing: 1px; text-align: center;">АНТИЧНОСТ</div>
         </div>
         
         <div id="dynasty-badge" style="text-align: center;">
@@ -147,12 +164,10 @@
         <button class="icon-btn" onclick="window.openRegionsMap()">🗺️</button>
         <button class="icon-btn" onclick="window.buyUnits()">🏹</button>
         <button class="icon-btn" id="btn-battle" onclick="window.startBattle()">⚔️</button>
-        
         <button class="icon-btn" id="btn-expeditions" onclick="window.openExpeditionsMenu()" title="Експедиции">
             🧭
-            <div id="expedition-badge" class="mission-badge">0</div>
+            <div id="expedition-badge" class="mission-badge">3</div>
         </button>
-        
         <button class="icon-btn" id="btn-marriage" onclick="window.openMarriageMenu()">👑</button>
         <button class="icon-btn" onclick="window.openInventory()">🎒</button>
     </div>
