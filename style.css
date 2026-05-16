@@ -1,9 +1,13 @@
-/* ГЛАВЕН СТИЛ - ВЕЛИКА БЪЛГАРИЯ (FINAL MINIMAL) */
+/* * ГЛАВЕН СТИЛ - ВЕЛИКА БЪЛГАРИЯ (FINAL MINIMAL & RPG SYNCHRONIZED)
+ * СТАТУС: НАПЪЛНО ОБНОВЕН И СИНХРОНИЗИРАН (Връзка с RPG Система и Карта)
+ * Статистика на файловете в проекта: 16
+ */
 
 :root {
     --gold: #d4af37;
     --gold-glow: rgba(212, 175, 55, 0.3);
     --dark-bg: #050505;
+    --crimson: #7b1a1a;
 }
 
 * { box-sizing: border-box; }
@@ -18,6 +22,21 @@ body {
     height: 100vh;
     display: flex;
     flex-direction: column;
+}
+
+/* СТИЛИЗИРАНЕ НА СКРОЛБАРОВЕТЕ ЗА ВСИЧКИ ЕКРАНИ (Карта и Списъци) */
+::-webkit-scrollbar {
+    width: 6px;
+}
+::-webkit-scrollbar-track {
+    background: #0a0a0a;
+}
+::-webkit-scrollbar-thumb {
+    background: #222;
+    border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+    background: var(--gold);
 }
 
 /* TOP BAR */
@@ -91,7 +110,7 @@ body {
     position: absolute;
     bottom: 0;
     right: -5px;
-    background: #7b1a1a;
+    background: var(--crimson);
     color: #fff;
     font-size: 9px;
     padding: 1px 3px;
@@ -174,6 +193,37 @@ body {
 #dynasty-shield { width: 200px; filter: drop-shadow(0 0 10px #000); }
 #central-display h1 { font-family: 'Cinzel'; color: var(--gold); margin-top: 15px; font-size: 22px; letter-spacing: 4px; }
 
+/* ТЕМА И СТИЛОВЕ ЗА RPG СИСТЕМАТА И КЛАСОВЕТЕ */
+.rpg-class-title {
+    font-family: 'Cinzel', serif;
+    color: var(--gold);
+    font-weight: bold;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.skill-node-btn {
+    background: #111;
+    border: 1px solid #444;
+    color: #ccc;
+    padding: 6px 10px;
+    font-size: 11px;
+    cursor: pointer;
+    border-radius: 3px;
+    transition: all 0.2s ease;
+}
+
+.skill-node-btn:hover:not(:disabled) {
+    border-color: var(--gold);
+    color: white;
+    box-shadow: 0 0 5px var(--gold-glow);
+}
+
+.skill-node-btn:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
+
 /* TREASURY OVERLAY */
 #treasury-overlay {
     display: none;
@@ -185,7 +235,7 @@ body {
     background: rgba(0,0,0,0.98);
     z-index: 100;
     padding: 25px;
-    border: 2px solid #7b1a1a;
+    border: 2px solid var(--crimson);
 }
 
 .overlay-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid var(--gold); padding-bottom: 10px; }
@@ -238,8 +288,8 @@ body {
     display: none;
 }
 
-/* ГАРАНЦИЯ ЗА ПРЕМАХВАНЕ НА SUGGESTIONS */
-#marquee-container, #suggestion-input-block, .marquee-style, #marquee-text {
+/* ГАРАНЦИЯ ЗА ПРЕМАХВАНЕ НА SUGGESTIONS И WORKSPACE */
+#marquee-container, #suggestion-input-block, .marquee-style, #marquee-text, .google-ws-prompt, #workspace-invite-banner {
     display: none !important;
     visibility: hidden !important;
     height: 0 !important;
