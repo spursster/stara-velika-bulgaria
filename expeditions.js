@@ -1,6 +1,6 @@
 /**
  * МОДУЛ: ВЕЛИКИТЕ ЕКСПЕДИЦИИ НА СВЕТА - Велика България
- * СТАТУС: ФИКСИРАН ТУПЕ ГРЕШКА (AUTOMATIC IN-LINE FALLBACK FOR SHOWMYSTICMODAL) + РЪЧЕН БУТОН ЗА НАГРАДИ
+ * СТАТУС: НАПЪЛНО СИНХРОНИЗИРАН С RPG_SYSTEM.JS (Поправени нива, опресняване на опита и еволюция)
  * Статистика на файловете в проекта: 16
  */
 
@@ -42,11 +42,11 @@ if (typeof window.showMysticModal !== 'function') {
     };
 }
 
-// Времеви масив за заредените водачи в Палатата
+// Времеви масив за заредените водачи в Палатата (С подсигурени базови RPG полета)
 window.mightyLeaders = window.mightyLeaders || [
-    { name: "Аспарух", dynasty: "Дуло", level: 1, xp: 0, skillPoints: 0, heroPower: 130, gold: 0 },
-    { name: "Самуил", dynasty: "Комитопули", level: 1, xp: 0, skillPoints: 0, heroPower: 125, gold: 0 },
-    { name: "Тервел", dynasty: "Дуло", level: 1, xp: 0, skillPoints: 0, heroPower: 120, gold: 0 }
+    { name: "Аспарух", dynasty: "Дуло", level: 1, xp: 0, skillPoints: 0, heroPower: 130, gold: 0, currentClass: "Чист Водач", skills: { endurance:0, vampirism:0, mysticism:0, tactics:0, diplomacy:0, scouting:0, alchemy:0, leadership:0 } },
+    { name: "Самуил", dynasty: "Комитопули", level: 1, xp: 0, skillPoints: 0, heroPower: 125, gold: 0, currentClass: "Чист Водач", skills: { endurance:0, vampirism:0, mysticism:0, tactics:0, diplomacy:0, scouting:0, alchemy:0, leadership:0 } },
+    { name: "Тервел", dynasty: "Дуло", level: 1, xp: 0, skillPoints: 0, heroPower: 120, gold: 0, currentClass: "Чист Водач", skills: { endurance:0, vampirism:0, mysticism:0, tactics:0, diplomacy:0, scouting:0, alchemy:0, leadership:0 } }
 ];
 
 const allCoreQuests = [
@@ -187,7 +187,9 @@ window.rerollExpeditionLeaders = function() {
             xp: 0,
             skillPoints: 0,
             heroPower: Math.floor(Math.random() * 40) + 100,
-            gold: 0
+            gold: 0,
+            currentClass: "Чист Водач",
+            skills: { endurance: 0, vampirism: 0, mysticism: 0, tactics: 0, diplomacy: 0, scouting: 0, alchemy: 0, leadership: 0 }
         });
     }
     
@@ -258,12 +260,11 @@ window.openExpeditionCenter = function() {
             let pct = Math.min(Math.floor((activeInstance.currentProgress / activeInstance.duration) * 100), 100);
             
             if (isDone) {
-                // ВИЗУАЛИЗАЦИЯ ЗА ЗАВЪРШЕНА МИСИЯ (Бутон за ръчно приемане)
                 qCard.style.border = "2px solid #ffd700";
                 qCard.style.background = "linear-gradient(135deg, #221a02, #111)";
                 qCard.innerHTML = `
                     <h3 style="margin:0 0 4px 0; color:#ffd700; font-size:1em;">🎉 ГОТОВА: ${q.title}</h3>
-                    <div style="font-size:0.8em; color:#fff; margin-bottom:4px;"><b>Водач:</b> ${activeInstance.leader.name} (${activeInstance.leader.dynasty})</div>
+                    <div style="font-size:0.8em; color:#fff; margin-bottom:4px;"><b>Водач:</b> ${activeInstance.leader.name} (${activeInstance.leader.dynasty}) — Ниво ${activeInstance.leader.level || 1}</div>
                     <div style="font-size:0.85em; color:#00ffcc; font-weight:bold; margin-bottom:8px;">✅ Експедицията се завърна успешно!</div>
                 `;
                 
@@ -280,7 +281,6 @@ window.openExpeditionCenter = function() {
                 };
                 qCard.appendChild(claimBtn);
             } else {
-                // ВИЗУАЛИЗАЦИЯ ЗА МИСИЯ В ПРОЦЕС НА ИЗПЪЛНЕНИЕ
                 qCard.style.border = "1px solid #00ffcc";
                 qCard.style.background = "#152220";
                 qCard.innerHTML = `
@@ -293,7 +293,6 @@ window.openExpeditionCenter = function() {
                 `;
             }
         } else {
-            // СВОБОДНА МИСИЯ, КОЯТО МОЖЕ ДА СЕ СТАРТИРА
             qCard.innerHTML = `
                 <h3 style="margin:0 0 4px 0; color:#ffd700; font-size:1em;">${q.title}</h3>
                 <div style="font-size:0.75em; color:#00ffcc; margin-bottom:4px;">📍 Направление: ${q.destination} | ⏳ ${q.duration} х.</div>
@@ -343,7 +342,7 @@ window.openExpeditionCenter = function() {
         <input type="radio" name="exp_leader_sel" id="exp_l_main" ${isHeroRunning ? 'disabled' : 'checked'} style="margin-right:10px; transform: scale(1.2);">
         <div>
             <b style="color:#ffd700;">${mainHero.name} (Текущ)</b>
-            <div style="font-size:0.75em; color:#ccc;">Род: ${mainHero.dynasty} | Сила: ${mainHero.heroPower}</div>
+            <div style="font-size:0.75em; color:#ccc;">Род: ${mainHero.dynasty} | Сила: ${mainHero.heroPower} | Нв: ${mainHero.level || 1}</div>
         </div>
     `;
     leadersContainer.appendChild(hRadio);
@@ -360,7 +359,7 @@ window.openExpeditionCenter = function() {
                 <input type="radio" name="exp_leader_sel" id="exp_l_mighty_${mIdx}" ${isLeaderRunning ? 'disabled' : ''} style="margin-right:10px; transform: scale(1.2);">
                 <div>
                     <b style="color:#fff;">${ml.name}</b>
-                    <div style="font-size:0.75em; color:#aaa;">Род: <span style="color:#ffd700;">${ml.dynasty}</span> | Сила: ${ml.heroPower}</div>
+                    <div style="font-size:0.75em; color:#aaa;">Род: <span style="color:#ffd700;">${ml.dynasty}</span> | Сила: ${ml.heroPower} | Нв: ${ml.level || 1}</div>
                 </div>
             `;
             leadersContainer.appendChild(lRadio);
@@ -440,7 +439,7 @@ window.startSelectedExpedition = function(questIndex, leader) {
 };
 
 /**
- * АВТОМАТИЧНО ОБНОВЯВАНЕ ПРИ ВСЕКИ ХОД
+ * АВТОМАТИЧНО ОБНОВЯВАНЕ ПРИ ВСЕКИ ХОД (ПОПРАВЕНО: Всеки водач трупа за себе си!)
  */
 window.updateExpeditionSystem = function() {
     if (window.activeExpeditions.length === 0) return;
@@ -451,6 +450,7 @@ window.updateExpeditionSystem = function() {
         if (exp.currentProgress < exp.duration) {
             exp.currentProgress++;
 
+            // СИНХРОНИЗАЦИЯ: Трупане на малък текущ ход опит от експедицията за конкретния водач
             if (window.gainHeroXP) {
                 window.gainHeroXP(exp.leader, 15);
             }
@@ -486,8 +486,14 @@ window.completeSpecificExpedition = function(index) {
     const goldReward = exp.reward.gold || 0;
     const powerReward = exp.reward.power || 0;
 
+    // СИНХРОНИЗАЦИЯ: Бонус опитът отива точно в завърналия се водач
     if (window.gainHeroXP) {
         window.gainHeroXP(hero, 300);
+    }
+    
+    // Подсигуряваме еволюцията в класовете веднага при награждаване
+    if (window.checkAndAssignClass) {
+        window.checkAndAssignClass(hero);
     }
 
     let rewardSummary = `+${goldReward} 💰, +${powerReward} ⚔️`;
@@ -495,6 +501,7 @@ window.completeSpecificExpedition = function(index) {
         ${exp.final}<br><br>
         <b>Бонус опит за водача:</b> <span style="color: #00ffff;">+300 XP</span> ✨<br>
         <b>Род:</b> ${hero.dynasty}<br>
+        <b>Текущ Клас:</b> <span style="color: #ffd700;">${hero.currentClass || "Чист Водач"}</span><br>
         <b>Спечелени блага:</b> ${rewardSummary}<br>
         <b>Донесен артефакт:</b> <span style="color: #ffd700;">${exp.reward.item || "Няма"}</span>
     `;
@@ -512,11 +519,14 @@ window.completeSpecificExpedition = function(index) {
         window.acquireArtifact(exp.reward.item);
     }
 
-    // Изтриване на мисията СЛЕД успешен сигурен клик
+    // Изтриване на мисията
     window.activeExpeditions.splice(index, 1);
     
     window.openExpeditionCenter();
     window.renderExpeditionButton();
+    
+    // Насилствено опресняване на екраните
+    if (window.renderTop6LeadersUI) window.renderTop6LeadersUI();
     if (window.updateCharacterUI) window.updateCharacterUI(window.currentHero);
 };
 
@@ -526,6 +536,9 @@ window.completeExpedition = function() {
     }
 };
 
+/**
+ * ИНВЕНТАР НА ВЛАДЕТЕЛЯ (ПОПРАВЕН: Напълно обвързан с формула * 150 от rpg_system.js)
+ */
 window.toggleRulerInventory = function() {
     const hero = window.currentHero;
     let inventoryModal = document.getElementById('inventory-modal');
@@ -534,7 +547,14 @@ window.toggleRulerInventory = function() {
         return;
     }
 
-    let reqXP = (hero.level || 1) * 100;
+    // СИНХРОНИЗАЦИЯ: Викаме реалната формула за лимит от системата
+    let reqXP = 150;
+    if (window.rpgDatabase && window.rpgDatabase.getXPRequiredForLevel) {
+        reqXP = window.rpgDatabase.getXPRequiredForLevel(hero.level || 1);
+    } else {
+        reqXP = (hero.level || 1) * 150;
+    }
+    
     let xpPercent = Math.min(((hero.xp || 0) / reqXP) * 100, 100);
 
     inventoryModal = document.createElement('div');
@@ -549,7 +569,7 @@ window.toggleRulerInventory = function() {
     let rpgDashboardHTML = `
         <div style="text-align: center; border-bottom: 1px solid #444; padding-bottom: 12px; margin-bottom: 12px;">
             <h2 style="margin: 0 0 5px 0; color: #ffd700; font-family: 'Georgia', serif; font-size:1.1em;">RPG ДОСИЕ НА ВЛАДЕТЕЛЯ</h2>
-            <div style="font-size: 1em; font-weight: bold; color: #00ffff; margin-bottom: 6px;">Клас: ${hero.currentClass || "Владетел"}</div>
+            <div style="font-size: 1em; font-weight: bold; color: #00ffff; margin-bottom: 6px;">Клас: ${hero.currentClass || "Чист Водач"}</div>
             <div style="display: flex; justify-content: space-between; font-size: 0.85em; margin-bottom: 4px; color: #ccc;">
                 <span><b>Ниво:</b> ${hero.level || 1}</span>
                 <span>${hero.xp || 0} / ${reqXP} XP</span>
