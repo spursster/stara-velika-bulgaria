@@ -1,9 +1,9 @@
 /**
  * ==========================================================================
  * ПРОЕКТ: ВЕЛИКА БЪЛГАРИЯ
- * ФАЙЛ: ui.js (ПЪЛНО СИНХРОНИЗИРАНЕ & АДАПТИВЕН ДИЗАЙН ЗА ТОП 6)
- * ОПИСАНИЕ: Управление на UI, RPG системи и адаптивна горна лента за владетели
- * СТАТУС: КОРИГИРАН (Оптимизирано инжектиране спрямо новата структура на хедъра)
+ * ФАЙЛ: ui.js (ОПТИМИЗАЦИЯ НА ЛЕВИЯ ПАНЕЛ & ВРЕМЕТО)
+ * ОПИСАНИЕ: Управление на UI. Времето и парите са преместени отляво.
+ * СТАТУС: КОРИГИРАН (Премахнат надпис Династия владения, изчистен дизайн)
  * Статистика на файловете в проекта: 16
  * ==========================================================================
  */
@@ -95,10 +95,9 @@ function checkAndExecuteAutoLevel(leader, currentLevel) {
 }
 
 /**
- * РЕНДЕРИРАНЕ НА ТОП 6 ЛЕНТАТА (Регулирана за новата структура)
+ * РЕНДЕРИРАНЕ НА ТОП 6 ЛЕНТАТА
  */
 window.renderTop6LeadersUI = function() {
-    // Намираме хедъра или контейнера, преди който да застане лентата с владетели
     let mainContainer = document.getElementById('game-container');
     let targetContainer = mainContainer ? mainContainer.parentNode : document.body;
     if (!targetContainer) return;
@@ -136,7 +135,6 @@ window.renderTop6LeadersUI = function() {
             font-family: 'Montserrat', sans-serif; box-sizing: border-box; z-index: 999; -webkit-overflow-scrolling: touch;
         `;
         
-        // Поставяме лентата точно над основния контейнер на играта
         if (mainContainer) {
             targetContainer.insertBefore(leadersBar, mainContainer);
         } else {
@@ -281,33 +279,49 @@ window.inspectSpecificRulerByName = function(name) {
 };
 
 /**
- * ОБНОВЯВАНЕ НА ОСНОВНИЯ CHARACTER UI В СТРАНИЧНИЯ ПАНЕЛ
+ * ОБНОВЯВАНЕ НА ЛЕВИЯ СТРАНИЧЕН ПАНЕЛ (Контейнер с Време, Пари и Владетел)
  */
 window.updateCharacterUI = function(hero) {
     if (!hero) return;
 
     let stats = getCalculatedLeaderStats(hero);
-
     const leftSidebar = document.getElementById('provinces-list');
+
+    // Извличане на текущите стойности за времето
+    let currentYear = window.gameTime ? window.gameTime.year : 681;
+    let currentEra = window.gameTime ? window.gameTime.era : "г.";
+
     if (leftSidebar) {
         leftSidebar.innerHTML = `
-            <div style="text-align: center; padding: 10px; background: rgba(212, 175, 55, 0.1); border: 1px solid #d4af37; border-radius: 5px; margin-bottom: 15px;">
-                <h3 style="margin: 0; color: #d4af37; font-family: 'Cinzel'; font-size: 12px;">ВЛАДЕТЕЛ</h3>
-                <div style="font-size: 1.2em; margin-top: 5px; font-weight: bold; color: #fff;">Кан ${hero.name}</div>
-                <div style="font-size: 0.85em; color: #aaa;">Род: ${hero.dynasty} | ${hero.age} г. | Ниво ${stats.level}</div>
+            <div style="padding: 10px; background: rgba(0, 0, 0, 0.4); border: 1px solid rgba(212, 175, 55, 0.3); border-radius: 6px; margin-bottom: 12px; font-family: 'Montserrat', sans-serif;">
+                <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(212,175,55,0.2); padding-bottom: 5px; margin-bottom: 6px;">
+                    <span style="color: #aaa; font-size: 10px; letter-spacing: 0.5px;">ЛЕТОБРОЕНЕ:</span>
+                    <strong id="sidebar-time-display" style="color: #ffd700; font-size: 13px; font-family: 'Cinzel', serif;">${currentYear} ${currentEra}</strong>
+                </div>
+                <div style="display: flex; justify-content: space-between; align-items: center; font-size: 11px;">
+                    <span style="color: #eee;">💰 Скарби (Злато):</span>
+                    <strong id="sidebar-gold-display" style="color: #00ffcc; font-size: 12px;">${Math.floor(hero.gold)}</strong>
+                </div>
+            </div>
+
+            <div style="text-align: center; padding: 10px; background: rgba(212, 175, 55, 0.08); border: 1px solid #d4af37; border-radius: 6px; margin-bottom: 15px;">
+                <h3 style="margin: 0 0 5px 0; color: #d4af37; font-family: 'Cinzel'; font-size: 11px; letter-spacing: 1px;">ВЛАДЕТЕЛ</h3>
+                <div style="font-size: 1.15em; font-weight: bold; color: #fff; font-family: 'Cinzel', serif;">Кан ${hero.name}</div>
+                <div style="font-size: 0.8em; color: #bbb; margin-top: 2px;">Род: ${hero.dynasty} | ${hero.age} г.</div>
+                <div style="font-size: 0.85em; color: #00ffcc; font-weight: bold; margin-top: 4px;">Ниво ${stats.level}</div>
             </div>
             
-            <div style="margin-bottom: 20px;">
-                <h4 style="color: #d4af37; border-bottom: 1px solid #444; padding-bottom: 5px; letter-spacing: 1px; display: flex; justify-content: space-between; align-items: center; font-family: 'Cinzel'; font-size: 11px;">
+            <div style="margin-bottom: 15px;">
+                <h4 style="color: #d4af37; border-bottom: 1px solid #444; padding-bottom: 5px; letter-spacing: 0.5px; display: flex; justify-content: space-between; align-items: center; font-family: 'Cinzel'; font-size: 11px; margin-top: 0;">
                     <span>СЪВЕТ НА РОДОВЕТЕ</span>
-                    <span onclick="window.toggleGameFullScreen()" title="Цял Екран" style="cursor: pointer; font-size: 14px; padding: 2px 6px; background: rgba(212,175,55,0.15); border: 1px solid #d4af37; border-radius: 4px;">📺</span>
+                    <span onclick="window.toggleGameFullScreen()" title="Цял Екран" style="cursor: pointer; font-size: 12px; padding: 1px 5px; background: rgba(212,175,55,0.15); border: 1px solid #d4af37; border-radius: 4px;">📺</span>
                 </h4>
-                <div style="font-size: 0.85em; max-height: 150px; overflow-y: auto; background: rgba(0,0,0,0.3); padding: 8px; border-radius: 4px;">
+                <div style="font-size: 0.85em; max-height: 130px; overflow-y: auto; background: rgba(0,0,0,0.25); padding: 6px; border-radius: 4px;">
                     ${Object.keys(window.activeDynasties || {}).map(clanName => {
                         const clan = window.activeDynasties[clanName];
                         const isPlayer = clanName === hero.dynasty;
                         return `
-                            <div style="display: flex; justify-content: space-between; margin-bottom: 6px; color: ${isPlayer ? '#d4af37' : '#fff'}">
+                            <div style="display: flex; justify-content: space-between; margin-bottom: 5px; color: ${isPlayer ? '#d4af37' : '#eee'}">
                                 <span>${isPlayer ? '👑 ' : ''}${clanName}</span>
                                 <span style="font-size: 0.85em; opacity: 0.8;">${clan ? clan.regions || 0 : 0} зем.</span>
                             </div>
@@ -317,12 +331,13 @@ window.updateCharacterUI = function(hero) {
             </div>
 
             <div id="history-log-container" style="border-top: 1px solid #333; padding-top: 10px;">
-                <h4 style="color: #d4af37; font-size: 11px; margin-bottom: 10px; letter-spacing: 1px; font-family: 'Cinzel';">ЛЕТОПИС</h4>
-                <div id="history-log" style="font-size: 10px; color: #aaa; max-height: 200px; overflow-y: auto; line-height: 1.4;"></div>
+                <h4 style="color: #d4af37; font-size: 10px; margin-bottom: 8px; letter-spacing: 0.5px; font-family: 'Cinzel';">ЛЕТОПИС</h4>
+                <div id="history-log" style="font-size: 10px; color: #aaa; max-height: 180px; overflow-y: auto; line-height: 1.4;"></div>
             </div>
         `;
     }
 
+    // Синхронизация на хедър елементите, ако все още съществуват в HTML
     const goldEl = document.getElementById('stat-gold');
     const armyEl = document.getElementById('stat-army');
     const powerEl = document.getElementById('stat-power');
@@ -338,8 +353,8 @@ window.updateCharacterUI = function(hero) {
 };
 
 window.showAdvisorMsg = function(msg) {
-    const year = window.gameTime ? window.gameTime.year : 1;
-    const era = window.gameTime ? window.gameTime.era : "от н.е.";
+    const year = window.gameTime ? window.gameTime.year : 681;
+    const era = window.gameTime ? window.gameTime.era : "г.";
     window.eventHistory.unshift({ text: msg, time: `${year} ${era}` });
     if (window.eventHistory.length > 5) window.eventHistory.pop();
     window.renderHistory();
@@ -349,8 +364,8 @@ window.renderHistory = function() {
     const logEl = document.getElementById('history-log');
     if (logEl) {
         logEl.innerHTML = window.eventHistory.map(event => `
-            <div style="margin-bottom: 8px; border-bottom: 1px solid #222; padding-bottom: 4px;">
-                <span style="color: #d4af37;">[${event.time} г.]:</span> ${event.text}
+            <div style="margin-bottom: 6px; border-bottom: 1px solid #222; padding-bottom: 4px;">
+                <span style="color: #d4af37;">[${event.time}]:</span> ${event.text}
             </div>
         `).join('');
     }
@@ -366,7 +381,8 @@ window.updateExpeditionBadge = function() {
     let availableMissions = 0;
     if (window.expeditionDatabase && window.expeditionDatabase.missions) {
         availableMissions = window.expeditionDatabase.missions.filter(mission => {
-            const meetsLevel = window.currentHero.level >= (mission.reqLevel || 0);
+            const currentLevel = window.currentHero ? (window.currentHero.level || 1) : 1;
+            const meetsLevel = currentLevel >= (mission.reqLevel || 0);
             const isNotRunning = !window.activeExpeditions || !window.activeExpeditions.some(e => e.missionId === mission.id);
             return meetsLevel && isNotRunning;
         }).length;
@@ -380,23 +396,9 @@ window.updateExpeditionBadge = function() {
 
 const UI = {
     init() {
-        this.updatePlayerStats();
         window.renderTop6LeadersUI();
         if (window.currentHero) window.updateCharacterUI(window.currentHero);
         this.cleanExpeditionButtonText();
-    },
-    updatePlayerStats() {
-        const goldEl = document.getElementById('stat-gold');
-        const powerEl = document.getElementById('stat-power');
-        const armyEl = document.getElementById('stat-army');
-        const clanEl = document.getElementById('current-clan-name');
-        const rulerEl = document.getElementById('current-ruler-name');
-
-        if (goldEl && window.gameState && window.gameState.player) goldEl.textContent = Math.floor(window.gameState.player.gold);
-        if (powerEl && window.gameState && window.gameState.player) powerEl.textContent = window.gameState.player.power;
-        if (armyEl && window.gameState && window.gameState.player) armyEl.textContent = window.gameState.player.armySize;
-        if (clanEl && window.gameState && window.gameState.player && window.gameState.player.clan) clanEl.textContent = window.gameState.player.clan.toUpperCase();
-        if (rulerEl && window.gameState && window.gameState.player && window.gameState.player.rulerName) rulerEl.textContent = window.gameState.player.rulerName;
     },
     cleanExpeditionButtonText() {
         const expBtn = document.getElementById('btn-expeditions');
