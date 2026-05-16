@@ -1,7 +1,11 @@
 /**
- * МОДУЛ: ИНТЕРФЕЙС - Велика България
- * СТАТУС: КОРИГИРАН (Оправен бъг с грешно трупане на опит при експедиции)
+ * ==========================================================================
+ * ПРОЕКТ: ВЕЛИКА БЪЛГАРИЯ
+ * ФАЙЛ: ui.js (ПЪЛНО ОБНОВЯВАНЕ & СИНХРОНИЗАЦИЯ С МОБИЛЕН И ДЕСКТОП ИЗГЛЕД)
+ * ОПИСАНИЕ: Управление на потребителския интерфейс без дублиращи се панели
+ * СТАТУС: КОРИГИРАН (Изчистен конфликт в хедъра, съобразен за всякакви екрани)
  * Статистика на файловете в проекта: 16
+ * ==========================================================================
  */
 
 window.eventHistory = [];  
@@ -10,337 +14,107 @@ if (!window.autoLevelState) {
     window.autoLevelState = {};
 }
 
+const UI = {
+    // Инициализиране на интерфейса при старт
+    init() {
+        this.updatePlayerStats();
+        this.renderProvincesList();
+        this.setupEventListeners();
+        this.cleanExpeditionButtonText();
+    },
+
+    // Обновяване на основните статистики в хедъра и левия панел
+    updatePlayerStats() {
+        const goldEl = document.getElementById('stat-gold');
+        const powerEl = document.getElementById('stat-power');
+        const armyEl = document.getElementById('stat-army');
+        const clanEl = document.getElementById('current-clan-name');
+        const rulerEl = document.getElementById('current-ruler-name');
+
+        if (goldEl && window.gameState && window.gameState.player) {
+            goldEl.textContent = Math.floor(window.gameState.player.gold);
+        }
+        if (powerEl && window.gameState && window.gameState.player) {
+            powerEl.textContent = window.gameState.player.power;
+        }
+        if (armyEl && window.gameState && window.gameState.player) {
+            armyEl.textContent = window.gameState.player.armySize;
+        }
+        if (clanEl && window.gameState && window.gameState.player && window.gameState.player.clan) {
+            clanEl.textContent = window.gameState.player.clan.toUpperCase();
+        }
+        if (rulerEl && window.gameState && window.gameState.player && window.gameState.player.rulerName) {
+            rulerEl.textContent = window.gameState.player.rulerName;
+        }
+
+        // Синхронизация, ако се чете от променливата window.currentHero
+        if (window.currentHero) {
+            if (goldEl) goldEl.innerText = Math.floor(window.currentHero.gold);
+            if (armyEl) armyEl.innerText = window.currentHero.armySize;
+            if (powerEl) powerEl.innerText = window.currentHero.heroPower;
+        }
+    },
+
+    // Рендериране на списъка с провинции (Владения) в левия панел
+    renderProvincesList() {
+        const listContainer = document.getElementById('provinces-list');
+        if (!listContainer) return;
+
+        listContainer.innerHTML = `<h3 style="font-family:'Cinzel'; font-size:12px; color:#d4af37; border-bottom:1px solid #333; padding-bottom:5px;">ВЛАДЕНИЯ</h3>`;
+
+        if (window.worldData && window.worldData.provinces) {
+            window.worldData.provinces.forEach(province => {
+                const provinceDiv = document.createElement('div');
+                provinceDiv.style.cssText = "padding: 6px 0; font-size: 11px; color: #eee; border-bottom: 1px solid rgba(255,255,255,0.05);";
+                provinceDiv.innerHTML = `📍 <strong>${province.name}</strong> (Данък: ${province.taxIncome} 💰)`;
+                listContainer.appendChild(provinceDiv);
+            });
+        }
+    },
+
+    // Динамично премахване на текстове по долните бутони за чист мобилен изглед
+    cleanExpeditionButtonText() {
+        const expBtn = document.getElementById('btn-expeditions');
+        if (expBtn) {
+            const badge = expBtn.querySelector('.mission-badge') || document.getElementById('expedition-badge');
+            const badgeCount = badge ? badge.textContent : '3';
+            expBtn.innerHTML = `🧭 <div id="expedition-badge" class="mission-badge">${badgeCount}</div>`;
+        }
+    },
+
+    // Закачане на събития и слушатели
+    setupEventListeners() {
+        window.addEventListener('gameStateUpdated', () => {
+            this.updatePlayerStats();
+        });
+    }
+};
+
 /**
- * Глобална функция за превключване на Цял Екран (Full Screen)
+ * Глобални функции за управление съвместими с ядрото на играта
  */
 window.toggleGameFullScreen = function() {
-    if (!document.fullscreenElement && 
-        !document.mozFullScreenElement && 
-        !document.webkitFullscreenElement && 
-        !document.msFullscreenElement) {
-        
+    if (!document.fullscreenElement && !document.mozFullScreenElement && !document.webkitFullscreenElement && !document.msFullscreenElement) {
         const docEl = document.documentElement;
-        if (docEl.requestFullscreen) { docEl.requestFullscreen(); } 
-        else if (docEl.mozRequestFullScreen) { docEl.mozRequestFullScreen(); } 
-        else if (docEl.webkitRequestFullscreen) { docEl.webkitRequestFullscreen(); } 
+        if (docEl.requestFullscreen) { docEl.requestFullscreen(); }
+        else if (docEl.mozRequestFullScreen) { docEl.mozRequestFullScreen(); }
+        else if (docEl.webkitRequestFullscreen) { docEl.webkitRequestFullscreen(); }
         else if (docEl.msRequestFullscreen) { docEl.msRequestFullscreen(); }
     } else {
-        if (document.exitFullscreen) { document.exitFullscreen(); } 
-        else if (document.mozCancelFullScreen) { document.mozCancelFullScreen(); } 
-        else if (document.webkitExitFullscreen) { document.webkitExitFullscreen(); } 
+        if (document.exitFullscreen) { document.exitFullscreen(); }
+        else if (document.mozCancelFullScreen) { document.mozCancelFullScreen(); }
+        else if (document.webkitExitFullscreen) { document.webkitExitFullscreen(); }
         else if (document.msExitFullscreen) { document.msExitFullscreen(); }
     }
 };
 
-/**
- * Глобална функция за превключване на AUTO режима
- */
 window.toggleAutoLevel = function(leaderName) {
     window.autoLevelState[leaderName] = !window.autoLevelState[leaderName];
-    if (window.renderTop6LeadersUI) window.renderTop6LeadersUI();
-};
-
-/**
- * ГЕНЕРАТОР НА RPG СТАТИСТИКИ: Изчислява виртуално ниво и XP прогрес на база реалния heroPower
- */
-function getCalculatedLeaderStats(leader) {
-    if (!leader) return { level: 1, xpPercent: 0 };
-
-    let power = leader.heroPower || 100;
-
-    // Математика: Ниво на всеки 25 точки мощност над 100
-    let calculatedLevel = Math.max(1, Math.floor((power - 100) / 25) + 1);
-    
-    let pointsInCurrentLevel = (power - 100) % 25;
-    if (power < 100) pointsInCurrentLevel = 0;
-
-    let percent = Math.min(100, Math.floor((pointsInCurrentLevel / 25) * 100));
-
-    // Важно: Записваме изчисленото ниво в самия оригинален обект
-    leader.level = calculatedLevel;
-
-    return {
-        level: calculatedLevel,
-        xpPercent: percent
-    };
-}
-
-/**
- * AUTO-LEVEL ИЗПЪЛНИТЕЛ: Автоматично разпределяне на бонуси при качено ниво
- */
-function checkAndExecuteAutoLevel(leader, currentLevel) {
-    if (!leader || !window.autoLevelState[leader.name]) return;
-
-    if (!leader.lastProcessedLevel) {
-        leader.lastProcessedLevel = currentLevel;
-        return;
-    }
-
-    if (currentLevel > leader.lastProcessedLevel) {
-        let levelsGained = currentLevel - leader.lastProcessedLevel;
-        let currentClass = leader.currentClass || "Пълководец";
-
-        if (currentClass === "Велик Кан") {
-            leader.gold = (leader.gold || 0) + (levelsGained * 300);
-        } else {
-            leader.armySize = (leader.armySize || 0) + (levelsGained * 75);
-        }
-
-        if (window.showAdvisorMsg) {
-            window.showAdvisorMsg(`Кан ${leader.name} качи ниво и автоматично разпредели бонуси за род ${leader.dynasty}!`);
-        }
-
-        leader.lastProcessedLevel = currentLevel;
-    }
-}
-
-/**
- * РЕНДЕРИРАНЕ НА ТОП 6 ЛЕНТАТА (Регулирана да чете директно от живата памет)
- */
-window.renderTop6LeadersUI = function() {
-    let targetContainer = document.getElementById('game-time-display')?.parentNode || document.querySelector('.main-content') || document.body;
-    if (!targetContainer) return;
-
-    let styleSheet = document.getElementById('top-6-responsive-style');
-    if (!styleSheet) {
-        styleSheet = document.createElement("style");
-        styleSheet.id = 'top-6-responsive-style';
-        styleSheet.innerText = `
-            #top-6-leaders-bar::-webkit-scrollbar { display: none; }
-            #top-6-leaders-bar { -ms-overflow-style: none; scrollbar-width: none; }
-            .leader-rpg-card { flex: 1; min-width: 95px; }
-            @media (max-width: 768px) {
-                #top-6-leaders-bar { justify-content: flex-start !important; padding: 8px 6px !important; gap: 10px !important; }
-                .leader-rpg-card { flex: 0 0 calc(25% - 8px) !important; min-width: 78px !important; }
-                .leader-avatar-box { width: 50px !important; height: 50px !important; font-size: 20px !important; }
-                .leader-name-text { font-size: 0.65em !important; max-width: 76px !important; }
-                .leader-class-text { font-size: 0.52em !important; max-width: 76px !important; }
-                .leader-xp-bar-container { width: 60px !important; }
-            }
-        `;
-        document.head.appendChild(styleSheet);
-    }
-
-    let leadersBar = document.getElementById('top-6-leaders-bar');
-    if (!leadersBar) {
-        leadersBar = document.createElement('div');
-        leadersBar.id = 'top-6-leaders-bar';
-        leadersBar.style.cssText = `
-            margin: 12px auto; padding: 10px; background: linear-gradient(180deg, #141414, #1f1802);
-            border: 2px solid #d4af37; border-radius: 8px; width: 96%; max-width: 900px;
-            display: flex; justify-content: center; align-items: flex-start; gap: 14px;
-            overflow-x: auto; scroll-snap-type: x mandatory; box-shadow: 0 0 20px rgba(212,175,55,0.3);
-            font-family: 'Georgia', serif; box-sizing: border-box; z-index: 999; -webkit-overflow-scrolling: touch;
-        `;
-        
-        const timeEl = document.getElementById('game-time-display');
-        if (timeEl) {
-            timeEl.parentNode.insertBefore(leadersBar, timeEl.nextSibling);
-        } else {
-            targetContainer.insertBefore(leadersBar, targetContainer.firstChild);
-        }
-    }
-
-    // Правим дълбоко копиране на списъка, за да не повредим сортирането в ядрото на играта
-    let allLeaders = [];
-    
-    // Добавяме главния герой директно от реалния window.currentHero
-    if (window.currentHero) {
-        let rpgStats = getCalculatedLeaderStats(window.currentHero);
-        allLeaders.push({ 
-            name: window.currentHero.name,
-            dynasty: window.currentHero.dynasty,
-            heroPower: window.currentHero.heroPower,
-            gold: window.currentHero.gold,
-            armySize: window.currentHero.armySize,
-            age: window.currentHero.age,
-            isMain: true, 
-            level: rpgStats.level, 
-            xpPercent: rpgStats.xpPercent, 
-            currentClass: window.currentHero.currentClass || "Велик Кан" 
-        });
-    }
-    
-    // Добавяме останалите водачи директно от оригиналния ти глобален масив mightyLeaders
-    if (window.mightyLeaders && window.mightyLeaders.length > 0) {
-        window.mightyLeaders.forEach(ml => { 
-            let rpgStats = getCalculatedLeaderStats(ml);
-            allLeaders.push({ 
-                name: ml.name,
-                dynasty: ml.dynasty,
-                heroPower: ml.heroPower,
-                gold: ml.gold,
-                armySize: ml.armySize,
-                age: ml.age,
-                isMain: false, 
-                level: rpgStats.level, 
-                xpPercent: rpgStats.xpPercent, 
-                currentClass: ml.currentClass || "Пълководец" 
-            }); 
-        });
-    }
-
-    if (allLeaders.length === 0) {
-        leadersBar.style.display = 'none';
-        return;
-    }
-    leadersBar.style.display = 'flex';
-
-    // Сортираме за визуализацията
-    allLeaders.sort((a, b) => b.level - a.level || b.xpPercent - a.xpPercent);
-    const top6 = allLeaders.slice(0, 6);
-
-    leadersBar.innerHTML = top6.map((leader) => {
-        let icon = leader.isMain ? "🛡️" : "⚔️";
-        
-        // Намираме съответния ОРИГИНАЛЕН обект в паметта, за да извършим AUTO-LEVEL върху него, а не върху копието!
-        let originalLeaderObj = leader.isMain ? window.currentHero : window.mightyLeaders.find(l => l.name === leader.name);
-        if (originalLeaderObj) {
-            checkAndExecuteAutoLevel(originalLeaderObj, leader.level);
-        }
-
-        let isAutoOn = window.autoLevelState[leader.name] || false;
-        let autoBtnBg = isAutoOn ? "#00ffcc" : "rgba(212,175,55,0.12)";
-        let autoBtnColor = isAutoOn ? "#000" : "#ffd700";
-        let autoBtnBorder = isAutoOn ? "1px solid #00ffcc" : "1px solid rgba(212,175,55,0.4)";
-
-        return `
-            <div class="leader-rpg-card" onclick="window.inspectSpecificRulerByName('${leader.name}')" style="text-align: center; display: flex; flex-direction: column; align-items: center; cursor: pointer; transition: transform 0.2s; scroll-snap-align: start;" onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">
-                <div class="leader-name-text" style="font-size: 0.72em; font-weight: bold; color: #ffd700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 92px; line-height: 1.2;">${leader.name}</div>
-                <div class="leader-class-text" style="font-size: 0.58em; color: #aaa; margin-bottom: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 92px;">${leader.currentClass}</div>
-                
-                <div style="position: relative; display: flex; flex-direction: column; align-items: center; margin-bottom: 3px;">
-                    <div style="font-size: 14px; opacity: 0.7; line-height: 1; margin-bottom: -3px; z-index: 2;">👑</div>
-                    <div class="leader-avatar-box" style="width: 54px; height: 54px; background: rgba(0,0,0,0.5); border-radius: 8px; display: flex; justify-content: center; align-items: center; font-size: 22px; box-sizing: border-box; border: 1px solid #d4af37;">${icon}</div>
-                </div>
-
-                <div style="font-size: 0.68em; font-weight: bold; color: #00ffcc; line-height: 1.1; margin-bottom: 3px;">Н. ${leader.level}</div>
-                
-                <button onclick="event.stopPropagation(); window.toggleAutoLevel('${leader.name}')" style="font-size: 8px; font-weight: bold; padding: 1px 5px; background: ${autoBtnBg}; color: ${autoBtnColor}; border: ${autoBtnBorder}; border-radius: 3px; cursor: pointer; margin-bottom: 5px; transition: all 0.15s;">
-                    AUTO
-                </button>
-
-                <div class="leader-xp-bar-container" style="width: 66px; height: 4px; background: #333; border-radius: 2px; overflow: hidden; border: 1px solid rgba(212,175,55,0.2); box-sizing: border-box;">
-                    <div style="width: ${leader.xpPercent}%; height: 100%; background: linear-gradient(90deg, #00ccff, #00ffcc);"></div>
-                </div>
-            </div>
-        `;
-    }).join('');
-};
-
-/**
- * ИНСПЕКТИРАНЕ НА ИНВЕНТАР ПО ИМЕ: Напълно защитено от презаписване на данни
- */
-window.inspectSpecificRulerByName = function(name) {
-    let realLeader = null;
-    if (window.currentHero && window.currentHero.name === name) {
-        realLeader = window.currentHero;
-    } else if (window.mightyLeaders) {
-        realLeader = window.mightyLeaders.find(l => l.name === name);
-    }
-
-    if (!realLeader) return;
-
-    if (typeof window.toggleRulerInventory === 'function') {
-        const existingModal = document.getElementById('inventory-modal');
-        if (existingModal) existingModal.remove();
-
-        // Временно превключваме за инвентара
-        let previousHero = window.currentHero;
-        window.currentHero = realLeader;
-
-        window.toggleRulerInventory();
-
-        setTimeout(() => {
-            const modal = document.getElementById('inventory-modal');
-            if (modal) {
-                let ownerHeader = document.getElementById('inventory-owner-title');
-                if (!ownerHeader) {
-                    ownerHeader = document.createElement('div');
-                    ownerHeader.id = 'inventory-owner-title';
-                    ownerHeader.style.cssText = `
-                        text-align: center; padding: 8px; margin: -5px auto 12px auto;
-                        background: rgba(212, 175, 55, 0.15); border: 1px solid #d4af37;
-                        border-radius: 6px; width: 90%; font-family: 'Georgia', serif; box-sizing: border-box;
-                    `;
-                    modal.insertBefore(ownerHeader, modal.firstChild);
-                }
-                ownerHeader.innerHTML = `
-                    <span style="color: #ccc; font-size: 0.8em; letter-spacing: 1px;">ИНВЕНТАР НА:</span><br>
-                    <strong style="color: #ffd700; font-size: 1.1em;">Кан ${realLeader.name}</strong> 
-                    <span style="color: #00ffcc; font-size: 0.9em;">(Н. ${realLeader.level})</span>
-                `;
-
-                const closeBtn = modal.querySelector("button");
-                if (closeBtn) {
-                    closeBtn.onclick = function() {
-                        if (modal) modal.remove();
-                        window.currentHero = previousHero; // Връщаме главния герой безопасно
-                        if (window.updateCharacterUI) window.updateCharacterUI(window.currentHero);
-                    };
-                }
-            }
-        }, 80);
-    }
-};
-
-window.updateCharacterUI = function(hero) {
-    if (!hero) return;
-
-    let stats = getCalculatedLeaderStats(hero);
-
-    const leftSidebar = document.getElementById('provinces-list');
-    if (leftSidebar) {
-        leftSidebar.innerHTML = `
-            <div style="text-align: center; padding: 10px; background: rgba(212, 175, 55, 0.1); border: 1px solid #d4af37; border-radius: 5px; margin-bottom: 15px;">
-                <h3 style="margin: 0; color: #d4af37;">ВЛАДЕТЕЛ</h3>
-                <div style="font-size: 1.2em; margin-top: 5px;">Кан ${hero.name}</div>
-                <div style="font-size: 0.85em; color: #aaa;">Род: ${hero.dynasty} | ${hero.age} г. | Ниво ${stats.level}</div>
-            </div>
-            
-            <div style="margin-bottom: 20px;">
-                <h4 style="color: #d4af37; border-bottom: 1px solid #444; padding-bottom: 5px; letter-spacing: 1px; display: flex; justify-content: space-between; align-items: center;">
-                    <span>СЪВЕТ НА РОДОВЕТЕ</span>
-                    <span onclick="window.toggleGameFullScreen()" title="Цял Екран" style="cursor: pointer; font-size: 14px; padding: 2px 6px; background: rgba(212,175,55,0.15); border: 1px solid #d4af37; border-radius: 4px;">📺</span>
-                </h4>
-                <div style="font-size: 0.85em; max-height: 150px; overflow-y: auto; background: rgba(0,0,0,0.3); padding: 8px; border-radius: 4px;">
-                    ${Object.keys(window.activeDynasties || {}).map(clanName => {
-                        const clan = window.activeDynasties[clanName];
-                        const isPlayer = clanName === hero.dynasty;
-                        return `
-                            <div style="display: flex; justify-content: space-between; margin-bottom: 6px; color: ${isPlayer ? '#d4af37' : '#fff'}">
-                                <span>${isPlayer ? '👑 ' : ''}${clanName}</span>
-                                <span style="font-size: 0.85em; opacity: 0.8;">${clan ? clan.regions || 0 : 0} зем.</span>
-                            </div>
-                        `;
-                    }).join('')}
-                </div>
-            </div>
-
-            <div id="history-log-container" style="border-top: 1px solid #333; padding-top: 10px;">
-                <h4 style="color: #d4af37; font-size: 11px; margin-bottom: 10px; letter-spacing: 1px;">ЛЕТОПИС</h4>
-                <div id="history-log" style="font-size: 10px; color: #aaa; max-height: 200px; overflow-y: auto; line-height: 1.4;"></div>
-            </div>
-        `;
-    }
-
-    const goldEl = document.getElementById('stat-gold');
-    const armyEl = document.getElementById('stat-army');
-    const powerEl = document.getElementById('stat-power');
-
-    if (goldEl) goldEl.innerText = Math.floor(hero.gold);
-    if (armyEl) armyEl.innerText = hero.armySize;
-    if (powerEl) powerEl.innerText = hero.heroPower;
-    
-    window.renderHistory();
-    window.renderTop6LeadersUI();
-
-    if (window.updateTimeUI) window.updateTimeUI();
 };
 
 window.showAdvisorMsg = function(msg) {
-    const year = window.gameTime ? window.gameTime.year : 1;
-    const era = window.gameTime ? window.gameTime.era : "от н.е.";
+    const year = window.gameTime ? window.gameTime.year : 681;
+    const era = window.gameTime ? window.gameTime.era : "г.";
     window.eventHistory.unshift({ text: msg, time: `${year} ${era}` });
     if (window.eventHistory.length > 5) window.eventHistory.pop();
     window.renderHistory();
@@ -350,41 +124,44 @@ window.renderHistory = function() {
     const logEl = document.getElementById('history-log');
     if (logEl) {
         logEl.innerHTML = window.eventHistory.map(event => `
-            <div style="margin-bottom: 8px; border-bottom: 1px solid #222; padding-bottom: 4px;">
-                <span style="color: #d4af37;">[${event.time} г.]:</span> ${event.text}
+            <div style="margin-bottom: 8px; border-bottom: 1px solid #222; padding-bottom: 4px; font-size: 11px;">
+                <span style="color: #d4af37;">[${event.time}]:</span> ${event.text}
             </div>
         `).join('');
     }
 };
 
-/**
- * ФУНКЦИЯ ЗА ОБНОВЯВАНЕ НА ИНДИКАТОРА НА ЕКСПЕДИЦИИТЕ
- */
 window.updateExpeditionBadge = function() {
     const badge = document.getElementById('expedition-badge');
     if (!badge) return;
     
     let availableMissions = 0;
-    
-    // Проверка дали базата с мисии е заредена
     if (window.expeditionDatabase && window.expeditionDatabase.missions) {
-        // Броим мисиите, които отговарят на нивото на героя и не са активни в момента
         availableMissions = window.expeditionDatabase.missions.filter(mission => {
-            const meetsLevel = window.currentHero.level >= (mission.reqLevel || 0);
+            const currentLevel = window.currentHero ? (window.currentHero.level || 1) : 1;
+            const meetsLevel = currentLevel >= (mission.reqLevel || 0);
             const isNotRunning = !window.activeExpeditions || !window.activeExpeditions.some(e => e.missionId === mission.id);
             return meetsLevel && isNotRunning;
         }).length;
     } else {
-        // Алтернативен базов изглед, ако няма заредени мисии
         availableMissions = Math.max(0, 3 - (window.activeExpeditions ? window.activeExpeditions.length : 0));
     }
     
     badge.innerText = availableMissions;
-    
-    // Скриваме индикатора напълно, ако няма налични мисии
-    if (availableMissions === 0) {
-        badge.style.display = 'none';
-    } else {
-        badge.style.display = 'flex';
-    }
+    badge.style.display = availableMissions === 0 ? 'none' : 'flex';
 };
+
+// Запазване на празни функции, ако ядрото ги търси, за да няма конзолни грешки
+window.renderTop6LeadersUI = function() { };
+window.updateCharacterUI = function(hero) { 
+    if (hero) UI.updatePlayerStats();
+};
+
+// Експортиране на обекта
+window.UI = UI;
+
+// Автоматичен старт при зареждане
+document.addEventListener('DOMContentLoaded', () => {
+    window.UI.init();
+    window.updateExpeditionBadge();
+});
