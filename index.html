@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="bg">
 <head>
-    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>👑</text></svg>\">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>👑</text></svg>">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Велика България - Игра</title>
@@ -25,6 +25,24 @@
     </style>
 </head>
 <body>
+
+    <div id="top-bar">
+        <div id="time-container">
+            <div id="current-time-info">Зареждане...</div>
+            <div id="era-display">ЕРА НА СУВЕРЕНИТЕТА</div>
+        </div>
+        <div id="dynasty-badge">
+            <div id="current-clan-name">Династия</div>
+            <div id="leader-title" style="font-size: 10px; color: #aaa; text-transform: uppercase;">Владетел</div>
+        </div>
+        <div id="resources-container" style="font-family: 'Cinzel', serif; color: #d4af37; font-weight: bold;">
+            <span id="gold-count">0</span> 💰
+        </div>
+    </div>
+
+    <div id="advisor-panel" style="background: rgba(15, 15, 15, 0.9); border-bottom: 1px solid #222; padding: 8px 15px; font-size: 12px; text-align: center; color: #ccc; min-height: 35px; font-family: 'Montserrat', sans-serif;">
+        <span id="advisor-text">Добре дошли, господарю. Вашите родове очакват вашите заповеди.</span>
+    </div>
 
     <div id="game-container">
         <div id="game-main-area"></div>
