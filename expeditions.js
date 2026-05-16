@@ -1,27 +1,54 @@
 /**
  * МОДУЛ: ВЕЛИКИТЕ ЕКСПЕДИЦИИ НА СВЕТА И ИНВЕНТАРНА СИСТЕМА - Велика България
- * СТАТУС: ФИНАЛНО СИНХРОНИЗИРАН (Поправени нива, z-index на инвентара и advanceTurn мост)
- * Вградена хардкор цена от 20 000 злато за нов фентъзи водач.
+ * СТАТУС: НАПЪЛНО КОРИГИРАН И ИЗПРАВЕН (Инжектирана универсална RPG система и бутон за инвентар)
  * Статистика на файловете в проекта: 16
  */
 
 window.activeExpeditions = window.activeExpeditions || [];
 window.legendaryQuests = window.legendaryQuests || [];
 window.mightyLeaders = window.mightyLeaders || [];
+window.equippedItems = window.equippedItems || [];
+window.playerInventory = window.playerInventory || [];
+
+// Променлива за следене на отключените водачи в палатата
+window.unlockedLeadersCount = window.unlockedLeadersCount || 1;
 
 // Автоматичен мост за Следващ ход (Поправка за ред 127 в index.html)
 window.advanceTurn = function() {
     if (typeof window.nextTurn === 'function') {
         window.nextTurn();
-    } else {
-        console.log("Връзката към window.nextTurn() в logic.js още не е готова.");
     }
 };
 
-// Променлива за следене на отключените водачи в палатата
-window.unlockedLeadersCount = window.unlockedLeadersCount || 1;
+/**
+ * 🔥 УНИВЕРСАЛНА RPG СИСТЕМА ЗА ВСИЧКИ ВЛАДЕТЕЛИ
+ * Поправя проблема с вдигането на нива на втория, третия и т.н. лидер
+ */
+window.gainExperience = function(targetLeader, xpAmount) {
+    if (!targetLeader) return;
+    
+    targetLeader.xp = (targetLeader.xp || 0) + xpAmount;
+    targetLeader.level = targetLeader.level || 1;
+    targetLeader.heroPower = targetLeader.heroPower || 120;
 
-// АВТОМАТИЧЕН ЗАЩИТЕН FALLBACK АКО ОСТАНАЛИТЕ ФАЙЛОВЕ НЕМАТ РАЗПИСАНА SHOWMYSTICMODAL
+    // Изчисляване на нужен опит за следващо ниво: Ниво * 100
+    let nextLevelXp = targetLeader.level * 100;
+
+    let leveledUp = false;
+    while (targetLeader.xp >= nextLevelXp) {
+        targetLeader.xp -= nextLevelXp;
+        targetLeader.level += 1;
+        targetLeader.heroPower += 30; // Всеки левел дава +30 Сила
+        nextLevelXp = targetLeader.level * 100;
+        leveledUp = true;
+    }
+
+    if (leveledUp) {
+        console.log(`📈 Владетелят ${targetLeader.name} изкачи ново равнище! Текущо ниво: ${targetLeader.level}, Сила: ${targetLeader.heroPower}`);
+    }
+};
+
+// АВТОМАТИЧЕН ЗАЩИТЕН FALLBACK ЗА МОДАЛНИТЕ ПРОЗОРЦИ
 if (typeof window.showMysticModal !== 'function') {
     window.showMysticModal = function(title, content, type) {
         let fallbackModal = document.getElementById('mystic-fallback-modal');
@@ -30,17 +57,14 @@ if (typeof window.showMysticModal !== 'function') {
         fallbackModal = document.createElement('div');
         fallbackModal.id = 'mystic-fallback-modal';
         
-        let borderColors = {
-            triumph: '#4caf50',
-            expedition: '#d4af37'
-        };
+        let borderColors = { triumph: '#4caf50', expedition: '#d4af37' };
         let currentBorder = borderColors[type] || '#d4af37';
 
         fallbackModal.style.cssText = `
             position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
             width: 85%; max-width: 440px; background: #161616; border: 2px solid ${currentBorder};
             padding: 20px; color: white; border-radius: 10px; text-align: center;
-            box-shadow: 0 0 25px rgba(0,0,0,0.8); z-index: 210000; font-family: sans-serif;
+            box-shadow: 0 0 25px rgba(0,0,0,0.8); z-index: 260000; font-family: sans-serif;
         `;
         fallbackModal.innerHTML = `
             <h3 style="color:${currentBorder}; margin-top:0;">${title}</h3>
@@ -56,12 +80,12 @@ window.legendaryQuests = [
     { id: 1, title: "Поход до делтата на Дунав", duration: 3, risk: 10, goldReward: 800, xpReward: 150, desc: "Разузнаване на търговските пътища отвъд реката." },
     { id: 2, title: "Експедиция в Карпатските планини", duration: 5, risk: 25, goldReward: 2200, xpReward: 400, desc: "Търсене на ценни залежи и тайни древни крепости." },
     { id: 3, title: "Дипломатическа мисия в Кавказ", duration: 8, risk: 15, goldReward: 4500, xpReward: 750, desc: "Преговори с далечни родове за вечен съюз и търговия." },
-    { id: 4, title: "Обсада на разбунтувана Черноморска твърдина", duration: 6, risk: 40, goldReward: 3800, xpReward: 600, desc: "Потискане на местни размирици със силата на меча." },
+    { id: 4, title: "Обсада на разбунтувана Черноморска твърдина", duration: 6, risk: 40, goldReward: 3800, xpReward: 600, desc: "Потискане на местни размирици со силата на меча." },
     { id: 5, title: "Тайни разкопки край Мадара", duration: 4, risk: 5, goldReward: 1200, xpReward: 300, desc: "Търсене на древни реликви и свещени знаци." }
 ];
 
 /**
- * ФУНКЦИЯ ЗА ЗАКУПУВАНЕ / ОТКЛЮЧВАНЕ НА СЛУЧАЕН НОВ ВЛАДЕТЕЛ
+ * ЗАКУПУВАНЕ / ОТКЛЮЧВАНЕ НА СЛУЧАЕН НОВ ВЛАДЕТЕЛ
  */
 window.buyNewExpeditionLeader = function() {
     let currentCost = 20000 * window.unlockedLeadersCount;
@@ -95,10 +119,6 @@ window.buyNewExpeditionLeader = function() {
         xp: 0,
         heroPower: 120
     };
-
-    if (window.initializeHeroRPGData) {
-        window.initializeHeroRPGData(newLeader);
-    }
 
     window.mightyLeaders.push(newLeader);
 
@@ -144,7 +164,9 @@ window.openExpeditionCenter = function() {
         <div style="display:flex; justify-content:space-between; border-bottom:2px solid #333; padding-bottom:15px; margin-bottom:20px;">
             <h2 style="margin:0; color:#ffd700; font-size:24px;">🌍 ПАЛАТА НА ЕКСПЕДИЦИИТЕ</h2>
             <div>
-                <button onclick="window.buyNewExpeditionLeader()" style="background:linear-gradient(135deg, #11998e, #38ef7d); border:1px solid #ffd700; padding:10px 18px; color:white; font-weight:bold; cursor:pointer; border-radius:6px; margin-right:15px; font-size:13px;">📜 Отключи нов Владетел (Цена: ${currentUnlockCost} 💰)</button>
+                <button onclick="window.openInventory()" style="background:#8a2387; border:1px solid #ffd700; padding:10px 18px; color:white; font-weight:bold; cursor:pointer; border-radius:6px; margin-right:10px; font-size:13px;">🎒 Кралски Инвентар</button>
+                <button onclick="window.openMerchantShop()" style="background:#6c5ce7; border:1px solid #38ef7d; padding:10px 18px; color:white; font-weight:bold; cursor:pointer; border-radius:6px; margin-right:10px; font-size:13px;">📜 Търговец</button>
+                <button onclick="window.buyNewExpeditionLeader()" style="background:linear-gradient(135deg, #11998e, #38ef7d); border:1px solid #ffd700; padding:10px 18px; color:white; font-weight:bold; cursor:pointer; border-radius:6px; margin-right:15px; font-size:13px;">📜 Призови Владетел (${currentUnlockCost} 💰)</button>
                 <button onclick="document.getElementById('expedition-modal').remove()" style="background:#e94057; border:none; padding:10px 20px; color:white; font-weight:bold; cursor:pointer; border-radius:6px;">Затвори</button>
             </div>
         </div>
@@ -160,12 +182,16 @@ window.openExpeditionCenter = function() {
         if (isAssigned) status = "<span style='color:#e94057;'>На мисия в момента</span>";
         if (window.currentHero && leader.name === window.currentHero.name) status = "<span style='color:#ffd700;'>👑 Текущ Върховен Лидер</span>";
 
+        let lvl = leader.level || 1;
+        let xpNeeded = lvl * 100;
+        let currentXp = leader.xp || 0;
+
         html += `
             <div style="background:#222; border:1px solid #444; border-radius:6px; padding:15px; position:relative;">
                 <b style="font-size:16px; color:#fff;">${leader.name}</b><br>
-                <span style="font-size:12px; color:#aaa;">Род: ${leader.dynasty}</span><br>
-                <span style="font-size:12px; color:#ffd700;">RPG Ниво: ${leader.level || 1}</span><br>
-                <span style="font-size:12px; color:#4caf50;">Сила: ${leader.heroPower || 120}</span><br>
+                <span style="font-size:12px; color:#aaa;">Род: ${leader.dynasty || "Български"}</span><br>
+                <span style="font-size:12px; color:#ffd700;">Ниво: ${lvl} (${currentXp}/${xpNeeded} XP)</span><br>
+                <span style="font-size:12px; color:#4caf50;">Сила: ${leader.heroPower || 120} 💪</span><br>
                 <div style="margin-top:8px; font-size:11px; border-top:1px solid #333; padding-top:6px; color:#ddd;">Статус: ${status}</div>
             </div>
         `;
@@ -230,7 +256,7 @@ window.openExpeditionCenter = function() {
 window.startQuest = function(questId) {
     let select = document.getElementById(`select-leader-${questId}`);
     if (!select || !select.value) {
-        window.showMysticModal("⚠️ Няма свободен лидер", "Всички твои отключени владетели са заети на мисии в момента!", "expedition");
+        window.showMysticModal("⚠️ Няма свободен лидер", "Избери отключен водач, който не е зает в момента!", "expedition");
         return;
     }
 
@@ -254,7 +280,7 @@ window.startQuest = function(questId) {
 };
 
 /**
- * АВТОНОМЕН НАПРЕДЪК НА ЕКСПЕДИЦИИТЕ
+ * НАПРЕДЪК НА ЕКСПЕДИЦИИТЕ (ПРИ СЛЕДВАЩ ХОД)
  */
 window.updateExpeditionSystem = function() {
     if (!window.activeExpeditions || window.activeExpeditions.length === 0) return;
@@ -265,6 +291,7 @@ window.updateExpeditionSystem = function() {
 
         if (exp.currentProgress >= exp.duration) {
             let roll = Math.random() * 100;
+            // Търсим лидера в обекта на героя или в масива на призованите
             let targetLeader = (window.currentHero && window.currentHero.name === exp.leaderName) ? window.currentHero : window.mightyLeaders.find(l => l.name === exp.leaderName);
 
             if (!targetLeader) {
@@ -278,21 +305,18 @@ window.updateExpeditionSystem = function() {
 
                 window.showMysticModal(
                     "⚠️ Провал на Експедицията!",
-                    `Походът "<b>${exp.title}</b>", воден от <b>${exp.leaderName}</b>, попадна в засада! Владетелят оцеля благодарение на безсмъртието си, но държавата изгуби <b>${lostTroops} бойци</b>!`,
+                    `Походът "<b>${exp.title}</b>", воден от <b>${exp.leaderName}</b>, попадна в засада! Държавата изгуби <b>${lostTroops} бойци</b>!`,
                     "expedition"
                 );
             } else {
                 if (window.currentHero) window.currentHero.gold += exp.goldReward;
                 
-                if (window.gainExperience) {
-                    window.gainExperience(targetLeader, exp.xpReward);
-                } else {
-                    targetLeader.xp = (targetLeader.xp || 0) + exp.xpReward;
-                }
+                // ВЕЧЕ ИЗВИКВА СИГУРНАТА И ОПТИМИЗИРАНА window.gainExperience ФУНКЦИЯ ЗА ВСИЧКИ ВЛАДЕТЕЛИ
+                window.gainExperience(targetLeader, exp.xpReward);
 
                 window.showMysticModal(
                     "🎉 ТРИУМФАЛНО ЗАВРЪЩАНЕ!",
-                    `Владетелят <b>${exp.leaderName}</b> се завърна успешно от "<b>${exp.title}</b>"!<br>Спечелени: <span style='color:#4caf50;'>+${exp.goldReward} злато</span> за съкровищницата и <span style='color:#ffd700;'>+${exp.xpReward} опит (XP)</span> за личния му прогрес!`,
+                    `Владетелят <b>${exp.leaderName}</b> се завърна успешно от "<b>${exp.title}</b>"!<br>Спечелени: <span style='color:#4caf50;'>+${exp.goldReward} злато</span> и <span style='color:#ffd700;'>+${exp.xpReward} опит (XP)</span>!`,
                     "triumph"
                 );
             }
@@ -305,11 +329,8 @@ window.updateExpeditionSystem = function() {
 };
 
 /* ==========================================================================
-   ⚠️ ВЪЗСТАНОВЕН БЛОК: СИСТЕМА ЗА ПРЕДМЕТИ, АРТЕФАКТИ И МАГАЗИН (УСИЛЕН Z-INDEX)
+   ⚠️ ИНВЕНТАРНА СИСТЕМА И ТЪРГОВЕЦ (ОПТИМИЗИРАНИ С КРИТИЧЕН Z-INDEX СЛОЙ)
    ========================================================================== */
-
-window.equippedItems = window.equippedItems || [];
-window.playerInventory = window.playerInventory || [];
 
 window.availableMerchantItems = [
     { id: 1, name: "Меч на Кубрат", type: "weapon", price: 3000, bonus: { powerBonus: 30 }, desc: "+30 Лична Бойна Мощ" },
@@ -326,38 +347,38 @@ window.openInventory = function() {
     let inventoryModal = document.createElement('div');
     inventoryModal.id = 'inventory-modal';
     inventoryModal.style.cssText = `
-        position: fixed; top: 10%; left: 10%; width: 80%; height: 80%;
-        background: rgba(15,15,15,0.98); border: 2px solid #ffd700; color: white;
-        padding: 20px; z-index: 250000; overflow-y: auto; font-family: 'Georgia', serif;
-        border-radius: 8px; box-shadow: 0 0 30px rgba(0,0,0,0.9);
+        position: fixed; top: 8%; left: 8%; width: 84%; height: 84%;
+        background: #111; border: 3px solid #ffd700; color: white;
+        padding: 25px; z-index: 250000; overflow-y: auto; font-family: 'Georgia', serif;
+        border-radius: 10px; box-shadow: 0 0 40px black;
     `;
 
-    let equippedHtml = `<div style="display:grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap:10px; margin-bottom:20px;">`;
+    let equippedHtml = `<div style="display:grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap:12px; margin-bottom:25px;">`;
     if (window.equippedItems.length === 0) {
-        equippedHtml += `<p style="color:#aaa; font-style:italic;">Няма екипирани артефакти.</p>`;
+        equippedHtml += `<p style="color:#aaa; font-style:italic; grid-column: 1/-1;">Няма екипирани реликви в момента.</p>`;
     } else {
         window.equippedItems.forEach((item, index) => {
             equippedHtml += `
-                <div style="background:#222; border:1px solid #ffd700; padding:10px; border-radius:4px;">
-                    <b style="color:#ffd700;">${item.name}</b> (${item.type})<br>
-                    <small>${item.desc}</small><br>
-                    <button onclick="window.unequipItem(${index})" style="background:#e94057; border:none; padding:4px 8px; color:white; margin-top:5px; cursor:pointer; font-size:11px; border-radius:3px;">Свали</button>
+                <div style="background:#222; border:1px solid #ffd700; padding:12px; border-radius:6px;">
+                    <b style="color:#ffd700; font-size:14px;">${item.name}</b> <small>(${item.type})</small><br>
+                    <span style="font-size:12px; color:#ccc;">${item.desc}</span><br>
+                    <button onclick="window.unequipItem(${index})" style="background:#e94057; border:none; padding:5px 10px; color:white; margin-top:8px; cursor:pointer; font-size:11px; border-radius:4px; font-weight:bold;">Свали реликвията</button>
                 </div>
             `;
         });
     }
     equippedHtml += `</div>`;
 
-    let inventoryHtml = `<div style="display:grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap:10px;">`;
+    let inventoryHtml = `<div style="display:grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap:12px;">`;
     if (window.playerInventory.length === 0) {
-        inventoryHtml += `<p style="color:#aaa; font-style:italic;">Саквояжът е празен.</p>`;
+        inventoryHtml += `<p style="color:#aaa; font-style:italic; grid-column: 1/-1;">Складището на държавата е празно. Купи артефакти от Търговеца!</p>`;
     } else {
         window.playerInventory.forEach((item, index) => {
             inventoryHtml += `
-                <div style="background:#1a1a1a; border:1px solid #444; padding:10px; border-radius:4px;">
-                    <b>${item.name}</b> (${item.type})<br>
-                    <small>${item.desc}</small><br>
-                    <button onclick="window.equipItem(${index})" style="background:#38ef7d; border:none; padding:4px 8px; color:black; font-weight:bold; margin-top:5px; cursor:pointer; font-size:11px; border-radius:3px;">Екипирай</button>
+                <div style="background:#1a1a1a; border:1px solid #444; padding:12px; border-radius:6px;">
+                    <b style="color:#38ef7d; font-size:14px;">${item.name}</b> <small>(${item.type})</small><br>
+                    <span style="font-size:12px; color:#ddd;">${item.desc}</span><br>
+                    <button onclick="window.equipItem(${index})" style="background:#38ef7d; border:none; padding:5px 10px; color:black; font-weight:bold; margin-top:8px; cursor:pointer; font-size:11px; border-radius:4px;">Екипирай на Върховния</button>
                 </div>
             `;
         });
@@ -365,13 +386,13 @@ window.openInventory = function() {
     inventoryHtml += `</div>`;
 
     inventoryModal.innerHTML = `
-        <div style="display:flex; justify-content:space-between; border-bottom:1px solid #333; padding-bottom:10px; margin-bottom:15px;">
-            <h2 style="margin:0; color:#ffd700;">🛡️ КРАЛСКА СЪКРОВИЩНИЦА И ИНВЕНТАР</h2>
-            <button onclick="document.getElementById('inventory-modal').remove()" style="background:#e94057; border:none; color:white; padding:5px 15px; font-weight:bold; cursor:pointer; border-radius:4px;">Затвори</button>
+        <div style="display:flex; justify-content:space-between; border-bottom:2px solid #ffd700; padding-bottom:12px; margin-bottom:20px;">
+            <h2 style="margin:0; color:#ffd700; font-size:22px;">🛡️ КРАЛСКА СЪКРОВИЩНИЦА И ИНВЕНТАР</h2>
+            <button onclick="document.getElementById('inventory-modal').remove()" style="background:#e94057; border:none; color:white; padding:8px 18px; font-weight:bold; cursor:pointer; border-radius:5px;">Затвори</button>
         </div>
-        <h3 style="color:#ffd700; margin-bottom:10px;">⚔️ Екипирани Реликви:</h3>
+        <h3 style="color:#ffd700; font-size:15px; margin-top:0;">⚔️ Активно Екипирани Артефакти (Влияят на Върховния лидер):</h3>
         ${equippedHtml}
-        <h3 style="color:#38ef7d; margin-bottom:10px;">🎒 Предмети в Складището:</h3>
+        <h3 style="color:#38ef7d; font-size:15px;">🎒 Предмети на съхранение в Складището:</h3>
         ${inventoryHtml}
     `;
     document.body.appendChild(inventoryModal);
@@ -381,7 +402,7 @@ window.equipItem = function(index) {
     let item = window.playerInventory[index];
     let alreadyEquippedSameType = window.equippedItems.some(i => i.type === item.type);
     if (alreadyEquippedSameType) {
-        window.showMysticModal("⚠️ Слотът е зает", `Вече имаш екипиран предмет от тип "${item.type}".`, "expedition");
+        window.showMysticModal("⚠️ Слотът е зает", `Вече имаш екипиран предмет от тип "${item.type}". Свали стария първо!`, "expedition");
         return;
     }
     window.playerInventory.splice(index, 1);
@@ -411,8 +432,8 @@ window.openMerchantShop = function() {
     let shopModal = document.createElement('div');
     shopModal.id = 'merchant-modal';
     shopModal.style.cssText = `
-        position: fixed; top: 10%; left: 15%; width: 70%; height: 70%;
-        background: rgba(20,15,10,0.98); border: 2px solid #38ef7d; color: white;
+        position: fixed; top: 12%; left: 15%; width: 70%; height: 70%;
+        background: #181412; border: 2px solid #38ef7d; color: white;
         padding: 20px; z-index: 250000; overflow-y: auto; font-family: 'Georgia', serif;
         border-radius: 8px; box-shadow: 0 0 35px rgba(0,0,0,0.9);
     `;
@@ -420,7 +441,7 @@ window.openMerchantShop = function() {
     let shopHtml = `<div style="display:grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap:15px;">`;
     window.availableMerchantItems.forEach(item => {
         shopHtml += `
-            <div style="background:#221a15; border:1px solid #664d3b; padding:15px; border-radius:5px;">
+            <div style="background:#261f1a; border:1px solid #664d3b; padding:15px; border-radius:5px;">
                 <b style="color:#38ef7d; font-size:15px;">${item.name}</b><br>
                 <small style="color:#ccc;">Тип: ${item.type}</small><br>
                 <p style="margin:5px 0; font-size:12px; min-height:30px;">${item.desc}</p>
@@ -433,8 +454,8 @@ window.openMerchantShop = function() {
 
     shopModal.innerHTML = `
         <div style="display:flex; justify-content:space-between; border-bottom:1px solid #664d3b; padding-bottom:10px; margin-bottom:15px;">
-            <h2 style="margin:0; color:#38ef7d;">📜 ПЪТУВАЩ ТЪРГОВЕЦ НА РЕЛИКВИ</h2>
-            <button onclick="document.getElementById('merchant-modal').remove()" style="background:#e94057; border:none; color:white; padding:5px 15px; font-weight:bold; cursor:pointer; border-radius:4px;">Затвори</button>
+            <h2 style="margin:0; color:#38ef7d; font-size:20px;">📜 ПЪТУВАЩ ТЪРГОВЕЦ НА РЕЛИКВИ</h2>
+            <button onclick="document.getElementById('merchant-modal').remove()" style="background:#e94057; border:none; color:white; padding:6px 15px; font-weight:bold; cursor:pointer; border-radius:4px;">Затвори</button>
         </div>
         ${shopHtml}
     `;
@@ -446,13 +467,13 @@ window.buyMerchantItem = function(id) {
     if (!item) return;
 
     if (!window.currentHero || window.currentHero.gold < item.price) {
-        window.showMysticModal("❌ Нямаш злато!", "Търговецът не прави вересии.", "expedition");
+        window.showMysticModal("❌ Нямаш злато!", "Търговецът не дава реликви без злато.", "expedition");
         return;
     }
 
     window.currentHero.gold -= item.price;
     window.playerInventory.push(JSON.parse(JSON.stringify(item)));
-    window.showMysticModal("🎉 Успешна покупка!", `Закупи ${item.name}! Предметът е в Складището.`, "triumph");
+    window.showMysticModal("🎉 Успешна покупка!", `Закупихте <b>${item.name}</b>! Предметът е изпратен в Складището ви.`, "triumph");
     
     if (window.updateCharacterUI) window.updateCharacterUI(window.currentHero);
     window.openMerchantShop();
@@ -488,7 +509,7 @@ window.renderExpeditionButton = function() {
     }
 };
 
-// Зареждане
+// Автоматично инициализиране
 if (document.readyState === 'complete') {
     window.renderExpeditionButton();
 } else {
