@@ -383,23 +383,41 @@ window.updateExpeditionBadge = function() {
     const badge = document.getElementById('expedition-badge');
     if (!badge) return;
     
-    let completedMissionsCount = 0;
-    
-    // Проверяваме дали има активни експедиции и броим само завършилите (готови)
-    if (window.activeExpeditions && window.activeExpeditions.length > 0) {
-        completedMissionsCount = window.activeExpeditions.filter(e => {
-            let leftTime = e.duration - e.currentProgress;
-            return leftTime <= 0; // Готова/Завършена мисия
+    let availableMissions = 0;
+    if (window.expeditionDatabase && window.expeditionDatabase.missions) {
+        availableMissions = window.expeditionDatabase.missions.filter(mission => {
+            const currentLevel = window.currentHero ? (window.currentHero.level || 1) : 1;
+            const meetsLevel = currentLevel >= (mission.reqLevel || 0);
+            const isNotRunning = !window.activeExpeditions || !window.activeExpeditions.some(e => e.missionId === mission.id);
+            return meetsLevel && isNotRunning;
         }).length;
+    } else {
+        availableMissions = Math.max(0, 3 - (window.activeExpeditions ? window.activeExpeditions.length : 0));
     }
     
-    // Показваме баджа само ако има поне 1 готова мисия за прибиране, иначе се скрива напълно
-    if (completedMissionsCount > 0) {
-        badge.innerText = completedMissionsCount;
-        badge.style.display = 'flex';
-    } else {
-        badge.style.display = 'none';
+    badge.innerText = availableMissions;
+    badge.style.display = availableMissions === 0 ? 'none' : 'flex';
+
+    const UI = {
+    init() {
+        if (window.renderTop6LeadersUI) window.renderTop6LeadersUI();
+        if (window.currentHero && window.updateCharacterUI) window.updateCharacterUI(window.currentHero);
+        this.cleanExpeditionButtonText();
+    },
+    cleanExpeditionButtonText() {
+        // Тъй като бутонът е преместен в левия панел, просто подсигуряваме,
+        // че баджът ще се опресни веднага с правилната бройка налични мисии при старт.
+        if (typeof window.updateExpeditionBadge === 'function') {
+            window.updateExpeditionBadge();
+        }
     }
+};
+
+window.UI = UI;
+
+document.addEventListener('DOMContentLoaded', () => {
+    window.UI.init();
+});
 };
 
 window.UI = UI;
