@@ -161,23 +161,28 @@ window.renderTop6LeadersUI = function() {
         });
     }
     
-    if (window.worldData && window.worldData.clans) {
-        Object.values(window.worldData.clans).forEach(ml => {
-            if (window.currentHero && ml.name === window.currentHero.name) return;
+   if (window.worldData && window.worldData.clans) {
+        Object.entries(window.worldData.clans).forEach(([clanName, ml]) => {
+            // Вземаме името на водача от свойството .leader
+            let actualName = ml.leader || clanName;
+            if (window.currentHero && actualName === window.currentHero.name) return;
             
             if (ml.purchased || ml.owned || ml.isUnlocked || (ml.level !== undefined) || (ml.xp !== undefined) || ml.inventory) {
-                let rpgStats = (typeof getCalculatedLeaderStats === "function") ? getCalculatedLeaderStats(ml) : null;
+                // Използваме реалното ниво и XP, записани от битките, или падаме обратно на формулата
+                let currentLvl = ml.level || 1;
+                let xpReq = (window.rpgDatabase && window.rpgDatabase.getXPRequiredForLevel) ? window.rpgDatabase.getXPRequiredForLevel(currentLvl) : currentLvl * 150;
+                let xpPct = ml.xpPercent !== undefined ? ml.xpPercent : (ml.xp ? Math.min(100, Math.floor((ml.xp / xpReq) * 100)) : 0);
                 
                 allLeaders.push({ 
-                    name: ml.name,
-                    dynasty: ml.dynasty,
+                    name: actualName,
+                    dynasty: clanName, // Ключът на масива е името на династията
                     heroPower: ml.heroPower || 100,
                     gold: ml.gold || 0,
                     armySize: ml.armySize || 0,
                     age: ml.age || 30,
                     isMain: false, 
-                    level: rpgStats && rpgStats.level ? rpgStats.level : (ml.level || 1), 
-                    xpPercent: rpgStats && rpgStats.xpPercent !== undefined ? rpgStats.xpPercent : (ml.xpPercent || (ml.xp ? (ml.xp / 1.5) : 0)), 
+                    level: currentLvl, 
+                    xpPercent: xpPct, 
                     currentClass: ml.currentClass || "Пълководец" 
                 });
             }
