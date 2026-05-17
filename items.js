@@ -35,7 +35,7 @@ window.addItemToTreasury = function(itemName) {
     if (artifactKey) {
         itemData = window.artifactsDatabase[artifactKey];
     } else {
-        // Ако предметът е нов/генериран динамично, създаваме временен обект
+        // Ако предметът е нов/генериран динамично, създаваме временен опект
         itemData = {
             id: "gen_" + Date.now(),
             name: itemName,
@@ -45,32 +45,48 @@ window.addItemToTreasury = function(itemName) {
         };
     }
 
-    // Проверка за дубликати
-    if (window.playerInventory.find(i => i.name === itemData.name)) return;
+    let dynamicAdded = false;
 
-    window.playerInventory.push(itemData);
-    
-    // Прилагане на бонусите
-    if (itemData.bonus.heroPower) {
-        window.currentHero.heroPower += itemData.bonus.heroPower;
+    // Проверка в общия инвентар
+    if (!window.playerInventory.find(i => i.name === itemData.name)) {
+        window.playerInventory.push(itemData);
+        dynamicAdded = true; // Отбелязваме, че предметът е наистина нов
+    }
+
+    // Проверка и добавяне в личния инвентар на текущия владетел
+    if (window.currentHero) {
+        if (!window.currentHero.inventory) {
+            window.currentHero.inventory = [];
+        }
+        if (!window.currentHero.inventory.find(i => i.name === itemData.name)) {
+            window.currentHero.inventory.push(itemData);
+            dynamicAdded = true;
+        }
+        
+        // ПРИЛАГАНЕ НА БОНУСИТЕ САМО АКО ПРЕДМЕТЪТ СЕ ДОБАВЯ СЕГА ЗА ПЪРВИ ПЪТ
+        if (dynamicAdded && itemData.bonus && itemData.bonus.heroPower) {
+            window.currentHero.heroPower += itemData.bonus.heroPower;
+        }
     }
 
     if (window.logEvent) {
         window.logEvent(`В съкровищницата е поставен нов артефакт: ${itemData.name}!`, "royal");
     }
 
-    if (window.updateCharacterUI) window.updateCharacterUI(window.currentHero);
+    if (window.currentHero && window.updateCharacterUI) {
+        window.updateCharacterUI(window.currentHero);
+    }
     
     // Ако решетката на съкровищницата е отворена, я опресняваме
     if (window.renderTreasury) window.renderTreasury();
 };
-
 window.renderTreasury = function() {
     const grid = document.getElementById('treasury-grid');
     if (!grid) return;
 
     grid.innerHTML = "";
-    window.playerInventory.forEach(item => {
+   let activeItems = (window.currentHero && window.currentHero.inventory) ? window.currentHero.inventory : window.playerInventory;
+activeItems.forEach(item => {
         const itemDiv = document.createElement('div');
         itemDiv.style.cssText = `
             background: #1a1a1a;
@@ -96,4 +112,8 @@ window.toggleTreasury = function() {
         overlay.style.display = isOpening ? 'block' : 'none';
         if (isOpening) window.renderTreasury();
     }
+};
+
+window.openInventory = function() {
+    window.toggleTreasury();
 };
