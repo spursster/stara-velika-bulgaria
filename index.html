@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="bg">
 <head>
-    <link rel=\"icon\" href=\"data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>👑</text></svg>\">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>👑</text></svg>">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Велика България - Игра</title>
@@ -20,130 +20,147 @@
             -webkit-backdrop-filter: blur(10px) !important;
             border-top: 2px solid #d4af37 !important;
             display: flex !important;
-            justify-content: space-around !important;
+            justify-content: space-between !important;
             align-items: center !important;
-            z-index: 999999 !important;
-            box-shadow: 0 -5px 20px rgba(0,0,0,0.8) !important;
-            padding-bottom: env(safe-area-inset-bottom) !important;
+            z-index: 9999 !important;
+            padding: 0 4px !important;
+            box-sizing: border-box !important;
         }
+
+        /* АДАПТИВНИ И СИМЕТРИЧНИ БУТОНИ – СВИВАТ СЕ АВТОМАТИЧНО СПРЯМО ТЕЛЕФОНА */
         .icon-btn {
-            background: none !important;
-            border: none !important;
-            font-size: 28px !important;
+            background: rgba(20, 20, 20, 0.6) !important;
+            border: 1px solid #d4af37 !important;
+            color: #d4af37 !important;
+            font-size: 20px !important;
+            border-radius: 6px !important;
             cursor: pointer !important;
-            transition: transform 0.2s, filter 0.2s !important;
-            width: 50px !important;
-            height: 50px !important;
+            flex: 1 !important;
+            min-width: 0 !important;
+            margin: 0 2px !important;
+            height: 48px !important;
             display: flex !important;
-            align-items: center !important;
             justify-content: center !important;
-            padding: 0 !important;
-            margin: 0 !important;
+            align-items: center !important;
+            position: relative !important;
+            transition: background 0.2s, transform 0.1s !important;
+            box-sizing: border-box !important;
         }
+
+        @media (max-width: 360px) {
+            .icon-btn {
+                font-size: 16px !important;
+                margin: 0 1px !important;
+            }
+        }
+
         .icon-btn:hover {
-            transform: scale(1.15) !important;
-            filter: drop-shadow(0 0 8px #ffd700) !important;
+            background: rgba(212, 175, 55, 0.2) !important;
         }
+
         .icon-btn:active {
             transform: scale(0.95) !important;
         }
-        /* Специфичен стил за скролируема горна лента, ако владетелите станат много */
-        #top-6-leaders-bar {
-            width: 100%;
-            background: #000;
-            border-bottom: 1px solid #d4af37;
-            box-sizing: border-box;
-            overflow-x: auto;
-            white-space: nowrap;
-            -webkit-overflow-scrolling: touch;
+
+        /* Подравняване на значката с числото върху иконката */
+        .mission-badge, #expedition-badge {
+            position: absolute !important;
+            top: 1px !important;
+            right: 1px !important;
+            background: #ff4d4d !important;
+            color: white !important;
+            font-size: 9px !important;
+            font-weight: bold !important;
+            border-radius: 50% !important;
+            padding: 1px 4px !important;
+            line-height: 1 !important;
         }
-        #top-6-leaders-bar::-webkit-scrollbar {
-            height: 3px;
+
+        /* КОРЕКЦИЯ НА ОСНОВНИЯ КОНТЕЙНЕР ЗА МОБИЛНИ */
+        #game-container {
+            height: calc(100vh - 130px) !important;
+            overflow: hidden !important;
+            display: flex !important;
+            margin-bottom: 70px !important;
         }
-        #top-6-leaders-bar::-webkit-scrollbar-thumb {
-            background: #d4af37;
+
+        @media (max-width: 768px) {
+            #left-sidebar {
+                width: 35%;
+                font-size: 0.8em;
+            }
+            #game-main-area {
+                width: 65%;
+            }
         }
     </style>
 </head>
 <body>
-    <div id="top-6-leaders-bar"></div>
+    <div id="battle-screen"></div>
 
-    <header id="top-bar">
-        <div id="game-title">ВЕЛИКА БЪЛГАРИЯ</div>
-        <div id="stats-container">
-            <span class="stat-item" id="stat-gold">🏆 Злато: <b class="value">0</b></span>
-            <span class="stat-item" id="stat-manpower">🏹 Войска: <b class="value">0</b></span>
-            <span class="stat-item" id="stat-legitimacy">⚖️ Легитимност: <b class="value">0</b></span>
-            <span class="stat-item" id="stat-turn">⏳ Ход: <b class="value">1</b></span>
+    <div id="event-modal" style="display: none;"></div>
+
+    <header id="top-bar" style="background: transparent; border-bottom: none; padding: 0 10px; display: flex; justify-content: space-between; align-items: center; height: 60px;">
+        <div id="time-container">
+            <div id="current-time-info" style="font-family: 'Cinzel', serif; color: #d4af37; font-size: 13px;">Зареждане...</div>
+            <div id="era-display" style="font-family: 'Cinzel', serif; font-size: 9px; color: #d4af37; opacity: 0.6; letter-spacing: 1px; text-align: center;">АНТИЧНОСТ</div>
         </div>
-        <div id="advisor-banner" style="display: none;"></div>
+        
+        <div id="dynasty-badge" style="text-align: center;">
+            <div id="current-clan-name" style="font-family: 'Cinzel'; color: #fff; font-size: 14px; text-shadow: 0 0 5px #d4af37;">ДИНАСТИЯ</div>
+            <div id="current-ruler-name" style="font-size: 10px; color: #aaa;">Владетел</div>
+        </div>
+
+        <div style="font-family: 'Cinzel', serif; font-size: 14px; color: #ffd700;">
+            💰 <span id="stat-gold">1500</span>
+        </div>
     </header>
 
-    <main id="game-layout">
-        <section id="map-section">
-            <div id="map-container">
-                <div id="regions-map"></div>
-            </div>
-            <div id="region-details-panel" class="hidden">
-                <h3 id="panel-region-name">Регион</h3>
-                <p id="panel-region-owner">Собственик: -</p>
-                <p id="panel-region-income">Доход: -</p>
-                <p id="panel-region-garrison">Гарнизон: -</p>
-                <div class="panel-actions">
-                    <button id="btn-attack-region" onclick="window.attackSelectedRegion()">⚔️ Атакувай</button>
-                    <button id="btn-develop-region" onclick="window.developSelectedRegion()">🚜 Развий</button>
-                    <button onclick="window.closeRegionPanel()">❌ Затвори</button>
-                </div>
-            </div>
-        </section>
+    <div id="action-bar" style="background: rgba(10,10,10,0.9); border-bottom: 1px solid #333; display: flex; justify-content: center; align-items: center; height: 80px; gap: 15px; display: none;">
+    </div>
 
-        <section id="control-section">
-            <div id="hero-card">
-                <div id="hero-avatar">👑</div>
-                <div id="hero-status">
-                    <h2 id="hero-name">Зареждане...</h2>
-                    <p id="hero-dynasty">Род: -</p>
-                    <p id="hero-perk">Бонус: -</p>
-                </div>
+    <main id="game-container">
+        <aside id="left-sidebar">
+            <div id="provinces-list" style="padding: 10px;">
+                <h3 style="font-family:'Cinzel'; font-size:12px; color:#d4af37; border-bottom:1px solid #333; padding-bottom:5px;">ВЛАДЕНИЯ</h3>
             </div>
-
-            <button id="btn-expeditions" onclick="window.openExpeditionCenter()" style="position: relative; width: 100%; padding: 12px; margin-bottom: 15px; background: #111; color: #d4af37; border: 1px solid #d4af37; font-family: 'Cinzel', serif; font-weight: bold; cursor: pointer; border-radius: 4px; display: flex; align-items: center; justify-content: center; gap: 8px;">
-                🗺️ ВЕЛИКИ ЕКСПЕДИЦИИ ПО СВЕТА
-                <span id="expedition-badge" style="display: none; background: #4caf50; color: white; border-radius: 50%; width: 20px; height: 20px; font-size: 11px; align-items: center; justify-content: center; font-family: 'Montserrat', sans-serif; font-weight: bold; box-shadow: 0 0 8px #4caf50;">0</span>
-            </button>
-
-            <div id="rpg-panel" class="panel-box">
-                <h3>RPG Статистика & Клас</h3>
-                <div style="display: flex; justify-content: space-between; margin-bottom: 10px; background: rgba(255,255,255,0.03); padding: 6px; border-radius: 4px;">
-                    <span id="rpg-level" style="color: #00ffcc; font-weight: bold;">Ниво: 1</span>
-                    <span id="rpg-class" style="color: #ffd700; font-weight: bold; font-style: italic;">Клас: Зареждане...</span>
-                </div>
-                <div id="rpg-xp-bar-container" style="width: 100%; background: #222; height: 12px; border-radius: 6px; margin-bottom: 10px; border: 1px solid #333; overflow: hidden; position: relative;">
-                    <div id="rpg-xp-fill" style="width: 0%; background: linear-gradient(90deg, #00ffcc, #0099ff); height: 100%; transition: width 0.3s;"></div>
-                    <span id="rpg-xp-text" style="position: absolute; width: 100%; text-align: center; top: 0; left: 0; font-size: 9px; color: #fff; font-weight: bold; line-height: 12px;">0 / 150 XP</span>
-                </div>
-                <div id="rpg-points" style="color: #ffcc00; font-size: 0.9em; margin-bottom: 10px; font-weight: bold; text-align: center;">Свободни точки: 0</div>
+            
+            <div style="padding: 10px; display: flex; flex-direction: column; gap: 10px;">
+                <div style="font-family: 'Cinzel'; font-size: 11px; color: #ff4d4d;">⚔️ МОЩ: <span id="stat-power">150</span></div>
+                <div style="font-family: 'Cinzel'; font-size: 11px; color: #eee;">🛡️ АРМИЯ: <span id="stat-army">500</span></div>
                 
-                <div id="skills-list" style="max-height: 180px; overflow-y: auto; padding-right: 4px;">
-                    </div>
+                <div id="treasury-trigger" style="cursor: pointer; background: rgba(17, 17, 17, 0.6); padding: 10px; border-radius: 4px; border: 1px solid #d4af37; text-align: center;" onclick="window.toggleTreasury()">
+                    <span style="font-size: 20px;">🏺</span>
+                    <span id="new-item-badge" style="display: none; background: #ff4d4d; color: white; font-size: 10px; border-radius: 50%; padding: 2px 6px; margin-left: 5px;">0</span>
+                </div>
             </div>
 
-            <div id="diplomacy-panel" class="panel-box">
-                <h3>Велики Родове & Владетели</h3>
-                <div id="clans-list"></div>
+            <div id="history-log-container" style="margin-top: 20px; padding: 10px; border-top: 1px solid #333;">
+                <h4 style="font-family: 'Cinzel'; color: #d4af37; font-size: 11px; margin-bottom: 10px;">ЛЕТОПИС</h4>
+                <div id="history-log" style="font-size: 10px; color: #aaa; max-height: 200px; overflow-y: auto; line-height: 1.4;">
+                </div>
             </div>
+        </aside>
 
-            <div id="treasury-panel" class="panel-box">
-                <div style="display:flex; justify-content:space-between; align-items:center;">
-                    <h3>Родова Съкровищница</h3>
-                    <button onclick="window.openInventory()" style="background:#222; color:#00ffcc; border:1px solid #00ffcc; font-size:0.75em; cursor:pointer; padding:2px 6px; border-radius:4px;">Преглед</button>
+        <section id="game-main-area" style="position: relative;">
+            <div id="barracks-container" style="display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(10,10,10,0.95); z-index: 50; padding: 20px; overflow-y: auto;"></div>
+
+            <div id="central-display" style="height: 100%; display: flex; flex-direction: column; justify-content: center; align-items: center; opacity: 0.15;">
+                 <img id="dynasty-shield" src="assets/icons/clans/default.png" style="width: 200px; filter: drop-shadow(0 0 10px #000);" onerror="this.style.display='none'">
+                 <h1 style="font-family: 'Cinzel'; color: #d4af37; margin-top: 15px; font-size: 22px; letter-spacing: 4px; text-align: center;">ВЕЛИКА БЪЛГАРИЯ</h1>
+            </div>
+            
+            <div id="treasury-overlay" style="display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.98); z-index: 100; padding: 25px; border: 2px solid #7b1a1a;">
+                <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #d4af37; padding-bottom: 10px;">
+                    <h2 style="font-family: 'Cinzel'; color: #d4af37; font-size: 18px; margin:0;">🏺 РОДОВА СЪКРОВИЩНИЦА</h2>
+                    <button onclick="window.toggleTreasury()" style="background:none; border:none; color:#d4af37; font-size:24px; cursor:pointer;">✕</button>
                 </div>
                 <div id="treasury-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); gap: 15px; margin-top: 20px;"></div>
             </div>
         </section>
     </main>
 
-    <div id="bottom-controls">
+  <div id="bottom-controls">
         <button class="icon-btn" onclick="window.openRegionsMap()">🗺️</button>
         <button class="icon-btn" onclick="window.buyUnits()">🏹</button>
         <button class="icon-btn" id="btn-battle" onclick="window.startBattle()">⚔️</button>
@@ -161,9 +178,11 @@
     <script src="diplomacy.js"></script>
     <script src="events.js"></script>
     <script src="database.js"></script>
-    <script src="expeditions.js"></script>
-    <script src="rpg_system.js"></script>
-    <script src="ui.js"></script>
+    <script src="items.js"></script> 
+    <script src="expeditions.js"></script> 
+    <script src="battle.js"></script>
     <script src="logic.js"></script>
+    <script src="time.js"></script>
+    <script src="ui.js"></script>
 </body>
 </html>
