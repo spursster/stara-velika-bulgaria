@@ -1,13 +1,14 @@
 /**
  * МОДУЛ: СЪБИТИЯ - Велика България
  * СТАТУС: ГЕНЕРАТОР НА СЪБИТИЯ - ОПТИМИЗИРАН ЗА РЪЧНО И АВТОМАТИЧНО СТАРТИРАНЕ
+ * КОРЕКЦИЯ: Пълна синхронизация с процеса на времето в time.js
  * Статистика на файловете в проекта: 16
  */
 
 // База от данни за динамично сглобяване
 window.eventTemplates = {
     positive: [
-        { t: "Благоденствие в {region}", desc: "Местните родове в {region} откриха нови пасища. Хазната расте.", effect: { gold: 150, power: 5 } },
+        { t: "Благоденствие в {region}", desc: "Местните родове in {region} откриха нови пасища. Хазната расте.", effect: { gold: 150, power: 5 } },
         { t: "Мъдростта на Кан {hero}", desc: "Вашето решение по съдебен спор между два рода увеличи влиянието Ви.", effect: { power: 25, gold: 0 } },
         { t: "Елитна гвардия", desc: "Група млади воини от род {dynasty} се заклеха във вярност до смърт.", effect: { army: 120, power: 10 } },
         { t: "Търговски керван", desc: "Пътници от далечни земи пристигнаха, носейки дарове и злато.", effect: { gold: 300, power: 0 } }
@@ -18,7 +19,7 @@ window.eventTemplates = {
         { t: "Пясъчна буря/Мраз", desc: "Природата се обърна срещу нас. Загубихме провизии.", effect: { gold: -200, army: -20 } }
     ],
     mystic: [
-        { t: "Небесно знамение", desc: "Комета пресече небето над лагера. Жреците тълкуват това као знак.", effect: { power: 30, gold: -50 } },
+        { t: "Небесно знамение", desc: "Комета пресече небето над лагера. Жреците тълкуват това като знак.", effect: { power: 30, gold: -50 } },
         { t: "Древно предсказание", desc: "Открит е надпис в скалите, възхваляващ величието на българите.", effect: { power: 50, army: 0 } }
     ]
 };
@@ -82,11 +83,11 @@ window.executeEventLogic = function(isForced) {
 
 window.showEventModal = function(title, text, options) {
     let modal = document.getElementById('event-modal');
-    if (modal) modal.remove(); // Изчистване на стар модал за сигурност
-
-    modal = document.createElement('div');
-    modal.id = 'event-modal';
-    document.body.appendChild(modal);
+    if (!modal) {
+        modal = document.createElement('div');
+        modal.id = 'event-modal';
+        document.body.appendChild(modal);
+    }
 
     modal.style.cssText = `
         position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
@@ -118,31 +119,19 @@ window.handleEventChoice = function(index) {
     const result = choice.action(window.currentHero);
     
     const modal = document.getElementById('event-modal');
-    if (modal) modal.remove(); // Изтриваме модала от екрана
+    if (modal) modal.style.display = 'none';
     
-    // ПРАВИЛНА ЛОГИКА: Напредване с 1 ход (3 месеца) вместо с 1 година
-    if (window.gameTime) {
-        if (typeof window.gameTime.advanceTurn === 'function') {
-            // Ако имаш готова функция в ядрото, я викаме директно:
-            window.gameTime.advanceTurn();
-        } else {
-            // Ръчен fallback, ако логиката е записана като променливи:
-            window.gameTime.currentTurn = (window.gameTime.currentTurn || 0) + 1;
-            
-            // На всеки 4 хода (4 * 3 месеца = 12 месеца) се сменя годината
-            if (window.gameTime.currentTurn % 4 === 0) {
-                window.gameTime.year += 1;
-            }
-        }
+    // НАПРЕДВАНЕ НА ВРЕМЕТО (Официалната логика от time.js)
+    if (typeof window.processTime === 'function') {
+        window.processTime(); // Превърта сезон индекса, проверява годината и пренаписва UI лентата
     }
     
-    // СИНХРОНИЗАЦИЯ С ЕКСПЕДИЦИИТЕ (Намаляват времетраенето си с 1 ход)
-    if (window.updateExpeditionSystem) {
+    // НАПРЕДВАНЕ НА ЕКСПЕДИЦИИТЕ (Намалява оставащите им ходове с 1 ход / 3 месеца)
+    if (typeof window.updateExpeditionSystem === 'function') {
         window.updateExpeditionSystem();
     }
     
-    // ОБНОВЯВАНЕ НА ИНТЕРФЕЙСА
+    // ОБНОВЯВАНЕ НА СТАТИСТИКИТЕ НА ВЛАДЕТЕЛЯ (Злато, Войска, Сила)
     if (window.showAdvisorMsg) window.showAdvisorMsg(result);
     if (window.updateCharacterUI) window.updateCharacterUI(window.currentHero);
-    if (window.updateTimeUI) window.updateTimeUI();
 };
