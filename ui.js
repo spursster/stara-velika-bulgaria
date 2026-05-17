@@ -161,25 +161,27 @@ window.renderTop6LeadersUI = function() {
         });
     }
     
-// ПОСТАВИ ТОЗИ КОД НА НЕГОВО МЯСТО:
+// ЗАМЕНИ ГО С ТОЗИ ПРЕЦИЗЕН И ЗАЩИТЕН ВАРИАНТ:
 if (window.worldData && window.worldData.clans) {
     Object.values(window.worldData.clans).forEach(ml => {
-        // Пропускаме главния герой, тъй като той вече е добавен по-горе
         if (window.currentHero && ml.name === window.currentHero.name) return;
         
-        // Взимаме само владетелите, които играчът реално притежава или е закупил
         if (ml.purchased || ml.isUnlocked || ml.owned || (ml.level && ml.level > 0)) {
-            let rpgStats = getCalculatedLeaderStats(ml);
+            // Подсигуряваме безопасно извикване на статистиките
+            let rpgStats = (typeof getCalculatedLeaderStats === "function") ? getCalculatedLeaderStats(ml) : null;
+            
             allLeaders.push({ 
                 name: ml.name,
                 dynasty: ml.dynasty,
-                heroPower: ml.heroPower,
-                gold: ml.gold,
-                armySize: ml.armySize,
-                age: ml.age,
+                heroPower: ml.heroPower || 100,
+                gold: ml.gold || 0,
+                armySize: ml.armySize || 0,
+                age: ml.age || 30,
                 isMain: false, 
-                level: rpgStats.level, 
-                xpPercent: rpgStats.xpPercent, 
+                // Ако rpgStats липсва или няма ниво, четем директно от обекта ml, иначе даваме по подразбиране 1
+                level: rpgStats && rpgStats.level ? rpgStats.level : (ml.level || 1), 
+                // Ако няма изчислен процент опит, четем ml.xpPercent, ml.xp или даваме 0% за празна лента
+                xpPercent: rpgStats && rpgStats.xpPercent !== undefined ? rpgStats.xpPercent : (ml.xpPercent || (ml.xp ? (ml.xp / 1.5) : 0)), 
                 currentClass: ml.currentClass || "Пълководец" 
             });
         }
