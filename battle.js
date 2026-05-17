@@ -79,7 +79,7 @@ window.startBattle = function(targetRegion) {
             </div>
 
             <div id="battle-log-details" style="background: #000; border: 1px solid #333; padding: 12px; min-height: 120px; max-height: 250px; overflow-y: auto; font-size: 0.8em; color: #ccc; line-height: 1.4; border-radius: 3px; margin-bottom: 15px;">
-                <p style="color: #ffd700; font-style: italic; margin: 0;">Разузнавачите докладват: Врагът заема отбранителни позиции in укрепление Ранг ${defenseLvl}...</p>
+                <p style="color: #ffd700; font-style: italic; margin: 0;">Разузнавачите докладват: Врагът заема отбранителни позиции и укрепление Ранг ${defenseLvl}...</p>
             </div>
 
             <div id="battle-controls" style="text-align: center;">
@@ -271,7 +271,7 @@ window.executeBattleSimulation = function(regionName, enemyArmy, defenseLvl) {
     if (pArmyText) pArmyText.innerText = playerArmy;
     if (eArmyText) eArmyText.innerText = enemyArmy;
 
-    // Раздаване на опит (вика функцията от rpg_system.js с пълна родова защита)
+    // Раздаване на опит за текущия активен лидер (с пълна родова защита)
     if (window.gainHeroXP && !hero.isDead) {
         window.gainHeroXP(hero, xpGained);
     }
@@ -297,32 +297,35 @@ window.executeBattleSimulation = function(regionName, enemyArmy, defenseLvl) {
                 clan.skills = JSON.parse(JSON.stringify(hero.skills || {}));
             }
             
-            // 2. ПАСИВЕН ОПИТ ЗА ОСТАНАЛИТЕ ЗАКУПЕНИ/ОТКЛЮЧЕНИ ГЕРОИ (за да растат паралелно в бекграунда)
+            // 2. ПАСИВЕН ОПИТ ЗА ОСТАНАЛИТЕ ЗАКУПЕНИ/ОТКЛЮЧЕНИ ГЕРОИ (Директно изчисляване за стабилност)
             if ((clan.isUnlocked || clan.purchased) && clan.name !== hero.name) {
-                let passiveXP = Math.floor(xpGained * 0.5); // 50% от опита за останалите отключени лидери
-                if (window.gainHeroXP) {
-                    window.gainHeroXP(clan, passiveXP);
-                } else {
-                    clan.xp = (clan.xp || 0) + passiveXP;
-                    let nextLevelXP = (clan.level || 1) * 100;
-                    if (clan.xp >= nextLevelXP) {
-                        clan.xp -= nextLevelXP;
-                        clan.level = (clan.level || 1) + 1;
-                    }
+                let passiveXP = Math.floor((xpGained || 0) * 0.5); // 50% от опита за останалите отключени лидери
+                clan.xp = (clan.xp || 0) + passiveXP;
+                
+                // Автоматично вдигане на ниво в базата данни
+                let nextLevelXP = (clan.level || 1) * 100;
+                while (clan.xp >= nextLevelXP) {
+                    clan.xp -= nextLevelXP;
+                    clan.level = (clan.level || 1) + 1;
+                    nextLevelXP = (clan.level || 1) * 100; // Рекалкулиране за следващото ниво
                 }
             }
         }
     }
 
-    // Допълнително подсигуряване на синхронизацията в паралелни структури, ако съществуват
-    if (window.unlockedLeaders) {
+    // Синхронизация с паралелната структура window.unlockedLeaders за абсолютно всички отключени лидери
+    if (window.unlockedLeaders && window.worldData && window.worldData.clans) {
         let ulArray = Array.isArray(window.unlockedLeaders) ? window.unlockedLeaders : Object.values(window.unlockedLeaders);
         ulArray.forEach(l => {
-            if (l.name === hero.name || l.id === hero.id) {
-                l.level = hero.level;
-                l.xp = hero.xp;
-                l.skills = hero.skills;
-                l.armySize = hero.armySize;
+            for (let key in window.worldData.clans) {
+                let clan = window.worldData.clans[key];
+                if (clan.name === l.name) {
+                    l.level = clan.level;
+                    l.xp = clan.xp;
+                    l.skills = JSON.parse(JSON.stringify(clan.skills || {}));
+                    l.armySize = clan.armySize;
+                    l.isDead = clan.isDead;
+                }
             }
         });
     }
