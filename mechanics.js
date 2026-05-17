@@ -1,7 +1,7 @@
 /**
  * МОДУЛ: МЕХАНИКИ - Велика България
- * СТАТУС: ФИНАЛНА СИНХРОНИЗАЦИЯ (13 Рода)
- * Дефинира уникалните бонуси и математическата логика на родовете.
+ * СТАТУС: НАПЪЛНО СИНХРОНИЗИРАН (Фентъзи баланс, Без стареене)
+ * Статистика на файловете в проекта: 16
  */
 
 window.dynastyPerks = {
@@ -46,7 +46,69 @@ window.getPerkValue = function(perkType) {
  */
 window.applyPerkToValue = function(baseValue, perkType) {
     const multiplier = window.getPerkValue(perkType);
-    
-    // За бонуси тип "cost" (цена), по-малко от 1.0 е по-добре
     return baseValue * multiplier;
+};
+
+/**
+ * МЕХАНИКА ЗА ПРЕЗ ХОДОВЕТЕ - ВЛАДЕТЕЛИТЕ СА БЕЗСМЪРТНИ
+ * Тази функция замества всякакво стареене или естествена смърт.
+ */
+window.processLeaderTurnMechanics = function(hero) {
+    if (!hero) return;
+    
+    // Инициализация на жизнени статуси, ако липсват
+    if (hero.isDead === undefined) hero.isDead = false;
+    if (hero.slainByGod === undefined) hero.slainByGod = false;
+    
+    // Владетелите не стареят. Проверява се само дали не са паднали в битка или покосени от божество.
+    if (hero.isDead) {
+        return;
+    }
+    
+    // Логика за регенерация на личната мощ/армия на база бонусите на рода
+    if (hero.armyRecoveryRate) {
+        const recoveryBonus = window.getPerkValue('recovery'); // Бонус на Асеневци
+        hero.currentArmy = Math.min(hero.maxArmy, hero.currentArmy + (hero.armyRecoveryRate * recoveryBonus));
+    }
+};
+
+/**
+ * АРХИТЕКТУРА ЗА БЪДЕЩАТА ФУНКЦИЯ: РИТУАЛИ И ВЪЗКРЕСЯВАНЕ
+ * Ще се задейства от UI екрана за ритуали, когато бъде добавен.
+ */
+window.performResurrectionRitual = function(caster, deadHero) {
+    if (!caster || !deadHero) return { success: false, msg: "Невалидни данни за ритуала." };
+    if (!deadHero.isDead) return { success: false, msg: "Владетелят вече е жив и безсмъртен!" };
+    
+    const mysticismLevel = (caster.skills && caster.skills.mysticism) || 0;
+    const canCast = mysticismLevel >= 4 || 
+                    caster.currentClass === "Колобър-Магьосник" || 
+                    caster.currentClass === "Некромант от Хиперборея" ||
+                    caster.currentClass === "Посветен на Авитохол";
+                    
+    if (!canCast) {
+        return { success: false, msg: `${caster.name} няма необходимите тайни познания или клас, за да извърши възкресяване!` };
+    }
+    
+    let baseChance = 0.40 + (mysticismLevel * 0.05); 
+    if (caster.dynasty === "Одриси") {
+        baseChance *= (window.dynastyPerks["Одриси"].ritual || 1.3); 
+    }
+    
+    const roll = Math.random();
+    if (roll <= baseChance) {
+        deadHero.isDead = false;
+        deadHero.slainByGod = false;
+        if (deadHero.currentArmy !== undefined) deadHero.currentArmy = Math.floor(deadHero.maxArmy * 0.2); 
+        
+        return { 
+            success: true, 
+            msg: `✨ ВЕЛИК РИТУАЛ: ${caster.name} успешно призова древните сили и възкреси ${deadHero.name} от род ${deadHero.dynasty}!` 
+        };
+    } else {
+        return { 
+            success: false, 
+            msg: `🔮 Ритуалът се провали. Духът на ${deadHero.name} остава в отвъдното.` 
+        };
+    }
 };
