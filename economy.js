@@ -1,7 +1,7 @@
 /**
  * МОДУЛ: ИКОНОМИКА И РОДОВИ РЕСУРСИ - Велика България
  * СТАТУС: НАПЪЛНО НАДГРАДЕН (Интеграция на 100+ Diablo Способности & ArcheAge Класове)
- * КОРЕКЦИЯ БЪГ: Добавено раздаване на пасивен опит и качване на нива на отключените герои при икономически ход.
+ * КОРЕКЦИЯ БЪГ: Коригирано пасивното раздаване на опит и вдигане на нива на отключените герои според родовата структура.
  * Статистика на файловете в проекта: 16
  */
 
@@ -25,110 +25,162 @@ window.calculateEconomy = function() {
         baseIncome += (skills.goldRush * 25); // +25 злато за всяко ниво от златни мини
     }
     if ((skills.bazaars || 0) > 0) {
-        baseIncome += (skills.bazaars * 15); // +15 злато от търговски пазари
+        baseIncome += (skills.bazaars * 15); // +15 злато от панаири
     }
 
-    // Добавяне на родови бонуси от притежавани територии
-    let regionBonus = 0;
-    if (window.playerRegions && window.playerRegions.length > 0) {
-        regionBonus = window.playerRegions.length * 40; // +40 злато за всеки завоюван регион
+    let totalRegionIncome = 0;
+
+    // 2. ИЗЧИСЛЯВАНЕ НА ДОХОД ОТ РЕГИОНИТЕ И СЕЗОННИТЕ ПРОМЕНИ
+    let seasonalBonus = 200;
+    if (window.gameTime) {
+        if (window.gameTime.seasonIndex === 1) seasonalBonus = 350; // Лято (Пик на реколтата)
+        if (window.gameTime.seasonIndex === 3) seasonalBonus = 100; // Зима (Студ и презапасяване)
     }
 
-    let totalIncome = baseIncome + regionBonus;
-
-    // 2. ПОДДРЪЖКА НА ВОЙСКАТА И ЛОГИСТИКА
-    let armyCount = hero.currentArmy || 0;
-    let baseMaintenanceRate = 0.5; // 0.5 злато на боец
-
-    // ArcheAge пасиви: Тактическо снабдяване намалява поддръжката
-    if ((skills.supplyLines || 0) > 0) {
-        baseMaintenanceRate -= (skills.supplyLines * 0.05); // -5% разходи на точка
-        baseMaintenanceRate = Math.max(0.1, baseMaintenanceRate);
-    }
-
-    let armyMaintenance = Math.floor(armyCount * baseMaintenanceRate);
-
-    // Зимна логистична криза (Ако е зима, разходите за храна скачат)
-    let isWinter = false;
-    if (window.gameTime && typeof window.gameTime.getSeasonName === 'function') {
-        if (window.gameTime.getSeasonName() === "Зима") isWinter = true;
-    }
-    if (isWinter) {
-        armyMaintenance = Math.floor(armyMaintenance * 1.3); // +30% зимна поддръжка
-    }
-
-    // 3. ЧИСТ ПРОФИТ И БАЛАНС НА ХАЗНАТА
-    let finalProfit = totalIncome - armyMaintenance;
-    hero.gold = (hero.gold || 0) + finalProfit;
-
-    // Предотвратяване на фалит (златото не може да бъде отрицателно)
-    if (hero.gold < 0) {
-        let debt = Math.abs(hero.gold);
-        hero.gold = 0;
-        // При фалит част от армията дезертира поради липса на заплати
-        if (hero.currentArmy > 10) {
-            let deserters = Math.floor(hero.currentArmy * 0.15); // 15% дезертьори
-            hero.currentArmy -= deserters;
-            hero.armySize = hero.currentArmy;
-            if (window.showAdvisorMsg) {
-                window.showAdvisorMsg(`⚠️ ДЕЗЕРТИРСТВО: Поради празна хазна и дълг от -${debt}💰, ${deserters} воини напуснаха лагера!`);
+    if (window.playerRegions && window.worldData && window.worldData.regions) {
+        const ownedRegionsFlat = window.playerRegions.flat();
+        
+        ownedRegionsFlat.forEach(regionName => {
+            const regionData = window.worldData.regions[regionName];
+            
+            if (regionData) {
+                let regionBase = seasonalBonus > 0 ? Math.floor(seasonalBonus * 0.3) : 60;
+                
+                // Diablo пасив: Управление на благата (economy skill) увеличава данъка от регионите с 5% на точка
+                let economyModifier = 1 + ((skills.economy || 0) * 0.05);
+                
+                // Ранг на инфраструктурата на региона (ако има такъв)
+                let infraLvl = regionData.infrastructureLevel || 1;
+                
+                totalRegionIncome += Math.floor(regionBase * infraLvl * economyModifier);
             }
+        });
+    }
+
+    // Сбор на базовия и регионалния данък
+    let totalIncome = baseIncome + totalRegionIncome;
+
+    // 3. ТЪРГОВСКИ КАРТЕЛИ, КРАЛСКА ЛИХВА И РОДОВИ БОНУСИ
+    // Diablo пасив: Кралска съкровищница (royalTreasury) - дава 2% пасивна лихва върху текущото злато
+    if ((skills.royalTreasury || 0) > 0 && hero.gold > 0) {
+        let interest = Math.floor(hero.gold * (skills.royalTreasury * 0.02));
+        if (interest > 500) interest = 500; // Таван на лихвата за баланс
+        totalIncome += interest;
+    }
+
+    // Diablo пасиви: Търговски картел (cartel) и Монопол (monopoly)
+    let tradeBonusMultiplier = 1.0;
+    if ((skills.cartel || 0) > 0) tradeBonusMultiplier += (skills.cartel * 0.04);
+    if ((skills.monopoly || 0) > 0) tradeBonusMultiplier += (skills.monopoly * 0.05);
+    totalIncome = Math.floor(totalIncome * tradeBonusMultiplier);
+
+    // Оригинални родови бонуси от механиката (ЗАПАЗЕНИ НА 100%)
+    let clanMultiplier = 1.0;
+    if (window.dynastyPerks && window.dynastyPerks[hero.dynasty]) {
+        if (window.dynastyPerks[hero.dynasty].gold) {
+            clanMultiplier = window.dynastyPerks[hero.dynasty].gold;
         }
+    } else if (window.getPerkValue) {
+        clanMultiplier = window.getPerkValue('gold');
+    }
+    totalIncome = Math.floor(totalIncome * clanMultiplier);
+
+    // Допълнителни 15% за специфични търговски родове (Бесараб и Ерми)
+    if (hero.dynasty === "Бесараб" || hero.dynasty === "Ерми") {
+        totalIncome = Math.floor(totalIncome * 1.15);
     }
 
-    // 4. БАНКОВИ ЛИХВИ И СЪКРОВИЩНИЦА
-    // Diablo пасив: Лихварство (usury) дава 2% пасивна лихва върху спестеното злато (макс 500)
-    if ((skills.usury || 0) > 0 && hero.gold > 500) {
-        let interestGained = Math.floor(hero.gold * (skills.usury * 0.02));
-        interestGained = Math.min(500, interestGained); // лимит до 500 злато
-        hero.gold += interestGained;
+    // 4. РАЗХОДИ ЗА ИЗДРЪЖКА С ДИПЛОМАТИЧЕСКА И ХЛЕБНА ЛОГИСТИКА
+    let armyCostMultiplier = 1.0;
+    if (window.dynastyPerks && window.dynastyPerks[hero.dynasty] && window.dynastyPerks[hero.dynasty].armyCost) {
+        armyCostMultiplier = window.dynastyPerks[hero.dynasty].armyCost;
+    } else if (window.getPerkValue) {
+        armyCostMultiplier = window.getPerkValue('armyCost');
     }
 
-    // 5. ГЛОБАЛНА СИНХРОНИЗАЦИЯ С КЛАНОВЕТЕ (worldData)
-    // Записваме обновените финансови данни обратно в глобалния списък на родовете
-    if (window.worldData && window.worldData.clans && hero.id) {
-        if (window.worldData.clans[hero.id]) {
-            window.worldData.clans[hero.id].gold = hero.gold;
-            window.worldData.clans[hero.id].currentArmy = hero.currentArmy;
-            window.worldData.clans[hero.id].armySize = hero.armySize;
+    // Diablo пасиви: Обсадна логистика (supplyChain) и Хлебна логистика (grainLogistics)
+    let logisticsReduction = ((skills.supplyChain || 0) * 0.03) + ((skills.grainLogistics || 0) * 0.04);
+    
+    // Специално предимство през Зимата: Хлебната логистика спасява от глад
+    if (window.gameTime && window.gameTime.seasonIndex === 3 && (skills.grainLogistics || 0) > 0) {
+        logisticsReduction += (skills.grainLogistics * 0.05); // Още по-висока спестовност в студа
+    }
+    
+    armyCostMultiplier = Math.max(0.4, armyCostMultiplier - logisticsReduction);
+
+    let armyMaintenanceBase = (hero.armySize || 0) * 0.15;
+    let armyMaintenance = Math.floor(armyMaintenanceBase * armyCostMultiplier);
+    let finalProfit = Math.floor(totalIncome - armyMaintenance);
+
+    // ArcheAge Проверка: Специфичен бонус за висши финансови класове
+    if (hero.currentClass === "Имперски ковчежник" || hero.currentClass === "Златен Алхимик") {
+        finalProfit += 50; // Бонус за класова специализация
+        totalIncome += 50;
+    }
+
+    // 5. АКТУАЛИЗАЦИЯ НА ХАЗНАТА НА КАНА СЪС ЗАЩИТА ПРОТИВ ФАЛИТ
+    hero.gold = (hero.gold || 0) + finalProfit;
+    if (hero.gold < 0) hero.gold = 0; 
+
+    // Записване на обновените финансови данни обратно в глобалния списък на родовете
+    if (window.worldData && window.worldData.clans && hero.dynasty) {
+        if (window.worldData.clans[hero.dynasty]) {
+            window.worldData.clans[hero.dynasty].gold = hero.gold;
         }
     }
 
     // =========================================================================
-    // 🎯 АВТОМАТИЧЕН RPG ПРОГРЕС НА ВСИЧКИ КУПЕНИ ЛИДЕРИ ПРИ ИКОНОМИЧЕСКИ ХОД
+    // 🎯 АВТОМАТИЧЕН RPG ПРОГРЕС И КАЧВАНЕ НА НИВА НА ВСИЧКИ ОТКЛЮЧЕНИ ГЕРОИ
     // =========================================================================
     if (window.worldData && window.worldData.clans) {
-        const clans = window.worldData.clans;
+        Object.keys(window.worldData.clans).forEach(clanKey => {
+            let clan = window.worldData.clans[clanKey];
+            if (!clan) return;
 
-        Object.keys(clans).forEach(key => {
-            let leader = clans[key];
+            // Всеки водач/герой трупа опит, ако е изрично отключен или е текущият ни активен герой на играча
+            let isActiveHeroClan = (hero.dynasty && clanKey === hero.dynasty) || (clan.name === hero.name);
+            
+            if (clan.isUnlocked || isActiveHeroClan) {
+                // Подсигуряваме базовите стойности, ако липсват в обекта
+                if (clan.xp === undefined) clan.xp = 0;
+                if (clan.level === undefined) clan.level = 1;
 
-            // Проверяваме структурата на лидера според префикса и наличието на опит (r_tervel и др.)
-            if (leader && leader.id && (key.startsWith('r_') || leader.xp !== undefined)) {
-                // Героят трупа опит, ако е от нашия род, ако е отключен или е служебният активен Тервел
-                if (leader.dynasty === hero.dynasty || leader.isUnlocked || key === 'r_tervel') {
-                    
-                    let xpGained = Math.floor(Math.random() * 25) + 15; // 15-40 пасивен опит от управление
-                    leader.xp = (leader.xp || 0) + xpGained;
-                    
-                    let currentLevel = leader.level || 1;
-                    let requiredXP = currentLevel * 150; // Формула: ниво * 150 XP
+                // Раздаваме пасивен опит за ход от успешно родово управление (между 20 и 45 XP)
+                let xpGained = Math.floor(Math.random() * 26) + 20;
+                clan.xp += xpGained;
 
-                    // Логика за вдигане на ниво (Level Up)
-                    if (leader.xp >= requiredXP) {
-                        leader.xp -= requiredXP;
-                        leader.level = currentLevel + 1;
-                        leader.skillPoints = (leader.skillPoints || 0) + 1;
+                // Ако това е активният ни герой, добавяме опита веднага и към неговия основен обект
+                if (isActiveHeroClan) {
+                    hero.xp = (hero.xp || 0) + xpGained;
+                }
 
-                        // Автоматично разпределяне на магии и точки от rpg_system.js
-                        if (window.autoAssignLeaderSkills) {
-                            window.autoAssignLeaderSkills(leader);
-                        }
+                let requiredXP = clan.level * 150;
 
-                        if (window.showAdvisorMsg) {
-                            window.showAdvisorMsg(`👑 ВЕЛИК ПРОГРЕС: Родовият лидер ${leader.name} достигна Ниво ${leader.level}! Спечелена е точка за способности.`);
-                        }
+                // Цикъл за сигурно вдигане на нива (Level Up)
+                while (clan.xp >= requiredXP) {
+                    clan.xp -= requiredXP;
+                    clan.level += 1;
+                    clan.skillPoints = (clan.skillPoints || 0) + 1;
+
+                    // Ако е активният ни герой, обновяваме главния интерфейсен обект
+                    if (isActiveHeroClan) {
+                        hero.level = clan.level;
+                        hero.xp = clan.xp;
+                        hero.skillPoints = (hero.skillPoints || 0) + 1;
+                        if (window.initializeHeroRPGData) window.initializeHeroRPGData(hero);
                     }
+
+                    // Автоматично разпределяне на магии от rpg_system.js за пасивните лидери
+                    if (window.autoAssignLeaderSkills) {
+                        window.autoAssignLeaderSkills(clan);
+                    }
+
+                    if (window.showAdvisorMsg) {
+                        window.showAdvisorMsg(`👑 ВЕЛИК ПРОГРЕС: Родовият водач ${clan.name} достигна Ниво ${clan.level}! Спечелена е точка за способности.`);
+                    }
+
+                    // Обновяваме прага на опита за следващото ниво вътре в цикъла
+                    requiredXP = clan.level * 150;
                 }
             }
         });
@@ -140,7 +192,7 @@ window.calculateEconomy = function() {
         if (window.gameTime && window.gameTime.getSeasonName) {
             seasonName = window.gameTime.getSeasonName();
         } else if (window.gameTime) {
-            const seasons = [\"Пролет\", \"Лято\", \"Есен\", \"Зима\"];
+            const seasons = ["Пролет", "Лято", "Есен", "Зима"];
             seasonName = seasons[window.gameTime.seasonIndex] || "Сезон";
         }
         
@@ -149,11 +201,15 @@ window.calculateEconomy = function() {
         if (finalProfit >= 0) {
             window.showAdvisorMsg(`💰 Счетоводство [${seasonName}]: Владетелят ${hero.name}${classTitle} събра +${totalIncome} злато от родови земи. След поддръжка на армията (-${armyMaintenance}), чистият профит е +${finalProfit} злато.`);
         } else {
-            window.showAdvisorMsg(`📉 Икономическа криза [${seasonName}]: Разходите за войската (-${armyMaintenance}) надхвърлиха приходите! Чистият дефицит е ${finalProfit} злато.`);
+            window.showAdvisorMsg(`📉 Икономическа криза [${seasonName}]: Разходите за войската (-${armyMaintenance}) надхвърлят приходите (+${totalIncome}). Хазната е на червено с ${finalProfit} злато!`);
         }
     }
 
-    // Моментално опресняване на интерфейсите на екрана (Топ 6 картите)
-    if (window.renderTop6LeadersUI) window.renderTop6LeadersUI();
-    if (window.updateCharacterUI) window.updateCharacterUI(hero);
+    // Моментално опресняване на главния интерфейс и Топ 6 картите
+    if (window.updateCharacterUI) {
+        window.updateCharacterUI(hero);
+    }
+    if (window.renderTop6LeadersUI) {
+        window.renderTop6LeadersUI();
+    }
 };
