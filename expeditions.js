@@ -588,8 +588,7 @@ window.toggleSpecificRulerInventory = function(leaderKey) {
             </div>
         </div>
     `;
-
-    let slotsHTML = `<div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 12px;">`;
+let slotsHTML = `<div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 12px;">`;
     for (let i = 0; i < 9; i++) {
         let item = window.playerInventory && window.playerInventory[i];
         if (item) {
@@ -613,37 +612,55 @@ window.toggleRulerInventory = function() {
 };
 
 /**
- * РЕНДЕРИРАНЕ НА БУТОНА С ОПТИМИЗИРАН КЛАС ЗА МОБИЛНИ УСТРОЙСТВА
+ * РЕНДЕРИРАНЕ НА БУТОНА (ОПТИМИЗИРАНО ЗА НОВИЯ ЛЕВ ПАНЕЛ)
  */
 window.renderExpeditionButton = function() {
+    // Вземаме бутона, който вече е позициониран в левия панел чрез ui.js
     let btn = document.getElementById('btn-expeditions');
-    if (!btn) {
-        btn = document.createElement('button');
-        btn.id = 'btn-expeditions';
-        btn.style.cssText = `
-            position: fixed; bottom: 80px; right: 20px; padding: 12px 24px;
-            background: linear-gradient(135deg, #8a2387, #e94057); color: white;
-            font-weight: bold; border: 2px solid #ffd700; border-radius: 30px;
-            cursor: pointer; box-shadow: 0 5px 15px rgba(0,0,0,0.5); z-index: 10000;
-            font-family: 'Georgia', serif; letter-spacing: 0.5px;
-        `;
-        btn.onclick = () => { window.openExpeditionCenter(); };
-        document.body.appendChild(btn);
+    if (!btn) return; // Ако още не е зареден в панела, прекратяваме
+
+    // Намираме баджа за бройка вътре в бутона ни
+    let badge = document.getElementById('expedition-badge') || btn.querySelector('.mission-badge');
+    
+    // Пресмятаме наличните свободни мисии спрямо активните в момента
+    let availableMissions = 0;
+    if (window.expeditionDatabase && window.expeditionDatabase.missions) {
+        availableMissions = window.expeditionDatabase.missions.filter(mission => {
+            const currentLevel = window.currentHero ? (window.currentHero.level || 1) : 1;
+            const meetsLevel = currentLevel >= (mission.reqLevel || 0);
+            const isNotRunning = !window.activeExpeditions || !window.activeExpeditions.some(e => e.missionId === mission.id);
+            return meetsLevel && isNotRunning;
+        }).length;
+    } else {
+        availableMissions = Math.max(0, 3 - window.activeExpeditions.length);
     }
 
+    // Обновяваме текста на бутона в левия панел без да чупим неговите стилове
+    const btnText = btn.querySelector('span') || btn;
     if (window.activeExpeditions.length > 0) {
-        let shortStatus = window.activeExpeditions.map(e => {
-            let left = e.duration - e.currentProgress;
-            return `• ${e.title.substring(0,10)}... (${left <= 0 ? 'Готова' : left + 'х'})`;
-        }).join(' | ');
-        
-        btn.innerHTML = `🌍 <span class="expedition-btn-text">Мисии (${window.activeExpeditions.length}/3)</span><br><span class="expedition-btn-status" style="font-size: 10px; color: #00ffcc; font-family: Arial;">${shortStatus}</span>`;
-        btn.style.background = "linear-gradient(135deg, #1f4037, #99f2c8)";
-        btn.style.color = "#fff";
+        btnText.innerHTML = `🧭 МИСИИ (${window.activeExpeditions.length}/3)`;
     } else {
-        btn.innerHTML = `🌍 <span class="expedition-btn-text">Експедиции (0/3)</span>`;
-        btn.style.background = "linear-gradient(135deg, #8a2387, #e94057)";
-        btn.style.color = "white";
+        btnText.innerHTML = `🧭 ЕКСПЕДИЦИИ`;
+    }
+
+    // Управляваме баджа спрямо състоянието на мисиите
+    if (badge) {
+        badge.innerText = availableMissions;
+        badge.style.display = availableMissions === 0 ? 'none' : 'flex';
+
+        // Проверяваме дали някоя от активните мисии вече е завършила и чака награда
+        if (window.activeExpeditions.length > 0) {
+            let isAnyDone = window.activeExpeditions.some(e => e.currentProgress >= e.duration);
+            if (isAnyDone) {
+                badge.innerText = "✓"; // Показваме отметка за завършена мисия
+                badge.style.display = 'flex';
+                badge.style.background = "#4caf50"; // Зелен цвят за успех
+            } else {
+                badge.style.background = "#ff3333"; // Червен цвят, ако просто вървят мисии
+            }
+        } else {
+            badge.style.background = "#ff3333";
+        }
     }
 };
 
