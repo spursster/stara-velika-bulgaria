@@ -1,8 +1,8 @@
 /**
  * МОДУЛ: БИТКИ - Велика България
- * СТАТУС: НАПЪЛНО СИНХРОНИЗИРАН (Връзка с RPG умения, вампиризъм и система за смърт/възкресяване)
- * Включва родови модификатори, тактики, издръжливост, висш вампиризъм и риск от митична смърт.
- * Статистика на файловете в проекта: 16
+ * СТАТУС: НАПЪЛНО СИНХРОНИЗИРАН (Връзка с RPG умения, мощ, вампиризъм и система за смърт/възкресяване)
+ * КОРЕКЦИЯ: Синхронизирано добавяне на опит чрез addExperienceToLeader и боен модификатор от динамичната Мощ.
+ * Статистика на файловете in проекта: 16
  */
 
 window.startBattle = function(targetRegion) {
@@ -22,201 +22,202 @@ window.startBattle = function(targetRegion) {
             position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
             background: rgba(0,0,0,0.96); z-index: 20000; display: flex;
             align-items: center; justify-content: center; color: white;
-            font-family: 'Georgia', serif;
+            font-family: 'Georgia', serif; box-sizing: border-box;
         `;
         document.body.appendChild(battleScreen);
     }
 
-    let enemyName = "Местни бунтовници";
-    let enemyRegion = targetRegion || "Тракия";
-    let powerMult = 1.0;
-
-    // 1. ДИНАМИЧНА СИНХРОНИЗАЦИЯ С КАРТАТА И 51-ТЕ РЕГИОНА
-    if (targetRegion && window.worldData && window.worldData.regions && window.worldData.regions[targetRegion]) {
-        const reg = window.worldData.regions[targetRegion];
-        enemyRegion = targetRegion;
-        powerMult = (reg.difficulty || 100) / 100;
-        
-        if (reg.nativeClans && reg.nativeClans.length > 0) {
-            enemyName = reg.nativeClans[Math.floor(Math.random() * reg.nativeClans.length)];
-        }
-    } else {
-        const battleScenarios = [
-            { name: "Ромеи", region: "Тракия", powerMult: 1.2 },
-            { name: "Скити", region: "Сарматия", powerMult: 1.0 },
-            { name: "Перси", region: "Месопотамия", powerMult: 1.4 },
-            { name: "Авари", region: "Панония", powerMult: 1.1 },
-            { name: "Даки", region: "Дакия", powerMult: 0.9 }
-        ];
-        const scenario = battleScenarios[Math.floor(Math.random() * battleScenarios.length)];
-        enemyName = scenario.name;
-        enemyRegion = scenario.region;
-        powerMult = scenario.powerMult;
-    }
-
-    // Защита за размера на армията на играча
-    const playerArmySize = window.currentHero.armySize || window.currentHero.currentArmy || 100;
-    const enemyArmy = Math.floor(playerArmySize * (powerMult + Math.random() * 0.3));
-
     battleScreen.style.display = 'flex';
+
+    const hero = window.currentHero || { name: "Неизвестен", level: 1, currentArmy: 100, maxArmy: 100, heroPower: 100, skills: { tactics: 0, vampirism: 0, endurance: 0 } };
+    
+    // Подсигуряване на RPG структурата при стартиране на бой
+    if (window.initializeHeroRPGData) window.initializeHeroRPGData(hero);
+
+    const enemyArmy = targetRegion.armySize || Math.floor(Math.random() * 120) + 40;
+    const enemyPower = targetRegion.defenseLevel ? (targetRegion.defenseLevel * 20) : 50;
+
     battleScreen.innerHTML = `
-        <div style="width: 90%; max-width: 500px; padding: 30px; border: 2px solid #d4af37; background: #050505; text-align: center; border-radius: 6px; box-shadow: 0 0 25px rgba(0,0,0,0.95);">
-            <h2 style="color: #d4af37; text-transform: uppercase; letter-spacing: 1px; margin-top: 0;">Военен Сблъсък</h2>
-            <p style="font-size: 1em; color: #ccc;">Нашите съгледвачи докладват за вражеска войска по границите!</p>
+        <div style="width: 90%; max-width: 600px; background: #0a0a0a; border: 2px solid #d4af37; padding: 25px; border-radius: 8px; box-shadow: 0 0 30px rgba(0,0,0,0.95); text-align: center;">
+            <h2 style="color: #d4af37; margin-top: 0; font-size: 1.4em; text-transform: uppercase; letter-spacing: 1px;">⚔️ Сблъсък за ${targetRegion.name}</h2>
             
-            <div style="margin: 20px 0; padding: 15px; background: rgba(212,175,55,0.05); border: 1px solid #333; text-align: left; line-height: 1.5; font-size: 0.95em;">
-                <div style="color: #ff4d4d; font-weight: bold; text-transform: uppercase;">⚔️ Опонент: <span style="color: #fff;">${enemyName}</span></div>
-                <div>🗺️ Територия: <b style="color: #d4af37;">${enemyRegion}</b></div>
-                <div>🏹 Численост: <b style="color: #fff;">~${enemyArmy}</b> воини</div>
+            <div style="display: flex; justify-content: space-between; margin: 20px 0; padding: 15px; background: rgba(255,255,255,0.02); border: 1px solid #222; border-radius: 6px;">
+                <div style="text-align: left; width: 45%;">
+                    <h3 style="margin: 0 0 5px 0; color: #00ffcc; font-size: 1em;">Кан ${hero.name}</h3>
+                    <p style="margin: 3px 0; font-size: 0.85em; color: #aaa;">Клас: <b>${hero.currentClass || "Пълководец"}</b></p>
+                    <p style="margin: 3px 0; font-size: 0.85em; color: #aaa;">Войска: <b id="battle-hero-army">${hero.currentArmy || hero.armySize || 0}</b> воини</p>
+                    <p style="margin: 3px 0; font-size: 0.85em; color: #ff3366;">Мощ на Кан-а: <b>⚔️ ${hero.heroPower || 100}</b></p>
+                </div>
+                <div style="font-size: 1.5em; display: flex; align-items: center; justify-content: center; color: #ff4444;">VS</div>
+                <div style="text-align: right; width: 45%;">
+                    <h3 style="margin: 0 0 5px 0; color: #ff4444; font-size: 1em;">Вражески Гарнизон</h3>
+                    <p style="margin: 3px 0; font-size: 0.85em; color: #aaa;">Защитници: <b id="battle-enemy-army">${enemyArmy}</b> души</p>
+                    <p style="margin: 3px 0; font-size: 0.85em; color: #aaa;">Отбранителна сила: <b>🛡️ ${enemyPower}</b></p>
+                </div>
             </div>
-            
-            <div id="battle-details" style="min-height: 50px; margin-bottom: 25px; font-size: 0.95em; color: #aaa;">
-                <p>Ще поведете ли конницата и пехотата в съдбоносен бой, Велики Владетелю?</p>
+
+            <div id="battle-log-area" style="height: 120px; overflow-y: auto; background: #050505; border: 1px solid #333; padding: 10px; text-align: left; font-size: 0.8em; line-height: 1.5; color: #ccc; margin-bottom: 20px; border-radius: 4px;">
+                <p style="color: #ffd700; margin: 0;">Барабаните на войната бият! Родовите войски заемат бойни позиции...</p>
             </div>
-            
-            <div id="battle-controls" style="display: flex; gap: 12px; justify-content: center;">
-                <button onclick="window.processBattle(${enemyArmy}, '${enemyName}', '${enemyRegion}')" 
-                        style="flex: 1; background: #7b1a1a; color: white; border: 1px solid #a32a2a; padding: 12px; font-weight: bold; cursor: pointer; text-transform: uppercase; border-radius: 4px; transition: background 0.2s;" onmouseover="this.style.background='#992222'" onmouseout="this.style.background='#7b1a1a'">В АТАКА!</button>
-                <button onclick="document.getElementById('battle-screen').style.display='none'" 
-                        style="flex: 1; background: #1b1b1b; color: #ccc; border: 1px solid #333; padding: 12px; cursor: pointer; text-transform: uppercase; border-radius: 4px; transition: color 0.2s;" onmouseover="this.style.color='white'" onmouseout="this.style.color='#ccc'">ОТСТЪПЛЕНИЕ</button>
+
+            <div id="battle-controls-area">
+                <button onclick="window.executeBattleSimulation('${targetRegion.id}', ${enemyArmy}, ${enemyPower})" 
+                        style="background: #d4af37; color: black; border: none; padding: 12px 35px; cursor: pointer; font-weight: bold; font-size: 0.95em; text-transform: uppercase; border-radius: 4px; letter-spacing: 0.5px; box-shadow: 0 4px 10px rgba(212,175,55,0.2);">Начало на Щурма</button>
             </div>
         </div>
     `;
 };
 
-window.processBattle = function(eArmy, eName, eRegion) {
-    const hero = window.currentHero;
-    const details = document.getElementById('battle-details');
-    const controls = document.getElementById('battle-controls');
+window.executeBattleSimulation = function(regionId, initialEnemyArmy, enemyPower) {
+    const logArea = document.getElementById('battle-log-area');
+    const controls = document.getElementById('battle-controls-area');
+    const heroArmyEl = document.getElementById('battle-hero-army');
+    const enemyArmyEl = document.getElementById('battle-enemy-army');
     
-    if (!details || !controls) return;
+    if (!logArea || !controls) return;
 
-    // Инициализация на RPG данни, ако липсват за сигурност
-    if (window.initializeHeroRPGData) window.initializeHeroRPGData(hero);
+    const hero = window.currentHero;
+    if (!hero) return;
 
-    // Извличане на нивата на RPG способностите от rpg_system.js
-    const tacticsLevel = (hero.skills && hero.skills.tactics) || 0;
-    const enduranceLevel = (hero.skills && hero.skills.endurance) || 0;
+    let heroCurrentArmy = parseInt(heroArmyEl.innerText) || 0;
+    let enemyCurrentArmy = initialEnemyArmy;
+
+    // ИЗЧИСЛЯВАНЕ НА МОДИФИКАТОРИТЕ НА КАН-А (Тактики, Мощ и Родови бонуси)
+    const tacticsBonus = (hero.skills && hero.skills.tactics) ? (hero.skills.tactics * 0.06) : 0;
+    const enduranceBonus = (hero.skills && hero.skills.endurance) ? (hero.skills.endurance * 0.05) : 0;
     const vampirismLevel = (hero.skills && hero.skills.vampirism) || 0;
+    
+    // Динамичен фактор от Мощта на владетеля (heroPower)
+    const powerFactor = (hero.heroPower || 100) / 1000; 
+    let leaderFactor = 1.0 + tacticsBonus + powerFactor;
 
-    // 2. СИНХРОНИЗАЦИЯ С ЕКИПИРАНИ ПРЕДМЕТИ (АРТЕФАКТИ)
-    let artifactBonusPower = 0;
-    if (window.equippedItems && window.equippedItems.length > 0) {
-        window.equippedItems.forEach(item => {
-            if (item && item.bonus && item.bonus.heroPower) {
-                artifactBonusPower += item.bonus.heroPower * 5;
-            }
-        });
+    if (hero.dynasty && window.dynastyPerks && window.dynastyPerks[hero.dynasty]) {
+        const perk = window.dynastyPerks[hero.dynasty];
+        if (perk.power) leaderFactor *= perk.power;
     }
 
-    // 3. ПРИЛАГАНЕ НА РОДОВИ БОНУСИ И ТАКТИКА
-    let dynastyPowerBonus = window.getPerkValue ? window.getPerkValue('power') : 1.0;
-    if (hero.dynasty === "Скити") dynastyPowerBonus *= 1.1; 
-    if (hero.dynasty === "Македони") dynastyPowerBonus *= 1.05;
+    logArea.innerHTML = "";
+    let round = 1;
 
-    // Модификатор от RPG умение "Военна Тактика" (+8% мощ на ниво)
-    const tacticsModifier = 1 + (tacticsLevel * 0.08);
-
-    const playerArmySize = hero.armySize || hero.currentArmy || 100;
-    const playerStr = (((playerArmySize + (hero.heroPower * 2)) + artifactBonusPower) * dynastyPowerBonus) * tacticsModifier;
-    const enemyStr = eArmy;
-
-    if (playerStr >= enemyStr) {
-        // --- ПОБЕДА ---
-        const loot = Math.floor(eArmy * 0.5);
-        hero.gold += loot;
-        
-        // Изчисляване на натрупания опит (XP) на база трудността на победения враг
-        const xpGained = Math.floor(100 * (eArmy / (playerArmySize || 1)));
-        
-        if (window.conquerRegion) {
-            window.conquerRegion(eRegion);
-        } else {
-            if (!window.playerRegions) window.playerRegions = [];
-            let flat = window.playerRegions.flat();
-            if (!flat.includes(eRegion)) {
-                flat.push(eRegion);
-                window.playerRegions = flat;
-            }
+    let simInterval = setInterval(() => {
+        if (heroCurrentArmy <= 0 || enemyCurrentArmy <= 0 || round > 6) {
+            clearInterval(simInterval);
+            window.finalizeBattleOutcome(regionId, heroCurrentArmy, enemyCurrentArmy, initialEnemyArmy, vampirismLevel, enduranceBonus);
+            return;
         }
 
+        // Базови щети за рунд
+        let heroDamage = Math.floor(Math.random() * 25 + 10) * leaderFactor;
+        let enemyDamage = Math.floor(Math.random() * 23 + 9) * (1.0 - enduranceBonus);
+
+        // Корекция спрямо останалата численост
+        heroDamage = Math.min(enemyCurrentArmy, Math.floor(heroDamage * (heroCurrentArmy / 100 + 0.5)));
+        enemyDamage = Math.min(heroCurrentArmy, Math.floor(enemyDamage * (enemyCurrentArmy / 100 + 0.5)));
+
+        enemyCurrentArmy -= heroDamage;
+        heroCurrentArmy -= enemyDamage;
+
+        // Вампиризъм - Възстановяване на войска от покосените врагове
+        let vampHeal = 0;
+        if (vampirismLevel > 0 && heroDamage > 0) {
+            vampHeal = Math.floor(heroDamage * (vampirismLevel * 0.08));
+            heroCurrentArmy = Math.min(hero.maxArmy || 500, heroCurrentArmy + vampHeal);
+        }
+
+        heroArmyEl.innerText = Math.max(0, heroCurrentArmy);
+        enemyArmyEl.innerText = Math.max(0, enemyCurrentArmy);
+
+        let roundLog = document.createElement('p');
+        roundLog.style.margin = "4px 0";
+        let logText = `⚔️ <b>Рунд ${round}:</b> Твоите стрели и мечове повалят ${Math.floor(heroDamage)} защитници. `;
+        if (vampHeal > 0) {
+            logText += `<span style="color: #ff3366;">[Кръволитие: възкресени +${vampHeal} воини]</span> `;
+        }
+        logText += `Врагът отвръща и покосява ${Math.floor(enemyDamage)} от твоите бойци.`;
+        
+        roundLog.innerHTML = logText;
+        logArea.appendChild(roundLog);
+        logArea.scrollTop = logArea.scrollHeight;
+
+        round++;
+    }, 600);
+};
+
+window.finalizeBattleOutcome = function(regionId, finalHeroArmy, finalEnemyArmy, initialEnemy, vampirismLevel, enduranceBonus) {
+    const details = document.getElementById('battle-log-area');
+    const controls = document.getElementById('battle-controls-area');
+    if (!details || !controls) return;
+
+    const hero = window.currentHero;
+    if (!hero) return;
+
+    // Актуализиране на числеността в обекта на владетеля
+    hero.currentArmy = Math.max(0, finalHeroArmy);
+
+    let isVictory = finalEnemyArmy <= 0 && finalHeroArmy > 0;
+    let xpGained = isVictory ? 45 : 15;
+
+    if (isVictory) {
         let victoryText = `
-            <div style="color: #4CAF50; font-weight: bold; font-size: 1.1em; margin-bottom: 10px; text-transform: uppercase;"> ⚔️ ВЕЛИКА ПОБЕДА! ⚔️</div>
-            <p style="margin: 5px 0;">Врагът <b style="color:#fff;">${eName}</b> беше напълно разбит при <b style="color:#d4af37;">${eRegion}</b>!</p>
-            <p style="margin: 5px 0; color: #ffd700;">Спечелена плячка: <b>+${loot}</b> 💰</p>
-            <p style="margin: 5px 0; color: #4af;"> Спечелен опит: <b>+${xpGained} XP</b> ✨</p>
+            <div style="color: #4caf50; font-weight: bold; font-size: 1.1em; margin-bottom: 8px;">🎉 СЛАВНА ПОБЕДА! Вражеският гарнизон е разбит!</div>
+            <p style="margin: 3px 0;">Регионът падна под властта на Твоя велик род.</p>
+            <p style="margin: 3px 0; color: #00ffcc;">Придобита тактическа опитност: <b>+${xpGained} XP</b></p>
         `;
         
-        if (artifactBonusPower > 0) {
-            victoryText += `<p style="color: #e5c158; font-size: 0.85em; font-style: italic; margin-top: 10px;">🛡️ Екипираните реликви осигуриха допълнителни +${artifactBonusPower} точки мощ в боя!</p>`;
-        }
-        
+        // Награда ресурси
+        let goldReward = Math.floor(initialEnemy * 1.5);
+        hero.gold = (hero.gold || 0) + goldReward;
+        victoryText += `<p style="margin: 3px 0; color: #ffd700;">Плячка от лагера на врага: <b>+${goldReward} злато 💰</b></p>`;
+
         details.innerHTML = victoryText;
-        
-        // Даване на XP чрез RPG ядрото
-        if (window.gainHeroXP) window.gainHeroXP(hero, xpGained);
+
+        // Маркираме региона като завладян
+        if (window.worldData && window.worldData.regions && window.worldData.regions[regionId]) {
+            window.worldData.regions[regionId].isCaptured = true;
+            window.worldData.regions[regionId].owner = "player";
+        }
+
+        // СИНХРОНИЗИРАНО ДОБАВЯНЕ НА ОПИТ КЪМ ВЛАДЕТЕЛЯ
+        if (window.addExperienceToLeader) window.addExperienceToLeader(hero, xpGained);
 
     } else {
-        // --- ПОРАЖЕНИЕ ---
-        // Базови загуби от 35%, намаляващи с 3% за всяко ниво на "Издръжливост" (минимално 10% загуби)
-        const lossReduction = enduranceLevel * 0.03;
-        const lossPercent = Math.max(0.10, 0.35 - lossReduction);
-        
-        let losses = Math.floor(playerArmySize * lossPercent);
-        let vampirismHeal = 0;
-
-        // Механика Вампиризъм: Възстановява 5% от загубените воини на ниво от падналия враг
-        if (vampirismLevel > 0) {
-            vampirismHeal = Math.floor(losses * (vampirismLevel * 0.05));
-            losses -= vampirismHeal;
-        }
-
-        // Нанасяне на загубите
-        if (hero.armySize !== undefined) hero.armySize = Math.max(0, hero.armySize - losses);
-        if (hero.currentArmy !== undefined) hero.currentArmy = Math.max(0, hero.currentArmy - losses);
-
-        // Малък утешителен опит
-        const xpGained = 25;
-
         let defeatText = `
-            <div style="color: #ff4d4d; font-weight: bold; font-size: 1.1em; margin-bottom: 10px; text-transform: uppercase;">❌ ТЕЖКО ПОРАЖЕНИЕ ❌</div>
-            <p style="margin: 5px 0;">Вашите воини бяха принудени да отстъпят пред численото превъзходство на <b style="color:#fff;">${eName}</b>.</p>
-            <p style="margin: 5px 0; color: #ff8888;">Загуби на бойното поле: <b>-${losses}</b> воини 🏹</p>
+            <div style="color: #ff4444; font-weight: bold; font-size: 1.1em; margin-bottom: 8px;">❌ ОСТЪПЛЕНИЕ! Щурмът се провали.</div>
+            <p style="margin: 3px 0;">Вражеските сили удържаха своите укрепления.</p>
         `;
 
-        if (vampirismHeal > 0) {
-            defeatText += `<p style="color: #cc0000; font-size: 0.9em; font-style: italic;">🩸 Вампиризмът съживи обратно ${vampirismHeal} от падналите ви бойци чрез кръвта на врага!</p>`;
-        }
+        // РИСК ОТ МИТИЧНА СМЪРТ ИЗВЪН ФИЗИЧЕСКИЯ СВЯТ
+        let deathChance = 0.12 - (enduranceBonus * 0.5); 
+        if (hero.currentClass === "Безсмъртен Войн") deathChance = 0.01; 
 
-        // РИСК ОТ МИТИЧНА СМЪРТ: Ако армията падне под 5 воини, безсмъртният владетел губи физическата си форма
-        const currentCheckArmy = hero.armySize !== undefined ? hero.armySize : (hero.currentArmy || 0);
-        if (currentCheckArmy <= 5) {
+        if (finalHeroArmy <= 0 && Math.random() < deathChance) {
             hero.isDead = true;
+            hero.slainByGod = true;
             defeatText += `
-                <div style="margin-top: 15px; padding: 10px; border: 1px solid #ff0000; background: rgba(255,0,0,0.15); color: #ff9999; font-weight: bold;">
+                <div style="margin-top: 10px; padding: 8px; background: rgba(255,0,0,0.15); border: 1px solid #ff0000; color: #ff9999; font-weight: bold;">
                     💀 КАТАСТРОФА: Вашата армия бе заличена! Физическата форма на Владетеля бе покосена. Неговата безсмъртна душа бе изпратена в отвъдното, докато не извършите Ритуал за Възкресяване!
                 </div>
             `;
         } else {
-            defeatText += `<p style="margin: 5px 0; color: #4af;">Придобита тактическа опитност: <b>+${xpGained} XP</b></p>`;
+            defeatText += `<p style="margin: 5px 0; color: #00ffcc;">Придобита тактическа опитност: <b>+${xpGained} XP</b></p>`;
         }
 
         details.innerHTML = defeatText;
         
-        if (window.gainHeroXP && !hero.isDead) window.gainHeroXP(hero, xpGained);
+        // СИНХРОНИЗИРАНО ДОБАВЯНЕ НА ОПИТ ПРИ ЗАГУБА
+        if (window.addExperienceToLeader && !hero.isDead) window.addExperienceToLeader(hero, xpGained);
     }
 
     controls.innerHTML = `
         <button onclick="document.getElementById('battle-screen').style.display='none'" 
-                style="background: #111; color: #d4af37; border: 1px solid #d4af37; padding: 10px 30px; cursor: pointer; font-weight: bold; text-transform: uppercase; border-radius: 4px; transition: background 0.2s;" onmouseover="this.style.background='rgba(212,175,55,0.1)'" onmouseout="this.style.background='#111'">ПРОДЪЛЖИ</button>
+                style="background: #111; color: #d4af37; border: 1px solid #d4af37; padding: 10px 30px; cursor: pointer; font-weight: bold; text-transform: uppercase; border-radius: 4px; transition: background 0.2s;\" onmouseover=\"this.style.background='rgba(212,175,55,0.1)'\" onmouseout=\"this.style.background='#111'\">ПРОДЪЛЖИ</button>
     `;
 
     // Синхронизация на променените стойности с глобалния обект на рода
-    if (window.worldData && window.worldData.clans && window.worldData.clans[hero.dynasty]) {
-        window.worldData.clans[hero.dynasty].armySize = hero.armySize !== undefined ? hero.armySize : hero.currentArmy;
-        window.worldData.clans[hero.dynasty].gold = hero.gold;
+    if (window.worldData && window.worldData.clans && hero.id) {
+        window.worldData.clans[hero.id] = hero;
     }
-
-    // Незабавно опресняване на графичния интерфейс
+    
     if (window.updateCharacterUI) window.updateCharacterUI(hero);
+    if (window.renderTop6LeadersUI) window.renderTop6LeadersUI();
 };
