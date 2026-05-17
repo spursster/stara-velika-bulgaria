@@ -1,6 +1,7 @@
 /**
  * МОДУЛ: КАЗАРМИ (ВОЕНЕН СТАН) - Велика България
  * СТАТУС: НАПЪЛНО СИНХРОНИЗИРАН (Връзка с Top Bar UI и Родови Модификатори)
+ * КОРЕКЦИЯ: Поправен бъг с пропадането на прозореца на мобилни устройства (добавен адаптивен фиксиран изглед и скрол)
  * Статистика на файловете в проекта: 16
  */
 
@@ -18,38 +19,64 @@ window.buyUnits = function() {
     const finalCost = Math.floor(baseCost * costModifier);
     const amount = 100; 
 
+    // Премахваме стария прозорец, ако случайно е останал отворен
+    const oldScreen = document.getElementById('barracks-screen');
+    if (oldScreen) oldScreen.remove();
+
+    // Създаваме новия прозорец и го закачаме директно към body за максимална стабилност над всичко
+    const barracksScreen = document.createElement('div');
+    barracksScreen.id = 'barracks-screen';
+    
+    // Адаптивни стилове за компютър и телефон: фиксиран по средата, висок z-index и вътрешен скрол
+    barracksScreen.style.cssText = `
+        position: fixed; 
+        top: 50%; 
+        left: 50%; 
+        transform: translate(-50%, -50%);
+        width: 95%; 
+        max-width: 460px; 
+        max-height: 85vh; 
+        overflow-y: auto; 
+        padding: 25px; 
+        background: rgba(10, 10, 10, 0.98); 
+        border: 2px solid #d4af37; 
+        color: white; 
+        z-index: 30000; 
+        font-family: 'Georgia', serif; 
+        box-sizing: border-box;
+        border-radius: 8px;
+        box-shadow: 0 0 30px rgba(0,0,0,0.95);
+    `;
+
     // Визуализация на екрана на казармата със стилистика Georgia
-    mainArea.innerHTML = `
-        <div id="barracks-screen" style="padding:25px; background: rgba(5,5,5,0.98); border: 2px solid #d4af37; color: white; position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 100; font-family: 'Georgia', serif; box-sizing: border-box;">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 1px solid #444; padding-bottom: 10px;">
-                <h2 style="color: #d4af37; margin: 0; text-transform: uppercase; letter-spacing: 1px; font-size: 1.3em;">Военен Стан (Казарми)</h2>
-                <button onclick="document.getElementById('barracks-screen').remove()" style="background:none; border:none; color:#ff4d4d; cursor:pointer; font-size:24px; font-weight:bold;">✕</button>
-            </div>
+    barracksScreen.innerHTML = `
+        <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #d4af37; padding-bottom: 10px; margin-bottom: 20px;">
+            <h2 style="margin: 0; color: #d4af37; font-family: 'Cinzel', serif; font-size: 1.3em; letter-spacing: 1px;">⚔️ ВОЕНЕН СТАН</h2>
+            <button onclick="document.getElementById('barracks-screen').remove()" style="background: none; border: 1px solid #d4af37; color: #d4af37; font-size: 14px; cursor: pointer; padding: 2px 8px; border-radius: 4px; font-weight: bold;">X</button>
+        </div>
 
-            <p style="font-size: 0.95em; color: #ccc; line-height: 1.6; margin-bottom: 25px;">
-                Съберете елитни конници и стрелци под знамената на род <b style="color: #d4af37;">${hero.dynasty}</b>. 
-                Всяка войска увеличава общата Ви мощ по време на битки за нови региони.
-            </p>
+        <p style="font-size: 14px; line-height: 1.6; color: #ccc; margin-bottom: 20px; text-align: center;">
+            Тук събирате своите верни дружини. Наемането на воини увеличава числеността на армията Ви, гарантирайки защитата и величието на Вашите земи.
+        </p>
 
-            <div style="background: #0d0d0d; border: 1px solid #222; padding: 20px; border-radius: 4px; display: flex; align-items: center; justify-content: space-between; max-width: 500px;">
-                <div>
-                    <h4 style="margin: 0 0 5px 0; color: #fff; text-transform: uppercase; font-size: 0.95em; letter-spacing: 0.5px;">Стихове от Опълчение</h4>
-                    <span style="font-size: 0.8em; color: #888;">Пакет от +${amount} воини</span>
-                </div>
-                <div style="text-align: right;">
-                    <div style="font-size: 1.1em; color: #ffd700; font-weight: bold; margin-bottom: 8px;">${finalCost} 💰</div>
-                    <button onclick="window.processRecruitment(${finalCost}, ${amount})" style="background: #7b1a1a; color: white; border: 1px solid #a32a2a; padding: 8px 16px; cursor: pointer; font-weight: bold; font-size: 0.85em; text-transform: uppercase; border-radius: 4px; transition: background 0.2s;" onmouseover="this.style.background='#992222'" onmouseout="this.style.background='#7b1a1a'">
-                        Наеми Войска
-                    </button>
-                </div>
-            </div>
+        <div style="background: rgba(212, 175, 55, 0.05); border: 1px solid rgba(212, 175, 55, 0.2); padding: 15px; border-radius: 6px; margin-bottom: 20px; text-align: center;">
+            <div style="font-size: 16px; font-weight: bold; color: #fff; margin-bottom: 10px;">ДРУЖИНА ОТ НОВИ ВОИНИ</div>
+            <div style="font-size: 13px; color: #aaa; margin-bottom: 15px;">Брой воини: <span style="color: #00ffcc; font-weight: bold;">+${amount}</span></div>
+            
+            <button onclick="window.processRecruitment(${finalCost}, ${amount})" style="width: 100%; padding: 12px; background: #111; color: #d4af37; border: 1px solid #d4af37; font-weight: bold; text-transform: uppercase; cursor: pointer; border-radius: 4px; font-size: 12px; transition: background 0.2s;" onmouseover="this.style.background='#222'" onmouseout="this.style.background='#111'">
+                Наеми за ${finalCost} 💰
+            </button>
+        </div>
 
-            <div style="margin-top: 30px; display: flex; justify-content: space-between; padding: 12px; background: #111; border: 1px solid #333; border-radius: 4px; max-width: 500px;">
-                <span style="font-size: 12px; color: #aaa;">ВАШАТА ХАЗНА: <b style="color: #ffd700;">${Math.floor(hero.gold)} 💰</b></span>
-                <span style="font-size: 12px; color: #aaa;">ТЕКУЩА АРМИЯ: <b style="color: #d4af37;">${hero.armySize} 🏹</b></span>
+        <div style="border-top: 1px solid #333; padding-top: 15px; margin-top: 15px;">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <span style="font-size: 12px; color: #aaa;">ВАШАТА ХАЗНА: <b style="color: #ffd700;\">${Math.floor(hero.gold)} 💰</b></span>
+                <span style="font-size: 12px; color: #aaa;">ТЕКУЩА АРМИЯ: <b style="color: #d4af37;\">${hero.armySize} 🏹</b></span>
             </div>
         </div>
     `;
+    
+    document.body.appendChild(barracksScreen);
 };
 
 /**
@@ -74,15 +101,15 @@ window.processRecruitment = function(cost, amount) {
         }
 
         // 🎯 СИНХРОНИЗАЦИОНЕН МОСТ: Моментално преначертаване на Top Bar и екрана
-        if (window.updateCharacterUI) {
-            window.updateCharacterUI(hero);
+        if (window.updateCharacterUI) window.updateCharacterUI(hero);
+
+        // Обновяваме текста на хазната и армията директно в отворения Военен Стан, за да се види веднага промяната
+        const barracksScreen = document.getElementById('barracks-screen');
+        if (barracksScreen) {
+            // Преначертаваме прозореца, за да се актуализират цифрите за злато в реално време
+            window.buyUnits();
         }
-        
-        // Презареждаме вътрешния изглед на казармата, за да се отразят новите стойности в долната лента
-        window.buyUnits();
     } else {
-        if (window.showAdvisorMsg) {
-            window.showAdvisorMsg(`❌ ГРЕШКА: Нямате достатъчно злато в хазната за това наемане!`);
-        }
+        alert("Нямате достатъчно злато в съкровищницата!");
     }
 };
