@@ -161,32 +161,28 @@ window.renderTop6LeadersUI = function() {
         });
     }
     
-// ЗАМЕНИ ГО С ТОЗИ ПРЕЦИЗЕН И ЗАЩИТЕН ВАРИАНТ:
-if (window.worldData && window.worldData.clans) {
-    Object.values(window.worldData.clans).forEach(ml => {
-        if (window.currentHero && ml.name === window.currentHero.name) return;
-        
-        if (ml.purchased || ml.isUnlocked || ml.owned || (ml.level && ml.level > 0)) {
-            // Подсигуряваме безопасно извикване на статистиките
-            let rpgStats = (typeof getCalculatedLeaderStats === "function") ? getCalculatedLeaderStats(ml) : null;
+    if (window.worldData && window.worldData.clans) {
+        Object.values(window.worldData.clans).forEach(ml => {
+            if (window.currentHero && ml.name === window.currentHero.name) return;
             
-            allLeaders.push({ 
-                name: ml.name,
-                dynasty: ml.dynasty,
-                heroPower: ml.heroPower || 100,
-                gold: ml.gold || 0,
-                armySize: ml.armySize || 0,
-                age: ml.age || 30,
-                isMain: false, 
-                // Ако rpgStats липсва или няма ниво, четем директно от обекта ml, иначе даваме по подразбиране 1
-                level: rpgStats && rpgStats.level ? rpgStats.level : (ml.level || 1), 
-                // Ако няма изчислен процент опит, четем ml.xpPercent, ml.xp или даваме 0% за празна лента
-                xpPercent: rpgStats && rpgStats.xpPercent !== undefined ? rpgStats.xpPercent : (ml.xpPercent || (ml.xp ? (ml.xp / 1.5) : 0)), 
-                currentClass: ml.currentClass || "Пълководец" 
-            });
-        }
-    });
-}
+            if (ml.purchased || ml.isUnlocked || ml.owned || (ml.level && ml.level > 0)) {
+                let rpgStats = (typeof getCalculatedLeaderStats === "function") ? getCalculatedLeaderStats(ml) : null;
+                
+                allLeaders.push({ 
+                    name: ml.name,
+                    dynasty: ml.dynasty,
+                    heroPower: ml.heroPower || 100,
+                    gold: ml.gold || 0,
+                    armySize: ml.armySize || 0,
+                    age: ml.age || 30,
+                    isMain: false, 
+                    level: rpgStats && rpgStats.level ? rpgStats.level : (ml.level || 1), 
+                    xpPercent: rpgStats && rpgStats.xpPercent !== undefined ? rpgStats.xpPercent : (ml.xpPercent || (ml.xp ? (ml.xp / 1.5) : 0)), 
+                    currentClass: ml.currentClass || "Пълководец" 
+                });
+            }
+        });
+    }
 
     if (allLeaders.length === 0) {
         leadersBar.style.display = 'none';
@@ -199,7 +195,8 @@ if (window.worldData && window.worldData.clans) {
 
     leadersBar.innerHTML = top6.map((leader) => {
         let icon = leader.isMain ? "🛡️" : "⚔️";
-       let originalLeaderObj = leader.isMain ? window.currentHero : (window.worldData && window.worldData.clans ? Object.values(window.worldData.clans).find(l => l.name === leader.name) : null);
+        let originalLeaderObj = leader.isMain ? window.currentHero : (window.worldData && window.worldData.clans ? Object.values(window.worldData.clans).find(l => l.name === leader.name) : null);
+        
         if (originalLeaderObj) {
             checkAndExecuteAutoLevel(originalLeaderObj, leader.level);
         }
@@ -209,8 +206,11 @@ if (window.worldData && window.worldData.clans) {
         let autoBtnColor = isAutoOn ? "#000" : "#ffd700";
         let autoBtnBorder = isAutoOn ? "1px solid #00ffcc" : "1px solid rgba(212,175,55,0.4)";
 
+        // Екраниране срещу грешки при интервали в имената (например "Иван Асен I")
+        let safeName = encodeURIComponent(leader.name);
+
         return `
-            <div class="leader-rpg-card" onclick="window.selectAndOpenLeaderInventory('${leader.name}')" style="text-align: center; display: flex; flex-direction: column; align-items: center; cursor: pointer; transition: transform 0.2s; scroll-snap-align: start;" onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">
+            <div class="leader-rpg-card" onclick="window.selectAndOpenLeaderInventory(decodeURIComponent('${safeName}'))" style="text-align: center; display: flex; flex-direction: column; align-items: center; cursor: pointer; transition: transform 0.2s; scroll-snap-align: start;" onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">
                 <div class="leader-name-text" style="font-size: 0.72em; font-weight: bold; color: #ffd700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 92px; line-height: 1.2;">${leader.name}</div>
                 <div class="leader-class-text" style="font-size: 0.58em; color: #aaa; margin-bottom: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 92px;">${leader.currentClass}</div>
                 
@@ -221,7 +221,7 @@ if (window.worldData && window.worldData.clans) {
 
                 <div style="font-size: 0.68em; font-weight: bold; color: #00ffcc; line-height: 1.1; margin-bottom: 3px;">Н. ${leader.level}</div>
                 
-                <button onclick="event.stopPropagation(); window.toggleAutoLevel('${leader.name}')" style="font-size: 8px; font-weight: bold; padding: 1px 5px; background: ${autoBtnBg}; color: ${autoBtnColor}; border: ${autoBtnBorder}; border-radius: 3px; cursor: pointer; margin-bottom: 5px; transition: all 0.15s;">
+                <button onclick="event.stopPropagation(); if(window.toggleAutoLevel){ window.toggleAutoLevel(decodeURIComponent('${safeName}')); window.renderTop6LeadersUI(); }" style="font-size: 8px; font-weight: bold; padding: 1px 5px; background: ${autoBtnBg}; color: ${autoBtnColor}; border: ${autoBtnBorder}; border-radius: 3px; cursor: pointer; margin-bottom: 5px; transition: all 0.15s;">
                     AUTO
                 </button>
 
@@ -259,6 +259,7 @@ window.selectAndOpenLeaderInventory = function(leaderName) {
         }
     }
 };
+
 /**
  * ИНСПЕКТИРАНЕ НА ИНВЕНТАР / ПРОФИЛ ПО ИМЕ (СВЪРЗАНО КЪМ УНИВЕРСАЛНИЯ ПРОФИЛ)
  */
@@ -303,10 +304,9 @@ window.updateCharacterUI = function(hero) {
                 </h4>
                 <div style="font-size: 0.85em; max-height: 130px; overflow-y: auto; background: rgba(0,0,0,0.25); padding: 6px; border-radius: 4px;">
                     ${Object.keys(window.activeDynasties || {}).map(clanName => {
-                        const clan = window.activeDynadties ? window.activeDynasties[clanName] : null;
+                        const clan = window.activeDynasties ? window.activeDynasties[clanName] : null;
                         const isPlayer = clanName === hero.dynasty;
                         
-                        // Търсим лидера на съответния род в mightyLeaders, за да го предадем при клик
                         let clanLeaderObj = null;
                         if (isPlayer) {
                             clanLeaderObj = window.currentHero;
@@ -314,7 +314,6 @@ window.updateCharacterUI = function(hero) {
                             clanLeaderObj = window.mightyLeaders.find(l => l.dynasty === clanName);
                         }
                         
-                        // Ако няма намерен в могъщите лидери, създаваме временен обект за визуализация на профила
                         if (!clanLeaderObj) {
                             clanLeaderObj = { name: "Водач", dynasty: clanName, level: 1, heroPower: 100, skills: {} };
                         }
@@ -330,7 +329,7 @@ window.updateCharacterUI = function(hero) {
             </div>
 
             <div style="margin-bottom: 15px;">
-                <button id="btn-expeditions" onclick="window.openExpeditionsMenu()" style="width: 100%; padding: 8px; background: rgba(212, 175, 55, 0.15); border: 1px solid #d4af37; border-radius: 6px; color: #fff; font-family: 'Cinzel', serif; font-size: 11px; cursor: pointer; display: flex; justify-content: center; align-items: center; gap: 8px; position: relative; transition: background 0.2s;" onmouseover="this.style.background='rgba(212,175,55,0.3)'" onmouseout="this.style.background='rgba(212,175,55,0.15)'">
+                <button id="btn-expeditions" onclick="window.openExpeditionsMenu()" style="width: 100%; padding: 8px; background: rgba(212, 175, 55, 0.15); border: 1px solid #d4af37; border-radius: 6px; color: #fff; font-family: 'Cinzel', serif; font-size: 11px; cursor: pointer; display: flex; justify-content: center; align-items: center; gap: 8px; position: relative; transition: background 0.2s;" onmouseover="this.style.background='rgba(212,175,55,0.3)'" onmouseout="this.style.background='rgba(212, 175, 55, 0.15)'">
                     <span>🧭 ЕКСПЕДИЦИИ</span>
                     <div id="expedition-badge" class="mission-badge" style="position: absolute; right: 10px; background: #ff3333; color: white; border-radius: 50%; width: 16px; height: 16px; font-size: 10px; display: flex; justify-content: center; align-items: center; font-weight: bold;">0</div>
                 </button>
