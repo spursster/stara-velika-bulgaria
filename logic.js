@@ -64,8 +64,9 @@ window.initNewGame = function() {
 };
 
 /**
+/* ==========================================================================
  * ПРЕХВЪРЛЯНЕ НА ХОД (Клик на бутона "Следващ ход")
- */
+ * ========================================================================== */
 window.nextTurn = function() {
     // 1. НАПРЕДЪК НА ВРЕМЕТО
     window.gameTime.turn += 1;
@@ -116,9 +117,32 @@ window.nextTurn = function() {
     }
 
     // ДОБАВИ ТОВА ТУК: Опресняване на графичния бадж на бутона
-if (window.updateExpeditionBadge) {
-    window.updateExpeditionBadge();
-}
+    if (window.updateExpeditionBadge) {
+        window.updateExpeditionBadge();
+    }
+
+    // ==========================================================================
+    // НАДГРАЖДАНЕ: ТЕРИТОРИАЛЕН ОПИТ НА ХОД (Автоматична RPG система)
+    // ==========================================================================
+    if (window.playerRegions && window.gainHeroXP) {
+        const flatRegions = window.playerRegions.flat();
+        const totalTerritoryXP = flatRegions.length * 10;
+
+        if (totalTerritoryXP > 0) {
+            // 1. Опит за главния Върховен владетел
+            window.gainHeroXP(window.currentHero, totalTerritoryXP);
+            
+            // 2. Опит за активните водачи, изпратени на експедиция по света
+            if (window.activeExpeditions && window.activeExpeditions.length > 0) {
+                window.activeExpeditions.forEach(exp => {
+                    if (exp.leaderData) {
+                        window.gainHeroXP(exp.leaderData, totalTerritoryXP);
+                    }
+                });
+            }
+            console.log(`🦅 Спечелен териториален опит от ${flatRegions.length} региона: +${totalTerritoryXP} XP.`);
+        }
+    }
 
     // 6. ОПРЕСНЯВАНЕ НА ИНТЕРФЕЙСА (Задължително опресняване на героя и времето)
     if (window.updateCharacterUI) window.updateCharacterUI(window.currentHero);
