@@ -208,7 +208,7 @@ if (window.worldData && window.worldData.clans) {
         let autoBtnBorder = isAutoOn ? "1px solid #00ffcc" : "1px solid rgba(212,175,55,0.4)";
 
         return `
-            <div class="leader-rpg-card" onclick="window.inspectSpecificRulerByName('${leader.name}')" style="text-align: center; display: flex; flex-direction: column; align-items: center; cursor: pointer; transition: transform 0.2s; scroll-snap-align: start;" onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">
+            <div class="leader-rpg-card" onclick="window.selectAndOpenLeaderInventory('${leader.name}')" style="text-align: center; display: flex; flex-direction: column; align-items: center; cursor: pointer; transition: transform 0.2s; scroll-snap-align: start;" onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">
                 <div class="leader-name-text" style="font-size: 0.72em; font-weight: bold; color: #ffd700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 92px; line-height: 1.2;">${leader.name}</div>
                 <div class="leader-class-text" style="font-size: 0.58em; color: #aaa; margin-bottom: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 92px;">${leader.currentClass}</div>
                 
@@ -231,6 +231,25 @@ if (window.worldData && window.worldData.clans) {
     }).join('');
 };
 
+window.selectAndOpenLeaderInventory = function(leaderName) {
+    if (window.worldData && window.worldData.clans) {
+        let targetLeader = Object.values(window.worldData.clans).find(l => l.name === leaderName);
+        if (targetLeader) {
+            // Сменяме фокуса на играта към този владетел
+            window.currentHero = targetLeader;
+            // Обновяваме UI интерфейса на героя
+            if (window.updateCharacterUI) window.updateCharacterUI(targetLeader);
+            
+            // Ако имаш специфична функция за личен инвентар, я викаме тук:
+            if (typeof window.openSpecificLeaderInventory === "function") {
+                window.openSpecificLeaderInventory(targetLeader);
+            } else if (window.openInventory) {
+                // Алтернативен вариант: отваря инвентара, който вече ще чете данните на новия текущ герой
+                window.openInventory();
+            }
+        }
+    }
+};
 /**
  * ИНСПЕКТИРАНЕ НА ИНВЕНТАР / ПРОФИЛ ПО ИМЕ (СВЪРЗАНО КЪМ УНИВЕРСАЛНИЯ ПРОФИЛ)
  */
