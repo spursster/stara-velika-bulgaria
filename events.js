@@ -1,14 +1,14 @@
 /**
  * МОДУЛ: СЪБИТИЯ - Велика България
  * СТАТУС: ГЕНЕРАТОР НА СЪБИТИЯ - ОПТИМИЗИРАН ЗА РЪЧНО И АВТОМАТИЧНО СТАРТИРАНЕ
- * КОРЕКЦИЯ: Пълна синхронизация с процеса на времето в time.js
+ * КОРЕКЦИЯ БЪГ: Времето и експедициите вече ВИНАГИ напредват при натискане, независимо от шанса за събитие!
  * Статистика на файловете в проекта: 16
  */
 
 // База от данни за динамично сглобяване
 window.eventTemplates = {
     positive: [
-        { t: "Благоденствие в {region}", desc: "Местните родове in {region} откриха нови пасища. Хазната расте.", effect: { gold: 150, power: 5 } },
+        { t: "Благоденствие в {region}", desc: "Местните родове в {region} откриха нови пасища. Хазната расте.", effect: { gold: 150, power: 5 } },
         { t: "Мъдростта на Кан {hero}", desc: "Вашето решение по съдебен спор между два рода увеличи влиянието Ви.", effect: { power: 25, gold: 0 } },
         { t: "Елитна гвардия", desc: "Група млади воини от род {dynasty} се заклеха във вярност до смърт.", effect: { army: 120, power: 10 } },
         { t: "Търговски керван", desc: "Пътници от далечни земи пристигнаха, носейки дарове и злато.", effect: { gold: 300, power: 0 } }
@@ -25,35 +25,46 @@ window.eventTemplates = {
 };
 
 /**
- * ФУНКЦИЯ ЗА ТЕСТОВ БУТОН: Гарантирано пускане със 100% шанс
+ * ФУНКЦИЯ ЗА ТЕСТОВ БУТОН: Гарантирано пускане със 100% шанс (Времето също напредва!)
  */
 window.forceTriggerRandomEvent = function() {
     window.executeEventLogic(true);
 };
 
 /**
- * СТАНДАРТНО АВТОМАТИЧНО ПУСКАНЕ (При нов ход - с 40% шанс)
+ * СТАНДАРТНО АВТОМАТИЧНО ПУСКАНЕ (Задейства се при натискане на основния бутон за нов ход)
  */
 window.triggerRandomEvent = function() {
     window.executeEventLogic(false);
 };
 
 /**
- * ОСНОВНО ЯДРО НА СЪБИТИЯТА
+ * ОСНОВНО ЯДРО НА ХОДА И СЪБИТИЯТА
  */
 window.executeEventLogic = function(isForced) {
+    // 1. ВРЕМЕТО ВИНАГИ НАПРЕДВА ПРИ НАТИСКАНЕ (Превъртане на сезон/година в time.js)
+    if (typeof window.processTime === 'function') {
+        window.processTime();
+    }
+
+    // 2. ЕКСПЕДИЦИИТЕ ВИНАГИ СЕ ОБНОВЯВАТ (Намаляват оставащите си ходове с 1)
+    if (typeof window.updateExpeditionSystem === 'function') {
+        window.updateExpeditionSystem();
+    }
+
     const hero = window.currentHero;
     if (!hero) return;
 
-    // Ако събитието се вика автоматично на нов ход и шансът от 40% не е генериран - спираме.
-    if (!isForced && Math.random() > 0.4) return;
+    // 3. ПРОВЕРКА ЗА ШАНС (Ако е автоматично и 40% шанс НЕ се падне, спираме ДОТУК - ходът вече е превъртян успешно!)
+    if (!isForced && Math.random() > 0.4) {
+        return; 
+    }
 
-    // Избор на тип събитие
+    // 4. ГЕНЕРИРАНЕ НА ТЕКСТОВОТО СЪБИТИЕ (При успех или принудителен тест)
     const types = ['positive', 'negative', 'mystic'];
     const selectedType = types[Math.floor(Math.random() * types.length)];
     const template = window.eventTemplates[selectedType][Math.floor(Math.random() * window.eventTemplates[selectedType].length)];
 
-    // Динамично заместване на наименованията
     const regions = ["Тракия", "Мизия", "Понт", "Крим", "Кавказ", "Панония"];
     const randomRegion = regions[Math.floor(Math.random() * regions.length)];
     
@@ -83,11 +94,11 @@ window.executeEventLogic = function(isForced) {
 
 window.showEventModal = function(title, text, options) {
     let modal = document.getElementById('event-modal');
-    if (!modal) {
-        modal = document.createElement('div');
-        modal.id = 'event-modal';
-        document.body.appendChild(modal);
-    }
+    if (modal) modal.remove();
+
+    modal = document.createElement('div');
+    modal.id = 'event-modal';
+    document.body.appendChild(modal);
 
     modal.style.cssText = `
         position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
@@ -119,19 +130,9 @@ window.handleEventChoice = function(index) {
     const result = choice.action(window.currentHero);
     
     const modal = document.getElementById('event-modal');
-    if (modal) modal.style.display = 'none';
+    if (modal) modal.remove();
     
-    // НАПРЕДВАНЕ НА ВРЕМЕТО (Официалната логика от time.js)
-    if (typeof window.processTime === 'function') {
-        window.processTime(); // Превърта сезон индекса, проверява годината и пренаписва UI лентата
-    }
-    
-    // НАПРЕДВАНЕ НА ЕКСПЕДИЦИИТЕ (Намалява оставащите им ходове с 1 ход / 3 месеца)
-    if (typeof window.updateExpeditionSystem === 'function') {
-        window.updateExpeditionSystem();
-    }
-    
-    // ОБНОВЯВАНЕ НА СТАТИСТИКИТЕ НА ВЛАДЕТЕЛЯ (Злато, Войска, Сила)
+    // Само обновяваме интерфейса с новите награди/наказания от събитието (времето вече е превъртяно в началото)
     if (window.showAdvisorMsg) window.showAdvisorMsg(result);
     if (window.updateCharacterUI) window.updateCharacterUI(window.currentHero);
 };
