@@ -161,11 +161,12 @@ window.renderTop6LeadersUI = function() {
         });
     }
     
-    if (window.worldData && window.worldData.clans) {
+   if (window.worldData && window.worldData.clans) {
         Object.values(window.worldData.clans).forEach(ml => {
             if (window.currentHero && ml.name === window.currentHero.name) return;
             
-            if (ml.purchased || ml.isUnlocked || ml.owned || (ml.level && ml.level > 0)) {
+            // НОВИЯТ СИГУРЕН ФИЛТЪР: Щом владетелят има ниво, опит или инвентар, значи Е купен/активен в кампанията!
+            if (ml.purchased || ml.owned || ml.isUnlocked || (ml.level !== undefined) || (ml.xp !== undefined) || ml.inventory) {
                 let rpgStats = (typeof getCalculatedLeaderStats === "function") ? getCalculatedLeaderStats(ml) : null;
                 
                 allLeaders.push({ 
