@@ -271,7 +271,7 @@ window.executeBattleSimulation = function(regionName, enemyArmy, defenseLvl) {
     if (pArmyText) pArmyText.innerText = playerArmy;
     if (eArmyText) eArmyText.innerText = enemyArmy;
 
-    // Раздаване на опит за текущия активен лидер (с пълна родова защита)
+    // Раздаване на опит за текущия активен лидер (вика функцията от rpg_system.js с пълна родова защита)
     if (window.gainHeroXP && !hero.isDead) {
         window.gainHeroXP(hero, xpGained);
     }
@@ -297,12 +297,12 @@ window.executeBattleSimulation = function(regionName, enemyArmy, defenseLvl) {
                 clan.skills = JSON.parse(JSON.stringify(hero.skills || {}));
             }
             
-            // 2. ПАСИВЕН ОПИТ ЗА ОСТАНАЛИТЕ ЗАКУПЕНИ/ОТКЛЮЧЕНИ ГЕРОИ (Директно изчисляване за стабилност)
-            if ((clan.isUnlocked || clan.purchased) && clan.name !== hero.name) {
-                let passiveXP = Math.floor((xpGained || 0) * 0.5); // 50% от опита за останалите отключени лидери
+            // 2. ПАСИВЕН ОПИТ ЗА ОСТАНАЛИТЕ ЗАКУПЕНИ/ОТКЛЮЧЕНИ ГЕРОИ (Изчислява се директно тук за абсолютна стабилност)
+            if ((clan.isUnlocked || clan.purchased || clan.unlocked) && clan.name !== hero.name) {
+                let passiveXP = Math.floor((xpGained || 0) * 0.5); // 50% пасивен опит
                 clan.xp = (clan.xp || 0) + passiveXP;
                 
-                // Автоматично вдигане на ниво в базата данни
+                // Автоматично и сигурно вдигане на нива в базата данни
                 let nextLevelXP = (clan.level || 1) * 100;
                 while (clan.xp >= nextLevelXP) {
                     clan.xp -= nextLevelXP;
@@ -313,18 +313,28 @@ window.executeBattleSimulation = function(regionName, enemyArmy, defenseLvl) {
         }
     }
 
-    // Синхронизация с паралелната структура window.unlockedLeaders за абсолютно всички отключени лидери
-    if (window.unlockedLeaders && window.worldData && window.worldData.clans) {
+    // КОРЕКЦИЯ: Пълна синхронизация и с масива window.unlockedLeaders, тъй като Топ 6 UI картите четат от него!
+    if (window.unlockedLeaders) {
         let ulArray = Array.isArray(window.unlockedLeaders) ? window.unlockedLeaders : Object.values(window.unlockedLeaders);
         ulArray.forEach(l => {
-            for (let key in window.worldData.clans) {
-                let clan = window.worldData.clans[key];
-                if (clan.name === l.name) {
-                    l.level = clan.level;
-                    l.xp = clan.xp;
-                    l.skills = JSON.parse(JSON.stringify(clan.skills || {}));
-                    l.armySize = clan.armySize;
-                    l.isDead = clan.isDead;
+            if (window.worldData && window.worldData.clans) {
+                for (let key in window.worldData.clans) {
+                    let clan = window.worldData.clans[key];
+                    if (clan.name === l.name) {
+                        l.level = clan.level;
+                        l.xp = clan.xp;
+                        if (clan.skills) {
+                            l.skills = JSON.parse(JSON.stringify(clan.skills));
+                        }
+                        // Прехвърляне на бойния статус
+                        if (l.name === hero.name) {
+                            l.armySize = hero.armySize;
+                            l.isDead = hero.isDead;
+                        } else {
+                            l.armySize = clan.armySize;
+                            l.isDead = clan.isDead;
+                        }
+                    }
                 }
             }
         });
