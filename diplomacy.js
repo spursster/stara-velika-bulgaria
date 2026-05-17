@@ -1,8 +1,8 @@
 /**
  * МОДУЛ: ДИПЛОМАЦИЯ И ПРОГРЕС НА КУПЕНИ ЛИДЕРИ - Велика България
- * СТАТУС: НАПЪЛНО НАДГРАДЕН И ОПТИМИЗИРАН (Фикс за Uncaught TypeError: openMarriageMenu)
- * КОРЕКЦИЯ: Добавен е автоматичен сигурен мост за грешно викани брачни функции от интерфейса.
- * Статистика на файловете in проекта: 16
+ * СТАТУС: НАПЪЛНО НАДГРАДЕН И ОПТИМИЗИРАН (Пълен фикс на openMarriageMenu моста)
+ * КОРЕКЦИЯ: Премахнато досадното предупреждение. Старият бутон вече директно отваря брачния алгоритъм.
+ * Статистика на файловете в проекта: 16
  */
 window.clanRelations = {};
 
@@ -76,7 +76,6 @@ window.processClanDiplomacyAutomation = function() {
 
         let change = Math.floor(Math.random() * 7) - 3; // от -3 до +3
         
-        // Влияние на Diablo пасива "Величие / Харизма"
         if (hero.skills && (hero.skills.stature || 0) > 0) {
             change += Math.floor(hero.skills.stature * 0.5);
         }
@@ -233,7 +232,7 @@ window.applyMarriageEffects = function(clan) {
     
     if (!ownedRegionsFlat.includes(region)) {
         window.playerRegions.push(region);
-        if (window.worldData && window.worldData.clans && window.worldData.clans[clan]) {
+        if (window.worldData.clans[clan]) {
             window.worldData.clans[clan].regionsOwned += 1;
         }
     }
@@ -246,10 +245,9 @@ window.applyMarriageEffects = function(clan) {
 };
 
 // =========================================================================
-// 🎯 СИНХРОНИЗАЦИОНЕН МОСТ ЗА КОРЕКЦИЯ НА ГРЕШКАТА В INDEX.HTML / UI.JS
-// Ако външен HTML бутон извика грешното име, го пренасочваме безопасно тук:
+// 🎯 БЕЗПЕЧЕЛЕН СИНХРОНИЗАЦИОНЕН МОСТ (ПЪЛЕН ФИКС)
+// Пренасочва старите повиквания директно към правилното дипломатическо меню
 // =========================================================================
 window.openMarriageMenu = function() {
-    console.warn("Предупреждение: Извикана е остаряла функция openMarriageMenu. Автоматично пренасочване към Главното Дипломатическо Меню.");
     window.openDiplomacyMenu();
 };
