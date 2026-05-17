@@ -1,7 +1,7 @@
 /**
  * МОДУЛ: КАЗАРМИ (ВОЕНЕН СТАН И КОСМИЧЕСКИ ДОК) - Велика България
- * СТАТУС: НАПЪЛНО СИНХРОНИЗИРАН (Връзка с Епохите, Top Bar UI, Родови Модификатори и Космическо бъдеще)
- * КОРЕКЦИЯ: Поправен синхронизационен бъг между hero.armySize и hero.currentArmy. Добавена еволюция на единиците.
+ * СТАТУС: НАПЪЛНО НАДГРАДЕН (Интеграция на 100+ Diablo Способности & ArcheAge Класове)
+ * КОРЕКЦИЯ: Цената за наемане, ветеранските бонуси и подкупите вече четат точките от rpg_system.js.
  * Статистика на файловете в проекта: 16
  */
 
@@ -15,73 +15,115 @@ window.buyUnits = function() {
     // Инициализиране на RPG структурата, ако липсва
     if (window.initializeHeroRPGData) window.initializeHeroRPGData(hero);
 
-    // Изчисляване на ценовия модификатор от 13-те династии в mechanics.js (напр. Даки)
+    let skills = hero.skills || {};
+
+    // 1. ИЗЧИСЛЯВАНЕ НА ЦЕНОВИЯ МОДИФИКАТОР (Родови бонуси + Diablo пасиви)
     let costModifier = 1.0;
     if (hero.dynasty && window.dynastyPerks && window.dynastyPerks[hero.dynasty]) {
         const perk = window.dynastyPerks[hero.dynasty];
         if (perk.armyCost) costModifier = perk.armyCost;
     }
 
+    // Diablo пасив: Величие/Харизма (stature) намалява цената с 4% на всяка точка
+    if ((skills.stature || 0) > 0) {
+        costModifier = Math.max(0.3, costModifier - (skills.stature * 0.04));
+    }
+
+    // ArcheAge Бонус за военни класове
+    if (hero.currentClass === "Имперски Воевода" || hero.currentClass === "Генерал-Легат" || hero.currentClass === "Обсаден Командир") {
+        costModifier = Math.max(0.25, costModifier - 0.08); // Допълнителна класова отстъпка
+    }
+
     // ДИНАМИЧНО ОПРЕДЕЛЯНЕ НА ЕДИНИЦИТЕ СПОРЕД RPG НИВОТО И ЕПОХАТА ЗА БЕЗКРАЙНО БЪДЕЩЕ
-    let unitName = "Родови воини";
+    let unitName = "Антични Воини";
     let baseCost = 250;
     let amount = 100;
 
-    if (hero.level >= 5 && hero.level < 10) {
-        unitName = "Елитна Имперска Гвардия";
-        baseCost = 450;
-        amount = 150;
-    } else if (hero.level >= 10) {
-        unitName = "Звездни Родови Легионери";
-        baseCost = 800;
-        amount = 200;
+    if (window.gameTime && window.gameTime.era) {
+        let era = window.gameTime.era;
+        if (era === 1) { unitName = "Тракийски Стрелци"; baseCost = 220; }
+        else if (era === 2) { unitName = "Средновековни Багатури"; baseCost = 300; }
+        else if (era === 3) { unitName = "Царски Мускетари"; baseCost = 450; }
+        else if (era === 4) { unitName = "Имперска Линейна Пехота"; baseCost = 600; }
+        else if (era === 5) { unitName = "Кибернетични Стражи"; baseCost = 1000; amount = 80; }
+        else if (era >= 6) { unitName = "Междузвездни Кръстосвачи 🚀"; baseCost = 2500; amount = 50; }
+    } else {
+        // Fallback еволюция според RPG нивото, ако времето не е заредено
+        if (hero.level >= 5) { unitName = "Елитни Тежки Конници"; baseCost = 500; }
+        else if (hero.level >= 3) { unitName = "Родови Стрелци"; baseCost = 350; }
     }
 
-    const finalCost = Math.floor(baseCost * costModifier);
+    // Diablo пасив: Ветеранско обучение (veteranTraining) увеличава бройката на наетите с +5 на точка
+    if ((skills.veteranTraining || 0) > 0) {
+        amount += (skills.veteranTraining * 5);
+    }
 
-    // Премахваме стария прозорец, ако е отворен
+    let finalCost = Math.floor(baseCost * costModifier);
+
+    // Diablo пасив: Дипломатический подкуп (bribe) - 10% шанс за безплатни войници при отваряне на казармата
+    let bribeBonusReport = "";
+    if ((skills.bribe || 0) > 0 && Math.random() < 0.15) {
+        let defectors = Math.floor(skills.bribe * 12);
+        hero.armySize += defectors;
+        hero.currentArmy = (hero.currentArmy || 0) + defectors;
+        bribeBonusReport = `<p style="color: #ffcc00; font-size: 0.85em; margin: 5px 0; text-align: center;">💰 [ПОДКУП]: Успяхте да подкупите ${defectors} вражески дезертьори, които се вляха в армията ви безплатно!</p>`;
+        
+        if (window.worldData && window.worldData.clans && window.worldData.clans[hero.dynasty]) {
+            window.worldData.clans[hero.dynasty].armySize = hero.armySize;
+        }
+    }
+
+    // Премахваме стария прозорец, ако съществува
     const oldScreen = document.getElementById('barracks-screen');
     if (oldScreen) oldScreen.remove();
 
-    // Създаваме новия адаптивен прозорец над всичко за максимална стабилност
+    // Изграждане на адаптивния интерфейс на Военния Стан
     const barracksScreen = document.createElement('div');
     barracksScreen.id = 'barracks-screen';
     barracksScreen.style.cssText = `
         position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
-        background: rgba(0,0,0,0.85); z-index: 15000; display: flex;
-        align-items: center; justify-content: center; padding: 10px;
-        box-sizing: border-box; font-family: 'Georgia', serif;
+        background: rgba(0, 0, 0, 0.95); z-index: 25000;
+        display: flex; align-items: center; justify-content: center;
+        color: white; font-family: 'Georgia', serif; box-sizing: border-box; padding: 10px;
     `;
 
+    let classTitle = hero.currentClass && hero.currentClass !== "Няма клас" ? ` (${hero.currentClass})` : "";
+
     barracksScreen.innerHTML = `
-        <div style="width: 100%; max-width: 480px; background: #0c0c0c; border: 2px solid #d4af37; border-radius: 6px; color: white; padding: 20px; box-shadow: 0 0 25px rgba(0,0,0,0.9); box-sizing: border-box; max-height: 95vh; overflow-y: auto;">
-            <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #333; padding-bottom: 10px; margin-bottom: 15px;">
-                <h3 style="margin: 0; color: #d4af37; text-transform: uppercase; font-size: 1.1em; letter-spacing: 1px;">⚔️ Военен Стан и Док</h3>
-                <button onclick="document.getElementById('barracks-screen').remove()" style="background: none; border: none; color: #ff4444; font-size: 1.3em; cursor: pointer; font-weight: bold;">&times;</button>
+        <div style="width: 100%; max-width: 460px; background: #080808; border: 2px solid #d4af37; padding: 25px; box-sizing: border-box; border-radius: 6px; box-shadow: 0 0 20px rgba(0,0,0,0.8); max-height: 95vh; overflow-y: auto;">
+            <h2 style="text-align: center; color: #d4af37; margin-top: 0; border-bottom: 1px solid #333; padding-bottom: 12px; text-transform: uppercase; font-size: 1.2em; letter-spacing: 1px;">⚔️ ВОЕНЕН СТАН И КАЗАРМИ ⚔️</h2>
+            <p style="text-align: center; font-size: 0.85em; color: #aaa; margin-bottom: 20px;">Главнокомандващ: <b style="color: #fff;">Кан ${hero.name}${classTitle}</b></p>
+            
+            ${bribeBonusReport}
+
+            <div style="background: rgba(255,255,255,0.02); border: 1px solid #222; padding: 15px; border-radius: 4px; margin-bottom: 20px;">
+                <p style="margin: 5px 0; font-size: 0.9em; display: flex; justify-content: space-between;">
+                    <span>Текуща военна еволюция:</span>
+                    <b style="color: #ffd700;">${unitName}</b>
+                </p>
+                <p style="margin: 5px 0; font-size: 0.9em; display: flex; justify-content: space-between;">
+                    <span>Численост на наборна група:</span>
+                    <b style="color: #4caf50;">+${amount} бойци</b>
+                </p>
+                <p style="margin: 5px 0; font-size: 0.9em; display: flex; justify-content: space-between;">
+                    <span>Родова цена за група:</span>
+                    <b style="color: #f39c12;">${finalCost} злато</b>
+                </p>
+                ${(skills.stature || 0) > 0 ? `<p style="margin: 3px 0; font-size: 0.75em; color: #85c1e9;">✨ [ВЕЛИЧЕ]: Отстъпка за харизма: -${skills.stature * 4}% цена.</p>` : ""}
+                ${(skills.veteranTraining || 0) > 0 ? `<p style="margin: 3px 0; font-size: 0.75em; color: #a9dfbf;">✨ [ОБУЧЕНИЕ]: Допълнителни +${skills.veteranTraining * 5} ветерани на набор.</p>` : ""}
             </div>
 
-            <p style="font-size: 0.9em; line-height: 1.5; color: #ccc; margin-bottom: 15px;">
-                Повикайте под знамената нови попълнения за Вашата безсмъртна армия. Силата и видът на единиците еволюират заедно с ранга на Вашия Кан.
-            </p>
-
-            <div style="background: rgba(255,255,255,0.02); border: 1px solid #222; border-radius: 4px; padding: 12px; margin-bottom: 15px; font-size: 0.9em;">
-                <div style="margin-bottom: 5px; color: #aaa;">Текуща Епохална Единица:</div>
-                <div style="font-size: 1.1em; font-weight: bold; color: #00ffcc; margin-bottom: 8px;">${unitName}</div>
-                <div style="display: flex; justify-content: space-between; color: #bbb;">
-                    <span>Брой в отряд: <b>+${amount}</b></span>
-                    <span>Цена: <b style="color: #ffd700;">${finalCost} злато 💰</b></span>
-                </div>
-                ${costModifier < 1.0 ? `<div style="color: #4caf50; font-size: 0.8em; margin-top: 5px; font-style: italic;">(Включена -${Math.round((1 - costModifier) * 100)}% родова отстъпка от Династията)</div>` : ''}
+            <div style="display: flex; justify-content: space-between; font-size: 0.85em; background: #000; padding: 12px; border: 1px solid #333; border-radius: 4px; margin-bottom: 25px;">
+                <span>Хазна: <b id="barracks-ui-gold" style="color: #ffd700;">${hero.gold} 💰</b></span>
+                <span>Твоята войска: <b id="barracks-ui-army" style="color: #d4af37;">${hero.armySize} 🏹</b></span>
             </div>
 
-            <div style="display: flex; flex-direction: column; gap: 10px;">
-                <button onclick="window.processRecruitment(${finalCost}, ${amount})" style="background: #d4af37; color: black; border: none; padding: 12px; font-weight: bold; cursor: pointer; border-radius: 4px; text-transform: uppercase; font-size: 0.85em; letter-spacing: 0.5px; box-shadow: 0 4px 8px rgba(212,175,55,0.15);">Наемане на Отряд</button>
-                <button onclick="document.getElementById('barracks-screen').remove()" style="background: #111; color: #aaa; border: 1px solid #333; padding: 10px; cursor: pointer; border-radius: 4px; font-size: 0.85em;">Затваряне на лагера</button>
-            </div>
-
-            <div style="margin-top: 15px; border-top: 1px solid #222; padding-top: 10px; font-size: 0.8em; color: #888; display: flex; justify-content: space-between;">
-                <span>Вашето Злато: <b id="barracks-ui-gold" style="color: #ffd700;">${hero.gold || 0} 💰</b></span>
-                <span>Обща Армия: <b id="barracks-ui-army" style="color: #d4af37;">${hero.currentArmy || hero.armySize || 0} 🏹</b></span>
+            <div style="display: flex; flex-direction: column; gap: 12px;">
+                <button onclick="window.processRecruitment(${finalCost}, ${amount})" 
+                        style="background: #a32a2a; color: white; border: 1px solid #ff4444; padding: 12px; font-size: 0.95em; cursor: pointer; font-weight: bold; text-transform: uppercase; border-radius: 4px; width: 100%;">НАЕМИ ВОЙСКА</button>
+                
+                <button onclick="document.getElementById('barracks-screen').remove()" 
+                        style="background: #111; color: #ccc; border: 1px solid #333; padding: 10px; font-size: 0.85em; cursor: pointer; border-radius: 4px; width: 100%;">ЗАТВОРИ СТАНА</button>
             </div>
         </div>
     `;
@@ -89,18 +131,13 @@ window.buyUnits = function() {
     document.body.appendChild(barracksScreen);
 };
 
-/**
- * ИЗПЪЛНЕНИЕ НА ПОКУПКАТА И МОМЕНТАЛНО ОБНОВЯВАНЕ НА UI И ВСИЧКИ СВЪРЗАНИ ФАЙЛОВЕ
- */
 window.processRecruitment = function(cost, amount) {
     const hero = window.currentHero;
     if (!hero) return;
 
     if (hero.gold >= cost) {
         hero.gold -= cost;
-        
-        // СИНХРОНИЗАЦИОНЕН МОСТ: Увеличаваме и двете променливи, за да няма разминаване в битките
-        hero.armySize = (hero.armySize || 0) + amount;
+        hero.armySize += amount;
         hero.currentArmy = (hero.currentArmy || 0) + amount;
         
         // Подсигуряване на максимума за армия при наемане
@@ -109,17 +146,17 @@ window.processRecruitment = function(cost, amount) {
         }
 
         // Синхронизация с глобалната родова статистика в worldData
-        if (window.worldData && window.worldData.clans && hero.id) {
-            window.worldData.clans[hero.id].armySize = hero.armySize;
-            window.worldData.clans[hero.id].currentArmy = hero.currentArmy;
-            window.worldData.clans[hero.id].gold = hero.gold;
+        if (window.worldData && window.worldData.clans && window.worldData.clans[hero.dynasty]) {
+            window.worldData.clans[hero.dynasty].armySize = hero.armySize;
+            window.worldData.clans[hero.dynasty].currentArmy = hero.currentArmy;
+            window.worldData.clans[hero.dynasty].gold = hero.gold;
         }
 
         if (window.showAdvisorMsg) {
             window.showAdvisorMsg(`⚔️ УСПЕХ: Нови ${amount} бойци преклониха глава пред Кан ${hero.name}!`);
         }
 
-        // Моментално преначертаване на левия и горния панел в ui.js
+        // Моментално преначертаване на левия и горния панел
         if (window.updateCharacterUI) window.updateCharacterUI(hero);
         if (window.renderTop6LeadersUI) window.renderTop6LeadersUI();
 
@@ -127,11 +164,11 @@ window.processRecruitment = function(cost, amount) {
         const goldUi = document.getElementById('barracks-ui-gold');
         const armyUi = document.getElementById('barracks-ui-army');
         if (goldUi) goldUi.innerText = `${hero.gold} 💰`;
-        if (armyUi) armyUi.innerText = `${hero.currentArmy} 🏹`;
+        if (armyUi) armyUi.innerText = `${hero.armySize} 🏹`;
 
     } else {
         if (window.showAdvisorMsg) {
-            window.showAdvisorMsg("❌ НЕДОСТИГ: Нямате достатъчно злато в родовата хазна за този отряд воини!");
+            window.showAdvisorMsg("❌ ГРЕШКА: Нямате достатъчно злато в родовата хазна за този наем!");
         }
     }
 };
