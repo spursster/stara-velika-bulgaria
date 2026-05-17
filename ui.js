@@ -235,19 +235,26 @@ if (window.worldData && window.worldData.clans) {
 
 window.selectAndOpenLeaderInventory = function(leaderName) {
     if (window.worldData && window.worldData.clans) {
+        // 1. Намираме владетеля по име в клановете
         let targetLeader = Object.values(window.worldData.clans).find(l => l.name === leaderName);
+        
+        // 2. Ако не го намерим в клановете, проверяваме дали това не е главният герой
+        if (!targetLeader && window.currentHero && window.currentHero.name === leaderName) {
+            targetLeader = window.currentHero;
+        }
+
         if (targetLeader) {
-            // Сменяме фокуса на играта към този владетел
-            window.currentHero = targetLeader;
-            // Обновяваме UI интерфейса на героя
-            if (window.updateCharacterUI) window.updateCharacterUI(targetLeader);
+            // МНОГО ВАЖНО: Задаваме фокус за инспектиране БЕЗ да сменяме window.currentHero!
+            window.inspectedLeaderForInventory = targetLeader;
             
-            // Ако имаш специфична функция за личен инвентар, я викаме тук:
-            if (typeof window.openSpecificLeaderInventory === "function") {
-                window.openSpecificLeaderInventory(targetLeader);
-            } else if (window.openInventory) {
-                // Алтернативен вариант: отваря инвентара, който вече ще чете данните на новия текущ герой
-                window.openInventory();
+            // 3. Отваряме прозореца на съкровищницата/инвентара
+            if (window.toggleTreasury) {
+                const overlay = document.getElementById('treasury-overlay');
+                if (overlay) {
+                    overlay.style.display = 'block'; // Форсираме отваряне
+                }
+                // Извикваме рендерирането, което вече ще знае кой е инспектираният лидер
+                if (window.renderTreasury) window.renderTreasury();
             }
         }
     }
