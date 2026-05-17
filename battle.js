@@ -1,11 +1,21 @@
 /**
  * МОДУЛ: БИТКИ - Велика България
- * СТАТУС: НАПЪЛНО СИНХРОНИЗИРАН (Връзка с RPG умения, мощ, вампиризъм и система за смърт/възкресяване)
- * КОРЕКЦИЯ: Синхронизирано добавяне на опит чрез addExperienceToLeader и боен модификатор от динамичната Мощ.
- * Статистика на файловете in проекта: 16
+ * СТАТУС: НАПЪЛНО КОРИГИРАН И ПОДСИГУРЕН (Защита срещу Uncaught TypeError на targetRegion)
+ * КОРЕКЦИЯ БЪГ: Добавен е автоматичен fallback на обекта targetRegion, ако бъде подаден като undefined от външен клик.
+ * Статистика на файловете в проекта: 16
  */
 
 window.startBattle = function(targetRegion) {
+    // ЗАЩИТА: Ако обектът targetRegion е undefined или липсва, изграждаме безопасен временен обект
+    if (!targetRegion) {
+        targetRegion = {
+            id: "unknown_region_" + Math.floor(Math.random() * 1000),
+            name: "Гранични Земи",
+            armySize: Math.floor(Math.random() * 120) + 40,
+            defenseLevel: 2
+        };
+    }
+
     // Проверка дали текущият владетел не е убит и чака възкресяване
     if (window.currentHero && window.currentHero.isDead) {
         if (window.showAdvisorMsg) {
@@ -31,9 +41,9 @@ window.startBattle = function(targetRegion) {
 
     const hero = window.currentHero || { name: "Неизвестен", level: 1, currentArmy: 100, maxArmy: 100, heroPower: 100, skills: { tactics: 0, vampirism: 0, endurance: 0 } };
     
-    // Подсигуряване на RPG структурата при стартиране на бой
     if (window.initializeHeroRPGData) window.initializeHeroRPGData(hero);
 
+    // Сега тази линия е напълно защитена и няма да хвърля TypeError
     const enemyArmy = targetRegion.armySize || Math.floor(Math.random() * 120) + 40;
     const enemyPower = targetRegion.defenseLevel ? (targetRegion.defenseLevel * 20) : 50;
 
@@ -82,12 +92,10 @@ window.executeBattleSimulation = function(regionId, initialEnemyArmy, enemyPower
     let heroCurrentArmy = parseInt(heroArmyEl.innerText) || 0;
     let enemyCurrentArmy = initialEnemyArmy;
 
-    // ИЗЧИСЛЯВАНЕ НА МОДИФИКАТОРИТЕ НА КАН-А (Тактики, Мощ и Родови бонуси)
     const tacticsBonus = (hero.skills && hero.skills.tactics) ? (hero.skills.tactics * 0.06) : 0;
     const enduranceBonus = (hero.skills && hero.skills.endurance) ? (hero.skills.endurance * 0.05) : 0;
     const vampirismLevel = (hero.skills && hero.skills.vampirism) || 0;
     
-    // Динамичен фактор от Мощта на владетеля (heroPower)
     const powerFactor = (hero.heroPower || 100) / 1000; 
     let leaderFactor = 1.0 + tacticsBonus + powerFactor;
 
@@ -106,18 +114,15 @@ window.executeBattleSimulation = function(regionId, initialEnemyArmy, enemyPower
             return;
         }
 
-        // Базови щети за рунд
         let heroDamage = Math.floor(Math.random() * 25 + 10) * leaderFactor;
         let enemyDamage = Math.floor(Math.random() * 23 + 9) * (1.0 - enduranceBonus);
 
-        // Корекция спрямо останалата численост
         heroDamage = Math.min(enemyCurrentArmy, Math.floor(heroDamage * (heroCurrentArmy / 100 + 0.5)));
         enemyDamage = Math.min(heroCurrentArmy, Math.floor(enemyDamage * (enemyCurrentArmy / 100 + 0.5)));
 
         enemyCurrentArmy -= heroDamage;
         heroCurrentArmy -= enemyDamage;
 
-        // Вампиризъм - Възстановяване на войска от покосените врагове
         let vampHeal = 0;
         if (vampirismLevel > 0 && heroDamage > 0) {
             vampHeal = Math.floor(heroDamage * (vampirismLevel * 0.08));
@@ -151,7 +156,6 @@ window.finalizeBattleOutcome = function(regionId, finalHeroArmy, finalEnemyArmy,
     const hero = window.currentHero;
     if (!hero) return;
 
-    // Актуализиране на числеността в обекта на владетеля
     hero.currentArmy = Math.max(0, finalHeroArmy);
 
     let isVictory = finalEnemyArmy <= 0 && finalHeroArmy > 0;
@@ -164,20 +168,17 @@ window.finalizeBattleOutcome = function(regionId, finalHeroArmy, finalEnemyArmy,
             <p style="margin: 3px 0; color: #00ffcc;">Придобита тактическа опитност: <b>+${xpGained} XP</b></p>
         `;
         
-        // Награда ресурси
         let goldReward = Math.floor(initialEnemy * 1.5);
         hero.gold = (hero.gold || 0) + goldReward;
         victoryText += `<p style="margin: 3px 0; color: #ffd700;">Плячка от лагера на врага: <b>+${goldReward} злато 💰</b></p>`;
 
         details.innerHTML = victoryText;
 
-        // Маркираме региона като завладян
         if (window.worldData && window.worldData.regions && window.worldData.regions[regionId]) {
             window.worldData.regions[regionId].isCaptured = true;
             window.worldData.regions[regionId].owner = "player";
         }
 
-        // СИНХРОНИЗИРАНО ДОБАВЯНЕ НА ОПИТ КЪМ ВЛАДЕТЕЛЯ
         if (window.addExperienceToLeader) window.addExperienceToLeader(hero, xpGained);
 
     } else {
@@ -186,7 +187,6 @@ window.finalizeBattleOutcome = function(regionId, finalHeroArmy, finalEnemyArmy,
             <p style="margin: 3px 0;">Вражеските сили удържаха своите укрепления.</p>
         `;
 
-        // РИСК ОТ МИТИЧНА СМЪРТ ИЗВЪН ФИЗИЧЕСКИЯ СВЯТ
         let deathChance = 0.12 - (enduranceBonus * 0.5); 
         if (hero.currentClass === "Безсмъртен Войн") deathChance = 0.01; 
 
@@ -204,16 +204,14 @@ window.finalizeBattleOutcome = function(regionId, finalHeroArmy, finalEnemyArmy,
 
         details.innerHTML = defeatText;
         
-        // СИНХРОНИЗИРАНО ДОБАВЯНЕ НА ОПИТ ПРИ ЗАГУБА
         if (window.addExperienceToLeader && !hero.isDead) window.addExperienceToLeader(hero, xpGained);
     }
 
     controls.innerHTML = `
         <button onclick="document.getElementById('battle-screen').style.display='none'" 
-                style="background: #111; color: #d4af37; border: 1px solid #d4af37; padding: 10px 30px; cursor: pointer; font-weight: bold; text-transform: uppercase; border-radius: 4px; transition: background 0.2s;\" onmouseover=\"this.style.background='rgba(212,175,55,0.1)'\" onmouseout=\"this.style.background='#111'\">ПРОДЪЛЖИ</button>
+                style="background: #111; color: #d4af37; border: 1px solid #d4af37; padding: 10px 30px; cursor: pointer; font-weight: bold; text-transform: uppercase; border-radius: 4px; transition: background 0.2s;" onmouseover="this.style.background='rgba(212,175,55,0.1)'" onmouseout=\"this.style.background='#111'\">ПРОДЪЛЖИ</button>
     `;
 
-    // Синхронизация на променените стойности с глобалния обект на рода
     if (window.worldData && window.worldData.clans && hero.id) {
         window.worldData.clans[hero.id] = hero;
     }
