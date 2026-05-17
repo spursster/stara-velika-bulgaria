@@ -1,7 +1,7 @@
 /**
  * МОДУЛ: ВЕЛИКИТЕ ЕКСПЕДИЦИИ НА СВЕТА - Велика България
  * СТАТУС: НАПЪЛНО СИНХРОНИЗИРАН (26 мисии + Владетелско отключване + RPG система за опит и нива)
- * КОРЕКЦИЯ БЪГ: Баджът свети в зелено и показва ЧИСЛО само при завършени мисии, чакащи награда.
+ * КОРЕКЦИЯ БЪГ: Нов закупен владетел незабавно се инициализира в RPG системата и се рендерира в Top 6 Leaders лентата.
  * Статистика на файловете в проекта: 16
  */
 
@@ -94,7 +94,6 @@ window.openExpeditionCenter = function() {
     // 1. ЗАЛА НА СЛАВАТА: Намиране и сортиране на отключените владетели с най-голям опит
     let topRulers = [];
     if (window.worldData && window.worldData.clans) {
-        // Четем директно от споделената база данни
         topRulers = Object.values(window.worldData.clans);
     } else if (window.gameDatabase && window.gameDatabase.rulers) {
         topRulers = Object.values(window.gameDatabase.rulers).filter(r => r.unlocked);
@@ -153,14 +152,13 @@ window.openExpeditionCenter = function() {
 
     // Динамичен масив с владетели за отключване
     let potentiallyLocked = [
-        { id: "r_tervel", name: "Тервел", cost: 1500, perk: "+15% злато от Римски и Ромейски преговори" },
-        { id: "r_krum", name: "Крум", cost: 2200, perk: "-10% риск в Европейските експедиции" },
-        { id: "r_omurtag", name: "Омуртаг", cost: 3000, perk: "-2 сезона времетраене за далечни дестинации" }
+        { id: "r_tervel", name: "Тервел", cost: 1500, perk: "+15% злато от Римски и Ромейски преговори", dynasty: "Дуло" },
+        { id: "r_krum", name: "Крум", cost: 2200, perk: "-10% риск в Европейските експедиции", dynasty: "Дуло" },
+        { id: "r_omurtag", name: "Омуртаг", cost: 3000, perk: "-2 сезона времетраене за далечни дестинации", dynasty: "Дуло" }
     ];
 
     let showAnyLocked = false;
     potentiallyLocked.forEach(rl => {
-        // Проверяваме дали вече не съществува такъв отключен владетел в родовата система
         let alreadyExists = window.worldData && window.worldData.clans && window.worldData.clans[rl.id];
         if (!alreadyExists) {
             showAnyLocked = true;
@@ -170,7 +168,7 @@ window.openExpeditionCenter = function() {
                         <b style="color:#00ffcc;">Кан ${rl.name}</b><br>
                         <small style="color:#aaa; font-style:italic;">Умение: ${rl.perk}</small>
                     </div>
-                    <button onclick="window.unlockNewRuler('${rl.id}', '${rl.name}', ${rl.cost})" style="background:#111; color:#00ffcc; border:1px solid #00ffcc; padding:6px 12px; cursor:pointer; font-weight:bold; border-radius:4px; font-size:0.8em; text-transform:uppercase;">
+                    <button onclick="window.unlockNewRuler('${rl.id}', '${rl.name}', ${rl.cost}, '${rl.dynasty}')" style="background:#111; color:#00ffcc; border:1px solid #00ffcc; padding:6px 12px; cursor:pointer; font-weight:bold; border-radius:4px; font-size:0.8em; text-transform:uppercase;">
                         Привлечи (💰 ${rl.cost})
                     </button>
                 </div>
@@ -205,12 +203,11 @@ window.openExpeditionCenter = function() {
                             : `Водач: <b style="color:#00ffcc;">Кан ${isRunning.rulerName}</b> | Статус: Пътува и трупа опит... (Остават: <b style="color:#ffd700;">${remains} хода</b>)`}
                     </div>
                     ${isDone 
-                        ? `<button onclick="window.claimExpeditionReward('${q.id}')" style="width:100%; background:#4caf50; color:white; border:none; padding:8px; cursor:pointer; font-weight:bold; text-transform:uppercase; border-radius:4px; font-size:0.8em; margin-top:5px;">Прибери Плячката в Съкровищницата</button>`
+                        ? `<button onclick="window.claimExpeditionReward('${q.id}')" style="width:100%; background:#4caf50; color:white; border:none; padding:8px; cursor:pointer; font-weight:bold; text-transform:uppercase; border-radius:4px; font-size:0.8em; margin-top:5px;">Прибери Плячката in Съкровищницата</button>`
                         : `<button disabled style="width:100%; background:#222; color:#555; border:1px solid #333; padding:6px; border-radius:4px; font-size:0.8em; margin-top:5px;">Кан ${isRunning.rulerName} води бой...</button>`}
                 </div>
             `;
         } else {
-            // Намаляване на опасността на база ниво на владетеля
             let levelBonus = hero ? (hero.expeditionLevel - 1) * 3 : 0;
             let currentDanger = Math.max(5, q.danger - levelBonus);
 
@@ -233,14 +230,14 @@ window.openExpeditionCenter = function() {
 };
 
 /**
- * ФУНКЦИЯ ЗА ОТКЛЮЧВАНЕ НА НОВИ ВЛАДЕТЕЛИ ОТ ДАТАБАЗАТА
+ * ФУНКЦИЯ ЗА ОТКЛЮЧВАНЕ НА НОВИ ВЛАДЕТЕЛИ ОТ ДАТАБАЗАТА - СИГУРЕН FIX НА БЪГА
  */
-window.unlockNewRuler = function(rulerId, rulerName, cost) {
+window.unlockNewRuler = function(rulerId, rulerName, cost, dynastyName) {
     const hero = window.currentHero;
     if (!hero) return;
 
     if (hero.gold < cost) {
-        alert("Нямате достатъчно злато в хазната, за да привлечете този владетел!");
+        alert("Нямате достатъчно злато in хазната, за да привлечете този владетел!");
         return;
     }
 
@@ -250,19 +247,43 @@ window.unlockNewRuler = function(rulerId, rulerName, cost) {
     window.worldData = window.worldData || {};
     window.worldData.clans = window.worldData.clans || {};
     
-    window.worldData.clans[rulerId] = {
+    // Дефиниране на пълната структура на обекта за владетеля
+    let newRuler = {
         id: rulerId,
         name: rulerName,
+        dynasty: dynastyName || "Дуло",
+        heroPower: 100, // Базова сила за RPG битки
+        gold: 0,
+        armySize: 150,
         expeditionLevel: 1,
         expeditionXP: 0,
         inventory: []
     };
 
+    // Извикване на RPG инициализация от rpg_system.js, за да получи веднага нива, опит и умения
+    if (window.initializeHeroRPGData) {
+        window.initializeHeroRPGData(newRuler);
+    } else {
+        newRuler.level = 1;
+        newRuler.xp = 0;
+        newRuler.skillPoints = 0;
+        newRuler.skills = { endurance: 0, vampirism: 0, mysticism: 0, tactics: 0, diplomacy: 0, scouting: 0, alchemy: 0, leadership: 0 };
+        newRuler.currentClass = "Чист Водач";
+    }
+
+    // Запис в базата данни
+    window.worldData.clans[rulerId] = newRuler;
+
     window.showMysticModal(
         "📜 РОДОВ СЪЮЗ ТРИУМФ",
-        `Великият Кан ${rulerName} прие Вашето злато и се присъедини към съюза на родовете! Сега той е записан в Залата на славата и неговият опит ще расте при бъдещи походи.`,
+        `Великият Кан ${rulerName} прие Вашето злато и се присъедини към съюза на родовете! Сега той притежава пълни RPG атрибути, отразен е в лентата на най-силните и неговият опит ще расте при бъдещи походи.`,
         "triumph"
     );
+
+    // НЕЗАБАВНА СИНХРОНИЗАЦИЯ И СОРТИРАНЕ НА ЛЕНТАТА С ТОП 6 ЛИДЕРИ
+    if (window.renderTop6LeadersUI) {
+        window.renderTop6LeadersUI();
+    }
 
     if (window.updateCharacterUI) window.updateCharacterUI(hero);
     window.openExpeditionCenter();
@@ -286,7 +307,7 @@ window.startExpedition = function(questId) {
     if (!quest || !hero) return;
 
     if (hero.gold < quest.cost) {
-        alert("Нямате достатъчно злато в държавната хазна за тази експедиция!");
+        alert("Нямате достатъчно злато in държавната хазна за тази експедиция!");
         return;
     }
 
@@ -346,12 +367,9 @@ window.claimExpeditionReward = function(questId) {
     if (questId === "q26") { baseGoldReward = 1400; artifactGenerated = "Японска Стоманена Катана"; }
 
     hero.gold += baseGoldReward;
-
-    // Реликвата отива в личния инвентар на активния владетел
     hero.inventory = hero.inventory || [];
     hero.inventory.push(artifactGenerated);
 
-    // Добавяне на допълнителен финален бонус опит
     hero.expeditionXP += 40;
     let leveledUp = false;
     if (hero.expeditionXP >= 100) {
@@ -368,13 +386,14 @@ window.claimExpeditionReward = function(questId) {
     window.showMysticModal("🎉 ТРИУМФАЛНО ЗАВРЪЩАНЕ", modalMsg, "triumph");
 
     if (window.updateCharacterUI) window.updateCharacterUI(hero);
+    if (window.renderTop6LeadersUI) window.renderTop6LeadersUI();
     
     window.updateExpeditionBadge();
     window.openExpeditionCenter();
 };
 
 /**
- * ОСНОВЕН ДВИГАТЕЛ: Смяна на ход (Трупане на опит на всеки ход)
+ * ОСНОВЕН ДВИГАТЕЛ: Смяна на ход
  */
 window.updateExpeditionSystem = function() {
     if (!window.activeExpeditions || window.activeExpeditions.length === 0) {
@@ -388,17 +407,16 @@ window.updateExpeditionSystem = function() {
         if (exp.currentProgress < exp.duration) {
             exp.currentProgress += 1;
             
-            // Проверка за трупане на опит на ход, ако владетелят пътува в момента
             if (hero && exp.rulerName === hero.name) {
                 hero.expeditionXP = hero.expeditionXP || 0;
                 hero.expeditionLevel = hero.expeditionLevel || 1;
                 
-                hero.expeditionXP += 25; // +25 XP на ход
+                hero.expeditionXP += 25;
                 if (hero.expeditionXP >= 100) {
                     hero.expeditionLevel += 1;
                     hero.expeditionXP -= 100;
                     if (window.showAdvisorMsg) {
-                        window.showAdvisorMsg(`🌟 Родовият опит нараства! Кан ${hero.name} достигна Експедиционно Ниво ${hero.expeditionLevel}.`);
+                        window.showAdvisorMsg(`🌟 Родовият опит нараства! Твоят водач достигна Експедиционно Ниво ${hero.expeditionLevel}.`);
                     }
                 }
             }
@@ -406,6 +424,7 @@ window.updateExpeditionSystem = function() {
     });
 
     if (hero && window.updateCharacterUI) window.updateCharacterUI(hero);
+    if (window.renderTop6LeadersUI) window.renderTop6LeadersUI();
     window.updateExpeditionBadge();
 };
 
@@ -421,7 +440,7 @@ window.updateExpeditionBadge = function() {
     if (completedMissionsCount > 0) {
         badge.innerText = completedMissionsCount;
         badge.style.display = 'flex';
-        badge.style.background = "#4caf50"; // Свети в зелено
+        badge.style.background = "#4caf50";
         badge.style.color = "white";
     } else {
         badge.innerText = "0";
