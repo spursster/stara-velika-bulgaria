@@ -18,7 +18,7 @@ window.eventTemplates = {
         { t: "Пясъчна буря/Мраз", desc: "Природата се обърна срещу нас. Загубихме провизии.", effect: { gold: -200, army: -20 } }
     ],
     mystic: [
-        { t: "Небесно знамение", desc: "Комета пресече небето над лагера. Жреците тълкуват това като знак.", effect: { power: 30, gold: -50 } },
+        { t: "Небесно знамение", desc: "Комета пресече небето над лагера. Жреците тълкуват това као знак.", effect: { power: 30, gold: -50 } },
         { t: "Древно предсказание", desc: "Открит е надпис в скалите, възхваляващ величието на българите.", effect: { power: 50, army: 0 } }
     ]
 };
@@ -82,11 +82,11 @@ window.executeEventLogic = function(isForced) {
 
 window.showEventModal = function(title, text, options) {
     let modal = document.getElementById('event-modal');
-    if (!modal) {
-        modal = document.createElement('div');
-        modal.id = 'event-modal';
-        document.body.appendChild(modal);
-    }
+    if (modal) modal.remove(); // Изчистване на стар модал за сигурност
+
+    modal = document.createElement('div');
+    modal.id = 'event-modal';
+    document.body.appendChild(modal);
 
     modal.style.cssText = `
         position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
@@ -118,8 +118,20 @@ window.handleEventChoice = function(index) {
     const result = choice.action(window.currentHero);
     
     const modal = document.getElementById('event-modal');
-    if (modal) modal.style.display = 'none';
+    if (modal) modal.remove(); // Напълно изтриваме елемента от DOM дървото вместо само скриване
     
+    // НАПРЕДВАНЕ НА ВРЕМЕТО ПРИ СЪБИТИЕ
+    if (window.gameTime) {
+        window.gameTime.year += 1; // Увеличава годината с 1 при натискане
+    }
+    
+    // СИНХРОНИЗАЦИЯ С ЕКСПЕДИЦИИТЕ (За да отброяват ходове при всяко събитие)
+    if (window.updateExpeditionSystem) {
+        window.updateExpeditionSystem();
+    }
+    
+    // ОБНОВЯВАНЕ НА ИНТЕРФЕЙСА С НОВИТЕ ДАННИ И ВРЕМЕ
     if (window.showAdvisorMsg) window.showAdvisorMsg(result);
     if (window.updateCharacterUI) window.updateCharacterUI(window.currentHero);
+    if (window.updateTimeUI) window.updateTimeUI();
 };
