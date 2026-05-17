@@ -1,11 +1,19 @@
 /**
  * МОДУЛ: БИТКИ - Велика България
- * СТАТУС: НАПЪЛНО СИНХРОНИЗИРАН (Връзка с 51 Региона, Екипирани Артефакти и Родови Бонуси)
- * Включва родови модификатори, система за завладяване на земи и бонуси от съкровищницата.
+ * СТАТУС: НАПЪЛНО СИНХРОНИЗИРАН (Връзка с RPG умения, вампиризъм и система за смърт/възкресяване)
+ * Включва родови модификатори, тактики, издръжливост, висш вампиризъм и риск от митична смърт.
  * Статистика на файловете в проекта: 16
  */
 
 window.startBattle = function(targetRegion) {
+    // Проверка дали текущият владетел не е убит и чака възкресяване
+    if (window.currentHero && window.currentHero.isDead) {
+        if (window.showAdvisorMsg) {
+            window.showAdvisorMsg(`🔮 ${window.currentHero.name} е в отвъдното! Извършете Ритуал за Възкресяване, преди да водите битки!`);
+        }
+        return;
+    }
+
     let battleScreen = document.getElementById('battle-screen');
     if (!battleScreen) {
         battleScreen = document.createElement('div');
@@ -30,11 +38,9 @@ window.startBattle = function(targetRegion) {
         powerMult = (reg.difficulty || 100) / 100;
         
         if (reg.nativeClans && reg.nativeClans.length > 0) {
-            // Избираме случаен от местните родове за опонент на база world_data.js
             enemyName = reg.nativeClans[Math.floor(Math.random() * reg.nativeClans.length)];
         }
     } else {
-        // Резервен сценарий за съвместимост, ако функцията се извика без подаден регион
         const battleScenarios = [
             { name: "Ромеи", region: "Тракия", powerMult: 1.2 },
             { name: "Скити", region: "Сарматия", powerMult: 1.0 },
@@ -48,7 +54,9 @@ window.startBattle = function(targetRegion) {
         powerMult = scenario.powerMult;
     }
 
-    const enemyArmy = Math.floor(window.currentHero.armySize * (powerMult + Math.random() * 0.3));
+    // Защита за размера на армията на играча
+    const playerArmySize = window.currentHero.armySize || window.currentHero.currentArmy || 100;
+    const enemyArmy = Math.floor(playerArmySize * (powerMult + Math.random() * 0.3));
 
     battleScreen.style.display = 'flex';
     battleScreen.innerHTML = `
@@ -83,48 +91,52 @@ window.processBattle = function(eArmy, eName, eRegion) {
     
     if (!details || !controls) return;
 
+    // Инициализация на RPG данни, ако липсват за сигурност
+    if (window.initializeHeroRPGData) window.initializeHeroRPGData(hero);
+
+    // Извличане на нивата на RPG способностите от rpg_system.js
+    const tacticsLevel = (hero.skills && hero.skills.tactics) || 0;
+    const enduranceLevel = (hero.skills && hero.skills.endurance) || 0;
+    const vampirismLevel = (hero.skills && hero.skills.vampirism) || 0;
+
     // 2. СИНХРОНИЗАЦИЯ С ЕКИПИРАНИ ПРЕДМЕТИ (АРТЕФАКТИ)
-    // Преминаваме към window.equippedItems за пълна съвместимост с logic.js и economy.js
     let artifactBonusPower = 0;
     if (window.equippedItems && window.equippedItems.length > 0) {
         window.equippedItems.forEach(item => {
             if (item && item.bonus && item.bonus.heroPower) {
-                // Всяка единица мощ от екипиран родов артефакт дава сериозно предимство
                 artifactBonusPower += item.bonus.heroPower * 5;
             }
         });
     }
 
-    // 3. ПРИЛАГАНЕ НА РОДОВИ БОНУСИ (от mechanics.js)
+    // 3. ПРИЛАГАНЕ НА РОДОВИ БОНУСИ И ТАКТИКА
     let dynastyPowerBonus = window.getPerkValue ? window.getPerkValue('power') : 1.0;
-    
-    // Специфични допълнителни бонуси за родове съгласно твоите правила
     if (hero.dynasty === "Скити") dynastyPowerBonus *= 1.1; 
     if (hero.dynasty === "Македони") dynastyPowerBonus *= 1.05;
 
-    // Изчисляване на общата военна мощ
-    const playerStr = ((hero.armySize + (hero.heroPower * 2)) + artifactBonusPower) * dynastyPowerBonus;
+    // Модификатор от RPG умение "Военна Тактика" (+8% мощ на ниво)
+    const tacticsModifier = 1 + (tacticsLevel * 0.08);
+
+    const playerArmySize = hero.armySize || hero.currentArmy || 100;
+    const playerStr = (((playerArmySize + (hero.heroPower * 2)) + artifactBonusPower) * dynastyPowerBonus) * tacticsModifier;
     const enemyStr = eArmy;
 
     if (playerStr >= enemyStr) {
-        // ПОБЕДА
+        // --- ПОБЕДА ---
         const loot = Math.floor(eArmy * 0.5);
         hero.gold += loot;
         
-        // 4. СИНХРОНИЗАЦИЯ НА ЗАВЛАДЯВАНЕТО
+        // Изчисляване на натрупания опит (XP) на база трудността на победения враг
+        const xpGained = Math.floor(100 * (eArmy / (playerArmySize || 1)));
+        
         if (window.conquerRegion) {
             window.conquerRegion(eRegion);
         } else {
-            // Сигурен предпазен механизъм за вписване на региона, в случай че функцията липсва в logic.js
             if (!window.playerRegions) window.playerRegions = [];
             let flat = window.playerRegions.flat();
             if (!flat.includes(eRegion)) {
                 flat.push(eRegion);
-                if (window.playerRegions.length > 0 && Array.isArray(window.playerRegions[0])) {
-                    window.playerRegions = [flat];
-                } else {
-                    window.playerRegions = flat;
-                }
+                window.playerRegions = flat;
             }
         }
 
@@ -132,6 +144,7 @@ window.processBattle = function(eArmy, eName, eRegion) {
             <div style="color: #4CAF50; font-weight: bold; font-size: 1.1em; margin-bottom: 10px; text-transform: uppercase;"> ⚔️ ВЕЛИКА ПОБЕДА! ⚔️</div>
             <p style="margin: 5px 0;">Врагът <b style="color:#fff;">${eName}</b> беше напълно разбит при <b style="color:#d4af37;">${eRegion}</b>!</p>
             <p style="margin: 5px 0; color: #ffd700;">Спечелена плячка: <b>+${loot}</b> 💰</p>
+            <p style="margin: 5px 0; color: #4af;"> Спечелен опит: <b>+${xpGained} XP</b> ✨</p>
         `;
         
         if (artifactBonusPower > 0) {
@@ -139,16 +152,58 @@ window.processBattle = function(eArmy, eName, eRegion) {
         }
         
         details.innerHTML = victoryText;
-    } else {
-        // ПОРАЖЕНИЕ
-        const losses = Math.floor(hero.armySize * 0.3);
-        hero.armySize -= losses;
         
-        details.innerHTML = `
+        // Даване на XP чрез RPG ядрото
+        if (window.gainHeroXP) window.gainHeroXP(hero, xpGained);
+
+    } else {
+        // --- ПОРАЖЕНИЕ ---
+        // Базови загуби от 35%, намаляващи с 3% за всяко ниво на "Издръжливост" (минимално 10% загуби)
+        const lossReduction = enduranceLevel * 0.03;
+        const lossPercent = Math.max(0.10, 0.35 - lossReduction);
+        
+        let losses = Math.floor(playerArmySize * lossPercent);
+        let vampirismHeal = 0;
+
+        // Механика Вампиризъм: Възстановява 5% от загубените воини на ниво от падналия враг
+        if (vampirismLevel > 0) {
+            vampirismHeal = Math.floor(losses * (vampirismLevel * 0.05));
+            losses -= vampirismHeal;
+        }
+
+        // Нанасяне на загубите
+        if (hero.armySize !== undefined) hero.armySize = Math.max(0, hero.armySize - losses);
+        if (hero.currentArmy !== undefined) hero.currentArmy = Math.max(0, hero.currentArmy - losses);
+
+        // Малък утешителен опит
+        const xpGained = 25;
+
+        let defeatText = `
             <div style="color: #ff4d4d; font-weight: bold; font-size: 1.1em; margin-bottom: 10px; text-transform: uppercase;">❌ ТЕЖКО ПОРАЖЕНИЕ ❌</div>
             <p style="margin: 5px 0;">Вашите воини бяха принудени да отстъпят пред численото превъзходство на <b style="color:#fff;">${eName}</b>.</p>
             <p style="margin: 5px 0; color: #ff8888;">Загуби на бойното поле: <b>-${losses}</b> воини 🏹</p>
         `;
+
+        if (vampirismHeal > 0) {
+            defeatText += `<p style="color: #cc0000; font-size: 0.9em; font-style: italic;">🩸 Вампиризмът съживи обратно ${vampirismHeal} от падналите ви бойци чрез кръвта на врага!</p>`;
+        }
+
+        // РИСК ОТ МИТИЧНА СМЪРТ: Ако армията падне под 5 воини, безсмъртният владетел губи физическата си форма
+        const currentCheckArmy = hero.armySize !== undefined ? hero.armySize : (hero.currentArmy || 0);
+        if (currentCheckArmy <= 5) {
+            hero.isDead = true;
+            defeatText += `
+                <div style="margin-top: 15px; padding: 10px; border: 1px solid #ff0000; background: rgba(255,0,0,0.15); color: #ff9999; font-weight: bold;">
+                    💀 КАТАСТРОФА: Вашата армия бе заличена! Физическата форма на Владетеля бе покосена. Неговата безсмъртна душа бе изпратена в отвъдното, докато не извършите Ритуал за Възкресяване!
+                </div>
+            `;
+        } else {
+            defeatText += `<p style="margin: 5px 0; color: #4af;">Придобита тактическа опитност: <b>+${xpGained} XP</b></p>`;
+        }
+
+        details.innerHTML = defeatText;
+        
+        if (window.gainHeroXP && !hero.isDead) window.gainHeroXP(hero, xpGained);
     }
 
     controls.innerHTML = `
@@ -156,12 +211,12 @@ window.processBattle = function(eArmy, eName, eRegion) {
                 style="background: #111; color: #d4af37; border: 1px solid #d4af37; padding: 10px 30px; cursor: pointer; font-weight: bold; text-transform: uppercase; border-radius: 4px; transition: background 0.2s;" onmouseover="this.style.background='rgba(212,175,55,0.1)'" onmouseout="this.style.background='#111'">ПРОДЪЛЖИ</button>
     `;
 
-    // Синхронизираме новите финансови и военни данни в глобалната база данни на рода
+    // Синхронизация на променените стойности с глобалния обект на рода
     if (window.worldData && window.worldData.clans && window.worldData.clans[hero.dynasty]) {
-        window.worldData.clans[hero.dynasty].armySize = hero.armySize;
+        window.worldData.clans[hero.dynasty].armySize = hero.armySize !== undefined ? hero.armySize : hero.currentArmy;
         window.worldData.clans[hero.dynasty].gold = hero.gold;
     }
 
-    // Незабавно обновяване на интерфейса
+    // Незабавно опресняване на графичния интерфейс
     if (window.updateCharacterUI) window.updateCharacterUI(hero);
 };
