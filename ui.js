@@ -1,9 +1,9 @@
 /**
  * ==========================================================================
  * ПРОЕКТ: ВЕЛИКА БЪЛГАРИЯ
- * ФАЙЛ: ui.js (ОПТИМИЗАЦИЯ НА ЛЕВИЯ ПАНЕЛ & СКРИВАНЕ НА ТЕКСТА НА ЕКСПЕДИЦИИТЕ)
- * ОПИСАНИЕ: Управление на UI. Времето е преместени отляво. Текстът на експедициите се скрива на телефон.
- * СТАТУС: КОРИГИРАН (Скриване на текстовия етикет на експедициите само за мобилни)
+ * ФАЙЛ: ui.js (УНИВЕРСАЛЕН ГЛОБАЛЕН ПРОФИЛ И ИНСПЕКЦИЯ НА ВЛАДЕТЕЛИТЕ)
+ * ОПИСАНИЕ: Управление на UI. Времето е преместено отляво. Текстът на експедициите се скрива на телефон.
+ * СТАТУС: ОБНОВЕН (Глобално отваряне на профил при кликване на икона или име на владетел)
  * Статистика на файловете в проекта: 16
  * ==========================================================================
  */
@@ -117,7 +117,7 @@ window.renderTop6LeadersUI = function() {
                 .leader-name-text { font-size: 0.60em !important; max-width: 70px !important; }
                 .leader-class-text { font-size: 0.48em !important; max-width: 70px !important; }
                 .leader-xp-bar-container { width: 55px !important; }
-                .expedition-btn-text { display: none !important; } /* Скрива текста на телефона */
+                .expedition-btn-text { display: none !important; }
             }
         `;
         document.head.appendChild(styleSheet);
@@ -225,7 +225,7 @@ window.renderTop6LeadersUI = function() {
 };
 
 /**
- * ИНСПЕКТИРАНЕ НА ИНВЕНТАР ПО ИМЕ
+ * ИНСПЕКТИРАНЕ НА ИНВЕНТАР / ПРОФИЛ ПО ИМЕ (СВЪРЗАНО КЪМ УНИВЕРСАЛНИЯ ПРОФИЛ)
  */
 window.inspectSpecificRulerByName = function(name) {
     let realLeader = null;
@@ -237,49 +237,12 @@ window.inspectSpecificRulerByName = function(name) {
 
     if (!realLeader) return;
 
-    if (typeof window.toggleRulerInventory === 'function') {
-        const existingModal = document.getElementById('inventory-modal');
-        if (existingModal) existingModal.remove();
-
-        let previousHero = window.currentHero;
-        window.currentHero = realLeader;
-
-        window.toggleRulerInventory();
-
-        setTimeout(() => {
-            const modal = document.getElementById('inventory-modal');
-            if (modal) {
-                let ownerHeader = document.getElementById('inventory-owner-title');
-                if (!ownerHeader) {
-                    ownerHeader = document.createElement('div');
-                    ownerHeader.id = 'inventory-owner-title';
-                    ownerHeader.style.cssText = `
-                        text-align: center; padding: 8px; margin: -5px auto 12px auto;
-                        background: rgba(212, 175, 55, 0.15); border: 1px solid #d4af37;
-                        border-radius: 6px; width: 90%; font-family: 'Georgia', serif; box-sizing: border-box;
-                    `;
-                    modal.insertBefore(ownerHeader, modal.firstChild);
-                }
-                ownerHeader.innerHTML = `
-                    <span style="color: #ccc; font-size: 0.8em; letter-spacing: 1px;">ИНВЕНТАР НА:</span><br>
-                    <strong style="color: #ffd700; font-size: 1.1em;">Кан ${realLeader.name}</strong> 
-                    <span style="color: #00ffcc; font-size: 0.9em;">(Н. ${realLeader.level})</span>
-                `;
-
-                const closeBtn = modal.querySelector("button");
-                if (closeBtn) {
-                    closeBtn.onclick = function() {
-                        if (modal) modal.remove();
-                        window.currentHero = previousHero;
-                        if (window.updateCharacterUI) window.updateCharacterUI(window.currentHero);
-                    };
-                }
-            }
-        }, 80);
+    // Пренасочваме към новия красив универсален профил
+    if (typeof window.openLeaderProfile === 'function') {
+        window.openLeaderProfile(realLeader);
     }
 };
 
-/**
 /**
  * ОБНОВЯВАНЕ НА ЛЕВИЯ СТРАНИЧЕН ПАНЕЛ
  */
@@ -291,7 +254,7 @@ window.updateCharacterUI = function(hero) {
 
     if (leftSidebar) {
         leftSidebar.innerHTML = `
-            <div style="text-align: center; padding: 10px; background: rgba(212, 175, 55, 0.08); border: 1px solid #d4af37; border-radius: 6px; margin-bottom: 15px;">
+            <div onclick="window.openLeaderProfile(window.currentHero)" style="text-align: center; padding: 10px; background: rgba(212, 175, 55, 0.08); border: 1px solid #d4af37; border-radius: 6px; margin-bottom: 15px; cursor: pointer;" onmouseover="this.style.background='rgba(212,175,55,0.15)'" onmouseout="this.style.background='rgba(212, 175, 55, 0.08)'">
                 <h3 style="margin: 0 0 5px 0; color: #d4af37; font-family: 'Cinzel'; font-size: 11px; letter-spacing: 1px;">ВЛАДЕТЕЛ</h3>
                 <div style="font-size: 1.15em; font-weight: bold; color: #fff; font-family: 'Cinzel', serif;">Кан ${hero.name}</div>
                 <div style="font-size: 0.8em; color: #bbb; margin-top: 2px;">Род: ${hero.dynasty} | ${hero.age} г.</div>
@@ -305,12 +268,26 @@ window.updateCharacterUI = function(hero) {
                 </h4>
                 <div style="font-size: 0.85em; max-height: 130px; overflow-y: auto; background: rgba(0,0,0,0.25); padding: 6px; border-radius: 4px;">
                     ${Object.keys(window.activeDynasties || {}).map(clanName => {
-                        const clan = window.activeDynasties[clanName];
+                        const clan = window.activeDynadties ? window.activeDynasties[clanName] : null;
                         const isPlayer = clanName === hero.dynasty;
+                        
+                        // Търсим лидера на съответния род в mightyLeaders, за да го предадем при клик
+                        let clanLeaderObj = null;
+                        if (isPlayer) {
+                            clanLeaderObj = window.currentHero;
+                        } else if (window.mightyLeaders) {
+                            clanLeaderObj = window.mightyLeaders.find(l => l.dynasty === clanName);
+                        }
+                        
+                        // Ако няма намерен в могъщите лидери, създаваме временен обект за визуализация на профила
+                        if (!clanLeaderObj) {
+                            clanLeaderObj = { name: "Водач", dynasty: clanName, level: 1, heroPower: 100, skills: {} };
+                        }
+
                         return `
-                            <div style="display: flex; justify-content: space-between; margin-bottom: 5px; color: ${isPlayer ? '#d4af37' : '#eee'}">
+                            <div onclick="window.openLeaderProfile(${JSON.stringify(clanLeaderObj).replace(/"/g, '&quot;')})" style="display: flex; justify-content: space-between; margin-bottom: 5px; color: ${isPlayer ? '#d4af37' : '#eee'}; cursor: pointer; padding: 2px 4px; border-radius: 3px;" onmouseover="this.style.background='rgba(255,255,255,0.05)'" onmouseout="this.style.background='transparent'">
                                 <span>${isPlayer ? '👑 ' : ''}${clanName}</span>
-                                <span style="font-size: 0.85em; opacity: 0.8;">${clan ? clan.regions || 0 : 0} зем.</span>
+                                <span style="font-size: 0.85em; opacity: 0.8;">${window.activeDynasties[clanName] ? window.activeDynasties[clanName].regions || 0 : 0} зем.</span>
                             </div>
                         `;
                     }).join('')}
@@ -385,6 +362,99 @@ window.updateExpeditionBadge = function() {
     
     badge.innerText = availableMissions;
     badge.style.display = availableMissions === 0 ? 'none' : 'flex';
+};
+
+// ==========================================================================
+// НАДГРАЖДАНЕ: УНИВЕРСАЛЕН ГЛОБАЛЕН ПРОФИЛ ЗА ВСЕКИ ВЛАДЕТЕЛ / ВОДАЧ
+// ==========================================================================
+window.openLeaderProfile = function(leader) {
+    if (!leader) return;
+
+    if (window.currentHero && leader.name === window.currentHero.name && leader.dynasty === window.currentHero.dynasty) {
+        if (typeof window.openInventory === 'function') {
+            window.openInventory();
+        } else if (typeof window.toggleTreasury === 'function') {
+            window.toggleTreasury();
+        }
+        return;
+    }
+
+    let stats = leader;
+    if (typeof window.getCalculatedLeaderStats === 'function') {
+        stats = window.getCalculatedLeaderStats(leader);
+    }
+
+    const currentClass = leader.characterClass || stats.characterClass || leader.currentClass || "Воевода";
+    const level = leader.level || stats.level || 1;
+    const power = leader.heroPower || stats.heroPower || 100;
+
+    let skillsHTML = '<div style="margin-top: 15px; background: rgba(0,0,0,0.4); padding: 10px; border-radius: 6px; border: 1px solid #333;">';
+    skillsHTML += '<h4 style="margin: 0 0 8px 0; color: #d4af37; font-family: \'Cinzel\'; font-size: 12px; border-bottom: 1px solid #444; padding-bottom: 4px;">ПРИДОБИТИ СПОСОБНОСТИ</h4>';
+    
+    if (leader.skills && Object.keys(leader.skills).length > 0) {
+        const skillNames = {
+            endurance: { name: "Издръжливост", icon: "❤️" },
+            tactics: { name: "Тактика", icon: "⚔️" },
+            diplomacy: { name: "Дипломация", icon: "🤝" },
+            mysticism: { name: "Мистицизъм", icon: "🔮" },
+            vampirism: { name: "Вампиризъм", icon: "🦇" },
+            scouting: { name: "Разузнаване", icon: "🦅" }
+        };
+
+        let hasSkills = false;
+        Object.keys(leader.skills).forEach(key => {
+            if (skillNames[key] && leader.skills[key] > 0) {
+                hasSkills = true;
+                skillsHTML += `
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 5px; font-size: 13px; color: #ccc;">
+                        <span>${skillNames[key].icon} ${skillNames[key].name}:</span>
+                        <span style="color: #00ffcc; font-weight: bold;">lvl ${leader.skills[key]}</span>
+                    </div>
+                `;
+            }
+        });
+        if (!hasSkills) skillsHTML += '<div style="color: #666; font-size: 12px; text-align: center;">Все още няма развити способности.</div>';
+    } else {
+        skillsHTML += '<div style="color: #666; font-size: 12px; text-align: center;">Все още няма развити способности.</div>';
+    }
+    skillsHTML += '</div>';
+
+    const profileModal = document.createElement('div');
+    profileModal.id = 'dynamic-leader-profile';
+    profileModal.style = 'position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.75); display: flex; justify-content: center; align-items: center; z-index: 99999; font-family: sans-serif;';
+    
+    profileModal.innerHTML = `
+        <div style="background: #1a1a1a; border: 2px solid #d4af37; border-radius: 10px; width: 320px; padding: 20px; box-shadow: 0 0 20px rgba(212,175,55,0.3); position: relative; color: #fff;">
+            <button onclick="document.getElementById('dynamic-leader-profile').remove()" style="position: absolute; top: 10px; right: 10px; background: none; border: none; color: #ff3333; font-size: 18px; cursor: pointer; font-weight: bold;">✕</button>
+            
+            <div style="text-align: center; margin-bottom: 15px;">
+                <div style="font-size: 10px; color: #d4af37; letter-spacing: 2px; font-family: 'Cinzel'; margin-bottom: 4px;">ПРОФИЛ НА ВОДАЧ</div>
+                <h2 style="margin: 0; color: #fff; font-family: 'Cinzel', serif; font-size: 1.6em;">Кан ${leader.name}</h2>
+                <div style="font-size: 0.9em; color: #aaa; margin-top: 2px;">Род: ${leader.dynasty} ${leader.age ? `| ${leader.age} г.` : ''}</div>
+            </div>
+
+            <div style="display: flex; justify-content: space-around; background: rgba(212,175,55,0.05); padding: 10px; border-radius: 6px; border: 1px dashed rgba(212,175,55,0.3); text-align: center;">
+                <div>
+                    <div style="font-size: 11px; color: #888;">НИВО</div>
+                    <div style="font-size: 16px; color: #00ffcc; font-weight: bold;">${level}</div>
+                </div>
+                <div>
+                    <div style="font-size: 11px; color: #888;">КЛАС</div>
+                    <div style="font-size: 13px; color: #ffaa00; font-weight: bold; text-transform: uppercase; margin-top: 3px;">${currentClass}</div>
+                </div>
+                <div>
+                    <div style="font-size: 11px; color: #888;">МОЩ</div>
+                    <div style="font-size: 16px; color: #ff3366; font-weight: bold;">⚔️ ${power}</div>
+                </div>
+            </div>
+
+            ${skillsHTML}
+
+            <button onclick="document.getElementById('dynamic-leader-profile').remove()" style="width: 100%; margin-top: 15px; padding: 10px; background: rgba(212,175,55,0.15); border: 1px solid #d4af37; border-radius: 6px; color: #fff; font-family: 'Cinzel', serif; cursor: pointer; font-size: 12px; transition: background 0.2s;" onmouseover="this.style.background='rgba(212,175,55,0.3)'" onmouseout="this.style.background='rgba(212,175,55,0.15)'">Затвори летописа</button>
+        </div>
+    `;
+
+    document.body.appendChild(profileModal);
 };
 
 const UI = {
