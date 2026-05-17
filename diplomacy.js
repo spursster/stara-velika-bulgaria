@@ -1,8 +1,8 @@
 /**
  * МОДУЛ: ДИПЛОМАЦИЯ И ПРОГРЕС НА КУПЕНИ ЛИДЕРИ - Велика България
- * СТАТУС: НАПЪЛНО НАДГРАДЕН (Опит за всички лидери, Diablo пасиви & Династични съюзи)
- * КОРЕКЦИЯ: Добавен е цикъл за пасивен/активен опит на купените и отключените лидери на всеки ход.
- * Статистика на файловете в проекта: 16
+ * СТАТУС: НАПЪЛНО НАДГРАДЕН И ОПТИМИЗИРАН (Фикс за Uncaught TypeError: openMarriageMenu)
+ * КОРЕКЦИЯ: Добавен е автоматичен сигурен мост за грешно викани брачни функции от интерфейса.
+ * Статистика на файловете in проекта: 16
  */
 window.clanRelations = {};
 
@@ -63,7 +63,6 @@ window.processClanDiplomacyAutomation = function() {
                             window.showAdvisorMsg(`📈 ПРОГРЕС: Отключеният лидер ${leader.name} от род ${leader.dynasty} достигна Ниво ${leader.level}!`);
                         }
                         
-                        // Изчисляваме изискването за следващото ниво
                         reqXP = window.rpgDatabase.getXPRequiredForLevel(leader.level);
                     }
                 }
@@ -75,18 +74,16 @@ window.processClanDiplomacyAutomation = function() {
     Object.keys(window.worldData.clans).forEach(clanName => {
         if (clanName === hero.dynasty) return; // Пропускаме нашия род
 
-        // Базово изменение на отношенията
         let change = Math.floor(Math.random() * 7) - 3; // от -3 до +3
         
-        // Влияние на Diablo пасива "Величие / Харизма" на главния Кан върху останалите родове
+        // Влияние на Diablo пасива "Величие / Харизма"
         if (hero.skills && (hero.skills.stature || 0) > 0) {
-            change += Math.floor(hero.skills.stature * 0.5); // По-лесно поддържане на добри отношения
+            change += Math.floor(hero.skills.stature * 0.5);
         }
 
         window.clanRelations[clanName] = Math.max(0, Math.min(100, (window.clanRelations[clanName] || 40) + change));
     });
 
-    // Опресняваме UI екраните, за да се видят веднага новите нива на купените герои
     if (window.renderTop6LeadersUI) window.renderTop6LeadersUI();
     if (window.updateCharacterUI) window.updateCharacterUI(hero);
 };
@@ -188,9 +185,9 @@ window.sendDiplomaticGift = function(clan, cost) {
         }
 
         if (window.updateCharacterUI) window.updateCharacterUI(hero);
-        window.openDiplomacyMenu(); // Преначертаване на менюто
+        window.openDiplomacyMenu();
     } else {
-        if (window.showAdvisorMsg) window.showAdvisorMsg("❌ Нима ще пращате празни каруци? Хазната няма толкова злато!");
+        if (window.showAdvisorMsg) window.showAdvisorMsg("❌ Хазната няма толкова злато за такъв разкошен дар!");
     }
 };
 
@@ -204,7 +201,8 @@ window.proposeMarriage = function(clan, cost) {
     if (hero.gold >= cost) {
         hero.gold -= cost;
         window.applyMarriageEffects(clan);
-        document.getElementById('diplomacy-overlay').remove();
+        const overlay = document.getElementById('diplomacy-overlay');
+        if (overlay) overlay.remove();
     } else {
         if (window.showAdvisorMsg) window.showAdvisorMsg("❌ Нямате достатъчно злато, за да покриете разкошната сватба!");
     }
@@ -235,14 +233,23 @@ window.applyMarriageEffects = function(clan) {
     
     if (!ownedRegionsFlat.includes(region)) {
         window.playerRegions.push(region);
-        if (window.worldData.clans[clan]) {
+        if (window.worldData && window.worldData.clans && window.worldData.clans[clan]) {
             window.worldData.clans[clan].regionsOwned += 1;
         }
     }
 
     if (window.showAdvisorMsg) {
-        window.showAdvisorMsg(`💍 СВАТБА: Вдигнат е пищен династичен съюз с род ${clan}! Като зестра получавате пълна власт над регион: ${region}!`);
+        window.showAdvisorMsg(`💍 СВАТБА: Вдигнат е пищен династичен съюз с род ${clan}! Като зестра получавате власт над регион: ${region}!`);
     }
 
     if (window.updateCharacterUI) window.updateCharacterUI(window.currentHero);
+};
+
+// =========================================================================
+// 🎯 СИНХРОНИЗАЦИОНЕН МОСТ ЗА КОРЕКЦИЯ НА ГРЕШКАТА В INDEX.HTML / UI.JS
+// Ако външен HTML бутон извика грешното име, го пренасочваме безопасно тук:
+// =========================================================================
+window.openMarriageMenu = function() {
+    console.warn("Предупреждение: Извикана е остаряла функция openMarriageMenu. Автоматично пренасочване към Главното Дипломатическо Меню.");
+    window.openDiplomacyMenu();
 };
