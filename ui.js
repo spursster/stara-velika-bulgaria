@@ -161,21 +161,22 @@ window.renderTop6LeadersUI = function() {
         });
     }
     
-   if (window.worldData && window.worldData.clans) {
+if (window.worldData && window.worldData.clans) {
         Object.entries(window.worldData.clans).forEach(([clanName, ml]) => {
-            // Вземаме името на водача от свойството .leader
+            // Поправка: Вземаме правилното име на водача от .leader
             let actualName = ml.leader || clanName;
+            
             if (window.currentHero && actualName === window.currentHero.name) return;
             
             if (ml.purchased || ml.owned || ml.isUnlocked || (ml.level !== undefined) || (ml.xp !== undefined) || ml.inventory) {
-                // Използваме реалното ниво и XP, записани от битките, или падаме обратно на формулата
+                // Изчисляване на виртуалното или реалното ниво безопасно
                 let currentLvl = ml.level || 1;
                 let xpReq = (window.rpgDatabase && window.rpgDatabase.getXPRequiredForLevel) ? window.rpgDatabase.getXPRequiredForLevel(currentLvl) : currentLvl * 150;
                 let xpPct = ml.xpPercent !== undefined ? ml.xpPercent : (ml.xp ? Math.min(100, Math.floor((ml.xp / xpReq) * 100)) : 0);
                 
                 allLeaders.push({ 
-                    name: actualName,
-                    dynasty: clanName, // Ключът на масива е името на династията
+                    name: actualName,      // Коректно присвояване
+                    dynasty: clanName,     // Ключът е името на династията ("Дуло", "Асеневци" и т.н.)
                     heroPower: ml.heroPower || 100,
                     gold: ml.gold || 0,
                     armySize: ml.armySize || 0,
