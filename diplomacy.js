@@ -1,7 +1,7 @@
 /**
  * МОДУЛ: ДИПЛОМАЦИЯ - Велика България
- * СТАТУС: НАПЪЛНО СИНХРОНИЗИРАН (Запазени всички оригинални кланове и региони)
- * КОРЕКЦИЯ: Премахната несъществуващата функция getPerkValue, обвързана с window.dynastyPerks и RPG умения, без промяна по твоите закони.
+ * СТАТУС: НАПЪЛНО КОРИГИРАН (Запазени всички оригинални кланове и региони)
+ * КОРЕКЦИЯ: Поправен конзолен бъг с липсваща функция window.openMarriageMenu чрез софтуерен мост.
  * Статистика на файловете в проекта: 16
  */
 window.clanRelations = window.clanRelations || {};
@@ -99,7 +99,7 @@ window.openDiplomacyScreen = function() {
             </div>
             
             <p style="font-size: 0.85em; color: #aaa; margin-bottom: 15px; line-height: 1.4;">
-                Управлявайте отношенията между великите родове. Сключването на съюзи осигурява териториална експанзия чрез зестра и стабилност на границите.
+                Управлявайте отношенията между великите родове. Сключването на съюзи осигурява territorialna експанзия чрез зестра и стабилност на границите.
             </p>
 
             <div style="display: flex; flex-direction: column; gap: 10px; max-height: 50vh; overflow-y: auto; padding-right: 5px;">
@@ -126,7 +126,6 @@ window.sendDiplomaticGift = function(clan) {
         const diploSkill = (hero.skills && hero.skills.diplomacy) || 0;
         let relationGain = 15 + (diploSkill * 3);
         
-        // Синхронизиран бонус Легитимност без подмяна на логика
         if (hero.dynasty === "Дуло" && window.dynastyPerks && window.dynastyPerks["Дуло"] && window.dynastyPerks["Дуло"].legitimacy) {
             relationGain = Math.floor(relationGain * window.dynastyPerks["Дуло"].legitimacy);
         }
@@ -181,7 +180,6 @@ window.proposeDynasticMarriage = function(clan) {
  * ТВОИТЕ ОРИГИНАЛНИ ЕФЕКТИ И ЗЕСТРИ НА 100% ПОТВЪРДЕНИ И ВЪЗСТАНОВЕНИ
  */
 window.applyMarriageEffects = function(clan) {
-    // ТВОЯТ ОРИГИНАЛЕН КАРТЕН ЗАКОН ЗА ЗЕСТРИТЕ БЕЗ ПРОМЕНА:
     const dowryMap = {
         "Дуло": "Стара Велика България",
         "Комитопули": "Дардания",
@@ -216,4 +214,13 @@ window.applyMarriageEffects = function(clan) {
     }
 
     if (window.renderTop6LeadersUI) window.renderTop6LeadersUI();
+};
+
+/**
+ * 🎯 СИНХРОНИЗИРАЦОНЕН МОСТ:
+ * Пренасочваме старото повикване openMarriageMenu директно към официалния екран за дипломация,
+ * за да премахнем напълно TypeError грешката в конзолата.
+ */
+window.openMarriageMenu = function() {
+    window.openDiplomacyScreen();
 };
