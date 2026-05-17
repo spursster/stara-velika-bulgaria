@@ -1,6 +1,7 @@
 /**
  * МОДУЛ: ВЕЛИКАТА RPG СИСТЕМА - Велика България
  * СТАТУС: НАПЪЛНО СИНХРОНИЗИРАН, ИЗЧИСТЕН И ИСТОРИЧЕСКИ ПРЕЦИЗЕН (Без забранени титли)
+ * КОРЕКЦИЯ БЪГ: Добавена е пълната UI система за Топ 6 Лидери със сортиране по опит и превключване.
  * Статистика на файловете в проекта: 16
  */
 
@@ -19,7 +20,7 @@ window.rpgDatabase = window.rpgDatabase || {
         diplomacy: { name: "Родова Дипломация", desc: "Увеличава приходите от злато при преговори и мисии." },
         scouting: { name: "Следотърсачество", desc: "Намалява времетраенето на експедициите с 1 ход на всеки 3 нива." },
         alchemy: { name: "Древна Алхимия", desc: "Увеличава шанса за намиране на редки артефакти в слотовете." },
-        leadership: { name: "Владетелски Дух", desc: "Позволява воденето на по-голяма лична армия." }
+        leadership: { name: "Владетелски Дух", desc: "Позволява воденето на по-голая лична армия." }
     },
 
     // ПЪЛЕН СПИСЪК С ТОЧНО 42 УНИКАЛНИ КЛАСА (РАЗДЕЛЕНИ ПО РОДОВЕ И КРИТЕРИИ)
@@ -88,12 +89,10 @@ window.getLeaderTitle = function(hero) {
     const name = hero.name || "";
     const dyn = hero.dynasty || "";
     
-    // Ако името вече съдържа титла (напр. "Кан Аспарух", "Цар Симеон"), не добавяме нищо
     if (name.includes("Кан") || name.includes("Цар") || name.includes("Княз") || name.includes("Войвода")) {
         return "";
     }
     
-    // Специфични титли според епохата и рода
     if (dyn === "Дуло") return "Кан ";
     if (dyn === "Одриси") return "Цар ";
     if (dyn === "Македони") return "Владетел ";
@@ -101,6 +100,119 @@ window.getLeaderTitle = function(hero) {
     if (dyn === "Комитопули" || dyn === "Асеневци" || dyn === "Шишмановци") return "Цар ";
     
     return "Водач ";
+};
+
+/**
+ * ДИНАМИЧНО ИЗРИСУВАНЕ И СОРТИРАНЕ НА ЛЕНТАТА С ТОП 6 ЛИДЕРИ
+ * Оправя бъга изцяло чрез събиране на всички отключени родове от window.worldData.clans
+ */
+window.renderTop6LeadersUI = function() {
+    // Търсим контейнера на горната лента в index.html
+    let leadersBar = document.getElementById('top-6-leaders-bar');
+    if (!leadersBar) {
+        // Ако контейнерът липсва динамично, го инжектираме в горната част на екрана над картата
+        leadersBar = document.getElementById('top-leaders-panel');
+        if (!leadersBar) return;
+    }
+
+    let allRulers = [];
+    
+    // 1. Извличане на всички текущо притежавани владетели от глобалния обект на играта
+    if (window.worldData && window.worldData.clans) {
+        allRulers = Object.values(window.worldData.clans);
+    }
+
+    // Подсигуряваме, че текущият ни герой също е вътре, ако липсва в клановете
+    if (window.currentHero && !allRulers.find(r => r.name === window.currentHero.name)) {
+        allRulers.push(window.currentHero);
+    }
+
+    // Подсигуряваме базови RPG данни за всички владетели в масива
+    allRulers.forEach(r => window.initializeHeroRPGData(r));
+
+    // 2. Сортиране по Ниво и Опит (Низходящ ред) - Лентата винаги се подрежда по мощ
+    allRulers.sort((a, b) => {
+        if (b.level !== a.level) return b.level - a.level;
+        return (b.xp || 0) - (a.xp || 0);
+    });
+
+    // Избираме първите 6 най-силни безсмъртни владетели
+    let top6 = allRulers.slice(0, 6);
+
+    let html = `
+        <div style="display: flex; gap: 8px; justify-content: center; align-items: center; width: 100%; background: #000; padding: 6px; border-bottom: 1px solid #d4af37; box-sizing: border-box;">
+    `;
+
+    // 3. Рендериране на 6-те слота
+    for (let i = 0; i < 6; i++) {
+        let ruler = top6[i];
+
+        if (ruler) {
+            let isCurrent = window.currentHero && window.currentHero.name === ruler.name;
+            let title = window.getLeaderTitle(ruler);
+            let displayClass = ruler.currentClass || "Чист Водач";
+            
+            // Проверка за статус на смърт / безсмъртие
+            let deathStatus = ruler.isDead ? `<span style="color:#ff0000; font-size:0.8em; font-weight:bold;"> [💀 МЪРТЪВ]</span>` : '';
+            
+            html += `
+                <div onclick="window.selectHeroFromTopBar('${ruler.id || ruler.name}')" style="
+                    flex: 1; min-width: 130px; max-width: 180px; padding: 6px 10px; border-radius: 4px;
+                    background: ${isCurrent ? 'rgba(214,175,55,0.15)' : '#0d0d0d'};
+                    border: 1px solid ${isCurrent ? '#ffd700' : '#222'};
+                    cursor: pointer; text-align: left; position: relative; transition: all 0.2s;
+                " onmouseover="this.style.borderColor='#ffd700'" onmouseout="this.style.borderColor='${isCurrent ? '#ffd700' : '#222'}'">
+                    <div style="font-size: 0.8em; font-weight: bold; color: ${isCurrent ? '#ffd700' : '#fff'}; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                        ${title}${ruler.name}${deathStatus}
+                    </div>
+                    <div style="display: flex; justify-content: space-between; font-size: 0.7em; color: #aaa; margin-top: 2px;">
+                        <span style="color: #00ffcc;">Ниво ${ruler.level}</span>
+                        <span style="color: #888; font-style: italic;">${displayClass}</span>
+                    </div>
+                </div>
+            `;
+        } else {
+            // Празен слот, ако играчът още няма купени 6 владетели
+            html += `
+                <div style="flex: 1; min-width: 130px; max-width: 180px; padding: 6px 10px; border-radius: 4px; background: #050505; border: 1px solid #111; border-style: dashed; text-align: center; opacity: 0.4;">
+                    <div style="font-size: 0.75em; color: #555; font-style: italic; line-height: 24px;">Чака привличане...</div>
+                </div>
+            `;
+        }
+    }
+
+    html += `</div>`;
+    leadersBar.innerHTML = html;
+};
+
+/**
+ * ФУНКЦИЯ ПРИ КЛИКВАНЕ НА ВЛАДЕТЕЛ ОТ ЛЕНТАТА - ЗА СМЯНА НА ТЕКУЩИЯ ГЕРОЙ
+ */
+window.selectHeroFromTopBar = function(rulerIdentifier) {
+    if (!window.worldData || !window.worldData.clans) return;
+    
+    let target = window.worldData.clans[rulerIdentifier];
+    if (!target) {
+        // Fallback търсене по име
+        target = Object.values(window.worldData.clans).find(r => r.name === rulerIdentifier);
+    }
+
+    if (target) {
+        window.currentHero = target;
+        
+        if (window.showAdvisorMsg) {
+            let title = window.getLeaderTitle(target);
+            window.showAdvisorMsg(`👑 Вие поехте контрола над ${title}${target.name}! Всички военни и цивилни действия вече са под негово командване.`);
+        }
+
+        // Пълно обновяване на екраните
+        if (window.updateCharacterUI) window.updateCharacterUI(target);
+        window.renderTop6LeadersUI();
+        
+        // Ако експедиционният център е отворен, го обновяваме с новия лидер
+        let expUI = document.getElementById('expedition-ui-container');
+        if (expUI && window.openExpeditionCenter) window.openExpeditionCenter();
+    }
 };
 
 /**
@@ -113,7 +225,9 @@ window.initializeHeroRPGData = function(hero) {
     hero.level = 1;
     hero.xp = 0;
     hero.skillPoints = 0;
+    hero.heroPower = hero.heroPower || 100;
     hero.currentClass = hero.currentClass && hero.currentClass !== "Няма клас" ? hero.currentClass : "Чист Водач";
+    hero.isDead = hero.isDead || false;
     
     if (!hero.skills) {
         hero.skills = {
@@ -161,7 +275,7 @@ window.gainHeroXP = function(hero, amount) {
         window.showAdvisorMsg(`✨ ${title}${hero.name} от род ${hero.dynasty} достигна НИВО ${hero.level}!`);
     }
 
-    if (window.renderTop6LeadersUI) window.renderTop6LeadersUI();
+    window.renderTop6LeadersUI();
     if (window.updateCharacterUI && window.currentHero && window.currentHero.name === hero.name) {
         window.updateCharacterUI(window.currentHero);
     }
@@ -178,13 +292,12 @@ window.upgradeHeroSkill = function(hero, skillKey) {
         hero.skills[skillKey]++;
         hero.skillPoints--;
         
-        // След всяка промяна на умение, проверяваме дали не отключва нов клас
         window.checkAndAssignClass(hero);
         
-        // Обновяваме UI дисплея веднага
         if (window.updateCharacterUI && window.currentHero && window.currentHero.name === hero.name) {
             window.updateCharacterUI(window.currentHero);
         }
+        window.renderTop6LeadersUI();
         return true;
     }
     return false;
@@ -205,6 +318,7 @@ window.autoAssignLeaderSkills = function(leader) {
         }
     }
     window.checkAndAssignClass(leader);
+    window.renderTop6LeadersUI();
 };
 
 /**
