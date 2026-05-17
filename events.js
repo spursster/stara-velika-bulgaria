@@ -118,19 +118,30 @@ window.handleEventChoice = function(index) {
     const result = choice.action(window.currentHero);
     
     const modal = document.getElementById('event-modal');
-    if (modal) modal.remove(); // Напълно изтриваме елемента от DOM дървото вместо само скриване
+    if (modal) modal.remove(); // Изтриваме модала от екрана
     
-    // НАПРЕДВАНЕ НА ВРЕМЕТО ПРИ СЪБИТИЕ
+    // ПРАВИЛНА ЛОГИКА: Напредване с 1 ход (3 месеца) вместо с 1 година
     if (window.gameTime) {
-        window.gameTime.year += 1; // Увеличава годината с 1 при натискане
+        if (typeof window.gameTime.advanceTurn === 'function') {
+            // Ако имаш готова функция в ядрото, я викаме директно:
+            window.gameTime.advanceTurn();
+        } else {
+            // Ръчен fallback, ако логиката е записана като променливи:
+            window.gameTime.currentTurn = (window.gameTime.currentTurn || 0) + 1;
+            
+            // На всеки 4 хода (4 * 3 месеца = 12 месеца) се сменя годината
+            if (window.gameTime.currentTurn % 4 === 0) {
+                window.gameTime.year += 1;
+            }
+        }
     }
     
-    // СИНХРОНИЗАЦИЯ С ЕКСПЕДИЦИИТЕ (За да отброяват ходове при всяко събитие)
+    // СИНХРОНИЗАЦИЯ С ЕКСПЕДИЦИИТЕ (Намаляват времетраенето си с 1 ход)
     if (window.updateExpeditionSystem) {
         window.updateExpeditionSystem();
     }
     
-    // ОБНОВЯВАНЕ НА ИНТЕРФЕЙСА С НОВИТЕ ДАННИ И ВРЕМЕ
+    // ОБНОВЯВАНЕ НА ИНТЕРФЕЙСА
     if (window.showAdvisorMsg) window.showAdvisorMsg(result);
     if (window.updateCharacterUI) window.updateCharacterUI(window.currentHero);
     if (window.updateTimeUI) window.updateTimeUI();
