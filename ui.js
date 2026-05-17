@@ -280,6 +280,7 @@ window.inspectSpecificRulerByName = function(name) {
 };
 
 /**
+/**
  * ОБНОВЯВАНЕ НА ЛЕВИЯ СТРАНИЧЕН ПАНЕЛ
  */
 window.updateCharacterUI = function(hero) {
@@ -288,22 +289,8 @@ window.updateCharacterUI = function(hero) {
     let stats = getCalculatedLeaderStats(hero);
     const leftSidebar = document.getElementById('provinces-list');
 
-    let currentYear = window.gameTime ? window.gameTime.year : 681;
-    let currentEra = window.gameTime ? window.gameTime.era : "г.";
-
     if (leftSidebar) {
         leftSidebar.innerHTML = `
-            <div style="padding: 10px; background: rgba(0, 0, 0, 0.4); border: 1px solid rgba(212, 175, 55, 0.3); border-radius: 6px; margin-bottom: 12px; font-family: 'Montserrat', sans-serif;">
-                <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(212,175,55,0.2); padding-bottom: 5px; margin-bottom: 6px;">
-                    <span style="color: #aaa; font-size: 10px; letter-spacing: 0.5px;">ЛЕТОБРОЕНЕ:</span>
-                    <strong id="sidebar-time-display" style="color: #ffd700; font-size: 13px; font-family: 'Cinzel', serif;">${currentYear} ${currentEra}</strong>
-                </div>
-                <div style="display: flex; justify-content: space-between; align-items: center; font-size: 11px;">
-                    <span style="color: #eee;">💰 Скарби (Злато):</span>
-                    <strong id="sidebar-gold-display" style="color: #00ffcc; font-size: 12px;">${Math.floor(hero.gold)}</strong>
-                </div>
-            </div>
-
             <div style="text-align: center; padding: 10px; background: rgba(212, 175, 55, 0.08); border: 1px solid #d4af37; border-radius: 6px; margin-bottom: 15px;">
                 <h3 style="margin: 0 0 5px 0; color: #d4af37; font-family: 'Cinzel'; font-size: 11px; letter-spacing: 1px;">ВЛАДЕТЕЛ</h3>
                 <div style="font-size: 1.15em; font-weight: bold; color: #fff; font-family: 'Cinzel', serif;">Кан ${hero.name}</div>
@@ -326,30 +313,20 @@ window.updateCharacterUI = function(hero) {
                                 <span style="font-size: 0.85em; opacity: 0.8;">${clan ? clan.regions || 0 : 0} зем.</span>
                             </div>
                         `;
-                   }).join('')}
+                    }).join('')}
                 </div>
             </div>
 
             <div style="margin-bottom: 15px;">
-                <button id="btn-expeditions" onclick="window.openExpeditionsMenu()" style="width: 100%; padding: 8px; background: rgba(212, 175, 55, 0.15); border: 1px solid #d4af37; border-radius: 6px; color: #fff; font-family: 'Cinzel', serif; font-size: 11px; cursor: pointer; display: flex; justify-content: center; align-items: center; gap: 8px; position: relative;">
+                <button id="btn-expeditions" onclick="window.openExpeditionsMenu()" style="width: 100%; padding: 8px; background: rgba(212, 175, 55, 0.15); border: 1px solid #d4af37; border-radius: 6px; color: #fff; font-family: 'Cinzel', serif; font-size: 11px; cursor: pointer; display: flex; justify-content: center; align-items: center; gap: 8px; position: relative; transition: background 0.2s;" onmouseover="this.style.background='rgba(212,175,55,0.3)'" onmouseout="this.style.background='rgba(212,175,55,0.15)'">
                     <span>🧭 ЕКСПЕДИЦИИ</span>
                     <div id="expedition-badge" class="mission-badge" style="position: absolute; right: 10px; background: #ff3333; color: white; border-radius: 50%; width: 16px; height: 16px; font-size: 10px; display: flex; justify-content: center; align-items: center; font-weight: bold;">0</div>
                 </button>
             </div>
         
-
-            <div id="history-log-container" style="border-top: 1px solid #333; padding-top: 10px;">
-                <h4 style="color: #d4af37; font-size: 10px; margin-bottom: 8px; letter-spacing: 0.5px; font-family: 'Cinzel';">ЛЕТОПИС</h4>
-            </div>
-
             <div id="history-log-container" style="border-top: 1px solid #333; padding-top: 10px;">
                 <h4 style="color: #d4af37; font-size: 10px; margin-bottom: 8px; letter-spacing: 0.5px; font-family: 'Cinzel';">ЛЕТОПИС</h4>
                 <div id="history-log" style="font-size: 10px; color: #aaa; max-height: 180px; overflow-y: auto; line-height: 1.4;"></div>
-                <div style="margin-bottom: 15px;">
-                <button id="btn-expeditions" onclick="window.openExpeditionsMenu()" style="width: 100%; padding: 8px; background: rgba(212, 175, 55, 0.15); border: 1px solid #d4af37; border-radius: 6px; color: #fff; font-family: 'Cinzel', serif; font-size: 11px; cursor: pointer; display: flex; justify-content: center; align-items: center; gap: 8px; position: relative; transition: background 0.2s;" onmouseover="this.style.background='rgba(212,175,55,0.3)'" onmouseout="this.style.background='rgba(212,175,55,0.15)'">
-                   <span>🧭 ЕКСПЕДИЦИИ</span>
-                    <div id="expedition-badge" class="mission-badge" style="position: absolute; right: 10px; background: #ff3333; color: white; border-radius: 50%; width: 16px; height: 16px; font-size: 10px; display: flex; justify-content: center; align-items: center; font-weight: bold;">3</div>
-                </button>
             </div>
         `;
     }
