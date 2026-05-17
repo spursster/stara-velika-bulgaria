@@ -1,6 +1,6 @@
 /**
  * МОДУЛ: ВЕЛИКИТЕ ЕКСПЕДИЦИИ НА СВЕТА - Велика България
- * СТАТУС: НАПЪЛНО СИНХРОНИЗИРАН И ОБНОВЕН (Всички 26 мисии от цял свят са налични)
+ * СТАТУС: НАПЪЛНО СИНХРОНИЗИРАН (Всички 26 мисии от цял свят + RPG система за нива на владетелите)
  * КОРЕКЦИЯ БЪГ: Баджът свети в зелено и показва ЧИСЛО само при завършени мисии, чакащи награда.
  * Статистика на файловете в проекта: 16
  */
@@ -48,7 +48,7 @@ window.initLegendaryQuests = function() {
     window.legendaryQuests = [
         { id: "q1", name: "Пътят на коприната", duration: 3, cost: 200, danger: 15, reward: "Злато и Рядък артефакт" },
         { id: "q2", name: "Тайната на Родопите", duration: 2, cost: 100, danger: 10, reward: "Древен български амулет" },
-        { id: "q3", name: "Понтийско плаване", duration: 4, cost: 350, danger: 30, reward: "Богатства от Ромейската империя" },
+        { id: "q3", name: "Понтийско плаване", duration: 4, cost: 350, danger: 30, reward: "Богатства от Ромейската empire" },
         { id: "q4", name: "Кримска мисия", duration: 5, cost: 500, danger: 45, reward: "Легендарен меч на Кан" },
         { id: "q5", name: "Кавказки поход", duration: 4, cost: 400, danger: 35, reward: "Планински кристали и Слава" },
         { id: "q6", name: "Волжка мисия", duration: 6, cost: 600, danger: 40, reward: "Търговски договори и Злато" },
@@ -84,20 +84,30 @@ window.openExpeditionCenter = function() {
     const mainArea = document.getElementById('game-main-area');
     if (!mainArea) return;
 
+    // Подсигуряване на RPG статистика за текущия активен владетел
+    const hero = window.currentHero;
+    if (hero) {
+        hero.expeditionLevel = hero.expeditionLevel || 1;
+        hero.expeditionXP = hero.expeditionXP || 0;
+    }
+
     let contentHtml = `
         <div id="expedition-ui-container" style="padding:20px; background:rgba(8,8,8,0.98); border:2px solid #d4af37; color:white; font-family:'Georgia',serif; box-sizing:border-box; height:100%; overflow-y:auto; border-radius:8px;">
             <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #d4af37; padding-bottom:10px; margin-bottom:15px;">
                 <h2 style="margin:0; color:#d4af37; font-size:1.3em; text-transform:uppercase; letter-spacing:1px;">🧭 Експедиционен Корпус</h2>
+                <div style="font-size:0.85em; color:#00ffcc; border:1px solid #00ffcc; padding:4px 8px; border-radius:4px; background:rgba(0,255,204,0.05);">
+                    🎖️ Кан ${hero ? hero.name : ''}: Ниво ${hero ? hero.expeditionLevel : 1} (${hero ? hero.expeditionXP : 0}/100 XP)
+                </div>
                 <button onclick="window.closeExpeditionCenter()" style="background:none; border:1px solid #d4af37; color:#d4af37; cursor:pointer; padding:3px 8px; font-weight:bold; border-radius:4px;">X</button>
             </div>
             
-            <div style="margin-bottom:20px;">
-                <button onclick="window.toggleRulerInventory()" style="background:#111; color:#00ffcc; border:1px solid #00ffcc; padding:8px 12px; cursor:pointer; font-weight:bold; border-radius:4px; text-transform:uppercase; font-size:0.8em; width:100%;">
-                    🎒 Отвори Скулптурен Инвентар на Владетеля
+            <div style="margin-bottom:20px; display:flex; gap:10px;">
+                <button onclick="window.toggleRulerInventory()" style="background:#111; color:#00ffcc; border:1px solid #00ffcc; padding:8px 12px; cursor:pointer; font-weight:bold; border-radius:4px; text-transform:uppercase; font-size:0.8em; flex:1;">
+                    🎒 Скулптурен Инвентар и Съкровищница
                 </button>
             </div>
 
-            <h3 style="color:#d4af37; font-size:1em; margin-bottom:10px; text-transform:uppercase;">Достъпни експедиции:</h3>
+            <h3 style="color:#d4af37; font-size:1em; margin-bottom:10px; text-transform:uppercase;">Достъпни дестинации по света:</h3>
             <div style="display:flex; flex-direction:column; gap:12px; margin-bottom:25px;">
     `;
 
@@ -113,23 +123,27 @@ window.openExpeditionCenter = function() {
                     <div style="font-weight:bold; color:#aaa;">${q.name}</div>
                     <div style="font-size:0.85em; margin:5px 0;">
                         ${isDone 
-                            ? `<span style="color:#4caf50; font-weight:bold;">✓ МИСИЯТА Е ЗАВЪРШЕНА!</span>` 
-                            : `Статус: Изследва се... (Остават: <b style="color:#ffd700;">${remains} хода</b>)`}
+                            ? `<span style="color:#4caf50; font-weight:bold;">✓ МИСИЯТА Е ЗАВЪРШЕНА ВЛАДЕТЕЛЮ!</span>` 
+                            : `Статус: Водачът трупа опит... (Остават: <b style="color:#ffd700;">${remains} хода</b>)`}
                     </div>
                     ${isDone 
-                        ? `<button onclick="window.claimExpeditionReward('${q.id}')" style="width:100%; background:#4caf50; color:white; border:none; padding:8px; cursor:pointer; font-weight:bold; text-transform:uppercase; border-radius:4px; font-size:0.8em; margin-top:5px;">Прибери Плячката</button>`
-                        : `<button disabled style="width:100%; background:#222; color:#555; border:1px solid #333; padding:6px; border-radius:4px; font-size:0.8em; margin-top:5px;">Хората пътуват...</button>`}
+                        ? `<button onclick="window.claimExpeditionReward('${q.id}')" style="width:100%; background:#4caf50; color:white; border:none; padding:8px; cursor:pointer; font-weight:bold; text-transform:uppercase; border-radius:4px; font-size:0.8em; margin-top:5px;">Прибери в Съкровищницата</button>`
+                        : `<button disabled style="width:100%; background:#222; color:#555; border:1px solid #333; padding:6px; border-radius:4px; font-size:0.8em; margin-top:5px;">Владетелят пътува и води бой...</button>`}
                 </div>
             `;
         } else {
+            // Нивото на владетеля намалява риска от засада
+            let levelBonus = hero ? (hero.expeditionLevel - 1) * 3 : 0;
+            let currentDanger = Math.max(5, q.danger - levelBonus);
+
             contentHtml += `
                 <div style="border:1px solid #d4af37; padding:12px; background:rgba(214,175,55,0.03); border-radius:6px; display:flex; flex-direction:column; gap:4px;">
                     <div style="font-weight:bold; color:#ffd700; font-size:0.95em;">${q.name}</div>
                     <div style="font-size:0.8em; color:#ccc;">Времетраене: <b>${q.duration} сезона</b> | Разходи: <b style="color:#ffd700;">${q.cost} 💰</b></div>
-                    <div style="font-size:0.8em; color:#ff4444;">Риск от засада: <b>${q.danger}%</b></div>
-                    <div style="font-size:0.8em; color:#00ffcc; margin-bottom:5px;">Награда: <i>${q.reward}</i></div>
+                    <div style="font-size:0.8em; color:#ff4444;">Риск от засада: <b>${currentDanger}%</b> ${levelBonus > 0 ? `<i>(-${levelBonus}% от Опит)</i>` : ''}</div>
+                    <div style="font-size:0.8em; color:#00ffcc; margin-bottom:5px;">Реликва за Съкровищницата: <i>${q.reward}</i></div>
                     <button onclick="window.startExpedition('${q.id}')" style="background:#111; color:#d4af37; border:1px solid #d4af37; padding:6px; cursor:pointer; font-weight:bold; text-transform:uppercase; border-radius:4px; font-size:0.8em; transition:background 0.2s;" onmouseover="this.style.background='#222'" onmouseout="this.style.background='#111'">
-                        Изпрати Дружина
+                        Изпрати Дружина начело с Кан ${hero ? hero.name : ''}
                     </button>
                 </div>
             `;
@@ -166,11 +180,12 @@ window.startExpedition = function(questId) {
     window.activeExpeditions.push({
         id: quest.id,
         currentProgress: 0,
-        duration: quest.duration
+        duration: quest.duration,
+        rulerName: hero.name // Обвързваме мисията с името на конкретния владетел
     });
 
     if (window.updateCharacterUI) window.updateCharacterUI(hero);
-    if (window.showAdvisorMsg) window.showAdvisorMsg(`🧭 Експедицията "${quest.name}" потегли! Изразходвани: ${quest.cost} злато.`);
+    if (window.showAdvisorMsg) window.showAdvisorMsg(`🧭 Кан ${hero.name} лично оглави експедицията "${quest.name}"!`);
     
     window.updateExpeditionBadge();
     window.openExpeditionCenter();
@@ -211,25 +226,32 @@ window.claimExpeditionReward = function(questId) {
     if (questId === "q20") { baseGoldReward = 450; artifactGenerated = "Пророческа Златна Чаша"; }
     if (questId === "q21") { baseGoldReward = 1500; artifactGenerated = "Слънчев Диск на Инките"; }
     if (questId === "q22") { baseGoldReward = 1300; artifactGenerated = "Нефритова Маска на Маите"; }
-    if (questId === "q23") { baseGoldReward = 2000; artifactGenerated = "Орихалково Мече Острие"; }
+    if (questId === "q23") { baseGoldReward = 2000; artifactGenerated = "Орихалково Острие"; }
     if (questId === "q24") { baseGoldReward = 950; artifactGenerated = "Аксумитски Свещен Рог"; }
     if (questId === "q25") { baseGoldReward = 1600; artifactGenerated = "Нефритен Императорски Печат"; }
     if (questId === "q26") { baseGoldReward = 1400; artifactGenerated = "Японска Стоманена Катана"; }
 
     hero.gold += baseGoldReward;
 
-    if (window.addArtifactToHero) {
-        window.addArtifactToHero(artifactGenerated);
-    } else {
-        hero.inventory = hero.inventory || [];
-        hero.inventory.push(artifactGenerated);
+    // Реликвата отива директно в инвентара на активния владетел
+    hero.inventory = hero.inventory || [];
+    hero.inventory.push(artifactGenerated);
+
+    // Добавяне на бонус опит при успешно завръщане
+    hero.expeditionXP += 40;
+    let leveledUp = false;
+    if (hero.expeditionXP >= 100) {
+        hero.expeditionLevel += 1;
+        hero.expeditionXP -= 100;
+        leveledUp = true;
     }
 
-    window.showMysticModal(
-        "🎉 ТРИУМФАЛНО ЗАВЪРШВАНЕ",
-        `Дружината се завърна от "${quest.name}"! Донесено злато: +${baseGoldReward} 💰. В инвентара е добавено: [${artifactGenerated}] 🏆.`,
-        "triumph"
-    );
+    let modalMsg = `Кан ${hero.name} се завърна триумфално от "${quest.name}"! Донесено злато: +${baseGoldReward} 💰.\nВ инвентара и съкровищницата е добавено: [${artifactGenerated}] 🏆.`;
+    if (leveledUp) {
+        modalMsg += `\n\n🌟 ВЕЛИКО СЪБИТИЕ: Твоят владетел вдигна ниво! Сега е Ниво ${hero.expeditionLevel}, което трайно намалява риска при следващи походи!`;
+    }
+
+    window.showMysticModal("🎉 ТРИУМФ НА ВЛАДЕТЕЛЯ", modalMsg, "triumph");
 
     if (window.updateCharacterUI) window.updateCharacterUI(hero);
     
@@ -238,7 +260,8 @@ window.claimExpeditionReward = function(questId) {
 };
 
 /**
- * ОСНОВЕН ДВИГАТЕЛ: Смяна на ход (Вика се директно от events.js)
+ * ОСНОВЕН ДВИГАТЕЛ: Смяна на ход (Вика се автоматично от events.js)
+ * ТУК СЕ СЛУЧВА ВДИГАНЕТО НА НИВО НА ВСЕКИ ХОД
  */
 window.updateExpeditionSystem = function() {
     if (!window.activeExpeditions || window.activeExpeditions.length === 0) {
@@ -246,12 +269,30 @@ window.updateExpeditionSystem = function() {
         return;
     }
 
+    const hero = window.currentHero;
+
     window.activeExpeditions.forEach(exp => {
         if (exp.currentProgress < exp.duration) {
             exp.currentProgress += 1;
+            
+            // Ако текущият пътуващ владетел съвпада с активния, получава опит на всеки ход
+            if (hero && exp.rulerName === hero.name) {
+                hero.expeditionXP = hero.expeditionXP || 0;
+                hero.expeditionLevel = hero.expeditionLevel || 1;
+                
+                hero.expeditionXP += 25; // Трупане на опит на ход
+                if (hero.expeditionXP >= 100) {
+                    hero.expeditionLevel += 1;
+                    hero.expeditionXP -= 100;
+                    if (window.showAdvisorMsg) {
+                        window.showAdvisorMsg(`🌟 Кан ${hero.name} увеличи своя опит по време на похода и достигна Ниво ${hero.expeditionLevel}!`);
+                    }
+                }
+            }
         }
     });
 
+    if (hero && window.updateCharacterUI) window.updateCharacterUI(hero);
     window.updateExpeditionBadge();
 };
 
@@ -276,7 +317,7 @@ window.updateExpeditionBadge = function() {
 };
 
 /**
- * ИНВЕНТАРНА СИСТЕМА
+ * ИНВЕНТАРНА СИСТЕМА И СЪКРОВИЩНИЦА
  */
 window.toggleRulerInventory = function() {
     const mainArea = document.getElementById('game-main-area');
@@ -290,14 +331,14 @@ window.toggleRulerInventory = function() {
     let invHtml = `
         <div style="padding:20px; background:rgba(10,10,10,0.98); border:2px solid #00ffcc; color:white; font-family:'Georgia',serif; box-sizing:border-box; height:100%; overflow-y:auto; border-radius:8px;">
             <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #00ffcc; padding-bottom:10px; margin-bottom:15px;">
-                <h2 style="margin:0; color:#00ffcc; font-size:1.1em; text-transform:uppercase; letter-spacing:1px;">🎒 Свещени Реликви на Кан ${hero.name}</h2>
+                <h2 style="margin:0; color:#00ffcc; font-size:1.1em; text-transform:uppercase; letter-spacing:1px;">👑 Държавна Съкровищница на Кан ${hero.name}</h2>
                 <button onclick="window.openExpeditionCenter()" style="background:none; border:1px solid #00ffcc; color:#00ffcc; cursor:pointer; padding:2px 6px; border-radius:4px;">Назад</button>
             </div>
-            <p style="font-size:0.85em; color:#aaa; margin-bottom:15px;">Тези артефакти увеличават Твоята божествена мощ и титла пред останалите родове.</p>
+            <p style="font-size:0.85em; color:#aaa; margin-bottom:15px;">Тези артефакти са притежание на твоя личен инвентар и вдигат божествения ти статус пред останалите родове.</p>
     `;
 
     if (hero.inventory.length === 0) {
-        invHtml += `<div style="text-align:center; padding:30px; color:#555; font-style:italic; font-size:0.9em;">Инвентарът е празен. Изпратете експедиции, за да откриете реликви.</div>`;
+        invHtml += `<div style="text-align:center; padding:30px; color:#555; font-style:italic; font-size:0.9em;">Съкровищницата в момента е празна. Изпрати Кан ${hero.name} на експедиция, за да открие ценни реликви.</div>`;
     } else {
         invHtml += `<div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">`;
         hero.inventory.forEach((item, index) => {
@@ -305,7 +346,7 @@ window.toggleRulerInventory = function() {
                 <div style="border:1px solid #333; padding:10px; background:rgba(255,255,255,0.01); text-align:center; border-radius:4px;">
                     <div style="font-size:1.3em; margin-bottom:3px;">🏆</div>
                     <div style="font-size:0.85em; font-weight:bold; color:#00ffcc;">${item}</div>
-                    <div style="font-size:0.75em; color:#777; margin-top:2px;">Реликва от мисия</div>
+                    <div style="font-size:0.75em; color:#777; margin-top:2px;">Свещена реликва от поход</div>
                 </div>
             `;
         });
