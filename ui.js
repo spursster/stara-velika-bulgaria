@@ -3,8 +3,8 @@
  * ПРОЕКТ: ВЕЛИКА БЪЛГАРИЯ
  * ФАЙЛ: ui.js (УНИВЕРСАЛЕН ГЛОБАЛЕН ПРОФИЛ И ИНСПЕКЦИЯ НА ВЛАДЕТЕЛИТЕ)
  * ОПИСАНИЕ: Управление на UI. Времето е преместено отляво. Текстът на експедициите се скрива на телефон.
- * СТАТУС: ОБНОВЕН (Глобално отваряне на профил при кликване на икона или име на владетел)
- * Статистика на файловете в проекта: 16
+ * СТАТУС: ОБНОВЕН (Пълна синхронизация между горна лента, ляв панел и лични инвентари)
+ * Статистика на файловете в проекта: 15
  * ==========================================================================
  */
 
@@ -15,7 +15,7 @@ if (!window.autoLevelState) {
 }
 
 /**
- * Глобална функция за превключване на Цял Екран (Full Screen)
+ * Globalna funkcija za prevkluchvane na Cjal Ekran (Full Screen)
  */
 window.toggleGameFullScreen = function() {
     if (!document.fullscreenElement && 
@@ -37,7 +37,7 @@ window.toggleGameFullScreen = function() {
 };
 
 /**
- * Глобална функция за превключване на AUTO режима
+ * Globalna funkcija za prevkluchvane na AUTO rejima
  */
 window.toggleAutoLevel = function(leaderName) {
     window.autoLevelState[leaderName] = !window.autoLevelState[leaderName];
@@ -45,7 +45,7 @@ window.toggleAutoLevel = function(leaderName) {
 };
 
 /**
- * ГЕНЕРАТОР НА RPG СТАТИСТИКИ: Изчислява виртуално ниво и XP прогрес на база реалния heroPower
+ * GENERATOR NA RPG STATISTIKI: Izchisljava virtualno nivo i XP progres na baza realnija heroPower
  */
 function getCalculatedLeaderStats(leader) {
     if (!leader) return { level: 1, xpPercent: 0 };
@@ -66,7 +66,7 @@ function getCalculatedLeaderStats(leader) {
 }
 
 /**
- * AUTO-LEVEL ИЗПЪЛНИТЕЛ: Автоматично разпределяне на бонуси при качено ниво
+ * AUTO-LEVEL IZPULNITEL: Avtomatichno razpredeljane на bonusi pri kacheno nivo
  */
 function checkAndExecuteAutoLevel(leader, currentLevel) {
     if (!leader || !window.autoLevelState[leader.name]) return;
@@ -95,7 +95,7 @@ function checkAndExecuteAutoLevel(leader, currentLevel) {
 }
 
 /**
- * РЕНДЕРИРАНЕ НА ТОП 6 ЛЕНТАТА
+ * RENDERING NA TOP 6 LENTATA
  */
 window.renderTop6LeadersUI = function() {
     let mainContainer = document.getElementById('game-container');
@@ -161,11 +161,11 @@ window.renderTop6LeadersUI = function() {
         });
     }
     
-   if (window.worldData && window.worldData.clans) {
+    if (window.worldData && window.worldData.clans) {
         Object.values(window.worldData.clans).forEach(ml => {
             if (window.currentHero && ml.name === window.currentHero.name) return;
             
-            // НОВИЯТ СИГУРЕН ФИЛТЪР: Щом владетелят има ниво, опит или инвентар, значи Е купен/активен в кампанията!
+            // СИНХРОНИЗИРАН КОРЕКТЕН ФИЛТЪР ЗА КУПЕНИ ВОДАЧИ (КАТО ТЕРВЕЛ)
             if (ml.purchased || ml.owned || ml.isUnlocked || (ml.level !== undefined) || (ml.xp !== undefined) || ml.inventory) {
                 let rpgStats = (typeof getCalculatedLeaderStats === "function") ? getCalculatedLeaderStats(ml) : null;
                 
@@ -207,7 +207,6 @@ window.renderTop6LeadersUI = function() {
         let autoBtnColor = isAutoOn ? "#000" : "#ffd700";
         let autoBtnBorder = isAutoOn ? "1px solid #00ffcc" : "1px solid rgba(212,175,55,0.4)";
 
-        // Екраниране срещу грешки при интервали в имената (например "Иван Асен I")
         let safeName = encodeURIComponent(leader.name);
 
         return `
@@ -234,27 +233,25 @@ window.renderTop6LeadersUI = function() {
     }).join('');
 };
 
+/**
+ * ЦЕНТРАЛНА ФУНКЦИЯ ЗА ОТВАРЯНЕ НА ЛИЧЕН ИНВЕНТАР
+ */
 window.selectAndOpenLeaderInventory = function(leaderName) {
     if (window.worldData && window.worldData.clans) {
-        // 1. Намираме владетеля по име в клановете
         let targetLeader = Object.values(window.worldData.clans).find(l => l.name === leaderName);
         
-        // 2. Ако не го намерим в клановете, проверяваме дали това не е главният герой
         if (!targetLeader && window.currentHero && window.currentHero.name === leaderName) {
             targetLeader = window.currentHero;
         }
 
         if (targetLeader) {
-            // МНОГО ВАЖНО: Задаваме фокус за инспектиране БЕЗ да сменяме window.currentHero!
             window.inspectedLeaderForInventory = targetLeader;
             
-            // 3. Отваряме прозореца на съкровищницата/инвентара
             if (window.toggleTreasury) {
                 const overlay = document.getElementById('treasury-overlay');
                 if (overlay) {
-                    overlay.style.display = 'block'; // Форсираме отваряне
+                    overlay.style.display = 'block'; 
                 }
-                // Извикваме рендерирането, което вече ще знае кой е инспектираният лидер
                 if (window.renderTreasury) window.renderTreasury();
             }
         }
@@ -262,26 +259,23 @@ window.selectAndOpenLeaderInventory = function(leaderName) {
 };
 
 /**
- * ИНСПЕКТИРАНЕ НА ИНВЕНТАР / ПРОФИЛ ПО ИМЕ (СВЪРЗАНО КЪМ УНИВЕРСАЛНИЯ ПРОФИЛ)
+ * INSPEKTIRANE NA INVENTAR / PROFIL PO IME (SVURZANO KUM UNIVERZALNIJA PROFIL)
  */
 window.inspectSpecificRulerByName = function(name) {
     let realLeader = null;
     if (window.currentHero && window.currentHero.name === name) {
         realLeader = window.currentHero;
-    } else if (window.mightyLeaders) {
-        realLeader = window.mightyLeaders.find(l => l.name === name);
+    } else if (window.worldData && window.worldData.clans) {
+        realLeader = Object.values(window.worldData.clans).find(l => l.name === name);
     }
 
-    if (!realLeader) return;
-
-    // Пренасочваме към новия красив универсален профил
-    if (typeof window.openLeaderProfile === 'function') {
+    if (realLeader && typeof window.openLeaderProfile === 'function') {
         window.openLeaderProfile(realLeader);
     }
 };
 
 /**
- * ОБНОВЯВАНЕ НА ЛЕВИЯ СТРАНИЧЕН ПАНЕЛ
+ * OBNOVJAVANE NA LEVIJA STRANICHEN PANEL (SUVET NA RODOVETE)
  */
 window.updateCharacterUI = function(hero) {
     if (!hero) return;
@@ -291,7 +285,7 @@ window.updateCharacterUI = function(hero) {
 
     if (leftSidebar) {
         leftSidebar.innerHTML = `
-            <div onclick="window.openLeaderProfile(window.currentHero)" style="text-align: center; padding: 10px; background: rgba(212, 175, 55, 0.08); border: 1px solid #d4af37; border-radius: 6px; margin-bottom: 15px; cursor: pointer;" onmouseover="this.style.background='rgba(212,175,55,0.15)'" onmouseout="this.style.background='rgba(212, 175, 55, 0.08)'">
+            <div onclick="window.selectAndOpenLeaderInventory('${hero.name}')" style="text-align: center; padding: 10px; background: rgba(212, 175, 55, 0.08); border: 1px solid #d4af37; border-radius: 6px; margin-bottom: 15px; cursor: pointer;" onmouseover="this.style.background='rgba(212,175,55,0.15)'" onmouseout="this.style.background='rgba(212, 175, 55, 0.08)'">
                 <h3 style="margin: 0 0 5px 0; color: #d4af37; font-family: 'Cinzel'; font-size: 11px; letter-spacing: 1px;">ВЛАДЕТЕЛ</h3>
                 <div style="font-size: 1.15em; font-weight: bold; color: #fff; font-family: 'Cinzel', serif;">Кан ${hero.name}</div>
                 <div style="font-size: 0.8em; color: #bbb; margin-top: 2px;">Род: ${hero.dynasty} | ${hero.age} г.</div>
@@ -311,17 +305,18 @@ window.updateCharacterUI = function(hero) {
                         let clanLeaderObj = null;
                         if (isPlayer) {
                             clanLeaderObj = window.currentHero;
-                        } else if (window.mightyLeaders) {
-                            clanLeaderObj = window.mightyLeaders.find(l => l.dynasty === clanName);
+                        } else if (window.worldData && window.worldData.clans) {
+                            clanLeaderObj = Object.values(window.worldData.clans).find(l => l.dynasty === clanName);
                         }
                         
                         if (!clanLeaderObj) {
                             clanLeaderObj = { name: "Водач", dynasty: clanName, level: 1, heroPower: 100, skills: {} };
                         }
 
+                        // КОРИГИРАНО: Кликването тук вече отваря Директно Личния инвентар в Хазната за съответния водач!
                         return `
-                            <div onclick="window.openLeaderProfile(${JSON.stringify(clanLeaderObj).replace(/"/g, '&quot;')})" style="display: flex; justify-content: space-between; margin-bottom: 5px; color: ${isPlayer ? '#d4af37' : '#eee'}; cursor: pointer; padding: 2px 4px; border-radius: 3px;" onmouseover="this.style.background='rgba(255,255,255,0.05)'" onmouseout="this.style.background='transparent'">
-                                <span>${isPlayer ? '👑 ' : ''}${clanName}</span>
+                            <div onclick="window.selectAndOpenLeaderInventory('${clanLeaderObj.name}')" style="display: flex; justify-content: space-between; margin-bottom: 5px; color: ${isPlayer ? '#d4af37' : '#eee'}; cursor: pointer; padding: 2px 4px; border-radius: 3px;" onmouseover="this.style.background='rgba(255,255,255,0.05)'" onmouseout="this.style.background='transparent'">
+                                <span>${isPlayer ? '👑 ' : ''}${clanName} (${clanLeaderObj.name})</span>
                                 <span style="font-size: 0.85em; opacity: 0.8;">${window.activeDynasties[clanName] ? window.activeDynasties[clanName].regions || 0 : 0} зем.</span>
                             </div>
                         `;
@@ -377,7 +372,7 @@ window.renderHistory = function() {
 };
 
 /**
- * ФУНКЦИЯ ЗА ОБНОВЯВАНЕ НА ИНДИКАТОРА НА ЕКСПЕДИЦИИТЕ
+ * FUNKCIJA ZA OBNOVJAVANE NA INDIKATORA NA EKSPEDICIITE
  */
 window.updateExpeditionBadge = function() {
     const badge = document.getElementById('expedition-badge');
@@ -399,20 +394,11 @@ window.updateExpeditionBadge = function() {
     badge.style.display = availableMissions === 0 ? 'none' : 'flex';
 };
 
-// ==========================================================================
-// НАДГРАЖДАНЕ: УНИВЕРСАЛЕН ГЛОБАЛЕН ПРОФИЛ ЗА ВСЕКИ ВЛАДЕТЕЛ / ВОДАЧ
-// ==========================================================================
+/**
+ * UNIVERZALEN GLOBALEN PROFIL ZA VSJEKI VLADETEL / VODACH (ZAPAZEN ZA SPRAVKI)
+ */
 window.openLeaderProfile = function(leader) {
     if (!leader) return;
-
-    if (window.currentHero && leader.name === window.currentHero.name && leader.dynasty === window.currentHero.dynasty) {
-        if (typeof window.openInventory === 'function') {
-            window.openInventory();
-        } else if (typeof window.toggleTreasury === 'function') {
-            window.toggleTreasury();
-        }
-        return;
-    }
 
     let stats = leader;
     if (typeof window.getCalculatedLeaderStats === 'function') {
@@ -498,10 +484,7 @@ const UI = {
         if (window.currentHero && window.updateCharacterUI) window.updateCharacterUI(window.currentHero);
         this.cleanExpeditionButtonText();
     },
-    cleanExpeditionButtonText() {
-        // Остава напълно празна, за да не търси стария бутон долу вляво 
-        // и да не създава втория голям бутон на екрана.
-    }
+    cleanExpeditionButtonText() {}
 };
 
 window.UI = UI;
