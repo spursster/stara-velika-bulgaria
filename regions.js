@@ -1,7 +1,7 @@
 /**
  * МОДУЛ: РЕГИОНИ - Велика България
- * СТАТУС: НАПЪЛНО НАДГРАДЕН (Инфраструктурна Еволюция и Планетарни Куполи)
- * КОРЕКЦИЯ: Добавена еволюция на изгледа на регионите според Ерата и нивото им, без изрязване на твоя код.
+ * СТАТУС: НАПЪЛНО НАДГРАДЕН (Инфраструктурна Еволюция и Поправен Бъг със Затварянето)
+ * КОРЕКЦИЯ БЪГ: Добавен е бутон "X" и долен бутон за затваряне на картата, за да не засяда играчът в този екран.
  * Статистика на файловете в проекта: 16
  */
 
@@ -10,7 +10,7 @@ window.openRegionsMap = function() {
     if (!mainArea) return;
 
     if (!window.worldData || !window.worldData.regions) {
-        console.error("Грешка: Липсват данни за регионите in world_data.js");
+        console.error("Грешка: Липсват данни за регионите в world_data.js");
         return;
     }
 
@@ -23,10 +23,13 @@ window.openRegionsMap = function() {
         <div id="regions-screen" style="padding:20px; background: rgba(5,5,5,0.98); border: 2px solid #d4af37; color: white; font-family: 'Georgia', serif;">
             <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #333; padding-bottom: 10px; margin-bottom: 20px;">
                 <h2 style="margin: 0; color: #d4af37; text-transform: uppercase; letter-spacing: 1px;">🗺️ Карта на Велика България</h2>
-                <div style="font-size: 0.9em; color: #aaa;">Контролирани територии: <b style="color: #00ffcc;">${ownedRegionsFlat.length} / ${regionKeys.length}</b></div>
+                <div style="display: flex; align-items: center; gap: 15px;">
+                    <div style="font-size: 0.9em; color: #aaa;">Контролирани територии: <b style="color: #00ffcc;">${ownedRegionsFlat.length} / ${regionKeys.length}</b></div>
+                    <button onclick="window.closeRegionsMap()" style="background: none; border: none; color: #ff4444; font-size: 1.6em; cursor: pointer; font-weight: bold; line-height: 1;">&times;</button>
+                </div>
             </div>
             
-            <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 12px; max-height: 70vh; overflow-y: auto; padding-right: 5px;">
+            <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 12px; max-height: 60vh; overflow-y: auto; padding-right: 5px;">
                 ${regionKeys.map(key => {
                     const reg = regions[key];
                     const isOwned = ownedRegionsFlat.includes(key);
@@ -48,8 +51,34 @@ window.openRegionsMap = function() {
                     `;
                 }).join('')}
             </div>
+
+            <div style="margin-top: 20px; border-top: 1px solid #333; padding-top: 15px; text-align: right;">
+                <button onclick="window.closeRegionsMap()" style="background: #111; color: #aaa; border: 1px solid #444; padding: 10px 25px; cursor: pointer; border-radius: 4px; font-size: 0.85em; font-weight: bold; text-transform: uppercase; transition: all 0.2s;" onmouseover="this.style.color='#fff'; this.style.borderColor='#666';" onmouseout="this.style.color='#aaa'; this.style.borderColor='#444';">
+                    ↩️ Връщане в Двореца
+                </button>
+            </div>
         </div>
     `;
+};
+
+/**
+ * ФУНКЦИЯ ЗА ЗАТВАРЯНЕ НА КАРТАТА И ВЪЗСТАНОВЯВАНЕ НА ОСНОВНИЯ ИЗГЛЕД
+ */
+window.closeRegionsMap = function() {
+    const mainArea = document.getElementById('game-main-area');
+    if (mainArea) {
+        mainArea.innerHTML = ''; // Изчистваме екрана на картата
+    }
+    
+    // Ако има функция за обновяване на основния UI на героя, я викаме веднага за рендериране
+    if (window.updateCharacterUI && window.currentHero) {
+        window.updateCharacterUI(window.currentHero);
+    }
+    
+    // Преначертаваме лентата с лидерите за сигурност
+    if (window.renderTop6LeadersUI) {
+        window.renderTop6LeadersUI();
+    }
 };
 
 window.inspectRegion = function(regionName) {
@@ -60,7 +89,6 @@ window.inspectRegion = function(regionName) {
     const isOwned = ownedRegionsFlat.includes(regionName);
     const infra = reg.infrastructureLevel || 1;
 
-    // ТВОЯТ НАДГРАДЕН ЕПОХАЛЕН АРХИТЕКТУРЕН КЛАС (За прехода към космическо бъдеще)
     let architecturalEra = "Древно родово укрепление (Палисади и Ров)";
     let eraColor = "#d4af37";
     if (infra >= 3 && infra < 5) {
@@ -119,9 +147,6 @@ window.inspectRegion = function(regionName) {
     document.body.appendChild(overlay);
 };
 
-/**
- * ИЗПЪЛНЕНИЕ НА СТРОЕЖА И СИНХРОНИЗАЦИЯ С ИКОНОМИКАТА
- */
 window.upgradeRegionInfrastructure = function(regionName, cost) {
     const hero = window.currentHero;
     if (!hero) return;
@@ -129,21 +154,18 @@ window.upgradeRegionInfrastructure = function(regionName, cost) {
     if (hero.gold >= cost) {
         hero.gold -= cost;
         
-        // Вдигаме инфраструктурното ниво в глобалния обект
         if (window.worldData && window.worldData.regions && window.worldData.regions[regionName]) {
             const reg = window.worldData.regions[regionName];
             reg.infrastructureLevel = (reg.infrastructureLevel || 1) + 1;
-            reg.defenseLevel = (reg.defenseLevel || 1) + 1; // Автоматично укрепваме и защитата
+            reg.defenseLevel = (reg.defenseLevel || 1) + 1;
         }
 
         if (window.showAdvisorMsg) {
             window.showAdvisorMsg(`🏗️ СТРОЕЖ: Регион "${regionName}" бе успешно модернизиран до Ниво ${window.worldData.regions[regionName].infrastructureLevel}! Приходите от тук нарастват.`);
         }
 
-        // Обновяване на UI панелите
         if (window.updateCharacterUI) window.updateCharacterUI(hero);
         
-        // Презареждаме прозорците за моментален визуален ефект
         document.getElementById('region-inspect-overlay').remove();
         window.openRegionsMap();
         window.inspectRegion(regionName);
