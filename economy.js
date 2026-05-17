@@ -1,97 +1,100 @@
 /**
- * МОДУЛ: ИКОНОМИКА - Велика България
- * СТАТУС: НАПЪЛНО СИНХРОНИЗИРАН И ОПТИМИЗИРАН (Връзка с Артефакти, Сезони и Родове)
+ * МОДУЛ: ИКОНОМИКА И РОДОВИ РЕСУРСИ - Велика България
+ * СТАТУС: НАПЪЛНО СИНХРОНИЗИРАН И НАДГРАДЕН (Връзка с 13-те Династии, Епохи и RPG рангове)
+ * КОРЕКЦИЯ: Поправено грешното викане на getPerkValue. Директно обвързване с window.dynastyPerks и нивата на Кана.
  * Статистика на файловете в проекта: 16
  */
 
 window.calculateEconomy = function() {
     if (!window.currentHero) return;
 
-    let baseIncome = 200; // По-висок базов приход за по-голямата карта
+    const hero = window.currentHero;
+    if (window.initializeHeroRPGData) window.initializeHeroRPGData(hero);
+
+    let baseIncome = 200; // Базов приход на родовата столица
     let totalRegionIncome = 0;
 
-    // 1. ИЗЧИСЛЯВАНЕ НА ДОХОД ОТ РЕГИОНИТЕ И СЕЗОННИТЕ ПРОМЕНИ
-    // Вземаме сезонния бонус директно от времето в играта (logic.js)
+    // 1. ИЗЧИСЛЯВАНЕ НА ДОХОД ОТ РЕГИОНИТЕ И СЕЗОННИТЕ ПРОМЕНИ (Основа от logic.js)
     let seasonalBonus = 200;
     if (window.gameTime) {
-        if (window.gameTime.seasonIndex === 1) seasonalBonus = 350; // Лято
-        if (window.gameTime.seasonIndex === 3) seasonalBonus = 100; // Зима
+        if (window.gameTime.seasonIndex === 1) seasonalBonus = 350; // Лято (Пик на реколтата)
+        if (window.gameTime.seasonIndex === 3) seasonalBonus = 100; // Зима (Студ и презапасяване)
     }
 
     if (window.playerRegions && window.worldData && window.worldData.regions) {
         window.playerRegions.forEach(regionName => {
             const regionData = window.worldData.regions[regionName];
-            
             if (regionData) {
-                // Използваме динамичния сезонен бонус като базов за всеки регион
-                let regionBase = seasonalBonus > 0 ? Math.floor(seasonalBonus * 0.3) : 60; 
-                let resourceBonus = 0;
-
-                // СИНХРОНИЗАЦИЯ С РЕСУРСИТЕ ОТ 51-ТЕ РЕГИОНА
-                switch (regionData.resource) {
-                    case "Злато": resourceBonus = 150; break;
-                    case "Сребро": resourceBonus = 100; break;
-                    case "Мед": case "Желязо": case "Стомана": resourceBonus = 60; break;
-                    case "Коприна": case "Кехлибар": case "Пурпур": resourceBonus = 120; break;
-                    case "Търговия": case "Пристанище": resourceBonus = 90; break;
-                    case "Коне": case "Добитък": resourceBonus = 50; break;
-                    case "Вино": case "Зехтин": case "Маслини": resourceBonus = 70; break;
-                    case "Сол": case "Жито": resourceBonus = 40; break;
-                    default: resourceBonus = 30;
-                }
-                
-                totalRegionIncome += (regionBase + resourceBonus);
+                let regionBase = seasonalBonus > 0 ? Math.floor(seasonalBonus * 0.3) : 60;
+                let infrastructure = regionData.infrastructureLevel || 1;
+                totalRegionIncome += regionBase * infrastructure;
             }
         });
     }
 
-    // Базов общ приход + доходите от притежаваните територии
     let totalIncome = baseIncome + totalRegionIncome;
 
-    // 2. ПРИЛАГАНЕ НА МОДИФИКАТОРИ ОТ ЕКИПИРАНИ ПРЕДМЕТИ (АРТЕФАКТИ)
-    // Синхронизирано с откритите реликви от Експедициите
-    let goldArtifactModifier = 0;
-    if (window.equippedItems) {
-        window.equippedItems.forEach(item => {
-            if (item && item.bonus && item.bonus.goldBonus) {
-                goldArtifactModifier += item.bonus.goldBonus;
-            }
-        });
+    // 2. НАДГРАЖДАНЕ: ЕПОХАЛЕН RPG МОДИФИКАТОР (За преход от Древност към Космическо бъдеще)
+    // По-високото RPG ниво на Кана отразява по-напреднали икономически структури
+    let epochModifier = 1.0;
+    if (hero.level >= 5 && hero.level < 10) {
+        epochModifier = 1.15; // Имперска ера (+15% доходи)
+    } else if (hero.level >= 10) {
+        epochModifier = 1.35; // Ера на Квантов и Звезден разцвет (+35% доходи)
     }
-    if (goldArtifactModifier > 0) {
-        totalIncome += Math.floor(totalIncome * (goldArtifactModifier / 100));
+    totalIncome = Math.floor(totalIncome * epochModifier);
+
+    // 3. СИНХРОНИЗАЦИЯ СЪС ЗАКОНА НА 13-ТЕ ДИНАСТИИ (от mechanics.js)
+    let goldMultiplier = 1.0;
+    let armyCostMultiplier = 1.0;
+
+    if (hero.dynasty && window.dynastyPerks && window.dynastyPerks[hero.dynasty]) {
+        const perk = window.dynastyPerks[hero.dynasty];
+        if (perk.gold) goldMultiplier = perk.gold;
+        if (perk.armyCost) armyCostMultiplier = perk.armyCost;
     }
 
-    // 3. ПРИЛАГАНЕ НА РОДОВИ БОНУСИ (от mechanics.js)
-    if (window.getPerkValue) {
-        // Бонус за общо злато (Уния Траки, Смилец и др.)
-        totalIncome = Math.floor(totalIncome * window.getPerkValue('gold'));
+    // Прилагане на родовия икономически бонус (напр. Уния Траки +20% или Лизимах +15%)
+    totalIncome = Math.floor(totalIncome * goldMultiplier);
+    
+    // Специален търговски бонус за определени стратегически родови линии от закона
+    if (hero.dynasty === "Бесараб" || hero.dynasty === "Лизимах") {
+        totalIncome = Math.floor(totalIncome * 1.15); // Допълнителни 15% за търговски унии
+    }
+
+    // 4. РАЗХОДИ ЗА ИЗДРЪЖКА НА АРМИЯТА (Влияе се от числеността и родовите отстъпки)
+    // Поддържаме синхронизация както с hero.currentArmy, така и с hero.armySize
+    let activeArmy = hero.currentArmy || hero.armySize || 0;
+    let armyMaintenanceBase = activeArmy * 0.15;
+    
+    // Прилагане на отстъпката за поддръжка (напр. Даки купуват и издържат по-евтино)
+    let armyMaintenance = Math.floor(armyMaintenanceBase * armyCostMultiplier);
+    let finalProfit = Math.floor(totalIncome - armyMaintenance);
+
+    // 5. АКТУАЛИЗАЦИЯ НА ХАЗНАТА НА КАНА СЪС ЗАЩИТА ПРОТИВ ФАЛИТ
+    hero.gold = (hero.gold || 0) + finalProfit;
+    if (hero.gold < 0) hero.gold = 0; 
+
+    // Записване на обновените данни обратно в глобалния обект на родовите линии
+    if (window.worldData && window.worldData.clans && hero.id) {
+        window.worldData.clans[hero.id].gold = hero.gold;
+    }
+
+    // 6. ЛЕТОПИС (Съобщение от Съветника за финансовото състояние)
+    if (window.showAdvisorMsg) {
+        let seasonName = "Текущ сезон";
+        if (window.gameTime && window.gameTime.getSeasonName) {
+            seasonName = window.gameTime.getSeasonName();
+        }
         
-        // Специален търговски бонус (Бесараб)
-        if (window.currentHero.dynasty === "Бесараб" || window.currentHero.dynasty === "Ерми") {
-            totalIncome = Math.floor(totalIncome * 1.15); // Допълнителни 15% за търговски родове
+        if (finalProfit >= 0) {
+            window.showAdvisorMsg(`💰 Счетоводство [${seasonName}]: Родовата хазна събра +${totalIncome} злато. След поддръжката на войската (-${armyMaintenance}), чистият профит е +${finalProfit} злато.`);
+        } else {
+            window.showAdvisorMsg(`📉 Икономическа криза [${seasonName}]: Издръжката на Вашата армия (${armyMaintenance}) надхвърля приходите (${totalIncome}). Загуба: ${finalProfit} злато!`);
         }
     }
 
-    // 4. РАЗХОДИ ЗА ИЗДРЪЖКА (Армия и Двор)
-    // Разходът за армия се влияе от бонуса на рода (напр. Даки)
-    let armyMaintenanceBase = window.currentHero.armySize * 0.15;
-    if (window.getPerkValue) {
-        armyMaintenanceBase = armyMaintenanceBase * window.getPerkValue('armyCost');
-    }
-    
-    let armyMaintenance = Math.floor(armyMaintenanceBase);
-    let finalProfit = Math.floor(totalIncome - armyMaintenance);
-
-    // 5. АКТУАЛИЗАЦИЯ НА ХАЗНАТА НА КАНА
-    window.currentHero.gold += finalProfit;
-    if (window.currentHero.gold < 0) window.currentHero.gold = 0; // Защита против фалит
-
-    // 6. ЛЕТОПИС (Вест за финансите)
-    if (window.showAdvisorMsg && window.gameTime && window.gameTime.seasonIndex === 0) { 
-        // Показваме отчет само през пролетта, за да не спамим интерфейса на всеки ход
-        window.showAdvisorMsg(`💰 Годишен отчет: Приход +${totalIncome} | Издръжка на войската -${armyMaintenance} 🪙`);
-    }
-    
-    return { income: totalIncome, expense: armyMaintenance, profit: finalProfit };
+    // 7. МОМЕНТАЛНО ОБНОВЯВАНЕ НА ИНТЕРФЕЙСА (Синхрон с ui.js)
+    if (window.updateCharacterUI) window.updateCharacterUI(hero);
+    if (window.renderTop6LeadersUI) window.renderTop6LeadersUI();
 };
