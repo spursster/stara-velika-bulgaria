@@ -161,8 +161,14 @@ window.renderTop6LeadersUI = function() {
         });
     }
     
-    if (window.mightyLeaders && window.mightyLeaders.length > 0) {
-        window.mightyLeaders.forEach(ml => { 
+// ПОСТАВИ ТОЗИ КОД НА НЕГОВО МЯСТО:
+if (window.worldData && window.worldData.clans) {
+    Object.values(window.worldData.clans).forEach(ml => {
+        // Пропускаме главния герой, тъй като той вече е добавен по-горе
+        if (window.currentHero && ml.name === window.currentHero.name) return;
+        
+        // Взимаме само владетелите, които играчът реално притежава или е закупил
+        if (ml.purchased || ml.isUnlocked || ml.owned || (ml.level && ml.level > 0)) {
             let rpgStats = getCalculatedLeaderStats(ml);
             allLeaders.push({ 
                 name: ml.name,
@@ -175,9 +181,10 @@ window.renderTop6LeadersUI = function() {
                 level: rpgStats.level, 
                 xpPercent: rpgStats.xpPercent, 
                 currentClass: ml.currentClass || "Пълководец" 
-            }); 
-        });
-    }
+            });
+        }
+    });
+}
 
     if (allLeaders.length === 0) {
         leadersBar.style.display = 'none';
@@ -190,7 +197,7 @@ window.renderTop6LeadersUI = function() {
 
     leadersBar.innerHTML = top6.map((leader) => {
         let icon = leader.isMain ? "🛡️" : "⚔️";
-        let originalLeaderObj = leader.isMain ? window.currentHero : window.mightyLeaders.find(l => l.name === leader.name);
+       let originalLeaderObj = leader.isMain ? window.currentHero : (window.worldData && window.worldData.clans ? Object.values(window.worldData.clans).find(l => l.name === leader.name) : null);
         if (originalLeaderObj) {
             checkAndExecuteAutoLevel(originalLeaderObj, leader.level);
         }
