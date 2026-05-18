@@ -1,31 +1,33 @@
 /**
  * МОДУЛ: ГЛАВНА ИГРОВА ЛОГИКА - Велика България
- * СТАТУС: НАПЪЛНО НАДГРАДЕН И СИНХРОНИЗИРАН (ГЕРОИ И КЛАНОВЕ)
- * КОРЕКЦИЯ: Премахната синтактична грешка (\n) на ред 49. Пълна сигурност на ресурсите.
- * Статистика на файловете в проекта: 17
+ * СТАТУС: НАПЪЛНО НАДГРАДЕН И СИНХРОНИЗИРАН (СВОЙСТВА: ГЕРОИ И КЛАНОВЕ)
+ * КОРЕКЦИЯ: Използват се само 'name' и 'clan'. Автоматичен старт при зареждане.
+ * Статистика на файловете в проекта: 15
  */
 
 /**
  * ИНИЦИАЛИЗИРАНЕ НА НОВА ИГРА И СИНГУЛЯРЕН ИЗБОР НА ГЕРОЙ И КЛАН
  */
 window.initNewGame = function() {
-    let selectedName = "Болгарос"; 
+    let selectedName = "Кубрат"; 
     let selectedClan = "Дуло"; 
 
-    // Автоматичен подбор от наличните данни в световната матрица
-    if (window.worldData && window.worldData.clans) {
-        const clanKeys = Object.keys(window.worldData.clans);
+    // Автоматичен подбор от наличната база данни в database.js (window.clans)
+    if (window.clans) {
+        const clanKeys = Object.keys(window.clans);
         if (clanKeys.length > 0) {
-            // Избираме произволен стартиращ клан за играча, ако не е избран ръчно
             selectedClan = clanKeys[Math.floor(Math.random() * clanKeys.length)];
-            selectedName = window.worldData.clans[selectedClan].leader || "Воевода";
+            const heroesList = window.clans[selectedClan].heroes;
+            if (heroesList && heroesList.length > 0) {
+                selectedName = heroesList[Math.floor(Math.random() * heroesList.length)];
+            }
         }
     }
 
-    // Твърдо задаване на структурите, за да се избегне 'undefined' в икономиката
+    // Твърдо задаване на структурите (Изчистени от стари дефиниции)
     window.currentHero = {
         name: selectedName, 
-        dynasty: selectedClan, // Единен стандарт за родова принадлежност
+        clan: selectedClan, // Единен стандарт за родова принадлежност
         gold: 1500,
         armySize: 500,
         currentArmy: 500,
@@ -33,18 +35,21 @@ window.initNewGame = function() {
         level: 1,
         xp: 0,
         skillPoints: 0,
-        age: 35, 
+        age: 50, 
         techLevel: 1,
         inventory: [],
         isDead: false
     };
 
-    // Инициализиране на Diablo дървото с умения за новия Герой
+    // Подсигуряваме, че играта не стартира с празен списък - главният герой е първият отключен
+    window.unlockedLeaders = [window.currentHero];
+
+    // Инициализиране на RPG данните, ако модулът съществува
     if (window.initializeHeroRPGData) {
         window.initializeHeroRPGData(window.currentHero);
     }
 
-    // Времева ос на играта (КОРИГИРАНО: Премахнат е счупеният \n токен)
+    // Времева ос на играта
     window.gameTime = { 
         year: 1, 
         seasonIndex: 0, 
@@ -53,19 +58,19 @@ window.initNewGame = function() {
     };
     
     // Стартови територии на играча
-    window.playerRegions = [["Мизия"]];
+    window.playerRegions = [["Крим"]];
     
     // Инициализиране на автономните активни кланове за ИИ процесите
     window.activeClans = {};
-    if (window.worldData && window.worldData.clans) {
-        Object.keys(window.worldData.clans).forEach(name => {
-            const cData = window.worldData.clans[name];
+    if (window.clans) {
+        Object.keys(window.clans).forEach(name => {
+            const cData = window.clans[name];
             window.activeClans[name] = {
                 name: name,
-                leader: cData.leader,
-                gold: cData.gold || 500,
-                armySize: cData.armySize || 250,
-                regions: cData.regionsOwned || 1,
+                leader: (cData.heroes && cData.heroes[0]) || "Воевода",
+                gold: 800,
+                armySize: 300,
+                regions: 1,
                 isDead: false
             };
         });
@@ -76,12 +81,12 @@ window.initNewGame = function() {
         window.initDiplomacy();
     }
 
-    console.log("🎮 Нова игра: Успешно инициализиран Герой и 13-те автономни клана.");
+    console.log(`🎮 Нова игра: Успешно инициализиран Герой ${window.currentHero.name} от Клан ${window.currentHero.clan}.`);
 };
 
 /**
  * СИСТЕМНО ПРЕВЪРТАНЕ НА ХОДА (СЛЕДВАЩ СЕЗОН)
- * Движи икономиката, експедициите, ИИ на клановете и трупането на териториален опит
+ * Движи икономиката, експедициите, ИИ на клановете и трупането на опит
  */
 window.nextTurn = function() {
     if (!window.currentHero) return;
@@ -113,11 +118,11 @@ window.nextTurn = function() {
     if (window.processClanDiplomacy) {
         window.processClanDiplomacy();
     } else if (window.activeClans) {
-        // Резервен ИИ за баланс на златото при автономните кланове
+        // Резервен ИИ за баланс при автономните кланове
         Object.keys(window.activeClans).forEach(cName => {
-            if (cName !== window.currentHero.dynasty) {
-                window.activeClans[cName].gold += 75;
-                if (Math.random() > 0.92) window.activeClans[cName].armySize += 30;
+            if (cName !== window.currentHero.clan) {
+                window.activeClans[cName].gold += 50;
+                if (Math.random() > 0.9) window.activeClans[cName].regions += 1;
             }
         });
     }
@@ -138,7 +143,7 @@ window.nextTurn = function() {
     // 7. Териториален прогрес: Героят печели XP пасивно на база брой контролирани земи
     if (window.playerRegions && window.gainHeroXP) {
         const flatRegions = window.playerRegions.flat();
-        const totalTerritoryXP = flatRegions.length * 15; // +15 XP за всеки регион
+        const totalTerritoryXP = flatRegions.length * 10;
 
         if (totalTerritoryXP > 0) {
             window.gainHeroXP(window.currentHero, totalTerritoryXP);
@@ -151,7 +156,7 @@ window.nextTurn = function() {
                     }
                 });
             }
-            console.log(`🦅 Териториален бонус: +${totalTerritoryXP} XP генерирани от контролираните региони.`);
+            console.log(`🦅 Спечелен териториален опит от ${flatRegions.length} региона: +${totalTerritoryXP} XP.`);
         }
     }
 
@@ -160,3 +165,10 @@ window.nextTurn = function() {
     if (window.updateTimeUI) window.updateTimeUI();
     if (window.renderTop6LeadersUI) window.renderTop6LeadersUI();
 };
+
+// =========================================================================
+// АВТОМАТИЧНО СТАРТИРАНЕ НА ИГРАТА ПРИ ЗАРЕЖДАНЕ НА СТРАНИЦАТА В БРАУЗЪРА
+// =========================================================================
+window.addEventListener('DOMContentLoaded', () => {
+    window.initNewGame();
+});
