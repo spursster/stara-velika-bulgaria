@@ -17,172 +17,171 @@
             height: 70px !important;
             background: rgba(17, 17, 17, 0.85) !important;
             backdrop-filter: blur(10px) !important;
-            -webkit-backdrop-filter: blur(10px) !important;
             border-top: 2px solid #d4af37 !important;
             display: flex !important;
-            justify-content: space-between !important;
+            justify-content: space-around !important;
             align-items: center !important;
             z-index: 9999 !important;
-            padding: 0 4px !important;
+            padding: 0 5px !important;
             box-sizing: border-box !important;
         }
 
-        /* АДАПТИВНИ И СИМЕТРИЧНИ БУТОНИ – СВИВАТ СЕ АВТОМАТИЧНО СПРЯМО ТЕЛЕФОНА */
         .icon-btn {
-            background: rgba(20, 20, 20, 0.6) !important;
-            border: 1px solid #d4af37 !important;
+            background: none !important;
+            border: 1px solid rgba(214, 175, 55, 0.3) !important;
             color: #d4af37 !important;
-            font-size: 20px !important;
-            border-radius: 6px !important;
+            font-size: 22px !important;
+            width: 50px !important;
+            height: 50px !important;
             cursor: pointer !important;
-            flex: 1 !important;
-            min-width: 0 !important;
-            margin: 0 2px !important;
-            height: 48px !important;
+            border-radius: 8px !important;
             display: flex !important;
-            justify-content: center !important;
             align-items: center !important;
+            justify-content: center !important;
+            transition: all 0.2s ease-in-out !important;
             position: relative !important;
-            transition: background 0.2s, transform 0.1s !important;
             box-sizing: border-box !important;
-        }
-
-        @media (max-width: 360px) {
-            .icon-btn {
-                font-size: 16px !important;
-                margin: 0 1px !important;
-            }
         }
 
         .icon-btn:hover {
-            background: rgba(212, 175, 55, 0.2) !important;
+            background: rgba(214, 175, 55, 0.1) !important;
+            border-color: #d4af37 !important;
+            transform: translateY(-2px) !important;
         }
 
-        .icon-btn:active {
-            transform: scale(0.95) !important;
-        }
-
-        /* Подравняване на значката с числото върху иконката */
-        .mission-badge, #expedition-badge {
+        .badge {
             position: absolute !important;
-            top: 1px !important;
-            right: 1px !important;
-            background: #ff4d4d !important;
+            top: -5px !important;
+            right: -5px !important;
+            background: #ff4444 !important;
             color: white !important;
-            font-size: 9px !important;
+            font-size: 10px !important;
             font-weight: bold !important;
             border-radius: 50% !important;
-            padding: 1px 4px !important;
-            line-height: 1 !important;
+            width: 18px !important;
+            height: 18px !important;
+            display: none; /* Контролира се динамично от скриптовете */
+            align-items: center !important;
+            justify-content: center !important;
+            border: 1px solid white !important;
+            z-index: 10000 !important;
         }
 
-        /* КОРЕКЦИЯ НА ОСНОВНИЯ КОНТЕЙНЕР ЗА МОБИЛНИ */
-        #game-container {
-            height: calc(100vh - 130px) !important;
-            overflow: hidden !important;
-            display: flex !important;
-            margin-bottom: 70px !important;
-        }
-
-        @media (max-width: 768px) {
-            #left-sidebar {
-                width: 35%;
-                font-size: 0.8em;
-            }
-            #game-main-area {
-                width: 65%;
-            }
+        body {
+            padding-bottom: 80px !important; /* Осигурява място за долните контроли */
         }
     </style>
 </head>
 <body>
-    <div id="battle-screen"></div>
 
-    <div id="event-modal" style="display: none;"></div>
-
-    <header id="top-bar" style="background: transparent; border-bottom: none; padding: 0 10px; display: flex; justify-content: space-between; align-items: center; height: 60px;">
-        <div id="time-container">
-            <div id="current-time-info" style="font-family: 'Cinzel', serif; color: #d4af37; font-size: 13px;">Зареждане...</div>
-            <div id="era-display" style="font-family: 'Cinzel', serif; font-size: 9px; color: #d4af37; opacity: 0.6; letter-spacing: 1px; text-align: center;">АНТИЧНОСТ</div>
-        </div>
-        
-        <div id="dynasty-badge" style="text-align: center;">
-            <div id="current-clan-name" style="font-family: 'Cinzel'; color: #fff; font-size: 14px; text-shadow: 0 0 5px #d4af37;">ДИНАСТИЯ</div>
-            <div id="current-ruler-name" style="font-size: 10px; color: #aaa;">Владетел</div>
-        </div>
-
-        <div style="font-family: 'Cinzel', serif; font-size: 14px; color: #ffd700;">
-            💰 <span id="stat-gold">1500</span>
-        </div>
+    <header id="top-bar">
+        <div class="stat-box"><span class="icon">💰</span> <span id="stat-gold">500</span></div>
+        <div class="stat-box"><span class="icon">⚔️</span> <span id="stat-army">150</span></div>
+        <div class="stat-box"><span class="icon">🏛️</span> <span id="stat-legitimacy">100</span></div>
+        <div class="stat-box"><span class="icon">📅</span> <span id="stat-time">Пролет 632 г.</span></div>
     </header>
 
-    <div id="action-bar" style="background: rgba(10,10,10,0.9); border-bottom: 1px solid #333; display: flex; justify-content: center; align-items: center; height: 80px; gap: 15px; display: none;">
+    <div id="advisor-panel">
+        <div id="advisor-avatar">🦅</div>
+        <div id="advisor-text">Добре дошли, Велики Водачу! Родовите кланове очакват Вашите заповеди за съюзи и походи.</div>
     </div>
 
     <main id="game-container">
-        <aside id="left-sidebar">
-            <div id="provinces-list" style="padding: 10px;">
-                <h3 style="font-family:'Cinzel'; font-size:12px; color:#d4af37; border-bottom:1px solid #333; padding-bottom:5px;">ВЛАДЕНИЯ</h3>
-            </div>
-            
-            <div style="padding: 10px; display: flex; flex-direction: column; gap: 10px;">
-                <div style="font-family: 'Cinzel'; font-size: 11px; color: #ff4d4d;">⚔️ МОЩ: <span id="stat-power">150</span></div>
-                <div style="font-family: 'Cinzel'; font-size: 11px; color: #eee;">🛡️ АРМИЯ: <span id="stat-army">500</span></div>
+        
+        <section id="sidebar-left">
+            <div id="hero-profile" style="border: 2px solid #d4af37; padding: 15px; background: rgba(10,10,10,0.95); border-radius: 6px; margin-bottom: 15px;">
+                <h3 style="margin-top:0; color:#d4af37; font-family:'Cinzel', serif; font-size:1.05em; text-transform:uppercase; border-bottom:1px solid #333; padding-bottom:5px;">👤 Главен Герой</h3>
+                <div style="font-size:0.9em; line-height:1.6; color:#ccc;">
+                    Име: <b id="hero-name" style="color:#ffd700;">Кан Кубрат</b><br>
+                    Клан: <b id="hero-dynasty" style="color:#00ffcc;">Дуло</b><br>
+                    Клас: <b id="hero-class" style="color:#ffd700;">Багатур</b><br>
+                    Мощ: <b id="hero-power" style="color:#ff4444;">100</b> | Ниво: <b id="hero-level" style="color:#00ffcc;">1</b><br>
+                    Опит: <span id="hero-xp-display" style="color:#aaa;">0 / 150 XP</span>
+                </div>
                 
-                <div id="treasury-trigger" style="cursor: pointer; background: rgba(17, 17, 17, 0.6); padding: 10px; border-radius: 4px; border: 1px solid #d4af37; text-align: center;" onclick="window.toggleTreasury()">
-                    <span style="font-size: 20px;">🏺</span>
-                    <span id="new-item-badge" style="display: none; background: #ff4d4d; color: white; font-size: 10px; border-radius: 50%; padding: 2px 6px; margin-left: 5px;">0</span>
+                <div id="hero-unspent-points-container" style="margin-top:10px; display:none; background:rgba(0,255,204,0.1); border:1px solid #00ffcc; padding:5px; border-radius:4px; font-size:0.8em; text-align:center;">
+                    ✨ Имате <b id="hero-skill-points">0</b> свободни родови точки!
                 </div>
             </div>
 
-            <div id="history-log-container" style="margin-top: 20px; padding: 10px; border-top: 1px solid #333;">
-                <h4 style="font-family: 'Cinzel'; color: #d4af37; font-size: 11px; margin-bottom: 10px;">ЛЕТОПИС</h4>
-                <div id="history-log" style="font-size: 10px; color: #aaa; max-height: 200px; overflow-y: auto; line-height: 1.4;">
-                </div>
-            </div>
-        </aside>
-
-        <section id="game-main-area" style="position: relative;">
-            <div id="barracks-container" style="display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(10,10,10,0.95); z-index: 50; padding: 20px; overflow-y: auto;"></div>
-
-            <div id="central-display" style="height: 100%; display: flex; flex-direction: column; justify-content: center; align-items: center; opacity: 0.15;">
-                 <img id="dynasty-shield" src="assets/icons/clans/default.png" style="width: 200px; filter: drop-shadow(0 0 10px #000);" onerror="this.style.display='none'">
-                 <h1 style="font-family: 'Cinzel'; color: #d4af37; margin-top: 15px; font-size: 22px; letter-spacing: 4px; text-align: center;">ВЕЛИКА БЪЛГАРИЯ</h1>
-            </div>
-            
-            <div id="treasury-overlay" style="display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.98); z-index: 100; padding: 25px; border: 2px solid #7b1a1a;">
-                <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #d4af37; padding-bottom: 10px;">
-                    <h2 style="font-family: 'Cinzel'; color: #d4af37; font-size: 18px; margin:0;">🏺 РОДОВА СЪКРОВИЩНИЦА</h2>
-                    <button onclick="window.toggleTreasury()" style="background:none; border:none; color:#d4af37; font-size:24px; cursor:pointer;">✕</button>
-                </div>
-                <div id="treasury-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); gap: 15px; margin-top: 20px;"></div>
+            <div id="clans-list-container" style="border: 1px solid #333; padding: 12px; background: rgba(5,5,5,0.9); border-radius: 6px;">
+                <h4 style="margin:0 0 10px 0; color:#00ffcc; font-family:'Cinzel', serif; font-size:0.85em; text-transform:uppercase; letter-spacing:0.5px;">👥 Водачи на Клана</h4>
+                <div id="top-leaders-grid" style="display:flex; flex-direction:column; gap:8px;">
+                    </div>
             </div>
         </section>
+
+        <section id="game-main-area">
+            <div style="padding:20px; color:#aaa; text-align:center; font-family:Georgia,serif; margin-top:40px;">
+                Кликнете върху регион от картата или изберете действие от страничния панел, за да управлявате силите на Велика България.
+            </div>
+        </section>
+
+        <section id="sidebar-right">
+            <button class="menu-btn" onclick="window.openRegionsMap()">🗺️ Родова Карта</button>
+            <button class="menu-btn" onclick="window.buyUnits()">🏹 Военен Стан /Казарма</button>
+            <button class="menu-btn" onclick="window.startBattle()">⚔️ Поход и Щурм</button>
+            <button class="menu-btn" onclick="window.openMarriageMenu()">💍 Брачни Съюзи</button>
+            
+            <button class="menu-btn" onclick="window.openExpeditionCenter ? window.openExpeditionCenter() : (window.openExpeditionsMenu ? window.openExpeditionsMenu() : alert('Модулът за експедиции не е зареден!'))" style="border-color:#ffd700; background:rgba(214,175,55,0.05); position:relative;">
+                🧭 Велики Експедиции
+                <span id="expeditions-badge" class="badge">0</span>
+            </button>
+            
+            <button class="menu-btn" onclick="window.toggleTreasury()">🎒 Родова Съкровищница</button>
+            <button id="btn-next-turn" class="menu-btn action-btn" onclick="window.advanceTurn()">⏳ СЛЕДВАЩ СЕЗОН</button>
+        </section>
+
     </main>
 
-  <div id="bottom-controls">
-        <button class="icon-btn" onclick="window.openRegionsMap()">🗺️</button>
-        <button class="icon-btn" onclick="window.buyUnits()">🏹</button>
-        <button class="icon-btn" id="btn-battle" onclick="window.startBattle()">⚔️</button>
-        
-        <button class="icon-btn" id="btn-events" onclick="window.openEventsMenu ? window.openEventsMenu() : (window.triggerRandomEvent ? window.triggerRandomEvent() : alert('Функцията за събития не е намерена!'))" title="Събития">📜</button>
-        <button class="icon-btn" id="btn-marriage" onclick="window.openMarriageMenu()">👑</button>
-        <button class="icon-btn" onclick="window.openInventory()">🎒</button>
+    <section id="treasury-overlay" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); z-index: 2000; justify-content: center; align-items: center;">
+        <div id="treasury-content" style="background: #0d0d0d; border: 2px solid #d4af37; padding: 25px; width: 90%; max-width: 500px; max-height: 80vh; overflow-y: auto; color: white; border-radius: 6px; font-family: 'Georgia', serif; box-shadow: 0 0 30px rgba(0,0,0,0.95);">
+            <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #d4af37; padding-bottom: 10px; margin-bottom: 15px;">
+                <h2 style="margin: 0; font-family: 'Cinzel', serif; font-size: 1.2em; color: #d4af37; text-transform: uppercase;">🎒 СЪКРОВИЩНИЦА НА КЛАНА</h2>
+                <button onclick="window.toggleTreasury()" style="background: none; border: 1px solid #d4af37; color: #d4af37; font-weight: bold; cursor: pointer; padding: 3px 8px; border-radius: 4px;">X</button>
+            </div>
+            <div id="treasury-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); gap: 15px; margin-top: 20px;"></div>
+        </div>
+    </section>
+
+    <div id="bottom-controls">
+        <button class="icon-btn" onclick="window.openRegionsMap()" title="Родова Карта">🗺️</button>
+        <button class="icon-btn" onclick="window.buyUnits()" title="Казарма">🏹</button>
+        <button class="icon-btn" id=\"btn-battle\" onclick="window.startBattle()" title="Битка">⚔️</button>
+        <button class="icon-btn" id="btn-events" onclick="window.openExpeditionCenter ? window.openExpeditionCenter() : (window.openExpeditionsMenu ? window.openExpeditionsMenu() : alert('Модулът не е намерен!'))" title="Велики Експедиции">
+            🧭
+            <span id="expeditions-badge-mobile" class="badge" style="top: -5px; right: -5px;">0</span>
+        </button>
+        <button class="icon-btn" id="btn-marriage" onclick="window.openMarriageMenu()" title="Брачни Съюзи">💍</button>
+        <button class="icon-btn" onclick="window.toggleTreasury()" title="Съкровищница">🎒</button>
     </div>
 
     <script src="mechanics.js"></script>
     <script src="world_data.js"></script>
+    <script src="database.js"></script>
+    <script src="rpg_system.js"></script>
     <script src="economy.js"></script>
     <script src="barracks.js"></script>
     <script src="regions.js"></script>
     <script src="diplomacy.js"></script>
     <script src="events.js"></script>
-    <script src="database.js"></script>
-    <script src="items.js"></script> 
-    <script src="expeditions.js"></script> 
+    <script src="items.js"></script>
+    <script src="expeditions.js"></script>
     <script src="battle.js"></script>
-    <script src="logic.js"></script>
-    <script src="time.js"></script>
     <script src="ui.js"></script>
+    <script src="logic.js"></script>
+
+    <script>
+        // Защитен мост, който следи горния бадж и го отразява долу за мобилни устройства
+        setInterval(() => {
+            const mainBadge = document.getElementById('expeditions-badge');
+            const mobileBadge = document.getElementById('expeditions-badge-mobile');
+            if (mainBadge && mobileBadge) {
+                mobileBadge.innerText = mainBadge.innerText;
+                mobileBadge.style.display = mainBadge.style.display;
+                mobileBadge.style.background = mainBadge.style.background;
+            }
+        }, 1000);
+    </script>
 </body>
 </html>
