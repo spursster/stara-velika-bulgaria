@@ -100,6 +100,13 @@ window.initNewGame = function() {
     if (window.updateCharacterUI) window.updateCharacterUI(window.currentHero);
     if (window.updateTimeUI) window.updateTimeUI();
     if (window.renderTop6HeroesUI) window.renderTop6HeroesUI();
+
+    // =======================================================================
+    // НАДГРАЖДАНЕ: ИНИЦИАЛИЗАЦИЯ НА ПОРТАЛА ПРИ СТАРТИРАНЕ НА НОВА ИГРА
+    // =======================================================================
+    if (window.updatePortalContainerUI) {
+        window.updatePortalContainerUI();
+    }
 };
 
 window.nextTurn = function() {
