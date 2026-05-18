@@ -129,6 +129,9 @@ window.renderTop6LeadersUI = function() {
     });
 };
 
+// Насочваме извикването от logic.js към същата функция, за да се появи лентата веднага
+window.renderTop6HeroesUI = window.renderTop6LeadersUI;
+
 /**
  * ОСНОВНО ОБНОВЯВАНЕ НА ЛЕВИЯ ПАНЕЛ (ТЕКУЩ АКТИВЕН ИГРАЧ / ВОДАЧ)
  */
