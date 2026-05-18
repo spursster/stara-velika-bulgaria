@@ -1,8 +1,7 @@
 /**
  * МОДУЛ: БИТКИ - Велика България
- * СТАТУС: НАПЪЛНО НАДГРАДЕН (Интеграция на 100+ Diablo Способности & ArcheAge Класове)
- * КОРЕКЦИЯ: Добавени тактически фази за магии, критични удари, некромантия и засади без промяна на базовата структура.
- * ИЗПРАВЛЕНИЕ: Пълна дълбока синхронизация на опит (XP) и ниво (Level) за всички отключени герои и автоматично преначертаване на техните карти.
+ * СТАТУС: НАПЪЛНО НАДГРАДЕН И СИНХРОНИЗИРАН (Корекция на родовите лидери)
+ * КОРЕКЦИЯ БЪГ: Пренасочване на clan.name към clan.leader и интеграция на isJoined за дълбоката синхронизация.
  * Статистика на файловете в проекта: 16
  */
 
@@ -102,7 +101,6 @@ window.executeBattleSimulation = function(regionName, enemyArmy, defenseLvl) {
     let battleReport = "";
 
     // === ДИАГНОСТИКА НА DIABLO СПОСОБНОСТИТЕ ПРЕДИ БИТКАТА (ПРЕДВАРИТЕЛНА ФАЗА) ===
-    let preBattlePlayerDamage = 0;
     let skills = hero.skills || {};
 
     // 1. Умение Sabotage (Саботаж)
@@ -288,7 +286,7 @@ window.executeBattleSimulation = function(regionName, enemyArmy, defenseLvl) {
             let clan = window.worldData.clans[key];
             
             // 1. Синхронизация на текущия активен герой (Ниво, Опит, Умения, Войска, Злато)
-            if (key === hero.dynasty || key === hero.id || clan.name === hero.name || (hero.dynasty && clan.dynasty === hero.dynasty)) {
+            if (key === hero.dynasty || key === hero.id || clan.leader === hero.name || (hero.dynasty && clan.dynasty === hero.dynasty)) {
                 clan.armySize = hero.armySize;
                 clan.gold = hero.gold;
                 clan.isDead = hero.isDead;
@@ -297,8 +295,8 @@ window.executeBattleSimulation = function(regionName, enemyArmy, defenseLvl) {
                 clan.skills = JSON.parse(JSON.stringify(hero.skills || {}));
             }
             
-            // 2. ПАСИВЕН ОПИТ ЗА ОСТАНАЛИТЕ ЗАКУПЕНИ/ОТКЛЮЧЕНИ ГЕРОИ (Изчислява се директно тук за абсолютна стабилност)
-            if ((clan.isUnlocked || clan.purchased || clan.unlocked) && clan.name !== hero.name) {
+            // 2. ПАСИВЕН ОПИТ ЗА ОСТАНАЛИТЕ ЗАКУПЕНИ/ОТКЛЮЧЕНИ ГЕРОИ (С включена проверка за съвместимост на водачите)
+            if ((clan.isUnlocked || clan.purchased || clan.unlocked || clan.isJoined) && clan.leader !== hero.name) {
                 let passiveXP = Math.floor((xpGained || 0) * 0.5); // 50% пасивен опит
                 clan.xp = (clan.xp || 0) + passiveXP;
                 
@@ -320,7 +318,7 @@ window.executeBattleSimulation = function(regionName, enemyArmy, defenseLvl) {
             if (window.worldData && window.worldData.clans) {
                 for (let key in window.worldData.clans) {
                     let clan = window.worldData.clans[key];
-                    if (clan.name === l.name) {
+                    if (clan.leader === l.name || key === l.dynasty) {
                         l.level = clan.level;
                         l.xp = clan.xp;
                         if (clan.skills) {
@@ -360,7 +358,7 @@ window.closeBattleAndRefresh = function() {
     if (window.renderTop6LeadersUI) window.renderTop6LeadersUI();
     if (window.updateLeadersUI) window.updateLeadersUI();
 
-    // Ако сме завладели регион, преначертаваме картата, за да светне в зелено
+    // Ако сме завладели регион, преначертаваме картата, за да светне правилно
     if (window.openRegionsMap && document.getElementById('regions-screen')) {
         window.openRegionsMap();
     }
