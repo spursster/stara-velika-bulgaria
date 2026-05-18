@@ -55,13 +55,45 @@
             }
         }
 
+        /* 📱 СПЕЦИАЛНИ СТИЛОВЕ ЗА МАКСИМАЛНО СВИТА И МАЛКА ЛЕНТА НА ТЕЛЕФОН 📱 */
         @media (max-width: 768px) {
-            .elite-hero-card {
-                min-width: 130px !important;
-                flex-shrink: 0 !important;
-            }
             #top-bar {
-                justify-content: center !important;
+                padding: 5px 8px !important; /* Тънка лента */
+                min-height: 35px !important;
+                justify-content: space-between !important;
+                gap: 5px !important;
+            }
+            
+            .top-bar-stats {
+                gap: 6px !important; /* Сближени иконки */
+            }
+
+            .stat-box {
+                font-size: 11px !important; /* Малък шрифт за стойностите */
+                padding: 2px 4px !important;
+                background: none !important; /* Махаме тежките фонове на кутиите */
+                border: none !important;
+            }
+
+            /* Скриваме излишните текстове около времето и сезоните, оставяме само същината */
+            #current-time-info {
+                font-size: 11px !important;
+            }
+
+            .top-bar-controls {
+                gap: 4px !important;
+            }
+
+            /* Намаляваме бутоните драстично, за да не заемат място */
+            .top-bar-controls .menu-btn {
+                padding: 4px 6px !important;
+                font-size: 10px !important;
+                letter-spacing: 0px !important;
+            }
+
+            .elite-hero-card {
+                min-width: 120px !important;
+                flex-shrink: 0 !important;
             }
         }
 
@@ -125,11 +157,11 @@
             <div class="stat-box" id="stat-time" title="Текущ Сезон и Година">⏳ <span id="current-time-info">Зареждане...</span></div>
         </div>
         <div class="top-bar-controls">
-            <button class="menu-btn action-btn" onclick="window.buyNewHero()" style="padding: 8px 12px !important; font-size: 0.8rem !important; background: linear-gradient(135deg, #a98613, #d4af37); border: 1px solid #fff; color: #000; font-weight: bold;">👑 НАЕМИ ГЕРОЙ</button>
+            <button class="menu-btn action-btn" onclick="window.buyNewHero()" style="padding: 8px 12px !important; font-size: 0.8rem !important; background: linear-gradient(135deg, #a98613, #d4af37); border: 1px solid #fff; color: #000; font-weight: bold;">👑 НАЕМИ</button>
             
             <button class="menu-btn action-btn" onclick="window.toggleGameFullScreen()" style="padding: 8px 12px !important; font-size: 0.8rem !important; background: rgba(212,175,55,0.2); border: 1px solid #d4af37;">📺 ЦЯЛ ЕКРАН</button>
             
-            <button class="menu-btn action-btn" onclick="window.processTurn()" style="padding: 8px 15px !important; font-size: 0.8rem !important;">СЛЕДВАЩ СЕЗОН ➔</button>
+            <button class="menu-btn action-btn" onclick="window.processTurn()" style="padding: 8px 15px !important; font-size: 0.8rem !important;">СЛЕДВАЩ ➔</button>
         </div>
     </header>
 
