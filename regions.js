@@ -1,8 +1,8 @@
 /**
  * МОДУЛ: РЕГИОНИ И ГЕОПОЛИТИЧЕСКА КАРТА - Велика България
- * СТАТУС: НАПЪЛНО НАДГРАДЕН И СИНХРОНИЗИРАН (Синхронизация на 13-те рода)
- * КОРЕКЦИЯ: Твърдо обвързване с актуалното име "Уния Траки" и премахване на термина "племена".
- * Статистика на файловете в проекта: 16
+ * СТАТУС: НАПЪЛНО НАДГРАДЕН И СИНХРОНИЗИРАН (ГЕРОИ И КЛАНОВЕ)
+ * КОРЕКЦИЯ: Чист игрови код без исторически филтри, уеднаквен с 13-те клана и Diablo пасивите.
+ * Статистика на файловете в проекта: 17
  */
 
 window.openRegionsMap = function() {
@@ -17,56 +17,47 @@ window.openRegionsMap = function() {
     const regions = window.worldData.regions;
     const regionKeys = Object.keys(regions);
 
-    // Прецизно изравняване на масива за собственост на земите
+    // Изравняване на масива за собственост на земите от играча
     const ownedRegionsFlat = Array.isArray(window.playerRegions) ? window.playerRegions.flat() : [];
 
     mainArea.innerHTML = `
-        <div id="regions-screen" style="padding:20px; background: rgba(5,5,5,0.98); border: 2px solid #d4af37; color: white; font-family: 'Georgia', serif; box-sizing: border-box;">
-            <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #333; padding-bottom: 10px; margin-bottom: 20px;">
-                <h2 style="color: #d4af37; margin: 0; text-transform: uppercase; letter-spacing: 1px;">🗺️ ГЕОПОЛИТИЧЕСКА КАРТА НА КЛАНОВЕТЕ</h2>
-                <button onclick="if(window.showPalaceUI) window.showPalaceUI();" 
-                        style="background: #a32a2a; color: white; border: 1px solid #ff4444; padding: 6px 15px; cursor: pointer; font-weight: bold; border-radius: 4px; font-size: 0.8em;">❌ ЗАТВОРИ КАРТАТА</button>
+        <div id=\"regions-screen\" style=\"padding:20px; background: rgba(5,5,5,0.98); border: 2px solid #d4af37; color: white; font-family: 'Cinzel', serif; box-sizing: border-box;\">\n            <div style=\"display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;\">
+                <h2 style=\"margin:0; color:#ffd700; text-transform:uppercase; font-size:1.3em;\">Карта на Регионите</h2>
+                <span style=\"font-size:11px; color:#aaa;\">Кликнете на регион за инспекция или атака</span>
             </div>
-            
-            <p style="font-size: 0.85em; color: #ccc; margin-bottom: 20px; line-height: 1.5;">
-                Управлявайте имперските територии. Изберете регион, за да прегледате местния родов ресурс, трудността за удържане или да инвестирате в инфраструктура.
-            </p>
 
-            <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 12px; max-height: 450px; overflow-y: auto; padding-right: 5px;">
-                ${regionKeys.map(regionName => {
-                    const isOwned = ownedRegionsFlat.includes(regionName);
-                    const regData = regions[regionName];
-                    const nativeClan = (regData.nativeClans && regData.nativeClans[0]) ? regData.nativeClans[0] : "Независим";
+            <div style=\"display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 10px; max-height: 400px; overflow-y: auto; padding-right: 5px;\">
+                ${regionKeys.map(key => {
+                    const reg = regions[key];
+                    const isPlayerOwned = ownedRegionsFlat.includes(key);
                     
+                    // Намиране на текущия контролиращ клан
+                    let controllingClan = "Няма";
+                    if (reg.nativeClans && reg.nativeClans.length > 0) {
+                        controllingClan = reg.nativeClans[0];
+                    }
+
+                    let borderStyle = isPlayerOwned ? "2px solid #00ffcc" : "1px solid #333";
+                    let bgStyle = isPlayerOwned ? "rgba(0, 255, 204, 0.05)" : "rgba(0,0,0,0.4)";
+
                     return `
-                        <div onclick="window.inspectRegion('${regionName}')" style="
-                            background: ${isOwned ? 'rgba(76, 175, 80, 0.15)' : 'rgba(255, 255, 255, 0.02)'};
-                            border: 1px solid ${isOwned ? '#4caf50' : '#333'};
-                            padding: 12px; border-radius: 4px; cursor: pointer; text-align: center;
-                            transition: transform 0.2s, border-color 0.2s;
-                        " onmouseover="this.style.transform='scale(1.02)'; this.style.borderColor='#d4af37';" onmouseout="this.style.transform='scale(1)'; this.style.borderColor='${isOwned ? '#4caf50' : '#333'}';">
-                            <b style="color: #fff; font-size: 0.9em; display: block; margin-bottom: 4px;">${regionName}</b>
-                            <span style="font-size: 0.75em; color: #aaa; display: block; margin-bottom: 6px;">🏞️ ${regData.terrain || 'Равнина'}</span>
-                            <div style="font-size: 0.75em; font-weight: bold; color: ${isOwned ? '#4caf50' : '#ff9800'}; text-transform: uppercase; letter-spacing: 0.5px;">
-                                ${isOwned ? '⚔️ Под Ваш контрол' : `Род: ${nativeClan}`}
-                            </div>
+                        <div onclick=\"window.inspectRegion('${key}')\" style=\"background: ${bgStyle}; border: ${borderStyle}; padding: 10px; border-radius: 6px; cursor: pointer; text-align: center; transition: transform 0.2s;\" onmouseover=\"this.style.transform='scale(1.03)'\" onmouseout=\"this.style.transform='scale(1)'\">
+                            <div style=\"font-size: 1.4em; margin-bottom: 4px;\">🗺️</div>
+                            <strong style=\"color: #ffd700; font-size: 12px; display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;\">${key}</strong>
+                            <div style=\"font-size: 10px; color: #888; margin-top: 3px;\">Клан: ${controllingClan}</div>
+                            <div style=\"font-size: 9px; color: #aaa; margin-top: 2px;\">💎 ${reg.resource}</div>
                         </div>
                     `;
                 }).join('')}
             </div>
-
-            <div style="margin-top: 20px; text-align: center; border-top: 1px solid #222; padding-top: 15px;">
-                <button onclick="if(window.showPalaceUI) window.showPalaceUI();" 
-                        style="background: #222; color: #ccc; border: 1px solid #444; padding: 10px 30px; cursor: pointer; border-radius: 4px; font-size: 0.85em; text-transform: uppercase;">
-                    Върни се в двореца
-                </button>
-            </div>
+            
+            <button class=\"menu-btn\" onclick=\"if(window.backToMainMenu) window.backToMainMenu();\" style=\"width: 100%; margin-top: 15px;\">Назад към Главното Меню</button>
         </div>
     `;
 };
 
 /**
- * ИНСПЕКЦИЯ НА КОНКРЕТЕН РЕГИОН И СТРОИТЕЛСТВО
+ * ИНСПЕКЦИЯ И ДЕЙСТВИЯ ЗА КОНКРЕТЕН РЕГИОН
  */
 window.inspectRegion = function(regionName) {
     if (!window.worldData || !window.worldData.regions || !window.worldData.regions[regionName]) return;
@@ -75,14 +66,21 @@ window.inspectRegion = function(regionName) {
     const hero = window.currentHero;
     if (!hero) return;
 
+    // Инициализация на RPG пасивите за сигурност
+    if (window.initializeHeroRPGData) window.initializeHeroRPGData(hero);
+    let skills = hero.skills || {};
+
     const ownedRegionsFlat = Array.isArray(window.playerRegions) ? window.playerRegions.flat() : [];
-    const isOwned = ownedRegionsFlat.includes(regionName);
+    const isPlayerOwned = ownedRegionsFlat.includes(regionName);
 
-    const nativeClan = (reg.nativeClans && reg.nativeClans[0]) ? reg.nativeClans[0] : "Свободен Род";
-    const currentInfra = reg.infrastructureLevel || 1;
-    const upgradeCost = currentInfra * 250; // Динамична цена за модернизация
+    // Изчисляване на цената за подобрение с отстъпка от Diablo умението за Икономика
+    let baseUpgradeCost = 500;
+    let economyLevel = skills.economy || 0;
+    let finalUpgradeCost = Math.max(100, Math.floor(baseUpgradeCost * (1 - (economyLevel * 0.10))));
 
-    // Изчистване от стари наслагвания, ако има такива
+    let nativeClan = (reg.nativeClans && reg.nativeClans[0]) || "Независим";
+
+    // Премахване на стар инспекционен прозорец, ако съществува
     const oldOverlay = document.getElementById('region-inspect-overlay');
     if (oldOverlay) oldOverlay.remove();
 
@@ -90,42 +88,46 @@ window.inspectRegion = function(regionName) {
     overlay.id = 'region-inspect-overlay';
     overlay.style.cssText = `
         position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-        background: rgba(0,0,0,0.85); display: flex; align-items: center; justify-content: center;
-        z-index: 10000; font-family: 'Georgia', serif; color: white; padding: 15px; box-sizing: border-box;
+        background: rgba(0,0,0,0.85); backdrop-filter: blur(6px);
+        display: flex; justify-content: center; align-items: center; z-index: 50000;
+        font-family: 'Cinzel', serif; box-sizing: border-box; padding: 15px;
     `;
 
+    let actionButtonHTML = '';
+    if (isPlayerOwned) {
+        actionButtonHTML = `
+            <button onclick=\"window.upgradeRegionInfrastructure('${regionName}', ${finalUpgradeCost})\" style=\"width: 100%; background: #00ffcc; color: #000; border: none; padding: 12px; font-weight: bold; cursor: pointer; text-transform: uppercase; border-radius: 4px; font-size: 0.85em; margin-bottom: 10px;\">
+                🏗️ Модернизирай Инфраструктура (${finalUpgradeCost} зл.)
+            </button>
+        `;
+    } else {
+        actionButtonHTML = `
+            <button onclick=\"document.getElementById('region-inspect-overlay').remove(); if(window.startBattle) window.startBattle('${regionName}');\" style=\"width: 100%; background: #ff3366; color: #fff; border: none; padding: 12px; font-weight: bold; cursor: pointer; text-transform: uppercase; border-radius: 4px; font-size: 0.85em; margin-bottom: 10px;\">
+                ⚔️ Изпрати Войски за Завладяване
+            </button>
+        `;
+    }
+
     overlay.innerHTML = `
-        <div style="background: #0a0a0a; border: 2px solid #d4af37; padding: 25px; border-radius: 6px; max-width: 450px; width: 100%; box-sizing: border-box; position: relative;">
-            <div onclick="document.getElementById('region-inspect-overlay').remove()" 
-                 style="position: absolute; top: 10px; right: 15px; color: #ff4444; font-weight: bold; cursor: pointer; font-size: 1.2em;">&times;</div>
-            
-            <h3 style="margin-top: 0; color: #d4af37; text-transform: uppercase; border-bottom: 1px solid #222; padding-bottom: 10px; text-align: center; letter-spacing: 0.5px;">
-                🔎 ОГЛЕД: ${regionName}
+        <div style=\"background: #0a0a0a; border: 2px solid #d4af37; width: 100%; max-width: 380px; border-radius: 8px; padding: 20px; color: white; box-sizing: border-box;\">
+            <h3 style=\"margin-top: 0; color: #ffd700; text-transform: uppercase; border-bottom: 1px solid #222; padding-bottom: 10px; text-align: center;\">
+                Инспекция: ${regionName}
             </h3>
 
-            <table style="width: 100%; font-size: 0.85em; color: #ccc; margin-bottom: 20px; border-collapse: collapse;">
-                <tr style="border-bottom: 1px solid #111;"><td style="padding: 6px 0;">⛰️ Терен:</td><td style="text-align: right; color: #fff;">${reg.terrain || 'Равнина'}</td></tr>
-                <tr style="border-bottom: 1px solid #111;"><td style="padding: 6px 0;">💎 Родов ресурс:</td><td style="text-align: right; color: #ffd700; font-weight: bold;">${reg.resource || 'Зърно'}</td></tr>
-                <tr style="border-bottom: 1px solid #111;"><td style="padding: 6px 0;">🏰 Местен клан:</td><td style="text-align: right; color: #fff;">Род ${nativeClan}</td></tr>
-                <tr style="border-bottom: 1px solid #111;"><td style="padding: 6px 0;">🎯 Ниво на отбрана:</td><td style="text-align: right; color: #4caf50;">Ниво ${reg.defenseLevel || 1}</td></tr>
-                <tr style="border-bottom: 1px solid #111;"><td style="padding: 6px 0;">🏗️ Инфраструктура:</td><td style="text-align: right; color: #2196f3;">Ниво ${currentInfra}</td></tr>
-                <tr><td style="padding: 6px 0;">💀 Трудност за превземане:</td><td style="text-align: right; color: #ff4444;">${reg.difficulty || 10}</td></tr>
-            </table>
-
-            <div style="display: flex; gap: 10px; margin-top: 15px;">
-                ${isOwned ? `
-                    <button onclick="window.upgradeRegionInfrastructure('${regionName}', ${upgradeCost})" style="flex: 2; background: #a32a2a; color: white; border: 1px solid #ff4444; padding: 10px; cursor: pointer; font-weight: bold; font-size: 0.85em; text-transform: uppercase; border-radius: 4px;">
-                        🏗️ РАЗШИРИ ИНФРАСТРУКТУРАТА (-${upgradeCost} 💰)
-                    </button>
-                ` : `
-                    <button onclick="document.getElementById('region-inspect-overlay').remove(); if(window.startBattle) window.startBattle({name: '${regionName}', difficulty: ${reg.difficulty || 20}, armySize: ${Math.floor((reg.difficulty || 20) * 5)}});" style="flex: 2; background: #4caf50; color: white; border: 1px solid #81c784; padding: 10px; cursor: pointer; font-weight: bold; font-size: 0.85em; text-transform: uppercase; border-radius: 4px;">
-                        ⚔️ ПОВЕДИ ПОХОД ЗА ЗАВЛАДЯВАНЕ
-                    </button>
-                `}
-                <button onclick="document.getElementById('region-inspect-overlay').remove()" style="flex: 1; background: #1b1b1b; color: #ccc; border: 1px solid #333; padding: 10px; cursor: pointer; font-weight: bold; font-size: 0.85em; text-transform: uppercase; border-radius: 4px;">
-                    ЗАТВОРИ
-                </button>
+            <div style=\"font-size: 11px; color: #ccc; line-height: 1.8; margin-bottom: 20px; background: rgba(255,255,255,0.02); padding: 10px; border-radius: 4px;\">
+                <div>⛰️ Терен: <strong>${reg.terrain}</strong></div>
+                <div>💎 Ресурс: <strong>${reg.resource}</strong></div>
+                <div>🚩 Контролиращ Клан: <strong>${nativeClan}</strong></div>
+                <div>🛡️ Ниво на Защита: <strong>Ниво ${reg.defenseLevel || 1}</strong></div>
+                <div>🏗️ Инфраструктура: <strong>Ниво ${reg.infrastructureLevel || 1}</strong></div>
+                <div>💀 Трудност на Терена: <strong>${reg.difficulty}%</strong></div>
             </div>
+
+            ${actionButtonHTML}
+
+            <button onclick=\"document.getElementById('region-inspect-overlay').remove()\" style=\"width: 100%; background: #222; color: #fff; border: 1px solid #444; padding: 10px; cursor: pointer; font-size: 0.8em; text-transform: uppercase; border-radius: 4px;\">
+                Затвори
+            </button>
         </div>
     `;
 
@@ -149,19 +151,21 @@ window.upgradeRegionInfrastructure = function(regionName, cost) {
         }
 
         if (window.showAdvisorMsg) {
-            window.showAdvisorMsg(`🏗️ СТРОЕЖ: Инфраструктурата на регион "${regionName}" бе успешно модернизирана до Ниво ${window.worldData.regions[regionName].infrastructureLevel}! Местните доходи нарастват.`);
+            window.showAdvisorMsg(`🏗️ СТРОЕЖ: Инфраструктурата на регион \"${regionName}\" бе успешно модернизирана! Нивото на защита се повиши.`);
         }
 
         if (window.updateCharacterUI) window.updateCharacterUI(hero);
         
-        // Моментално обновяване на интерфейса и картата
-        document.getElementById('region-inspect-overlay').remove();
+        // Моментално обновяване на интерфейса и преначертаване
+        const overlay = document.getElementById('region-inspect-overlay');
+        if (overlay) overlay.remove();
+        
         window.openRegionsMap();
         window.inspectRegion(regionName);
 
     } else {
         if (window.showAdvisorMsg) {
-            window.showAdvisorMsg("📉 СЪВЕТНИК: В имперската хазна няма достатъчно злато за финансиране на този мащабен строеж!");
+            window.showAdvisorMsg("❌ НЕДОСТИГ: Нямате достатъчно злато за извършване на тези строителни дейности!");
         }
     }
 };
