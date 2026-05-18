@@ -1,41 +1,41 @@
 /**
  * МОДУЛ: ГЛАВНА ЛОГИКА - Велика България
- * СТАТУС: ОБНОВЕН СЪС СЛУЧАЕН ВЪРХОВЕН ЛИДЕР И СИНХРОНИЗАЦИЯ НА ХОДОВЕТЕ
- * При всяко стартиране Върховният владетел се избира напълно случайно от database.js!
+ * СТАТУС: КОРИГИРАН И НАПЪЛНО СИНХРОНИЗИРАН СЪС ЗАКОНА НА DATABASE.JS (Едно към едно)
+ * ОПИСАНИЕ: Всички термини "династия" са изтрити. Използват се единствено Кланове и Герои.
  * Статистика на файловете в проекта: 16
  */
 
 window.initNewGame = function() {
-    // 1. АЛГОРИТЪМ ЗА ИЗБОР НА СЛУЧАЕН ВЪРХОВЕН ВЛАДЕТЕЛ (От твоя окончателен списък)
-    let selectedName = "Кубрат"; // Fallback по подразбиране при грешка в базата данни
-    let selectedDynasty = "Дуло"; // Fallback по подразбиране при грешка в базата данни
+    // 1. АЛГОРИТЪМ ЗА ИЗБОР НА СЛУЧАЕН ГЕРОЙ ОТ СЛУЧАЕН КЛАН (От законния обект window.clans)
+    let selectedName = "Кубрат"; // Fallback по подразбиране
+    let selectedClan = "Дуло"; // Fallback по подразбиране
 
-    if (window.bulgarianDynasties) {
-        const dynastiesKeys = Object.keys(window.bulgarianDynasties);
-        if (dynastiesKeys.length > 0) {
-            // Избираме случайна династия от 13-те налични
-            selectedDynasty = dynastiesKeys[Math.floor(Math.random() * dynastiesKeys.length)];
-            const rulersList = window.bulgarianDynasties[selectedDynasty].rulers;
+    if (window.clans) {
+        const clanKeys = Object.keys(window.clans);
+        if (clanKeys.length > 0) {
+            // Избираме случаен Клан от 13-те налични в базата данни
+            selectedClan = clanKeys[Math.floor(Math.random() * clanKeys.length)];
+            const heroesList = window.clans[selectedClan].heroes;
             
-            if (rulersList && rulersList.length > 0) {
-                // Избираме случаен владетел от тази династия
-                selectedName = rulersList[Math.floor(Math.random() * rulersList.length)];
+            if (heroesList && heroesList.length > 0) {
+                // Избираме случаен Герой от този клан
+                selectedName = heroesList[Math.floor(Math.random() * heroesList.length)];
             }
         }
     }
 
-    // 2. ИНИЦИАЛИЗАЦИЯ НА ВЪРХОВНИЯ ЛИДЕР С РАВНОПРАВНИ СТАТИСТИКИ
+    // 2. ИНИЦИАЛИЗАЦИЯ НА ГЛАВНИЯ ГЕРОЙ
     window.currentHero = {
         name: selectedName, 
-        dynasty: selectedDynasty,
+        clan: selectedClan, // Използва се само clan, без династии
         gold: 1500,
         armySize: 500,
         heroPower: 150,
-        age: 50, // Унифицирана базова стойност за старт
+        age: 50,
         techLevel: 1
     };
 
-    // 3. ИНИЦИАЛИЗАЦИЯ НА ВРЕМЕТО (Фиксиран ред 41)
+    // 3. ИНИЦИАЛИЗАЦИЯ НА ВРЕМЕТО
     window.gameTime = { 
         year: 1, 
         seasonIndex: 0, 
@@ -43,16 +43,26 @@ window.initNewGame = function() {
         turn: 1 
     };
     
-    window.playerRegions = [["Крим"]];
+    // Намиране на коренния регион за избрания Клан от световните данни
+    let startRegion = "Мизия";
+    if (window.worldData && window.worldData.regions) {
+        const foundRegion = Object.keys(window.worldData.regions).find(regKey => 
+            window.worldData.regions[regKey].nativeClans && 
+            window.worldData.regions[regKey].nativeClans.includes(selectedClan)
+        );
+        if (foundRegion) startRegion = foundRegion;
+    }
+    window.playerRegions = [[startRegion]];
     
-    window.activeDynasties = {};
-    if (window.bulgarianDynasties) {
-        Object.keys(window.bulgarianDynasties).forEach(name => {
-            window.activeDynasties[name] = { power: 100, gold: 500, regions: 1 };
+    // Активните кланове се взимат директно от базата данни
+    window.activeClans = {};
+    if (window.clans) {
+        Object.keys(window.clans).forEach(name => {
+            window.activeClans[name] = { power: 100, gold: 500, regions: 1 };
         });
     }
 
-    // Инициализираме RPG статуса на главния герой веднага при старт
+    // Инициализиране на RPG статуса на главния герой при старт
     if (window.initializeHeroRPGData) {
         window.initializeHeroRPGData(window.currentHero);
     }
@@ -60,13 +70,14 @@ window.initNewGame = function() {
     if (window.updateCharacterUI) window.updateCharacterUI(window.currentHero);
     if (window.updateTimeUI) window.updateTimeUI();
     
-    console.log(`👑 Играта започна с Върховен Лидер: ${window.currentHero.name} от род ${window.currentHero.dynasty}!`);
+    console.log(`👑 Играта започна със случаен Герой: ${window.currentHero.name} от Клан: ${window.currentHero.clan}! Стартов регион: ${startRegion}`);
 };
 
 /**
-/* ==========================================================================
- * ПРЕХВЪРЛЯНЕ НА ХОД (Клик на бутона "Следващ ход")
- * ========================================================================== */
+ * ==========================================================================
+ * ПРЕХВЪРЛЯНЕ НА ХОД
+ * ==========================================================================
+ */
 window.nextTurn = function() {
     // 1. НАПРЕДЪК НА ВРЕМЕТО
     window.gameTime.turn += 1;
@@ -77,12 +88,12 @@ window.nextTurn = function() {
         window.gameTime.year += 1;
     }
 
-    // Автономно извикване на механиките за родови промени и проверка за трона
+    // Извикване на механиките за времеви процеси
     if (window.processTime) {
         window.processTime();
     }
 
-    // 2. ИКОНОМИКА: ПРИХОДИ НА ИГРАЧА
+    // 2. ИКОНОМИКА: СЕЗОННИ ПРИХОДИ
     let seasonalBonus = 200;
     if (window.gameTime.seasonIndex === 1) seasonalBonus = 350; // Лято
     if (window.gameTime.seasonIndex === 3) seasonalBonus = 100; // Зима
@@ -100,39 +111,36 @@ window.nextTurn = function() {
     let artifactExtraGold = Math.floor(baseIncome * (goldArtifactModifier / 100));
     window.currentHero.gold += (baseIncome + artifactExtraGold);
 
-    // 3. Логика за останалите родове
-    Object.keys(window.activeDynasties).forEach(dyn => {
-        if (dyn !== window.currentHero.dynasty) {
-            window.activeDynasties[dyn].gold += 50;
-            if (Math.random() > 0.9) window.activeDynasties[dyn].regions += 1;
-        }
-    });
+    // 3. ЛОГИКА ЗА ОСТАНАЛИТЕ КЛАНОВЕ
+    if (window.activeClans) {
+        Object.keys(window.activeClans).forEach(cName => {
+            if (cName !== window.currentHero.clan) {
+                window.activeClans[cName].gold += 50;
+                if (Math.random() > 0.9) window.activeClans[cName].regions += 1;
+            }
+        });
+    }
 
-    // 4. АКТИВИРАНЕ НА СЛУЧАЙНИ СЪБИТИЯ (Стандартно автоматично извикване на нов ход)
+    // 4. СЛУЧАЙНИ СЪБИТИЯ
     if (window.triggerRandomEvent) window.triggerRandomEvent();
 
-    // 5. НАПРЕДЪК НА АКТИВНИТЕ ЕКСПЕДИЦИИ
+    // 5. НАПРЕДЪК НА ЕКСПЕДИЦИИТЕ
     if (window.updateExpeditionSystem) {
         window.updateExpeditionSystem();
     }
 
-    // ДОБАВИ ТОВА ТУК: Опресняване на графичния бадж на бутона
     if (window.updateExpeditionBadge) {
         window.updateExpeditionBadge();
     }
 
-    // ==========================================================================
-    // НАДГРАЖДАНЕ: ТЕРИТОРИАЛЕН ОПИТ НА ХОД (Автоматична RPG система)
-    // ==========================================================================
+    // 6. ТЕРИТОРИАЛЕН ОПИТ НА ХОД
     if (window.playerRegions && window.gainHeroXP) {
         const flatRegions = window.playerRegions.flat();
         const totalTerritoryXP = flatRegions.length * 10;
 
         if (totalTerritoryXP > 0) {
-            // 1. Опит за главния Върховен владетел
             window.gainHeroXP(window.currentHero, totalTerritoryXP);
             
-            // 2. Опит за активните водачи, изпратени на експедиция по света
             if (window.activeExpeditions && window.activeExpeditions.length > 0) {
                 window.activeExpeditions.forEach(exp => {
                     if (exp.leaderData) {
@@ -144,15 +152,13 @@ window.nextTurn = function() {
         }
     }
 
-    // 6. ОПРЕСНЯВАНЕ НА ИНТЕРФЕЙСА (Задължително опресняване на героя и времето)
+    // 7. ОПРЕСНЯВАНЕ НА ИНТЕРФЕЙСА
     if (window.updateCharacterUI) window.updateCharacterUI(window.currentHero);
     if (window.updateTimeUI) window.updateTimeUI();
 };
 
-// 🎯 ЗАЩИТЕН МОСТ: Свързваме бутона от HTML страницата без значение кое от двете имена вика
 window.advanceTurn = window.nextTurn;
 
-// Автоматично стартиране на играта веднага след като браузърът зареди изцяло страницата
 window.addEventListener('DOMContentLoaded', () => {
     window.initNewGame();
 });
