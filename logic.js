@@ -33,7 +33,6 @@ window.initNewGame = function() {
         xp: 0
     };
 
-    // Главният герой автоматично става първият отключен в играта
     window.unlockedHeroes = [window.currentHero];
 
     window.gameTime = { 
@@ -67,8 +66,6 @@ window.initNewGame = function() {
     if (window.updateCharacterUI) window.updateCharacterUI(window.currentHero);
     if (window.updateTimeUI) window.updateTimeUI();
     if (window.renderTop6HeroesUI) window.renderTop6HeroesUI();
-
-    console.log(`🎮 Нова игра: Успешно инициализиран Герой ${window.currentHero.name} от Клан ${window.currentHero.clan}.`);
 };
 
 window.nextTurn = function() {
@@ -100,13 +97,8 @@ window.nextTurn = function() {
 
     if (window.triggerRandomEvent) window.triggerRandomEvent();
 
-    if (window.updateExpeditionSystem) {
-        window.updateExpeditionSystem();
-    }
-
-    if (window.updateExpeditionBadge) {
-        window.updateExpeditionBadge();
-    }
+    if (window.updateExpeditionSystem) window.updateExpeditionSystem();
+    if (window.updateExpeditionBadge) window.updateExpeditionBadge();
 
     if (window.playerRegions && window.gainHeroXP) {
         const flatRegions = window.playerRegions.flat();
@@ -114,15 +106,11 @@ window.nextTurn = function() {
 
         if (totalTerritoryXP > 0) {
             window.gainHeroXP(window.currentHero, totalTerritoryXP);
-            
             if (window.activeExpeditions && window.activeExpeditions.length > 0) {
                 window.activeExpeditions.forEach(exp => {
-                    if (exp.heroData) {
-                        window.gainHeroXP(exp.heroData, totalTerritoryXP);
-                    }
+                    if (exp.heroData) window.gainHeroXP(exp.heroData, totalTerritoryXP);
                 });
             }
-            console.log(`🦅 Спечелен териториален опит от ${flatRegions.length} региона: +${totalTerritoryXP} XP.`);
         }
     }
 
@@ -136,51 +124,51 @@ window.processTurn = function() {
 };
 
 // =========================================================================
-// НАДГРАЖДАНЕ: МЕХАНИКА ЗА ЗАКУПУВАНЕ НА НОВИ ГЕРОИ ОСТАНАЛИТЕ КЛАНОВЕ
+// МЕХАНИКА ЗА ЗАКУПУВАНЕ НА НОВИ ГЕРОИ
 // =========================================================================
 window.buyNewHero = function() {
     if (!window.currentHero) return;
 
-    const heroCost = 1000; // Цена за наемане на елитен войн
+    const heroCost = 1000; 
 
     if (window.currentHero.gold < heroCost) {
         alert(`❌ Нямате достатъчно злато! Наемането струва 💰 ${heroCost} злато.`);
         return;
     }
 
-    // Списък с възможни имена и кланове за новия герой
     let poolNames = ["Птолемей I Сотер", "Аспарух", "Тервел", "Крум", "Омуртаг", "Пресиян"];
     let poolClans = ["Птолемеи", "Дуло", "Крумови", "Вокил", "Угаин"];
 
     let randomName = poolNames[Math.floor(Math.random() * poolNames.length)];
     let randomClan = poolClans[Math.floor(Math.random() * poolClans.length)];
 
-    // Създаваме новия закупен герой с базови бойни показатели
     let purchasedHero = {
+        hero: randomName, // Синхронизирано свойство за ui.js
         name: randomName,
         clan: randomClan,
-        level: 2, // Стартира с малко по-високо ниво като награда
+        level: 2, 
         xp: 0,
-        heroPower: 200,
+        heroPower: 220,
         gold: 300,
         armySize: 150,
-        age: 30,
-        currentClass: "Багатур"
+        age: 32,
+        currentClass: "Багатур",
+        isAuto: false,
+        storedXP: 0,
+        equipment: [],
+        skills: {}
     };
 
-    // Икономическа транзакция
     window.currentHero.gold -= heroCost;
 
-    // Добавяме го към отключените герои на играча
     if (!window.unlockedHeroes) window.unlockedHeroes = [];
     window.unlockedHeroes.push(purchasedHero);
 
-    // Вкарваме го в глобалния свят (worldData), за да може ui.js веднага да го покаже в Топ 6
+    // Добавяне в света, за да се класира в Топ 6 елитната лента
     if (window.worldData && window.worldData.clans) {
         window.worldData.clans[randomClan] = purchasedHero;
     }
 
-    // Опресняваме целия интерфейс веднага
     if (window.updateCharacterUI) window.updateCharacterUI(window.currentHero);
     if (window.renderTop6HeroesUI) window.renderTop6HeroesUI();
 
@@ -191,7 +179,6 @@ window.buyNewHero = function() {
     }
 };
 
-// Автоматично извикване при първоначално зареждане на браузъра
 window.addEventListener('DOMContentLoaded', () => {
     window.initNewGame();
 });
