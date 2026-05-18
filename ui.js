@@ -2,8 +2,8 @@
  * ==========================================================================
  * ПРОЕКТ: ВЕЛИКА БЪЛГАРИЯ
  * ФАЙЛ: ui.js (УНИВЕРСАЛЕН ГЛОБАЛЕН ПРОФИЛ, ЛЕНТА НА ЕЛИТА И ИНСПЕКЦИЯ НА КЛАНОВЕТЕ)
- * СТАТУС: НАПЪЛНО НАДГРАДЕН (ИНТЕГРАЦИЯ НА ТОП 6 ЕЛИТ, XP БАРОВЕ И АУТО КОНТРОЛИ)
- * НАДГРАДАНЕ: Премахнати са форсираните инлайн решетки в полза на CSS адаптивност.
+ * СТАТУС: НАПЪЛНО НАДГРАДЕН И СИНХРОНИЗИРАН
+ * НАДГРАДАНЕ: Фиксиран бутон "Auto/Manual" (Ькшд) чрез добавяне на toggleHeroAutoMode.
  * Статистика на файловете в проекта: 15
  * ==========================================================================
  */
@@ -57,7 +57,7 @@ window.renderTop6HeroesUI = function() {
     });
 
     const top6 = leaders.slice(0, 6);
-    eliteBar.innerHTML = ""; // Изчистване преди чертаене
+    eliteBar.innerHTML = ""; 
 
     top6.forEach(leader => {
         if (window.initializeHeroRPGData) window.initializeHeroRPGData(leader);
@@ -267,4 +267,28 @@ window.inspectLeaderProfile = function(clanKey) {
     `;
 
     document.body.appendChild(overlay);
+};
+
+// =========================================================================
+// ФИКС: МЕХАНИКА ЗА СМЕНЯНЕ НА АУТО / МАНУАЛ РЕЖИМ (ПОПРАВКА НА "Ькшд")
+// =========================================================================
+window.toggleHeroAutoMode = function(clanKey) {
+    if (!window.worldData || !window.worldData.clans || !window.worldData.clans[clanKey]) {
+        console.log("❌ Не бе намерен такъв Клан/Герой в базата данни.");
+        return;
+    }
+
+    let leader = window.worldData.clans[clanKey];
+    
+    // Превключваме състоянието
+    leader.isAuto = !leader.isAuto;
+
+    // Инициализираме структурите при нужда, за да няма неопределени стойности (undefined)
+    if (leader.isAuto === undefined) leader.isAuto = false;
+    if (leader.storedXP === undefined) leader.storedXP = 0;
+
+    console.log(`👑 Героят от род "${clanKey}" премина в режим: ${leader.isAuto ? "Автоматичен (Auto)" : "Ръчен (Manual)"}`);
+
+    // Веднага преначертаваме лентата, за да се види обновеният цвят на бутона
+    window.renderTop6HeroesUI();
 };
