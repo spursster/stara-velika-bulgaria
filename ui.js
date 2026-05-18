@@ -3,7 +3,7 @@
  * ПРОЕКТ: ВЕЛИКА БЪЛГАРИЯ
  * ФАЙЛ: ui.js (УНИВЕРСАЛЕН ГЛОБАЛЕН ПРОФИЛ, ЛЕНТА НА ЕЛИТА И ИНСПЕКЦИЯ НА КЛАНОВЕТЕ)
  * СТАТУС: НАПЪЛНО НАДГРАДЕН (ИНТЕГРАЦИЯ НА ТОП 6 ЕЛИТ, XP БАРОВЕ И АУТО КОНТРОЛИ)
- * Логика: Владетелите са единствено Герои, а династиите са Кланове. Без забранени титли.
+ * НАДГРАДАНЕ: Премахнати са форсираните инлайн решетки в полза на CSS адаптивност.
  * Статистика на файловете в проекта: 15
  * ==========================================================================
  */
@@ -40,18 +40,15 @@ window.toggleGameFullScreen = function() {
  * 👑 ДИНАМИЧНО ЧЕРТАЕНЕ НА ЛЕНТАТА НА ЕЛИТА (ТОП 6 ГЕРОИ С НАЙ-ВИСОК ОПИТ)
  */
 window.renderTop6HeroesUI = function() {
-    // НАДГРАЖДАНЕ: Вече търси обновения контейнер в index.html
     const eliteBar = document.getElementById('top-elite-heroes-bar');
     if (!eliteBar) return;
 
     if (!window.worldData || !window.worldData.clans) return;
 
-    // Взимаме всички водачи (Герои) от базата данни
     let leaders = Object.entries(window.worldData.clans).map(([clanKey, data]) => {
         return { clanKey: clanKey, ...data };
     });
 
-    // Сортиране по Ниво и Опит в низходящ ред
     leaders.sort((a, b) => {
         if ((b.level || 1) !== (a.level || 1)) {
             return (b.level || 1) - (a.level || 1);
@@ -59,40 +56,32 @@ window.renderTop6HeroesUI = function() {
         return (b.xp || 0) - (a.xp || 0);
     });
 
-    // Взимаме първите 6 лидера за елитната лента
     const top6 = leaders.slice(0, 6);
-
-    eliteBar.innerHTML = "";
-    eliteBar.style.cssText = "display: grid; grid-template-columns: repeat(6, 1fr); gap: 10px; width: 100%; box-sizing: border-box;";
+    eliteBar.innerHTML = ""; // Изчистване преди чертаене
 
     top6.forEach(leader => {
-        // Подсигуряваме инициализация на новите свойства
         if (window.initializeHeroRPGData) window.initializeHeroRPGData(leader);
 
         const card = document.createElement('div');
         card.className = "elite-hero-card";
 
-        // Клик върху картата отваря масивния RPG профил за управление на предмети и любимци
         card.onclick = (e) => {
-            if (e.target.classList.contains('auto-btn')) return; // Изолираме бутона AUTO
+            if (e.target.classList.contains('auto-btn')) return; 
             if (window.openHeroRPGModal) window.openHeroRPGModal(leader.clanKey);
         };
 
-        // Изчисляване на процента прогрес за XP лентата
         let currentXP = leader.xp || 0;
         let reqXP = 150;
         if (window.rpgDatabase && window.rpgDatabase.getXPRequiredForLevel) {
             reqXP = window.rpgDatabase.getXPRequiredForLevel(leader.level || 1);
         }
         
-        // Ако е в ръчен режим, визуализираме натрупания складиран опит спрямо текущото ниво
         if (!leader.isAuto) {
             currentXP = leader.storedXP || 0;
         }
         
         let xpPercent = Math.min(100, Math.floor((currentXP / reqXP) * 100));
 
-        // Икона за любимец, ако има такъв
         let petIcon = "";
         if (leader.pet && window.rpgDatabase && window.rpgDatabase.petsDatabase[leader.pet]) {
             petIcon = window.rpgDatabase.petsDatabase[leader.pet].icon;
@@ -100,8 +89,6 @@ window.renderTop6HeroesUI = function() {
 
         const autoClass = leader.isAuto ? "auto-btn active" : "auto-btn";
         const autoText = leader.isAuto ? "Auto" : "Manual";
-
-        // Коректно подсигуряване на името на Героя без 'undefined'
         const heroName = leader.hero || leader.name || "Воевода";
 
         card.innerHTML = `
@@ -130,10 +117,8 @@ window.updateCharacterUI = function(hero) {
     if (!hero) return;
     window.currentHero = hero;
 
-    // Подсигуряване на RPG структурата
     if (window.initializeHeroRPGData) window.initializeHeroRPGData(hero);
 
-    // Горна информационен панел (Ресурси)
     const goldDisplay = document.getElementById('val-gold');
     if (goldDisplay) goldDisplay.innerText = hero.gold || 0;
 
@@ -143,7 +128,6 @@ window.updateCharacterUI = function(hero) {
     const powerDisplay = document.getElementById('val-hero-power');
     if (powerDisplay) powerDisplay.innerText = hero.heroPower || 100;
 
-    // Ляв панел - Профил на текущия водач
     const nameDisplay = document.getElementById('active-character-profile');
     if (nameDisplay) {
         let petStatus = "Няма";
@@ -163,7 +147,6 @@ window.updateCharacterUI = function(hero) {
         `;
     }
 
-    // Бутон за бърз достъп до RPG Модала от левия панел
     const leftPanel = document.getElementById('sidebar-left');
     if (leftPanel && !document.getElementById('open-rpg-modal-btn')) {
         const rpgBtn = document.createElement('button');
@@ -177,7 +160,6 @@ window.updateCharacterUI = function(hero) {
         leftPanel.appendChild(rpgBtn);
     }
 
-    // Преначертаване на Елитната хоризонтална лента, за да отрази промените веднага
     window.renderTop6HeroesUI();
 };
 
@@ -211,12 +193,9 @@ window.inspectLeaderProfile = function(clanKey) {
     }
 
     const leader = window.worldData.clans[clanKey];
-    
-    // Премахване на стар инспектор ако съществува
     const oldProfile = document.getElementById('dynamic-leader-profile');
     if (oldProfile) oldProfile.remove();
 
-    // Генериране на HTML изглед за придобитите пасиви на клана
     let skillsHTML = `<div style="margin-top:10px; background:rgba(255,255,255,0.02); padding:8px; border-radius:4px; border:1px solid #222;">
                         <h4 style="margin:0 0 5px 0; color:#ffd700; font-size:11px; font-family:'Cinzel'; text-transform:uppercase;">Придобити Способности:</h4>`;
     let hasSkills = false;
@@ -231,7 +210,6 @@ window.inspectLeaderProfile = function(clanKey) {
     if (!hasSkills) skillsHTML += `<div style="font-size:10px; color:#555; font-style:italic;">Все още няма развити умения.</div>`;
     skillsHTML += `</div>`;
 
-    // Инвентарен преглед на оръжията
     let inventoryHTML = `<div style="margin-top:8px; background:rgba(255,255,255,0.02); padding:8px; border-radius:4px; border:1px solid #222;">
                            <h4 style="margin:0 0 5px 0; color:#00ffcc; font-size:11px; font-family:'Cinzel'; text-transform:uppercase;">Налична Екипировка:</h4><div style="display:flex; gap:5px;">`;
     let hasEquipment = false;
