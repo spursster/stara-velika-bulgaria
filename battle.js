@@ -28,6 +28,7 @@ window.startBattle = function(targetRegion) {
         battleScreen = document.createElement('div');
         battleScreen.id = 'battle-screen';
         battleScreen.className = 'fullscreen-overlay';
+        battleScreen.style.zIndex = "9999";
         document.body.appendChild(battleScreen);
     }
 
