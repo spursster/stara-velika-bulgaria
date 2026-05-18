@@ -37,6 +37,14 @@ window.processTime = function() {
 
     // 3. Обновяване на интерфейса
     window.updateTimeUI();
+
+    // =======================================================================
+    // НАДГРАЖДАНЕ: АВТОМАТИЧНО ОБНОВЯВАНЕ НА МИСТИЧНИЯ ПОРТАЛ ПРИ СЛЕДВАЩ СЕЗОН
+    // =======================================================================
+    if (window.advanceExpeditionsTurn) {
+        window.advanceExpeditionsTurn();
+    }
+}; // Край на window.processTime
 };
 
 window.updateTimeUI = function() {
