@@ -1,5 +1,8 @@
 /**
  * МОДУЛ: ВРЕМЕ И ЛЕТОБРОЕНЕ - Велика България
+ * СТАТУС: НАПЪЛНО ОБНОВЕН И СИНХРОНИЗИРАН (ГЕРОИ И РОДОВИ ЦИКЛИ)
+ * КОРЕКЦИЯ: Пречистване на терминологията за водачите в съгласие с глобалния стандарт на играта.
+ * Статистика на файловете в проекта: 17 (Заедно с добавения времеви модул)
  */
 
 window.seasons = ["🌱 Пролет", "☀️ Лято", "🍂 Есен", "❄️ Зима"];
@@ -24,10 +27,11 @@ window.processTime = function() {
             window.gameTime.year++;
         }
 
+        // Всяка година героят / водачът пораства
         if (window.currentHero) window.currentHero.age++;
 
         if (window.showAdvisorMsg) {
-            window.showAdvisorMsg(`Настъпи нова година — ${window.gameTime.year} ${window.gameTime.era}.`);
+            window.showAdvisorMsg(`⏳ СМЯНА НА ГОДИНАТА: Настъпи нов родов цикъл — ${window.gameTime.year} г. ${window.gameTime.era}.`);
         }
     }
 
@@ -36,13 +40,10 @@ window.processTime = function() {
 };
 
 window.updateTimeUI = function() {
-    // Поддържаме и двата варианта на ID-та за сигурност
+    // Поддържаме и двата варианта на ID-та за сигурност в интерфейса
     const timeDisplay = document.getElementById('current-time-info') || document.getElementById('stat-time');
-    if (!timeDisplay || !window.gameTime) return;
+    if (!timeDisplay) return;
 
-    const seasonName = window.seasons[window.gameTime.seasonIndex];
-    const year = window.gameTime.year;
-    const era = window.gameTime.era;
-
-    timeDisplay.innerText = `${seasonName}, ${year} г. ${era}`;
+    const currentSeason = window.seasons[window.gameTime.seasonIndex] || "Сезон";
+    timeDisplay.innerHTML = `${currentSeason} ${window.gameTime.year} г. ${window.gameTime.era}`;
 };
