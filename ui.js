@@ -3,7 +3,7 @@
  * ПРОЕКТ: ВЕЛИКА БЪЛГАРИЯ
  * ФАЙЛ: ui.js (УНИВЕРСАЛЕН ГЛОБАЛЕН ПРОФИЛ И ИНСПЕКЦИЯ НА ВЛАДЕТЕЛИТЕ)
  * ОПИСАНИЕ: Управление на UI. Времето е преместено отляво. Текстът на експедициите се скрива на телефон.
- * СТАТУС: ОБНОВЕН (Обединен универсален профил: Статистики, Способности и Инвентар заедно)
+ * СТАТУС: СТАБИЛНА СТАРТОВА ВЕРСИЯ
  * Статистика на файловете в проекта: 15
  * ==========================================================================
  */
@@ -38,7 +38,6 @@ window.toggleGameFullScreen = function() {
 
 /**
  * ГЛОБАЛЕН РЕНДЕР НА ТОП 6 КАРТИ НА ВЛАДЕТЕЛИТЕ
- * Пълна синхронизация с масива на отключените водачи от битките
  */
 window.renderTop6LeadersUI = function() {
     const container = document.getElementById('top6-leaders-container');
@@ -70,6 +69,7 @@ window.renderTop6LeadersUI = function() {
     // 2. Събиране на останалите отключени/закупени водачи от глобалната база
     if (window.worldData && window.worldData.clans) {
         Object.values(window.worldData.clans).forEach(ml => {
+            if (!ml || !ml.name) return;
             if (window.currentHero && ml.name === window.currentHero.name) return;
             
             if (ml.purchased || ml.owned || ml.isUnlocked || ml.isJoined) {
@@ -191,7 +191,7 @@ window.selectAndOpenLeaderInventory = function(escapedName) {
         leader = window.currentHero;
     } else if (window.worldData && window.worldData.clans) {
         Object.values(window.worldData.clans).forEach(ml => {
-            if (ml.name === name) leader = ml;
+            if (ml && ml.name === name) leader = ml;
         });
     }
 
@@ -210,7 +210,6 @@ window.selectAndOpenLeaderInventory = function(escapedName) {
     if (oldModal) oldModal.remove();
 
     let power = leader.heroPower || 100;
-    let calculatedLevel = Math.max(1, Math.floor((power - 100) / 25) + 1);
     let currentClass = leader.currentClass || "Пълководец";
 
     let skillsHTML = '<div style="margin-top: 10px;"><strong style="color: #ffaa00; font-size: 11px;">РАЗВИТИ УМЕНИЯ:</strong>';
