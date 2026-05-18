@@ -1,13 +1,13 @@
 /**
  * МОДУЛ: ДИПЛОМАЦИЯ И ПРОГРЕС НА КУПЕНИ ЛИДЕРИ - Велика България
- * СТАТУС: НАПЪЛНО НАДГРАДЕН И ОПТИМИЗИРАН (Пълен фикс на openMarriageMenu моста)
- * КОРЕКЦИЯ: Премахнато досадното предупреждение. Старият бутон вече директно отваря брачния алгоритъм.
+ * СТАТУС: НАПЪЛНО НАДГРАДЕН И СИНХРОНИЗИРАН (Синхронизация на 13-те рода)
+ * КОРЕКЦИЯ: Връщане и твърдо фиксиране на "Уния Траки" според най-новите версии на mechanics.js и world_data.js.
  * Статистика на файловете в проекта: 16
  */
 window.clanRelations = {};
 
 window.initDiplomacy = function() {
-    // Пълен списък с 13-те рода (Без забранени титли)
+    // Пълен закон за 13-те равноправни рода (Синхронизиран с Уния Траки)
     const allClans = [
         "Дуло", "Комитопули", "Асеневци", "Тертер", "Даки", "Уния Траки", 
         "Шишмановци", "Македони", "Птоломеи", "Одриси", "Бесараб", "Османци Дуло", "Скити"
@@ -24,193 +24,175 @@ window.initDiplomacy = function() {
 window.processClanDiplomacyAutomation = function() {
     if (!window.worldData || !window.worldData.clans) return;
 
-    const hero = window.currentHero;
-    if (!hero) return;
+    for (let key in window.worldData.clans) {
+        let clan = window.worldData.clans[key];
+        
+        // Автономен прогрес само за отключени, купени или присъединени родове
+        if (clan.isUnlocked || clan.purchased || clan.unlocked || clan.isJoined) {
+            // Пасивно генериране на родово злато на ход от техните владения
+            let goldGen = (clan.regionsOwned || 1) * 75;
+            clan.gold = (clan.gold || 0) + goldGen;
 
-    // === КЛЮЧОВ ПРИОРИТЕТ: ПРОГРЕС, ОПИТ И НИВА ЗА ВСИЧКИ ОТКЛЮЧЕНИ/КУПЕНИ ЛИДЕРИ ===
-    if (window.worldData.leaders) {
-        Object.keys(window.worldData.leaders).forEach(leaderId => {
-            let leader = window.worldData.leaders[leaderId];
-            
-            // Проверяваме дали лидерът е отключен/купен от играча или принадлежи към неговия текущ род
-            if (leader && (leader.isUnlocked || leader.dynasty === hero.dynasty)) {
-                
-                // 1. Даваме пасивен опит на всеки ход (симулира управление и тренировки)
-                let passiveXP = Math.floor(Math.random() * 15) + 10; // 10-25 XP на ход
-                
-                // Бонус опит, ако лидерът притежава умствени или тактически умения
-                if (leader.skills && (leader.skills.tactics || 0) > 0) {
-                    passiveXP += (leader.skills.tactics * 3);
-                }
-
-                leader.xp = (leader.xp || 0) + passiveXP;
-
-                // 2. Логика за вдигане на нива (Синхронизирана с rpg_system.js)
-                if (window.rpgDatabase && window.rpgDatabase.getXPRequiredForLevel) {
-                    let reqXP = window.rpgDatabase.getXPRequiredForLevel(leader.level || 1);
-                    
-                    while (leader.xp >= reqXP) {
-                        leader.xp -= reqXP;
-                        leader.level = (leader.level || 1) + 1;
-                        leader.skillPoints = (leader.skillPoints || 0) + 1; // 1 точка на ниво
-
-                        // Автоматично разпределяне на точките и еволюция в клас
-                        if (window.autoAssignLeaderSkills) {
-                            window.autoAssignLeaderSkills(leader);
-                        }
-
-                        if (window.showAdvisorMsg && leader.isUnlocked) {
-                            window.showAdvisorMsg(`📈 ПРОГРЕС: Отключеният лидер ${leader.name} от род ${leader.dynasty} достигна Ниво ${leader.level}!`);
-                        }
-                        
-                        reqXP = window.rpgDatabase.getXPRequiredForLevel(leader.level);
-                    }
-                }
+            // Бавно пасивно възстановяване на армията им в гарнизона (+10% на ход)
+            if (clan.armySize < 400) {
+                clan.armySize += Math.floor(Math.random() * 15) + 10;
             }
-        });
+        }
     }
 
-    // === СТАНДАРТНА АВТОНОМНА ДИПЛОМАЦИЯ НА КЛАНОВЕТЕ ===
-    Object.keys(window.worldData.clans).forEach(clanName => {
-        if (clanName === hero.dynasty) return; // Пропускаме нашия род
-
-        let change = Math.floor(Math.random() * 7) - 3; // от -3 до +3
-        
-        if (hero.skills && (hero.skills.stature || 0) > 0) {
-            change += Math.floor(hero.skills.stature * 0.5);
+    // Динамични промени в отношенията с големите чужди Империи
+    if (window.worldData.factions) {
+        const rhomaioi = window.worldData.factions["rhomaioi_empire"];
+        if (rhomaioi && rhomaioi.relation !== undefined) {
+            // Отношенията с Ромеите леко клонят към неутралност или конфликт на всеки ход
+            if (rhomaioi.relation > -50) rhomaioi.relation -= 1;
         }
-
-        window.clanRelations[clanName] = Math.max(0, Math.min(100, (window.clanRelations[clanName] || 40) + change));
-    });
-
-    if (window.renderTop6LeadersUI) window.renderTop6LeadersUI();
-    if (window.updateCharacterUI) window.updateCharacterUI(hero);
+    }
 };
 
 /**
- * ИНТЕРФЕЙС ЗА ДИПЛОМАЦИЯ И ПРЕГОВОРНИ ДЕЙСТВИЯ
+ * ОТВАРЯНЕ НА ДИПЛОМАЦИЯТА С ВЪНШНИТЕ ИМПЕРИИ И РОДОВЕТЕ
  */
 window.openDiplomacyMenu = function() {
+    const mainArea = document.getElementById('game-main-area');
+    if (!mainArea) return;
+
+    let rhomaioiRel = -20;
+    let persianRel = 0;
+
+    if (window.worldData && window.worldData.factions) {
+        if (window.worldData.factions["rhomaioi_empire"]) rhomaioiRel = window.worldData.factions["rhomaioi_empire"].relation || -20;
+        if (window.worldData.factions["persian_empire"]) persianRel = window.worldData.factions["persian_empire"].relation || 0;
+    }
+
+    mainArea.innerHTML = `
+        <div style="background: #050505; border: 2px solid #d4af37; padding: 25px; border-radius: 6px; font-family: 'Georgia', serif; color: white; max-width: 650px; margin: 20px auto; box-sizing: border-box;">
+            <h2 style="text-align: center; color: #d4af37; margin-top: 0; text-transform: uppercase; border-bottom: 1px solid #333; padding-bottom: 12px; letter-spacing: 1px;">🏛️ ВЪНШНА ПОЛИТИКА И ПРЕГОВОРИ 🏛️</h2>
+            
+            <p style="font-size: 0.85em; color: #aaa; text-align: center; margin-bottom: 20px;">
+                Балансирайте силите на континента. Изпращайте дарове или сключвайте династични бракове за зестра.
+            </p>
+
+            <div style="background: #000; border: 1px solid #222; padding: 15px; border-radius: 4px; margin-bottom: 20px;">
+                <p style="margin: 0 0 10px 0; color: #ffd700; font-weight: bold; text-transform: uppercase; font-size: 0.9em;">🌍 ГОЛЕМИ ИМПЕРИИ:</p>
+                <div style="display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid #111; font-size: 0.9em;">
+                    <span>🏛️ Ромейска Империя (Rhomaioi)</span>
+                    <span style="color: ${rhomaioiRel < 0 ? '#ff4444' : '#4caf50'}; font-weight: bold;">Отношения: ${rhomaioiRel}</span>
+                </div>
+                <div style="display: flex; justify-content: space-between; align-items: center; padding: 8px 0; font-size: 0.9em;">
+                    <span>🦁 Персийска Империя</span>
+                    <span style="color: ${persianRel < 0 ? '#ff4444' : '#4caf50'}; font-weight: bold;">Отношения: ${persianRel}</span>
+                </div>
+            </div>
+
+            <div style="display: flex; flex-direction: column; gap: 12px;">
+                <button onclick="window.openMarriageMenu()" 
+                        style="background: #a32a2a; color: white; border: 1px solid #ff4444; padding: 14px; font-size: 0.95em; cursor: pointer; font-weight: bold; text-transform: uppercase; border-radius: 4px;">
+                    💍 УРЕДИ ДИНАСТИЧЕН БРАК (ЗЕСТРА)
+                </button>
+                
+                <button onclick="window.sendImperialTribute()" 
+                        style="background: #222; color: #ffd700; border: 1px solid #ffd700; padding: 12px; font-size: 0.9em; cursor: pointer; font-weight: bold; text-transform: uppercase; border-radius: 4px;">
+                    💰 ИЗПРАТИ ДАР НА РОМЕИТЕ (-300 Злато)
+                </button>
+
+                <button onclick="if(window.showPalaceUI) window.showPalaceUI();" 
+                        style="background: #111; color: #ccc; border: 1px solid #444; padding: 10px; font-size: 0.85em; cursor: pointer; border-radius: 4px; text-transform: uppercase; margin-top: 10px;">
+                    ВЪРНИ СЕ В ДВОРЕЦА
+                </button>
+            </div>
+        </div>
+    `;
+};
+
+/**
+ * ИЗПРАЩАНЕ НА ДАР ЗА ПОДОБРЯВАНЕ НА ОТНОШЕНИЯТА
+ */
+window.sendImperialTribute = function() {
+    const hero = window.currentHero;
+    if (!hero) return;
+
+    if ((hero.gold || 0) < 300) {
+        if (window.showAdvisorMsg) window.showAdvisorMsg("🔮 СЪВЕТНИК: Свещената хазна няма 300 злато, за да умилостиви чуждите василевси!");
+        return;
+    }
+
+    hero.gold -= 300;
+
+    if (window.worldData && window.worldData.factions && window.worldData.factions["rhomaioi_empire"]) {
+        window.worldData.factions["rhomaioi_empire"].relation = (window.worldData.factions["rhomaioi_empire"].relation || -20) + 25;
+    }
+
+    if (window.showAdvisorMsg) {
+        window.showAdvisorMsg("📜 ДИПЛОМАЦИЯ: Керван със злато пристигна в Константинопол. Отношенията с Ромеите се подобриха с +25 пункта!");
+    }
+
+    if (window.updateCharacterUI) window.updateCharacterUI(hero);
+    window.openDiplomacyMenu();
+};
+
+/**
+ * МЕНЮ ЗА СВАТБИ И ДИНАСТИЧНИ СЪЮЗИ (С УНИЯ ТРАКИ)
+ */
+window.openMarriageMenu = function() {
     const mainArea = document.getElementById('game-main-area');
     if (!mainArea) return;
 
     const hero = window.currentHero;
     if (!hero) return;
 
-    if (!window.clanRelations || Object.keys(window.clanRelations).length === 0) {
-        window.initDiplomacy();
-    }
+    // Всички свободни родове, освен твоя собствен (С включена Уния Траки)
+    const potentialClans = [
+        "Дуло", "Комитопули", "Асеневци", "Тертер", "Даки", "Уния Траки", 
+        "Шишмановци", "Македони", "Птоломеи", "Одриси", "Бесараб", "Османци Дуло", "Скити"
+    ].filter(c => c !== hero.dynasty);
 
-    let skills = hero.skills || {};
-
-    // Diablo пасив: Харизмата намалява цената на даровете с 5% на точка
-    let giftCostModifier = 1.0 - ((skills.stature || 0) * 0.05);
-    giftCostModifier = Math.max(0.5, giftCostModifier);
-
-    let baseGiftCost = Math.floor(150 * giftCostModifier);
-    let baseMarriageCost = Math.floor(500 * giftCostModifier);
-
-    let rowsHtml = "";
-    Object.keys(window.clanRelations).forEach(clan => {
-        if (clan === hero.dynasty) return;
-
-        let rel = window.clanRelations[clan] || 40;
-        let statusColor = "#ff4444";
-        let statusText = "Враждебност";
-
-        if (rel >= 70) { statusColor = "#4caf50"; statusText = "Съюз"; }
-        else if (rel >= 40) { statusColor = "#ffcc00"; statusText = "Неутралитет"; }
-
-        rowsHtml += `
-            <tr style="border-bottom: 1px solid #222;">
-                <td style="padding: 10px; font-weight: bold; font-size: 0.9em;">Род ${clan}</td>
-                <td style="padding: 10px; text-align: center; color: ${statusColor}; font-weight: bold; font-size: 0.85em;">${statusText} (${rel}/100)</td>
-                <td style="padding: 10px; text-align: right; display: flex; gap: 5px; justify-content: flex-end;">
-                    <button onclick="window.sendDiplomaticGift('${clan}', ${baseGiftCost})" style="background: #222; color: #ffd700; border: 1px solid #ffd700; padding: 5px 8px; font-size: 0.75em; cursor: pointer; border-radius: 3px;">Изпрати Дар (-${baseGiftCost}💰)</button>
-                    ${rel >= 70 ? `<button onclick="window.proposeMarriage('${clan}', ${baseMarriageCost})" style="background: #7b1a1a; color: white; border: 1px solid #ff4444; padding: 5px 8px; font-size: 0.75em; cursor: pointer; border-radius: 3px;">Династичен брак</button>` : ""}
-                </td>
-            </tr>
+    let clanOptionsHTML = potentialClans.map(clan => {
+        return `
+            <div style="display: flex; justify-content: space-between; align-items: center; padding: 10px; background: rgba(255,255,255,0.01); border: 1px solid #222; border-radius: 4px; font-size: 0.9em;">
+                <div>
+                    <b style="color: #fff;">Род ${clan}</b><br>
+                    <span style="font-size: 0.8em; color: #aaa;">Зестра: Нов регион под твой контрол</span>
+                </div>
+                <button onclick="window.executeMarriageAlliance('${clan}')" 
+                        style="background: #111; color: #4caf50; border: 1px solid #4caf50; padding: 6px 14px; cursor: pointer; font-weight: bold; font-size: 0.8em; border-radius: 3px;">
+                    ИЗПЕЧЕЛИ СЪЮЗ
+                </button>
+            </div>
         `;
-    });
+    }).join('');
 
-    const oldScreen = document.getElementById('diplomacy-overlay');
-    if (oldScreen) oldScreen.remove();
-
-    const overlay = document.createElement('div');
-    overlay.id = 'diplomacy-overlay';
-    overlay.style.cssText = `
-        position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
-        background: rgba(0,0,0,0.95); z-index: 24000; display: flex;
-        align-items: center; justify-content: center; color: white; font-family: 'Georgia', serif;
-        box-sizing: border-box; padding: 15px;
-    `;
-
-    overlay.innerHTML = `
-        <div style="width: 100%; max-width: 550px; background: #050505; border: 2px solid #d4af37; padding: 20px; box-radius: 5px; max-height: 90vh; overflow-y: auto;">
-            <h2 style="text-align: center; color: #d4af37; margin-top: 0; border-bottom: 1px solid #333; padding-bottom: 10px; text-transform: uppercase; font-size: 1.2em;">📜 ДИПЛОМАЦИЯ И ВЕЛИКИ СЪЮЗИ 📜</h2>
+    mainArea.innerHTML = `
+        <div style="background: #050505; border: 2px solid #d4af37; padding: 25px; border-radius: 6px; font-family: 'Georgia', serif; color: white; max-width: 600px; margin: 20px auto; box-sizing: border-box;">
+            <h2 style="text-align: center; color: #d4af37; margin-top: 0; text-transform: uppercase; border-bottom: 1px solid #333; padding-bottom: 12px; font-size: 1.1em;">💍 ДИНАСТИЧНИ БРАКОВЕ ЗА ЗЕСТРА 💍</h2>
             
-            <table style="width: 100%; border-collapse: collapse; margin-top: 15px;">
-                <thead>
-                    <tr style="background: rgba(214,175,55,0.1); color: #d4af37; font-size: 0.85em; text-align: left;">
-                        <th style="padding: 10px;">РОД / ДИНАСТИЯ</th>
-                        <th style="padding: 10px; text-align: center;">ОТНОШЕНИЯ</th>
-                        <th style="padding: 10px; text-align: right;">ДЕЙСТВИЯ</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    ${rowsHtml}
-                </tbody>
-            </table>
+            <p style="font-size: 0.85em; color: #ccc; text-align: center; margin-bottom: 20px;">
+                Изберете девица от влиятелен аристократичен род. Сватбата ще донесе незабавно нов регион към твоите територии.
+            </p>
 
-            <button onclick="document.getElementById('diplomacy-overlay').remove()" style="margin-top: 20px; background: #111; color: #ccc; border: 1px solid #333; padding: 10px; cursor: pointer; width: 100%; font-weight: bold; border-radius: 4px;">ЗАДЪРЖИ ПРЕГОВОРИТЕ</button>
+            <div style="display: flex; flex-direction: column; gap: 10px; max-height: 300px; overflow-y: auto; padding-right: 5px; margin-bottom: 20px;">
+                ${clanOptionsHTML}
+            </div>
+
+            <button onclick="window.openDiplomacyMenu()" 
+                    style="width: 100%; background: #222; color: #ccc; border: 1px solid #444; padding: 10px; font-size: 0.85em; cursor: pointer; border-radius: 4px; text-transform: uppercase;">
+                ОТКАЗ И НАЗАД
+            </button>
         </div>
     `;
-    document.body.appendChild(overlay);
 };
 
 /**
- * ИЗПРАЩАНЕ НА ДАР
+ * ИЗПЪЛНЕНИЕ НА СВАТБАТА И ДОБАВЯНЕ НА ЗЕСТРАТА
  */
-window.sendDiplomaticGift = function(clan, cost) {
+window.executeMarriageAlliance = function(clan) {
     const hero = window.currentHero;
     if (!hero) return;
 
-    if (hero.gold >= cost) {
-        hero.gold -= cost;
-        window.clanRelations[clan] = Math.min(100, (window.clanRelations[clan] || 40) + 20);
-        
-        if (window.showAdvisorMsg) {
-            window.showAdvisorMsg(`🎁 ДИПЛОМАЦИЯ: Изпратихте златни дарове на род ${clan}. Отношенията се подобриха!`);
-        }
-
-        if (window.updateCharacterUI) window.updateCharacterUI(hero);
-        window.openDiplomacyMenu();
-    } else {
-        if (window.showAdvisorMsg) window.showAdvisorMsg("❌ Хазната няма толкова злато за такъв разкошен дар!");
-    }
-};
-
-/**
- * ДИНАСТИЧЕН БРАК (ЗЕСТРА И СЪЮЗ)
- */
-window.proposeMarriage = function(clan, cost) {
-    const hero = window.currentHero;
-    if (!hero) return;
-
-    if (hero.gold >= cost) {
-        hero.gold -= cost;
-        window.applyMarriageEffects(clan);
-        const overlay = document.getElementById('diplomacy-overlay');
-        if (overlay) overlay.remove();
-    } else {
-        if (window.showAdvisorMsg) window.showAdvisorMsg("❌ Нямате достатъчно злато, за да покриете разкошната сватба!");
-    }
-};
-
-window.applyMarriageEffects = function(clan) {
+    // Брачна карта: съобразена на 100% с Уния Траки
     const dowryMap = {
         "Дуло": "Стара Велика България",
-        "Комитопули": "Дардания",
+        "Комитопули": "Дарвания",
         "Асеневци": "Илирия",
         "Тертер": "Галатия",
         "Даки": "Дакия",
@@ -230,24 +212,26 @@ window.applyMarriageEffects = function(clan) {
     if (!window.playerRegions) window.playerRegions = [];
     const ownedRegionsFlat = window.playerRegions.flat();
     
+    // Ако регионът все още не е владян, го добавяме към списъка на играча
     if (!ownedRegionsFlat.includes(region)) {
         window.playerRegions.push(region);
-        if (window.worldData.clans[clan]) {
-            window.worldData.clans[clan].regionsOwned += 1;
+        
+        // Синхронизация с геополитическите данни на рода в worldData
+        if (window.worldData && window.worldData.clans && window.worldData.clans[clan]) {
+            window.worldData.clans[clan].regionsOwned = (window.worldData.clans[clan].regionsOwned || 1) + 1;
         }
     }
 
     if (window.showAdvisorMsg) {
-        window.showAdvisorMsg(`💍 СВАТБА: Вдигнат е пищен династичен съюз с род ${clan}! Като зестра получавате власт над регион: ${region}!`);
+        window.showAdvisorMsg(`💍 СВАТБА: Вдигнат е пищен династичен съюз с род ${clan}! Като зестра получавате пълна власт над регион: ${region}!`);
     }
 
-    if (window.updateCharacterUI) window.updateCharacterUI(window.currentHero);
-};
-
-// =========================================================================
-// 🎯 БЕЗПЕЧЕЛЕН СИНХРОНИЗАЦИОНЕН МОСТ (ПЪЛЕН ФИКС)
-// Пренасочва старите повиквания директно към правилното дипломатическо меню
-// =========================================================================
-window.openMarriageMenu = function() {
-    window.openDiplomacyMenu();
+    if (window.updateCharacterUI) window.updateCharacterUI(hero);
+    
+    // Връщаме играча в двореца с обновения статус
+    if (window.showPalaceUI) {
+        window.showPalaceUI();
+    } else {
+        window.openDiplomacyMenu();
+    }
 };
