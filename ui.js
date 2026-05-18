@@ -1,10 +1,10 @@
 /**
  * ==========================================================================
  * ПРОЕКТ: ВЕЛИКА БЪЛГАРИЯ
- * ФАЙЛ: ui.js (УНИВЕРСАЛЕН ГЛОБАЛЕН ПРОФИЛ И ИНСПЕКЦИЯ НА ВЛАДЕТЕЛИТЕ)
- * ОПИСАНИЕ: Управление на UI. Времето е преместено отляво. Текстът на експедициите се скрива на телефон.
- * СТАТУС: СТАБИЛНА СТАРТОВА ВЕРСИЯ
- * Статистика на файловете в проекта: 15
+ * ФАЙЛ: ui.js (УНИВЕРСАЛЕН ГЛОБАЛЕН ПРОФИЛ И ИНСПЕКЦИЯ НА КЛАНОВЕТЕ И ГЕРОИТЕ)
+ * СТАТУС: ОБНОВЕН И СИНХРОНИЗИРАН С НОВИЯ DATABASE (Кланове и Герои)
+ * Логика: Владетелите са единствено Герои, а династиите са Кланове.
+ * Статистика на файловете в проекта: 16
  * ==========================================================================
  */
 
@@ -37,7 +37,7 @@ window.toggleGameFullScreen = function() {
 };
 
 /**
- * ГЛОБАЛЕН РЕНДЕР НА ТОП 6 КАРТИ НА ВЛАДЕТЕЛИТЕ
+ * ГЛОБАЛЕН РЕНДЕР НА ТОП 6 КАРТИ НА ГЕРОИТЕ И ТЕХНИТЕ КЛАНОВЕ
  */
 window.renderTop6LeadersUI = function() {
     const container = document.getElementById('top6-leaders-container');
@@ -49,12 +49,12 @@ window.renderTop6LeadersUI = function() {
     // 1. Включване на текущия главен герой (ако съществува)
     if (window.currentHero) {
         let currentLvl = window.currentHero.level || 1;
-        let xpReq = currentLvl * 150;
+        let xpReq = (window.rpgDatabase && window.rpgDatabase.getXPRequiredForLevel) ? window.rpgDatabase.getXPRequiredForLevel(currentLvl) : currentLvl * 150;
         let xpPct = Math.min(100, Math.floor(((window.currentHero.xp || 0) / xpReq) * 100));
 
         allLeaders.push({
             name: window.currentHero.name,
-            dynasty: window.currentHero.dynasty || "Главен Род",
+            clan: window.currentHero.clan || "Главен Род", // Синхронизирано: ползва клан, не династия
             heroPower: window.currentHero.heroPower || 100,
             gold: window.currentHero.gold || 0,
             armySize: window.currentHero.armySize || 0,
@@ -66,21 +66,23 @@ window.renderTop6LeadersUI = function() {
         });
     }
 
-    // 2. Събиране на останалите отключени/закупени водачи от глобалната база
+    // 2. Събиране на останалите отключени/закупени герои от глобалните кланове в world_data.js
     if (window.worldData && window.worldData.clans) {
-        Object.values(window.worldData.clans).forEach(ml => {
-            if (!ml || !ml.name) return;
-            if (window.currentHero && ml.name === window.currentHero.name) return;
+        Object.entries(window.worldData.clans).forEach(([clanKey, ml]) => {
+            // Името на героя е записано в .leader в световните данни
+            let heroName = ml.leader || clanKey;
+            
+            if (window.currentHero && heroName === window.currentHero.name) return;
             
             if (ml.purchased || ml.owned || ml.isUnlocked || ml.isJoined) {
                 let power = ml.heroPower || 100;
-                let calculatedLevel = Math.max(1, Math.floor((power - 100) / 25) + 1);
-                let xpReq = calculatedLevel * 150;
+                let calculatedLevel = ml.level || Math.max(1, Math.floor((power - 100) / 25) + 1);
+                let xpReq = (window.rpgDatabase && window.rpgDatabase.getXPRequiredForLevel) ? window.rpgDatabase.getXPRequiredForLevel(calculatedLevel) : calculatedLevel * 150;
                 let xpPct = ml.xpPercent !== undefined ? ml.xpPercent : (ml.xp ? Math.min(100, Math.floor((ml.xp / xpReq) * 100)) : 0);
                 
                 allLeaders.push({
-                    name: ml.name,
-                    dynasty: ml.dynasty || "Васал",
+                    name: heroName,
+                    clan: clanKey, // Ключът от уорлд дата (напр. "Дуло", "Асеневци") е името на Клана
                     heroPower: power,
                     gold: ml.gold || 0,
                     armySize: ml.armySize || 0,
@@ -113,7 +115,7 @@ window.renderTop6LeadersUI = function() {
             <div onclick="window.selectAndOpenLeaderInventory('${safeName}')" style="cursor:pointer; width:100%;">
                 <div style="display:flex; justify-content:space-between; align-items:center;">
                     <span style="font-weight:bold; color:${leader.isMain ? '#ffaa00' : '#d4af37'}; font-size:13px;">${leader.name}</span>
-                    <span style="font-size:10px; opacity:0.7; background:rgba(0,0,0,0.3); padding:2px 5px; border-radius:3px;">${leader.dynasty}</span>
+                    <span style="font-size:10px; opacity:0.7; background:rgba(0,0,0,0.3); padding:2px 5px; border-radius:3px;">${leader.clan}</span>
                 </div>
                 <div style="font-size:11px; color:#aaa; margin:2px 0;">${leader.currentClass}</div>
                 <div style="display:flex; justify-content:space-between; margin-top:5px; font-size:11px;">
@@ -145,12 +147,12 @@ window.toggleAutoLevel = function(escapedName) {
     window.autoLevelState[name] = !window.autoLevelState[name];
     
     if (window.showAdvisorMsg) {
-        window.showAdvisorMsg(`⚙️ АВТОМАТИЗАЦИЯ: Автоматичното обучение за ${name} е ${window.autoLevelState[name] ? 'АКТИВИРАНО' : 'ДЕАКТИВИРАНО'}.`);
+        window.showAdvisorMsg(`⚙️ АВТОМАТИЗАЦИЯ: Автоматичното обучение за Героя ${name} е ${window.autoLevelState[name] ? 'АКТИВИРАНО' : 'ДЕАКТИВИРАНО'}.`);
     }
 };
 
 /**
- * ОБНОВЯВАНЕ НА ИНТЕРФЕЙСА НА ВЛАДЕТЕЛИТЕ
+ * ОБНОВЯВАНЕ НА ИНТЕРФЕЙСА НА ЛИДЕР КАРТИТЕ
  */
 window.updateLeadersUI = function() {
     if (window.renderTop6LeadersUI) {
@@ -159,7 +161,7 @@ window.updateLeadersUI = function() {
 };
 
 /**
- * ИЗПЪЛНЕНИЕ НА АВТОМАТИЧНОТО КУПУВАНЕ НА УМЕНИЯ
+ * ИЗПЪЛНЕНИЕ НА АВТОМАТИЧНОТО КУПУВАНЕ НА УМЕНИЯ ЗА ГЕРОИТЕ
  */
 window.checkAndExecuteAutoLevel = function(leader) {
     if (!leader || !window.autoLevelState || !window.autoLevelState[leader.name]) return;
@@ -181,7 +183,7 @@ window.checkAndExecuteAutoLevel = function(leader) {
 };
 
 /**
- * ОТВАРЯНЕ НА ПРОФИЛА И ИНСПЕКЦИЯТА НА ДАДЕН ЛИДЕР
+ * ОТВАРЯНЕ НА ПРОФИЛА И ИНСПЕКЦИЯТА НА ДАДЕН ГЕРОЙ
  */
 window.selectAndOpenLeaderInventory = function(escapedName) {
     let name = decodeURIComponent(escapedName);
@@ -190,27 +192,35 @@ window.selectAndOpenLeaderInventory = function(escapedName) {
     if (window.currentHero && window.currentHero.name === name) {
         leader = window.currentHero;
     } else if (window.worldData && window.worldData.clans) {
-        Object.values(window.worldData.clans).forEach(ml => {
-            if (ml && ml.name === name) leader = ml;
+        Object.entries(window.worldData.clans).forEach(([clanKey, ml]) => {
+            if (ml && (ml.leader || clanKey) === name) {
+                leader = {
+                    name: ml.leader || clanKey,
+                    clan: clanKey,
+                    heroPower: ml.heroPower || 100,
+                    gold: ml.gold || 0,
+                    armySize: ml.armySize || 0,
+                    age: ml.age || 30,
+                    level: ml.level || Math.max(1, Math.floor(((ml.heroPower || 100) - 100) / 25) + 1),
+                    currentClass: ml.currentClass || "Пълководец",
+                    skills: ml.skills || {},
+                    inventory: ml.inventory || []
+                };
+            }
         });
     }
 
-    if (!leader) {
-        if (window.unlockedLeaders && window.unlockedLeaders[name]) {
-            leader = window.unlockedLeaders[name];
-        }
+    if (!leader && window.unlockedLeaders && window.unlockedLeaders[name]) {
+        leader = window.unlockedLeaders[name];
     }
 
     if (!leader) {
-        alert("Владетелят не е намерен в текущите анализи.");
+        alert("Героят не е намерен в текущите анализи на клановете.");
         return;
     }
 
     const oldModal = document.getElementById('dynamic-leader-profile');
     if (oldModal) oldModal.remove();
-
-    let power = leader.heroPower || 100;
-    let currentClass = leader.currentClass || "Пълководец";
 
     let skillsHTML = '<div style="margin-top: 10px;"><strong style="color: #ffaa00; font-size: 11px;">РАЗВИТИ УМЕНИЯ:</strong>';
     if (leader.skills && Object.keys(leader.skills).length > 0) {
@@ -247,13 +257,20 @@ window.selectAndOpenLeaderInventory = function(escapedName) {
         <div style="display: flex; flex-direction: column; gap: 10px;">
             <div style="display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 1px solid #333; padding-bottom: 8px;">
                 <div>
-                    <h3 style="margin: 0; color: #d4af37; font-size: 16px;">${leader.name || name}</h3>
-                    <div style="font-size: 12px; color: #ffaa00; font-weight: bold; text-transform: uppercase; margin-top: 2px;">${currentClass}</div>
+                    <h3 style="margin: 0; color: #d4af37; font-size: 16px;">${leader.name}</h3>
+                    <div style="font-size: 12px; color: #ffaa00; font-weight: bold; text-transform: uppercase; margin-top: 2px;">${leader.currentClass || "Пълководец"}</div>
                 </div>
                 <div>
                     <div style="font-size: 10px; color: #888;">МОЩ</div>
-                    <div style="font-size: 15px; color: #ff3366; font-weight: bold;">⚔️ ${power}</div>
+                    <div style="font-size: 15px; color: #ff3366; font-weight: bold;">⚔️ ${leader.heroPower || 100}</div>
                 </div>
+            </div>
+            
+            <div style="font-size:11px; color:#aaa; display:grid; grid-template-columns:1fr 1fr; gap:5px; background:rgba(0,0,0,0.2); padding:5px; border-radius:4px;">
+                <div>Клан: <strong>${leader.clan || "Свободен"}</strong></div>
+                <div>Ниво: <strong>${leader.level || 1}</strong></div>
+                <div>Лично злато: <strong>💰 ${leader.gold || 0}</strong></div>
+                <div>Войска: <strong>⚔️ ${leader.armySize || 0}</strong></div>
             </div>
 
             ${skillsHTML}
@@ -269,7 +286,6 @@ window.selectAndOpenLeaderInventory = function(escapedName) {
 const UI = {
     init() {
         if (window.renderTop6LeadersUI) window.renderTop6LeadersUI();
-        if (window.currentHero && window.updateCharacterUI) window.updateCharacterUI();
     }
 };
 
