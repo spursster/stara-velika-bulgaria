@@ -1,7 +1,7 @@
 /**
  * МОДУЛ: ИКОНОМИКА И РОДОВИ РЕСУРСИ - Велика България
- * СТАТУС: НАПЪЛНО НАДГРАДЕН (Интеграция на 100+ Diablo Способности & ArcheAge Класове)
- * КОРЕКЦИЯ БЪГ: Коригирано пасивното раздаване на опит и вдигане на нива на отключените герои според родовата структура.
+ * СТАТУС: НАПЪЛНО НАДГРАДЕН И СИНХРОНИЗИРАН (Корекция на обектите за лидери)
+ * КОРЕКЦИЯ БЪГ: Коригирано използване на clan.name към clan.leader и синхронизация между isUnlocked / isJoined.
  * Статистика на файловете в проекта: 16
  */
 
@@ -137,10 +137,11 @@ window.calculateEconomy = function() {
             let clan = window.worldData.clans[clanKey];
             if (!clan) return;
 
-            // Всеки водач/герой трупа опит, ако е изрично отключен или е текущият ни активен герой на играча
-            let isActiveHeroClan = (hero.dynasty && clanKey === hero.dynasty) || (clan.name === hero.name);
+            // КОРЕКЦИЯ БЪГ: Използва се правилното свойство .leader вместо несъществуващото .name
+            let isActiveHeroClan = (hero.dynasty && clanKey === hero.dynasty) || (clan.leader === hero.name);
             
-            if (clan.isUnlocked || isActiveHeroClan) {
+            // КОРЕКЦИЯ БЪГ: Добавена съвместимост с родовата структура на world_data.js (isJoined)
+            if (clan.isUnlocked || clan.isJoined || isActiveHeroClan) {
                 // Подсигуряваме базовите стойности, ако липсват в обекта
                 if (clan.xp === undefined) clan.xp = 0;
                 if (clan.level === undefined) clan.level = 1;
@@ -176,7 +177,8 @@ window.calculateEconomy = function() {
                     }
 
                     if (window.showAdvisorMsg) {
-                        window.showAdvisorMsg(`👑 ВЕЛИК ПРОГРЕС: Родовият водач ${clan.name} достигна Ниво ${clan.level}! Спечелена е точка за способности.`);
+                        // КОРЕКЦИЯ: Показва правилно името на лидера на рода от базата данни
+                        window.showAdvisorMsg(`👑 ВЕЛИК ПРОГРЕС: Родовият водач ${clan.leader || clanKey} достигна Ниво ${clan.level}! Спечелена е точка за способности.`);
                     }
 
                     // Обновяваме прага на опита за следващото ниво вътре в цикъла
