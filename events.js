@@ -1,71 +1,73 @@
 /**
  * МОДУЛ: СЪБИТИЯ - Велика България
- * СТАТУС: ГЕНЕРАТОР НА СЪБИТИЯ - ОПТИМИЗИРАН ЗА РЪЧНО И АВТОМАТИЧНО СТАРТИРАНЕ
- * КОРЕКЦИЯ БЪГ: Времето и експедициите вече ВИНАГИ напредват при натискане, независимо от шанса за събитие!
+ * СТАТУС: ФИНАЛНА СИНХРОНИЗАЦИЯ (Премахнато дублиране на ходовете)
+ * КОРЕКЦИЯ БЪГ: Функциите за време и експедиции се викат тук САМО при ръчен тест, за да няма двойно превъртане с logic.js!
  * Статистика на файловете в проекта: 16
  */
 
-// База от данни за динамично сглобяване
+// База от данни за динамично сглобяване на събития
 window.eventTemplates = {
     positive: [
-        { t: "Благоденствие в {region}", desc: "Местните родове в {region} откриха нови пасища. Хазната расте.", effect: { gold: 150, power: 5 } },
-        { t: "Мъдростта на Кан {hero}", desc: "Вашето решение по съдебен спор между два рода увеличи влиянието Ви.", effect: { power: 25, gold: 0 } },
-        { t: "Елитна гвардия", desc: "Група млади воини от род {dynasty} се заклеха във вярност до смърт.", effect: { army: 120, power: 10 } },
-        { t: "Търговски керван", desc: "Пътници от далечни земи пристигнаха, носейки дарове и злато.", effect: { gold: 300, power: 0 } }
+        { t: "Благоденствие в {region}", desc: "Местните родове в {region} откриха нови пасища и ресурси. Хазната расте.", effect: { gold: 150, power: 5 } },
+        { t: "Мъдростта на Кан {hero}", desc: "Вашето справедливо решение по спор между родовите старейшини увеличи влиянието Ви.", effect: { power: 25, gold: 0 } },
+        { t: "Елитна гвардия", desc: "Група млади и верни воини от род {dynasty} се заклеха в съдбовна вярност до смърт.", effect: { army: 120, power: 10 } },
+        { t: "Търговски керван", desc: "Пътници и търговци от далечни земи пристигнаха в столицата, носейки дарове и злато.", effect: { gold: 300, power: 0 } }
     ],
     negative: [
-        { t: "Чума по добитъка", desc: "Болест покоси конете в покрайнините. Армията страда.", effect: { army: -50, gold: -100 } },
-        { t: "Бунт на старейшини", desc: "Някои родове недоволстват от високите данъци.", effect: { power: -20, gold: 50 } },
-        { t: "Пясъчна буря/Мраз", desc: "Природата се обърна срещу нас. Загубихме провизии.", effect: { gold: -200, army: -20 } }
+        { t: "Чума по добитъка", desc: "Коварна болест покоси конете в покрайнините. Военната готовност страда.", effect: { army: -50, gold: -100 } },
+        { t: "Бунт на старейшини", desc: "Някои местни родове недоволстват от извънредните налози за хазната.", effect: { power: -20, gold: 50 } },
+        { t: "Природен мраз", desc: "Суровата природа изненада лагерите ни. Загубихме ценни провизии.", effect: { gold: -200, army: -20 } }
     ],
     mystic: [
-        { t: "Небесно знамение", desc: "Комета пресече небето над лагера. Жреците тълкуват това като знак.", effect: { power: 30, gold: -50 } },
-        { t: "Древно предсказание", desc: "Открит е надпис в скалите, възхваляващ величието на българите.", effect: { power: 50, army: 0 } }
+        { t: "Небесно знамение", desc: "Ярка комета пресече небето над лагера. Колобрите тълкуват това като знак от предците.", effect: { power: 30, gold: -50 } },
+        { t: "Древно предсказание", desc: "Открит е вековен надпис в скалите, възхваляващ величието и вечния път на българите.", effect: { power: 50, army: 0 } }
     ]
 };
 
 /**
- * ФУНКЦИЯ ЗА ТЕСТОВ БУТОН: Гарантирано пускане със 100% шанс (Времето също напредва!)
+ * ФУНКЦИЯ ЗА ТЕСТОВ БУТОН: Гарантирано пускане със 100% шанс (Тук времето напредва ръчно за самия тест!)
  */
 window.forceTriggerRandomEvent = function() {
     window.executeEventLogic(true);
 };
 
 /**
- * СТАНДАРТНО АВТОМАТИЧНО ПУСКАНЕ (Задейства се при натискане на основния бутон за нов ход)
+ * СТАНДАРТНО АВТОМАТИЧНО ПУСКАНЕ (Задейства се от logic.js при нов ход)
  */
 window.triggerRandomEvent = function() {
     window.executeEventLogic(false);
 };
 
 /**
- * ОСНОВНО ЯДРО НА ХОДА И СЪБИТИЯТА
+ * ОСНОВНО ЯДРО НА СЪБИТИЯТА
  */
 window.executeEventLogic = function(isForced) {
-    // 1. ВРЕМЕТО ВИНАГИ НАПРЕДВА ПРИ НАТИСКАНЕ (Превъртане на сезон/година в time.js)
-    if (typeof window.processTime === 'function') {
-        window.processTime();
-    }
-
-    // 2. ЕКСПЕДИЦИИТЕ ВИНАГИ СЕ ОБНОВЯВАТ (Намаляват оставащите си ходове с 1)
-    if (typeof window.updateExpeditionSystem === 'function') {
-        window.updateExpeditionSystem();
+    // 1. ПРОВЕРКА ЗА ДУБЛИРАНЕ: Напредваме времето и експедициите ТУК само ако е натиснат ТЕСТОВИЯ бутон.
+    // При нормален ход от logic.js, тези функции вече са се изпълнили веднъж!
+    if (isForced) {
+        if (typeof window.processTime === 'function') {
+            window.processTime();
+        }
+        if (typeof window.updateExpeditionSystem === 'function') {
+            window.updateExpeditionSystem();
+        }
     }
 
     const hero = window.currentHero;
     if (!hero) return;
 
-    // 3. ПРОВЕРКА ЗА ШАНС (Ако е автоматично и 40% шанс НЕ се падне, спираме ДОТУК - ходът вече е превъртян успешно!)
+    // 2. ПРОВЕРКА ЗА ШАНС (При автоматичен ход има 40% шанс за поява на прозорец със събитие)
     if (!isForced && Math.random() > 0.4) {
         return; 
     }
 
-    // 4. ГЕНЕРИРАНЕ НА ТЕКСТОВОТО СЪБИТИЕ (При успех или принудителен тест)
+    // 3. ГЕНЕРИРАНЕ НА ТЕКСТОВОТО СЪБИТИЕ
     const types = ['positive', 'negative', 'mystic'];
     const selectedType = types[Math.floor(Math.random() * types.length)];
     const template = window.eventTemplates[selectedType][Math.floor(Math.random() * window.eventTemplates[selectedType].length)];
 
-    const regions = ["Тракия", "Мизия", "Понт", "Крим", "Кавказ", "Панония"];
+    // Динамичен подбор на региони, съобразени изцяло с world_data.js
+    const regions = ["Тракия", "Мизия", "Понт", "Крим", "Кавказ", "Панония", "Дакия"];
     const randomRegion = regions[Math.floor(Math.random() * regions.length)];
     
     let eventTitle = template.t.replace("{region}", randomRegion).replace("{hero}", hero.name);
@@ -79,6 +81,7 @@ window.executeEventLogic = function(isForced) {
                 if (template.effect.power) h.heroPower += template.effect.power;
                 if (template.effect.army) h.armySize += template.effect.army;
                 
+                // Защита против отрицателни стойности в профила
                 if (h.gold < 0) h.gold = 0;
                 if (h.armySize < 0) h.armySize = 0;
 
@@ -132,7 +135,6 @@ window.handleEventChoice = function(index) {
     const modal = document.getElementById('event-modal');
     if (modal) modal.remove();
     
-    // Само обновяваме интерфейса с новите награди/наказания от събитието (времето вече е превъртяно в началото)
     if (window.showAdvisorMsg) window.showAdvisorMsg(result);
     if (window.updateCharacterUI) window.updateCharacterUI(window.currentHero);
 };
