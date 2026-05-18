@@ -1,7 +1,7 @@
 /**
  * МОДУЛ: ГЛАВНА ЛОГИКА - Велика България
  * СТАТУС: НАПЪЛНО СИНХРОНИЗИРАН С УНАКВИЧЕНИТЕ КЛАНОВЕ
- * НАДГРАДАНЕ: Пълна интеграция на Герои вместо старите лидери.
+ * НАДГРАДАНЕ: Добавена система за купуване/наемане на нови Герои.
  * Статистика на файловете в проекта: 15
  */
 
@@ -28,7 +28,9 @@ window.initNewGame = function() {
         armySize: 500,
         heroPower: 150,
         age: 50, 
-        techLevel: 1
+        techLevel: 1,
+        level: 1,
+        xp: 0
     };
 
     // Главният герой автоматично става първият отключен в играта
@@ -49,7 +51,7 @@ window.initNewGame = function() {
             const cData = window.clans[name];
             window.activeClans[name] = {
                 name: name,
-                hero: (cData.heroes && cData.heroes[0]) || "Воевода", // Напълно уеднаквено свойство за Герои
+                hero: (cData.heroes && cData.heroes[0]) || "Воевода",
                 gold: 800,
                 armySize: 300,
                 regions: 1,
@@ -62,11 +64,8 @@ window.initNewGame = function() {
         window.initDiplomacy();
     }
 
-    // Опресняване на интерфейса веднага при първото стартиране
     if (window.updateCharacterUI) window.updateCharacterUI(window.currentHero);
     if (window.updateTimeUI) window.updateTimeUI();
-    
-    // НАДГРАЖДАНЕ: Използваме уеднаквеното име за Герои
     if (window.renderTop6HeroesUI) window.renderTop6HeroesUI();
 
     console.log(`🎮 Нова игра: Успешно инициализиран Герой ${window.currentHero.name} от Клан ${window.currentHero.clan}.`);
@@ -129,14 +128,67 @@ window.nextTurn = function() {
 
     if (window.updateCharacterUI) window.updateCharacterUI(window.currentHero);
     if (window.updateTimeUI) window.updateTimeUI();
-    
-    // НАДГРАЖДАНЕ: Опресняване на лентата на героите
     if (window.renderTop6HeroesUI) window.renderTop6HeroesUI();
 };
 
-// Глобален мост за бутона от index.html
 window.processTurn = function() {
     window.nextTurn();
+};
+
+// =========================================================================
+// НАДГРАЖДАНЕ: МЕХАНИКА ЗА ЗАКУПУВАНЕ НА НОВИ ГЕРОИ ОСТАНАЛИТЕ КЛАНОВЕ
+// =========================================================================
+window.buyNewHero = function() {
+    if (!window.currentHero) return;
+
+    const heroCost = 1000; // Цена за наемане на елитен войн
+
+    if (window.currentHero.gold < heroCost) {
+        alert(`❌ Нямате достатъчно злато! Наемането струва 💰 ${heroCost} злато.`);
+        return;
+    }
+
+    // Списък с възможни имена и кланове за новия герой
+    let poolNames = ["Птолемей I Сотер", "Аспарух", "Тервел", "Крум", "Омуртаг", "Пресиян"];
+    let poolClans = ["Птолемеи", "Дуло", "Крумови", "Вокил", "Угаин"];
+
+    let randomName = poolNames[Math.floor(Math.random() * poolNames.length)];
+    let randomClan = poolClans[Math.floor(Math.random() * poolClans.length)];
+
+    // Създаваме новия закупен герой с базови бойни показатели
+    let purchasedHero = {
+        name: randomName,
+        clan: randomClan,
+        level: 2, // Стартира с малко по-високо ниво като награда
+        xp: 0,
+        heroPower: 200,
+        gold: 300,
+        armySize: 150,
+        age: 30,
+        currentClass: "Багатур"
+    };
+
+    // Икономическа транзакция
+    window.currentHero.gold -= heroCost;
+
+    // Добавяме го към отключените герои на играча
+    if (!window.unlockedHeroes) window.unlockedHeroes = [];
+    window.unlockedHeroes.push(purchasedHero);
+
+    // Вкарваме го в глобалния свят (worldData), за да може ui.js веднага да го покаже в Топ 6
+    if (window.worldData && window.worldData.clans) {
+        window.worldData.clans[randomClan] = purchasedHero;
+    }
+
+    // Опресняваме целия интерфейс веднага
+    if (window.updateCharacterUI) window.updateCharacterUI(window.currentHero);
+    if (window.renderTop6HeroesUI) window.renderTop6HeroesUI();
+
+    if (window.showAdvisorMsg) {
+        window.showAdvisorMsg(`👑 Новият Герой ${randomName} от Клан ${randomClan} се присъедини към армията ви!`);
+    } else {
+        alert(`👑 Успешно наехте ${randomName} от Клан ${randomClan}!`);
+    }
 };
 
 // Автоматично извикване при първоначално зареждане на браузъра
