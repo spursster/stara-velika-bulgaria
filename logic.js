@@ -1,7 +1,7 @@
 /**
  * МОДУЛ: ГЛАВНА ЛОГИКА - Велика България
  * СТАТУС: НАПЪЛНО СИНХРОНИЗИРАН С УНАКВИЧЕНИТЕ КЛАНОВЕ
- * НАДГРАДАНЕ: Преименувана функция за горния панел на 'window.renderTop6HeroesUI'.
+ * НАДГРАДАНЕ: Пълна интеграция на Герои вместо старите лидери.
  * Статистика на файловете в проекта: 15
  */
 
@@ -49,7 +49,7 @@ window.initNewGame = function() {
             const cData = window.clans[name];
             window.activeClans[name] = {
                 name: name,
-                hero: (cData.heroes && cData.heroes[0]) || "Воевода",
+                hero: (cData.heroes && cData.heroes[0]) || "Воевода", // Напълно уеднаквено свойство за Герои
                 gold: 800,
                 armySize: 300,
                 regions: 1,
@@ -65,7 +65,8 @@ window.initNewGame = function() {
     // Опресняване на интерфейса веднага при първото стартиране
     if (window.updateCharacterUI) window.updateCharacterUI(window.currentHero);
     if (window.updateTimeUI) window.updateTimeUI();
-    // НАДГРАЖДАНЕ: Използваме новото уеднаквено име на функцията за Герои
+    
+    // НАДГРАЖДАНЕ: Използваме уеднаквеното име за Герои
     if (window.renderTop6HeroesUI) window.renderTop6HeroesUI();
 
     console.log(`🎮 Нова игра: Успешно инициализиран Герой ${window.currentHero.name} от Клан ${window.currentHero.clan}.`);
@@ -128,8 +129,14 @@ window.nextTurn = function() {
 
     if (window.updateCharacterUI) window.updateCharacterUI(window.currentHero);
     if (window.updateTimeUI) window.updateTimeUI();
-    // НАДГРАЖДАНЕ: Използваме новото уеднаквено име на функцията за Герои тук също
+    
+    // НАДГРАЖДАНЕ: Опресняване на лентата на героите
     if (window.renderTop6HeroesUI) window.renderTop6HeroesUI();
+};
+
+// Глобален мост за бутона от index.html
+window.processTurn = function() {
+    window.nextTurn();
 };
 
 // Автоматично извикване при първоначално зареждане на браузъра
