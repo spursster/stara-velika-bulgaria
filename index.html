@@ -8,7 +8,65 @@
     <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Montserrat:wght@300;400;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
     <style>
-        /* 📱 ОПТИМИЗИРАНА ДОЛНА ЛЕНТА ЗА 6 БУТОНА – БЕЗ ИЗЛИЗАНЕ ОТ ЕКРАНА 📱 */
+        /* 📱 АДАПТИВНА ГОРНА ЛЕНТА ЗА РЕСУРСИ И ВРЕМЕ 📱 */
+        #top-bar {
+            display: flex !important;
+            flex-wrap: wrap !important;
+            justify-content: space-between !important;
+            align-items: center !important;
+            padding: 10px 15px !important;
+            gap: 10px !important;
+            background: rgba(15, 15, 15, 0.95) !important;
+            border-bottom: 2px solid #d4af37 !important;
+            min-height: 50px !important;
+        }
+
+        .top-bar-stats {
+            display: flex !important;
+            flex-wrap: wrap !important;
+            gap: 12px !important;
+            align-items: center !important;
+        }
+
+        .top-bar-controls {
+            display: flex !important;
+            align-items: center !important;
+            gap: 8px !important;
+        }
+
+        /* 👑 АДАПТИВНА ЛЕНТА ЗА ЕЛИТНИ ГЕРОИ 👑 */
+        #top-elite-heroes-bar {
+            width: 95% !important;
+            max-width: 1200px !important;
+            margin: 15px auto !important;
+            display: flex !important;
+            gap: 10px !important;
+            overflow-x: auto !important; /* Позволява скролване на телефон */
+            padding-bottom: 5px !important;
+            box-sizing: border-box !important;
+        }
+
+        /* Десктоп изглед за лентата на героите - разпределят се поравно */
+        @media (min-width: 769px) {
+            #top-elite-heroes-bar {
+                display: grid !important;
+                grid-template-columns: repeat(6, 1fr) !important;
+                overflow-x: visible !important;
+            }
+        }
+
+        /* Мобилен изглед за картичките - фиксирана ширина, за да не се свиват */
+        @media (max-width: 768px) {
+            .elite-hero-card {
+                min-width: 130px !important;
+                flex-shrink: 0 !important;
+            }
+            #top-bar {
+                justify-content: center !important;
+            }
+        }
+
+        /* 📱 ОПТИМИЗИРАНА ДОЛНА ЛЕНТА ЗА 6 БУТОНА 📱 */
         #bottom-controls {
             position: fixed !important;
             bottom: 0 !important;
@@ -62,17 +120,21 @@
 <body>
 
     <header id="top-bar">
-        <div class="stat-box" id="stat-hero-power" title="Обща Бойна Мощ на активния Водач">⚔️ <span id="val-hero-power">0</span></div>
-        <div class="stat-box" id="stat-gold" title="Родова Хазна">💰 <span id="val-gold">0</span></div>
-        <div class="stat-box" id="stat-army" title="Текуща Армия">🏹 <span id="val-army">0</span></div>
-        <div class="stat-box" id="stat-time" title="Текущ Сезон и Година">⏳ <span id="current-time-info">Зареждане...</span></div>
-        <button class="menu-btn action-btn" onclick="window.processTurn()" style="padding: 8px 15px !important; font-size: 0.8rem !important;">СЛЕДВАЩ СЕЗОН ➔</button>
+        <div class="top-bar-stats">
+            <div class="stat-box" id="stat-hero-power" title="Обща Бойна Мощ">⚔️ <span id="val-hero-power">0</span></div>
+            <div class="stat-box" id="stat-gold" title="Родова Хазна">💰 <span id="val-gold">0</span></div>
+            <div class="stat-box" id="stat-army" title="Текуща Армия">🏹 <span id="val-army">0</span></div>
+            <div class="stat-box" id="stat-time" title="Текущ Сезон и Година">⏳ <span id="current-time-info">Зареждане...</span></div>
+        </div>
+        <div class="top-bar-controls">
+            <button class="menu-btn action-btn" onclick="window.toggleGameFullScreen()" style="padding: 8px 12px !important; font-size: 0.8rem !important; background: rgba(212,175,55,0.2); border: 1px solid #d4af37;">📺 ЦЯЛ ЕКРАН</button>
+            <button class="menu-btn action-btn" onclick="window.processTurn()" style="padding: 8px 15px !important; font-size: 0.8rem !important;">СЛЕДВАЩ СЕЗОН ➔</button>
+        </div>
     </header>
 
-    <section id="top-elite-heroes-bar" style="width: 92%; max-width: 1200px; margin: 15px auto; display: grid; grid-template-columns: repeat(6, 1fr); gap: 10px; box-sizing: border-box;"></section>
+    <section id="top-elite-heroes-bar"></section>
 
     <main id="game-container">
-        
         <aside id="sidebar-left">
             <div style="background: rgba(15,15,15,0.7); border: 1px solid #d4af37; padding: 15px; border-radius: 8px; text-align: center;">
                 <h3 style="font-family:'Cinzel'; color:#ffd700; margin:0 0 10px 0; border-bottom:1px solid rgba(214,175,55,0.3); padding-bottom:5px;">Активен Герой</h3>
@@ -100,7 +162,6 @@
 
     <div id="hero-rpg-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.75); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); z-index: 20000; overflow-y: auto;">
         <div style="position: relative; width: 90%; max-width: 900px; background: rgba(20,20,20,0.95); border: 2px solid #d4af37; border-radius: 12px; margin: 40px auto; padding: 25px; box-sizing: border-box; color: #fff; box-shadow: 0 0 30px rgba(0,0,0,0.8);">
-            
             <button onclick="document.getElementById('hero-rpg-modal').style.display='none'" style="position: absolute; top: 15px; right: 15px; background: none; border: none; color: #ff4444; font-size: 24px; cursor: pointer; font-weight: bold;">✕</button>
             
             <div style="text-align: center; margin-bottom: 25px; border-bottom: 1px solid rgba(214,175,55,0.3); padding-bottom: 15px;">
@@ -108,26 +169,20 @@
                 <p id="rpg-modal-subtitle" style="color: #aaa; margin: 5px 0 0 0; font-family: 'Montserrat'; font-size: 1rem;">Клан Дуло | Клас: Върховен Боил (Ниво 5)</p>
             </div>
 
-            <div style="display: grid; grid-template-columns: 320px 1fr; gap: 25px;">
-                
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 25px;">
                 <div style="background: rgba(10,10,10,0.5); padding: 15px; border-radius: 8px; border: 1px solid #333; text-align: center;">
                     <h4 style="font-family:'Cinzel'; color:#ffd700; margin: 0 0 15px 0; text-transform: uppercase; font-size: 0.9rem;">Инвентар и Доспехи</h4>
-                    
                     <div id="rpg-equipment-grid" style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 20px; justify-content: center;"></div>
-                    
                     <h4 style="font-family:'Cinzel'; color:#ffd700; margin: 15px 0 10px 0; text-transform: uppercase; font-size: 0.9rem; border-top: 1px solid #333; padding-top: 15px;">Домашен Любимец</h4>
-                    
-                    <div id="rpg-pet-slot" style="width: 80px; height: 80px; margin: 0 auto; background: rgba(30,30,30,0.8); border: 2px dashed #ffd700; border-radius: 50%; display: flex; flex-direction: column; align-items: center; justify-content: center; cursor: pointer; transition: background 0.2s;"></div>
+                    <div id="rpg-pet-slot" style="width: 80px; height: 80px; margin: 0 auto; background: rgba(30,30,30,0.8); border: 2px dashed #ffd700; border-radius: 50%; display: flex; flex-direction: column; align-items: center; justify-content: center; cursor: pointer;"></div>
                 </div>
-
                 <div style="display: flex; flex-direction: column; gap: 15px;">
                     <div style="background: rgba(40,30,10,0.3); border: 1px solid #d4af37; padding: 10px 15px; border-radius: 6px; display: flex; justify-content: space-between; align-items: center;">
                         <span style="font-weight: bold; color: #ffd700;">Свободни Точки за Умения:</span>
                         <span id="rpg-modal-points" style="background: #ffd700; color: #000; padding: 2px 10px; font-weight: bold; border-radius: 4px;">0</span>
                     </div>
-                    <div id="rpg-modal-skills-container" style="flex: 1; max-height: 380px; overflow-y: auto; padding-right: 5px; display: flex; flex-direction: column; gap: 12px;"></div>
+                    <div id="rpg-modal-skills-container" style="flex: 1; max-height: 380px; overflow-y: auto; display: flex; flex-direction: column; gap: 12px;"></div>
                 </div>
-
             </div>
         </div>
     </div>
@@ -171,7 +226,6 @@
     <script src="logic.js"></script>
 
     <script>
-        // Коректно следене и отразяване на баджовете за мобилните контроли
         setInterval(() => {
             const mainBadge = document.getElementById('expeditions-badge');
             const mobileBadge = document.getElementById('expeditions-badge-mobile');
