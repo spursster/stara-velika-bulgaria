@@ -2,7 +2,8 @@
  * ==========================================================================
  * ПРОЕКТ: ВЕЛИКА БЪЛГАРИЯ
  * ФАЙЛ: ui.js (УНИВЕРСАЛЕН ГЛОБАЛЕН ПРОФИЛ И ИНСПЕКЦИЯ НА ВЛАДЕТЕЛИТЕ)
- * СТАТУС: НАПЪЛНО КОРИГИРАН И СИНХРОНИЗИРАН С WORLD_DATA И RPG_SYSTEM
+ * ОПИСАНИЕ: Управление на UI. Времето е преместено отляво. Текстът на експедициите се скрива на телефон.
+ * СТАТУС: ОБНОВЕН (Обединен универсален профил: Статистики, Способности и Инвентар заедно)
  * Статистика на файловете в проекта: 15
  * ==========================================================================
  */
@@ -18,8 +19,8 @@ if (!window.autoLevelState) {
  */
 window.toggleGameFullScreen = function() {
     if (!document.fullscreenElement && 
-        !document.mozFullScreenElement && \
-        !document.webkitFullscreenElement && \
+        !document.mozFullScreenElement && 
+        !document.webkitFullscreenElement && 
         !document.msFullscreenElement) {
         
         const docEl = document.documentElement;
@@ -37,7 +38,7 @@ window.toggleGameFullScreen = function() {
 
 /**
  * ГЛОБАЛЕН РЕНДЕР НА ТОП 6 КАРТИ НА ВЛАДЕТЕЛИТЕ
- * ИЗПРАВЕНО: Чете правилно .leader и родовата структура от world_data.js без грешки в конзолата!
+ * Пълна синхронизация с масива на отключените водачи от битките
  */
 window.renderTop6LeadersUI = function() {
     const container = document.getElementById('top6-leaders-container');
@@ -46,10 +47,10 @@ window.renderTop6LeadersUI = function() {
     container.innerHTML = '';
     let allLeaders = [];
 
-    // 1. Добавяне на Главния Владетел (ако съществува)
+    // 1. Включване на текущия главен герой (ако съществува)
     if (window.currentHero) {
         let currentLvl = window.currentHero.level || 1;
-        let xpReq = (window.rpgDatabase && window.rpgDatabase.getXPRequiredForLevel) ? window.rpgDatabase.getXPRequiredForLevel(currentLvl) : currentLvl * 150;
+        let xpReq = currentLvl * 150;
         let xpPct = Math.min(100, Math.floor(((window.currentHero.xp || 0) / xpReq) * 100));
 
         allLeaders.push({
@@ -66,41 +67,37 @@ window.renderTop6LeadersUI = function() {
         });
     }
 
-    // 2. БЕЗОПАСНО ИЗЧИСЛЯВАНЕ И СИНХРОНИЗАЦИЯ НА ОСТАНАЛИТЕ 13 РОДА ОТ WORLD_DATA
+    // 2. Събиране на останалите отключени/закупени водачи от глобалната база
     if (window.worldData && window.worldData.clans) {
-        Object.entries(window.worldData.clans).forEach(([clanName, ml]) => {
-            // Вземаме правилното име на водача от свойството .leader, а не несъществуващото .name
-            let actualName = ml.leader || clanName;
+        Object.values(window.worldData.clans).forEach(ml => {
+            if (window.currentHero && ml.name === window.currentHero.name) return;
             
-            // Прескачаме главния герой, за да не се дублира на екрана
-            if (window.currentHero && actualName === window.currentHero.name) return;
-            
-            if (ml.purchased || ml.owned || ml.isUnlocked || ml.isJoined || (ml.level !== undefined) || (ml.xp !== undefined)) {
-                let currentLvl = ml.level || 1;
-                let xpReq = (window.rpgDatabase && window.rpgDatabase.getXPRequiredForLevel) ? window.rpgDatabase.getXPRequiredForLevel(currentLvl) : currentLvl * 150;
+            if (ml.purchased || ml.owned || ml.isUnlocked || ml.isJoined) {
+                let power = ml.heroPower || 100;
+                let calculatedLevel = Math.max(1, Math.floor((power - 100) / 25) + 1);
+                let xpReq = calculatedLevel * 150;
                 let xpPct = ml.xpPercent !== undefined ? ml.xpPercent : (ml.xp ? Math.min(100, Math.floor((ml.xp / xpReq) * 100)) : 0);
                 
-                allLeaders.push({ 
-                    name: actualName,
-                    dynasty: clanName, 
-                    heroPower: ml.heroPower || 100,
+                allLeaders.push({
+                    name: ml.name,
+                    dynasty: ml.dynasty || "Васал",
+                    heroPower: power,
                     gold: ml.gold || 0,
                     armySize: ml.armySize || 0,
                     age: ml.age || 30,
-                    isMain: false, 
-                    level: currentLvl, 
-                    xpPercent: xpPct, 
-                    currentClass: ml.currentClass || "Пълководец" 
+                    isMain: false,
+                    level: calculatedLevel,
+                    xpPercent: xpPct,
+                    currentClass: ml.currentClass || "Пълководец"
                 });
             }
         });
     }
 
-    // Вземаме първите 6 лидера за показване
+    // Вземане на първите 6 лидера за показване
     let displayLeaders = allLeaders.slice(0, 6);
 
     displayLeaders.forEach(leader => {
-        // Проверка и инициализация на състоянието за автоматично вдигане на нива (Auto Level)
         if (window.autoLevelState[leader.name] === undefined) {
             window.autoLevelState[leader.name] = false;
         }
@@ -110,7 +107,6 @@ window.renderTop6LeadersUI = function() {
         card.className = 'leader-rpg-card' + (leader.isMain ? ' main-hero-card' : '');
         if (leader.isMain) card.style.border = "2px solid #ffaa00";
 
-        // Сигурна обработка на името за предотвратяване на HTML инжекции или сривове в URI компонентите
         let safeName = encodeURIComponent(leader.name);
 
         card.innerHTML = `
@@ -154,7 +150,7 @@ window.toggleAutoLevel = function(escapedName) {
 };
 
 /**
- * ОБНОВЯВАНЕ НА ИНТЕРФЕЙСА НА ВЛАДЕТЕЛИТЕ (Ако има по-стари секции, които го викат)
+ * ОБНОВЯВАНЕ НА ИНТЕРФЕЙСА НА ВЛАДЕТЕЛИТЕ
  */
 window.updateLeadersUI = function() {
     if (window.renderTop6LeadersUI) {
@@ -163,12 +159,11 @@ window.updateLeadersUI = function() {
 };
 
 /**
- * ИЗПЪЛНЕНИЕ НА АВТОМАТИЧНОТО КУПУВАНЕ НА УМЕНИЯ (При активиран AUTO режим)
+ * ИЗПЪЛНЕНИЕ НА АВТОМАТИЧНОТО КУПУВАНЕ НА УМЕНИЯ
  */
 window.checkAndExecuteAutoLevel = function(leader) {
     if (!leader || !window.autoLevelState || !window.autoLevelState[leader.name]) return;
     
-    // Ако има свободни точки за умения, ги разпределяме автоматично по тактическото дърво
     if (leader.skillPoints && leader.skillPoints > 0 && window.rpgDatabase && window.rpgDatabase.skillTrees) {
         leader.skills = leader.skills || {};
         let availableSkills = Object.keys(window.rpgDatabase.skillTrees);
@@ -189,31 +184,21 @@ window.checkAndExecuteAutoLevel = function(leader) {
  * ОТВАРЯНЕ НА ПРОФИЛА И ИНСПЕКЦИЯТА НА ДАДЕН ЛИДЕР
  */
 window.selectAndOpenLeaderInventory = function(escapedName) {
-    let leaderName = decodeURIComponent(escapedName);
+    let name = decodeURIComponent(escapedName);
     let leader = null;
 
-    // Търсене дали това е главният герой
-    if (window.currentHero && window.currentHero.name === leaderName) {
+    if (window.currentHero && window.currentHero.name === name) {
         leader = window.currentHero;
     } else if (window.worldData && window.worldData.clans) {
-        // Търсене в списъка на клановете
-        Object.entries(window.worldData.clans).forEach(([clanName, ml]) => {
-            if ((ml.leader || clanName) === leaderName) {
-                leader = {
-                    name: ml.leader || clanName,
-                    dynasty: clanName,
-                    level: ml.level || 1,
-                    xp: ml.xp || 0,
-                    heroPower: ml.heroPower || 100,
-                    gold: ml.gold || 0,
-                    armySize: ml.armySize || 0,
-                    age: ml.age || 30,
-                    currentClass: ml.currentClass || "Пълководец",
-                    skills: ml.skills || {},
-                    inventory: ml.inventory || []
-                };
-            }
+        Object.values(window.worldData.clans).forEach(ml => {
+            if (ml.name === name) leader = ml;
         });
+    }
+
+    if (!leader) {
+        if (window.unlockedLeaders && window.unlockedLeaders[name]) {
+            leader = window.unlockedLeaders[name];
+        }
     }
 
     if (!leader) {
@@ -221,14 +206,16 @@ window.selectAndOpenLeaderInventory = function(escapedName) {
         return;
     }
 
-    // Премахване на стар инспекционен прозорец, ако има такъв
     const oldModal = document.getElementById('dynamic-leader-profile');
     if (oldModal) oldModal.remove();
 
-    // Генериране на HTML за развитите способности
-    let skillsHTML = '<div style="margin-top:10px;"><strong style="color:#ffaa00; font-size:11px;">РАЗВИТИ УМЕНИЯ:</strong>';
+    let power = leader.heroPower || 100;
+    let calculatedLevel = Math.max(1, Math.floor((power - 100) / 25) + 1);
+    let currentClass = leader.currentClass || "Пълководец";
+
+    let skillsHTML = '<div style="margin-top: 10px;"><strong style="color: #ffaa00; font-size: 11px;">РАЗВИТИ УМЕНИЯ:</strong>';
     if (leader.skills && Object.keys(leader.skills).length > 0) {
-        skillsHTML += '<ul style="margin:5px 0; padding-left:15px; font-size:11px; color:#ccc;">';
+        skillsHTML += '<ul style="margin: 5px 0; padding-left: 15px; font-size: 11px; color: #ccc;">';
         Object.entries(leader.skills).forEach(([sKey, lvl]) => {
             if (lvl > 0) {
                 let sName = (window.rpgDatabase && window.rpgDatabase.skillTrees[sKey]) ? window.rpgDatabase.skillTrees[sKey].name : sKey;
@@ -237,65 +224,56 @@ window.selectAndOpenLeaderInventory = function(escapedName) {
         });
         skillsHTML += '</ul>';
     } else {
-        skillsHTML += '<div style="font-size:11px; color:#666; font-style:italic;">Няма разпределени точки.</div>';
+        skillsHTML += '<div style="font-size: 11px; color: #666; font-style: italic;">Няма разпределени точки.</div>';
     }
     skillsHTML += '</div>';
 
-    // Генериране на HTML за личния инвентар на лидера
-    let inventoryHTML = '<div style="margin-top:10px;"><strong style="color:#ffaa00; font-size:11px;">СЪКРОВИЩНИЦА И ИНВЕНТАР:</strong>';
+    let inventoryHTML = '<div style="margin-top: 10px;"><strong style="color: #ffaa00; font-size: 11px;">СЪКРОВИЩНИЦА И ИНВЕНТАР:</strong>';
     if (leader.inventory && leader.inventory.length > 0) {
-        inventoryHTML += '<div style="display:flex; gap:5px; flex-wrap:wrap; margin-top:5px;">';
+        inventoryHTML += '<div style="display: flex; gap: 5px; flex-wrap: wrap; margin-top: 5px;">';
         leader.inventory.forEach(item => {
-            inventoryHTML += `<div style="background:rgba(255,255,255,0.05); border:1px solid #444; padding:4px 8px; border-radius:4px; font-size:10px; color:#fff;">📦 ${item.name || item}</div>`;
+            inventoryHTML += `<div style="background: rgba(255,255,255,0.05); border: 1px solid #444; padding: 4px 8px; border-radius: 4px; font-size: 10px; color: #fff;">📦 ${item.name || item}</div>`;
         });
         inventoryHTML += '</div>';
     } else {
-        inventoryHTML += '<div style="font-size:11px; color:#666; font-style:italic;">Празен инвентар.</div>';
+        inventoryHTML += '<div style="font-size: 11px; color: #666; font-style: italic;">Празен инвентар.</div>';
     }
     inventoryHTML += '</div>';
 
-    // Сглобяване на целия прозорец на профила
     const profileModal = document.createElement('div');
     profileModal.id = 'dynamic-leader-profile';
-    profileModal.style = "position:fixed; top:50%; left:50%; transform:translate(-50%, -50%); width:320px; background:#111; border:2px solid #d4af37; box-shadow:0 0 20px rgba(0,0,0,0.8); z-index:10000; border-radius:8px; padding:15px; font-family:sans-serif; color:#fff;";
+    profileModal.style = "position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 320px; background: #111; border: 2px solid #d4af37; box-shadow: 0 0 20px rgba(0,0,0,0.8); z-index: 10000; border-radius: 8px; padding: 15px; font-family: sans-serif; color: #fff;";
     
     profileModal.innerHTML = `
-        <div style="display:flex; flex-direction:column; gap:10px;">
-            <div style="display:flex; justify-content:space-between; align-items:flex-start; border-bottom:1px solid #333; padding-bottom:8px;">
+        <div style="display: flex; flex-direction: column; gap: 10px;">
+            <div style="display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 1px solid #333; padding-bottom: 8px;">
                 <div>
-                    <h3 style="margin:0; color:#d4af37; font-size:16px;">${leader.name}</h3>
-                    <div style="font-size:12px; color:#ffaa00; font-weight:bold; text-transform:uppercase; margin-top:2px;">${leader.currentClass}</div>
+                    <h3 style="margin: 0; color: #d4af37; font-size: 16px;">${leader.name || name}</h3>
+                    <div style="font-size: 12px; color: #ffaa00; font-weight: bold; text-transform: uppercase; margin-top: 2px;">${currentClass}</div>
                 </div>
                 <div>
-                    <div style="font-size:10px; color:#888;">МОЩ</div>
-                    <div style="font-size:15px; color:#ff3366; font-weight:bold;">⚔️ ${leader.heroPower}</div>
+                    <div style="font-size: 10px; color: #888;">МОЩ</div>
+                    <div style="font-size: 15px; color: #ff3366; font-weight: bold;">⚔️ ${power}</div>
                 </div>
-            </div>
-            <div style="font-size:11px; color:#aaa; display:grid; grid-template-columns:1fr 1fr; gap:5px; background:rgba(0,0,0,0.2); padding:5px; border-radius:4px;">
-                <div>Династия: <strong>${leader.dynasty}</strong></div>
-                <div>Ниво: <strong>${leader.level}</strong></div>
-                <div>Войска: <strong>${leader.armySize}</strong></div>
-                <div>Лично злато: <strong>${leader.gold}</strong></div>
             </div>
 
             ${skillsHTML}
             ${inventoryHTML}
 
-            <button onclick="document.getElementById('dynamic-leader-profile').remove()" style="width:100%; margin-top:15px; padding:10px; background:rgba(212,175,55,0.15); border:1px solid #d4af37; border-radius:6px; color:#fff; cursor:pointer; font-size:11px; font-weight:bold; text-transform:uppercase;">Затвори профила</button>
+            <button onclick="document.getElementById('dynamic-leader-profile').remove()" style="width: 100%; margin-top: 15px; padding: 10px; background: rgba(212,175,55,0.15); border: 1px solid #d4af37; border-radius: 6px; color: #fff; font-family: 'Cinzel', serif; cursor: pointer; font-size: 11px; transition: background 0.2s;" onmouseover=\"this.style.background='rgba(212,175,55,0.3)'\" onmouseout=\"this.style.background='rgba(212,175,55,0.15)'\">Затвори профила</button>
         </div>
     `;
 
     document.body.appendChild(profileModal);
 };
 
-// Автоматична инициализация при зареждане на модула
 const UI = {
     init() {
         if (window.renderTop6LeadersUI) window.renderTop6LeadersUI();
+        if (window.currentHero && window.updateCharacterUI) window.updateCharacterUI();
     }
 };
 
-// Задействане на инициализацията
 if (typeof document !== 'undefined') {
     document.addEventListener('DOMContentLoaded', () => { UI.init(); });
 }
