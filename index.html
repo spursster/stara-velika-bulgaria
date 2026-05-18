@@ -8,7 +8,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Montserrat:wght@300;400;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
     <style>
-        /* 📱 АДАПТИВНА ГОРНА ЛЕНТА ЗА РЕСУРСИ И ВРЕМЕ 📱 */
+        /* 📱 АДАПТИВНА ГОРНА ЛЕНТА С ФЛЕКС ДИЗАЙН 📱 */
         #top-bar {
             display: flex !important;
             flex-wrap: wrap !important;
@@ -31,7 +31,8 @@
         .top-bar-controls {
             display: flex !important;
             align-items: center !important;
-            gap: 8px !important;
+            gap: 6px !important;
+            flex-wrap: wrap !important;
         }
 
         /* 👑 АДАПТИВНА ЛЕНТА ЗА ЕЛИТНИ ГЕРОИ 👑 */
@@ -41,12 +42,11 @@
             margin: 15px auto !important;
             display: flex !important;
             gap: 10px !important;
-            overflow-x: auto !important; /* Позволява скролване на телефон */
+            overflow-x: auto !important;
             padding-bottom: 5px !important;
             box-sizing: border-box !important;
         }
 
-        /* Десктоп изглед за лентата на героите - разпределят се поравно */
         @media (min-width: 769px) {
             #top-elite-heroes-bar {
                 display: grid !important;
@@ -55,7 +55,6 @@
             }
         }
 
-        /* Мобилен изглед за картичките - фиксирана ширина, за да не се свиват */
         @media (max-width: 768px) {
             .elite-hero-card {
                 min-width: 130px !important;
@@ -66,7 +65,6 @@
             }
         }
 
-        /* 📱 ОПТИМИЗИРАНА ДОЛНА ЛЕНТА ЗА 6 БУТОНА 📱 */
         #bottom-controls {
             position: fixed !important;
             bottom: 0 !important;
@@ -127,7 +125,10 @@
             <div class="stat-box" id="stat-time" title="Текущ Сезон и Година">⏳ <span id="current-time-info">Зареждане...</span></div>
         </div>
         <div class="top-bar-controls">
+            <button class="menu-btn action-btn" onclick="window.buyNewHero()" style="padding: 8px 12px !important; font-size: 0.8rem !important; background: linear-gradient(135deg, #a98613, #d4af37); border: 1px solid #fff; color: #000; font-weight: bold;">👑 НАЕМИ ГЕРОЙ</button>
+            
             <button class="menu-btn action-btn" onclick="window.toggleGameFullScreen()" style="padding: 8px 12px !important; font-size: 0.8rem !important; background: rgba(212,175,55,0.2); border: 1px solid #d4af37;">📺 ЦЯЛ ЕКРАН</button>
+            
             <button class="menu-btn action-btn" onclick="window.processTurn()" style="padding: 8px 15px !important; font-size: 0.8rem !important;">СЛЕДВАЩ СЕЗОН ➔</button>
         </div>
     </header>
@@ -160,37 +161,28 @@
         </aside>
     </main>
 
-    <div id="hero-rpg-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.75); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); z-index: 20000; overflow-y: auto;">
-        <div style="position: relative; width: 90%; max-width: 900px; background: rgba(20,20,20,0.95); border: 2px solid #d4af37; border-radius: 12px; margin: 40px auto; padding: 25px; box-sizing: border-box; color: #fff; box-shadow: 0 0 30px rgba(0,0,0,0.8);">
-            <button onclick="document.getElementById('hero-rpg-modal').style.display='none'" style="position: absolute; top: 15px; right: 15px; background: none; border: none; color: #ff4444; font-size: 24px; cursor: pointer; font-weight: bold;">✕</button>
-            
-            <div style="text-align: center; margin-bottom: 25px; border-bottom: 1px solid rgba(214,175,55,0.3); padding-bottom: 15px;">
-                <h2 id="rpg-modal-title" style="font-family: 'Cinzel', serif; color: #ffd700; margin: 0; font-size: 1.8rem; letter-spacing: 1px;">Кан Аспарух</h2>
-                <p id="rpg-modal-subtitle" style="color: #aaa; margin: 5px 0 0 0; font-family: 'Montserrat'; font-size: 1rem;">Клан Дуло | Клас: Върховен Боил (Ниво 5)</p>
+    <div id="hero-rpg-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.75); backdrop-filter: blur(10px); z-index: 20000; overflow-y: auto;">
+        <div style="position: relative; width: 90%; max-width: 900px; background: rgba(20,20,20,0.95); border: 2px solid #d4af37; margin: 40px auto; padding: 25px; color: #fff;">
+            <button onclick="document.getElementById('hero-rpg-modal').style.display='none'" style="position: absolute; top: 15px; right: 15px; background: none; border: none; color: #ff4444; font-size: 24px; cursor: pointer;">✕</button>
+            <div style="text-align: center; margin-bottom: 25px;">
+                <h2 id="rpg-modal-title" style="font-family: 'Cinzel'; color: #ffd700; margin: 0;"></h2>
+                <p id="rpg-modal-subtitle" style="color: #aaa; margin: 5px 0 0 0;"></p>
             </div>
-
             <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 25px;">
                 <div style="background: rgba(10,10,10,0.5); padding: 15px; border-radius: 8px; border: 1px solid #333; text-align: center;">
-                    <h4 style="font-family:'Cinzel'; color:#ffd700; margin: 0 0 15px 0; text-transform: uppercase; font-size: 0.9rem;">Инвентар и Доспехи</h4>
-                    <div id="rpg-equipment-grid" style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 20px; justify-content: center;"></div>
-                    <h4 style="font-family:'Cinzel'; color:#ffd700; margin: 15px 0 10px 0; text-transform: uppercase; font-size: 0.9rem; border-top: 1px solid #333; padding-top: 15px;">Домашен Любимец</h4>
-                    <div id="rpg-pet-slot" style="width: 80px; height: 80px; margin: 0 auto; background: rgba(30,30,30,0.8); border: 2px dashed #ffd700; border-radius: 50%; display: flex; flex-direction: column; align-items: center; justify-content: center; cursor: pointer;"></div>
+                    <h4 style="font-family:'Cinzel'; color:#ffd700; margin: 0 0 15px 0;">Инвентар</h4>
+                    <div id="rpg-equipment-grid" style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px;"></div>
+                    <div id="rpg-pet-slot" style="width: 80px; height: 80px; margin: 15px auto; border: 2px dashed #ffd700; border-radius: 50%; display: flex; align-items: center; justify-content: center;"></div>
                 </div>
-                <div style="display: flex; flex-direction: column; gap: 15px;">
-                    <div style="background: rgba(40,30,10,0.3); border: 1px solid #d4af37; padding: 10px 15px; border-radius: 6px; display: flex; justify-content: space-between; align-items: center;">
-                        <span style="font-weight: bold; color: #ffd700;">Свободни Точки за Умения:</span>
-                        <span id="rpg-modal-points" style="background: #ffd700; color: #000; padding: 2px 10px; font-weight: bold; border-radius: 4px;">0</span>
-                    </div>
-                    <div id="rpg-modal-skills-container" style="flex: 1; max-height: 380px; overflow-y: auto; display: flex; flex-direction: column; gap: 12px;"></div>
-                </div>
+                <div id="rpg-modal-skills-container" style="max-height: 380px; overflow-y: auto;"></div>
             </div>
         </div>
     </div>
 
-    <section id="treasury-overlay" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); z-index: 10000; overflow-y: auto;">
-        <div style="width: 85%; max-width: 600px; background: rgba(15,15,15,0.98); border: 2px solid #d4af37; margin: 50px auto; padding: 20px; border-radius: 8px; color: white;">
-            <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #333; padding-bottom: 10px;">
-                <h2 style="font-family: 'Cinzel'; color: #ffd700; margin: 0;">Родова Съкровищница</h2>
+    <section id="treasury-overlay" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); z-index: 10000;">
+        <div style="width: 85%; max-width: 600px; background: rgba(15,15,15,0.98); border: 2px solid #d4af37; margin: 50px auto; padding: 20px; color: white;">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <h2 style="font-family: 'Cinzel'; color: #ffd700; margin: 0;">Съкровищница</h2>
                 <button onclick="window.toggleTreasury()" style="background: none; border: none; color: #ff4444; font-size: 20px; cursor: pointer;">✕</button>
             </div>
             <div id="treasury-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); gap: 15px; margin-top: 20px;"></div>
@@ -198,15 +190,13 @@
     </section>
 
     <div id="bottom-controls">
-        <button class="icon-btn" onclick="window.openRegionsMap()" title="Родови Земи">🗺️</button>
-        <button class="icon-btn" onclick="window.buyUnits()" title="Военен Стан">🏹</button>
-        <button class="icon-btn" id="btn-battle" onclick="window.startBattle()" title="Битка">⚔️</button>
-        <button class="icon-btn" id="btn-events" onclick="window.openEventsMenu ? window.openEventsMenu() : (window.triggerRandomEvent ? window.triggerRandomEvent() : alert('Функцията за събития не е намерена!'))" title="Събития">📜</button>
-        <button class="icon-btn" id="btn-expeditions" onclick="window.openExpeditionsMenu()" title="Велики Походи" style="position: relative;">
-            🧭 <span id="expeditions-badge-mobile" class="badge" style="top: -5px; right: -5px;">0</span>
-        </button>
-        <button class="icon-btn" id="btn-marriage" onclick="window.openMarriageMenu()" title="Брачни Съюзи">💍</button>
-        <button class="icon-btn" onclick="window.toggleTreasury()" title="Съкровищница">🎒</button>
+        <button class="icon-btn" onclick="window.openRegionsMap()">🗺️</button>
+        <button class="icon-btn" onclick="window.buyUnits()">🏹</button>
+        <button class="icon-btn" id="btn-battle" onclick="window.startBattle()">⚔️</button>
+        <button class="icon-btn" id="btn-events" onclick="window.openEventsMenu()">📜</button>
+        <button class="icon-btn" id="btn-expeditions" onclick="window.openExpeditionsMenu()">🧭 <span id="expeditions-badge-mobile" class="badge">0</span></button>
+        <button class="icon-btn" id="btn-marriage" onclick="window.openMarriageMenu()">💍</button>
+        <button class="icon-btn" onclick="window.toggleTreasury()">🎒</button>
     </div>
 
     <script src="mechanics.js"></script>
@@ -224,15 +214,5 @@
     <script src="battle.js"></script>
     <script src="ui.js"></script>
     <script src="logic.js"></script>
-
-    <script>
-        setInterval(() => {
-            const mainBadge = document.getElementById('expeditions-badge');
-            const mobileBadge = document.getElementById('expeditions-badge-mobile');
-            if (mainBadge && mobileBadge) {
-                mobileBadge.innerText = mainBadge.innerText;
-            }
-        }, 1000);
-    </script>
 </body>
 </html>
