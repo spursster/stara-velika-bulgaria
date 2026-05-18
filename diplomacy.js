@@ -1,20 +1,33 @@
 /**
  * МОДУЛ: ДИПЛОМАЦИЯ И ПРОГРЕС НА КУПЕНИ ЛИДЕРИ - Велика България
- * СТАТУС: НАПЪЛНО НАДГРАДЕН И СИНХРОНИЗИРАН (Синхронизация на 13-те рода)
- * КОРЕКЦИЯ: Връщане и твърдо фиксиране на "Уния Траки" според най-новите версии на mechanics.js и world_data.js.
- * Статистика на файловете в проекта: 16
+ * СТАТУС: НАПЪЛНО НАДГРАДЕН (СИНХРОНИЗАЦИЯ С DIABLO ХАРИЗМА, БРАКОВЕ & AUTO/MANUAL XP)
+ * КОРЕКЦИЯ: Брачните съюзи четат пасивите, а пасивният опит ползва gainHeroXP.
+ * Статистика на файловете в проекта: 17
  */
+
 window.clanRelations = {};
 
 window.initDiplomacy = function() {
-    // Пълен закон за 13-те равноправни рода (Синхронизиран с Уния Траки)
+    // Свещеният списък от 13 равноправни рода (Синхронизиран с Птолемеи и Уния Траки)
     const allClans = [
         "Дуло", "Комитопули", "Асеневци", "Тертер", "Даки", "Уния Траки", 
         "Шишмановци", "Македони", "Птоломеи", "Одриси", "Бесараб", "Османци Дуло", "Скити"
     ];
     
+    const hero = window.currentHero;
+    let initialBonus = 0;
+
+    // Diablo пасив: Родословие (royalBlood) -> Добавя +15 точки към началните отношения
+    if (hero && hero.skills && (hero.skills.royalBlood || 0) > 0) {
+        initialBonus += (hero.skills.royalBlood * 15);
+    }
+    
     allClans.forEach(clan => {
-        window.clanRelations[clan] = (window.currentHero && clan === window.currentHero.dynasty) ? 100 : 40;
+        if (hero && clan === hero.dynasty) {
+            window.clanRelations[clan] = 100;
+        } else {
+            window.clanRelations[clan] = Math.min(100, 40 + initialBonus);
+        }
     });
 };
 
@@ -24,115 +37,37 @@ window.initDiplomacy = function() {
 window.processClanDiplomacyAutomation = function() {
     if (!window.worldData || !window.worldData.clans) return;
 
-    for (let key in window.worldData.clans) {
-        let clan = window.worldData.clans[key];
-        
-        // Автономен прогрес само за отключени, купени или присъединени родове
-        if (clan.isUnlocked || clan.purchased || clan.unlocked || clan.isJoined) {
-            // Пасивно генериране на родово злато на ход от техните владения
-            let goldGen = (clan.regionsOwned || 1) * 75;
-            clan.gold = (clan.gold || 0) + goldGen;
+    Object.entries(window.worldData.clans).forEach(([clanKey, clan]) => {
+        // Пропускаме текущия герой на играча, неговата икономика се смята в economy.js
+        if (window.currentHero && clanKey === window.currentHero.dynasty) return;
 
-            // Бавно пасивно възстановяване на армията им в гарнизона (+10% на ход)
-            if (clan.armySize < 400) {
-                clan.armySize += Math.floor(Math.random() * 15) + 10;
+        // Автономно купуване на войски за извънредните родове
+        if ((clan.gold || 0) >= 150) {
+            clan.gold -= 100;
+            clan.armySize = (clan.armySize || clan.currentArmy || 0) + Math.floor(Math.random() * 25) + 10;
+            clan.currentArmy = clan.armySize;
+        }
+
+        // Вдигане на нивата на автономните водачи по официалния закон на опита (Уважава Auto/Manual)
+        if (window.gainHeroXP) {
+            window.gainHeroXP(clan, 35);
+        } else {
+            clan.xp = (clan.xp || 0) + 35;
+            let reqXP = (clan.level || 1) * 150;
+            if (clan.xp >= reqXP) {
+                clan.xp -= reqXP;
+                clan.level = (clan.level || 1) + 1;
+                clan.heroPower = (clan.heroPower || 100) + 35;
             }
         }
-    }
+    });
 
-    // Динамични промени в отношенията с големите чужди Империи
-    if (window.worldData.factions) {
-        const rhomaioi = window.worldData.factions["rhomaioi_empire"];
-        if (rhomaioi && rhomaioi.relation !== undefined) {
-            // Отношенията с Ромеите леко клонят към неутралност или конфликт на всеки ход
-            if (rhomaioi.relation > -50) rhomaioi.relation -= 1;
-        }
-    }
+    // Опресняване на елитната лента след дипломатическия ход
+    if (window.renderTop6LeadersUI) window.renderTop6LeadersUI();
 };
 
 /**
- * ОТВАРЯНЕ НА ДИПЛОМАЦИЯТА С ВЪНШНИТЕ ИМПЕРИИ И РОДОВЕТЕ
- */
-window.openDiplomacyMenu = function() {
-    const mainArea = document.getElementById('game-main-area');
-    if (!mainArea) return;
-
-    let rhomaioiRel = -20;
-    let persianRel = 0;
-
-    if (window.worldData && window.worldData.factions) {
-        if (window.worldData.factions["rhomaioi_empire"]) rhomaioiRel = window.worldData.factions["rhomaioi_empire"].relation || -20;
-        if (window.worldData.factions["persian_empire"]) persianRel = window.worldData.factions["persian_empire"].relation || 0;
-    }
-
-    mainArea.innerHTML = `
-        <div style="background: #050505; border: 2px solid #d4af37; padding: 25px; border-radius: 6px; font-family: 'Georgia', serif; color: white; max-width: 650px; margin: 20px auto; box-sizing: border-box;">
-            <h2 style="text-align: center; color: #d4af37; margin-top: 0; text-transform: uppercase; border-bottom: 1px solid #333; padding-bottom: 12px; letter-spacing: 1px;">🏛️ ВЪНШНА ПОЛИТИКА И ПРЕГОВОРИ 🏛️</h2>
-            
-            <p style="font-size: 0.85em; color: #aaa; text-align: center; margin-bottom: 20px;">
-                Балансирайте силите на континента. Изпращайте дарове или сключвайте династични бракове за зестра.
-            </p>
-
-            <div style="background: #000; border: 1px solid #222; padding: 15px; border-radius: 4px; margin-bottom: 20px;">
-                <p style="margin: 0 0 10px 0; color: #ffd700; font-weight: bold; text-transform: uppercase; font-size: 0.9em;">🌍 ГОЛЕМИ ИМПЕРИИ:</p>
-                <div style="display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid #111; font-size: 0.9em;">
-                    <span>🏛️ Ромейска Империя (Rhomaioi)</span>
-                    <span style="color: ${rhomaioiRel < 0 ? '#ff4444' : '#4caf50'}; font-weight: bold;">Отношения: ${rhomaioiRel}</span>
-                </div>
-                <div style="display: flex; justify-content: space-between; align-items: center; padding: 8px 0; font-size: 0.9em;">
-                    <span>🦁 Персийска Империя</span>
-                    <span style="color: ${persianRel < 0 ? '#ff4444' : '#4caf50'}; font-weight: bold;">Отношения: ${persianRel}</span>
-                </div>
-            </div>
-
-            <div style="display: flex; flex-direction: column; gap: 12px;">
-                <button onclick="window.openMarriageMenu()" 
-                        style="background: #a32a2a; color: white; border: 1px solid #ff4444; padding: 14px; font-size: 0.95em; cursor: pointer; font-weight: bold; text-transform: uppercase; border-radius: 4px;">
-                    💍 УРЕДИ ДИНАСТИЧЕН БРАК (ЗЕСТРА)
-                </button>
-                
-                <button onclick="window.sendImperialTribute()" 
-                        style="background: #222; color: #ffd700; border: 1px solid #ffd700; padding: 12px; font-size: 0.9em; cursor: pointer; font-weight: bold; text-transform: uppercase; border-radius: 4px;">
-                    💰 ИЗПРАТИ ДАР НА РОМЕИТЕ (-300 Злато)
-                </button>
-
-                <button onclick="if(window.showPalaceUI) window.showPalaceUI();" 
-                        style="background: #111; color: #ccc; border: 1px solid #444; padding: 10px; font-size: 0.85em; cursor: pointer; border-radius: 4px; text-transform: uppercase; margin-top: 10px;">
-                    ВЪРНИ СЕ В ДВОРЕЦА
-                </button>
-            </div>
-        </div>
-    `;
-};
-
-/**
- * ИЗПРАЩАНЕ НА ДАР ЗА ПОДОБРЯВАНЕ НА ОТНОШЕНИЯТА
- */
-window.sendImperialTribute = function() {
-    const hero = window.currentHero;
-    if (!hero) return;
-
-    if ((hero.gold || 0) < 300) {
-        if (window.showAdvisorMsg) window.showAdvisorMsg("🔮 СЪВЕТНИК: Свещената хазна няма 300 злато, за да умилостиви чуждите василевси!");
-        return;
-    }
-
-    hero.gold -= 300;
-
-    if (window.worldData && window.worldData.factions && window.worldData.factions["rhomaioi_empire"]) {
-        window.worldData.factions["rhomaioi_empire"].relation = (window.worldData.factions["rhomaioi_empire"].relation || -20) + 25;
-    }
-
-    if (window.showAdvisorMsg) {
-        window.showAdvisorMsg("📜 ДИПЛОМАЦИЯ: Керван със злато пристигна в Константинопол. Отношенията с Ромеите се подобриха с +25 пункта!");
-    }
-
-    if (window.updateCharacterUI) window.updateCharacterUI(hero);
-    window.openDiplomacyMenu();
-};
-
-/**
- * МЕНЮ ЗА СВАТБИ И ДИНАСТИЧНИ СЪЮЗИ (С УНИЯ ТРАКИ)
+ * МЕНЮ ЗА СКЛЮЧВАНЕ НА БРАЧНИ СЪЮЗИ
  */
 window.openMarriageMenu = function() {
     const mainArea = document.getElementById('game-main-area');
@@ -141,97 +76,119 @@ window.openMarriageMenu = function() {
     const hero = window.currentHero;
     if (!hero) return;
 
-    // Всички свободни родове, освен твоя собствен (С включена Уния Траки)
-    const potentialClans = [
-        "Дуло", "Комитопули", "Асеневци", "Тертер", "Даки", "Уния Траки", 
-        "Шишмановци", "Македони", "Птоломеи", "Одриси", "Бесараб", "Османци Дуло", "Скити"
-    ].filter(c => c !== hero.dynasty);
+    if (window.initializeHeroRPGData) window.initializeHeroRPGData(hero);
+    let skills = hero.skills || {};
 
-    let clanOptionsHTML = potentialClans.map(clan => {
-        return `
-            <div style="display: flex; justify-content: space-between; align-items: center; padding: 10px; background: rgba(255,255,255,0.01); border: 1px solid #222; border-radius: 4px; font-size: 0.9em;">
-                <div>
-                    <b style="color: #fff;">Род ${clan}</b><br>
-                    <span style="font-size: 0.8em; color: #aaa;">Зестра: Нов регион под твой контрол</span>
-                </div>
-                <button onclick="window.executeMarriageAlliance('${clan}')" 
-                        style="background: #111; color: #4caf50; border: 1px solid #4caf50; padding: 6px 14px; cursor: pointer; font-weight: bold; font-size: 0.8em; border-radius: 3px;">
-                    ИЗПЕЧЕЛИ СЪЮЗ
-                </button>
-            </div>
-        `;
-    }).join('');
+    // Diablo пасив: Харизма (charisma) -> Намалява цената за зестра/договори с 10% на ниво (макс 50%)
+    let charismaDiscount = Math.min(0.50, (skills.charisma || 0) * 0.10);
+    let baseMarriageCost = 300;
+    let finalMarriageCost = Math.max(50, Math.floor(baseMarriageCost * (1 - charismaDiscount)));
 
-    mainArea.innerHTML = `
-        <div style="background: #050505; border: 2px solid #d4af37; padding: 25px; border-radius: 6px; font-family: 'Georgia', serif; color: white; max-width: 600px; margin: 20px auto; box-sizing: border-box;">
-            <h2 style="text-align: center; color: #d4af37; margin-top: 0; text-transform: uppercase; border-bottom: 1px solid #333; padding-bottom: 12px; font-size: 1.1em;">💍 ДИНАСТИЧНИ БРАКОВЕ ЗА ЗЕСТРА 💍</h2>
+    // Diablo пасив: Дипломация (diplomacy) -> Увеличава базовия шанс за успех с +5% на ниво
+    let diplomacyBonus = (skills.diplomacy || 0) * 5;
+    let baseSuccessChance = 50 + diplomacyBonus;
+
+    let html = `
+        <section class="rpg-section animate-fade" style="background: rgba(15,15,15,0.85); border: 1px solid #d4af37; padding: 20px; border-radius: 8px;">
+            <h2 style="font-family: 'Cinzel', serif; color: #ffd700; text-transform: uppercase;">Династични Бракове</h2>
+            <p style="font-size: 12px; color: #aaa; margin-bottom: 15px;">Изпратете дарове и поискайте ръката на родова княгиня за вечен военен съюз.</p>
             
-            <p style="font-size: 0.85em; color: #ccc; text-align: center; margin-bottom: 20px;">
-                Изберете девица от влиятелен аристократичен род. Сватбата ще донесе незабавно нов регион към твоите територии.
-            </p>
-
-            <div style="display: flex; flex-direction: column; gap: 10px; max-height: 300px; overflow-y: auto; padding-right: 5px; margin-bottom: 20px;">
-                ${clanOptionsHTML}
+            <div style="background:rgba(0,0,0,0.4); border:1px solid #222; padding:10px; margin-bottom:15px; font-size:12px; border-radius:4px;">
+                💰 Цена за пратеничество: <strong style="color:#ffd700;">${finalMarriageCost} злато</strong> | 
+                📈 Базов шанс за успех: <strong style="color:#00ffcc;">${baseSuccessChance}%</strong>
             </div>
 
-            <button onclick="window.openDiplomacyMenu()" 
-                    style="width: 100%; background: #222; color: #ccc; border: 1px solid #444; padding: 10px; font-size: 0.85em; cursor: pointer; border-radius: 4px; text-transform: uppercase;">
-                ОТКАЗ И НАЗАД
-            </button>
-        </div>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; max-height: 280px; overflow-y: auto; padding-right: 5px;">
     `;
+
+    Object.keys(window.clanRelations).forEach(clan => {
+        if (clan !== hero.dynasty) {
+            let rel = window.clanRelations[clan] || 40;
+            html += `
+                <div style="border: 1px solid #333; padding: 8px; background: rgba(255,255,255,0.01); border-radius: 4px; display: flex; flex-direction: column; justify-content: space-between;">
+                    <div style="font-size: 12px; font-weight: bold; color: #fff;">Род ${clan}</div>
+                    <div style="font-size: 11px; color: ${rel >= 70 ? '#00ffcc' : '#ff3366'}; margin: 3px 0;">Отношения: ${rel}/100</div>
+                    <button class="action-btn" style="padding: 5px; font-size: 10px; margin-top: 5px;" onclick="window.proposeMarriage('${clan}', ${finalMarriageCost}, ${baseSuccessChance})">💍 Предложи Брак</button>
+                </div>
+            `;
+        }
+    });
+
+    html += `
+            </div>
+            <button class="menu-btn" onclick="if(window.openRegionsMap){window.openRegionsMap();}else{location.reload();}" style="margin-top: 15px; width: 100%;">Върни се към Картата</button>
+        </section>
+    `;
+
+    mainArea.innerHTML = html;
 };
 
 /**
- * ИЗПЪЛНЕНИЕ НА СВАТБАТА И ДОБАВЯНЕ НА ЗЕСТРАТА
+ * ИЗПЪЛНЕНИЕ НА ПРЕДЛОЖЕНИЕТО ЗА БРАК
  */
-window.executeMarriageAlliance = function(clan) {
+window.proposeMarriage = function(clan, cost, successChance) {
     const hero = window.currentHero;
     if (!hero) return;
 
-    // Брачна карта: съобразена на 100% с Уния Траки
-    const dowryMap = {
-        "Дуло": "Стара Велика България",
-        "Комитопули": "Дарвания",
-        "Асеневци": "Илирия",
-        "Тертер": "Галатия",
-        "Даки": "Дакия",
-        "Уния Траки": "Мизия",
-        "Шишмановци": "Месопотамия",
-        "Македони": "Македония",
-        "Птоломеи": "Кипър",
-        "Одриси": "Тракия",
-        "Бесараб": "Добруджа",
-        "Османци Дуло": "Витиния",
-        "Скити": "Сарматия"
-    };
+    if ((hero.gold || 0) < cost) {
+        alert("Хазната на вашия род е празна! Нуждаете се от повече злато за дарове.");
+        return;
+    }
 
-    const region = dowryMap[clan] || "Мизия";
-    window.currentSpouse = { name: "Княгиня", dynasty: clan };
-    
-    if (!window.playerRegions) window.playerRegions = [];
-    const ownedRegionsFlat = window.playerRegions.flat();
-    
-    // Ако регионът все още не е владян, го добавяме към списъка на играча
-    if (!ownedRegionsFlat.includes(region)) {
-        window.playerRegions.push(region);
+    hero.gold -= cost;
+
+    // Модифициране на шанса спрямо текущите релации с рода
+    let currentRel = window.clanRelations[clan] || 40;
+    let finalChance = Math.min(95, successChance + Math.floor((currentRel - 40) * 0.5));
+
+    let roll = Math.random() * 100;
+    if (roll < finalChance) {
+        // УСПЕШЕН БРАК - Получаване на зестра (Земи)
+        window.clanRelations[clan] = 100;
         
-        // Синхронизация с геополитическите данни на рода в worldData
-        if (window.worldData && window.worldData.clans && window.worldData.clans[clan]) {
-            window.worldData.clans[clan].regionsOwned = (window.worldData.clans[clan].regionsOwned || 1) + 1;
+        const dowryMap = {
+            "Дуло": "Дарвания",
+            "Комитопули": "Дарвания",
+            "Асеневци": "Илирия",
+            "Тертер": "Галатия",
+            "Даки": "Дакия",
+            "Уния Траки": "Мизия",
+            "Шишмановци": "Месопотамия",
+            "Македони": "Македония",
+            "Птоломеи": "Кипър",
+            "Одриси": "Тракия",
+            "Бесараб": "Добруджа",
+            "Османци Дуло": "Витиния",
+            "Скити": "Сарматия"
+        };
+
+        const region = dowryMap[clan] || "Мизия";
+        window.currentSpouse = { name: `Княгиня от рода ${clan}`, dynasty: clan };
+        
+        if (!window.playerRegions) window.playerRegions = [];
+        const ownedRegionsFlat = window.playerRegions.flat();
+        
+        if (!ownedRegionsFlat.includes(region)) {
+            window.playerRegions.push(region);
+            if (window.worldData && window.worldData.regions && window.worldData.regions[region]) {
+                window.worldData.regions[region].armySize = 0; // Регионът се предава мирно
+            }
         }
-    }
 
-    if (window.showAdvisorMsg) {
-        window.showAdvisorMsg(`💍 СВАТБА: Вдигнат е пищен династичен съюз с род ${clan}! Като зестра получавате пълна власт над регион: ${region}!`);
-    }
-
-    if (window.updateCharacterUI) window.updateCharacterUI(hero);
-    
-    // Връщаме играча в двореца с обновения статус
-    if (window.showPalaceUI) {
-        window.showPalaceUI();
+        if (window.showAdvisorMsg) {
+            window.showAdvisorMsg(`👑 ДИНАСТИЧЕН ТРИУМФ: Кан ${hero.name} сключи свещен съюз с род ${clan}! Като зестра бяха предадени ключовете за регион "${region}".`);
+        }
+        alert(`Успех! Род ${clan} прие даровете и сключи династичен брак с вашия род. Получавате регион "${region}" като зестра!`);
     } else {
-        window.openDiplomacyMenu();
+        // ПРОВАЛ - Отношенията охладняват леко
+        window.clanRelations[clan] = Math.max(10, currentRel - 10);
+        if (window.showAdvisorMsg) {
+            window.showAdvisorMsg(`💔 ДИПЛОМАТИЧЕСКИ ХЛАД: Пратениците на Кан ${hero.name} бяха отхвърлени от старейшините на род ${clan}. Подаръците са задържани, а преговорите — прекратени.`);
+        }
+        alert("Предложението беше отхвърлено! Старейшините на рода сметнаха даровете за недостатъчни.");
     }
+
+    // Синхронизация и преначертаване на интерфейса
+    if (window.updateCharacterUI) window.updateCharacterUI(hero);
+    window.openMarriageMenu();
 };
