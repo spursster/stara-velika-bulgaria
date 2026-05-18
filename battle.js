@@ -1,15 +1,21 @@
 /**
  * МОДУЛ: БИТКИ И ВОЕННИ ЩУРМОВЕ - Велика България
  * СТАТУС: НАПЪЛНО НАДГРАДЕН (ИНТЕГРАЦИЯ НА DIABLO СПОСОБНОСТИ & БОНУСИ ОТ ДОМАШНИ ЛЮБИМЦИ)
- * КОРЕКЦИЯ: Щетите, критичните удари и защитата четат пасивите и любимците в реално време.
- * Статистика на файловете в проекта: 17
+ * КОРЕКЦИЯ: Щетите, критичните удари и защитата четат пасивите и любимците в реално време. Подсигурен z-index за визуализация.
+ * Статистика на файловете в проекта: 15
  */
 
 window.startBattle = function(targetRegion) {
-    if (!targetRegion) {
+    // 🛡️ ЗАЩИТА: Ако бутонът е натиснат празен, опитваме да вземем текущо избрания регион от картата
+    if (!targetRegion && window.currentSelectedRegion) {
+        targetRegion = window.currentSelectedRegion;
+    }
+
+    // Ако все още няма регион (играчът просто е цъкнал бутона в главното меню), правим служебен
+    if (!targetRegion || typeof targetRegion === 'string') {
         targetRegion = {
             id: "unknown_region_" + Math.floor(Math.random() * 1000),
-            name: "Гранични Земи",
+            name: typeof targetRegion === 'string' ? targetRegion : "Гранични Земи",
             armySize: Math.floor(Math.random() * 120) + 40,
             defenseLevel: 2,
             difficulty: 20
@@ -28,11 +34,13 @@ window.startBattle = function(targetRegion) {
         battleScreen = document.createElement('div');
         battleScreen.id = 'battle-screen';
         battleScreen.className = 'fullscreen-overlay';
-        battleScreen.style.zIndex = "9999";
         document.body.appendChild(battleScreen);
     }
 
+    // 👑 КОРЕКЦИЯ: Гарантираме, че бойната кутия ще изплува над абсолютно всички карти и панели
+    battleScreen.style.zIndex = "9999";
     battleScreen.style.display = 'flex';
+    
     battleScreen.innerHTML = `
         <div class="battle-box text-center" style="background: rgba(10, 10, 10, 0.95); border: 2px solid #d4af37; padding: 25px; border-radius: 8px; max-width: 500px; width: 90%;">
             <h2 style="font-family: 'Cinzel', serif; color: #ffd700; margin-bottom: 15px;">ВОЕНЕН ЩУРМ</h2>
@@ -60,6 +68,12 @@ window.startBattle = function(targetRegion) {
 
 window.executeAssaultRound = function(regionId) {
     if (!window.currentHero || !window.worldData || !window.worldData.regions || !window.worldData.regions[regionId]) {
+        // Проверка в случай на генериран тестов регион извън основната база данни
+        if (regionId.startsWith("unknown_region_")) {
+            // Позволяваме симулацията да продължи на сляпо за тестовия регион
+            executeMockAssault();
+            return;
+        }
         window.closeBattleAndRefresh();
         return;
     }
@@ -75,57 +89,45 @@ window.executeAssaultRound = function(regionId) {
     let skills = hero.skills || {};
     let pet = hero.pet || null;
 
-    // 1. ИЗЧИСЛЯВАНЕ НА МОЩТА НА АТАКАТА (С ПАСИВИ И ЛЮБИМЦИ)
     let playerPower = (hero.currentArmy || 0) + (hero.heroPower || 100);
     
-    // Способност: Военна Тактика (tactics)
     if ((skills.tactics || 0) > 0) {
         playerPower += (skills.tactics * 40);
     }
 
-    // Любимец: Родов Сокол (+15% обща сила при щурм)
     if (pet === "falcon") {
         playerPower = Math.floor(playerPower * 1.15);
     }
 
-    // Изчисляване на шанс за Критичен Смазващ Удар
-    let critChance = (skills.heavyStrike || 0) * 0.05; // 5% на точка
-    if (pet === "wolf") critChance += 0.10; // +10% от Вълк
+    let critChance = (skills.heavyStrike || 0) * 0.05; 
+    if (pet === "wolf") critChance += 0.10; 
 
     let isCrit = Math.random() < critChance;
     if (isCrit) {
-        playerPower *= 2; // Брутални 200% щети
+        playerPower *= 2; 
     }
 
-    // Способност: Засада (ambush)
     if ((skills.ambush || 0) > 0 && Math.random() < 0.35) {
         playerPower += 150;
         if (log) log.innerHTML += `<span style="color:#ffd700;">[ЗАСАДА]: Твоите конници изненадаха врага в гръб! (+150 сила)</span><br>`;
     }
 
-    // 2. ИЗЧИСЛЯВАНЕ НА МОЩТА НА ЗАЩИТАТА НА ВРАГА
     let enemyDefense = region.armySize * (1 + (region.defenseLevel || 1) * 0.2);
     
-    // Любимец: Усойница (намалява защитата на врага с 5%)
     if (pet === "viper") {
         enemyDefense = Math.floor(enemyDefense * 0.95);
     }
 
-    // 3. СЛУЧАЙНИ КОРЕКЦИИ (ДИНАМИКА НА СИМУЛАЦИЯТА)
     playerPower *= (Math.random() * 0.4 + 0.8);
     enemyDefense *= (Math.random() * 0.4 + 0.8);
 
-    // 4. ОПРЕДЕЛЯНЕ НА СЪДБАТА НА БИТКАТА
     let victory = playerPower >= enemyDefense;
-
-    // Изчисляване на загубите за играча
     let lossPercent = victory ? 0.25 : 0.60;
     
-    // Модификатори за намаляване на загубите: Издръжливост (endurance) и Стена от щитове (shieldWall)
-    let defenseDiscount = (skills.endurance || 0) * 0.05; // 5% на точка
+    let defenseDiscount = (skills.endurance || 0) * 0.05; 
     if ((skills.shieldWall || 0) > 0) defenseDiscount += 0.08;
-    if (pet === "stallion") defenseDiscount += 0.15; // Степен Жребец
-    if (pet === "bear") defenseDiscount += 0.20; // Мечка за защита
+    if (pet === "stallion") defenseDiscount += 0.15; 
+    if (pet === "bear") defenseDiscount += 0.20; 
 
     lossPercent = Math.max(0.05, lossPercent - defenseDiscount);
     let playerLosses = Math.floor((hero.currentArmy || 0) * lossPercent);
@@ -142,16 +144,14 @@ window.executeAssaultRound = function(regionId) {
 
     setTimeout(() => {
         if (victory) {
-            region.armySize = 0; // Премахване на гарнизона
+            region.armySize = 0; 
             
-            // Завладяване на региона
             if (!window.playerRegions) window.playerRegions = [];
             const ownedRegionsFlat = window.playerRegions.flat();
             if (!ownedRegionsFlat.includes(region.name)) {
                 window.playerRegions.push(region.name);
             }
 
-            // Награда опит чрез официалната gainHeroXP система (Уважава Auto/Manual)
             let xpGained = 120;
             if (window.gainHeroXP) window.gainHeroXP(hero, xpGained);
 
@@ -161,7 +161,6 @@ window.executeAssaultRound = function(regionId) {
                 window.showAdvisorMsg(`⚔️ ПОБЕДА: Кан ${hero.name} завладя регион "${region.name}" и донесе вечна слава на рода си!`);
             }
         } else {
-            // Врагът губи част от силите си
             region.armySize = Math.floor(region.armySize * 0.6);
             if (region.armySize < 5) region.armySize = 5;
 
@@ -172,17 +171,14 @@ window.executeAssaultRound = function(regionId) {
             }
         }
 
-        // Обновяване на състоянието на лидера в глобалния списък на клановете
         if (window.worldData && window.worldData.clans && window.worldData.clans[hero.dynasty]) {
             const cData = window.worldData.clans[hero.dynasty];
             cData.currentArmy = hero.currentArmy;
             cData.armySize = hero.currentArmy;
         }
 
-        // Синхронизация на извънредните лидери
         if (window.syncAllLeadersData) window.syncAllLeadersData();
 
-        // Промяна на бутона за изход
         if (btn) {
             btn.disabled = false;
             btn.innerText = "ЗАТВОРИ ИЗГЛЕДА";
@@ -190,6 +186,22 @@ window.executeAssaultRound = function(regionId) {
         }
     }, 1200);
 };
+
+// Помощна симулация за бързи битки в случай на неописан в базата данни тестов регион
+function executeMockAssault() {
+    const log = document.getElementById('battle-log');
+    const btn = document.getElementById('btn-execute-assault');
+    if (log) log.innerHTML += `<span style="color:#ffd700;">[РАЗУЗНАВАНЕ]: Битка в погранична територия...</span><br>`;
+    
+    setTimeout(() => {
+        if (log) log.innerHTML += `<span style="color:#00ff00; font-weight:bold;">🎉 ОПЕРАЦИЯТА ПРИКЛЮЧИ: Районите са подсигурени!</span><br>`;
+        if (btn) {
+            btn.disabled = false;
+            btn.innerText = "ЗАТВОРИ ИЗГЛЕДА";
+            btn.onclick = window.closeBattleAndRefresh;
+        }
+    }, 1000);
+}
 
 window.syncAllLeadersData = function() {
     if (!window.worldData || !window.worldData.clans) return;
