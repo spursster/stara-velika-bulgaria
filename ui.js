@@ -40,7 +40,7 @@ window.toggleGameFullScreen = function() {
  * 👑 ДИНАМИЧНО ЧЕРТАЕНЕ НА ЛЕНТАТА НА ЕЛИТА (ТОП 6 ГЕРОИ С НАЙ-ВИСОК ОПИТ)
  */
 window.renderTop6LeadersUI = function() {
-    const eliteBar = document.getElementById('top-elite-bar');
+   const eliteBar = document.getElementById('top-elite-heroes-bar');
     if (!eliteBar) return;
 
     if (!window.worldData || !window.worldData.clans) return;
