@@ -4,7 +4,7 @@
  * ФАЙЛ: ui.js (УНИВЕРСАЛЕН ГЛОБАЛЕН ПРОФИЛ, ЛЕНТА НА ЕЛИТА И ИНСПЕКЦИЯ НА КЛАНОВЕТЕ)
  * СТАТУС: НАПЪЛНО НАДГРАДЕН (ИНТЕГРАЦИЯ НА ТОП 6 ЕЛИТ, XP БАРОВЕ И АУТО КОНТРОЛИ)
  * Логика: Владетелите са единствено Герои, а династиите са Кланове. Без забранени титли.
- * Статистика на файловете в проекта: 17
+ * Статистика на файловете в проекта: 15
  * ==========================================================================
  */
 
@@ -39,13 +39,14 @@ window.toggleGameFullScreen = function() {
 /**
  * 👑 ДИНАМИЧНО ЧЕРТАЕНЕ НА ЛЕНТАТА НА ЕЛИТА (ТОП 6 ГЕРОИ С НАЙ-ВИСОК ОПИТ)
  */
-window.renderTop6LeadersUI = function() {
-   const eliteBar = document.getElementById('top-elite-heroes-bar');
+window.renderTop6HeroesUI = function() {
+    // НАДГРАЖДАНЕ: Вече търси обновения контейнер в index.html
+    const eliteBar = document.getElementById('top-elite-heroes-bar');
     if (!eliteBar) return;
 
     if (!window.worldData || !window.worldData.clans) return;
 
-    // Взимаме всички водачи от базата данни
+    // Взимаме всички водачи (Герои) от базата данни
     let leaders = Object.entries(window.worldData.clans).map(([clanKey, data]) => {
         return { clanKey: clanKey, ...data };
     });
@@ -100,9 +101,12 @@ window.renderTop6LeadersUI = function() {
         const autoClass = leader.isAuto ? "auto-btn active" : "auto-btn";
         const autoText = leader.isAuto ? "Auto" : "Manual";
 
+        // Коректно подсигуряване на името на Героя без 'undefined'
+        const heroName = leader.hero || leader.name || "Воевода";
+
         card.innerHTML = `
             <div style="font-size: 11px; font-weight: bold; color: #ffd700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
-                ${petIcon} ${leader.name}
+                ${petIcon} ${heroName}
             </div>
             <div style="font-size: 9px; color: #aaa;">Ниво ${leader.level || 1} | ${leader.currentClass || "Багатур"}</div>
             
@@ -130,40 +134,32 @@ window.updateCharacterUI = function(hero) {
     if (window.initializeHeroRPGData) window.initializeHeroRPGData(hero);
 
     // Горна информационен панел (Ресурси)
-    const goldDisplay = document.getElementById('stat-gold');
-    if (goldDisplay) goldDisplay.innerText = `${hero.gold || 0} 💰`;
+    const goldDisplay = document.getElementById('val-gold');
+    if (goldDisplay) goldDisplay.innerText = hero.gold || 0;
 
-    const armyDisplay = document.getElementById('stat-army');
-    if (armyDisplay) armyDisplay.innerText = `${hero.currentArmy || 0} / ${hero.maxArmy || 500} ⚔️`;
+    const armyDisplay = document.getElementById('val-army');
+    if (armyDisplay) armyDisplay.innerText = hero.armySize || 0;
 
-    const powerDisplay = document.getElementById('stat-power');
-    if (powerDisplay) powerDisplay.innerText = `${hero.heroPower || 100} ⭐`;
+    const powerDisplay = document.getElementById('val-hero-power');
+    if (powerDisplay) powerDisplay.innerText = hero.heroPower || 100;
 
     // Ляв панел - Профил на текущия водач
-    const avatarContainer = document.getElementById('hero-avatar-container');
-    if (avatarContainer && hero.avatar) {
-        avatarContainer.innerHTML = `<img src="${hero.avatar}" alt="${hero.name}" style="width:100%; height:100%; object-fit:cover; border-radius:8px;">`;
-    }
-
-    const nameDisplay = document.getElementById('hero-name');
-    if (nameDisplay) nameDisplay.innerText = hero.name || "Неизвестен";
-
-    const titleDisplay = document.getElementById('hero-title');
-    if (titleDisplay) titleDisplay.innerText = `Род ${hero.dynasty || "Свободен"} | Клас: ${hero.currentClass || "Багатур"}`;
-
-    const infoDisplay = document.getElementById('hero-info-stats');
-    if (infoDisplay) {
+    const nameDisplay = document.getElementById('active-character-profile');
+    if (nameDisplay) {
         let petStatus = "Няма";
         if (hero.pet && window.rpgDatabase && window.rpgDatabase.petsDatabase[hero.pet]) {
             const p = window.rpgDatabase.petsDatabase[hero.pet];
             petStatus = `${p.icon} ${p.name}`;
         }
 
-        infoDisplay.innerHTML = `
-            <div>Ниво: <strong>${hero.level || 1}</strong></div>
-            <div>Възраст: <strong>${hero.age || 25} г.</strong></div>
-            <div>Свободни точки: <strong style="color:#00ffcc;">${hero.skillPoints || 0}</strong></div>
-            <div>Любимец: <strong style="color:#ffd700;">${petStatus}</strong></div>
+        nameDisplay.innerHTML = `
+            <div style="font-size: 1.1rem; font-weight: bold; color: #ffd700; margin-bottom: 5px;">${hero.name || "Неизвестен"}</div>
+            <div style="font-size: 0.85rem; color: #ccc; margin-bottom: 10px;">Род ${hero.clan || "Свободен"} | ${hero.currentClass || "Багатур"}</div>
+            <div style="font-size:0.85rem; text-align: left; display: flex; flex-direction: column; gap: 4px; background: rgba(0,0,0,0.3); padding: 8px; border-radius: 4px;">
+                <div>Ниво: <strong>${hero.level || 1}</strong></div>
+                <div>Възраст: <strong>${hero.age || 25} г.</strong></div>
+                <div>Любимец: <strong style="color:#ffd700;">${petStatus}</strong></div>
+            </div>
         `;
     }
 
@@ -176,15 +172,13 @@ window.updateCharacterUI = function(hero) {
         rpgBtn.style.cssText = "width:100%; margin-top:10px; padding:8px; font-size:11px;";
         rpgBtn.innerText = "🎒 Управление на Героя";
         rpgBtn.onclick = () => {
-            if (window.openHeroRPGModal) window.openHeroRPGModal(hero.dynasty);
+            if (window.openHeroRPGModal) window.openHeroRPGModal(hero.clan);
         };
-        // Поставяме го под статистиките
-        const infoBlock = document.getElementById('hero-info-stats');
-        if (infoBlock) infoBlock.parentNode.insertBefore(rpgBtn, infoBlock.nextSibling);
+        leftPanel.appendChild(rpgBtn);
     }
 
     // Преначертаване на Елитната хоризонтална лента, за да отрази промените веднага
-    window.renderTop6LeadersUI();
+    window.renderTop6HeroesUI();
 };
 
 /**
@@ -222,7 +216,7 @@ window.inspectLeaderProfile = function(clanKey) {
     const oldProfile = document.getElementById('dynamic-leader-profile');
     if (oldProfile) oldProfile.remove();
 
-    // Генериране на HTML изглед за придобитите Diablo пасиви на клана
+    // Генериране на HTML изглед за придобитите пасиви на клана
     let skillsHTML = `<div style="margin-top:10px; background:rgba(255,255,255,0.02); padding:8px; border-radius:4px; border:1px solid #222;">
                         <h4 style="margin:0 0 5px 0; color:#ffd700; font-size:11px; font-family:'Cinzel'; text-transform:uppercase;">Придобити Способности:</h4>`;
     let hasSkills = false;
@@ -260,6 +254,8 @@ window.inspectLeaderProfile = function(clanKey) {
         display: flex; align-items: center; justify-content: center; z-index: 5000;
     `;
 
+    const currentHeroName = leader.hero || leader.name || "Воевода";
+
     overlay.innerHTML = `
         <div class="leader-card" style="width: 340px; background: rgba(15,15,15,0.95) !important; border: 2px solid #d4af37 !important; box-shadow: 0 0 30px rgba(0,0,0,0.9); flex-direction: column !important; gap: 12px !important;">
             <div style="display: flex; gap: 15px; width: 100%; border-bottom: 1px solid #222; padding-bottom: 10px;">
@@ -267,7 +263,7 @@ window.inspectLeaderProfile = function(clanKey) {
                     <img src="${leader.avatar || ''}" alt="" style="width:100%; height:100%; object-fit:cover;">
                 </div>
                 <div style="flex:1;">
-                    <h3 style="margin: 0; font-family: 'Cinzel', serif; font-size: 15px; color: #ffd700;">${leader.name}</h3>
+                    <h3 style="margin: 0; font-family: 'Cinzel', serif; font-size: 15px; color: #ffd700;">${currentHeroName}</h3>
                     <div style="font-size: 11px; color: #888; margin-top: 2px;">Родов Водач</div>
                     <div style="font-size: 14px; color: #ff3366; font-weight: bold; margin-top: 5px;">⚔️ ${leader.heroPower || 100} Сила</div>
                 </div>
