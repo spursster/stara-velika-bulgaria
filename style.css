@@ -1,6 +1,6 @@
 /* ==========================================================================
    ФИГАТУРА НА ИГРАТА ВЕЛИКА БЪЛГАРИЯ - ФИНАЛЕН СТЪКЛЕН ДИЗАЙН С ЕПИЧЕН АРТ
-   СТАТУС: НАПЪЛНО НАДГРАДЕН И СИНХРОНИЗИРАН (ГЕРОИ, ВОДАЧИ И РОДОВИ КЛАНОВЕ)
+   СТАТУС: НАПЪЛНО НАДГРАДЕН (ЛЕНТА НА ЕЛИТА, ИНДИКАТОРИ, АУТО РЕЖИМ И СЛОТОВЕ)
    ========================================================================== */
 
 /* ЕПИЧЕН ФОН НА ИГРАТА ОТ САМИЯ ВРЪХ С ТЪМЕН ФИЛТЪР */
@@ -45,32 +45,79 @@ html, body {
     gap: 8px !important;
 }
 
-/* 🦅 ПАНЕЛ НА СЪВЕТНИКА И ЛЕТОПИСА 🦅 */
-#advisor-panel {
-    background: rgba(20, 20, 20, 0.75) !important;
-    border: 1px solid rgba(214, 175, 55, 0.4) !important;
-    border-radius: 8px !important;
-    margin: 15px auto !important;
-    padding: 12px 20px !important;
-    width: 92% !important;
-    max-width: 1200px !important;
-    display: flex !important;
-    align-items: center !important;
-    gap: 15px !important;
+/* 🦅 ДИНАМИЧНА ЛЕНТА НА ЕЛИТА (ГЕРОИТЕ С НАЙ-ВИСОК ОПИТ) 🦅 */
+#top-elite-bar {
+    background: rgba(20, 20, 20, 0.4) !important;
+    border: 1px solid rgba(214, 175, 55, 0.25) !important;
+    border-radius: 10px !important;
     backdrop-filter: blur(8px) !important;
-    box-sizing: border-box !important;
+    -webkit-backdrop-filter: blur(8px) !important;
+    padding: 10px !important;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.5) !important;
 }
 
-#advisor-avatar {
-    font-size: 2rem !important;
-    filter: drop-shadow(0 2px 4px rgba(0,0,0,0.5)) !important;
+/* МИНИ КАРТА НА ГЕРОЙ В ЕЛИТНАТА ЛЕНТА */
+.elite-hero-card {
+    background: rgba(15, 15, 15, 0.75) !important;
+    border: 1px solid rgba(214, 175, 55, 0.4) !important;
+    border-radius: 6px !important;
+    padding: 8px !important;
+    text-align: center !important;
+    cursor: pointer !important;
+    transition: transform 0.2s, border-color 0.2s !important;
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: space-between !important;
+    gap: 5px !important;
+    position: relative !important;
 }
 
-#advisor-text {
-    font-size: 0.95rem !important;
-    line-height: 1.5 !important;
-    color: #dfdfdf !important;
-    font-style: italic !important;
+.elite-hero-card:hover {
+    transform: translateY(-2px) !important;
+    border-color: #ffd700 !important;
+    background: rgba(25, 25, 25, 0.85) !important;
+}
+
+/* ИНДИКАТОР НА ПРОГРЕСА НА НИВОТО (XP PROGRESS BAR) */
+.rpg-xp-container {
+    width: 100% !important;
+    height: 5px !important;
+    background: #222 !important;
+    border-radius: 3px !important;
+    overflow: hidden !important;
+    margin-top: 3px !important;
+    border: 1px solid rgba(255,255,255,0.05) !important;
+}
+
+.rpg-xp-fill {
+    height: 100% !important;
+    background: linear-gradient(90deg, #00c6ff, #0072ff) !important;
+    width: 0%;
+    transition: width 0.4s ease !important;
+}
+
+/* КОМПАКТЕН БУТОН AUTO */
+.auto-btn {
+    background: #333 !important;
+    border: 1px solid #555 !important;
+    color: #bbb !important;
+    font-size: 9px !important;
+    font-weight: bold !important;
+    padding: 2px 6px !important;
+    border-radius: 4px !important;
+    cursor: pointer !important;
+    text-transform: uppercase !important;
+    transition: all 0.2s ease !important;
+    margin: 2px auto 0 auto !important;
+    display: inline-block !important;
+}
+
+.auto-btn.active {
+    background: linear-gradient(135deg, #006400, #004d00) !important;
+    border-color: #00ff00 !important;
+    color: #fff !important;
+    text-shadow: 0 0 5px #00ff00 !important;
+    box-shadow: 0 0 8px rgba(0,255,0,0.3) !important;
 }
 
 /* 🗺️ ОСНОВЕН КОНТЕЙНЕР НА ИГРАТА 🗺️ */
@@ -92,9 +139,8 @@ html, body {
     gap: 15px !important;
 }
 
-/* 👑 ГОРЕН ХОРИЗОНТАЛЕН ПАНЕЛ ЗА ВОДАЧИТЕ (ЗА 4 НА ТЕЛЕФОН / 6 НА КОМПЮТЪР) 👑 */
-#hero-card, .leader-card, .character-card, .top-leader-container, 
-[id*="leader"], [class*="leader-card"], [class*="hero"] {
+/* 👑 ОБЩИ КАРТИ И КОНТЕЙНЕРИ ЗА ВОДАЧИ 👑 */
+.leader-card, .character-card, .top-leader-container {
     background: rgba(20, 20, 20, 0.6) !important;
     backdrop-filter: blur(10px) !important;
     -webkit-backdrop-filter: blur(10px) !important;
@@ -102,26 +148,7 @@ html, body {
     border-radius: 10px !important;
     margin: 15px auto !important;
     padding: 12px 15px !important;
-    width: 92% !important;
-    max-width: 1200px !important;
-    display: flex !important;
-    flex-direction: row !important; 
-    justify-content: space-around !important;
-    align-items: center !important;
-    gap: 15px !important;
     box-sizing: border-box !important;
-}
-
-/* Изчистване на индивидуални плаващи полета по картите на водачите */
-.leader-card-item {
-    flex: 1 !important;
-    text-align: center !important;
-    min-width: 120px !important;
-    border-right: 1px solid rgba(214, 175, 55, 0.2) !important;
-}
-
-.leader-card-item:last-child {
-    border-right: none !important;
 }
 
 /* 🎯 СЕКЦИЯ ЗА ТЕКУЩО ДЕЙСТВИЕ (ЦЕНТЪР) 🎯 */
@@ -152,7 +179,6 @@ html, body {
     text-transform: uppercase !important;
     transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1) !important;
     box-shadow: 0 4px 6px rgba(0,0,0,0.3) !important;
-    text-align: left !important;
 }
 
 .menu-btn:hover {
@@ -179,10 +205,40 @@ html, body {
     box-shadow: 0 0 20px rgba(255, 68, 68, 0.6) !important;
 }
 
-/* 🌍 ДИАЛОГОВИ ПРОЗОРЦИ И ОВЪРЛЕИ (МОДАЛНИ ЕКРАНИ) 🌍 */
-.modal-overlay, [id*="overlay"], [id*="modal"] {
-    backdrop-filter: blur(10px) !important;
-    -webkit-backdrop-filter: blur(10px) !important;
+/* 🎒 СТИЛОВЕ ЗА СЛОТОВЕТЕ НА ЕКИПИРОВКАТА И ЛЮБИМЕЦА В МОДАЛА 🎒 */
+.rpg-equip-box {
+    width: 80px !important;
+    height: 80px !important;
+    background: rgba(25, 25, 25, 0.8) !important;
+    border: 1px solid rgba(214, 175, 55, 0.3) !important;
+    border-radius: 6px !important;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: center !important;
+    font-size: 24px !important;
+    cursor: pointer !important;
+    position: relative !important;
+    transition: all 0.2s ease !important;
+}
+
+.rpg-equip-box:hover {
+    border-color: #ffd700 !important;
+    background: rgba(40, 35, 20, 0.9) !important;
+}
+
+.rpg-equip-label {
+    position: absolute !important;
+    bottom: 2px !important;
+    font-size: 8px !important;
+    color: #888 !important;
+    text-transform: uppercase !important;
+}
+
+/* Пулсиращ ефект за празния слот на домашния любимец */
+#rpg-pet-slot:hover {
+    background: rgba(214, 175, 55, 0.1) !important;
+    border-style: solid !important;
 }
 
 /* DIABLO & ARCHEAGE RPG ИНТЕРФЕЙСНИ КОМПОНЕНТИ */
@@ -234,19 +290,9 @@ html, body {
         order: 1 !important;
         min-height: 400px !important;
     }
-
-    #hero-card, .leader-card, .character-card, .top-leader-container, 
-    [id*="leader"], [class*="leader-card"], [class*="hero"] {
-        flex-direction: grid !important;
-        grid-template-columns: 1fr 1fr !important;
-        flex-wrap: wrap !important;
-        padding: 10px !important;
-    }
-
-    .leader-card-item {
-        min-width: 45% !important;
-        border-right: none !important;
-        border-bottom: 1px solid rgba(214, 175, 55, 0.1) !important;
-        padding: 6px 0 !important;
+    
+    #top-elite-bar {
+        grid-template-columns: repeat(3, 1fr) !important;
+        gap: 8px !important;
     }
 }
