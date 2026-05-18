@@ -112,4 +112,11 @@ window.calculateEconomy = function() {
     // Опресняване на интерфейсите
     if (window.updateCharacterUI) window.updateCharacterUI(hero);
     if (window.renderTop6LeadersUI) window.renderTop6LeadersUI();
+
+    // =======================================================================
+    // НАДГРАЖДАНЕ: АВТОМАТИЧНО ОБНОВЯВАНЕ НА МИСТИЧНИЯ ПОРТАЛ ПРИ СЛЕДВАЩ ХОД
+    // =======================================================================
+    if (window.advanceExpeditionsTurn) {
+        window.advanceExpeditionsTurn();
+    }
 };
