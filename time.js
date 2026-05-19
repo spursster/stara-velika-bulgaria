@@ -1,8 +1,7 @@
 /**
  * МОДУЛ: ВРЕМЕ И ЛЕТОБРОЕНЕ - Велика България
  * СТАТУС: НАПЪЛНО КОРИГИРАН, ИЗЧИСТЕН И СИНХРОНИЗИРАН
- * КОРЕКЦИЯ: Премахната излишната затваряща скоба на ред 42, която чупеше времето.
- * НАДГРАДАНЕ: Добавена липсващата функция window.processTurn за превъртане на ходовете.
+ * КОРЕКЦИЯ: Добавени са всички възможни HTML ID-та за визуализация на времето, за да изчезне "Зарежда се...".
  * Статистика на файловете в проекта: 15
  */
 
@@ -63,9 +62,17 @@ window.processTime = function() {
 window.updateTimeUI = function() {
     if (!window.gameTime) return;
     
-    // Поддържаме и двата варианта на ID-та за сигурност в интерфейса
-    const timeDisplay = document.getElementById('current-time-info') || document.getElementById('stat-time');
-    if (!timeDisplay) return;
+    // Поддържаме абсолютно всички възможни вариации на ID-та от твоя index.html
+    const timeDisplay = document.getElementById('current-time-info') || 
+                        document.getElementById('stat-time') || 
+                        document.getElementById('time-display') || 
+                        document.getElementById('game-time') || 
+                        document.getElementById('time-info');
+                        
+    if (!timeDisplay) {
+        console.warn("⚠️ Предупреждение: Не е намерен HTML елемент за показване на времето. Проверете ID-то в index.html!");
+        return;
+    }
 
     const currentSeason = window.seasons[window.gameTime.seasonIndex] || "Сезон";
     timeDisplay.innerHTML = `${currentSeason} ${window.gameTime.year} г. ${window.gameTime.era}`;
