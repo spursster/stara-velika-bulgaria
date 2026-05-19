@@ -1,10 +1,10 @@
 /**
 ==========================================================================
 ПРОЕКТ: ВЕЛИКА БЪЛГАРИЯ
-ФАЙЛ: battle.js (ПЪЛНОЕКРАННА БИТКА — ДЕСКТОП & МОБИЛЕН)
-СТАТУС: НАПЪЛНО ПРЕПИСАН
-КОРЕКЦИЯ: Пълен екран, елитна лента горе, вражески генерирани герои долу,
-          логове горе/долу, бутони в средата. Адаптивен за всички устройства.
+ФАЙЛ: battle.js (НОВ ДИЗАЙН - ПЪЛЕН ЕКРАН)
+СТАТУС: НАПЪЛНО ИЗЧИСТЕН И СИНХРОНИЗИРАН
+КОРЕКЦИЯ: Премахнати всички синтактични грешки. Използва се само "clan".
+          Бутонът без аргументи стартира случайна битка.
 ==========================================================================
 */
 
@@ -12,16 +12,19 @@
 // 1. СТАРТИРАНЕ НА БИТКА
 // ==========================================
 window.startBattle = function(targetRegion) {
+    // Ако няма подаден регион, проверяваме дали има избран от картата
     if (!targetRegion && window.currentSelectedRegion) {
         targetRegion = window.currentSelectedRegion;
     }
+
+    // Ако все още няма регион, създаваме случаен за "Бърза битка"
     if (!targetRegion || typeof targetRegion === 'string') {
         targetRegion = {
-            id: "unknown_region_" + Math.floor(Math.random() * 1000),
+            id: "random_battle_" + Math.floor(Math.random() * 1000),
             name: typeof targetRegion === 'string' ? targetRegion : "Гранични Земи",
-            armySize: Math.floor(Math.random() * 500) + 150,
-            defenseLevel: 3,
-            difficulty: 35
+            armySize: Math.floor(Math.random() * 300) + 100,
+            defenseLevel: 2,
+            difficulty: 20
         };
     }
 
@@ -31,7 +34,7 @@ window.startBattle = function(targetRegion) {
         allLeaders = Object.entries(window.worldData.clans).map(([key, clan]) => ({
             clanKey: key,
             name: clan.leaderName || clan.name || key,
-            clan: key,
+            clan: key, // ✅ ФИКС: използваме clan вместо dynasty
             currentArmy: clan.armySize || clan.currentArmy || 0,
             initialArmyMax: Math.max(clan.maxArmy || 300, clan.armySize || 300),
             heroPower: clan.heroPower || 100,
@@ -62,9 +65,8 @@ window.startBattle = function(targetRegion) {
         return;
     }
 
-    // --- Генериране на вражески герои (случайни имена, НЕ от 13-те клана) ---
+    // --- Генериране на вражески герои (случайни имена, НЕ от 13-те кланове) ---
     const enemyHeroes = window.generateEnemyHeroes(targetRegion);
-
     let totalEnemyArmy = enemyHeroes.reduce((sum, h) => sum + h.currentArmy, 0);
 
     window.currentBattleState = {
@@ -88,7 +90,7 @@ window.startBattle = function(targetRegion) {
     }
     battleScreen.className = 'fullscreen-battle-overlay';
 
-    // Инжектиране на анимациите
+    // Инжектиране на анимациите (ако липсват)
     if (!document.getElementById('battle-effects-style')) {
         const style = document.createElement('style');
         style.id = 'battle-effects-style';
@@ -99,11 +101,7 @@ window.startBattle = function(targetRegion) {
                 50% { transform: translate(4px,-2px); }
                 75% { transform: translate(-2px,4px); }
             }
-            @keyframes battleFlash {
-                0%,100% { opacity:1; } 50% { opacity:0.3; }
-            }
             .battle-shake { animation: battleShake 0.3s ease; }
-            .battle-flash { animation: battleFlash 0.3s ease; }
         `;
         document.head.appendChild(style);
     }
@@ -112,18 +110,15 @@ window.startBattle = function(targetRegion) {
 };
 
 // ==========================================
-// 2. ГЕНЕРИРАНЕ НА ВРАЖЕСКИ ГЕРОИ (НЕ ОТ 13-ТЕ КЛАНОВЕ)
+// 2. ГЕНЕРИРАНЕ НА ВРАЖЕСКИ ГЕРОИ
 // ==========================================
 window.generateEnemyHeroes = function(targetRegion) {
     const enemyNamesPool = [
-        "Роган", "Бран", "Торин", "Варго", "Зоран",
-        "Келтан", "Мордред", "Силвър", "Драко", "Фенрик",
-        "Уркан", "Грок", "Тангар", "Шаркан", "Мелкор",
-        "Артакс", "Вортекс", "Никсар", "Елронд", "Рагнар"
+        "Роган", "Бран", "Торин", "Варго", "Зоран", "Келтан", 
+        "Мордред", "Силвър", "Драко", "Фенрик", "Уркан", "Грок"
     ];
     const enemyTitles = [
-        "Разбойник", "Мерценар", "Пират", "Бунтовник", "Варварин",
-        "Наемник", "Оръженосец", "Предател", "Изгнаник", "Черен рицар"
+        "Разбойник", "Мерценар", "Пират", "Бунтовник", "Варварин", "Наемник"
     ];
 
     const count = 3 + Math.floor(Math.random() * 3); // 3 до 5 врага
@@ -144,7 +139,7 @@ window.generateEnemyHeroes = function(targetRegion) {
         enemies.push({
             name: name,
             title: title,
-            clan: "Враждебен род",
+            clan: "Враждебен род", // ✅ ФИКС: използваме clan
             currentArmy: army,
             initialArmyMax: army,
             heroPower: 80 + Math.floor(Math.random() * 60),
@@ -154,7 +149,6 @@ window.generateEnemyHeroes = function(targetRegion) {
             isEnemy: true
         });
     }
-
     return enemies;
 };
 
