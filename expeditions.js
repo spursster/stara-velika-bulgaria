@@ -204,6 +204,64 @@ window.enterMysticPortal = function() {
     }
 };
 
+/**
+==========================================================================
+ФУНКЦИЯ: ОТВАРЯНЕ НА МЕНЮТО ЗА ЕКСПЕДИЦИИ (ЛИПСВАЩА ФУНКЦИЯ)
+КОРЕКЦИЯ: Дефинира се window.openExpeditionsMenu за да спре грешката в конзолата.
+Създава интерфейс за преглед на статуса на портала и влизане в него.
+==========================================================================
+*/
+window.openExpeditionsMenu = function() {
+    const mainArea = document.getElementById('game-main-area');
+    if (!mainArea) return;
+
+    // Генериране на HTML структурата на менюто
+    mainArea.innerHTML = `
+        <section class="rpg-section animate-fade" style="background: rgba(15, 15, 15, 0.85); border: 1px solid #d4af37; padding: 20px; border-radius: 8px; text-align: center; position: relative;">
+            <!-- Бутон за затваряне горе вляво (Мобилен стил) -->
+            <button onclick="if(window.backToMainMenu) window.backToMainMenu();" style="position: absolute; top: 10px; left: 10px; width: 40px; height: 40px; background: rgba(0,0,0,0.6); border: 1px solid #ff4444; color: #ff4444; border-radius: 50%; font-size: 20px; cursor: pointer; z-index: 101; display: flex; align-items: center; justify-content: center;">✕</button>
+            
+            <h2 style="font-family: 'Cinzel', serif; color: #ffd700; text-transform: uppercase; margin-top: 0;">Мистични Експедиции</h2>
+            <p style="font-size: 12px; color: #aaa; margin-bottom: 20px;">Изследвайте неизвестни светове чрез портала.</p>
+            
+            <!-- Кутия за статус на портала -->
+            <div id="expedition-portal-box" style="margin-bottom: 20px; text-align: left; background: rgba(0,0,0,0.4); padding: 15px; border-radius: 8px; border: 1px solid #333;">
+                <p style="text-align: center; color: #666;">Зареждане на данни за портала...</p>
+            </div>
+
+            <button class="menu-btn" onclick="if(window.backToMainMenu) window.backToMainMenu();" style="width: 100%;">Назад към Главното Меню</button>
+        </section>
+    `;
+
+    // Попълване на информацията за портала динамично
+    const box = document.getElementById('expedition-portal-box');
+    if (window.currentPortalState) {
+        const state = window.currentPortalState;
+        const world = state.currentWorld;
+        
+        if (state.isOpen) {
+            box.innerHTML = `
+                <div style="font-size: 12px; line-height: 1.6; color: #fff;">
+                    <div>🪐 Свят: <span style="color: #ffd700; font-weight: bold;">${world.name}</span></div>
+                    <div>📡 Статус: <span style="color:#00ffcc">ОТВОРЕН ЗА ИЗСЛЕДВАНЕ</span></div>
+                    <div>🔥 Опасност: <span style="color:#ff9900">Ниво ${state.enemyLevel}</span></div>
+                    <div>🧬 Същества: <span style="color:#aaa">${world.creatureType}</span></div>
+                    <button class="action-btn" style="margin-top: 15px; width: 100%; padding: 12px;" onclick="window.enterMysticPortal()">🌌 ВЛЕЗ В ПОРТАЛА</button>
+                </div>
+            `;
+        } else {
+            box.innerHTML = `
+                <div style="font-size: 12px; line-height: 1.6; color: #fff;">
+                    <div>🪐 Свят: <span style="color: #ffd700; font-weight: bold;">${world.name}</span></div>
+                    <div>📡 Статус: <span style="color:#ff3366">СТАБИЛИЗИРА СЕ (ЗАТВОРЕН)</span></div>
+                    <div>🔥 Опасност: <span style="color:#ff9900">Ниво ${state.enemyLevel}</span></div>
+                    <button style="margin-top: 15px; width: 100%; padding: 12px; background: #333; color: #888; border: 1px solid #555; border-radius: 4px; cursor: not-allowed;" disabled>🔒 Порталът е затворен</button>
+                </div>
+            `;
+        }
+    }
+};
+
 // Извикване на функцията веднага при старт на играта
 setTimeout(() => {
     window.updatePortalContainerUI();
