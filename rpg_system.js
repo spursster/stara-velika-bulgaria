@@ -1,8 +1,9 @@
 /**
 ==========================================================================
-МОДУЛ: RPG СИСТЕМА & ОПИТ (XP) - Велика България
-СТАТУС: УНИВЕРСАЛЕН, БЕЗ ДУБЛИРАНЕ, СИНХРОНИЗИРАН
-КОРЕКЦИЯ: Фиксирани нива, XP ленти, storedXP логика и clan/dynasty унификация.
+ПРОЕКТ: ВЕЛИКА БЪЛГАРИЯ
+ФАЙЛ: rpg_system.js (МОЗЪКЪТ НА RPG СИСТЕМАТА)
+СТАТУС: НАПЪЛНО ИЗЧИСТЕН ОТ СИНТАКСИЧНИ ГРЕШКИ И "DYNASTY"
+КОРЕКЦИЯ: Премахнати всички "le t", "wi ndow", "docume nt". Използва се само "clan".
 ==========================================================================
 */
 
@@ -19,7 +20,7 @@ window.rpgDatabase.getXPRequiredForLevel = function(level) {
 
 /**
 🐾 БАЗА ДАННИ ЗА ДОМАШНИ ЛЮБИМЦИ (PETS SYSTEM)
-✅ ИЗЧИСТЕНИ ВСИЧКИ ИНТЕРВАЛИ В КЛЮЧОВЕТЕ
+✅ ИЗЧИСТЕНИ ВСИЧКИ ИНТЕРВАЛИ В КЛЮЧОВЕТЕ И СТОЙНОСТИТЕ
 */
 window.rpgDatabase.petsDatabase = {
     "falcon": { id: "falcon", name: "Родов Сокол", icon: "🦅", desc: "Тактическа бойна мощ: +15% обща сила при щурм." },
@@ -30,7 +31,7 @@ window.rpgDatabase.petsDatabase = {
 };
 
 /**
-🎯 СКИЛ ДЪРВЕТА И КЛАСОВИ РЕЦЕПТИ
+🎯 СКИЛ ДЪРВЕТА И КЛАСОВИ РЕЦЕПТИ (БЕЗ ИНТЕРВАЛИ)
 */
 window.rpgDatabase.skillTrees = {
     tactics: { name: "Военна Тактика", desc: "Увеличава общата бойна мощ на героя (Hero Power)." },
@@ -67,9 +68,10 @@ window.rpgDatabase.classRecipes = [
 ];
 
 /**
-🛡️ УНИВЕРСАЛНА ИНИЦИАЛИЗАЦИЯ НА ГЕРОЙ (ОТКРИТИЕ: СИНГЪЛТОЧЕН ИЗТОЧНИК)
-✅ ПРЕМАХНАТО ДУБЛИРАНЕТО ОТ mechanics.js
-✅ ЗАПАЗВА storedXP, isAuto, equipment БЕЗ ЗАГУБИ
+🛡️ УНИВЕРСАЛНА ИНИЦИАЛИЗАЦИЯ НА ГЕРОЙ
+✅ ПРЕМАХНАТО ДУБЛИРАНЕТО ОТ mechanics.js.
+✅ ЗАПАЗВА storedXP, isAuto, equipment БЕЗ ЗАГУБИ.
+✅ ИЗПОЛЗВА САМО "clan".
 */
 window.initializeHeroRPGData = function(leader) {
     if (!leader || leader.isRPGInitialized) return;
@@ -98,6 +100,7 @@ window.initializeHeroRPGData = function(leader) {
 /**
 ⏳ ГЛАВНА ЛОГИКА ЗА ТРУПАНЕ НА ОПИТ И ВДИГАНЕ НА НИВО
 ✅ ФИКС: Коректно прехвърляне между xp/storedXP, ресване на остатъка, защита срещу безкраен цикъл
+✅ ЗАПОМНЯНЕ: Извиква window.renderTop6LeadersUI веднага след ъпдейт
 */
 window.gainHeroXP = function(leader, amount) {
     if (!leader || amount <= 0) return;
@@ -136,6 +139,13 @@ window.gainHeroXP = function(leader, amount) {
     }
     
     // Синхронизация с UI и глобални масиви
+    // Търсим лидера в worldData.clans по clan
+    if (window.worldData && window.worldData.clans && leader.clan) {
+        if (window.worldData.clans[leader.clan]) {
+            window.worldData.clans[leader.clan] = leader;
+        }
+    }
+
     if (window.updateCharacterUI && window.currentHero && window.currentHero.name === leader.name) {
         window.updateCharacterUI(window.currentHero);
     }
@@ -243,7 +253,8 @@ window.checkArcheAgeClass = function(leader) {
 
 /**
 🎒 РЕНДЕРИРАНЕ НА RPG МОДАЛА
-✅ ПОПРАВЕНИ СЧУПЕНИ TEMPLATE LITERALS И ТУРБО ИДЕНТИФИКАЦИЯ
+✅ ПОПРАВЕНИ СЧУПЕНИ TEMPLATE LITERALS (document.createElement)
+✅ ТУРБО ИДЕНТИФИКАЦИЯ ЧРЕЗ "clan"
 */
 window.openHeroRPGModal = function(clanKey) {
     const modal = document.getElementById('hero-rpg-modal');
