@@ -1,7 +1,6 @@
 /** ==========================================================================
 ПРОЕКТ: ВЕЛИКА БЪЛГАРИЯ
-ФАЙЛ: regions.js (КАРТА, ИНСПЕКЦИЯ, ИНФРАСТРУКТУРА)
-СТАТУС: КОРИГИРАН – ДОБАВЕН БУТОН ЗА АТАКА
+ФАЙЛ: regions.js (ОКОНЧАТЕЛНА ВЕРСИЯ – СИГУРЕН БУТОН ЗА АТАКА)
 ========================================================================== */
 
 window.openRegionsMap = function() {
@@ -34,7 +33,6 @@ window.openRegionsMap = function() {
     mainArea.innerHTML = html;
 };
 
-/** ИНСПЕКЦИЯ И ДЕЙСТВИЯ ЗА КОНКРЕТЕН РЕГИОН */
 window.inspectRegion = function(regionName) {
     if (!window.worldData || !window.worldData.regions || !window.worldData.regions[regionName]) return;
     const reg = window.worldData.regions[regionName];
@@ -58,10 +56,10 @@ window.inspectRegion = function(regionName) {
 
     let actionButtonHTML = '';
     if (isPlayerOwned) {
-        actionButtonHTML = `<button class="region-action-btn" style="background:#2c5a2a;" onclick="window.upgradeRegionInfrastructure('${regionName.replace(/'/g, "\\'")}', ${finalUpgradeCost})">🏗️ Модернизирай Инфраструктура (${finalUpgradeCost} зл.)</button>`;
+        actionButtonHTML = `<button class="region-action-btn" style="background:#2c5a2a;" onclick="window.upgradeRegionInfrastructure('${regionName.replace(/'/g, "\\'")}', ${finalUpgradeCost})">🏗️ Модернизирай (${finalUpgradeCost} зл.)</button>`;
     } else {
-        // БУТОН ЗА АТАКА – ТОВА Е КЛЮЧОВАТА ПРОМЯНА
-        actionButtonHTML = `<button class="region-action-btn" style="background:#7a2e1a;" onclick="window.startBattle('${regionName.replace(/'/g, "\\'")}'); document.getElementById('region-inspect-overlay').remove();">⚔️ ИЗПРАТИ ВОЙСКИ ЗА ЗАВЛАДЯВАНЕ ⚔️</button>`;
+        // Безопасен бутон за атака – използва data-атрибут
+        actionButtonHTML = `<button class="region-action-btn attack-button" style="background:#7a2e1a;" data-region-name="${regionName.replace(/"/g, '&quot;')}">⚔️ ИЗПРАТИ ВОЙСКИ ЗА ЗАВЛАДЯВАНЕ ⚔️</button>`;
     }
 
     overlay.innerHTML = `<div style="background: rgba(0,0,0,0.9); border-radius: 32px; padding: 20px; max-width: 450px; width: 100%; text-align: center; border: 1px solid #c9a87b;">
@@ -69,17 +67,34 @@ window.inspectRegion = function(regionName) {
         <p>⛰️ Терен: ${reg.terrain}</p>
         <p>💰 Ресурс: ${reg.resource}</p>
         <p>🏴 Контролиращ Клан: ${nativeClan}</p>
-        <p>🛡️ Ниво на Защита: Ниво ${reg.defenseLevel || 1}</p>
+        <p>🛡️ Защита: Ниво ${reg.defenseLevel || 1}</p>
         <p>🏗️ Инфраструктура: Ниво ${reg.infrastructureLevel || 1}</p>
-        <p>⚠️ Трудност на Терена: ${reg.difficulty}%</p>
+        <p>⚠️ Трудност: ${reg.difficulty}%</p>
         <div style="margin: 20px 0;">${actionButtonHTML}</div>
         <button class="region-action-btn" style="background:#333;" onclick="this.closest('#region-inspect-overlay').remove()">🔒 Затвори</button>
     </div>`;
 
+    // Добавяне на event listener за бутона за атака
+    const attackBtn = overlay.querySelector('.attack-button');
+    if (attackBtn) {
+        attackBtn.addEventListener('click', function(e) {
+            const rName = this.getAttribute('data-region-name');
+            if (rName && window.startBattle) {
+                // Извикваме startBattle с името на региона
+                window.startBattle(rName);
+            } else {
+                console.error("Липсва startBattle или data-region-name");
+                alert("Грешка: Бойната система не е заредена.");
+            }
+            // Затваряме прозореца
+            const overlayElem = document.getElementById('region-inspect-overlay');
+            if (overlayElem) overlayElem.remove();
+        });
+    }
+
     document.body.appendChild(overlay);
 };
 
-/** НАДГРАЖДАНЕ НА ИНФРАСТРУКТУРАТА */
 window.upgradeRegionInfrastructure = function(regionName, cost) {
     const hero = window.currentHero;
     if (!hero) return;
@@ -91,7 +106,7 @@ window.upgradeRegionInfrastructure = function(regionName, cost) {
             reg.defenseLevel = (reg.defenseLevel || 1) + 1;
         }
         if (window.showAdvisorMsg) {
-            window.showAdvisorMsg(`🏗️ СТРОЕЖ: Инфраструктурата на регион "${regionName}" бе успешно модернизирана!`);
+            window.showAdvisorMsg(`🏗️ Инфраструктурата на ${regionName} е модернизирана!`);
         }
         if (window.updateCharacterUI) window.updateCharacterUI(hero);
         const overlay = document.getElementById('region-inspect-overlay');
@@ -100,7 +115,7 @@ window.upgradeRegionInfrastructure = function(regionName, cost) {
         window.inspectRegion(regionName);
     } else {
         if (window.showAdvisorMsg) {
-            window.showAdvisorMsg("❌ НЕДОСТИГ: Нямате достатъчно злато за строителни дейности!");
+            window.showAdvisorMsg("❌ Нямате достатъчно злато!");
         }
     }
 };
