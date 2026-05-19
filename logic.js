@@ -1,7 +1,7 @@
 /**
  * МОДУЛ: ГЛАВНА ЛОГИКА - Велика България
- * СТАТУС: НАПЪЛНО СИНХРОНИЗИРАН С HTML, UI И КАЗАРМИТЕ
- * КОРЕКЦИЯ: Напълно работеща покупка на герои (buyNewHero) и старт от 480 г. пр.н.е.
+ * СТАТУС: НАПЪЛНО СИНХРОНИЗИРАН И ПОДСИГУРЕН СРЕЩУ КЕШ ГРЕШКИ
+ * КОРЕКЦИЯ: Изолирана логика в handleStartChoice без външни зависимости, старт от 480 г. пр.н.е.
  * Статистика на файловете в проекта: 15
  */
 
@@ -65,10 +65,10 @@ window.startFreshGameLogic = function() {
         window.worldData.clans[selectedClan] = window.currentHero;
     }
 
-    // НАДГРАЖДАНЕ: Играта вече започва от 480 г. пр.н.е. (480 BC)
+    // Задаване на историческото време: 480 г. пр.н.е.
     window.gameTime = { seasonIndex: 0, year: 480, era: "пр.н.е." };
 
-    // Обновяваме целия интерфейс
+    // Обновяваме целия графичен интерфейс
     if (window.updateCharacterUI) window.updateCharacterUI(window.currentHero);
     if (window.renderTop6LeadersUI) window.renderTop6LeadersUI();
     
@@ -84,7 +84,7 @@ window.startFreshGameLogic = function() {
     }
 
     // Извършваме чист първоначален запис
-    if (window.saveGreatBulgariaGame) window.saveGreatBulgariaGame();
+    window.saveGreatBulgariaGame();
 };
 
 // Основната функция за покупка на герой от механата
@@ -96,8 +96,6 @@ window.buyHeroFromTavern = function() {
     if (window.currentHero.gold < heroCost) {
         if (window.showAdvisorMsg) {
             window.showAdvisorMsg("❌ НЕДОСТИГ: Нямате достатъчно злато за нов водач!");
-        } else {
-            alert("Нямате достатъчно злато за нов водач!");
         }
         return;
     }
@@ -126,19 +124,15 @@ window.buyHeroFromTavern = function() {
         skills: { tactics: 0, endurance: 0, economy: 0 }
     };
 
-    // Намаляваме златото на играча
     window.currentHero.gold -= heroCost;
 
-    // Добавяме новия водач в списъка с отключени водачи
     if (!window.unlockedLeaders) window.unlockedLeaders = [];
     window.unlockedLeaders.push(purchasedHero);
 
-    // Добавяме го и към глобалния свят на играта, за да се вижда навсякъде
     if (!window.worldData) window.worldData = {};
     if (!window.worldData.clans) window.worldData.clans = {};
     window.worldData.clans[randomClan] = purchasedHero;
 
-    // Обновяваме графичния интерфейс веднага
     if (window.updateCharacterUI) window.updateCharacterUI(window.currentHero);
     if (window.renderTop6LeadersUI) window.renderTop6LeadersUI();
     if (window.renderBarracksLayout) window.renderBarracksLayout();
@@ -147,11 +141,10 @@ window.buyHeroFromTavern = function() {
         window.showAdvisorMsg(`👑 МЕХАНА: Новият водач ${randomName} от род ${randomClan} се присъедини!`);
     }
 
-    // Запазваме новия прогрес
-    if (window.saveGreatBulgariaGame) window.saveGreatBulgariaGame();
+    window.saveGreatBulgariaGame();
 };
 
-// СИНХРОНИЗАЦИОНЕН МОСТ: Свързва бутона от index.html с логиката на играта
+// СИНХРОНИЗАЦИОНЕН МОСТ
 window.buyNewHero = window.buyHeroFromTavern;
 
 // =======================================================================
@@ -197,6 +190,7 @@ window.showStartChoiceModal = function() {
     `;
 };
 
+// Самостоятелна функция за обработка на избора без външни зависимости
 window.handleStartChoice = function(action) {
     const choiceModal = document.getElementById('start-choice-modal');
     if (choiceModal) choiceModal.remove();
@@ -204,7 +198,8 @@ window.handleStartChoice = function(action) {
     if (action === 'load') {
         window.loadGreatBulgariaGame();
     } else {
-        window.clearGreatBulgariaSaveWithoutReload();
+        // Директно изчистване на стария прогрес на място, за да няма сривове
+        localStorage.removeItem('GreatBulgaria_SaveGame');
         window.startFreshGameLogic();
     }
 };
@@ -260,4 +255,13 @@ window.loadGreatBulgariaGame = function() {
         localStorage.removeItem('GreatBulgaria_SaveGame');
         return false;
     }
+};
+
+window.clearGreatBulgariaSaveWithoutReload = function() {
+    localStorage.removeItem('GreatBulgaria_SaveGame');
+};
+
+window.clearGreatBulgariaSave = function() {
+    localStorage.removeItem('GreatBulgaria_SaveGame');
+    location.reload();
 };
