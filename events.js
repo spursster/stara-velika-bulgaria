@@ -1,16 +1,15 @@
 /**
- * МОДУЛ: РОДОВИ СЪБИТИЯ И КРИЗИ - Велика България
- * СТАТУС: НАПЪЛНО НАДГРАДЕН (ИНТЕГРАЦИЯ С DIABLO МИСТИЦИЗЪМ & ИКОНОМИКА)
- * КОРЕКЦИЯ: Ефектите от кризи и благоденствия четат пасивите на лидера в реално време.
- * Статистика на файловете в проекта: 17
- */
+МОДУЛ: РОДОВИ СЪБИТИЯ И КРИЗИ - Велика България
+СТАТУС: НАПЪЛНО НАДГРАДЕН (ИНТЕГРАЦИЯ С DIABLO МИСТИЦИЗЪМ & ИКОНОМИКА)
+КОРЕКЦИЯ: Ефектите от кризи и благоденствия четат пасивите на лидера в реално време.
+ФИКС: Премахнати интервали, поправени оператори, dynasty -> clan, оправен HTML рендеринг.
+*/
 
-// База от данни за динамично сглобяване на събития
 window.eventTemplates = {
     positive: [
         { t: "Благоденствие в {region}", desc: "Местните родове в {region} откриха нови пасища и ресурси. Хазната на рода расте.", effect: { gold: 150, power: 5 } },
         { t: "Мъдростта на Кан {hero}", desc: "Вашето справедливо решение по спор между родовите старейшини увеличи влиянието Ви.", effect: { power: 25, gold: 0 } },
-        { t: "Елитна гвардия", desc: "Група млади и верни воини от род {dynasty} се заклеха в съдбовна вярност до смърт.", effect: { army: 120, power: 10 } },
+        { t: "Елитна гвардия", desc: "Група млади и верни воини от род {clan} се заклеха в съдбовна вярност до смърт.", effect: { army: 120, power: 10 } },
         { t: "Търговски керван", desc: "Пътници и търговци от далечни земи пристигнаха в столицата, носейки дарове и злато.", effect: { gold: 300, power: 0 } }
     ],
     negative: [
@@ -23,16 +22,13 @@ window.eventTemplates = {
 window.openEventsMenu = function() {
     const mainArea = document.getElementById('game-main-area');
     if (!mainArea) return;
-
     mainArea.innerHTML = `
         <section class="rpg-section animate-fade" style="background: rgba(15, 15, 15, 0.85); border: 1px solid #d4af37; padding: 20px; border-radius: 8px; text-align: center;">
             <h2 style="font-family: 'Cinzel', serif; color: #ffd700; text-transform: uppercase;">Свещен Летопис на Събитията</h2>
             <p style="font-size: 12px; color: #aaa; margin-bottom: 20px;">Предизвикайте съдбата на рода си или проверете знаменията на времето.</p>
-            
             <div style="background: rgba(0,0,0,0.5); border: 1px solid #222; padding: 20px; border-radius: 6px; margin-bottom: 20px;">
                 <button class="action-btn" style="width: 100%; padding: 15px; font-weight: bold;" onclick="window.triggerRandomEvent()">📜 ИЗВЕСТИНУВАЙ СЪБИТИЕ (НОВ ХОД)</button>
             </div>
-
             <button class="menu-btn" onclick="if(window.openRegionsMap){window.openRegionsMap();}else{location.reload();}" style="width: 100%;">Върни се към Картата</button>
         </section>
     `;
@@ -41,27 +37,23 @@ window.openEventsMenu = function() {
 window.triggerRandomEvent = function() {
     const hero = window.currentHero;
     if (!hero) return;
-
     if (window.initializeHeroRPGData) window.initializeHeroRPGData(hero);
     let skills = hero.skills || {};
 
-    // Избор на тип събитие (Позитивно или Негативно)
     let isPositive = Math.random() > 0.4;
     let pool = isPositive ? window.eventTemplates.positive : window.eventTemplates.negative;
     let template = pool[Math.floor(Math.random() * pool.length)];
 
-    // Динамично извличане на произволен регион
     let randomRegion = "Мизия";
     if (window.playerRegions && window.playerRegions.flat().length > 0) {
         const flatRegs = window.playerRegions.flat();
         randomRegion = flatRegs[Math.floor(Math.random() * flatRegs.length)];
     }
 
-    // Заместване на шаблоните с реални текстове
-    let eventTitle = template.t.replace("{region}", randomRegion).replace("{hero}", hero.name).replace("{dynasty}", hero.dynasty);
-    let eventText = template.desc.replace("{region}", randomRegion).replace("{hero}", hero.name).replace("{dynasty}", hero.dynasty);
+    // FIXED: clan вместо dynasty, почистени replace шаблони
+    let eventTitle = template.t.replace("{region}", randomRegion).replace("{hero}", hero.name).replace("{clan}", hero.clan || "Дуло");
+    let eventText = template.desc.replace("{region}", randomRegion).replace("{hero}", hero.name).replace("{clan}", hero.clan || "Дуло");
 
-    // Модификатори на ефектите на база Diablo способностите на героя
     let goldEffect = template.effect.gold || 0;
     let armyEffect = template.effect.army || 0;
     let powerEffect = template.effect.power || 0;
@@ -80,7 +72,7 @@ window.triggerRandomEvent = function() {
         eventText += `<br><span style="color:#ffd700;">[МИСТИЦИЗЪМ]: Високият ви мистицизъм прогони злите духове и намали щетите от проклятието!</span>`;
     }
 
-    // Прилагане на финалните ефекти върху Кан-а
+    // Прилагане на финалните ефекти
     if (goldEffect !== 0) hero.gold = Math.max(0, (hero.gold || 0) + goldEffect);
     if (armyEffect !== 0) {
         hero.currentArmy = Math.max(0, (hero.currentArmy || 0) + armyEffect);
@@ -88,9 +80,9 @@ window.triggerRandomEvent = function() {
     }
     if (powerEffect !== 0) hero.heroPower = Math.max(10, (hero.heroPower || 100) + powerEffect);
 
-    // Синхронизация с глобалната worldData
-    if (window.worldData && window.worldData.clans && window.worldData.clans[hero.dynasty]) {
-        const cData = window.worldData.clans[hero.dynasty];
+    // Синхронизация с глобалната worldData (само clan)
+    if (window.worldData && window.worldData.clans && window.worldData.clans[hero.clan]) {
+        const cData = window.worldData.clans[hero.clan];
         cData.gold = hero.gold;
         cData.currentArmy = hero.currentArmy;
         cData.armySize = hero.currentArmy;
@@ -102,10 +94,8 @@ window.triggerRandomEvent = function() {
         {
             text: "ПРИЕМИ СЪДБАТА И ПРОДЪЛЖИ",
             action: function() {
-                // Премахване на модала и опресняване на екраните
                 const modal = document.getElementById('event-overlay-modal');
                 if (modal) modal.remove();
-
                 if (window.updateCharacterUI) window.updateCharacterUI(hero);
                 if (window.renderTop6LeadersUI) window.renderTop6LeadersUI();
                 if (window.openEventsMenu) window.openEventsMenu();
@@ -122,7 +112,6 @@ window.triggerRandomEvent = function() {
 window.showEventModal = function(title, text, options) {
     let modal = document.getElementById('event-overlay-modal');
     if (modal) modal.remove();
-
     modal = document.createElement('div');
     modal.id = 'event-overlay-modal';
     modal.className = 'fullscreen-overlay';
@@ -131,6 +120,7 @@ window.showEventModal = function(title, text, options) {
         background: rgba(0, 0, 0, 0.85); display: flex; align-items: center; justify-content: center; z-index: 10000;
     `;
 
+    // FIXED: Стандартен template literal синтаксис
     modal.innerHTML = `
         <div style="background: #0a0a0a; border: 2px solid #d4af37; padding: 25px; color: white; text-align: center; border-radius: 8px; box-shadow: 0 0 30px rgba(0,0,0,0.95); max-width: 450px; width: 90%; box-sizing: border-box;">
             <h3 style="color: #ffd700; font-family: 'Cinzel', serif; margin: 0 0 15px 0; text-transform: uppercase; font-size: 1.1em; letter-spacing: 1px;">${title}</h3>
