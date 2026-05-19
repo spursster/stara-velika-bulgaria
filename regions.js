@@ -1,9 +1,8 @@
 /** ==========================================================================
 ПРОЕКТ: ВЕЛИКА БЪЛГАРИЯ
-ФАЙЛ: regions.js (ВЪЗСТАНОВЕН ПОП-ЪП ПРОЗОРЕЦ ЗА КАРТА)
+ФАЙЛ: regions.js (СИГУРНА ВЕРСИЯ – EVENT LISTENER ЗА АТАКА)
 ========================================================================== */
 
-// Отваря картата в изскачащ прозорец
 window.openRegionsMap = function() {
     if (!window.worldData || !window.worldData.regions) {
         console.error("Липсват данни за регионите");
@@ -13,7 +12,6 @@ window.openRegionsMap = function() {
     const regionKeys = Object.keys(regions);
     const ownedRegionsFlat = Array.isArray(window.playerRegions) ? window.playerRegions.flat() : [];
 
-    // Създаваме overlay
     let overlay = document.getElementById('regions-map-overlay');
     if (overlay) overlay.remove();
     overlay = document.createElement('div');
@@ -43,7 +41,6 @@ window.openRegionsMap = function() {
     document.body.appendChild(overlay);
 };
 
-// Инспекция на конкретен регион (същата като преди, но без да пипа mainArea)
 window.inspectRegion = function(regionName) {
     if (!window.worldData || !window.worldData.regions || !window.worldData.regions[regionName]) return;
     const reg = window.worldData.regions[regionName];
@@ -67,10 +64,9 @@ window.inspectRegion = function(regionName) {
 
     let actionButtonHTML = '';
     if (isPlayerOwned) {
-        actionButtonHTML = `<button class="region-action-btn" style="background:#2c5a2a;" onclick="window.upgradeRegionInfrastructure('${regionName.replace(/'/g, "\\'")}', ${finalUpgradeCost}); this.closest('#region-inspect-overlay').remove();">🏗️ Модернизирай (${finalUpgradeCost} зл.)</button>`;
+        actionButtonHTML = `<button id="upgrade-btn" class="region-action-btn" style="background:#2c5a2a;">🏗️ Модернизирай (${finalUpgradeCost} зл.)</button>`;
     } else {
-        // БУТОН ЗА АТАКА – извиква startBattle с името на региона
-        actionButtonHTML = `<button class="region-action-btn" style="background:#7a2e1a;" onclick="window.startBattle('${regionName.replace(/'/g, "\\'")}'); document.getElementById('region-inspect-overlay').remove();">⚔️ ИЗПРАТИ ВОЙСКИ ЗА ЗАВЛАДЯВАНЕ ⚔️</button>`;
+        actionButtonHTML = `<button id="attack-btn" class="region-action-btn" style="background:#7a2e1a;">⚔️ ИЗПРАТИ ВОЙСКИ ЗА ЗАВЛАДЯВАНЕ ⚔️</button>`;
     }
 
     overlay.innerHTML = `<div style="background: rgba(0,0,0,0.9); border-radius: 32px; padding: 20px; max-width: 450px; width: 100%; text-align: center; border: 1px solid #c9a87b;">
@@ -82,9 +78,41 @@ window.inspectRegion = function(regionName) {
         <p>🏗️ Инфраструктура: Ниво ${reg.infrastructureLevel || 1}</p>
         <p>⚠️ Трудност: ${reg.difficulty}%</p>
         <div style="margin: 20px 0;">${actionButtonHTML}</div>
-        <button class="region-action-btn" style="background:#333;" onclick="this.closest('#region-inspect-overlay').remove()">🔒 Затвори</button>
+        <button class="region-action-btn" style="background:#333;" id="close-inspect-btn">🔒 Затвори</button>
     </div>`;
+
     document.body.appendChild(overlay);
+
+    // Event listener за бутона за атака
+    const attackBtn = document.getElementById('attack-btn');
+    if (attackBtn) {
+        attackBtn.addEventListener('click', function() {
+            if (window.startBattle) {
+                window.startBattle(regionName);
+            } else {
+                console.error("startBattle не е дефинирана");
+                alert("Бойната система не е заредена!");
+            }
+            overlay.remove();
+        });
+    }
+
+    // Event listener за бутона за upgrade
+    const upgradeBtn = document.getElementById('upgrade-btn');
+    if (upgradeBtn) {
+        upgradeBtn.addEventListener('click', function() {
+            window.upgradeRegionInfrastructure(regionName, finalUpgradeCost);
+            overlay.remove();
+        });
+    }
+
+    // Event listener за затваряне
+    const closeBtn = document.getElementById('close-inspect-btn');
+    if (closeBtn) {
+        closeBtn.addEventListener('click', function() {
+            overlay.remove();
+        });
+    }
 };
 
 window.upgradeRegionInfrastructure = function(regionName, cost) {
