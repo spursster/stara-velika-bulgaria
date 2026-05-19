@@ -1,40 +1,37 @@
 /**
 ==========================================================================
 ПРОЕКТ: ВЕЛИКА БЪЛГАРИЯ
-ФАЙЛ: battle.js (НОВ ДИЗАЙН - ПЪЛЕН ЕКРАН)
-СТАТУС: НАПЪЛНО ИЗЧИСТЕН И СИНХРОНИЗИРАН
-КОРЕКЦИЯ: Премахнати всички синтактични грешки. Използва се само "clan".
-          Бутонът без аргументи стартира случайна битка.
+ФАЙЛ: battle.js (БОЙНА СИСТЕМА - АДАПТИВНА И СТАБИЛНА)
+СТАТУС: НАПЪЛНО ИЗЧИСТЕН ОТ СИНТАКСИЧНИ ГРЕШКИ
+КОРЕКЦИЯ: Премахнати всички = >, & &, разделени думи, dynasty -> clan.
+          Функцията startBattle е гарантирано дефинирана и работеща.
 ==========================================================================
 */
 
-// ==========================================
 // 1. СТАРТИРАНЕ НА БИТКА
-// ==========================================
 window.startBattle = function(targetRegion) {
-    // Ако няма подаден регион, проверяваме дали има избран от картата
+    console.log("⚔️ Стартиране на битка...", targetRegion);
+    
     if (!targetRegion && window.currentSelectedRegion) {
         targetRegion = window.currentSelectedRegion;
     }
-
-    // Ако все още няма регион, създаваме случаен за "Бърза битка"
     if (!targetRegion || typeof targetRegion === 'string') {
         targetRegion = {
-            id: "random_battle_" + Math.floor(Math.random() * 1000),
+            id: "random_region_" + Math.floor(Math.random() * 1000),
             name: typeof targetRegion === 'string' ? targetRegion : "Гранични Земи",
-            armySize: Math.floor(Math.random() * 300) + 100,
+            armySize: Math.floor(Math.random() * 400) + 100,
             defenseLevel: 2,
-            difficulty: 20
+            difficulty: 25
         };
     }
 
-    // --- Събиране на играчовите герои (само фаворитите, макс 5) ---
+    // Събиране на играчовите герои
     let allLeaders = [];
     if (window.worldData && window.worldData.clans) {
         allLeaders = Object.entries(window.worldData.clans).map(([key, clan]) => ({
             clanKey: key,
             name: clan.leaderName || clan.name || key,
-            clan: key, // ✅ ФИКС: използваме clan вместо dynasty
+            clan: key,
             currentArmy: clan.armySize || clan.currentArmy || 0,
             initialArmyMax: Math.max(clan.maxArmy || 300, clan.armySize || 300),
             heroPower: clan.heroPower || 100,
@@ -65,7 +62,7 @@ window.startBattle = function(targetRegion) {
         return;
     }
 
-    // --- Генериране на вражески герои (случайни имена, НЕ от 13-те кланове) ---
+    // Генериране на вражески герои
     const enemyHeroes = window.generateEnemyHeroes(targetRegion);
     let totalEnemyArmy = enemyHeroes.reduce((sum, h) => sum + h.currentArmy, 0);
 
@@ -81,7 +78,6 @@ window.startBattle = function(targetRegion) {
         enemyLog: []
     };
 
-    // Създаване на бойния екран
     let battleScreen = document.getElementById('battle-screen');
     if (!battleScreen) {
         battleScreen = document.createElement('div');
@@ -90,7 +86,7 @@ window.startBattle = function(targetRegion) {
     }
     battleScreen.className = 'fullscreen-battle-overlay';
 
-    // Инжектиране на анимациите (ако липсват)
+    // Инжектиране на анимациите
     if (!document.getElementById('battle-effects-style')) {
         const style = document.createElement('style');
         style.id = 'battle-effects-style';
@@ -109,9 +105,7 @@ window.startBattle = function(targetRegion) {
     window.renderBattleLayout();
 };
 
-// ==========================================
 // 2. ГЕНЕРИРАНЕ НА ВРАЖЕСКИ ГЕРОИ
-// ==========================================
 window.generateEnemyHeroes = function(targetRegion) {
     const enemyNamesPool = [
         "Роган", "Бран", "Торин", "Варго", "Зоран", "Келтан", 
@@ -121,7 +115,7 @@ window.generateEnemyHeroes = function(targetRegion) {
         "Разбойник", "Мерценар", "Пират", "Бунтовник", "Варварин", "Наемник"
     ];
 
-    const count = 3 + Math.floor(Math.random() * 3); // 3 до 5 врага
+    const count = 3 + Math.floor(Math.random() * 3);
     const enemies = [];
     const usedNames = new Set();
 
@@ -139,7 +133,7 @@ window.generateEnemyHeroes = function(targetRegion) {
         enemies.push({
             name: name,
             title: title,
-            clan: "Враждебен род", // ✅ ФИКС: използваме clan
+            clan: "Враждебен род",
             currentArmy: army,
             initialArmyMax: army,
             heroPower: 80 + Math.floor(Math.random() * 60),
@@ -152,9 +146,7 @@ window.generateEnemyHeroes = function(targetRegion) {
     return enemies;
 };
 
-// ==========================================
 // 3. РЕНДЕРИРАНЕ НА БОЙНИЯ ЛЕЙАУТ
-// ==========================================
 window.renderBattleLayout = function() {
     const state = window.currentBattleState;
     const screen = document.getElementById('battle-screen');
@@ -166,7 +158,7 @@ window.renderBattleLayout = function() {
     const playerPct = state.initialPlayerArmy > 0 ? Math.max(0, Math.ceil((totalPlayerArmy / state.initialPlayerArmy) * 100)) : 0;
     const enemyPct = state.initialEnemyArmy > 0 ? Math.max(0, Math.ceil((totalEnemyArmy / state.initialEnemyArmy) * 100)) : 0;
 
-    // --- Генериране на играчовата елитна лента (горе) ---
+    // Горна лента: Играчи
     let playerSlotsHTML = '';
     state.group.forEach(hero => {
         const hpPct = hero.initialArmyMax > 0 ? Math.max(0, Math.ceil((hero.currentArmy / hero.initialArmyMax) * 100)) : 0;
@@ -174,14 +166,14 @@ window.renderBattleLayout = function() {
         const dead = hero.currentArmy <= 0 ? 'filter:grayscale(1);opacity:0.4;' : '';
         playerSlotsHTML += `
             <div class="battle-hero-slot" style="${dead}">
-                <div class="bhs-name">️ ${hero.name}</div>
+                <div class="bhs-name">🛡️ ${hero.name}</div>
                 <div class="bhs-level">Ниво ${hero.level || 1}</div>
                 <div class="bhs-bar-bg"><div class="bhs-bar" style="width:${hpPct}%;background:${color}"></div></div>
                 <div class="bhs-army">${hero.currentArmy || 0} ⚔️</div>
             </div>`;
     });
 
-    // --- Генериране на вражеските слотове (долу) ---
+    // Долна лента: Врагове
     let enemySlotsHTML = '';
     state.enemyGroup.forEach(hero => {
         const hpPct = hero.initialArmyMax > 0 ? Math.max(0, Math.ceil((hero.currentArmy / hero.initialArmyMax) * 100)) : 0;
@@ -196,7 +188,7 @@ window.renderBattleLayout = function() {
             </div>`;
     });
 
-    // --- Логове ---
+    // Логове
     const playerLogHTML = state.playerLog.length > 0
         ? state.playerLog.map(l => `<div class="log-line player-log">${l}</div>`).join('')
         : '<div class="log-line empty-log">⏳ Чака се заповед за атака...</div>';
@@ -205,7 +197,7 @@ window.renderBattleLayout = function() {
         ? state.enemyLog.map(l => `<div class="log-line enemy-log">${l}</div>`).join('')
         : '<div class="log-line empty-log">🏹 Врагът е готов за отбрана...</div>';
 
-    // --- Централен VS ---
+    // Център
     const vsCenter = `
         <div class="battle-vs-section">
             <div class="battle-vs-label player-side">
@@ -225,41 +217,32 @@ window.renderBattleLayout = function() {
             </div>
         </div>`;
 
-    // --- Бутони ---
+    // Бутони
     const buttonsHTML = `
         <div class="battle-buttons-row">
             <button id="btn-battle-assault" class="battle-btn assault" onclick="window.processBattleAction('assault')">⚔️ ПРОДЪЛЖИ ЩУРМА</button>
             <button id="btn-battle-retreat" class="battle-btn retreat" onclick="window.processBattleAction('retreat')">🏃 ОТСТЪПЛЕНИЕ</button>
         </div>`;
 
-    // --- Сглобяване на пълния екран ---
+    // Сглобяване
     screen.innerHTML = `
         <div class="battle-full-container">
-            <!-- ГОРНА ЛЕНТА: ЕЛИТНИ ГЕРОИ -->
             <div class="battle-elite-row">
                 <div class="battle-elite-label">👑 ТВОИ ВОЕВОДИ</div>
                 <div class="battle-elite-slots">${playerSlotsHTML}</div>
             </div>
-
-            <!-- ГОРЕН ЛОГ: ДЕЙСТВИЯ НА ГЕРОИТЕ -->
             <div class="battle-log-panel top-log">
                 <div class="battle-log-title">📜 ЛЕТОПИС — ДЕЙСТВИЯ НА ВОЕВОДИТЕ</div>
                 <div class="battle-log-content">${playerLogHTML}</div>
             </div>
-
-            <!-- ЦЕНТЪР: VS ИНДИКАТОР + БУТОНИ -->
             <div class="battle-center-section">
                 ${vsCenter}
                 ${buttonsHTML}
             </div>
-
-            <!-- ДОЛЕН ЛОГ: ДЕЙСТВИЯ НА ВРАГА -->
             <div class="battle-log-panel bottom-log">
                 <div class="battle-log-title">🏹 ЛЕТОПИС — ДЕЙСТВИЯ НА ВРАГА</div>
                 <div class="battle-log-content">${enemyLogHTML}</div>
             </div>
-
-            <!-- ДОЛНА ЛЕНТА: ВРАЖЕСКИ ГЕРОИ -->
             <div class="battle-elite-row enemy-row">
                 <div class="battle-elite-label">☠️ ВРАЖЕСКИ ОТРЯД</div>
                 <div class="battle-elite-slots">${enemySlotsHTML}</div>
@@ -268,9 +251,7 @@ window.renderBattleLayout = function() {
     `;
 };
 
-// ==========================================
-// 4. ОБРАБОТКА НА ДЕЙСТВИЕ (АТАКА / ОТСТЪПЛЕНИЕ)
-// ==========================================
+// 4. ОБРАБОТКА НА ДЕЙСТВИЕ
 window.processBattleAction = function(actionType) {
     const state = window.currentBattleState;
     if (!state) return;
@@ -287,7 +268,7 @@ window.processBattleAction = function(actionType) {
         return;
     }
 
-    // --- Анимация на треперене ---
+    // Анимация
     const container = document.querySelector('.battle-full-container');
     if (container) {
         container.classList.add('battle-shake');
@@ -297,7 +278,7 @@ window.processBattleAction = function(actionType) {
     let hasCrit = false;
     let totalPlayerPower = 0;
 
-    // --- Изчисляване на силата на играча ---
+    // Сила на играча
     state.group.forEach(hero => {
         if (!hero || hero.currentArmy <= 0) return;
         let p = hero.currentArmy + (hero.heroPower || 100);
@@ -309,20 +290,20 @@ window.processBattleAction = function(actionType) {
             }
         }
         if (hero.pet === 'falcon') { p = Math.floor(p * 1.15); state.playerLog.push(`🦅 ${hero.name}: Соколът засилва атаката!`); }
-        if (hero.pet === 'wolf') { if (Math.random() < 0.10) { p *= 2; hasCrit = true; state.playerLog.push(`🐺 ${hero.name}: Критичен удар от вълка!`); } }
+        if (hero.pet === 'wolf' && Math.random() < 0.10) { p *= 2; hasCrit = true; state.playerLog.push(`🐺 ${hero.name}: Критичен удар от вълка!`); }
         totalPlayerPower += p;
     });
 
     totalPlayerPower *= (Math.random() * 0.3 + 0.85);
 
-    // --- Изчисляване на силата на врага ---
+    // Сила на врага
     let totalEnemyPower = state.enemyArmy * (1 + (state.region.defenseLevel || 1) * 0.15);
     totalEnemyPower *= (Math.random() * 0.3 + 0.85);
 
     let playerLosses = Math.floor(totalEnemyPower * 0.18);
     let enemyLosses = Math.floor(totalPlayerPower * 0.22);
 
-    // --- Прилагане на щети ---
+    // Прилагане на щети
     state.enemyArmy = Math.max(0, state.enemyArmy - enemyLosses);
     state.enemyLog.push(`⚔️ Вражеският отряд губи <b>${enemyLosses}</b> бойци!`);
 
@@ -335,7 +316,6 @@ window.processBattleAction = function(actionType) {
         state.playerLog.push(`📉 Загубени са <b>${playerLosses}</b> твои бойци.`);
     }
 
-    // --- Вражески герои губят войска пропорционално ---
     let aliveEnemies = state.enemyGroup.filter(h => h && h.currentArmy > 0);
     if (aliveEnemies.length > 0 && enemyLosses > 0) {
         let lossPer = Math.floor(enemyLosses / aliveEnemies.length);
@@ -344,14 +324,14 @@ window.processBattleAction = function(actionType) {
         });
     }
 
-    // --- Проверка за бягство на врага ---
+    // Проверка за бягство
     let totalPlayerLeft = state.group.reduce((sum, h) => sum + (h.currentArmy || 0), 0);
     if (state.enemyArmy > 0 && totalPlayerLeft > 0 && state.enemyArmy < state.initialEnemyArmy * 0.30 && Math.random() < 0.5) {
         state.enemyRetreating = true;
         state.enemyLog.push("🏳️ Врагът <b>губи кураж</b> и започва да бяга!");
     }
 
-    // --- Край на рунда ---
+    // Край на рунда
     state.round++;
     setTimeout(() => {
         if (state.enemyArmy <= 0 && totalPlayerLeft > 0) {
@@ -360,7 +340,6 @@ window.processBattleAction = function(actionType) {
             window.endBattle(false, "defeat");
         } else {
             window.renderBattleLayout();
-            // Пренастройка на бутоните
             if (state.enemyRetreating) {
                 const btnA2 = document.getElementById('btn-battle-assault');
                 const btnR2 = document.getElementById('btn-battle-retreat');
@@ -374,7 +353,7 @@ window.processBattleAction = function(actionType) {
     }, 400);
 };
 
-// --- Преследване ---
+// Преследване
 window.processBattleAction = function(actionType) {
     if (actionType === 'chase') {
         const state = window.currentBattleState;
@@ -385,14 +364,11 @@ window.processBattleAction = function(actionType) {
     }
 };
 
-// ==========================================
 // 5. КРАЙ НА БИТКАТА
-// ==========================================
 window.endBattle = function(isVictory, reason) {
     const state = window.currentBattleState;
     if (!state) return;
 
-    // Записване на оцелелите войски обратно в worldData
     state.group.forEach(hero => {
         if (hero && hero.clan && window.worldData && window.worldData.clans[hero.clan]) {
             window.worldData.clans[hero.clan].currentArmy = hero.currentArmy;
@@ -400,7 +376,6 @@ window.endBattle = function(isVictory, reason) {
         }
     });
 
-    let finalMsg = '';
     if (isVictory) {
         state.region.armySize = 0;
         if (!window.playerRegions) window.playerRegions = [];
@@ -410,7 +385,6 @@ window.endBattle = function(isVictory, reason) {
         state.playerLog.push(`🎉 <b>ПОБЕДА!</b> Регионът <b>${state.region.name}</b> е завладян!`);
         state.enemyLog.push("💀 Вражеският отряд е унищожен...");
 
-        // XP награда
         state.group.forEach(hero => {
             if (hero && hero.currentArmy > 0 && window.gainHeroXP) {
                 window.gainHeroXP(hero, 150);
@@ -428,7 +402,6 @@ window.endBattle = function(isVictory, reason) {
         }
     }
 
-    // Показване на финален екран
     const container = document.querySelector('.battle-full-container');
     if (container) {
         const btnRow = container.querySelector('.battle-buttons-row');
@@ -445,9 +418,7 @@ window.endBattle = function(isVictory, reason) {
     }
 };
 
-// ==========================================
-// 6. ЗАТВАРЯНЕ НА БОЙНИЯ ЕКРАН
-// ==========================================
+// 6. ЗАТВАРЯНЕ
 window.closeBattle = function() {
     const screen = document.getElementById('battle-screen');
     if (screen) screen.style.display = 'none';
