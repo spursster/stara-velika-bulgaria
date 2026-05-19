@@ -195,3 +195,47 @@ window.ensureStartingUnlockedLeaders = function() {
         }
     }
 };
+
+/** МОДУЛ: БАЗА ДАННИ & ТАВЕРНА - АДАПТИВНА */
+window.clans = {
+    "Дуло": { heroes: ["Атила", "Кубрат", "Аспарух"] },
+    "Комитопули": { heroes: ["Самуил", "Давид"] },
+    "Асеневци": { heroes: ["Асен I", "Иван Асен II"] }
+};
+window.unlockedLeaders = window.unlockedLeaders || [];
+
+window.hireClanHero = function(name, clan, cost, power) {
+    if ((window.currentHero.gold || 0) < cost) {
+        if(window.showAdvisorMsg) window.showAdvisorMsg("❌ Нямате достатъчно злато!");
+        return;
+    }
+    window.currentHero.gold -= cost;
+    window.unlockedLeaders.push({ name, clan, level:1, xp:0, gold:100, armySize:100, heroPower:power, skills:{tactics:0,endurance:0,economy:0}, equipment:Array(9).fill(null) });
+    if(window.showAdvisorMsg) window.showAdvisorMsg(`👑 ${name} от род ${clan} се присъедини!`);
+    window.openTavernUI();
+};
+
+// 📱 МОБИЛНА ТАВЕРНА
+window.openTavernUI = function() {
+    const main = document.getElementById('game-main-area'); if(!main) return;
+    const hired = window.unlockedLeaders.map(l => l.name);
+    if(window.currentHero && !hired.includes(window.currentHero.name)) hired.push(window.currentHero.name);
+    
+    let html = `<h2 style="color:#ffd700;margin:0 0 10px 0;text-align:center;">🍻 ТАВЕРНА</h2><div style="display:grid;gap:8px;max-height:70vh;overflow-y:auto;padding-right:5px;">`;
+    
+    Object.entries(window.clans).forEach(([c, d]) => {
+        d.heroes.forEach(h => {
+            if(!hired.includes(h)) {
+                let cost = 500;
+                html += `<div style="background:rgba(20,20,20,0.8);border:1px solid #444;padding:10px;border-radius:6px;display:flex;justify-content:space-between;align-items:center;">
+                    <div><div style="color:#ffd700;font-weight:bold;">${h}</div><div style="font-size:10px;color:#aaa;">Род ${c} | ⚔️ 200</div></div>
+                    <button onclick="window.hireClanHero('${h}','${c}',${cost},150)" style="background:#d4af37;border:none;padding:5px 10px;font-weight:bold;border-radius:4px;">💰${cost}</button>
+                </div>`;
+            }
+        });
+    });
+    html += `</div><button class="menu-btn" onclick="if(window.backToMainMenu)window.backToMainMenu();" style="width:100%;margin-top:10px;">Назад</button>`;
+    main.innerHTML = `<div style="background:rgba(10,10,10,0.95);border:2px solid #d4af37;padding:15px;border-radius:8px;position:relative;">
+        <button onclick="if(window.backToMainMenu)window.backToMainMenu();" style="position:absolute;top:5px;right:10px;background:none;border:none;color:#ff3366;font-size:20px;cursor:pointer;">✕</button>
+        ${html}</div>`;
+};
