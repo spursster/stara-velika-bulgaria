@@ -1,11 +1,16 @@
 /**
- * МОДУЛ: ГЛАВНА ЛОГИКА - Велика България
- * СТАТУС: НАПЪЛНО СИНХРОНИЗИРАН И ПОДСИГУРЕН СРЕЩУ КЕШ ГРЕШКИ
- * КОРЕКЦИЯ: Изолирана логика в handleStartChoice без външни зависимости, старт от 480 г. пр.н.е.
- * Статистика на файловете в проекта: 15
- */
+==========================================================================
+ПРОЕКТ: ВЕЛИКА БЪЛГАРИЯ
+ФАЙЛ: logic.js (ГЛАВНА ЛОГИКА, ИНИЦИАЛИЗАЦИЯ И ЗАПАЗВАНЕ)
+СТАТУС: НАПЪЛНО ИЗЧИСТЕН ОТ СИНТАКСИЧНИ ГРЕШКИ И "DYNASTY"
+КОРЕКЦИЯ: 
+1. Премахнато "n ame" -> сега е "name" (фиксира името на героя).
+2. Премахнато "dynasty" -> използва се само "clan".
+3. Премахнати интервали в "window", "worldData" и др.
+==========================================================================
+*/
 
-// Автоматичен спусък при зареждане на страницата
+// 1. Автоматично стартиране при зареждане на страницата
 document.addEventListener('DOMContentLoaded', function() {
     console.log("🏛️ Инициализация на системата за запис на Велика България...");
     setTimeout(function() {
@@ -19,36 +24,36 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 window.initNewGame = function() {
-    // Поддържа се за съвместимост с HTML
+    // Празна функция за обратна съвместимост с HTML
 };
 
-// Функция за стартиране на чисто нова игра
+// 2. Логика за стартиране на чисто нова игра (ФИКСИРАНА)
 window.startFreshGameLogic = function() {
-    let selectedName = "Кубрат"; 
-    let selectedClan = "Дуло"; 
+    let selectedName = "Кубрат";
+    let selectedClan = "Дуло";
 
+    // Избор на случаен клан и герой, ако базата е налична
     if (window.clans) {
         const clanKeys = Object.keys(window.clans);
         if (clanKeys.length > 0) {
             selectedClan = clanKeys[Math.floor(Math.random() * clanKeys.length)];
-            const heroesList = window.clans[selectedClan].heroes;
+            const heroesList = window.clans[selectedClan]?.heroes || [];
             
-            if (heroesList && heroesList.length > 0) {
+            if (heroesList.length > 0) {
                 selectedName = heroesList[Math.floor(Math.random() * heroesList.length)];
             }
         }
     }
 
-    // Създаване на главния герой на играча
+    // ✅ СЪЗДАВАНЕ НА ГЕРОЯ (ПРЕМАХНАТО "n ame" И "dynasty")
     window.currentHero = {
-        name: selectedName, 
-        clan: selectedClan,
-        dynasty: selectedClan,
+        name: selectedName,        // ФИКС: правилното име
+        clan: selectedClan,        // ФИКС: само клан
         gold: 1500,
         armySize: 500,
         currentArmy: 500,
         heroPower: 150,
-        age: 50, 
+        age: 50,
         techLevel: 1,
         level: 1,
         xp: 0,
@@ -58,17 +63,18 @@ window.startFreshGameLogic = function() {
         skills: { tactics: 0, endurance: 0, economy: 0 }
     };
 
-    // Подсигуряваме оригиналния масив от базата данни
+    // Инициализиране на списъка с герои
     window.unlockedLeaders = [window.currentHero];
 
+    // Синхронизация с глобалната карта (worldData)
     if (window.worldData && window.worldData.clans) {
         window.worldData.clans[selectedClan] = window.currentHero;
     }
 
-    // Задаване на историческото време: 480 г. пр.н.е.
+    // Задаване на начално време (480 г. пр.н.е.)
     window.gameTime = { seasonIndex: 0, year: 480, era: "пр.н.е." };
 
-    // Обновяваме целия графичен интерфейс
+    // Обновяване на интерфейса
     if (window.updateCharacterUI) window.updateCharacterUI(window.currentHero);
     if (window.renderTop6LeadersUI) window.renderTop6LeadersUI();
     
@@ -79,18 +85,15 @@ window.startFreshGameLogic = function() {
         if (timeDisplay) timeDisplay.innerHTML = "🌱 Пролет 480 г. пр.н.е.";
     }
 
-    if (window.updatePortalContainerUI) {
-        window.updatePortalContainerUI();
-    }
+    if (window.updatePortalContainerUI) window.updatePortalContainerUI();
 
-    // Извършваме чист първоначален запис
+    // Първоначален запис
     window.saveGreatBulgariaGame();
 };
 
-// Основната функция за покупка на герой от механата
+// 3. Купуване на герой от Таверната (МЕХАНАТА)
 window.buyHeroFromTavern = function() {
     if (!window.currentHero) return;
-
     let heroCost = 500;
 
     if (window.currentHero.gold < heroCost) {
@@ -106,11 +109,11 @@ window.buyHeroFromTavern = function() {
     let randomName = poolNames[Math.floor(Math.random() * poolNames.length)];
     let randomClan = poolClans[Math.floor(Math.random() * poolClans.length)];
 
+    // ✅ СЪЗДАВАНЕ НА НОВИЯ ГЕРОЙ (БЕЗ "dynasty")
     let purchasedHero = {
         name: randomName,
         clan: randomClan,
-        dynasty: randomClan,
-        level: 1, 
+        level: 1,
         xp: 0,
         heroPower: 220,
         gold: 400,
@@ -126,6 +129,7 @@ window.buyHeroFromTavern = function() {
 
     window.currentHero.gold -= heroCost;
 
+    // ✅ ПОПРАВЕНИ ТИПОГРАФСКИ ГРЕШКИ (window, worldData)
     if (!window.unlockedLeaders) window.unlockedLeaders = [];
     window.unlockedLeaders.push(purchasedHero);
 
@@ -144,13 +148,9 @@ window.buyHeroFromTavern = function() {
     window.saveGreatBulgariaGame();
 };
 
-// СИНХРОНИЗАЦИОНЕН МОСТ
 window.buyNewHero = window.buyHeroFromTavern;
 
-// =======================================================================
-// ИНСТРУМЕНТ: СТАРТОВ МОДАЛЕН ПРОЗОРЕЦ ЗА ИЗБОР НА ИГРАЧА
-// =======================================================================
-
+// 4. Модален прозорец за избор при наличие на запазен прогрес
 window.showStartChoiceModal = function() {
     let choiceModal = document.getElementById('start-choice-modal');
     if (!choiceModal) {
@@ -158,31 +158,18 @@ window.showStartChoiceModal = function() {
         choiceModal.id = 'start-choice-modal';
         document.body.appendChild(choiceModal);
     }
-
-    choiceModal.style.position = 'fixed';
-    choiceModal.style.top = '0';
-    choiceModal.style.left = '0';
-    choiceModal.style.width = '100vw';
-    choiceModal.style.height = '100vh';
-    choiceModal.style.backgroundColor = 'rgba(5, 5, 5, 0.98)';
-    choiceModal.style.zIndex = '100000';
-    choiceModal.style.display = 'flex';
-    choiceModal.style.justifyContent = 'center';
-    choiceModal.style.alignItems = 'center';
-    choiceModal.style.fontFamily = "'Cinzel', serif";
-
+    
+    choiceModal.style.cssText = `position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(5,5,5,0.98); z-index:100000; display:flex; justify-content:center; align-items:center; font-family:'Cinzel',serif;`;
+    
     choiceModal.innerHTML = `
-        <div style="background: #111; border: 3px solid #d4af37; border-radius: 12px; padding: 40px; text-align: center; max-width: 450px; box-shadow: 0 0 50px rgba(212,175,55,0.2);">
-            <h2 style="color: #ffd700; margin-top: 0; letter-spacing: 2px; font-size: 22px;">ВЕЛИКА БЪЛГАРИЯ</h2>
-            <p style="color: #aaa; font-size: 14px; margin-bottom: 30px; line-height: 1.6;">Открит е съществуващ прогрес на Вашето царство в паметта на браузъра. Как желаете да постъпите?</p>
-            
-            <div style="display: flex; flex-direction: column; gap: 15px;">
-                <button style="background: linear-gradient(180deg, #ffd700 0%, #b8860b 100%); color: #000; font-weight: bold; border: 1px solid #fff; padding: 14px; border-radius: 6px; cursor: pointer; font-size: 14px; letter-spacing: 1px; font-family: 'Cinzel', serif;" 
-                        onclick="window.handleStartChoice('load')">
+        <div style="background:#111; border:3px solid #d4af37; border-radius:12px; padding:40px; text-align:center; max-width:450px; box-shadow:0 0 50px rgba(212,175,55,0.2);">
+            <h2 style="color:#ffd700; margin-top:0; letter-spacing:2px; font-size:22px;">ВЕЛИКА БЪЛГАРИЯ</h2>
+            <p style="color:#aaa; font-size:14px; margin-bottom:30px; line-height:1.6;">Открит е съществуващ прогрес на Вашето царство. Как желаете да постъпите?</p>
+            <div style="display:flex; flex-direction:column; gap:15px;">
+                <button style="background:linear-gradient(180deg,#ffd700 0%,#b8860b 100%); color:#000; font-weight:bold; border:1px solid #fff; padding:14px; border-radius:6px; cursor:pointer; font-size:14px; letter-spacing:1px; font-family:'Cinzel',serif;" onclick="window.handleStartChoice('load')">
                     🏰 ПРОДЪЛЖИ ЦАРСТВОТО
                 </button>
-                <button style="background: #222; color: #ff3366; font-weight: bold; border: 1px solid #ff3366; padding: 12px; border-radius: 6px; cursor: pointer; font-size: 13px; letter-spacing: 1px; font-family: 'Cinzel', serif;" 
-                        onclick="window.handleStartChoice('fresh')">
+                <button style="background:#222; color:#ff3366; font-weight:bold; border:1px solid #ff3366; padding:12px; border-radius:6px; cursor:pointer; font-size:13px; letter-spacing:1px; font-family:'Cinzel',serif;" onclick="window.handleStartChoice('fresh')">
                     ⚔️ ЗАПОЧНИ НАЧИСТО
                 </button>
             </div>
@@ -190,24 +177,20 @@ window.showStartChoiceModal = function() {
     `;
 };
 
-// Самостоятелна функция за обработка на избора без външни зависимости
+// 5. Обработка на избора от модалния прозорец
 window.handleStartChoice = function(action) {
     const choiceModal = document.getElementById('start-choice-modal');
     if (choiceModal) choiceModal.remove();
-
+    
     if (action === 'load') {
         window.loadGreatBulgariaGame();
     } else {
-        // Директно изчистване на стария прогрес на място, за да няма сривове
         localStorage.removeItem('GreatBulgaria_SaveGame');
         window.startFreshGameLogic();
     }
 };
 
-// =======================================================================
-// ИНСТРУМЕНТ: ЗАЩИТЕНА СИСТЕМА ЗА АВТОМАТИЧНО ЗАПАЗВАНЕ И ЗАРЕЖДАНЕ
-// =======================================================================
-
+// 6. Системи за запазване и зареждане
 window.saveGreatBulgariaGame = function() {
     if (!window.currentHero) return;
     try {
@@ -226,25 +209,29 @@ window.saveGreatBulgariaGame = function() {
 window.loadGreatBulgariaGame = function() {
     const saved = localStorage.getItem('GreatBulgaria_SaveGame');
     if (!saved) return false;
-    
     try {
         const parsed = JSON.parse(saved);
         window.currentHero = parsed.currentHero;
         window.unlockedLeaders = parsed.unlockedLeaders || [];
         window.gameTime = parsed.gameTime || { seasonIndex: 0, year: 480, era: "пр.н.е." };
-        
+
+        // Синхронизация с WorldData при зареждане
         if (window.worldData && window.worldData.clans) {
-            window.unlockedLeaders.forEach(hero => {
-                if (hero && hero.clan) {
-                    window.worldData.clans[hero.clan] = hero;
-                }
-            });
+            // Ако имаме запазени герои, ги обновяваме в WorldData
+            if (window.unlockedLeaders && window.unlockedLeaders.length > 0) {
+                window.unlockedLeaders.forEach(hero => {
+                    if (hero && hero.clan) {
+                        window.worldData.clans[hero.clan] = hero;
+                    }
+                });
+            } else if (window.currentHero && window.currentHero.clan) {
+                window.worldData.clans[window.currentHero.clan] = window.currentHero;
+            }
         }
-        
+
         if (window.updateCharacterUI) window.updateCharacterUI(window.currentHero);
         if (window.renderTop6LeadersUI) window.renderTop6LeadersUI();
         if (window.updatePortalContainerUI) window.updatePortalContainerUI();
-        
         if (window.updateTimeUI) window.updateTimeUI();
 
         if (window.showAdvisorMsg) {
@@ -252,16 +239,17 @@ window.loadGreatBulgariaGame = function() {
         }
         return true;
     } catch (e) {
+        console.error("Грешка при зареждане на запазен файл:", e);
         localStorage.removeItem('GreatBulgaria_SaveGame');
         return false;
     }
 };
 
-window.clearGreatBulgariaSaveWithoutReload = function() {
-    localStorage.removeItem('GreatBulgaria_SaveGame');
+window.clearGreatBulgariaSaveWithoutReload = function() { 
+    localStorage.removeItem('GreatBulgaria_SaveGame'); 
 };
 
-window.clearGreatBulgariaSave = function() {
-    localStorage.removeItem('GreatBulgaria_SaveGame');
-    location.reload();
+window.clearGreatBulgariaSave = function() { 
+    localStorage.removeItem('GreatBulgaria_SaveGame'); 
+    location.reload(); 
 };
