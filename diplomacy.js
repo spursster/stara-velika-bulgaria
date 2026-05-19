@@ -1,29 +1,35 @@
 /**
- * МОДУЛ: ДИПЛОМАЦИЯ И ПРОГРЕС НА КУПЕНИ ЛИДЕРИ - Велика България
- * СТАТУС: НАПЪЛНО НАДГРАДЕН (СИНХРОНИЗАЦИЯ С DIABLO ХАРИЗМА, БРАКОВЕ & AUTO/MANUAL XP)
- * КОРЕКЦИЯ: Брачните съюзи четат пасивите, а пасивният опит ползва gainHeroXP.
- * Статистика на файловете в проекта: 17
- */
+МОДУЛ: ДИПЛОМАЦИЯ И ПРОГРЕС НА КУПЕНИ ЛИДЕРИ - Велика България
+СТАТУС: НАПЪЛНО СИНХРОНИЗИРАН С ПРАВИЛОТО "САМО КЛАНОВЕ"
+КОРЕКЦИЯ: Премахнато dynasty, поправени разделени думи, стабилизирани брачни съюзи и инициализация.
+*/
 
 window.clanRelations = {};
 
+/**
+ИНИЦИАЛИЗАЦИЯ НА ДИПЛОМАТИЧЕСКИ ОТНОШЕНИЯ
+*/
 window.initDiplomacy = function() {
-    // Свещеният списък от 13 равноправни рода (Синхронизиран с Птолемеи и Уния Траки)
+    // Свещеният списък от 13 равноправни рода
     const allClans = [
-        "Дуло", "Комитопули", "Асеневци", "Тертер", "Даки", "Уния Траки", 
+        "Дуло", "Комитопули", "Асеневци", "Тертер", "Даки", "Уния Траки",
         "Шишмановци", "Македони", "Птоломеи", "Одриси", "Бесараб", "Османци Дуло", "Скити"
     ];
     
     const hero = window.currentHero;
     let initialBonus = 0;
 
-    // Diablo пасив: Родословие (royalBlood) -> Добавя +15 точки към началните отношения
-    if (hero && hero.skills && (hero.skills.royalBlood || 0) > 0) {
-        initialBonus += (hero.skills.royalBlood * 15);
+    // Подсигуряваме, че RPG данните са налични
+    if (hero && hero.skills) {
+        // Diablo пасив: Родословие (royalBlood) -> Добавя +15 точки към началните отношения
+        if ((hero.skills.royalBlood || 0) > 0) {
+            initialBonus += (hero.skills.royalBlood * 15);
+        }
     }
-    
+
     allClans.forEach(clan => {
-        if (hero && clan === hero.dynasty) {
+        // Използваме hero.clan според новия стандарт
+        if (hero && clan === hero.clan) {
             window.clanRelations[clan] = 100;
         } else {
             window.clanRelations[clan] = Math.min(100, 40 + initialBonus);
@@ -32,15 +38,18 @@ window.initDiplomacy = function() {
 };
 
 /**
- * АВТОНОМНА ДИПЛОМАЦИЯ И РАЗВИТИЕ НА КУПЕНИТЕ ЛИДЕРИ (Изпълнява се на всеки ход)
- */
+АВТОНОМНА ДИПЛОМАЦИЯ И РАЗВИТИЕ НА КУПЕНИТЕ ЛИДЕРИ (Изпълнява се на всеки ход)
+*/
 window.processClanDiplomacyAutomation = function() {
     if (!window.worldData || !window.worldData.clans) return;
-
+    
+    const hero = window.currentHero;
+    
     Object.entries(window.worldData.clans).forEach(([clanKey, clan]) => {
         // Пропускаме текущия герой на играча, неговата икономика се смята в economy.js
-        if (window.currentHero && clanKey === window.currentHero.dynasty) return;
-
+        // Използваме hero.clan вместо hero.dynasty
+        if (hero && clanKey === hero.clan) return;
+        
         // Автономно купуване на войски за извънредните родове
         if ((clan.gold || 0) >= 150) {
             clan.gold -= 100;
@@ -61,33 +70,33 @@ window.processClanDiplomacyAutomation = function() {
             }
         }
     });
-
+    
     // Опресняване на елитната лента след дипломатическия ход
     if (window.renderTop6LeadersUI) window.renderTop6LeadersUI();
 };
 
 /**
- * МЕНЮ ЗА СКЛЮЧВАНЕ НА БРАЧНИ СЪЮЗИ
- */
+МЕНЮ ЗА СКЛЮЧВАНЕ НА БРАЧНИ СЪЮЗИ
+*/
 window.openMarriageMenu = function() {
     const mainArea = document.getElementById('game-main-area');
     if (!mainArea) return;
-
+    
     const hero = window.currentHero;
     if (!hero) return;
-
+    
     if (window.initializeHeroRPGData) window.initializeHeroRPGData(hero);
+    
     let skills = hero.skills || {};
-
     // Diablo пасив: Харизма (charisma) -> Намалява цената за зестра/договори с 10% на ниво (макс 50%)
     let charismaDiscount = Math.min(0.50, (skills.charisma || 0) * 0.10);
     let baseMarriageCost = 300;
     let finalMarriageCost = Math.max(50, Math.floor(baseMarriageCost * (1 - charismaDiscount)));
-
+    
     // Diablo пасив: Дипломация (diplomacy) -> Увеличава базовия шанс за успех с +5% на ниво
     let diplomacyBonus = (skills.diplomacy || 0) * 5;
     let baseSuccessChance = 50 + diplomacyBonus;
-
+    
     let html = `
         <section class="rpg-section animate-fade" style="background: rgba(15,15,15,0.85); border: 1px solid #d4af37; padding: 20px; border-radius: 8px;">
             <h2 style="font-family: 'Cinzel', serif; color: #ffd700; text-transform: uppercase;">Династични Бракове</h2>
@@ -95,60 +104,65 @@ window.openMarriageMenu = function() {
             
             <div style="background:rgba(0,0,0,0.4); border:1px solid #222; padding:10px; margin-bottom:15px; font-size:12px; border-radius:4px;">
                 💰 Цена за пратеничество: <strong style="color:#ffd700;">${finalMarriageCost} злато</strong> | 
-                📈 Базов шанс за успех: <strong style="color:#00ffcc;">${baseSuccessChance}%</strong>
+                 Базов шанс за успех: <strong style="color:#00ffcc;">${baseSuccessChance}%</strong>
             </div>
 
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; max-height: 280px; overflow-y: auto; padding-right: 5px;">
     `;
-
+    
     Object.keys(window.clanRelations).forEach(clan => {
-        if (clan !== hero.dynasty) {
+        // Използваме hero.clan
+        if (clan !== hero.clan) {
             let rel = window.clanRelations[clan] || 40;
             html += `
                 <div style="border: 1px solid #333; padding: 8px; background: rgba(255,255,255,0.01); border-radius: 4px; display: flex; flex-direction: column; justify-content: space-between;">
                     <div style="font-size: 12px; font-weight: bold; color: #fff;">Род ${clan}</div>
                     <div style="font-size: 11px; color: ${rel >= 70 ? '#00ffcc' : '#ff3366'}; margin: 3px 0;">Отношения: ${rel}/100</div>
-                    <button class="action-btn" style="padding: 5px; font-size: 10px; margin-top: 5px;" onclick="window.proposeMarriage('${clan}', ${finalMarriageCost}, ${baseSuccessChance})">💍 Предложи Брак</button>
+                    <button class="action-btn" style="padding: 5px; font-size: 10px; margin-top: 5px;" onclick="window.proposeMarriage('${clan}', ${finalMarriageCost}, ${baseSuccessChance})">
+                        💍 Предложи Брак
+                    </button>
                 </div>
             `;
         }
     });
-
+    
     html += `
             </div>
-            <button class="menu-btn" onclick="if(window.openRegionsMap){window.openRegionsMap();}else{location.reload();}" style="margin-top: 15px; width: 100%;">Върни се към Картата</button>
+            <button class="menu-btn" onclick="if(window.openRegionsMap){window.openRegionsMap();}else{location.reload();}" style="margin-top: 15px; width: 100%;">
+                Върни се към Картата
+            </button>
         </section>
     `;
-
+    
     mainArea.innerHTML = html;
 };
 
 /**
- * ИЗПЪЛНЕНИЕ НА ПРЕДЛОЖЕНИЕТО ЗА БРАК
- */
+ИЗПЪЛНЕНИЕ НА ПРЕДЛОЖЕНИЕТО ЗА БРАК
+*/
 window.proposeMarriage = function(clan, cost, successChance) {
     const hero = window.currentHero;
     if (!hero) return;
-
+    
     if ((hero.gold || 0) < cost) {
         alert("Хазната на вашия род е празна! Нуждаете се от повече злато за дарове.");
         return;
     }
-
+    
     hero.gold -= cost;
-
+    
     // Модифициране на шанса спрямо текущите релации с рода
     let currentRel = window.clanRelations[clan] || 40;
     let finalChance = Math.min(95, successChance + Math.floor((currentRel - 40) * 0.5));
-
     let roll = Math.random() * 100;
+    
     if (roll < finalChance) {
         // УСПЕШЕН БРАК - Получаване на зестра (Земи)
         window.clanRelations[clan] = 100;
         
         const dowryMap = {
-            "Дуло": "Дарвания",
-            "Комитопули": "Дарвания",
+            "Дуло": "Дардания",
+            "Комитопули": "Пелагония",
             "Асеневци": "Илирия",
             "Тертер": "Галатия",
             "Даки": "Дакия",
@@ -163,11 +177,13 @@ window.proposeMarriage = function(clan, cost, successChance) {
         };
 
         const region = dowryMap[clan] || "Мизия";
-        window.currentSpouse = { name: `Княгиня от рода ${clan}`, dynasty: clan };
-        
+        window.currentSpouse = { name: `Княгиня от рода ${clan}`, clan: clan };
+
         if (!window.playerRegions) window.playerRegions = [];
-        const ownedRegionsFlat = window.playerRegions.flat();
         
+        // Поправка: премахнат интервал в playerRegions
+        const ownedRegionsFlat = window.playerRegions.flat();
+
         if (!ownedRegionsFlat.includes(region)) {
             window.playerRegions.push(region);
             if (window.worldData && window.worldData.regions && window.worldData.regions[region]) {
@@ -187,7 +203,7 @@ window.proposeMarriage = function(clan, cost, successChance) {
         }
         alert("Предложението беше отхвърлено! Старейшините на рода сметнаха даровете за недостатъчни.");
     }
-
+    
     // Синхронизация и преначертаване на интерфейса
     if (window.updateCharacterUI) window.updateCharacterUI(hero);
     window.openMarriageMenu();
