@@ -1,22 +1,21 @@
 /**
  * МОДУЛ: ГЛАВНА ЛОГИКА - Велика България
- * СТАТУС: НАПЪЛНО СИНХРОНИЗИРАН С УНАКВИЧЕНИТЕ КЛАНОВЕ И ЕЛИТНАТА ЛЕНТА
- * НАДГРАДАНЕ: Интегриран стартов диалог (Продължи / Нова Игра) за избягване на конфликти с таймера.
- * КОРЕКЦИЯ: Премахнати фиктивни родове от механата и заменени с реални кланове.
+ * СТАТУС: НАПЪЛНО СИНХРОНИЗИРАН С ОРИГИНАЛНАТА БАЗА ДАННИ И ТАЙМЕРА
+ * НАДГРАДАНЕ: Стартов прозорец при пълно зареждане (DOM) и фиксиран масив unlockedLeaders.
+ * КОРЕКЦИЯ: Използва се единствено window.unlockedLeaders, за да не спира времето в time.js.
  * Статистика на файловете в проекта: 15
  */
 
 window.initNewGame = function() {
-    // Проверяваме дали изобщо съществува запис в браузъра
-    const hasSave = localStorage.getItem('GreatBulgaria_SaveGame');
-
-    if (hasSave) {
-        // Ако има запис, извеждаме красив стартов прозорец за избор
-        window.showStartChoiceModal();
-    } else {
-        // Ако няма запис, директно стартираме чисто нова игра
-        window.startFreshGameLogic();
-    }
+    // Изчакваме DOM структурата да е напълно готова, за да няма конфликти с интерфейса
+    setTimeout(function() {
+        const hasSave = localStorage.getItem('GreatBulgaria_SaveGame');
+        if (hasSave) {
+            window.showStartChoiceModal();
+        } else {
+            window.startFreshGameLogic();
+        }
+    }, 100);
 };
 
 // Функция, която съдържа чистата първоначална логика за старт
@@ -42,6 +41,7 @@ window.startFreshGameLogic = function() {
         clan: selectedClan,
         gold: 1500,
         armySize: 500,
+        currentArmy: 500,
         heroPower: 150,
         age: 50, 
         techLevel: 1,
@@ -50,13 +50,16 @@ window.startFreshGameLogic = function() {
         storedXP: 0,
         isAuto: true,
         equipment: Array(9).fill(null),
-        skills: {}
+        skills: { tactics: 0, endurance: 0, economy: 0 }
     };
+
+    // Подсигуряваме оригиналния масив от базата данни
+    window.unlockedLeaders = [window.currentHero];
 
     if (window.updateCharacterUI) window.updateCharacterUI(window.currentHero);
     if (window.renderTop6LeadersUI) window.renderTop6LeadersUI();
 
-    // Първоначално изчертаване на Портала при старт
+    // Изчертаване на Портала при старт
     if (window.updatePortalContainerUI) {
         window.updatePortalContainerUI();
     }
@@ -84,26 +87,27 @@ window.buyHeroFromTavern = function() {
     let randomClan = poolClans[Math.floor(Math.random() * poolClans.length)];
 
     let purchasedHero = {
-        hero: randomName, 
         name: randomName,
         clan: randomClan,
-        level: 2, 
+        dynasty: randomClan,
+        level: 1, 
         xp: 0,
         heroPower: 220,
-        gold: 300,
+        gold: 400,
         armySize: 150,
+        currentArmy: 150,
         age: 32,
         currentClass: "Багатур",
         isAuto: false,
         storedXP: 0,
         equipment: Array(9).fill(null),
-        skills: {}
+        skills: { tactics: 0, endurance: 0, economy: 0 }
     };
 
     window.currentHero.gold -= heroCost;
 
-    if (!window.unlockedHeroes) window.unlockedHeroes = [];
-    window.unlockedHeroes.push(purchasedHero);
+    if (!window.unlockedLeaders) window.unlockedLeaders = [];
+    window.unlockedLeaders.push(purchasedHero);
 
     if (window.worldData && window.worldData.clans) {
         window.worldData.clans[randomClan] = purchasedHero;
@@ -120,7 +124,7 @@ window.buyHeroFromTavern = function() {
 };
 
 // =======================================================================
-// НОВ ИНСТРУМЕНТ: СТАРТОВ МОДАЛЕН ПРОЗОРЕЦ ЗА ИЗБОР НА ИГРАЧА
+// ИНСТРУМЕНТ: СТАРТОВ МОДАЛЕН ПРОЗОРЕЦ ЗА ИЗБОР НА ИГРАЧА
 // =======================================================================
 
 window.showStartChoiceModal = function() {
@@ -128,7 +132,6 @@ window.showStartChoiceModal = function() {
     if (!choiceModal) {
         choiceModal = document.createElement('div');
         choiceModal.id = 'start-choice-modal';
-        choiceModal.className = 'fullscreen-overlay';
         document.body.appendChild(choiceModal);
     }
 
@@ -184,10 +187,10 @@ window.saveGreatBulgariaGame = function() {
     try {
         const saveData = {
             currentHero: window.currentHero,
-            unlockedHeroes: window.unlockedHeroes || []
+            unlockedLeaders: window.unlockedLeaders || []
         };
         localStorage.setItem('GreatBulgaria_SaveGame', JSON.stringify(saveData));
-        console.log("💾 Прогресът беше запазен!");
+        console.log("💾 Прогресът беше запазен успешно!");
     } catch (e) {
         console.error(e);
     }
@@ -200,10 +203,10 @@ window.loadGreatBulgariaGame = function() {
     try {
         const parsed = JSON.parse(saved);
         window.currentHero = parsed.currentHero;
-        window.unlockedHeroes = parsed.unlockedHeroes || [];
+        window.unlockedLeaders = parsed.unlockedLeaders || [];
         
         if (window.worldData && window.worldData.clans) {
-            window.unlockedHeroes.forEach(hero => {
+            window.unlockedLeaders.forEach(hero => {
                 if (hero && hero.clan) {
                     window.worldData.clans[hero.clan] = hero;
                 }
