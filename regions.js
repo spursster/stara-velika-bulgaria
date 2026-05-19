@@ -1,6 +1,6 @@
 /** ==========================================================================
 ПРОЕКТ: ВЕЛИКА БЪЛГАРИЯ
-ФАЙЛ: regions.js (НАПЪЛНО ФУНКЦИОНАЛЕН – РАБОТИ С ВСЯКАКЪВ РЕГИОН)
+ФАЙЛ: regions.js – ФИНАЛНА ВЕРСИЯ (ГАРАНТИРАНО ПРЕДАВАНЕ НА ИМЕТО)
 ========================================================================== */
 
 window.openRegionsMap = function() {
@@ -106,9 +106,8 @@ window.inspectRegion = function(regionName) {
         const attackBtn = document.createElement('button');
         attackBtn.innerText = '⚔️ ИЗПРАТИ ВОЙСКИ ЗА ЗАВЛАДЯВАНЕ ⚔️';
         attackBtn.style.cssText = `background:#7a2e1a; border:none; border-bottom:2px solid #5a1e0a; padding:8px 20px; border-radius:40px; color:#ffdd99; cursor:pointer;`;
-        // ЗАТВАРЯНЕ НА regionName – гарантирано
         attackBtn.onclick = () => {
-            console.log("Извиква се startBattle с:", regionName);
+            console.log("Бутон за атака извиква startBattle с:", regionName);
             if (window.startBattle) {
                 window.startBattle(regionName);
             } else {
