@@ -1,13 +1,14 @@
 /**
  * МОДУЛ: ГЛАВНА ЛОГИКА - Велика България
  * СТАТУС: НАПЪЛНО СИНХРОНИЗИРАН С ОРИГИНАЛНАТА БАЗА ДАННИ И ТАЙМЕРА
- * НАДГРАДАНЕ: Стартов прозорец при пълно зареждане (DOM) и фиксиран масив unlockedLeaders.
- * КОРЕКЦИЯ: Използва се единствено window.unlockedLeaders, за да не спира времето в time.js.
+ * НАДГРАДАНЕ: Автоматично стартиране чрез DOMContentLoaded за заобикаляне на външни блокове.
+ * КОРЕКЦИЯ: Използва се window.unlockedLeaders, съобразен с ui.js и barracks.js.
  * Статистика на файловете в проекта: 15
  */
 
-window.initNewGame = function() {
-    // Изчакваме DOM структурата да е напълно готова, за да няма конфликти с интерфейса
+// Автоматичен спусък при зареждане на страницата - гарантира, че прозорецът ще се появи!
+document.addEventListener('DOMContentLoaded', function() {
+    console.log("🏛️ Инициализация на системата за запис на Велика България...");
     setTimeout(function() {
         const hasSave = localStorage.getItem('GreatBulgaria_SaveGame');
         if (hasSave) {
@@ -15,7 +16,11 @@ window.initNewGame = function() {
         } else {
             window.startFreshGameLogic();
         }
-    }, 100);
+    }, 150); // Леко забавяне, за да се заредят останалите 14 файла
+});
+
+window.initNewGame = function() {
+    // Тази функция се поддържа празна за съвместимост с HTML, тъй като DOMContentLoaded поема старта
 };
 
 // Функция, която съдържа чистата първоначална логика за старт
@@ -39,6 +44,7 @@ window.startFreshGameLogic = function() {
     window.currentHero = {
         name: selectedName, 
         clan: selectedClan,
+        dynasty: selectedClan,
         gold: 1500,
         armySize: 500,
         currentArmy: 500,
@@ -56,6 +62,10 @@ window.startFreshGameLogic = function() {
     // Подсигуряваме оригиналния масив от базата данни
     window.unlockedLeaders = [window.currentHero];
 
+    if (window.worldData && window.worldData.clans) {
+        window.worldData.clans[selectedClan] = window.currentHero;
+    }
+
     if (window.updateCharacterUI) window.updateCharacterUI(window.currentHero);
     if (window.renderTop6LeadersUI) window.renderTop6LeadersUI();
 
@@ -64,7 +74,7 @@ window.startFreshGameLogic = function() {
         window.updatePortalContainerUI();
     }
 
-    // Правим първоначален чист запис
+    // Първоначален чист запис
     if (window.saveGreatBulgariaGame) window.saveGreatBulgariaGame();
 };
 
@@ -150,7 +160,7 @@ window.showStartChoiceModal = function() {
     choiceModal.innerHTML = `
         <div style="background: #111; border: 3px solid #d4af37; border-radius: 12px; padding: 40px; text-align: center; max-width: 450px; box-shadow: 0 0 50px rgba(212,175,55,0.2);">
             <h2 style="color: #ffd700; margin-top: 0; letter-spacing: 2px; font-size: 22px;">ВЕЛИКА БЪЛГАРИЯ</h2>
-            <p style="color: #aaa; font-size: 14px; margin-bottom: 30px; line-height: 1.6;">Открит е съществуващ прогрес на Вашето царство в паметта на браузъра. Как желаете да постъпите?</p>
+            <p style="color: #aaa; font-size: 14px; margin-bottom: 30px; line-height: 1.6;">Открит е съществуващий прогрес на Вашето царство в паметта на браузъра. Как желаете да постъпите?</p>
             
             <div style="display: flex; flex-direction: column; gap: 15px;">
                 <button style="background: linear-gradient(180deg, #ffd700 0%, #b8860b 100%); color: #000; font-weight: bold; border: 1px solid #fff; padding: 14px; border-radius: 6px; cursor: pointer; font-size: 14px; letter-spacing: 1px; font-family: 'Cinzel', serif;" 
