@@ -3,18 +3,19 @@
 ПРОЕКТ: ВЕЛИКА БЪЛГАРИЯ
 ФАЙЛ: battle.js (БОЙНА СИСТЕМА - АДАПТИВНА И СТАБИЛНА)
 СТАТУС: НАПЪЛНО ИЗЧИСТЕН ОТ СИНТАКСИЧНИ ГРЕШКИ
-КОРЕКЦИЯ: Премахнати всички = >, & &, разделени думи, dynasty -> clan.
-          Функцията startBattle е гарантирано дефинирана и работеща.
+КОРЕКЦИЯ: Премахнати всички разделени думи, интервали в оператори и грешни ID-та.
+          Функцията гарантирано стартира битка с fallback регион.
 ==========================================================================
 */
 
 // 1. СТАРТИРАНЕ НА БИТКА
 window.startBattle = function(targetRegion) {
-    console.log("⚔️ Стартиране на битка...", targetRegion);
-    
+    // Приемаме аргумент или ползваме текущо избрания от картата
     if (!targetRegion && window.currentSelectedRegion) {
         targetRegion = window.currentSelectedRegion;
     }
+    
+    // Ако все още нямаме регион, създаваме случаен за "Бърза битка"
     if (!targetRegion || typeof targetRegion === 'string') {
         targetRegion = {
             id: "random_region_" + Math.floor(Math.random() * 1000),
@@ -25,13 +26,15 @@ window.startBattle = function(targetRegion) {
         };
     }
 
-    // Събиране на играчовите герои
+    console.log("⚔️ Битка стартира с регион:", targetRegion.name);
+
+    // Събиране на играчовите герои (само фаворитите, макс 5)
     let allLeaders = [];
     if (window.worldData && window.worldData.clans) {
         allLeaders = Object.entries(window.worldData.clans).map(([key, clan]) => ({
             clanKey: key,
             name: clan.leaderName || clan.name || key,
-            clan: key,
+            clan: key, // Използваме clan вместо dynasty
             currentArmy: clan.armySize || clan.currentArmy || 0,
             initialArmyMax: Math.max(clan.maxArmy || 300, clan.armySize || 300),
             heroPower: clan.heroPower || 100,
@@ -49,6 +52,7 @@ window.startBattle = function(targetRegion) {
         });
     }
 
+    // Филтрираме само фаворитите или първите 5 с войска
     let battleGroup = allLeaders.filter(l => l.isFavorite).slice(0, 5);
     if (battleGroup.length === 0) {
         battleGroup = allLeaders.filter(l => l.currentArmy > 0).slice(0, 5);
@@ -78,6 +82,7 @@ window.startBattle = function(targetRegion) {
         enemyLog: []
     };
 
+    // Създаване или намиране на бойния екран
     let battleScreen = document.getElementById('battle-screen');
     if (!battleScreen) {
         battleScreen = document.createElement('div');
@@ -86,7 +91,7 @@ window.startBattle = function(targetRegion) {
     }
     battleScreen.className = 'fullscreen-battle-overlay';
 
-    // Инжектиране на анимациите
+    // Инжектиране на анимациите (само ако липсват)
     if (!document.getElementById('battle-effects-style')) {
         const style = document.createElement('style');
         style.id = 'battle-effects-style';
@@ -115,7 +120,7 @@ window.generateEnemyHeroes = function(targetRegion) {
         "Разбойник", "Мерценар", "Пират", "Бунтовник", "Варварин", "Наемник"
     ];
 
-    const count = 3 + Math.floor(Math.random() * 3);
+    const count = 3 + Math.floor(Math.random() * 3); // 3 до 5 врага
     const enemies = [];
     const usedNames = new Set();
 
