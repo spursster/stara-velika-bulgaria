@@ -1,29 +1,29 @@
 /**
 ==========================================================================
 ПРОЕКТ: ВЕЛИКА БЪЛГАРИЯ
-ФАЙЛ: battle.js (ФИКСИРАНА БИТКА - БЕЗ СИНТАКСИЧНИ СРИВОВЕ)
-СТАТУС: НАПЪЛНО ИЗЧИСТЕН
-КОРЕКЦИЯ: Премахнати всички heig ht, border-radi us, cl ash, wi ndow, & &. 
-          Гарантирано визуализиране на екрана и работеща логика.
+ФАЙЛ: battle.js (АДАПТИВНА МОБИЛНА БИТКА - СЛОТОВЕ ГОРЕ, HP БАРОВЕ, STICKY БУТОНИ)
+СТАТУС: НАПЪЛНО ИЗЧИСТЕН И СИНХРОНИЗИРАН
+КОРЕКЦИЯ: 
+1. Премахнати всички синтактични грешки (интервали в оператори, ключови думи).
+2. Използва се САМО clan (без dynasty).
+3. Мобилен layout: слотове горе → HP барове → VS ред → скролируем лог → залепени бутони долу.
 ==========================================================================
 */
 
+// 1. СТАРТИРАНЕ НА БИТКА
 window.startBattle = function(targetRegion) {
-    console.log("⚔️ Стартиране на битка...", targetRegion);
-
-    if (!targetRegion && window.currentSelectedRegion) {
-        targetRegion = window.currentSelectedRegion;
-    }
+    if (!targetRegion && window.currentSelectedRegion) targetRegion = window.currentSelectedRegion;
     if (!targetRegion || typeof targetRegion === 'string') {
         targetRegion = {
-            id: "unknown_region_" + Math.floor(Math.random() * 1000),
+            id: "random_region_" + Math.floor(Math.random() * 1000),
             name: typeof targetRegion === 'string' ? targetRegion : "Гранични Земи",
-            armySize: Math.floor(Math.random() * 500) + 150,
-            defenseLevel: 3,
-            difficulty: 35
+            armySize: Math.floor(Math.random() * 400) + 100,
+            defenseLevel: 2,
+            difficulty: 25
         };
     }
 
+    // Събиране на играчовите герои (само фаворитите, макс 5)
     let allLeaders = [];
     if (window.worldData && window.worldData.clans) {
         allLeaders = Object.entries(window.worldData.clans).map(([key, clan]) => ({
@@ -48,15 +48,11 @@ window.startBattle = function(targetRegion) {
     }
 
     let battleGroup = allLeaders.filter(l => l.isFavorite).slice(0, 5);
-    if (battleGroup.length === 0) {
-        battleGroup = allLeaders.filter(l => l.currentArmy > 0).slice(0, 5);
-    }
+    if (battleGroup.length === 0) battleGroup = allLeaders.filter(l => l.currentArmy > 0).slice(0, 5);
 
     let totalPlayerArmy = battleGroup.reduce((sum, h) => sum + h.currentArmy, 0);
     if (totalPlayerArmy === 0) {
-        if (window.showAdvisorMsg) {
-            window.showAdvisorMsg("🔮 Твоите избрани воеводи нямат войска! Попълни ги в Казармите!");
-        }
+        if (window.showAdvisorMsg) window.showAdvisorMsg("🔮 Твоите избрани воеводи нямат войска! Попълни ги в Казармите!");
         return;
     }
 
@@ -67,7 +63,8 @@ window.startBattle = function(targetRegion) {
         initialEnemyArmy: targetRegion.armySize,
         initialPlayerArmy: totalPlayerArmy,
         round: 1,
-        logHistory: []
+        playerLog: [],
+        enemyLog: []
     };
 
     let battleScreen = document.getElementById('battle-screen');
@@ -77,38 +74,44 @@ window.startBattle = function(targetRegion) {
         document.body.appendChild(battleScreen);
     }
 
-    // ✅ ФИКС: Валидни CSS свойства без интервали
-    battleScreen.className = 'fullscreen-overlay';
-    battleScreen.style.position = 'fixed';
-    battleScreen.style.top = '0';
-    battleScreen.style.left = '0';
-    battleScreen.style.width = '100vw';
-    battleScreen.style.height = '100vh';
-    battleScreen.style.backgroundColor = '#050505';
-    battleScreen.style.zIndex = '99999';
-    battleScreen.style.display = 'flex';
-    battleScreen.style.justifyContent = 'center';
-    battleScreen.style.alignItems = 'center';
-    battleScreen.style.overflow = 'hidden';
-
-    if (!document.getElementById('battle-effects-style')) {
+    // Инжектиране на адаптивен CSS (само веднъж)
+    if (!document.getElementById('battle-mobile-css')) {
         const style = document.createElement('style');
-        style.id = 'battle-effects-style';
+        style.id = 'battle-mobile-css';
         style.innerHTML = `
-            @keyframes shake {
-                0% { transform: translate(1px, 1px) rotate(0deg); }
-                10% { transform: translate(-1px, -2px) rotate(-1deg); }
-                20% { transform: translate(-3px, 0px) rotate(1deg); }
-                30% { transform: translate(0px, 2px) rotate(0deg); }
-                40% { transform: translate(1px, -1px) rotate(1deg); }
-                50% { transform: translate(-1px, 2px) rotate(-1deg); }
-                100% { transform: translate(1px, -2px) rotate(0deg); }
+            .battle-wrapper { display:flex; flex-direction:column; height:100vh; width:100vw; background:radial-gradient(circle,#121212 0%,#050505 100%); color:#fff; font-family:'Cinzel',serif; overflow:hidden; }
+            .battle-header { padding:8px 10px; text-align:center; border-bottom:1px solid #333; flex-shrink:0; background:rgba(0,0,0,0.5); }
+            .slots-row { display:flex; gap:8px; overflow-x:auto; padding:10px; background:rgba(0,0,0,0.3); flex-shrink:0; }
+            .slots-row::-webkit-scrollbar { height:4px; }
+            .slots-row::-webkit-scrollbar-thumb { background:#d4af37; border-radius:2px; }
+            
+            .hero-slot { flex:0 0 auto; width:90px; background:#111; border:1px solid #444; border-radius:8px; padding:6px 4px; text-align:center; }
+            .slot-name { font-size:10px; color:#ffd700; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; font-weight:bold; }
+            .slot-lvl { font-size:8px; color:#aaa; margin-top:2px; }
+            .hp-track { width:100%; height:5px; background:#222; border-radius:3px; margin-top:4px; overflow:hidden; }
+            .hp-fill { height:100%; transition:width 0.3s; }
+            .slot-army { font-size:9px; margin-top:3px; color:#ccc; }
+
+            .vs-row { display:flex; align-items:center; justify-content:center; gap:8px; padding:6px 10px; font-size:11px; color:#ccc; flex-shrink:0; background:rgba(0,0,0,0.2); }
+            .vs-track { flex:1; height:8px; background:#222; border-radius:4px; overflow:hidden; }
+            .vs-fill { height:100%; transition:width 0.4s; }
+            .vs-text { font-weight:bold; color:#d4af37; min-width:30px; text-align:center; }
+
+            .log-box { flex:1; display:flex; flex-direction:column; overflow:hidden; padding:0 10px; min-height:0; }
+            .log-content { flex:1; background:#000; border:1px solid #333; border-radius:6px; padding:8px; overflow-y:auto; font-size:11px; line-height:1.5; }
+            .log-content div { margin-bottom:4px; word-wrap:break-word; }
+
+            .actions-bar { padding:10px; background:rgba(0,0,0,0.9); border-top:1px solid #444; display:flex; gap:10px; flex-shrink:0; z-index:10; }
+            .btn-fight { flex:1; padding:14px 8px; border:none; border-radius:6px; font-weight:bold; font-size:14px; cursor:pointer; font-family:'Cinzel',serif; }
+            .btn-atk { background:linear-gradient(180deg,#8b0000,#5a0000); color:#fff; border:1px solid #ff4444; }
+            .btn-ret { background:#222; color:#aaa; border:1px solid #555; }
+            .btn-fight:disabled { opacity:0.5; cursor:not-allowed; }
+
+            @media(min-width:768px) {
+                .hero-slot { width:110px; padding:8px; }
+                .btn-fight { padding:16px; font-size:16px; }
+                .log-content { font-size:13px; }
             }
-            @keyframes clashLeft { 0% { transform: translateX(0); } 50% { transform: translateX(30px); } 100% { transform: translateX(0); } }
-            @keyframes clashRight { 0% { transform: translateX(0); } 50% { transform: translateX(-30px); } 100% { transform: translateX(0); } }
-            .clash-anim-left { animation: clashLeft 0.3s ease-in-out; }
-            .clash-anim-right { animation: clashRight 0.3s ease-in-out; }
-            .shake-effect { animation: shake 0.3s; }
         `;
         document.head.appendChild(style);
     }
@@ -116,307 +119,163 @@ window.startBattle = function(targetRegion) {
     window.renderBattleLayout();
 };
 
+// 2. РЕНДЕРИРАНЕ НА ЛЕЙАУТА
 window.renderBattleLayout = function() {
     const state = window.currentBattleState;
-    const battleScreen = document.getElementById('battle-screen');
-    if (!state || !battleScreen) return;
+    const screen = document.getElementById('battle-screen');
+    if (!state || !screen) return;
 
-    let totalCurrentPlayerArmy = state.group.reduce((sum, h) => sum + h.currentArmy, 0);
-    let playerLifeHP = Math.ceil((totalCurrentPlayerArmy / state.initialPlayerArmy) * 100);
-    let enemyLifeHP = Math.ceil((state.enemyArmy / state.initialEnemyArmy) * 100);
+    // Генериране на слотове (като в казармите)
+    let slotsHTML = state.group.map(hero => {
+        const hp = Math.max(0, Math.ceil((hero.currentArmy / hero.initialArmyMax) * 100));
+        const color = hp > 50 ? '#00ffcc' : hp > 20 ? '#ffcc00' : '#ff3366';
+        const dead = hero.currentArmy <= 0 ? 'opacity:0.4;filter:grayscale(0.8);' : '';
+        return `
+            <div class="hero-slot" style="${dead}">
+                <div class="slot-name">🛡️ ${hero.name}</div>
+                <div class="slot-lvl">Нив. ${hero.level || 1}</div>
+                <div class="hp-track"><div class="hp-fill" style="width:${hp}%;background:${color}"></div></div>
+                <div class="slot-army">⚔️ ${hero.currentArmy || 0}</div>
+            </div>`;
+    }).join('');
 
-    let teamLeadersHTML = '';
-    state.group.forEach(hero => {
-        let heroHpPercent = Math.min(100, Math.ceil((hero.currentArmy / hero.initialArmyMax) * 100));
-        let barColor = heroHpPercent > 50 ? '#00ffcc' : (heroHpPercent > 20 ? '#ffcc00' : '#ff3366');
-        let deadStatus = hero.currentArmy <= 0 ? 'filter: grayscale(1); opacity: 0.5;' : '';
+    // VS Индикатори
+    const playerTotal = state.group.reduce((s, h) => s + (h.currentArmy || 0), 0);
+    const playerHP = Math.max(0, Math.ceil((playerTotal / state.initialPlayerArmy) * 100));
+    const enemyHP = Math.max(0, Math.ceil((state.enemyArmy / state.initialEnemyArmy) * 100));
 
-        teamLeadersHTML += `
-            <div style="background: rgba(255,255,255,0.02); border: 1px solid #222; border-radius: 6px; padding: 8px 12px; display: flex; align-items: center; gap: 10px; ${deadStatus}">
-                <div style="font-size: 22px;">🎖️</div>
-                <div style="flex: 1; min-width: 0;">
-                    <div style="display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 2px;">
-                        <span style="font-weight: bold; color: #ffd700; text-overflow: ellipsis; overflow: hidden; white-space: nowrap;">${hero.name}</span>
-                        <span style="color: #aaa; font-size: 11px;">Ниво ${hero.level}</span>
-                    </div>
-                    <div style="width: 100%; background: #111; height: 6px; border-radius: 3px; overflow: hidden; border: 1px solid #333;">
-                        <div style="width: ${heroHpPercent}%; background: ${barColor}; height: 100%; transition: width 0.3s;"></div>
-                    </div>
-                    <div style="font-size: 11px; text-align: right; color: #fff; margin-top: 2px;">${hero.currentArmy} войници</div>
-                </div>
-                <span style="color: #ff3366; font-size: 12px;">❤️</span>
+    screen.innerHTML = `
+        <div class="battle-wrapper">
+            <div class="battle-header">
+                <div style="font-size:16px;color:#ffd700;font-weight:bold;">⚔️ РУНД ${state.round}</div>
+                <div style="font-size:11px;color:#aaa;">${state.region.name}</div>
             </div>
-        `;
-    });
+            
+            <div class="slots-row">${slotsHTML}</div>
 
-    battleScreen.innerHTML = `
-        <div id="main-battle-box" class="heroes-battle-container" style="width: 96%; height: 94%; display: flex; background: radial-gradient(circle, #121212 0%, #050505 100%); border: 3px solid #d4af37; box-shadow: 0 0 40px rgba(0,0,0,0.9); border-radius: 12px; padding: 20px; box-sizing: border-box; color: #fff; font-family: 'Cinzel', serif; gap: 20px;">
-            <div style="width: 280px; display: flex; flex-direction: column; border-right: 1px solid #222; padding-right: 15px;">
-                <h3 style="color: #ffd700; margin: 0 0 5px 0; font-size: 14px; text-align: center; letter-spacing: 1px;">🛡️ ИЗБРАНА ПЕТИЦА</h3>
-                <p style="font-size: 10px; color: #666; text-align: center; margin: 0 0 15px 0;">(Следят се в реално време)</p>
-                <div style="display: flex; flex-direction: column; gap: 10px; flex: 1; overflow-y: auto;">
-                    ${teamLeadersHTML}
-                </div>
+            <div class="vs-row">
+                <span style="color:#00ffcc;">Ти</span>
+                <div class="vs-track"><div class="vs-fill" style="width:${playerHP}%;background:#00ffcc;"></div></div>
+                <div class="vs-text">VS</div>
+                <div class="vs-track"><div class="vs-fill" style="width:${enemyHP}%;background:#ff3366;"></div></div>
+                <span style="color:#ff3366;">Враг</span>
             </div>
 
-            <div style="flex: 1; display: flex; flex-direction: column;">
-                <div style="text-align: center; border-bottom: 1px solid #222; padding-bottom: 8px;">
-                    <h1 style="color: #ffd700; margin: 0; font-size: 22px; letter-spacing: 2px;">ВОЕНЕН ТАБОР — РУНД ${state.round}</h1>
-                    <p style="color: #aaa; margin: 2px 0 0 0; font-size: 12px;">Щурмуван регион: <b style="color: #fff;">"${state.region.name}"</b></p>
+            <div class="log-box">
+                <div class="log-content" id="battle-log-content">
+                    ${state.playerLog.length === 0 ? '<div style="color:#666;">⏳ Чака се заповед за атака...</div>' : state.playerLog.join('')}
                 </div>
+            </div>
 
-                <div style="display: flex; height: 150px; margin: 15px 0; align-items: center; justify-content: space-between; background: rgba(0,0,0,0.6); border-radius: 8px; border: 1px solid #222; padding: 0 30px; position: relative;">
-                    <div id="visual-player-army" style="text-align: center; width: 40%;">
-                        <div style="font-size: 38px;">🛡️</div>
-                        <div style="font-weight: bold; color: #00ffcc; font-size: 12px; margin-bottom: 4px;">ТВОИТЕ СИЛИ</div>
-                        <div style="width: 100%; background: #222; height: 10px; border-radius: 5px; overflow: hidden; border: 1px solid #444;">
-                            <div style="width: ${playerLifeHP}%; background: linear-gradient(90deg, #00aa77, #00ffcc); height: 100%; transition: width 0.3s;"></div>
-                        </div>
-                        <div style="font-size: 14px; margin-top: 4px; font-weight: bold;">${totalCurrentPlayerArmy} <span style="font-size: 10px; color:#666;">война</span></div>
-                    </div>
-
-                    <div id="battle-center-stage" style="width: 20%; text-align: center; font-size: 22px; font-weight: bold; color: #d4af37;">VS</div>
-
-                    <div id="visual-enemy-army" style="text-align: center; width: 40%;">
-                        <div style="font-size: 38px;">🏹</div>
-                        <div style="font-weight: bold; color: #ff3366; font-size: 12px; margin-bottom: 4px;">ГАРНИЗОН НА ВРАГА</div>
-                        <div style="width: 100%; background: #222; height: 10px; border-radius: 5px; overflow: hidden; border: 1px solid #444;">
-                            <div style="width: ${enemyLifeHP}%; background: linear-gradient(90deg, #ff3366, #aa0033); height: 100%; transition: width 0.3s;"></div>
-                        </div>
-                        <div style="font-size: 14px; margin-top: 4px; font-weight: bold;">${state.enemyArmy} <span style="font-size: 10px; color:#666;">защитници</span></div>
-                    </div>
-                </div>
-
-                <div id="heroes-battle-log" style="flex: 1; background: #000; border: 1px solid #222; padding: 12px; border-radius: 6px; overflow-y: auto; font-family: monospace; font-size: 12px; color: #00ff00; line-height: 1.5; margin-bottom: 15px;">
-                    ${state.logHistory.length === 0 ? '[Летопис]: Полковете на петицата са подредени. Чака се бойна заповед... <br>' : state.logHistory.join('')}
-                </div>
-
-                <div class="battle-controls" id="battle-controls-panel" style="display: flex; gap: 15px; justify-content: center;">
-                    <button id="btn-main-assault" class="action-btn" style="background: linear-gradient(180deg, #8b0000 0%, #5a0000 100%); color: #fff; border: 1px solid #ff3333; padding: 12px 35px; font-weight: bold; cursor: pointer; border-radius: 4px; font-size: 14px;" onclick="window.processBattleAction('assault')">⚔️ ПРОДЪЛЖИ ЩУРМА</button>
-                    <button id="btn-main-retreat" class="action-btn" style="background: #222; color: #aaa; border: 1px solid #444; padding: 12px 35px; font-weight: bold; cursor: pointer; border-radius: 4px; font-size: 14px;" onclick="window.processBattleAction('retreat')">🏃‍♂️ ОТСТЪПЛЕНИЕ</button>
-                </div>
+            <div class="actions-bar" id="battle-actions-container">
+                <button class="btn-fight btn-atk" onclick="window.processBattleAction('assault')">⚔️ АТАКА</button>
+                <button class="btn-fight btn-ret" onclick="window.processBattleAction('retreat')">🏃 ОТСТЪПЛЕНИЕ</button>
             </div>
         </div>
     `;
 
-    const logDiv = document.getElementById('heroes-battle-log');
+    // Auto-scroll лога
+    const logDiv = screen.querySelector('.log-content');
     if (logDiv) logDiv.scrollTop = logDiv.scrollHeight;
 };
 
+// 3. ОБРАБОТКА НА ДЕЙСТВИЕ
 window.processBattleAction = function(actionType) {
     const state = window.currentBattleState;
     if (!state) return;
-    const btnAssault = document.getElementById('btn-main-assault');
-    const btnRetreat = document.getElementById('btn-main-retreat');
-    if (btnAssault) btnAssault.disabled = true;
-    if (btnRetreat) btnRetreat.disabled = true;
+
+    const btnA = document.querySelector('.btn-atk');
+    const btnR = document.querySelector('.btn-ret');
+    if (btnA) btnA.disabled = true;
+    if (btnR) btnR.disabled = true;
 
     if (actionType === 'retreat') {
-        executeRetreatLogic();
+        state.playerLog.push(`<div style="color:#aaa;">🏳️ <b>Отстъпление!</b> Войските се изтеглят...</div>`);
+        window.endBattle(false, "retreat");
         return;
     }
 
-    const leftSide = document.getElementById('visual-player-army');
-    const rightSide = document.getElementById('visual-enemy-army');
-    const mainBox = document.getElementById('main-battle-box');
-    const centerStage = document.getElementById('battle-center-stage');
+    state.playerLog.push(`<div style="color:#fff;">⚔️ <b>РУНД ${state.round}:</b> Атаката започва!</div>`);
 
-    if (leftSide && rightSide) {
-        leftSide.className = ''; 
-        rightSide.className = '';
-        void leftSide.offsetWidth; 
-        leftSide.classList.add('clash-anim-left');
-        rightSide.classList.add('clash-anim-right');
-    }
-
-    let roundLog = `<div style="border-left: 3px solid #d4af37; padding-left: 8px; margin-bottom: 12px; color: #fff;"> <b style="color: #ffd700;">--- РУНД ${state.round} ---</b> <br>`;
-    let hasCritThisRound = false;
-
-    if (actionType === 'chase_enemy') {
-        let totalPlayerPower = state.group.reduce((sum, h) => sum + (h.currentArmy || 0), 0);
-        let bonusDamage = Math.floor(totalPlayerPower * 0.30 * (Math.random() * 0.5 + 0.5));
-        state.enemyArmy = Math.max(0, state.enemyArmy - bonusDamage);
-        roundLog += `<span style="color: #ffd700; font-weight: bold;">🏹 ПРЕСЛЕДВАНЕ: Твоите конни орди застигнаха врага и съсякоха още ${bonusDamage} защитници!</span> <br>`;
-        finishRoundCalculation(roundLog, false);
-        return;
-    }
-
-    let totalRoundPlayerPower = 0;
-    let totalRoundEnemyDefense = state.enemyArmy * (1 + (state.region.defenseLevel || 1) * 0.15);
-
+    let totalPlayerPower = 0;
     state.group.forEach(hero => {
-        if (hero.currentArmy <= 0) return;
-        let skills = hero.skills || {};
-        let pet = hero.pet || null;
-        let pPower = hero.currentArmy + (hero.heroPower || 100);
-
-        if ((skills.tactics || 0) > 0) {
-            pPower += (skills.tactics * 40);
-            roundLog += `• [${hero.name}]: Военна Тактика добавя +${skills.tactics * 40} сила. <br>`;
-        }
-        if (pet === "falcon") {
-            pPower = Math.floor(pPower * 1.15);
-            roundLog += `• [${hero.name}]: Родов Сокол разузнава отгоре (+15% мощ). <br>`;
-        }
-        let critChance = (skills.heavyStrike || 0) * 0.05;
-        if (pet === "wolf") critChance += 0.10;
-        if (Math.random() < critChance) {
-            pPower *= 2;
-            hasCritThisRound = true;
-            roundLog += `• <span style="color: #ffcc00; font-weight: bold;">[${hero.name}]: 💥 СМАЗВАЩ УДАР! Нанесени са 200% щети!</span> <br>`;
-        }
-        totalRoundPlayerPower += pPower;
-    });
-
-    totalRoundPlayerPower *= (Math.random() * 0.3 + 0.85);
-    totalRoundEnemyDefense *= (Math.random() * 0.3 + 0.85);
-
-    let playerLossesTotal = Math.floor(totalRoundEnemyDefense * 0.18);
-    let enemyLossesTotal = Math.floor(totalRoundPlayerPower * 0.22);
-
-    state.enemyArmy = Math.max(0, state.enemyArmy - enemyLossesTotal);
-    roundLog += `<span style="color: #00ffcc; font-weight: bold;">⚔️ Избраната петица съсече ${enemyLossesTotal} вражески войници.</span> <br>`;
-
-    let activeHeroesCount = state.group.filter(g => g.currentArmy > 0).length;
-    if (activeHeroesCount > 0) {
-        let lossPerHero = Math.floor(playerLossesTotal / activeHeroesCount);
-        state.group.forEach(h => {
-            if (h.currentArmy > 0) h.currentArmy = Math.max(0, h.currentArmy - lossPerHero);
-        });
-        roundLog += `<span style="color: #ff3366;">📉 Отпорът на крепостта погуби ${playerLossesTotal} от твоите бойци.</span> <br>`;
-    }
-
-    let totalPlayerArmyLeft = state.group.reduce((sum, h) => sum + h.currentArmy, 0);
-    if (state.enemyArmy > 0 && totalPlayerArmyLeft > 0) {
-        if (state.enemyArmy < (state.initialEnemyArmy * 0.35) && Math.random() < 0.50) {
-            roundLog += `<span style="color: #ffcc00; font-weight: bold;">🏳️ РАЗКОЛЕБАВАНЕ: Защитниците губят кураж!</span> <br>`;
-            state.enemyRetreating = true;
-        }
-    }
-    roundLog += `</div>`;
-
-    setTimeout(() => {
-        if (mainBox) mainBox.classList.add('shake-effect');
-        if (hasCritThisRound && centerStage) {
-            centerStage.innerHTML = `<span style="color:#ffcc00; font-size:15px; text-shadow:0 0 5px #ff0000;">💥 CRITICAL!</span>`;
-        } else if (centerStage) {
-            centerStage.innerHTML = `<span style="color:#ff3333; font-size:18px;">⚔️ СЕЧ!</span>`;
-        }
-
-        setTimeout(() => {
-            if (mainBox) mainBox.classList.remove('shake-effect');
-            if (centerStage) centerStage.innerHTML = "VS";
-            finishRoundCalculation(roundLog, totalPlayerArmyLeft <= 0);
-        }, 300);
-
-    }, 300);
-};
-
-function executeRetreatLogic() {
-    const state = window.currentBattleState;
-    let roundLog = `<div style="border-left: 3px solid #ff3333; padding-left: 8px; margin-bottom: 12px; color: #fff;"><b style="color: #ff3333;">--- ОТСТЪПЛЕНИЕ ---</b><br>`;
-    let enemyChasingPower = state.enemyArmy * 0.20;
-    let casualty = Math.floor(enemyChasingPower * (Math.random() * 0.5 + 0.5));
-    roundLog += `<span style="color: #ff3366;">🚨 Ариергардът беше застигнат при изтеглянето! Загубени са ${casualty} бойци.</span> <br>`;
-    state.group.forEach(h => {
-        if (h.currentArmy > 0) {
-            let share = Math.floor(casualty / state.group.filter(g => g.currentArmy > 0).length);
-            h.currentArmy = Math.max(0, h.currentArmy - share);
-        }
-    });
-
-    roundLog += `</div>`;
-    state.logHistory.push(roundLog);
-    window.endGroupBattle(false, "retreat");
-}
-
-function finishRoundCalculation(roundLog, isDefeat) {
-    const state = window.currentBattleState;
-    state.logHistory.push(roundLog);
-    let totalPlayerArmyLeft = state.group.reduce((sum, h) => sum + h.currentArmy, 0);
-
-    if (state.enemyArmy <= 0 && totalPlayerArmyLeft > 0) {
-        window.endGroupBattle(true);
-    } else if (isDefeat || totalPlayerArmyLeft <= 0) {
-        window.endGroupBattle(false, "defeat");
-    } else {
-        state.round++;
-        window.renderBattleLayout();
-        
-        if (state.enemyRetreating) {
-            const controls = document.getElementById('battle-controls-panel');
-            if (controls) {
-                controls.innerHTML = `
-                    <button class="action-btn" style="background: linear-gradient(180deg, #ffd700 0%, #b8860b 100%); color: #000; border: 1px solid #fff; padding: 12px 35px; font-weight: bold; cursor: pointer; border-radius: 4px; font-size: 14px;" onclick="window.processBattleAction('chase_enemy')">🏹 ПРЕСЛЕДВАНЕ</button>
-                    <button class="action-btn" style="background: #222; color: #aaa; border: 1px solid #444; padding: 12px 35px; font-weight: bold; cursor: pointer; border-radius: 4px; font-size: 14px;" onclick="window.processBattleAction('retreat')">🛑 ПУСНИ ГИ</button>
-                `;
+        if (!hero || hero.currentArmy <= 0) return;
+        let p = hero.currentArmy + (hero.heroPower || 100);
+        if (hero.skills) {
+            if ((hero.skills.tactics || 0) > 0) p += hero.skills.tactics * 40;
+            if ((hero.skills.heavyStrike || 0) > 0 && Math.random() < hero.skills.heavyStrike * 0.05) {
+                p *= 2;
+                state.playerLog.push(`<div style="color:#ffd700;">💥 <b>${hero.name}</b> нанася СМАЗВАЩ УДАР!</div>`);
             }
         }
-    }
-}
+        totalPlayerPower += p;
+    });
+    totalPlayerPower *= (Math.random() * 0.3 + 0.85);
 
-window.endGroupBattle = function(isVictory, reason = "") {
+    let totalEnemyPower = state.enemyArmy * (1 + (state.region.defenseLevel || 1) * 0.15) * (Math.random() * 0.3 + 0.85);
+    let playerLosses = Math.floor(totalEnemyPower * 0.18);
+    let enemyLosses = Math.floor(totalPlayerPower * 0.22);
+
+    state.enemyArmy = Math.max(0, state.enemyArmy - enemyLosses);
+    state.playerLog.push(`<div style="color:#ff3366;">🏹 Врагът губи <b>${enemyLosses}</b> бойци.</div>`);
+
+    let active = state.group.filter(h => h && h.currentArmy > 0).length;
+    if (active > 0) {
+        let lossPer = Math.floor(playerLosses / active);
+        state.group.forEach(h => { if (h.currentArmy > 0) h.currentArmy = Math.max(0, h.currentArmy - lossPer); });
+        state.playerLog.push(`<div style="color:#aaa;">📉 Твоите загуби: <b>${playerLosses}</b>.</div>`);
+    }
+
+    state.round++;
+    setTimeout(() => {
+        let totalPlayerLeft = state.group.reduce((s, h) => s + (h.currentArmy || 0), 0);
+        if (state.enemyArmy <= 0 && totalPlayerLeft > 0) window.endBattle(true);
+        else if (totalPlayerLeft <= 0) window.endBattle(false, "defeat");
+        else {
+            window.renderBattleLayout();
+            if (btnA) btnA.disabled = false;
+            if (btnR) btnR.disabled = false;
+        }
+    }, 400);
+};
+
+// 4. КРАЙ НА БИТКА
+window.endBattle = function(isVictory, reason) {
     const state = window.currentBattleState;
     if (!state) return;
-    const controls = document.getElementById('battle-controls-panel');
-    const logDiv = document.getElementById('heroes-battle-log');
 
     state.group.forEach(hero => {
-        if (window.worldData && window.worldData.clans && window.worldData.clans[hero.clan]) {
-            const globalClan = window.worldData.clans[hero.clan];
-            globalClan.currentArmy = hero.currentArmy;
-            globalClan.armySize = hero.currentArmy;
+        if (hero && hero.clan && window.worldData?.clans?.[hero.clan]) {
+            window.worldData.clans[hero.clan].currentArmy = hero.currentArmy;
+            window.worldData.clans[hero.clan].armySize = hero.currentArmy;
         }
     });
-
-    if (window.syncAllLeadersData) window.syncAllLeadersData();
-
-    let finalLog = `<div style="text-align:center; padding: 12px; margin-top: 12px; background: rgba(255,255,255,0.02); border-radius: 6px; border: 1px solid #333;">`;
 
     if (isVictory) {
         state.region.armySize = 0;
         if (!window.playerRegions) window.playerRegions = [];
-        const ownedRegionsFlat = window.playerRegions.flat();
-        if (!ownedRegionsFlat.includes(state.region.name)) {
-            window.playerRegions.push(state.region.name);
-        }
-
-        let xpReward = 150;
-        state.group.forEach(hero => {
-            if (hero.currentArmy > 0 && window.gainHeroXP) {
-                window.gainHeroXP(hero, xpReward);
-            }
-        });
-
-        finalLog += `<h2 style="color: #00ff00; margin: 0 0 5px 0;">🎉 ВЕЛИКА ПОБЕДА! 🎉</h2>`;
-        finalLog += `Регионът <b style="color:#fff;">"${state.region.name}"</b> премина под твой флаг! <br>`;
-        finalLog += `Всички оцелели от петицата вземат по <b style="color:#ffd700;">+${xpReward} XP</b>!</div>`;
+        const flat = window.playerRegions.flat();
+        if (!flat.includes(state.region.name)) window.playerRegions.push(state.region.name);
+        state.playerLog.push(`<div style="color:#00ffcc;font-weight:bold;text-align:center;margin-top:5px;">🎉 ВЕЛИКА ПОБЕДА!</div>`);
+        state.group.forEach(h => h.currentArmy > 0 && window.gainHeroXP?.(h, 150));
+        state.playerLog.push(`<div style="color:#ffd700;">🌟 Всеки оцелял герой получава +150 XP!</div>`);
     } else {
-        if (reason === "retreat") {
-            finalLog += `<h2 style="color: #ffcc00; margin: 0 0 5px 0;">🏳️ ТАКТИЧЕСКО ИЗТЕГЛЯНЕ 🏳️</h2>`;
-            finalLog += `Петицата запази основните си сили. Крепостта удържа.</div>`;
-        } else {
-            state.region.armySize = Math.floor(state.enemyArmy * 0.8);
-            finalLog += `<h2 style="color: #ff3366; margin: 0 0 5px 0;">❌ ПОРАЖЕНИЕ ❌</h2>`;
-            finalLog += `Твоят отряд бе отблъснат в прахта. Попълни редиците им в Казармите.</div>`;
-        }
+        state.playerLog.push(`<div style="color:${reason==='retreat'?'#ffcc00':'#ff3366'};font-weight:bold;text-align:center;">${reason==='retreat'?'🏳️ ТАКТИЧЕСКО ИЗТЕГЛЯНЕ':'❌ ПОРАЖЕНИЕ'}</div>`);
     }
 
-    if (logDiv) { logDiv.innerHTML += finalLog; logDiv.scrollTop = logDiv.scrollHeight; }
-
-    if (controls) {
-        controls.innerHTML = `
-            <button class="action-btn" style="background: #d4af37; color: #000; border: 1px solid #fff; padding: 12px 45px; font-weight: bold; cursor: pointer; border-radius: 4px; font-size: 15px;" onclick="window.closeBattleAndRefresh()">ЗАТВОРИ БОЙНИЯ ЕКРАН</button>
-        `;
+    // Заменяме бутоните с "ЗАТВОРИ"
+    const actions = document.getElementById('battle-actions-container');
+    if (actions) {
+        actions.innerHTML = `<button class="btn-fight btn-atk" onclick="window.closeBattle()" style="flex:1;width:100%;">ЗАТВОРИ БОЯ</button>`;
     }
+    window.renderBattleLayout();
 };
 
-window.closeBattleAndRefresh = function() {
+// 5. ЗАТВАРЯНЕ НА БОЯ
+window.closeBattle = function() {
     const screen = document.getElementById('battle-screen');
     if (screen) screen.style.display = 'none';
-    if (window.renderTop6LeadersUI) window.renderTop6LeadersUI();
-    if (window.updateCharacterUI && window.currentHero) window.updateCharacterUI(window.currentHero);
-    if (window.openRegionsMap && document.getElementById('regions-screen')) {
-        window.openRegionsMap();
-    }
+    window.currentBattleState = null;
+    window.renderTop6LeadersUI?.();
+    window.updateCharacterUI?.(window.currentHero);
 };
