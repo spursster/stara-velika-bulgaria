@@ -1,38 +1,49 @@
 /** ==========================================================================
 ПРОЕКТ: ВЕЛИКА БЪЛГАРИЯ
-ФАЙЛ: regions.js (ОКОНЧАТЕЛНА ВЕРСИЯ – СИГУРЕН БУТОН ЗА АТАКА)
+ФАЙЛ: regions.js (ВЪЗСТАНОВЕН ПОП-ЪП ПРОЗОРЕЦ ЗА КАРТА)
 ========================================================================== */
 
+// Отваря картата в изскачащ прозорец
 window.openRegionsMap = function() {
-    const mainArea = document.getElementById('game-main-area');
-    if (!mainArea) return;
     if (!window.worldData || !window.worldData.regions) {
-        console.error("Грешка: Липсват данни за регионите в world_data.js");
+        console.error("Липсват данни за регионите");
         return;
     }
     const regions = window.worldData.regions;
     const regionKeys = Object.keys(regions);
     const ownedRegionsFlat = Array.isArray(window.playerRegions) ? window.playerRegions.flat() : [];
-    let html = `<div style="padding:20px;"><h2 style="color:#ffdd99;">🗺️ Карта на Регионите</h2><div style="display:grid; grid-template-columns:repeat(auto-fill, minmax(180px,1fr)); gap:12px;">`;
+
+    // Създаваме overlay
+    let overlay = document.getElementById('regions-map-overlay');
+    if (overlay) overlay.remove();
+    overlay = document.createElement('div');
+    overlay.id = 'regions-map-overlay';
+    overlay.style.cssText = `position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); backdrop-filter: blur(8px); z-index: 50000; display: flex; justify-content: center; align-items: center; font-family: 'Cinzel', serif; overflow-y: auto; padding: 20px;`;
+
+    let html = `<div style="background: rgba(0,0,0,0.85); border-radius: 32px; border: 1px solid #c9a87b; max-width: 800px; width: 100%; max-height: 90vh; overflow-y: auto; padding: 20px;">
+        <h2 style="color:#ffdd99; text-align:center;">🗺️ Карта на Регионите</h2>
+        <div style="display:grid; grid-template-columns:repeat(auto-fill, minmax(180px,1fr)); gap:12px; margin-top:20px;">`;
+
     regionKeys.forEach(key => {
         const reg = regions[key];
         const isPlayerOwned = ownedRegionsFlat.includes(key);
-        let controllingClan = "Няма";
-        if (reg.nativeClans && reg.nativeClans.length > 0) {
-            controllingClan = reg.nativeClans[0];
-        }
+        let controllingClan = (reg.nativeClans && reg.nativeClans[0]) || "Независим";
         const borderStyle = isPlayerOwned ? "2px solid #00ffcc" : "1px solid #c9a87b";
         const bgStyle = isPlayerOwned ? "rgba(0, 255, 204, 0.1)" : "rgba(0,0,0,0.5)";
-        html += `<div style="border:${borderStyle}; background:${bgStyle}; border-radius:12px; padding:10px; cursor:pointer;" onclick="window.inspectRegion('${key.replace(/'/g, "\\'")}')">
+
+        html += `<div style="border:${borderStyle}; background:${bgStyle}; border-radius:12px; padding:10px; cursor:pointer;" onclick="window.inspectRegion('${key.replace(/'/g, "\\'")}'); document.getElementById('regions-map-overlay').remove();">
             <div style="font-size:1.2rem;">🏰 ${key}</div>
-            <div style="font-size:0.8rem;">🏴 Клан: ${controllingClan}</div>
+            <div style="font-size:0.8rem;">🏴 ${controllingClan}</div>
             <div style="font-size:0.8rem;">💰 ${reg.resource}</div>
         </div>`;
     });
-    html += `</div><button style="margin-top:20px;" onclick="window.showMainMenu ? window.showMainMenu() : location.reload()">Назад към Главното Меню</button></div>`;
-    mainArea.innerHTML = html;
+
+    html += `</div><button style="display:block; margin:20px auto 0; background:#2c1a0c; border:none; border-bottom:2px solid #a05a2c; padding:8px 24px; border-radius:40px; color:#ffdd99; cursor:pointer;" onclick="this.closest('#regions-map-overlay').remove()">🔒 Затвори Картата</button></div>`;
+    overlay.innerHTML = html;
+    document.body.appendChild(overlay);
 };
 
+// Инспекция на конкретен регион (същата като преди, но без да пипа mainArea)
 window.inspectRegion = function(regionName) {
     if (!window.worldData || !window.worldData.regions || !window.worldData.regions[regionName]) return;
     const reg = window.worldData.regions[regionName];
@@ -52,14 +63,14 @@ window.inspectRegion = function(regionName) {
 
     const overlay = document.createElement('div');
     overlay.id = 'region-inspect-overlay';
-    overlay.style.cssText = `position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); backdrop-filter: blur(6px); display: flex; justify-content: center; align-items: center; z-index: 50000; font-family: 'Cinzel', serif; box-sizing: border-box; padding: 15px;`;
+    overlay.style.cssText = `position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); backdrop-filter: blur(6px); display: flex; justify-content: center; align-items: center; z-index: 50001; font-family: 'Cinzel', serif; box-sizing: border-box; padding: 15px;`;
 
     let actionButtonHTML = '';
     if (isPlayerOwned) {
-        actionButtonHTML = `<button class="region-action-btn" style="background:#2c5a2a;" onclick="window.upgradeRegionInfrastructure('${regionName.replace(/'/g, "\\'")}', ${finalUpgradeCost})">🏗️ Модернизирай (${finalUpgradeCost} зл.)</button>`;
+        actionButtonHTML = `<button class="region-action-btn" style="background:#2c5a2a;" onclick="window.upgradeRegionInfrastructure('${regionName.replace(/'/g, "\\'")}', ${finalUpgradeCost}); this.closest('#region-inspect-overlay').remove();">🏗️ Модернизирай (${finalUpgradeCost} зл.)</button>`;
     } else {
-        // Безопасен бутон за атака – използва data-атрибут
-        actionButtonHTML = `<button class="region-action-btn attack-button" style="background:#7a2e1a;" data-region-name="${regionName.replace(/"/g, '&quot;')}">⚔️ ИЗПРАТИ ВОЙСКИ ЗА ЗАВЛАДЯВАНЕ ⚔️</button>`;
+        // БУТОН ЗА АТАКА – извиква startBattle с името на региона
+        actionButtonHTML = `<button class="region-action-btn" style="background:#7a2e1a;" onclick="window.startBattle('${regionName.replace(/'/g, "\\'")}'); document.getElementById('region-inspect-overlay').remove();">⚔️ ИЗПРАТИ ВОЙСКИ ЗА ЗАВЛАДЯВАНЕ ⚔️</button>`;
     }
 
     overlay.innerHTML = `<div style="background: rgba(0,0,0,0.9); border-radius: 32px; padding: 20px; max-width: 450px; width: 100%; text-align: center; border: 1px solid #c9a87b;">
@@ -73,25 +84,6 @@ window.inspectRegion = function(regionName) {
         <div style="margin: 20px 0;">${actionButtonHTML}</div>
         <button class="region-action-btn" style="background:#333;" onclick="this.closest('#region-inspect-overlay').remove()">🔒 Затвори</button>
     </div>`;
-
-    // Добавяне на event listener за бутона за атака
-    const attackBtn = overlay.querySelector('.attack-button');
-    if (attackBtn) {
-        attackBtn.addEventListener('click', function(e) {
-            const rName = this.getAttribute('data-region-name');
-            if (rName && window.startBattle) {
-                // Извикваме startBattle с името на региона
-                window.startBattle(rName);
-            } else {
-                console.error("Липсва startBattle или data-region-name");
-                alert("Грешка: Бойната система не е заредена.");
-            }
-            // Затваряме прозореца
-            const overlayElem = document.getElementById('region-inspect-overlay');
-            if (overlayElem) overlayElem.remove();
-        });
-    }
-
     document.body.appendChild(overlay);
 };
 
@@ -105,17 +97,9 @@ window.upgradeRegionInfrastructure = function(regionName, cost) {
             reg.infrastructureLevel = (reg.infrastructureLevel || 1) + 1;
             reg.defenseLevel = (reg.defenseLevel || 1) + 1;
         }
-        if (window.showAdvisorMsg) {
-            window.showAdvisorMsg(`🏗️ Инфраструктурата на ${regionName} е модернизирана!`);
-        }
+        if (window.showAdvisorMsg) window.showAdvisorMsg(`🏗️ Инфраструктурата на ${regionName} е модернизирана!`);
         if (window.updateCharacterUI) window.updateCharacterUI(hero);
-        const overlay = document.getElementById('region-inspect-overlay');
-        if (overlay) overlay.remove();
-        window.openRegionsMap();
-        window.inspectRegion(regionName);
     } else {
-        if (window.showAdvisorMsg) {
-            window.showAdvisorMsg("❌ Нямате достатъчно злато!");
-        }
+        if (window.showAdvisorMsg) window.showAdvisorMsg("❌ Нямате достатъчно злато!");
     }
 };
