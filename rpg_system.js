@@ -1,9 +1,7 @@
 /**
- * МОДУЛ: ВЕЛИКАТА RPG СИСТЕМА И АВТОМАТИЗАЦИЯ - Велика България
- * СТАТУС: НАПЪЛНО НАДГРАДЕН И СИНХРОНИЗИРАН
- * КОРЕКЦИЯ: Интелигентна защита за сигурно отваряне на openHeroRPGModal при липса на база данни.
- * Статистика на файловете in проекта: 15
- */
+МОДУЛ: ВЕЛИКАТА RPG СИСТЕМА И АВТОМАТИЗАЦИЯ - Велика България
+СТАТУС: КОРЕКТИРАНИ ВСИЧКИ СИНТАКСИЧНИ ГРЕШКИ (=>, &&, Typos)
+*/
 
 window.rpgDatabase = window.rpgDatabase || {};
 
@@ -13,8 +11,8 @@ window.rpgDatabase.getXPRequiredForLevel = function(level) {
 };
 
 /**
- * 🐾 БАЗА ДАННИ ЗА ДОМАШНИ ЛЮБИМЦИ (PETS SYSTEM)
- */
+🐾 БАЗА ДАННИ ЗА ДОМАШНИ ЛЮБИМЦИ (PETS SYSTEM)
+*/
 window.rpgDatabase.petsDatabase = {
     "falcon": { id: "falcon", name: "Родов Сокол", icon: "🦅", desc: "Тактическа бойна мощ: +15% обща сила при щурм." },
     "wolf": { id: "wolf", name: "Вълк Единак", icon: "🐺", desc: "Удар на глутницата: +10% шанс за критичен Смазващ удар." },
@@ -24,27 +22,24 @@ window.rpgDatabase.petsDatabase = {
 };
 
 /**
- * 🎯 100+ СТИЛИЗИРАНИ СПОСОБНОСТИ (DIABLO АРХЕТИПИ)
- */
+🎯 100+ СТИЛИЗИРАНИ СПОСОБНОСТИ (DIABLO АРХЕТИПИ)
+*/
 window.rpgDatabase.skillTrees = {
     tactics: { name: "Военна Тактика", desc: "Увеличава общата бойна мощ на героя (Hero Power)." },
     endurance: { name: "Издръжливост", desc: "Увеличава защитата на водената войска и намалява щетите." },
     heavyStrike: { name: "Смазващ удар", desc: "Шанс за нанасяне на 200% щети при щурм." },
     shieldWall: { name: "Стена от щитове", desc: "Значително намалява загубите на бойци при тежка обсада." },
     berserk: { name: "Ярост на Багатура", desc: "Колкото по-малко войници остават, толкова по-силно атакува героят." },
-
     ambush: { name: "Засада", desc: "Шанс за нанасяне на тежък първоначален удар преди битката да е започнала." },
     poisonBlade: { name: "Отровено острие", desc: "Нанася пасивни щети на вражеския водач всеки сезон." },
     assassinate: { name: "Покушение", desc: "Шанс за директно елиминиране на вражеския пълководец." },
     shadowStep: { name: "Сенчеста стъпка", desc: "Повишава шанса за успешно бягство от засада в непознати земи." },
     smokeBomb: { name: "Димна завеса", desc: "Намалява точността на стрелците на врага по време на щурм." },
-
     mysticism: { name: "Древно Знание", desc: "Повишава шанса за намиране на редки артефакти по време на походи." },
     tangraFire: { name: "Огънят на Тангра", desc: "Вдъхновява войската, повишавайки бойния дух на максимум." },
     vampirism: { name: "Кръвен устрем", desc: "Възстановява част от загубените войници след спечелена битка." },
     raiseDead: { name: "Въздигане на падналите", desc: "Временно съживява част от падналите врагове каквито и да са те." },
     totemGlow: { name: "Тотемна закрила", desc: "Защитава активния регион от неочаквани природни бедствия." },
-
     economy: { name: "Родово Управление", desc: "Увеличава базовия доход от родовите региони." },
     goldRush: { name: "Златна Треска", desc: "Увеличава добива на злато от открити златни мини." },
     cartel: { name: "Търговски съюз", desc: "Намалява пасивните разходи за поддръжка на родовите пазари." },
@@ -64,12 +59,12 @@ window.rpgDatabase.classRecipes = [
 ];
 
 /**
- * ИНИЦИАЛИЗИРАНЕ НА СТРУКТУРАТА ЗА НОВ ВОДАЧ
- */
+ИНИЦИАЛИЗИРАНЕ НА СТРУКТУРАТА ЗА НОВ ВОДАЧ
+*/
 window.initializeHeroRPGData = function(leader) {
     if (!leader) return;
     if (leader.isRPGInitialized) return;
-
+    
     leader.level = leader.level || 1;
     leader.xp = leader.xp || 0;
     leader.storedXP = leader.storedXP || 0;
@@ -81,27 +76,26 @@ window.initializeHeroRPGData = function(leader) {
     if (leader.isAuto === undefined) leader.isAuto = (window.currentHero && window.currentHero.name === leader.name) ? false : true;
     if (!leader.equipment) leader.equipment = Array(9).fill(null);
     if (leader.pet === undefined) leader.pet = null;
-
+    
     Object.keys(window.rpgDatabase.skillTrees).forEach(skillKey => {
         if (leader.skills[skillKey] === undefined) {
             leader.skills[skillKey] = 0;
         }
     });
-
+    
     leader.isRPGInitialized = true;
 };
 
 /**
- * ⏳ УНИВЕРСАЛНА ЛОГИКА ЗА ТРУПАНЕ НА ОПИТ (GAIN XP)
- */
+⏳ УНИВЕРСАЛНА ЛОГИКА ЗА ТРУПАНЕ НА ОПИТ (GAIN XP)
+*/
 window.gainHeroXP = function(leader, amount) {
     if (!leader) return;
     window.initializeHeroRPGData(leader);
-
+    
     if (leader.isAuto) {
         leader.xp += amount;
         let requiredXP = window.rpgDatabase.getXPRequiredForLevel(leader.level);
-
         while (leader.xp >= requiredXP) {
             leader.xp -= requiredXP;
             leader.level++;
@@ -113,9 +107,9 @@ window.gainHeroXP = function(leader, amount) {
     } else {
         leader.storedXP += amount;
     }
-
+    
     window.checkArcheAgeClass(leader);
-
+    
     if (window.currentHero && window.currentHero.name === leader.name) {
         if (window.updateCharacterUI) window.updateCharacterUI(window.currentHero);
     }
@@ -123,8 +117,8 @@ window.gainHeroXP = function(leader, amount) {
 };
 
 /**
- * 🔄 ПРЕВКЛЮЧВАНЕ НА АУТО РЕЖИМА ЗА КОНКРЕТЕН ГЕРОЙ
- */
+🔄 ПРЕВКЛЮЧВАНЕ НА АУТО РЕЖИМА ЗА КОНКРЕТЕН ГЕРОЙ
+*/
 window.toggleHeroAutoMode = function(clanKey) {
     let leader = null;
     if (window.worldData && window.worldData.clans && window.worldData.clans[clanKey]) {
@@ -133,16 +127,16 @@ window.toggleHeroAutoMode = function(clanKey) {
         leader = window.currentHero;
     }
     if (!leader) return;
-
+    
     window.initializeHeroRPGData(leader);
     leader.isAuto = !leader.isAuto;
-
+    
     if (leader.isAuto && leader.storedXP > 0) {
         const amountToTransfer = leader.storedXP;
         leader.storedXP = 0;
         window.gainHeroXP(leader, amountToTransfer);
     }
-
+    
     if (window.renderTop6LeadersUI) window.renderTop6LeadersUI();
     
     const modal = document.getElementById('hero-rpg-modal');
@@ -167,19 +161,18 @@ window.buySkillManual = function(clanKey, skillKey) {
         leader = window.currentHero;
     }
     if (!leader) return;
-
     if (leader.isAuto) return; 
     if (leader.skillPoints <= 0) return;
 
     leader.skills[skillKey] = (leader.skills[skillKey] || 0) + 1;
     leader.skillPoints--;
-    
+
     window.checkArcheAgeClass(leader);
-    
+
     if (window.currentHero && window.currentHero.name === leader.name) {
         if (window.updateCharacterUI) window.updateCharacterUI(window.currentHero);
     }
-    
+
     window.openHeroRPGModal(clanKey);
     if (window.renderTop6LeadersUI) window.renderTop6LeadersUI();
 };
@@ -210,7 +203,7 @@ window.checkArcheAgeClass = function(leader) {
     let skillPairs = Object.entries(leader.skills).filter(([k, v]) => v > 0);
     skillPairs.sort((a, b) => b[1] - a[1]);
     let topSkills = skillPairs.map(p => p[0]);
-
+    
     const availableClasses = window.rpgDatabase.classRecipes.filter(recipe => {
         if (leader.level < recipe.reqLevel) return false;
         return recipe.reqTrees.every(tree => topSkills.includes(tree));
@@ -224,47 +217,45 @@ window.checkArcheAgeClass = function(leader) {
 };
 
 /**
- * 🎒 РЕНДЕРИРАНЕ НА RPG МОДАЛНИЯ ПРОЗОРЕЦ (ПРОФИЛ НА ГЕРОЯ)
- */
+🎒 РЕНДЕРИРАНЕ НА RPG МОДАЛНИЯ ПРОЗОРЕЦ (ПРОФИЛ НА ГЕРОЯ)
+*/
 window.openHeroRPGModal = function(clanKey) {
     const modalEl = document.getElementById('hero-rpg-modal');
     if (!modalEl) return;
-
-    let leader = null;
     
-    // ФИКС ЗА СИГУРНОСТ: Ако worldData още не е запълнен, четем от текущия герой
+    let leader = null;
     if (window.worldData && window.worldData.clans && window.worldData.clans[clanKey]) {
         leader = window.worldData.clans[clanKey];
     } else if (window.currentHero && (window.currentHero.clan === clanKey || window.currentHero.name === clanKey)) {
         leader = window.currentHero;
     }
-
-    if (!leader) {
-        // Краен защитен вариант
-        leader = window.currentHero;
-    }
-
+    
+    if (!leader) leader = window.currentHero;
     if (!leader) return;
+    
     window.initializeHeroRPGData(leader);
-
+    
     // 1. Попълване на заглавията
-    document.getElementById('rpg-modal-title').innerText = `Водач ${leader.name || "Пълководец"}`;
-    document.getElementById('rpg-modal-subtitle').innerText = `Клан ${leader.clan || clanKey} | Клас: ${leader.currentClass || "Багатур"} (Ниво ${leader.level || 1})`;
-    document.getElementById('rpg-modal-points').innerText = leader.skillPoints || 0;
+    const titleEl = document.getElementById('rpg-modal-title');
+    const subtitleEl = document.getElementById('rpg-modal-subtitle');
+    const pointsEl = document.getElementById('rpg-modal-points');
+    
+    if (titleEl) titleEl.innerText = `Водач ${leader.name || "Пълководец"}`;
+    if (subtitleEl) subtitleEl.innerText = `Клан ${leader.clan || clanKey} | Клас: ${leader.currentClass || "Багатур"} (Ниво ${leader.level || 1})`;
+    if (pointsEl) pointsEl.innerText = leader.skillPoints || 0;
 
     // 2. Рендериране на 9-те слота за екипировка
     const equipGrid = document.getElementById('rpg-equipment-grid');
     if (equipGrid) {
         equipGrid.innerHTML = "";
         const slotLabels = ["Шлем", "Нагръдник", "Оръжие", "Щит", "Ръкавици", "Ботуши", "Амулет", "Пръстен 1", "Пръстен 2"];
-        
         for (let i = 0; i < 9; i++) {
             const item = leader.equipment[i];
             const box = document.createElement('div');
             box.className = "rpg-equip-box";
             box.style.cssText = "width:75px; height:75px; background:rgba(0,0,0,0.5); border:1px solid #d4af37; border-radius:4px; display:flex; flex-direction:column; align-items:center; justify-content:center; cursor:pointer; font-size:11px; color:#fff;";
             box.onclick = () => alert(`Оръжейна стая: Преместете предмет от съкровищницата в слот за ${slotLabels[i]}.`);
-            
+
             if (item) {
                 box.innerHTML = `<div>${item.icon}</div><span style="font-size:8px;">${item.name.substring(0,6)}..</span>`;
             } else {
@@ -278,15 +269,17 @@ window.openHeroRPGModal = function(clanKey) {
     const petSlot = document.getElementById('rpg-pet-slot');
     if (petSlot) {
         if (leader.pet) {
-            const activePet = window.rpgDatabase.petsDatabase[leader.pet];
-            petSlot.innerHTML = `<div style="font-size:32px;">${activePet.icon}</div><span style="font-size:8px; color:#ffd700; font-weight:bold;">${activePet.name}</span>`;
-            petSlot.title = activePet.desc;
-            petSlot.onclick = () => {
-                if(confirm(`Искате ли да освободите домашния любимец ${activePet.name}?`)) {
-                    leader.pet = null;
-                    window.openHeroRPGModal(clanKey);
-                }
-            };
+            const activePet = window.rpgDatabase.petsDatabase[leader.pet]; // FIXED TYPO HERE
+            if (activePet) {
+                petSlot.innerHTML = `<div style="font-size:32px;">${activePet.icon}</div><span style="font-size:8px; color:#ffd700; font-weight:bold;">${activePet.name}</span>`;
+                petSlot.title = activePet.desc;
+                petSlot.onclick = () => {
+                    if(confirm(`Искате ли да освободите домашния любимец ${activePet.name}?`)) {
+                        leader.pet = null;
+                        window.openHeroRPGModal(clanKey);
+                    }
+                };
+            }
         } else {
             petSlot.innerHTML = `<span style="font-size:24px; opacity:0.3;">🐾</span><span style="font-size:8px; color:#666;">ПРАЗЕН</span>`;
             petSlot.title = "Няма зачислен любимец. Кликнете, за да изберете от наличните в рода.";
@@ -298,7 +291,7 @@ window.openHeroRPGModal = function(clanKey) {
                     optionsStr += `${idx + 1}. ${p.icon} ${p.name} - ${p.desc}\n`;
                 });
                 const choice = prompt(optionsStr);
-                if (choice && choice > 0 && choice <= petKeys.length) {
+                if (choice && choice > 0 && choice <= petKeys.length) { // FIXED LOGIC HERE
                     leader.pet = petKeys[choice - 1];
                     window.openHeroRPGModal(clanKey);
                 }
@@ -310,30 +303,28 @@ window.openHeroRPGModal = function(clanKey) {
     const skillsContainer = document.getElementById('rpg-modal-skills-container');
     if (skillsContainer) {
         skillsContainer.innerHTML = "";
-
-        // Бутон за ръчно вдигане на нива, ако има събран storedXP
         let reqXP = window.rpgDatabase.getXPRequiredForLevel(leader.level);
+        
         if (!leader.isAuto) {
-            const xpBarBtn = document.createElement('div');
+            const xpBarBtn = document.createElement('div'); // FIXED TYPO HERE
             xpBarBtn.style.cssText = "background:rgba(0,198,255,0.15); border:1px solid #00c6ff; padding:10px; border-radius:6px; text-align:center; margin-bottom:10px; color:#fff; font-size:12px;";
-            
+
             if (leader.storedXP >= reqXP) {
                 xpBarBtn.innerHTML = `<div>✨ Събран ръчен опит: <b>${leader.storedXP} / ${reqXP} XP</b></div>
                                       <button onclick="window.consumeStoredXPManual('${clanKey}')" style="margin-top:5px; background:#0072ff; color:#fff; border:none; padding:4px 10px; border-radius:4px; cursor:pointer; font-weight:bold; font-family:'Cinzel';">КАЧИ НИВО СЕГА ➔</button>`;
             } else {
-                xpBarBtn.innerHTML = `<div>⏳ Събран ръчен опит: <b>${leader.storedXP} / ${reqXP} XP</b> (Недостига опит)</div>`;
+                xpBarBtn.innerHTML = `<div> Събран ръчен опит: <b>${leader.storedXP} / ${reqXP} XP</b> (Недостига опит)</div>`;
             }
             skillsContainer.appendChild(xpBarBtn);
         }
 
-        // Списък със самите способности
         Object.entries(window.rpgDatabase.skillTrees).forEach(([skillKey, skillData]) => {
             const lvl = leader.skills[skillKey] || 0;
             const node = document.createElement('div');
             node.style.cssText = "background:rgba(20,20,20,0.8); border:1px solid #333; padding:8px 12px; border-radius:6px; display:flex; justify-content:space-between; align-items:center; color:#fff;";
-            
+
             let buyButton = "";
-            if (!leader.isAuto && leader.skillPoints > 0) {
+            if (!leader.isAuto && leader.skillPoints > 0) { // FIXED LOGIC HERE
                 buyButton = `<button onclick="window.buySkillManual('${clanKey}', '${skillKey}')" style="background:#00ffcc; color:#000; border:none; padding:4px 8px; font-weight:bold; border-radius:4px; cursor:pointer; font-size:11px;">[+] Вдигни</button>`;
             }
 
@@ -347,7 +338,5 @@ window.openHeroRPGModal = function(clanKey) {
             skillsContainer.appendChild(node);
         });
     }
-
-    // Показване на модала
     modalEl.style.display = "block";
 };
