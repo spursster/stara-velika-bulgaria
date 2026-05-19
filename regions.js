@@ -1,8 +1,13 @@
 /**
-МОДУЛ: РЕГИОНИ И ГЕОПОЛИТИЧЕСКА КАРТА - Велика България
-СТАТУС: НАПЪЛНО СИНХРОНИЗИРАН И БЕЗ ГРЕШКИ
-КОРЕКЦИЯ: Поправени счупени HTML стрингове, оператори и имена на променливи.
+==========================================================================
+ПРОЕКТ: ВЕЛИКА БЪЛГАРИЯ
+ФАЙЛ: regions.js (КАРТА, ИНСПЕКЦИЯ И ЗАВЛАДЯВАНЕ)
+СТАТУС: НАПЪЛНО ИЗЧИСТЕН
+КОРЕКЦИЯ: Поправен е синтаксисът на бутоните за атака и пренасочване към новата битка.
+==========================================================================
 */
+
+// 1. ОТВАРЯНЕ НА КАРТАТА
 window.openRegionsMap = function() {
     const mainArea = document.getElementById('game-main-area');
     if (!mainArea) return;
@@ -40,7 +45,7 @@ window.openRegionsMap = function() {
 
                     return `
                         <div onclick="window.inspectRegion('${key}')" style="background: ${bgStyle}; border: ${borderStyle}; padding: 10px; border-radius: 6px; cursor: pointer; text-align: center; transition: transform 0.2s;" onmouseover="this.style.transform='scale(1.03)'" onmouseout="this.style.transform='scale(1)'">
-                            <div style="font-size: 1.4em; margin-bottom: 4px;">️</div>
+                            <div style="font-size: 1.4em; margin-bottom: 4px;">🗺️</div>
                             <strong style="color: #ffd700; font-size: 12px; display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${key}</strong>
                             <div style="font-size: 10px; color: #888; margin-top: 3px;">Клан: ${controllingClan}</div>
                             <div style="font-size: 9px; color: #aaa; margin-top: 2px;">💎 ${reg.resource}</div>
@@ -54,9 +59,7 @@ window.openRegionsMap = function() {
     `;
 };
 
-/**
-ИНСПЕКЦИЯ И ДЕЙСТВИЯ ЗА КОНКРЕТЕН РЕГИОН
-*/
+// 2. ИНСПЕКЦИЯ НА РЕГИОН И ГЕНЕРИРАНЕ НА БУТОНИ
 window.inspectRegion = function(regionName) {
     if (!window.worldData || !window.worldData.regions || !window.worldData.regions[regionName]) return;
     const reg = window.worldData.regions[regionName];
@@ -66,6 +69,7 @@ window.inspectRegion = function(regionName) {
     // Инициализация на RPG пасивите за сигурност
     if (window.initializeHeroRPGData) window.initializeHeroRPGData(hero);
     let skills = hero.skills || {};
+    
     const ownedRegionsFlat = Array.isArray(window.playerRegions) ? window.playerRegions.flat() : [];
     const isPlayerOwned = ownedRegionsFlat.includes(regionName);
 
@@ -83,17 +87,23 @@ window.inspectRegion = function(regionName) {
     overlay.id = 'region-inspect-overlay';
     overlay.style.cssText = `position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); backdrop-filter: blur(6px); display: flex; justify-content: center; align-items: center; z-index: 50000; font-family: 'Cinzel', serif; box-sizing: border-box; padding: 15px;`;
 
+    // --- ПОПРАВЕНИ БУТОНИ ---
     let actionButtonHTML = '';
     if (isPlayerOwned) {
+        // Бутон за подобрение (ако регионът е твой)
         actionButtonHTML = `
-            <button onclick="window.upgradeRegionInfrastructure('${regionName}', ${finalUpgradeCost})" style="width: 100%; background: #00ffcc; color: #000; border: none; padding: 12px; font-weight: bold; cursor: pointer; text-transform: uppercase; border-radius: 4px; font-size: 0.85em; margin-bottom: 10px;">
-                🏗️ Модернизирай Инфраструктура (${finalUpgradeCost} зл.)
+            <button onclick="window.upgradeRegionInfrastructure('${regionName}', ${finalUpgradeCost})" 
+                style="width: 100%; background: #00ffcc; color: #000; border: none; padding: 12px; font-weight: bold; cursor: pointer; text-transform: uppercase; border-radius: 4px; font-size: 0.85em; margin-bottom: 10px;"> 
+                🏗️ Модернизирай Инфраструктура (${finalUpgradeCost} зл.) 
             </button>
         `;
     } else {
+        // Бутон за БИТКА (ако регионът не е твой)
+        // ТУК БЕШЕ ГРЕШКАТА - Вече е поправен синтаксисът
         actionButtonHTML = `
-            <button onclick="document.getElementById('region-inspect-overlay').remove(); if(window.startBattle) window.startBattle('${regionName}');" style="width: 100%; background: #ff3366; color: #fff; border: none; padding: 12px; font-weight: bold; cursor: pointer; text-transform: uppercase; border-radius: 4px; font-size: 0.85em; margin-bottom: 10px;">
-                ️ Изпрати Войски за Завладяване
+            <button onclick="document.getElementById('region-inspect-overlay').remove(); window.startBattle('${regionName}');" 
+                style="width: 100%; background: #ff3366; color: #fff; border: none; padding: 12px; font-weight: bold; cursor: pointer; text-transform: uppercase; border-radius: 4px; font-size: 0.85em; margin-bottom: 10px;"> 
+                ⚔️ Изпрати Войски за Завладяване 
             </button>
         `;
     }
@@ -108,7 +118,7 @@ window.inspectRegion = function(regionName) {
                 <div>💎 Ресурс: <strong>${reg.resource}</strong></div>
                 <div>🚩 Контролиращ Клан: <strong>${nativeClan}</strong></div>
                 <div>🛡️ Ниво на Защита: <strong>Ниво ${reg.defenseLevel || 1}</strong></div>
-                <div>️ Инфраструктура: <strong>Ниво ${reg.infrastructureLevel || 1}</strong></div>
+                <div>🏗️ Инфраструктура: <strong>Ниво ${reg.infrastructureLevel || 1}</strong></div>
                 <div>💀 Трудност на Терена: <strong>${reg.difficulty}%</strong></div>
             </div>
 
@@ -122,9 +132,7 @@ window.inspectRegion = function(regionName) {
     document.body.appendChild(overlay);
 };
 
-/**
-НАДГРАЖДАНЕ НА ИНФРАСТРУКТУРАТА ВЪВ ВЛАДЕНИТЕ ЗЕМИ
-*/
+// 3. ПОДОБРЯВАНЕ НА ИНФРАСТРУКТУРАТА
 window.upgradeRegionInfrastructure = function(regionName, cost) {
     const hero = window.currentHero;
     if (!hero) return;
@@ -138,7 +146,7 @@ window.upgradeRegionInfrastructure = function(regionName, cost) {
         }
 
         if (window.showAdvisorMsg) {
-            window.showAdvisorMsg(`️ СТРОЕЖ: Инфраструктурата на регион "${regionName}" бе успешно модернизирана! Нивото на защита се повиши.`);
+            window.showAdvisorMsg(`🏗️ СТРОЕЖ: Инфраструктурата на регион "${regionName}" бе успешно модернизирана! Нивото на защита се повиши.`);
         }
 
         if (window.updateCharacterUI) window.updateCharacterUI(hero);
