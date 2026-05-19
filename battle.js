@@ -1,11 +1,11 @@
-/** ========================================================================== 
+/** ==========================================================================
 ПРОЕКТ: ВЕЛИКА БЪЛГАРИЯ
-ФАЙЛ: battle.js (АДАПТИВНА МОБИЛНА БИТКА - СЛОТОВЕ ГОРЕ, HP БАРОВЕ, STICKY БУТОНИ)
-СТАТУС: НАПЪЛНО ФУНКЦИОНАЛЕН И ОПТИМИЗИРАН
+ФАЙЛ: battle.js (АДАПТИВНА МОБИЛНА БИТКА – СЛОТОВЕ ГОРЕ, HP БАРОВЕ)
+СТАТУС: КОРИГИРАН – ПРИЕМА ИМЕ НА РЕГИОН КАТО НИЗ
 ========================================================================== */
 
 (function() {
-    // Уникален CSS за битката (добавя се само веднъж)
+    // Уникален CSS за битката (добавя се само веднъж, без да нарушава дизайна)
     if (!document.getElementById('battle-styles')) {
         const style = document.createElement('style');
         style.id = 'battle-styles';
@@ -136,10 +136,8 @@
         document.head.appendChild(style);
     }
 
-    // Глобална променлива за състоянието на битката
     window.currentBattleState = null;
 
-    // Функция за показване на съобщения (съвместимост със съществуващия код)
     window.showAdvisorMsg = window.showAdvisorMsg || function(msg) {
         console.log("СЪВЕТНИК: " + msg);
         const battleLog = document.getElementById('battle-log-content');
@@ -153,22 +151,30 @@
         }
     };
 
-    // СТАРТИРАНЕ НА БИТКА
+    // СТАРТИРАНЕ НА БИТКА – ПРИЕМА ИМЕ (НИЗ) ИЛИ ОБЕКТ
     window.startBattle = function(targetRegion) {
-        console.log("startBattle извикана", targetRegion);
-        
-        // Вземане на целевия регион
-        if (!targetRegion && window.currentSelectedRegion) {
-            targetRegion = window.currentSelectedRegion;
+        console.log("startBattle извикана с аргумент:", targetRegion);
+
+        // Ако е подаден низ (име на регион), превръщаме го в обект
+        let regionObj = targetRegion;
+        if (typeof targetRegion === 'string') {
+            if (window.worldData && window.worldData.regions && window.worldData.regions[targetRegion]) {
+                regionObj = window.worldData.regions[targetRegion];
+                regionObj.name = targetRegion; // гарантираме, че има име
+            } else {
+                window.showAdvisorMsg("Грешка: Регионът '" + targetRegion + "' не съществува в световните данни.");
+                console.error("Липсва регион:", targetRegion);
+                return;
+            }
         }
-        if (!targetRegion) {
-            window.showAdvisorMsg("Моля, изберете регион за атака!");
+
+        if (!regionObj) {
+            window.showAdvisorMsg("Невалиден регион за атака!");
             return;
         }
 
         // Събиране на играчовите герои (само любими, макс 5)
         let allLeaders = [];
-        
         if (window.worldData && window.worldData.clans) {
             allLeaders = Object.entries(window.worldData.clans)
                 .filter(([key, clan]) => clan.isJoined === true || clan.isFavorite === true)
@@ -193,25 +199,26 @@
             });
         }
 
-        // Филтриране на бойната група
         let battleGroup = allLeaders.filter(l => l.isFavorite === true).slice(0, 5);
         if (battleGroup.length === 0) {
             battleGroup = allLeaders.filter(l => l.currentArmy > 0).slice(0, 5);
         }
 
         let totalPlayerArmy = battleGroup.reduce((sum, h) => sum + h.currentArmy, 0);
-        
+
         if (totalPlayerArmy === 0) {
             window.showAdvisorMsg("Твоите избрани воеводи нямат войска! Попълни ги в Казармите!");
             return;
         }
 
-        // Създаване на обект за състоянието на битката
+        // Вземаме силата на врага от региона
+        let enemyArmy = regionObj.armySize || (regionObj.difficulty * 15) || 200;
+
         window.currentBattleState = {
-            region: targetRegion,
+            region: regionObj,
             group: battleGroup,
-            enemyArmy: targetRegion.armySize || 200,
-            initialEnemyArmy: targetRegion.armySize || 200,
+            enemyArmy: enemyArmy,
+            initialEnemyArmy: enemyArmy,
             initialPlayerArmy: totalPlayerArmy,
             round: 1,
             battleLog: [],
@@ -219,11 +226,9 @@
             battleActive: true
         };
 
-        // Рендиране на битката
         window.renderBattleLayout();
     };
 
-    // РЕНДИРАНЕ НА БИТКАТА
     window.renderBattleLayout = function() {
         const state = window.currentBattleState;
         if (!state) return;
@@ -235,7 +240,6 @@
             document.body.appendChild(battleScreen);
         }
 
-        // Изчисляване на проценти живот за героите
         const heroHpPercentages = state.group.map(hero => {
             const maxArmy = hero.initialArmyMax || 300;
             return Math.max(0, (hero.currentArmy / maxArmy) * 100);
@@ -250,7 +254,7 @@
 
         battleScreen.innerHTML = `
             <div class="battle-header">
-                <h2>⚔️ БИТКА ЗА ${state.region.name || state.region || "ЗЕМИТЕ"} ⚔️</h2>
+                <h2>⚔️ БИТКА ЗА ${state.region.name || state.region} ⚔️</h2>
                 <div>Рунд ${state.round}</div>
             </div>
             <div class="heroes-slots" id="heroes-slots">
@@ -293,36 +297,26 @@
             </div>
         `;
 
-        // Добавяне на функционалност към бутоните
         const attackBtn = document.getElementById('battle-attack-btn');
         const retreatBtn = document.getElementById('battle-retreat-btn');
-        
-        if (attackBtn) {
-            attackBtn.onclick = () => window.processBattleTurn('attack');
-        }
-        if (retreatBtn) {
-            retreatBtn.onclick = () => window.retreatFromBattle();
-        }
+        if (attackBtn) attackBtn.onclick = () => window.processBattleTurn('attack');
+        if (retreatBtn) retreatBtn.onclick = () => window.retreatFromBattle();
     };
 
-    // ОБРАБОТВАНЕ НА БИТКА
     window.processBattleTurn = function(action) {
         const state = window.currentBattleState;
         if (!state || !state.battleActive) return;
 
         if (action === 'attack') {
-            // Изчисляване на щетите
             let playerTotal = state.group.reduce((sum, h) => sum + h.currentArmy, 0);
             let damageToEnemy = Math.floor(playerTotal * (0.2 + Math.random() * 0.2));
             let damageToPlayer = Math.floor(state.enemyArmy * (0.15 + Math.random() * 0.25));
-            
-            // Прилагане на щетите
+
             damageToEnemy = Math.min(damageToEnemy, state.enemyArmy);
             damageToPlayer = Math.min(damageToPlayer, playerTotal);
-            
+
             state.enemyArmy -= damageToEnemy;
-            
-            // Разпределяне на щетите между героите пропорционално
+
             let remainingDamage = damageToPlayer;
             for (let hero of state.group) {
                 if (remainingDamage <= 0) break;
@@ -330,35 +324,32 @@
                 hero.currentArmy -= heroShare;
                 remainingDamage -= heroShare;
             }
-            
-            // Добавяне на лог
+
             state.battleLog.unshift(`🗡️ Нанасяш ${damageToEnemy} щети на врага!`);
             state.battleLog.unshift(`💔 Врагът ти отвръща с ${damageToPlayer} щети!`);
-            
-            // Проверка за край на битката
+
             let playerAlive = state.group.some(h => h.currentArmy > 0);
             let enemyAlive = state.enemyArmy > 0;
-            
+
             if (!enemyAlive) {
                 state.battleActive = false;
                 state.battleLog.unshift(`🏆 ПОБЕДА! 🏆 Регионът ${state.region.name || state.region} е превзет!`);
                 window.endBattle(true);
                 return;
             }
-            
+
             if (!playerAlive) {
                 state.battleActive = false;
                 state.battleLog.unshift(`💀 ЗАГУБА! 💀 Армията ти е разбита!`);
                 window.endBattle(false);
                 return;
             }
-            
+
             state.round++;
             window.renderBattleLayout();
         }
     };
 
-    // ОТСТЪПЛЕНИЕ
     window.retreatFromBattle = function() {
         const state = window.currentBattleState;
         if (state && state.battleActive) {
@@ -368,21 +359,18 @@
         }
     };
 
-    // ПРИКЛЮЧВАНЕ НА БИТКАТА
     window.endBattle = function(isVictory) {
         const state = window.currentBattleState;
         if (!state) return;
-        
+
         if (isVictory && state.region) {
-            // Маркиране на региона като превзет (ако системата го поддържа)
-            if (window.worldData && window.worldData.regions) {
-                const regionIndex = window.worldData.regions.findIndex(r => r.id === state.region.id);
-                if (regionIndex !== -1) {
-                    window.worldData.regions[regionIndex].controlledBy = "player";
+            if (window.worldData && window.worldData.regions && state.region.name) {
+                const regionKey = state.region.name;
+                if (!window.playerRegions) window.playerRegions = [];
+                if (!window.playerRegions.includes(regionKey)) {
+                    window.playerRegions.push(regionKey);
                 }
             }
-            
-            // Добавяне на награди
             let goldReward = Math.floor(state.enemyArmy * 0.5);
             if (window.currentHero) {
                 window.currentHero.gold = (window.currentHero.gold || 0) + goldReward;
@@ -392,17 +380,13 @@
         } else {
             window.showAdvisorMsg("Битката приключи. Войската ти се нуждае от почивка.");
         }
-        
-        // Затваряне на екрана
+
         const battleScreen = document.getElementById('battle-screen');
-        if (battleScreen) {
-            battleScreen.style.display = 'none';
-        }
-        
-        // Обновяване на интерфейса
+        if (battleScreen) battleScreen.style.display = 'none';
+
         if (window.renderTop6LeadersUI) window.renderTop6LeadersUI();
         if (window.updateCharacterUI && window.currentHero) window.updateCharacterUI(window.currentHero);
-        
+
         window.currentBattleState = null;
     };
 })();
