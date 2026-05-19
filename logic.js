@@ -1,7 +1,7 @@
 /**
  * МОДУЛ: ГЛАВНА ЛОГИКА - Велика България
  * СТАТУС: НАПЪЛНО СИНХРОНИЗИРАН С УНАКВИЧЕНИТЕ КЛАНОВЕ И ЕЛИТНАТА ЛЕНТА
- * НАДГРАДАНЕ: Интегриран нов инструмент LocalStorage (Auto-Save & Load система).
+ * НАДГРАДАНЕ: Защитена Auto-Save & Load система, съвместима с таймера за време.
  * КОРЕКЦИЯ: Премахнати фиктивни родове от механата и заменени с реални кланове.
  * Статистика на файловете в проекта: 15
  */
@@ -9,7 +9,7 @@
 window.initNewGame = function() {
     // ПРОВЕРКА ЗА ЗАПИС: Първо се опитваме да заредим стара игра
     if (window.loadGreatBulgariaGame && window.loadGreatBulgariaGame()) {
-        return; // Ако има запис, спираме дотук и играчът продължава оттам
+        return; // Ако има успешен запис, спираме дотук
     }
 
     let selectedName = "Кубрат"; 
@@ -69,8 +69,6 @@ window.buyHeroFromTavern = function() {
     }
 
     let poolNames = ["Птолемей I Сотер", "Аспарух", "Тервел", "Крум", "Омуртаг", "Пресиян"];
-    
-    // КОРЕКЦИЯ: Използваме само реално съществуващи кланове от играта
     let poolClans = ["Птоломеи", "Дуло", "Комитопули", "Асеневци", "Шишмановци"];
 
     let randomName = poolNames[Math.floor(Math.random() * poolNames.length)];
@@ -110,45 +108,55 @@ window.buyHeroFromTavern = function() {
         window.showAdvisorMsg(`👑 МЕХАНА: Новият водач ${randomName} от род ${randomClan} се присъедини!`);
     }
 
-    // ИНСТРУМЕНТ: Автоматично запазване след покупка на герой
+    // Автоматично запазване след покупка на герой
     if (window.saveGreatBulgariaGame) window.saveGreatBulgariaGame();
 };
 
 // =======================================================================
-// ИНСТРУМЕНТ: СИСТЕМА ЗА АВТОМАТИЧНО ЗАПАЗВАНЕ И ЗАРЕЖДАНЕ (LocalStorage)
+// ИНСТРУМЕНТ: ЗАЩИТЕНА СИСТЕМА ЗА АВТОМАТИЧНО ЗАПАЗВАНЕ И ЗАРЕЖДАНЕ
 // =======================================================================
 
 window.saveGreatBulgariaGame = function() {
     if (!window.currentHero) return;
     
-    const saveData = {
-        currentHero: window.currentHero,
-        unlockedHeroes: window.unlockedHeroes || []
-    };
-    
-    localStorage.setItem('GreatBulgaria_SaveGame', JSON.stringify(saveData));
-    console.log("💾 Прогресът на Велика България беше запазен успешно!");
+    try {
+        const saveData = {
+            currentHero: window.currentHero,
+            unlockedHeroes: window.unlockedHeroes || []
+        };
+        localStorage.setItem('GreatBulgaria_SaveGame', JSON.stringify(saveData));
+        console.log("💾 Прогресът на Велика България беше запазен успешно!");
+    } catch (e) {
+        console.error("Грешка при запис:", e);
+    }
 };
 
 window.loadGreatBulgariaGame = function() {
     const saved = localStorage.getItem('GreatBulgaria_SaveGame');
-    if (!saved) return false; // Няма намерен запис, стартира изцяло нова игра
+    if (!saved) return false; 
     
     try {
         const parsed = JSON.parse(saved);
+        
+        // Подсигуряване на коректни обекти
+        if (!parsed.currentHero || !parsed.currentHero.name) {
+            localStorage.removeItem('GreatBulgaria_SaveGame'); // Трие дефектния запис
+            return false;
+        }
+
         window.currentHero = parsed.currentHero;
         window.unlockedHeroes = parsed.unlockedHeroes || [];
         
-        // Презареждаме унаследените обекти в света за Топ 6 лентата
+        // Безопасно пълнене на worldData.clans без да чупим time.js
         if (window.worldData && window.worldData.clans) {
             window.unlockedHeroes.forEach(hero => {
-                if (hero.clan) {
+                if (hero && hero.clan) {
                     window.worldData.clans[hero.clan] = hero;
                 }
             });
         }
         
-        // Обновяваме целия интерфейс веднага с натоварените данни
+        // Обновяваме целия интерфейс
         if (window.updateCharacterUI) window.updateCharacterUI(window.currentHero);
         if (window.renderTop6LeadersUI) window.renderTop6LeadersUI();
         if (window.updatePortalContainerUI) window.updatePortalContainerUI();
@@ -156,16 +164,16 @@ window.loadGreatBulgariaGame = function() {
         if (window.showAdvisorMsg) {
             window.showAdvisorMsg("👑 Добре дошъл обратно, Воеводо! Твоето царство е заредено успешно.");
         }
-        console.log("💾 Записът беше зареден успешно от LocalStorage.");
         return true;
     } catch (e) {
-        console.error("Грешка при зареждане на файла:", e);
+        console.error("Критична грешка при зареждане, нулиране на кеша:", e);
+        localStorage.removeItem('GreatBulgaria_SaveGame');
         return false;
     }
 };
 
 window.clearGreatBulgariaSave = function() {
     localStorage.removeItem('GreatBulgaria_SaveGame');
-    console.log("🗑️ Записът беше изтрит. Играта ще започне на чисто при следващия рестарт.");
+    console.log("🗑️ Записът беше изтрит.");
     location.reload();
 };
