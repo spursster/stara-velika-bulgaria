@@ -1,8 +1,7 @@
 /**
  * МОДУЛ: ГЛАВНА ЛОГИКА - Велика България
- * СТАТУС: НАПЪЛНО СИНХРОНИЗИРАН С ОРИГИНАЛНАТА БАЗА ДАННИ И ЕЛЕМЕНТИТЕ ЗА ВРЕМЕ
- * НАДГРАДАНЕ: Форсирано обновяване на <span id="current-time-info"> веднага след избор от прозореца.
- * КОРЕКЦИЯ: Директно инжектиране на времето при старт на Нова Игра за избягване на "Зареждане...".
+ * СТАТУС: НАПЪЛНО СИНХРОНИЗИРАН С HTML, UI И КАЗАРМИТЕ
+ * КОРЕКЦИЯ: Напълно работеща покупка на герои (buyNewHero) и старт от 480 г. пр.н.е.
  * Статистика на файловете в проекта: 15
  */
 
@@ -66,19 +65,18 @@ window.startFreshGameLogic = function() {
         window.worldData.clans[selectedClan] = window.currentHero;
     }
 
-    // ИНИЦИАЛИЗАЦИЯ НА ВРЕМЕТО ОЩЕ ТУК ЗА СИГУРНОСТ
-    window.gameTime = { seasonIndex: 0, year: 632, era: "от н.е." };
+    // НАДГРАЖДАНЕ: Играта вече започва от 480 г. пр.н.е. (480 BC)
+    window.gameTime = { seasonIndex: 0, year: 480, era: "пр.н.е." };
 
     // Обновяваме целия интерфейс
     if (window.updateCharacterUI) window.updateCharacterUI(window.currentHero);
     if (window.renderTop6LeadersUI) window.renderTop6LeadersUI();
     
-    // Форсирано пренаписване на "Зареждане..." веднага след създаване на обекта
     if (window.updateTimeUI) {
         window.updateTimeUI();
     } else {
         const timeDisplay = document.getElementById('current-time-info');
-        if (timeDisplay) timeDisplay.innerHTML = "🌱 Пролет 632 г. от н.е.";
+        if (timeDisplay) timeDisplay.innerHTML = "🌱 Пролет 480 г. пр.н.е.";
     }
 
     if (window.updatePortalContainerUI) {
@@ -89,6 +87,7 @@ window.startFreshGameLogic = function() {
     if (window.saveGreatBulgariaGame) window.saveGreatBulgariaGame();
 };
 
+// Основната функция за покупка на герой от механата
 window.buyHeroFromTavern = function() {
     if (!window.currentHero) return;
 
@@ -97,6 +96,8 @@ window.buyHeroFromTavern = function() {
     if (window.currentHero.gold < heroCost) {
         if (window.showAdvisorMsg) {
             window.showAdvisorMsg("❌ НЕДОСТИГ: Нямате достатъчно злато за нов водач!");
+        } else {
+            alert("Нямате достатъчно злато за нов водач!");
         }
         return;
     }
@@ -125,24 +126,33 @@ window.buyHeroFromTavern = function() {
         skills: { tactics: 0, endurance: 0, economy: 0 }
     };
 
+    // Намаляваме златото на играча
     window.currentHero.gold -= heroCost;
 
+    // Добавяме новия водач в списъка с отключени водачи
     if (!window.unlockedLeaders) window.unlockedLeaders = [];
     window.unlockedLeaders.push(purchasedHero);
 
-    if (window.worldData && window.worldData.clans) {
-        window.worldData.clans[randomClan] = purchasedHero;
-    }
+    // Добавяме го и към глобалния свят на играта, за да се вижда навсякъде
+    if (!window.worldData) window.worldData = {};
+    if (!window.worldData.clans) window.worldData.clans = {};
+    window.worldData.clans[randomClan] = purchasedHero;
 
+    // Обновяваме графичния интерфейс веднага
     if (window.updateCharacterUI) window.updateCharacterUI(window.currentHero);
     if (window.renderTop6LeadersUI) window.renderTop6LeadersUI();
+    if (window.renderBarracksLayout) window.renderBarracksLayout();
 
     if (window.showAdvisorMsg) {
         window.showAdvisorMsg(`👑 МЕХАНА: Новият водач ${randomName} от род ${randomClan} се присъедини!`);
     }
 
+    // Запазваме новия прогрес
     if (window.saveGreatBulgariaGame) window.saveGreatBulgariaGame();
 };
+
+// СИНХРОНИЗАЦИОНЕН МОСТ: Свързва бутона от index.html с логиката на играта
+window.buyNewHero = window.buyHeroFromTavern;
 
 // =======================================================================
 // ИНСТРУМЕНТ: СТАРТОВ МОДАЛЕН ПРОЗОРЕЦ ЗА ИЗБОР НА ИГРАЧА
@@ -209,7 +219,7 @@ window.saveGreatBulgariaGame = function() {
         const saveData = {
             currentHero: window.currentHero,
             unlockedLeaders: window.unlockedLeaders || [],
-            gameTime: window.gameTime || { seasonIndex: 0, year: 632, era: "от н.е." }
+            gameTime: window.gameTime || { seasonIndex: 0, year: 480, era: "пр.н.е." }
         };
         localStorage.setItem('GreatBulgaria_SaveGame', JSON.stringify(saveData));
         console.log("💾 Прогресът беше запазен успешно!");
@@ -226,7 +236,7 @@ window.loadGreatBulgariaGame = function() {
         const parsed = JSON.parse(saved);
         window.currentHero = parsed.currentHero;
         window.unlockedLeaders = parsed.unlockedLeaders || [];
-        window.gameTime = parsed.gameTime || { seasonIndex: 0, year: 632, era: "от н.е." };
+        window.gameTime = parsed.gameTime || { seasonIndex: 0, year: 480, era: "пр.н.е." };
         
         if (window.worldData && window.worldData.clans) {
             window.unlockedLeaders.forEach(hero => {
@@ -240,7 +250,6 @@ window.loadGreatBulgariaGame = function() {
         if (window.renderTop6LeadersUI) window.renderTop6LeadersUI();
         if (window.updatePortalContainerUI) window.updatePortalContainerUI();
         
-        // Пренаписваме времето веднага при зареждане
         if (window.updateTimeUI) window.updateTimeUI();
 
         if (window.showAdvisorMsg) {
@@ -251,13 +260,4 @@ window.loadGreatBulgariaGame = function() {
         localStorage.removeItem('GreatBulgaria_SaveGame');
         return false;
     }
-};
-
-window.clearGreatBulgariaSaveWithoutReload = function() {
-    localStorage.removeItem('GreatBulgaria_SaveGame');
-};
-
-window.clearGreatBulgariaSave = function() {
-    localStorage.removeItem('GreatBulgaria_SaveGame');
-    location.reload();
 };
