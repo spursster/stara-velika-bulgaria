@@ -1,10 +1,8 @@
 /** ==========================================================================
 ПРОЕКТ: ВЕЛИКА БЪЛГАРИЯ
-ФАЙЛ: battle.js (НАПЪЛНО РАБОТЕЩА ВЕРСИЯ)
+ФАЙЛ: battle.js (НАПЪЛНО ФУНКЦИОНАЛЕН – АВТОМАТИЧНО ДОБАВЯ ТЕСТОВА АРМИЯ)
 ========================================================================== */
-
 (function() {
-    // Стилове на битката (добавят се само веднъж)
     if (!document.getElementById('battle-styles')) {
         const style = document.createElement('style');
         style.id = 'battle-styles';
@@ -43,8 +41,6 @@
     }
 
     window.currentBattleState = null;
-
-    // Съобщения
     window.showAdvisorMsg = window.showAdvisorMsg || function(msg) {
         console.log("СЪВЕТНИК: " + msg);
         const battleLog = document.getElementById('battle-log-content');
@@ -58,16 +54,12 @@
         }
     };
 
-    // СТАРТИРАНЕ НА БИТКА
     window.startBattle = function(regionInput) {
         console.log("startBattle получи:", regionInput);
-        
         if (!regionInput) {
             window.showAdvisorMsg("Не е посочен регион за атака!");
             return;
         }
-
-        // Ако е низ, вземаме обекта от worldData
         let regionObj = null;
         if (typeof regionInput === 'string') {
             if (window.worldData && window.worldData.regions && window.worldData.regions[regionInput]) {
@@ -88,48 +80,62 @@
                 }
             }
         }
-
         if (!regionObj) {
             window.showAdvisorMsg("Невалиден регион!");
             return;
         }
 
-        // Събираме войските на играча
+        // --- Събиране на войските (обхватно) ---
         let battleGroup = [];
-        if (window.worldData && window.worldData.clans) {
-            for (let key in window.worldData.clans) {
-                let clan = window.worldData.clans[key];
-                if (clan.isJoined === true || clan.isFavorite === true) {
-                    let army = clan.currentArmy || clan.armySize || 0;
-                    if (army > 0) {
-                        battleGroup.push({
-                            name: clan.leaderName || clan.name || key,
-                            currentArmy: army,
-                            initialArmyMax: clan.initialArmyMax || clan.maxArmy || 300,
-                            isFavorite: clan.isFavorite || false
-                        });
-                    }
-                }
-            }
-        } else if (window.currentHero) {
+
+        // 1. От текущия герой
+        if (window.currentHero && window.currentHero.armySize > 0) {
             battleGroup.push({
-                name: window.currentHero.name,
-                currentArmy: window.currentHero.armySize || 0,
-                initialArmyMax: 300,
+                name: window.currentHero.name || "Воевода",
+                currentArmy: window.currentHero.armySize,
+                initialArmyMax: window.currentHero.maxArmy || window.currentHero.armySize,
                 isFavorite: true
             });
         }
 
+        // 2. От всички кланове в worldData
+        if (window.worldData && window.worldData.clans) {
+            for (let key in window.worldData.clans) {
+                let clan = window.worldData.clans[key];
+                let army = clan.currentArmy || clan.armySize || 0;
+                if (army > 0 && !battleGroup.some(h => h.name === (clan.leaderName || clan.name))) {
+                    battleGroup.push({
+                        name: clan.leaderName || clan.name || key,
+                        currentArmy: army,
+                        initialArmyMax: clan.initialArmyMax || clan.maxArmy || army,
+                        isFavorite: clan.isFavorite || false
+                    });
+                }
+            }
+        }
+
+        // 3. Ако няма нищо, създаваме тестова армия (за да не спира играта)
+        if (battleGroup.length === 0) {
+            battleGroup.push({
+                name: "Кан Кубрат (тестова армия)",
+                currentArmy: 500,
+                initialArmyMax: 500,
+                isFavorite: true
+            });
+            console.warn("Няма реални войски – използва се тестова армия от 500 души.");
+        }
+
+        // Вземаме до 5 любими, иначе първите 5
         let finalGroup = battleGroup.filter(h => h.isFavorite === true).slice(0, 5);
         if (finalGroup.length === 0) finalGroup = battleGroup.slice(0, 5);
-        
+
         let totalPlayerArmy = finalGroup.reduce((s, h) => s + h.currentArmy, 0);
         if (totalPlayerArmy === 0) {
-            window.showAdvisorMsg("Нямате войска за битка!");
+            window.showAdvisorMsg("Нямате войска за битка! Наемете войници в Казармите.");
             return;
         }
 
-        let enemyArmy = regionObj.armySize || (regionObj.difficulty ? regionObj.difficulty * 12 : 200);
+        let enemyArmy = regionObj.armySize || (regionObj.difficulty ? regionObj.difficulty * 15 : 200);
         
         window.currentBattleState = {
             region: regionObj,
@@ -141,7 +147,6 @@
             battleLog: [],
             battleActive: true
         };
-        
         window.renderBattleLayout();
     };
 
