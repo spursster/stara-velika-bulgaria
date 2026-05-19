@@ -3,7 +3,7 @@
 ПРОЕКТ: ВЕЛИКА БЪЛГАРИЯ
 ФАЙЛ: ui.js (УНИВЕРСАЛЕН ГЛОБАЛЕН ПРОФИЛ, ЛЕНТА НА ЕЛИТА И ИНСПЕКЦИЯ НА КЛАНОВЕТЕ)
 СТАТУС: НАПЪЛНО ИЗЧИСТЕН И СИНХРОНИЗИРАН
-КОРЕКЦИЯ: Премахнати всички синтактични грешки, dynasty -> clan, оптимизиран XP бар.
+КОРЕКЦИЯ: Фиксиран XP индикатор, премахнати всички синтактични грешки, dynasty -> clan.
 ==========================================================================
 */
 window.eventHistory = [];
@@ -31,6 +31,7 @@ window.toggleGameFullScreen = function() {
 
 /**
 👑 ДИНАМИЧНО ЧЕРТАЕНЕ НА ЛЕНТАТА НА ЕЛИТА (ТОП 6 ГЕРОИ С НАЙ-ВИСОК ОПИТ)
+✅ ФИКС: Безопасно изчисление на XP, чисти HTML атрибути, гарантирано визуализиране на лентата.
 */
 window.renderTop6LeadersUI = function() {
     const eliteBar = document.getElementById('top-elite-bar');
@@ -66,39 +67,42 @@ window.renderTop6LeadersUI = function() {
         const card = document.createElement('div');
         card.className = "elite-hero-card";
         card.style.cursor = "pointer";
-
         card.onclick = (e) => {
             if (e.target.classList.contains('auto-btn')) return;
             if (window.openHeroRPGModal) window.openHeroRPGModal(leader.clanKey);
         };
 
-        // ✅ БЕЗОПАСНО ИЗЧИСЛЕНИЕ НА XP
+        // ✅ БЕЗОПАСНО ИЗЧИСЛЕНИЕ НА XP (Предотвратява NaN и Infinity)
         let currentXP = leader.xp || 0;
         let reqXP = 150;
         if (window.rpgDatabase && typeof window.rpgDatabase.getXPRequiredForLevel === 'function') {
             reqXP = window.rpgDatabase.getXPRequiredForLevel(leader.level || 1);
         }
-        if (!leader.isAuto) currentXP = leader.storedXP || 0;
-        if (reqXP <= 0) reqXP = 1; // Защита срещу деление на нула
+        reqXP = Math.max(1, reqXP); // Защита срещу деление на нула
+
+        if (!leader.isAuto) {
+            currentXP = leader.storedXP || 0;
+        }
 
         let xpPercent = Math.min(100, Math.floor((currentXP / reqXP) * 100));
 
         let petIcon = "🐾";
-        if (leader.pet && window.rpgDatabase && window.rpgDatabase.petsDatabase[leader.pet]) {
+        if (leader.pet && window.rpgDatabase && window.rpgDatabase.petsDatabase && window.rpgDatabase.petsDatabase[leader.pet]) {
             petIcon = window.rpgDatabase.petsDatabase[leader.pet].icon;
         }
 
         const autoClass = leader.isAuto ? "auto-btn active" : "auto-btn";
         const autoText = leader.isAuto ? "Auto" : "Manual";
-        const fillGradient = !leader.isAuto ? "linear-gradient(90deg, #ffcc00, #ff6600)" : "linear-gradient(90deg, #00ffcc, #0072ff)";
+        // Използваме !important в inline стила, за да надделее над style.css !important
+        const barGradient = leader.isAuto ? "linear-gradient(90deg, #00ffcc, #0072ff)" : "linear-gradient(90deg, #ffcc00, #ff6600)";
 
         card.innerHTML = `
-            <div style="font-size: 11px; font-weight: bold; color: #ffd700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+            <div style="font-size:11px; font-weight:bold; color:#ffd700; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">
                 ${petIcon} ${leader.name || leader.hero || "Воевода"}
             </div>
-            <div style="font-size: 9px; color: #aaa;">Ниво ${leader.level || 1} | ${leader.currentClass || "Багатур"}</div>
+            <div style="font-size:9px; color:#aaa;">Ниво ${leader.level || 1} | ${leader.currentClass || "Багатур"}</div>
             <div class="rpg-xp-container" title="Опит: ${currentXP}/${reqXP}" style="background:#222; height:4px; border-radius:2px; margin:4px 0; overflow:hidden;">
-                <div class="rpg-xp-fill" style="width:${xpPercent}%; height:100%; background:${fillGradient}; transition:width 0.3s;"></div>
+                <div class="rpg-xp-fill" style="width:${xpPercent}%; height:100%; background:${barGradient} !important; transition:width 0.3s;"></div>
             </div>
             <button class="${autoClass}" onclick="window.toggleHeroAutoMode('${leader.clanKey}')" style="font-size:9px; padding:2px 4px; cursor:pointer;">
                 ${autoText}
@@ -135,9 +139,9 @@ window.updateCharacterUI = function(hero) {
         }
 
         profileBox.innerHTML = `
-            <div style="font-weight: bold; color: #ffd700; font-size: 1.2rem; margin-bottom: 5px; font-family:'Cinzel';">${hero.name || "Неизвестен"}</div>
-            <div style="font-size: 11px; color: #ccc; margin-bottom: 10px;">Род ${hero.clan || "Свободен"} | Клас: ${hero.currentClass || "Багатур"}</div>
-            <div id="hero-info-stats" style="font-size: 12px; text-align: left; color: #aaa; display: flex; flex-direction: column; gap: 4px; background: rgba(0,0,0,0.3); padding: 8px; border-radius: 4px;">
+            <div style="font-weight:bold; color:#ffd700; font-size:1.2rem; margin-bottom:5px; font-family:'Cinzel';">${hero.name || "Неизвестен"}</div>
+            <div style="font-size:11px; color:#ccc; margin-bottom:10px;">Род ${hero.clan || "Свободен"} | Клас: ${hero.currentClass || "Багатур"}</div>
+            <div id="hero-info-stats" style="font-size:12px; text-align:left; color:#aaa; display:flex; flex-direction:column; gap:4px; background:rgba(0,0,0,0.3); padding:8px; border-radius:4px;">
                 <div>Ниво: <strong style="color:#fff;">${hero.level || 1}</strong></div>
                 <div>Възраст: <strong style="color:#fff;">${hero.age || 50} г.</strong></div>
                 <div>Бойна Сила: <strong style="color:#ff4444;">⚔️ ${hero.heroPower || 150}</strong></div>
@@ -173,11 +177,12 @@ window.showAdvisorMsg = function(msg) {
     }
     window.eventHistory.push(msg);
     if (window.eventHistory.length > 50) window.eventHistory.shift();
-    journal.innerHTML = window.eventHistory.map(line => `<div style="margin-bottom: 8px; font-size: 12px; border-left: 2px solid #d4af37; padding-left: 8px; line-height: 1.4; font-family: 'Montserrat', sans-serif;"> ${line} </div>`).reverse().join('');
+    journal.innerHTML = window.eventHistory.map(line => `<div style="margin-bottom:8px; font-size:12px; border-left:2px solid #d4af37; padding-left:8px; line-height:1.4; font-family:'Montserrat',sans-serif;"> ${line} </div>`).reverse().join('');
 };
 
 /**
 ИНСПЕКЦИЯ И ДЕТАЙЛЕН СТЪКЛЕН ПРОФИЛ НА КЛАН
+✅ ФИКС: Оправени счупени template literals, премахнато dynasty.
 */
 window.inspectLeaderProfile = function(clanKey) {
     if (!window.worldData || !window.worldData.clans || !window.worldData.clans[clanKey]) {
@@ -206,7 +211,7 @@ window.inspectLeaderProfile = function(clanKey) {
 
     let inventoryHTML = `<div style="margin-top:8px; background:rgba(255,255,255,0.02); padding:8px; border-radius:4px; border:1px solid #222;">
         <h4 style="margin:0 0 5px 0; color:#00ffcc; font-size:11px; font-family:'Cinzel'; text-transform:uppercase;">Налична Екипировка:</h4>
-        <div style="display:flex; gap:5px; flex-wrap: wrap;">`;
+        <div style="display:flex; gap:5px; flex-wrap:wrap;">`;
     
     let hasEquipment = false;
     if (leader.equipment) {
@@ -222,16 +227,16 @@ window.inspectLeaderProfile = function(clanKey) {
 
     const overlay = document.createElement('div');
     overlay.id = "dynamic-leader-profile";
-    overlay.style.cssText = `position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.75); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); display: flex; align-items: center; justify-content: center; z-index: 5000;`;
+    overlay.style.cssText = `position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(0,0,0,0.75); backdrop-filter:blur(8px); -webkit-backdrop-filter:blur(8px); display:flex; align-items:center; justify-content:center; z-index:5000;`;
 
     overlay.innerHTML = `
-        <div class="leader-card" style="width: 340px; background: rgba(15,15,15,0.95) !important; border: 2px solid #d4af37 !important; box-shadow: 0 0 30px rgba(0,0,0,0.9); flex-direction: column !important; gap: 12px !important; padding:15px; border-radius:8px;">
-            <div style="display: flex; gap: 15px; width: 100%; border-bottom: 1px solid #222; padding-bottom: 10px;">
-                <div style="width: 70px; height: 70px; border-radius: 6px; border: 1px solid #d4af37; overflow: hidden; background: #000; display:flex; align-items:center; justify-content:center; font-size:30px;">👑</div>
+        <div class="leader-card" style="width:340px; background:rgba(15,15,15,0.95)!important; border:2px solid #d4af37!important; box-shadow:0 0 30px rgba(0,0,0,0.9); flex-direction:column!important; gap:12px!important; padding:15px; border-radius:8px;">
+            <div style="display:flex; gap:15px; width:100%; border-bottom:1px solid #222; padding-bottom:10px;">
+                <div style="width:70px; height:70px; border-radius:6px; border:1px solid #d4af37; overflow:hidden; background:#000; display:flex; align-items:center; justify-content:center; font-size:30px;">👑</div>
                 <div style="flex:1;">
-                    <h3 style="margin: 0; font-family: 'Cinzel', serif; font-size: 15px; color: #ffd700;">${leader.name || leader.hero}</h3>
-                    <div style="font-size: 11px; color: #888; margin-top: 2px;">Родов Водач</div>
-                    <div style="font-size: 14px; color: #ff3366; font-weight: bold; margin-top: 5px;">⚔️ ${leader.heroPower || 100} Сила</div>
+                    <h3 style="margin:0; font-family:'Cinzel',serif; font-size:15px; color:#ffd700;">${leader.name || leader.hero}</h3>
+                    <div style="font-size:11px; color:#888; margin-top:2px;">Родов Водач</div>
+                    <div style="font-size:14px; color:#ff3366; font-weight:bold; margin-top:5px;">⚔️ ${leader.heroPower || 100} Сила</div>
                 </div>
             </div>
             <div style="font-size:11px; color:#aaa; display:grid; grid-template-columns:1fr 1fr; gap:5px; background:rgba(0,0,0,0.4); padding:8px; border-radius:4px; width:100%; box-sizing:border-box;">
@@ -239,13 +244,13 @@ window.inspectLeaderProfile = function(clanKey) {
                 <div>Ниво: <strong>${leader.level || 1}</strong></div>
                 <div>Лично злато: <strong>💰 ${leader.gold || 0}</strong></div>
                 <div>Войска: <strong>⚔️ ${leader.armySize || 0}</strong></div>
-                <div style="grid-column: 1 / span 2;">Клас: <strong style="color:#ffd700;">${leader.currentClass || "Багатур"}</strong></div>
+                <div style="grid-column:1 / span 2;">Клас: <strong style="color:#ffd700;">${leader.currentClass || "Багатур"}</strong></div>
             </div>
             <div style="width:100%; text-align:left;">
                 ${skillsHTML}
                 ${inventoryHTML}
             </div>
-            <button onclick="document.getElementById('dynamic-leader-profile').remove()" style="width: 100%; margin-top: 5px; padding: 10px; background: rgba(212,175,55,0.15); border: 1px solid #d4af37; border-radius: 6px; color: #fff; font-family: 'Cinzel', serif; cursor: pointer; font-size: 11px; transition: background 0.2s;" onmouseover="this.style.background='rgba(212,175,55,0.3)'" onmouseout="this.style.background='rgba(212,175,55,0.15)'">
+            <button onclick="document.getElementById('dynamic-leader-profile').remove()" style="width:100%; margin-top:5px; padding:10px; background:rgba(212,175,55,0.15); border:1px solid #d4af37; border-radius:6px; color:#fff; font-family:'Cinzel',serif; cursor:pointer; font-size:11px; transition:background 0.2s;" onmouseover="this.style.background='rgba(212,175,55,0.3)'" onmouseout="this.style.background='rgba(212,175,55,0.15)'">
                 ЗАТВОРИ ПРОФИЛА
             </button>
         </div>
