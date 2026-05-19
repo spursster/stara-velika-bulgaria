@@ -1,28 +1,31 @@
 /**
-МОДУЛ: СВЕТОВНИ ДАННИ И ГЕОПОЛИТИКА - Велика България
-СТАТУС: НАПЪЛНО ИЗЧИСТЕН И СИНХРОНИЗИРАН
-КОРЕКЦИЯ: Премахнати всички трейлинг интервали от ключове и стойности. Готово за работа.
+==========================================================================
+ПРОЕКТ: ВЕЛИКА БЪЛГАРИЯ
+ФАЙЛ: world_data.js (СВЕТОВНИ ДАННИ И ГЕОПОЛИТИКА)
+СТАТУС: НАПЪЛНО ИЗЧИСТЕН ОТ ИНТЕРВАЛИ И СИНХРОНИЗИРАН
+КОРЕКЦИЯ: Премахнати всички trailing spaces. Добавено поле 'name' за всеки клан/регион.
+==========================================================================
 */
 window.worldData = {
     factions: {
-        "bulgarian_empire": { nameBG: "Велика България", rulerTitleBG: "Кан", capitalBG: "Фанагория" },
-        "rhomaioi_empire": { nameBG: "Ромейска Империя (Rhomaioi)", relation: -20, power: 500 },
-        "persian_empire": { nameBG: "Персийска Империя", relation: 0, power: 1000 }
+        bulgarian_empire: { nameBG: "Велика България", rulerTitleBG: "Кан", capitalBG: "Фанагория" },
+        rhomaioi_empire: { nameBG: "Ромейска Империя (Rhomaioi)", relation: -20, power: 500 },
+        persian_empire: { nameBG: "Персийска Империя", relation: 0, power: 1000 }
     },
     clans: {
-        "Дуло": { leader: "Болгарос", isJoined: true, regionsOwned: 1, gold: 1500, armySize: 500 },
-        "Комитопули": { leader: "Никола", isJoined: false, regionsOwned: 1, gold: 800, armySize: 300 },
-        "Асеневци": { leader: "Асен I", isJoined: false, regionsOwned: 1, gold: 850, armySize: 320 },
-        "Тертер": { leader: "Георги I Тертер", isJoined: false, regionsOwned: 1, gold: 700, armySize: 250 },
-        "Даки": { leader: "Залмоксис", isJoined: false, regionsOwned: 1, gold: 650, armySize: 280 },
-        "Уния Траки": { leader: "Реметалк", isJoined: false, regionsOwned: 1, gold: 900, armySize: 310 },
-        "Шишмановци": { leader: "Михаил Шишман", isJoined: false, regionsOwned: 1, gold: 750, armySize: 260 },
-        "Македони": { leader: "Александър", isJoined: false, regionsOwned: 1, gold: 1200, armySize: 450 },
-        "Птоломеи": { leader: "Сотер", isJoined: false, regionsOwned: 1, gold: 1100, armySize: 350 },
-        "Одриси": { leader: "Терес", isJoined: false, regionsOwned: 1, gold: 800, armySize: 330 },
-        "Бесараб": { leader: "Иванко Бесараб", isJoined: false, regionsOwned: 1, gold: 700, armySize: 240 },
-        "Османци Дуло": { leader: "Осман Гази", isJoined: false, regionsOwned: 1, gold: 950, armySize: 400 },
-        "Скити": { leader: "Атеас", isJoined: false, regionsOwned: 1, gold: 600, armySize: 300 }
+        "Дуло": { name: "Болгарос", leader: "Болгарос", isJoined: true, regionsOwned: 1, gold: 1500, armySize: 500, clan: "Дуло" },
+        "Комитопули": { name: "Никола", leader: "Никола", isJoined: false, regionsOwned: 1, gold: 800, armySize: 300, clan: "Комитопули" },
+        "Асеневци": { name: "Асен I", leader: "Асен I", isJoined: false, regionsOwned: 1, gold: 850, armySize: 320, clan: "Асеневци" },
+        "Тертер": { name: "Георги I Тертер", leader: "Георги I Тертер", isJoined: false, regionsOwned: 1, gold: 700, armySize: 250, clan: "Тертер" },
+        "Даки": { name: "Залмоксис", leader: "Залмоксис", isJoined: false, regionsOwned: 1, gold: 650, armySize: 280, clan: "Даки" },
+        "Уния Траки": { name: "Реметалк", leader: "Реметалк", isJoined: false, regionsOwned: 1, gold: 900, armySize: 310, clan: "Уния Траки" },
+        "Шишмановци": { name: "Михаил Шишман", leader: "Михаил Шишман", isJoined: false, regionsOwned: 1, gold: 750, armySize: 260, clan: "Шишмановци" },
+        "Македони": { name: "Александър", leader: "Александър", isJoined: false, regionsOwned: 1, gold: 1200, armySize: 450, clan: "Македони" },
+        "Птоломеи": { name: "Сотер", leader: "Сотер", isJoined: false, regionsOwned: 1, gold: 1100, armySize: 350, clan: "Птоломеи" },
+        "Одриси": { name: "Терес", leader: "Терес", isJoined: false, regionsOwned: 1, gold: 800, armySize: 330, clan: "Одриси" },
+        "Бесараб": { name: "Иванко Бесараб", leader: "Иванко Бесараб", isJoined: false, regionsOwned: 1, gold: 700, armySize: 240, clan: "Бесараб" },
+        "Османци Дуло": { name: "Осман Гази", leader: "Осман Гази", isJoined: false, regionsOwned: 1, gold: 950, armySize: 400, clan: "Османци Дуло" },
+        "Скити": { name: "Атеас", leader: "Атеас", isJoined: false, regionsOwned: 1, gold: 600, armySize: 300, clan: "Скити" }
     },
     majorClans: [
         "Дуло", "Комитопули", "Асеневци", "Тертер", "Даки", "Уния Траки",
@@ -33,7 +36,7 @@ window.worldData = {
         "Тракия": { terrain: "Долина", resource: "Вино", nativeClans: ["Одриси"], difficulty: 15 },
         "Македония": { terrain: "Планина", resource: "Злато", nativeClans: ["Македони"], difficulty: 25 },
         "Добруджа": { terrain: "Равнина", resource: "Коне", nativeClans: ["Бесараб"], difficulty: 20 },
-        "Дарвания": { terrain: "Крепост", resource: "Желязо", nativeClans: ["Комитопули"], difficulty: 30 },
+        "Дардания": { terrain: "Крепост", resource: "Желязо", nativeClans: ["Комитопули"], difficulty: 30 },
         "Илирия": { terrain: "Хълмове", resource: "Сребро", nativeClans: ["Асеневци"], difficulty: 35 },
         "Галатия": { terrain: "Гора", resource: "Дървесина", nativeClans: ["Тертер"], difficulty: 40 },
         "Дакия": { terrain: "Планина", resource: "Сол", nativeClans: ["Даки"], difficulty: 30 },
