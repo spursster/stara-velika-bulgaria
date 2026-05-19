@@ -1,15 +1,15 @@
 /* ==========================================================================
-   ФИГАТУРА НА ИГРАТА ВЕЛИКА БЪЛГАРИЯ - ФИНАЛЕН СТЪКЛЕН ДИЗАЙН С ЕПИЧЕН АРТ
-   СТАТУС: НАПЪЛНО НАДГРАДЕН (ЛЕНТА НА ЕЛИТА, ИНДИКАТОРИ, АУТО РЕЖИМ И СЛОТОВЕ)
-   ========================================================================== */
+ФИГАТУРА НА ИГРАТА ВЕЛИКА БЪЛГАРИЯ - ФИНАЛЕН СТЪКЛЕН ДИЗАЙН С ЕПИЧЕН АРТ
+СТАТУС: НАПЪЛНО НАДГРАДЕН (ЛЕНТА НА ЕЛИТА, ИНДИКАТОРИ, АУТО РЕЖИМ И СЛОТОВЕ)
+========================================================================== */
 
 /* ЕПИЧЕН ФОН НА ИГРАТА ОТ САМИЯ ВРЪХ С ТЪМЕН ФИЛТЪР */
 html, body {
     margin: 0 !important;
     padding: 0 !important;
     height: 100vh !important;
-    background: linear-gradient(rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.4)), 
-                url('https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEjJuReyp2P1EHVmb8i_LXu6AQhvvvByWOCKKl4sVeQTuIKnvmu0dZ64-jCPAw7hisWSrzei_lJeAS3tvQvYHuV5vKWGvc4ZRWsd5XZpgkX-KbUA0o9C2MMXiV1H0NGzVhJEj1iRxeT67HYEAe1VTmjmeI__JKiOCkz6hVVbo6O7gbqfsABylSvdnA-P7VAq/s3072/_d012d68d-c196-4d76-be3e-0a44b9f7ccfa.jpeg') !important;
+    background: linear-gradient(rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.4)),
+    url('https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEjJuReyp2P1EHVmb8i_LXu6AQhvvvByWOCKKl4sVeQTuIKnvmu0dZ64-jCPAw7hisWSrzei_lJeAS3tvQvYHuV5vKWGvc4ZRWsd5XZpgkX-KbUA0o9C2MMXiV1H0NGzVhJEj1iRxeT67HYEAe1VTmjmeI__JKiOCkz6hVVbo6O7gbqfsABylSvdnA-P7VAq/s3072/_d012d68d-c196-4d76-be3e-0a44b9f7ccfa.jpeg') !important;
     background-size: cover !important;
     background-position: center !important;
     background-attachment: fixed !important;
@@ -139,7 +139,7 @@ html, body {
     gap: 15px !important;
 }
 
-/* 👑 ОБЩИ КАРТИ И КОНТЕЙНЕРИ ЗА ВОДАЧИ 👑 */
+/* 👑 ОБЩИ КАРТИ И КОНТЕЙНЕРИ ЗА ВОДАЧИ  */
 .leader-card, .character-card, .top-leader-container {
     background: rgba(20, 20, 20, 0.6) !important;
     backdrop-filter: blur(10px) !important;
@@ -151,7 +151,7 @@ html, body {
     box-sizing: border-box !important;
 }
 
-/* 🎯 СЕКЦИЯ ЗА ТЕКУЩО ДЕЙСТВИЕ (ЦЕНТЪР) 🎯 */
+/*  СЕКЦИЯ ЗА ТЕКУЩО ДЕЙСТВИЕ (ЦЕНТЪР) 🎯 */
 #game-main-area {
     background: rgba(10, 10, 10, 0.5) !important;
     backdrop-filter: blur(15px) !important;
@@ -164,7 +164,7 @@ html, body {
     overflow-y: auto !important;
 }
 
-/* ⚔️ ЕПИЧНИ БУТОНИ ЗА УПРАВЛЕНИЕ ⚔️ */
+/* ⚔️ ЕПИЧНИ БУТОНИ ЗА УПРАВЛЕНИЕ ️ */
 .menu-btn {
     background: linear-gradient(135deg, rgba(30, 30, 30, 0.9), rgba(15, 15, 15, 0.9)) !important;
     border: 1px solid rgba(214, 175, 55, 0.5) !important;
@@ -275,22 +275,19 @@ html, body {
     100% { box-shadow: 0 0 15px rgba(139, 0, 0, 0.6); }
 }
 
-/* 📱 СУПЕР СТИЛ ЗА МОБИЛНИ УСТРОЙСТВА (RESPONSIVE) 📱 */
+/* 📱 СУПЕР СТИЛ ЗА МОБИЛНИ УСТРОЙСТВА (RESPONSIVE)  */
 @media (max-width: 1024px) {
     #game-container {
         grid-template-columns: 1fr !important;
         padding-bottom: 90px !important;
     }
-    
     #sidebar-left, #sidebar-right {
         order: 2 !important;
     }
-    
     #game-main-area {
         order: 1 !important;
         min-height: 400px !important;
     }
-    
     #top-elite-bar {
         grid-template-columns: repeat(3, 1fr) !important;
         gap: 8px !important;
