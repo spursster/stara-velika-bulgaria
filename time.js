@@ -1,11 +1,25 @@
 /**
  * МОДУЛ: ВРЕМЕ И ЛЕТОБРОЕНЕ - Велика България
- * СТАТУС: НАПЪЛНО ОБНОВЕН И СИНХРОНИЗИРАН (ГЕРОИ И РОДОВИ ЦИКЛИ)
- * КОРЕКЦИЯ: Пречистване на терминологията за водачите в съгласие с глобалния стандарт на играта.
- * Статистика на файловете в проекта: 17 (Заедно с добавения времеви модул)
+ * СТАТУС: НАПЪЛНО КОРИГИРАН, ИЗЧИСТЕН И СИНХРОНИЗИРАН
+ * КОРЕКЦИЯ: Премахната излишната затваряща скоба на ред 42, която чупеше времето.
+ * НАДГРАДАНЕ: Добавена липсващата функция window.processTurn за превъртане на ходовете.
+ * Статистика на файловете в проекта: 15
  */
 
 window.seasons = ["🌱 Пролет", "☀️ Лято", "🍂 Есен", "❄️ Зима"];
+
+// Глобална функция за превъртане на ход от бутона в интерфейса
+window.processTurn = function() {
+    console.log("⏳ Превъртане на ход...");
+    
+    // Инициализираме gameTime, ако липсва в обекта window
+    if (!window.gameTime) {
+        window.gameTime = { seasonIndex: 0, year: 632, era: "от н.е." };
+    }
+
+    // Извикваме основната логика за времето
+    window.processTime();
+};
 
 window.processTime = function() {
     if (!window.gameTime) return;
@@ -28,7 +42,9 @@ window.processTime = function() {
         }
 
         // Всяка година героят / водачът пораства
-        if (window.currentHero) window.currentHero.age++;
+        if (window.currentHero) {
+            window.currentHero.age = (window.currentHero.age || 50) + 1;
+        }
 
         if (window.showAdvisorMsg) {
             window.showAdvisorMsg(`⏳ СМЯНА НА ГОДИНАТА: Настъпи нов родов цикъл — ${window.gameTime.year} г. ${window.gameTime.era}.`);
@@ -38,16 +54,15 @@ window.processTime = function() {
     // 3. Обновяване на интерфейса
     window.updateTimeUI();
 
-    // =======================================================================
-    // НАДГРАЖДАНЕ: АВТОМАТИЧНО ОБНОВЯВАНЕ НА МИСТИЧНИЯ ПОРТАЛ ПРИ СЛЕДВАЩ СЕЗОН
-    // =======================================================================
+    // 4. Автоматично обновяване на мистичния портал при следващ сезон
     if (window.advanceExpeditionsTurn) {
         window.advanceExpeditionsTurn();
     }
 }; // Край на window.processTime
-};
 
 window.updateTimeUI = function() {
+    if (!window.gameTime) return;
+    
     // Поддържаме и двата варианта на ID-та за сигурност в интерфейса
     const timeDisplay = document.getElementById('current-time-info') || document.getElementById('stat-time');
     if (!timeDisplay) return;
