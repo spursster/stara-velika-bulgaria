@@ -1,25 +1,25 @@
 /**
- * МОДУЛ: ИКОНОМИКА И РОДОВИ РЕСУРСИ - Велика България
- * СТАТУС: НАПЪЛНО НАДГРАДЕН (СИНХРОНИЗАЦИЯ С DIABLO ПАСИВИ & AUTO/MANUAL XP СИСТЕМА)
- * КОРЕКЦИЯ: Икономическите изчисления четат уменията, а пасивният опит ползва gainHeroXP.
- * Статистика на файловете в проекта: 17
- */
+МОДУЛ: ИКОНОМИКА И РОДОВИ РЕСУРСИ - Велика България
+СТАТУС: НАПЪЛНО СИНХРОНИЗИРАН И ПОПРАВЕН
+КОРЕКЦИЯ: Премахнати интервали в синтаксиса, уеднаквена референция към clan/dynasty.
+*/
 
 window.calculateEconomy = function() {
     if (!window.currentHero) return;
-
     const hero = window.currentHero;
-    
+
     // Подсигуряваме, че RPG структурата на способностите съществува
     if (window.initializeHeroRPGData) {
         window.initializeHeroRPGData(hero);
     }
 
     let skills = hero.skills || {};
+    // Намираме името на клана безопасно (за да работи и със стари записвания)
+    const activeClanKey = hero.clan || hero.dynasty;
 
-    // 1. БАЗОВ ПРИХОД И ДИАБЛО МОДИФИКАТОРИ НА СТОЛИЦАТА
+    // 1. БАЗОВ ПРИХОД И DIABLO МОДИФИКАТОРИ НА СТОЛИЦАТА
     let baseIncome = 200; // Базов приход на родовата столица
-    
+
     // Diablo пасиви: Златна треска (goldRush) и Родови пазари (bazaars)
     if ((skills.goldRush || 0) > 0) {
         baseIncome += (skills.goldRush * 25); // +25 злато за всяко ниво от златни мини
@@ -41,7 +41,7 @@ window.calculateEconomy = function() {
         });
     }
 
-    // Diablo пасив: Родово Управление (economy) - Увеличава с 10% общия приход от регионите за всяка точка
+    // Diablo пасив: Родово Управление (economy) - Увеличава с 10% общия приход от регионите за всяка точка 
     if ((skills.economy || 0) > 0) {
         regionIncome = Math.floor(regionIncome * (1 + (skills.economy * 0.10)));
     }
@@ -62,15 +62,15 @@ window.calculateEconomy = function() {
     if (hero.gold < 0) hero.gold = 0; // Защита против фалит
 
     // Синхронизация с глобалната база данни worldData за текущия род на играча
-    if (window.worldData && window.worldData.clans && window.worldData.clans[hero.dynasty]) {
-        window.worldData.clans[hero.dynasty].gold = hero.gold;
+    if (window.worldData && window.worldData.clans && activeClanKey && window.worldData.clans[activeClanKey]) {
+        window.worldData.clans[activeClanKey].gold = hero.gold;
     }
 
     // 5. ПАСИВЕН ПРОГРЕС ЗА ОСТАНАЛИТЕ АВТОНОМНИ КЛАНОВЕ
     // Ползваме официалната gainHeroXP функция, за да уважим Manual/Auto режимите им
     if (window.worldData && window.worldData.clans) {
         Object.entries(window.worldData.clans).forEach(([clanKey, clan]) => {
-            if (clanKey !== hero.dynasty) {
+            if (clanKey !== activeClanKey) {
                 // Пасивен доход за останалите родове, за да купуват войска
                 clan.gold = (clan.gold || 0) + 120;
                 
@@ -100,10 +100,10 @@ window.calculateEconomy = function() {
             seasonName = seasons[window.gameTime.seasonIndex] || "Сезон";
         }
         
-        let classTitle = hero.currentClass && hero.currentClass !== "Няма клас" ? ` (${hero.currentClass})` : "";
+        let classTitle = (hero.currentClass && hero.currentClass !== "Няма клас") ? ` (${hero.currentClass})` : "";
         
         if (finalProfit >= 0) {
-            window.showAdvisorMsg(`💰 Счетоводство [${seasonName}]: Водачът Кан ${hero.name}${classTitle} събра +${totalIncome} злато от родови земи. След поддръжка на армията (-${armyMaintenance}), чистият профит е +${finalProfit} злато.`);
+            window.showAdvisorMsg(` Счетоводство [${seasonName}]: Водачът Кан ${hero.name}${classTitle} събра +${totalIncome} злато от родови земи. След поддръжка на армията (-${armyMaintenance}), чистият профит е +${finalProfit} злато.`);
         } else {
             window.showAdvisorMsg(`📉 Икономическа криза [${seasonName}]: Разходите за войската (-${armyMaintenance}) надхвърлиха сезонните данъци. Взети са спешни резерви от хазната на рода. Чист дефицит: ${finalProfit} злато.`);
         }
@@ -113,9 +113,7 @@ window.calculateEconomy = function() {
     if (window.updateCharacterUI) window.updateCharacterUI(hero);
     if (window.renderTop6LeadersUI) window.renderTop6LeadersUI();
 
-    // =======================================================================
-    // НАДГРАЖДАНЕ: АВТОМАТИЧНО ОБНОВЯВАНЕ НА МИСТИЧНИЯ ПОРТАЛ ПРИ СЛЕДВАЩ ХОД
-    // =======================================================================
+    // Надграждане: Автоматично обновяване на мистичния портал при следващ ход
     if (window.advanceExpeditionsTurn) {
         window.advanceExpeditionsTurn();
     }
