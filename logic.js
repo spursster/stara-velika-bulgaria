@@ -1,12 +1,12 @@
 /**
  * МОДУЛ: ГЛАВНА ЛОГИКА - Велика България
- * СТАТУС: НАПЪЛНО СИНХРОНИЗИРАН С ОРИГИНАЛНАТА БАЗА ДАННИ И ТАЙМЕРА
- * НАДГРАДАНЕ: Автоматично стартиране чрез DOMContentLoaded за заобикаляне на външни блокове.
- * КОРЕКЦИЯ: Използва се window.unlockedLeaders, съобразен с ui.js и barracks.js.
+ * СТАТУС: НАПЪЛНО СИНХРОНИЗИРАН С ОРИГИНАЛНАТА БАЗА ДАННИ И ЕЛЕМЕНТИТЕ ЗА ВРЕМЕ
+ * НАДГРАДАНЕ: Форсирано обновяване на <span id="current-time-info"> веднага след избор от прозореца.
+ * КОРЕКЦИЯ: Директно инжектиране на времето при старт на Нова Игра за избягване на "Зареждане...".
  * Статистика на файловете в проекта: 15
  */
 
-// Автоматичен спусък при зареждане на страницата - гарантира, че прозорецът ще се появи!
+// Автоматичен спусък при зареждане на страницата
 document.addEventListener('DOMContentLoaded', function() {
     console.log("🏛️ Инициализация на системата за запис на Велика България...");
     setTimeout(function() {
@@ -16,14 +16,14 @@ document.addEventListener('DOMContentLoaded', function() {
         } else {
             window.startFreshGameLogic();
         }
-    }, 150); // Леко забавяне, за да се заредят останалите 14 файла
+    }, 150);
 });
 
 window.initNewGame = function() {
-    // Тази функция се поддържа празна за съвместимост с HTML, тъй като DOMContentLoaded поема старта
+    // Поддържа се за съвместимост с HTML
 };
 
-// Функция, която съдържа чистата първоначална логика за старт
+// Функция за стартиране на чисто нова игра
 window.startFreshGameLogic = function() {
     let selectedName = "Кубрат"; 
     let selectedClan = "Дуло"; 
@@ -66,15 +66,26 @@ window.startFreshGameLogic = function() {
         window.worldData.clans[selectedClan] = window.currentHero;
     }
 
+    // ИНИЦИАЛИЗАЦИЯ НА ВРЕМЕТО ОЩЕ ТУК ЗА СИГУРНОСТ
+    window.gameTime = { seasonIndex: 0, year: 632, era: "от н.е." };
+
+    // Обновяваме целия интерфейс
     if (window.updateCharacterUI) window.updateCharacterUI(window.currentHero);
     if (window.renderTop6LeadersUI) window.renderTop6LeadersUI();
+    
+    // Форсирано пренаписване на "Зареждане..." веднага след създаване на обекта
+    if (window.updateTimeUI) {
+        window.updateTimeUI();
+    } else {
+        const timeDisplay = document.getElementById('current-time-info');
+        if (timeDisplay) timeDisplay.innerHTML = "🌱 Пролет 632 г. от н.е.";
+    }
 
-    // Изчертаване на Портала при старт
     if (window.updatePortalContainerUI) {
         window.updatePortalContainerUI();
     }
 
-    // Първоначален чист запис
+    // Извършваме чист първоначален запис
     if (window.saveGreatBulgariaGame) window.saveGreatBulgariaGame();
 };
 
@@ -160,7 +171,7 @@ window.showStartChoiceModal = function() {
     choiceModal.innerHTML = `
         <div style="background: #111; border: 3px solid #d4af37; border-radius: 12px; padding: 40px; text-align: center; max-width: 450px; box-shadow: 0 0 50px rgba(212,175,55,0.2);">
             <h2 style="color: #ffd700; margin-top: 0; letter-spacing: 2px; font-size: 22px;">ВЕЛИКА БЪЛГАРИЯ</h2>
-            <p style="color: #aaa; font-size: 14px; margin-bottom: 30px; line-height: 1.6;">Открит е съществуващий прогрес на Вашето царство в паметта на браузъра. Как желаете да постъпите?</p>
+            <p style="color: #aaa; font-size: 14px; margin-bottom: 30px; line-height: 1.6;">Открит е съществуващ прогрес на Вашето царство в паметта на браузъра. Как желаете да постъпите?</p>
             
             <div style="display: flex; flex-direction: column; gap: 15px;">
                 <button style="background: linear-gradient(180deg, #ffd700 0%, #b8860b 100%); color: #000; font-weight: bold; border: 1px solid #fff; padding: 14px; border-radius: 6px; cursor: pointer; font-size: 14px; letter-spacing: 1px; font-family: 'Cinzel', serif;" 
@@ -197,7 +208,8 @@ window.saveGreatBulgariaGame = function() {
     try {
         const saveData = {
             currentHero: window.currentHero,
-            unlockedLeaders: window.unlockedLeaders || []
+            unlockedLeaders: window.unlockedLeaders || [],
+            gameTime: window.gameTime || { seasonIndex: 0, year: 632, era: "от н.е." }
         };
         localStorage.setItem('GreatBulgaria_SaveGame', JSON.stringify(saveData));
         console.log("💾 Прогресът беше запазен успешно!");
@@ -214,6 +226,7 @@ window.loadGreatBulgariaGame = function() {
         const parsed = JSON.parse(saved);
         window.currentHero = parsed.currentHero;
         window.unlockedLeaders = parsed.unlockedLeaders || [];
+        window.gameTime = parsed.gameTime || { seasonIndex: 0, year: 632, era: "от н.е." };
         
         if (window.worldData && window.worldData.clans) {
             window.unlockedLeaders.forEach(hero => {
@@ -227,6 +240,9 @@ window.loadGreatBulgariaGame = function() {
         if (window.renderTop6LeadersUI) window.renderTop6LeadersUI();
         if (window.updatePortalContainerUI) window.updatePortalContainerUI();
         
+        // Пренаписваме времето веднага при зареждане
+        if (window.updateTimeUI) window.updateTimeUI();
+
         if (window.showAdvisorMsg) {
             window.showAdvisorMsg("👑 Добре дошъл обратно, Воеводо!");
         }
