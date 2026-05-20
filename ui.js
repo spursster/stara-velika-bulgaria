@@ -25,17 +25,36 @@ window.toggleGameFullScreen = function() {
 
 // ==================== ЛЮБИМИ (FAVORITES) ====================
 let favoriteHeroes = new Set();
+
 try {
     let saved = localStorage.getItem('favoriteHeroesFinal');
-    if (saved) JSON.parse(saved).forEach(id => favoriteHeroes.add(id));
-} catch(e) {}
-function saveFavorites() { localStorage.setItem('favoriteHeroesFinal', JSON.stringify([...favoriteHeroes])); }
-function isFavorite(id) { return favoriteHeroes.has(id); }
+    if (saved) {
+        JSON.parse(saved).forEach(id => favoriteHeroes.add(id));
+    }
+} catch(e) {
+    console.warn("Грешка при зареждане на любими:", e);
+}
+
+function saveFavorites() {
+    localStorage.setItem('favoriteHeroesFinal', JSON.stringify([...favoriteHeroes]));
+}
+
+function isFavorite(id) {
+    return favoriteHeroes.has(id);
+}
+
 function toggleFavorite(id) {
-    if (favoriteHeroes.has(id)) favoriteHeroes.delete(id);
-    else favoriteHeroes.add(id);
+    if (favoriteHeroes.has(id)) {
+        favoriteHeroes.delete(id);
+    } else {
+        favoriteHeroes.add(id);
+    }
     saveFavorites();
-    renderSingleBar();
+    
+    // Обновяваме лентата, ако функцията съществува
+    if (typeof renderSingleBar === 'function') {
+        renderSingleBar();
+    }
 }
 
 // ==================== AUTO СИСТЕМА ====================
