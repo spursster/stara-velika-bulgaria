@@ -595,18 +595,7 @@ if (document.readyState === 'loading') {
 }
 
 
-// Автоматично добавяне на навигационни бутони след зареждане на лентата
-setTimeout(function addNavButtonsAutomatically() {
-    const heroBar = document.getElementById('single-hero-bar');
-    if (!heroBar) {
-        setTimeout(addNavButtonsAutomatically, 500);
-        return;
-    }
-    
-    // Проверяваме дали вече има бутони
-    if (document.getElementById('hero-nav-prev')) return;
-
- // Автоматично добавяне на навигационни бутони след зареждане на лентата
+// ==================== АВТОМАТИЧНО ДОБАВЯНЕ НА НАВИГАЦИОННИ БУТОНИ ====================
 setTimeout(function addNavButtonsAutomatically() {
     const heroBar = document.getElementById('single-hero-bar');
     if (!heroBar) {
@@ -615,13 +604,144 @@ setTimeout(function addNavButtonsAutomatically() {
     }
     if (document.getElementById('hero-nav-prev')) return;
     
-    // Тук сложи целия код за създаване на бутоните (← и →)
-    // (който ти хареса от предишните версии)
+    // ==================== ЕЛЕГАНТНИ НАВИГАЦИОННИ БУТОНИ ====================
+    const btnStyle = `
+        position: absolute;
+        top: 50%;
+        transform: translateY(-50%);
+        width: 28px;
+        height: 28px;
+        background: rgba(30, 25, 20, 0.5);
+        backdrop-filter: blur(4px);
+        border: 1px solid rgba(201, 168, 123, 0.4);
+        border-radius: 50%;
+        color: rgba(255, 221, 153, 0.8);
+        font-size: 14px;
+        cursor: pointer;
+        z-index: 1001;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.25s ease;
+        opacity: 0.6;
+    `;
     
-    console.log("✅ Навигационните бутони са добавени автоматично");
-}, 1000);
+    const prevBtn = document.createElement('button');
+    prevBtn.id = 'hero-nav-prev';
+    prevBtn.innerHTML = '←';
+    prevBtn.style.cssText = btnStyle + 'left: -12px;';
+    prevBtn.title = 'Предишни герои';
     
-    // ... (целият код от елегантните бутони, който ти хареса)
+    const nextBtn = document.createElement('button');
+    nextBtn.id = 'hero-nav-next';
+    nextBtn.innerHTML = '→';
+    nextBtn.style.cssText = btnStyle + 'right: -12px;';
+    nextBtn.title = 'Следващи герои';
+    
+    prevBtn.onmouseenter = () => {
+        prevBtn.style.opacity = '1';
+        prevBtn.style.background = 'rgba(60, 50, 40, 0.7)';
+        prevBtn.style.borderColor = '#c9a87b';
+        prevBtn.style.transform = 'translateY(-50%) scale(1.05)';
+    };
+    prevBtn.onmouseleave = () => {
+        prevBtn.style.opacity = '0.6';
+        prevBtn.style.background = 'rgba(30, 25, 20, 0.5)';
+        prevBtn.style.borderColor = 'rgba(201, 168, 123, 0.4)';
+        prevBtn.style.transform = 'translateY(-50%) scale(1)';
+    };
+    
+    nextBtn.onmouseenter = () => {
+        nextBtn.style.opacity = '1';
+        nextBtn.style.background = 'rgba(60, 50, 40, 0.7)';
+        nextBtn.style.borderColor = '#c9a87b';
+        nextBtn.style.transform = 'translateY(-50%) scale(1.05)';
+    };
+    nextBtn.onmouseleave = () => {
+        nextBtn.style.opacity = '0.6';
+        nextBtn.style.background = 'rgba(30, 25, 20, 0.5)';
+        nextBtn.style.borderColor = 'rgba(201, 168, 123, 0.4)';
+        nextBtn.style.transform = 'translateY(-50%) scale(1)';
+    };
+    
+    heroBar.style.position = 'relative';
+    heroBar.appendChild(prevBtn);
+    heroBar.appendChild(nextBtn);
+    
+    // Навигационна логика
+    let currentIndex = 0;
+    let allHeroes = [];
+    let pageSize = 3;
+    
+    function updateHeroesList() {
+        allHeroes = [];
+        if (window.worldData && window.worldData.clans) {
+            for (let key in window.worldData.clans) {
+                let clan = window.worldData.clans[key];
+                if (clan.isJoined === true) {
+                    allHeroes.push({
+                        id: key,
+                        name: clan.leaderName || clan.name || key,
+                        level: clan.level || 1,
+                        className: clan.currentClass || "Воевода",
+                        xp: clan.xp || 0,
+                        power: clan.heroPower || 100,
+                        gold: clan.gold || 1500,
+                        army: clan.armySize || 300
+                    });
+                }
+            }
+        }
+        if (allHeroes.length === 0 && window.currentHero) {
+            allHeroes.push({
+                id: window.currentHero.clan || "hero",
+                name: window.currentHero.name || "Воевода",
+                level: window.currentHero.level || 1,
+                className: window.currentHero.currentClass || "Багатур",
+                xp: window.currentHero.xp || 0,
+                power: window.currentHero.heroPower || 100,
+                gold: window.currentHero.gold || 1500,
+                army: window.currentHero.armySize || 500
+            });
+        }
+        allHeroes.sort((a,b) => b.level - a.level);
+        
+        const isMobile = window.innerWidth <= 768;
+        const listContainer = heroBar.querySelector('.hero-list-single, .hero-list-final, div[style*="flex"]');
+        if (listContainer) {
+            const start = currentIndex;
+            const end = Math.min(start + pageSize, allHeroes.length);
+            const page = allHeroes.slice(start, end);
+            
+            listContainer.innerHTML = '';
+            page.forEach(hero => {
+                const card = createHeroCard(hero, isMobile);
+                listContainer.appendChild(card);
+            });
+            
+            prevBtn.style.opacity = currentIndex > 0 ? '0.6' : '0.2';
+            nextBtn.style.opacity = currentIndex + pageSize < allHeroes.length ? '0.6' : '0.2';
+            prevBtn.style.cursor = currentIndex > 0 ? 'pointer' : 'default';
+            nextBtn.style.cursor = currentIndex + pageSize < allHeroes.length ? 'pointer' : 'default';
+        }
+    }
+    
+    prevBtn.onclick = () => {
+        if (currentIndex > 0) {
+            currentIndex = Math.max(0, currentIndex - pageSize);
+            updateHeroesList();
+        }
+    };
+    
+    nextBtn.onclick = () => {
+        if (currentIndex + pageSize < allHeroes.length) {
+            currentIndex = Math.min(allHeroes.length - pageSize, currentIndex + pageSize);
+            updateHeroesList();
+        }
+    };
+    
+    updateHeroesList();
+    window.addEventListener('resize', () => updateHeroesList());
     
     console.log("✅ Навигационните бутони са добавени автоматично");
 }, 1000);
