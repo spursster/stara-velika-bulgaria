@@ -53,15 +53,15 @@ function setAuto(id, enabled) {
 }
 
 
-// Извикваме при стартиране
+// AUTO функциите са деактивирани (няма пасивен опит)
 if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', function() {
-        startAllAutoTimers();
-        syncAutoStateWithHeroes();
+        // startAllAutoTimers();  // ДЕАКТИВИРАНО
+        // syncAutoStateWithHeroes();  // ДЕАКТИВИРАНО
     });
 } else {
-    startAllAutoTimers();
-    syncAutoStateWithHeroes();
+    // startAllAutoTimers();  // ДЕАКТИВИРАНО
+    // syncAutoStateWithHeroes();  // ДЕАКТИВИРАНО
 }
 // ==================== НАЕМАНЕ НА ГЕРОИ ====================
 window.hireNewHero = function() {
