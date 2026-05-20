@@ -2,7 +2,7 @@
 ==========================================================================
 ПРОЕКТ: ВЕЛИКА БЪЛГАРИЯ
 ФАЙЛ: rivalry.js (СИСТЕМА ЗА СЛУЧАЙНИ НАПАДЕНИЯ МЕЖДУ ГЕРОИТЕ)
-СТАТУС: ВЕРСИЯ 1.0 - ОСНОВНА ФУНКЦИОНАЛНОСТ
+СТАТУС: ВЕРСИЯ 1.1 - БАЛАНСИРАНА (3% ШАНС)
 ==========================================================================
 */
 
@@ -11,14 +11,18 @@
 
     // ==================== КОНФИГУРАЦИЯ ====================
     const RIVALRY_CONFIG = {
-        attackChance: 0.15,      // 15% шанс за нападение на ход
+        attackChance: 0.03,      // 3% шанс за нападение на ход (по-балансирано)
         xpTheftPercent: 0.30,    // 30% от текущия опит се краде
         xpTransferToAggressor: 0.50, // 50% от откраднатия опит отива при нападателя
-        revengeBonus: 1.5        // Бонус при отмъщение (върнатото се умножава)
+        revengeBonus: 1.5,       // Бонус при отмъщение (върнатото се умножава)
+        minHeroesForAttack: 2,   // Минимум 2 героя на играча, за да може да бъде нападнат
+        cooldownTurns: 5,        // Минимум 5 хода между две нападения
     };
 
     // ==================== ГЛОБАЛНИ ПРОМЕНЛИВИ ====================
-    window.pendingAttack = null;  // Съхранява информация за активно нападение
+    window.pendingAttack = null;
+    let lastAttackTurn = 0;
+    let turnCounter = 0;
 
     // ==================== ПОМОЩНИ ФУНКЦИИ ====================
     
@@ -28,8 +32,8 @@
         if (window.worldData && window.worldData.clans) {
             for (let key in window.worldData.clans) {
                 let clan = window.worldData.clans[key];
-                // Изключваме текущия герой на играча и съпругите (ако искаме само врагове)
-                if (window.currentHero && clan.name !== window.currentHero.name) {
+                // Изключваме текущия герой на играча
+                if (window.currentHero && clan.name !== window.currentHero.name && clan.isJoined !== true) {
                     enemies.push({
                         id: key,
                         name: clan.leaderName || clan.name || key,
@@ -164,7 +168,6 @@
 
     // Показва червения прозорец за нападение
     function showAttackNotification(aggressor, victim, stolenInfo) {
-        // Премахваме стар прозорец
         const oldNotify = document.getElementById('rivalry-notification');
         if (oldNotify) oldNotify.remove();
         
@@ -217,18 +220,21 @@
         document.body.appendChild(notification);
         
         // Анимация за изчезване
-        const style = document.createElement('style');
-        style.textContent = `
-            @keyframes slideInRight {
-                from { transform: translateX(100%); opacity: 0; }
-                to { transform: translateX(0); opacity: 1; }
-            }
-            @keyframes slideOutRight {
-                from { transform: translateX(0); opacity: 1; }
-                to { transform: translateX(100%); opacity: 0; }
-            }
-        `;
-        document.head.appendChild(style);
+        if (!document.getElementById('rivalry-animations')) {
+            const style = document.createElement('style');
+            style.id = 'rivalry-animations';
+            style.textContent = `
+                @keyframes slideInRight {
+                    from { transform: translateX(100%); opacity: 0; }
+                    to { transform: translateX(0); opacity: 1; }
+                }
+                @keyframes slideOutRight {
+                    from { transform: translateX(0); opacity: 1; }
+                    to { transform: translateX(100%); opacity: 0; }
+                }
+            `;
+            document.head.appendChild(style);
+        }
         
         // Затваряне
         document.getElementById('close-notification').onclick = () => {
@@ -255,17 +261,23 @@
     // ==================== ОСНОВНА ФУНКЦИЯ ЗА СЛУЧАЙНО НАПАДЕНИЕ ====================
     
     window.checkRandomAttack = function() {
+        // Увеличаваме брояча на ходовете
+        turnCounter++;
+        
+        // Проверка за cooldown
+        if (turnCounter - lastAttackTurn < RIVALRY_CONFIG.cooldownTurns) return;
+        
         // Проверка дали има вече висящо нападение
         if (window.pendingAttack) return;
         
-        // Шанс за нападение (15%)
+        // Шанс за нападение (3%)
         if (Math.random() > RIVALRY_CONFIG.attackChance) return;
         
         // Вземаме врагове и герои на играча
         const enemies = getEnemyHeroes();
         const playerHeroes = getPlayerHeroes(true);
         
-        if (enemies.length === 0 || playerHeroes.length === 0) return;
+        if (enemies.length === 0 || playerHeroes.length < RIVALRY_CONFIG.minHeroesForAttack) return;
         
         const aggressor = enemies[Math.floor(Math.random() * enemies.length)];
         const victim = playerHeroes[Math.floor(Math.random() * playerHeroes.length)];
@@ -274,6 +286,9 @@
         const stolenInfo = performTheft(victim.clan, aggressor.clan);
         if (!stolenInfo) return;
         
+        // Записваме хода на нападението
+        lastAttackTurn = turnCounter;
+        
         // Показваме нотификация
         showAttackNotification(aggressor, victim, stolenInfo);
         
@@ -281,7 +296,7 @@
         if (window.updateCharacterUI) window.updateCharacterUI(window.currentHero);
         if (typeof window.renderSingleBar === 'function') window.renderSingleBar();
         
-        console.log(`🔥 НАПАДЕНИЕ: ${aggressor.name} нападна ${victim.name} и открадна ${stolenInfo.type}`);
+        console.log(`🔥 НАПАДЕНИЕ (${turnCounter} ход): ${aggressor.name} нападна ${victim.name} и открадна ${stolenInfo.type}`);
     };
 
     // ==================== БИТКА ЗА ОТМЪЩЕНИЕ (1vs1) ====================
@@ -289,7 +304,6 @@
     window.startRevengeBattle = function(aggressor, victim, stolenInfo) {
         console.log(`⚔️ ЗАПОЧВА БИТКА ЗА ОТМЪЩЕНИЕ: ${victim.name} срещу ${aggressor.name}`);
         
-        // Създаваме временен прозорец за избор на герой за битка
         const playerHeroes = getPlayerHeroes(false);
         
         if (playerHeroes.length === 0) {
@@ -297,13 +311,11 @@
             return;
         }
         
-        // Ако има само един герой, директно започваме
         if (playerHeroes.length === 1) {
             startOneVsOneBattle(playerHeroes[0], aggressor, victim, stolenInfo);
             return;
         }
         
-        // Показваме модал за избор на герой
         showHeroSelectionModal(playerHeroes, aggressor, victim, stolenInfo);
     };
     
@@ -363,19 +375,16 @@
         const isVictory = Math.random() < playerChance;
         
         if (isVictory) {
-            // Победа – връщане на откраднатото + бонус
             alert(`🏆 ПОБЕДА! ${playerHero.name} победи ${aggressor.name}!`);
             
-            // Връщане на откраднатото (логика за връщане)
+            // Връщане на откраднатото (логиката ще се доразвие)
             if (window.showAdvisorMsg) {
                 window.showAdvisorMsg(`🏆 Отмъщението бе успешно! ${victim.name} си върна откраднатото!`);
             }
             
-            // Обновяване на UI
             if (window.updateCharacterUI) window.updateCharacterUI(window.currentHero);
             if (typeof window.renderSingleBar === 'function') window.renderSingleBar();
         } else {
-            // Загуба – откраднатото остава при нападателя
             alert(`💀 ЗАГУБА! ${playerHero.name} загуби от ${aggressor.name}!`);
             if (window.showAdvisorMsg) {
                 window.showAdvisorMsg(`💀 Отмъщението се провали! ${victim.name} не успя да си върне откраднатото.`);
@@ -385,24 +394,5 @@
         window.pendingAttack = null;
     }
 
-    // ==================== ИНИЦИАЛИЗАЦИЯ ====================
-    
-    // Добавяне на стилове за анимация
-    if (!document.getElementById('rivalry-styles')) {
-        const style = document.createElement('style');
-        style.id = 'rivalry-styles';
-        style.textContent = `
-            @keyframes slideInRight {
-                from { transform: translateX(100%); opacity: 0; }
-                to { transform: translateX(0); opacity: 1; }
-            }
-            @keyframes slideOutRight {
-                from { transform: translateX(0); opacity: 1; }
-                to { transform: translateX(100%); opacity: 0; }
-            }
-        `;
-        document.head.appendChild(style);
-    }
-    
-    console.log("✅ Системата за съперничество е инициализирана!");
+    console.log("✅ Системата за съперничество е инициализирана (3% шанс, 5 хода cooldown)!");
 })();
