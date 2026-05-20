@@ -108,7 +108,7 @@ function autoConquestBattle(attacker, defenderPower, regionName) {
         if (window.gainHeroXP) window.gainHeroXP(attacker, xpGain);
         else attacker.xp = (attacker.xp || 0) + xpGain;
         
-        // *** ДОБАВЕН ЛОГ ***
+        // *** ДОБАВЕН ЛОГ ЗА ЗАВЛАДЯВАНЕ ***
         if (window.addConquestLog) window.addConquestLog(attacker.leaderName || attacker.name, regionName, xpGain);
         
         if (window.showAdvisorMsg && Math.random() < 0.2) {
