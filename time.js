@@ -61,6 +61,7 @@ window.processTime = function() {
 
 window.updateTimeUI = function() {
     if (!window.gameTime) return;
+    if (typeof window.checkRandomAttack === 'function') window.checkRandomAttack();
     
     // Поддържаме абсолютно всички възможни вариации на ID-та от твоя index.html
     const timeDisplay = document.getElementById('current-time-info') || 
