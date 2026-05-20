@@ -744,4 +744,91 @@ setTimeout(function addNavButtonsAutomatically() {
     window.addEventListener('resize', () => updateHeroesList());
     
     console.log("✅ Навигационните бутони са добавени автоматично");
+    
+    // ==================== ДОБАВЯНЕ НА ЛОГ ПАНЕЛА ====================
+    (function setupEventLog() {
+        if (document.getElementById('autonomous-event-log')) return;
+        
+        const panel = document.createElement('div');
+        panel.id = 'autonomous-event-log';
+        panel.style.cssText = `
+            position: fixed;
+            bottom: 10px;
+            left: 10px;
+            width: 280px;
+            max-height: 200px;
+            background: rgba(0,0,0,0.75);
+            backdrop-filter: blur(8px);
+            border: 1px solid #c9a87b;
+            border-radius: 12px;
+            padding: 8px;
+            font-family: 'Cinzel', monospace;
+            font-size: 10px;
+            color: #ddccaa;
+            z-index: 9999;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            pointer-events: none;
+        `;
+        
+        const title = document.createElement('div');
+        title.innerText = '📜 СВЕТОВНИ СЪБИТИЯ';
+        title.style.cssText = `
+            font-weight: bold;
+            color: #ffdd99;
+            border-bottom: 1px solid #c9a87b;
+            padding-bottom: 4px;
+            margin-bottom: 6px;
+            text-align: center;
+        `;
+        panel.appendChild(title);
+        
+        const logContent = document.createElement('div');
+        logContent.id = 'event-log-content';
+        logContent.style.cssText = `
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            max-height: 160px;
+            overflow-y: auto;
+        `;
+        panel.appendChild(logContent);
+        document.body.appendChild(panel);
+        
+        window.addEventLogMessage = function(msg, type = 'info') {
+            const content = document.getElementById('event-log-content');
+            if (!content) return;
+            const entry = document.createElement('div');
+            entry.style.cssText = `
+                padding: 3px 6px;
+                border-left: 3px solid;
+                border-radius: 4px;
+                font-size: 9px;
+                line-height: 1.3;
+            `;
+            let color = '#ccaa77', borderColor = '#c9a87b', icon = '📌';
+            switch(type) {
+                case 'conquest': color = '#88ff88'; borderColor = '#44aa44'; icon = '🏰'; break;
+                case 'attack':   color = '#ff8888'; borderColor = '#ff4444'; icon = '⚔️'; break;
+                case 'portal':   color = '#aa88ff'; borderColor = '#8844ff'; icon = '🌌'; break;
+                case 'development': color = '#88ccff'; borderColor = '#44aaff'; icon = '📈'; break;
+            }
+            entry.style.color = color;
+            entry.style.borderLeftColor = borderColor;
+            entry.innerHTML = `${icon} ${msg}`;
+            content.appendChild(entry);
+            while (content.children.length > 50) content.removeChild(content.firstChild);
+            content.scrollTop = content.scrollHeight;
+        };
+        
+        window.addConquestLog = (hero, region, xp) => window.addEventLogMessage(`${hero} завладя ${region}! +${xp} XP`, 'conquest');
+        window.addAttackLog = (aggressor, victim, stolen) => window.addEventLogMessage(`${aggressor} нападна ${victim} и открадна ${stolen}`, 'attack');
+        window.addPortalLog = (hero, portal, victory) => window.addEventLogMessage(`${hero} ${victory ? 'премина през' : 'не успя в'} ${portal}`, 'portal');
+        window.addDevelopmentLog = (hero, action, value) => window.addEventLogMessage(`${hero} ${action} +${value}`, 'development');
+        
+        console.log("✅ Лог панелът е инициализиран");
+    })();
+    
 }, 1000);
