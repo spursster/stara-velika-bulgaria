@@ -517,7 +517,8 @@
             }
         }
         
-        function heroesAttack() {
+       
+            function heroesAttack() {
             if (!battleActive) return false;
             
             let totalDamage = 0;
@@ -543,30 +544,76 @@
             if (currentMonster.hp <= 0) {
                 addLog(`━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`);
                 addLog(`🏆 ПОБЕДА! ${monster.name} е победен! 🏆`);
+                
                 // ==================== ДОБАВЯНЕ НА СЛУЧАЕН АРТЕФАКТ ====================
-if (window.currentHero && window.historicalArtifacts) {
-    // 20% шанс за получаване на артефакт
-    if (Math.random() < 0.2) {
-        const artifactKeys = Object.keys(window.historicalArtifacts);
-        const randomKey = artifactKeys[Math.floor(Math.random() * artifactKeys.length)];
-        const newArtifact = { ...window.historicalArtifacts[randomKey] };
-        
-        if (!window.currentHero.inventory) window.currentHero.inventory = [];
-        
-        // Максимум 30 артефакта
-        if (window.currentHero.inventory.length < 30) {
-            window.currentHero.inventory.push(newArtifact);
-            addLog(`🎁 НАМЕРИХТЕ АРТЕФАКТ: ${newArtifact.name} (${newArtifact.era})! +${newArtifact.bonus.heroPower || 0} сила`);
-            
-            // Преизчисляване на силата на героя
-            if (window.recalculateHeroPower) window.recalculateHeroPower(window.currentHero);
-            if (window.updateCharacterUI) window.updateCharacterUI(window.currentHero);
-            if (typeof window.renderSingleBar === 'function') window.renderSingleBar();
-        } else {
-            addLog(`📦 Инвентарът за артефакти е пълен! (макс 30)`);
+                if (window.currentHero && window.historicalArtifacts) {
+                    if (Math.random() < 0.2) {
+                        const artifactKeys = Object.keys(window.historicalArtifacts);
+                        const randomKey = artifactKeys[Math.floor(Math.random() * artifactKeys.length)];
+                        const newArtifact = { ...window.historicalArtifacts[randomKey] };
+                        
+                        if (!window.currentHero.inventory) window.currentHero.inventory = [];
+                        
+                        if (window.currentHero.inventory.length < 30) {
+                            window.currentHero.inventory.push(newArtifact);
+                            addLog(`🎁 НАМЕРИХТЕ АРТЕФАКТ: ${newArtifact.name} (${newArtifact.era})! +${newArtifact.bonus.heroPower || 0} сила`);
+                            
+                            if (window.recalculateHeroPower) window.recalculateHeroPower(window.currentHero);
+                            if (window.updateCharacterUI) window.updateCharacterUI(window.currentHero);
+                        } else {
+                            addLog(`📦 Инвентарът за артефакти е пълен! (макс 30)`);
+                        }
+                    }
+                }
+                
+                // ==================== 4% ШАНС ЗА ПЛЕННИЦА ====================
+                if (window.fantasyRaces && window.fantasyRaces.length > 0) {
+                    if (Math.random() < 0.04) {
+                        const randomRace = window.fantasyRaces[Math.floor(Math.random() * window.fantasyRaces.length)];
+                        const prisoner = {
+                            id: "prisoner_" + Date.now() + "_" + Math.floor(Math.random() * 10000),
+                            raceId: randomRace.id,
+                            name: randomRace.name,
+                            icon: randomRace.icon,
+                            bonus: randomRace.bonus,
+                            desc: randomRace.desc,
+                            isMarried: false,
+                            capturedAt: new Date().toISOString()
+                        };
+                        
+                        if (!window.prisoners) window.prisoners = [];
+                        window.prisoners.push(prisoner);
+                        
+                        addLog(`🌸 СЛЕД БИТКАТА! Открихте пленница - ${randomRace.name}!`);
+                        addLog(`   💍 Можете да се ожените за нея от менюто за брак.`);
+                        
+                        if (window.showAdvisorMsg) {
+                            window.showAdvisorMsg(`🌸 След битката открихте пленница - ${randomRace.name}! Можете да се ожените за нея (💍).`);
+                        }
+                    }
+                }
+                
+                // ==================== ДОБАВЯНЕ НА ЗЛАТО ====================
+                if (window.currentHero) {
+                    const goldReward = Math.floor(currentMonster.maxHp * 0.8);
+                    window.currentHero.gold = (window.currentHero.gold || 0) + goldReward;
+                    addLog(`💰 Получихте ${goldReward} злато!`);
+                    if (window.updateCharacterUI) window.updateCharacterUI(window.currentHero);
+                }
+                
+                battleActive = false;
+                const attackBtn = document.getElementById('battle-attack');
+                if (attackBtn) attackBtn.disabled = true;
+                
+                if (typeof window.renderSingleBar === 'function') window.renderSingleBar();
+                if (typeof window.renderTop6LeadersUI === 'function') window.renderTop6LeadersUI();
+                if (typeof window.hidePortalIndicator === 'function') window.hidePortalIndicator();
+                
+                return true;
+            }
+            updateUI();
+            return true;
         }
-    }
-}
                 battleActive = false;
                 const attackBtn = document.getElementById('battle-attack');
                 if (attackBtn) attackBtn.disabled = true;
