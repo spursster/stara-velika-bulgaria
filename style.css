@@ -487,3 +487,50 @@ html, body {
         font-size: 9px !important;
     }
 }
+/* ==================== СТЪКЛЕНИ БУТОНИ ЗА ГОРНАТА ЛЕНТА ==================== */
+.top-bar-controls {
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.glass-btn {
+    background: rgba(255, 255, 255, 0.08);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    border: 1px solid rgba(255, 215, 0, 0.3);
+    border-radius: 50%;
+    color: #ffdd99;
+    font-size: 1rem;
+    width: 32px;
+    height: 32px;
+    min-width: 32px;
+    padding: 0;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+}
+
+.glass-btn:hover {
+    background: rgba(255, 255, 255, 0.15);
+    border-color: #ffd700;
+    transform: scale(1.05);
+}
+
+.glass-btn:active {
+    transform: scale(0.95);
+}
+
+.glass-btn-gold {
+    background: linear-gradient(135deg, rgba(212, 175, 55, 0.2), rgba(184, 134, 11, 0.1));
+    border-color: #ffd700;
+}
+
+.glass-btn-gold:hover {
+    background: linear-gradient(135deg, rgba(212, 175, 55, 0.35), rgba(184, 134, 11, 0.2));
+}
