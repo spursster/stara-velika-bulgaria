@@ -366,3 +366,63 @@ window.openHeroRPGModal = function(clanKey) {
     }
     modalEl.style.display = "block";
 };
+
+// ==================== ИЗЧИСЛЯВАНЕ НА СЕТ БОНУСИ ОТ АРТЕФАКТИ ====================
+window.calculateArtifactSetBonuses = function(hero) {
+    if (!hero || !hero.inventory) return {};
+    
+    const setsCollected = {};
+    let totalSetBonus = { heroPower: 0, goldBonus: 0, defense: 0, armyBonus: 0, diplomacyBonus: 0, mysticismBonus: 0 };
+    
+    for (let item of hero.inventory) {
+        if (item && item.set && window.historicalArtifacts && window.historicalArtifacts[item.id]) {
+            const artifact = window.historicalArtifacts[item.id];
+            if (!setsCollected[artifact.set]) setsCollected[artifact.set] = [];
+            if (!setsCollected[artifact.set].includes(artifact.id)) {
+                setsCollected[artifact.set].push(artifact.id);
+            }
+        }
+    }
+    
+    for (let setKey in setsCollected) {
+        if (window.artifactSetBonuses && window.artifactSetBonuses[setKey]) {
+            const setInfo = window.artifactSetBonuses[setKey];
+            if (setsCollected[setKey].length >= setInfo.pieces) {
+                console.log(`✨ Активиран сет: ${setInfo.name}`);
+                for (let bonus in setInfo.bonus) {
+                    totalSetBonus[bonus] = (totalSetBonus[bonus] || 0) + setInfo.bonus[bonus];
+                }
+            }
+        }
+    }
+    
+    return totalSetBonus;
+};
+
+// Преизчисляване на силата на героя с артефакти и сетове
+window.recalculateHeroPower = function(hero) {
+    if (!hero) return;
+    
+    let basePower = hero.baseHeroPower || hero.heroPower || 100;
+    let artifactBonus = 0;
+    let setBonus = 0;
+    
+    if (hero.inventory) {
+        for (let item of hero.inventory) {
+            if (item && item.bonus && item.bonus.heroPower) {
+                artifactBonus += item.bonus.heroPower;
+            }
+        }
+    }
+    
+    const setBonuses = window.calculateArtifactSetBonuses(hero);
+    setBonus = setBonuses.heroPower || 0;
+    
+    hero.heroPower = basePower + artifactBonus + setBonus;
+    
+    if (window.showAdvisorMsg && (artifactBonus > 0 || setBonus > 0)) {
+        console.log(`📊 Сила на ${hero.name}: базова ${basePower} + артефакти ${artifactBonus} + сет ${setBonus} = ${hero.heroPower}`);
+    }
+    
+    return hero.heroPower;
+};
