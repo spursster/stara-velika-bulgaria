@@ -79,3 +79,27 @@ window.worldData = {
 
 // ✅ КЛЮЧОВО: Инициализация на регионите на играча
 window.playerRegions = window.playerRegions || ["Плиска"];
+
+// ==================== ФЕНТЪЗИ РАСИ ЗА БРАК ====================
+window.fantasyRaces = [
+    { id: "elf", name: "Висша елфийка", icon: "🧝♀️", bonus: { heroPower: 15, mysticismBonus: 0.1 }, desc: "Елфийската мъдрост увеличава магическата сила" },
+    { id: "dwarf", name: "Джудже", icon: "🪓", bonus: { defense: 15, armyBonus: 0.1 }, desc: "Джуджешката издръжливост укрепва армията" },
+    { id: "vampire", name: "Вампирка", icon: "🧛‍♀️", bonus: { heroPower: 20, lifeSteal: 0.1 }, desc: "Вампирският вампиризъм лекува при атака" },
+    { id: "werewolf", name: "Върколак", icon: "🐺", bonus: { heroPower: 18, armyBonus: 0.15 }, desc: "Върколашката свирепост усилва войските" },
+    { id: "driad", name: "Дриада", icon: "🌿", bonus: { goldBonus: 25, mysticismBonus: 0.1 }, desc: "Дриадите носят плодородие и богатство" },
+    { id: "phoenix", name: "Феникс", icon: "🔥", bonus: { heroPower: 25, reviveChance: 0.1 }, desc: "Фениксът може да възкресява паднали войници" },
+    { id: "dragonborn", name: "Драконианка", icon: "🐉", bonus: { heroPower: 30, defense: 10 }, desc: "Драконската кръв дава невероятна сила" },
+    { id: "nymph", name: "Нимфа", icon: "💧", bonus: { goldBonus: 30, diplomacyBonus: 0.15 }, desc: "Нимфите привличат богатство и съюзници" },
+    { id: "siren", name: "Сирена", icon: "🎵", bonus: { diplomacyBonus: 0.2, mysticismBonus: 0.1 }, desc: "Сиренският глас омайва враговете" },
+    { id: "gorgon", name: "Горгона", icon: "🐍", bonus: { heroPower: 22, defense: 15 }, desc: "Горгонският поглед вкаменява враговете" },
+    { id: "harpy", name: "Харпия", icon: "🦅", bonus: { armyBonus: 0.15, mobility: 0.1 }, desc: "Харпиите увеличават скоростта на армията" },
+    { id: "centaur", name: "Кентавърка", icon: "🏹", bonus: { heroPower: 18, armyBonus: 0.12 }, desc: "Кентаврите са майстори стрелци" },
+    { id: "fairy", name: "Фея", icon: "✨", bonus: { mysticismBonus: 0.2, goldBonus: 15 }, desc: "Феите носят магия и късмет" },
+    { id: "succubus", name: "Сукуб", icon: "😈", bonus: { heroPower: 25, diplomacyBonus: -0.05 }, desc: "Сукубите очарователни, но коварни" },
+    { id: "valkyrie", name: "Валкирия", icon: "⚔️", bonus: { heroPower: 28, armyBonus: 0.1 }, desc: "Валкириите водят падналите герои в битка" },
+    { id: "mermaid", name: "Русалка", icon: "🧜‍♀️", bonus: { goldBonus: 20, defense: 10 }, desc: "Русалките пазят морските съкровища" },
+    { id: "demon", name: "Демоница", icon: "👿", bonus: { heroPower: 35, diplomacyBonus: -0.1 }, desc: "Демоничната сила идва с цена" },
+    { id: "angel", name: "Ангел", icon: "😇", bonus: { heroPower: 30, mysticismBonus: 0.15, armyBonus: 0.1 }, desc: "Ангелското присъствие вдъхновява войските" },
+    { id: "ghost", name: "Дух", icon: "👻", bonus: { mysticismBonus: 0.25, defense: 10 }, desc: "Духовете са неуязвими на физически атаки" },
+    { id: "golem", name: "Голем", icon: "🗿", bonus: { defense: 30, heroPower: 10 }, desc: "Големите са живи бронирани машини" }
+];
