@@ -1,4 +1,4 @@
-// ==================== battle.js – ФИНАЛНА РАБОТЕЩА ВЕРСИЯ ====================
+// ==================== battle.js – ФИНАЛНА ВЕРСИЯ С ИНДИКАТОР ЗА ПОРТАЛ ====================
 (function() {
     if (!document.getElementById('battle-styles')) {
         const style = document.createElement('style');
@@ -90,6 +90,20 @@
 
     window.startBattle = function(regionInput) {
         console.log("[БИТКА] Старт с:", regionInput);
+        
+        // ==================== СКРИВАНЕ НА ИНДИКАТОРА ПРИ БИТКА С ПОРТАЛ ====================
+        let isPortal = false;
+        if (typeof regionInput === 'string') {
+            if (regionInput.includes('Портал') || regionInput.includes('портал')) isPortal = true;
+        } else if (regionInput && typeof regionInput === 'object') {
+            if (regionInput.name && (regionInput.name.includes('Портал') || regionInput.name.includes('портал'))) isPortal = true;
+            if (regionInput.id && regionInput.id.includes('portal')) isPortal = true;
+        }
+        
+        if (isPortal && typeof window.hidePortalIndicator === 'function') {
+            window.hidePortalIndicator();
+            console.log("🔴 Индикаторът за портал е скрит (битка с портал)");
+        }
         
         // Премахване на стар екран
         const old = document.querySelector('.battle-overlay');
@@ -184,10 +198,6 @@
                 }
                 active = false;
                 document.getElementById('battle-attack').disabled = true;
-                // След победа, скриваме индикатора за портал (ако е бил портал)
-                if (window.hidePortalIndicator && (regionName.includes('Портал') || regionName.includes('портал'))) {
-                    window.hidePortalIndicator();
-                }
                 setTimeout(() => overlay.remove(), 4000);
             }
         }
@@ -218,5 +228,5 @@
         addLog("⚔️ Битката започва! Натиснете АТАКА.");
     };
     
-    console.log("✅ battle.js зареден.");
+    console.log("✅ battle.js зареден (с поддръжка на индикатор за портал)");
 })();
