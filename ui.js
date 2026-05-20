@@ -262,13 +262,14 @@ const skillTree = {
     leadership: { name: "🏆 Лидерство", desc: "Увеличава максималния брой войници", cost: 1 }
 };
 
-// ==================== ПРОФИЛ С 12 СЛОТА ====================
+// ==================== ПРОФИЛ С 12 СЛОТА + АРТЕФАКТИ ====================
 function showHeroProfile(hero) {
     let needXP = 100 + (hero.level - 1) * 50;
     let xpPercent = Math.min(100, Math.floor((hero.xp / needXP) * 100));
     let autoOn = isAuto(hero.id);
     let slotNames = ["⚔️ ОРЪЖИЕ", "🛡️ ЩИТ", "🪖 ШЛЕМ", "🦺 НАГРЪДНИК", "🧤 РЪКАВИЦИ", "👖 КРАЧОЛИ", "👢 БОТУШИ", "💍 ПРЪСТЕН", "💍 ПРЪСТЕН 2", "📿 АМУЛЕТ", "🧣 НАМЕТАЛО", "🔱 РЕЛИКВИЯ"];
     
+    // ==================== ИНВЕНТАР (12 слота) ====================
     let inventoryHtml = '<div style="background:#0d0a07; border-radius:12px; padding:12px; margin-top:10px;"><h4 style="color:#ffdd99; margin:0 0 10px 0;">🎒 ИНВЕНТАР</h4><div style="display:grid; grid-template-columns:repeat(3,1fr); gap:8px;">';
     for (let i = 0; i < 12; i++) {
         let item = hero.equipment && hero.equipment[i] ? hero.equipment[i] : null;
@@ -281,6 +282,26 @@ function showHeroProfile(hero) {
     }
     inventoryHtml += '</div></div>';
     
+    // ==================== АРТЕФАКТИ (ИСТОРИЧЕСКИ) ====================
+    let artifactsHtml = '<div style="background:#0d0a07; border-radius:12px; padding:12px; margin-top:10px;"><h4 style="color:#ffdd99; margin:0 0 10px 0;">🏺 СЪБРАНИ АРТЕФАКТИ</h4><div style="display:flex; flex-wrap:wrap; gap:8px;">';
+    if (hero.inventory && hero.inventory.length > 0) {
+        let artifactCount = 0;
+        hero.inventory.forEach(artifact => {
+            if (artifact && artifact.id) {
+                artifactCount++;
+                artifactsHtml += `<div style="background:#2c1a0c; border-radius:8px; padding:6px; text-align:center; min-width:60px; border:1px solid #c9a87b;" title="${artifact.name} (${artifact.era || 'Исторически'})">
+                    <div style="font-size:20px;">${artifact.icon || '🏺'}</div>
+                    <div style="font-size:7px; color:#ffdd99;">${artifact.name.length > 10 ? artifact.name.substring(0,8)+'..' : artifact.name}</div>
+                </div>`;
+            }
+        });
+        if (artifactCount === 0) artifactsHtml += '<div style="color:#aa8866; padding:8px;">Няма събрани артефакти</div>';
+    } else {
+        artifactsHtml += '<div style="color:#aa8866; padding:8px;">Няма събрани артефакти</div>';
+    }
+    artifactsHtml += '</div></div>';
+    
+    // ==================== ДОМАШЕН ЛЮБИМЕЦ ====================
     let petHtml = '<div style="background:#0d0a07; border-radius:12px; padding:12px; margin-top:10px;"><h4 style="color:#ffdd99; margin:0 0 10px 0;">🐾 ДОМАШЕН ЛЮБИМЕЦ</h4>';
     if (hero.pet && window.rpgDatabase?.petsDatabase?.[hero.pet]) {
         let pet = window.rpgDatabase.petsDatabase[hero.pet];
@@ -290,15 +311,26 @@ function showHeroProfile(hero) {
     }
     petHtml += '</div>';
     
+    // ==================== УМЕНИЯ ====================
     let skillsHtml = '<div style="background:#0d0a07; border-radius:12px; padding:12px; margin-top:10px;"><h4 style="color:#ffdd99; margin:0 0 10px 0;">📖 ДЪРВО НА УМЕНИЯТА</h4><div style="color:#ffaa66; font-size:11px; margin-bottom:8px;">✨ Свободни точки: ' + (hero.skillPoints || 0) + '</div>';
     for (let [key, skill] of Object.entries(skillTree)) {
         let currentLevel = hero.skills?.[key] || 0;
-        skillsHtml += `<div style="margin-bottom:12px; border-bottom:1px solid #2a1a0a; padding-bottom:8px;"><div style="display:flex; justify-content:space-between;"><span style="color:#ffaa66;">${skill.name}</span><span style="color:#ccaa77;">Ниво ${currentLevel}</span></div><div style="font-size:10px; color:#aa8866;">${skill.desc}</div><button class="upgrade-skill-btn" data-skill="${key}" style="background:#2c1a0c; border:none; border-radius:20px; color:#ffdd99; font-size:9px; padding:2px 10px; margin-top:5px; cursor:pointer;">📈 ПОВИШИ</button></div>`;
+        let maxLevel = 5;
+        skillsHtml += `<div style="margin-bottom:12px; border-bottom:1px solid #2a1a0a; padding-bottom:8px;">
+            <div style="display:flex; justify-content:space-between;">
+                <span style="color:#ffaa66;">${skill.name}</span>
+                <span style="color:#ccaa77;">Ниво ${currentLevel}/${maxLevel}</span>
+            </div>
+            <div style="font-size:10px; color:#aa8866;">${skill.desc}</div>
+            <button class="upgrade-skill-btn" data-skill="${key}" style="background:#2c1a0c; border:none; border-radius:20px; color:#ffdd99; font-size:9px; padding:2px 10px; margin-top:5px; cursor:pointer;">📈 ПОВИШИ</button>
+        </div>`;
     }
     skillsHtml += '</div>';
     
+    // ==================== AUTO БУТОН ====================
     let autoBtnHtml = `<button id="auto-mode-btn" style="background:${autoOn ? '#4a6a2a' : '#2c1a0c'}; border:none; border-radius:20px; color:#ffdd99; padding:8px 16px; margin-top:10px; cursor:pointer; width:100%;">${autoOn ? '✅ AUTO РЕЖИМ: ВКЛЮЧЕН' : '🤖 AUTO РЕЖИМ: ИЗКЛЮЧЕН'}</button>`;
     
+    // ==================== МОДАЛЕН ПРОЗОРЕЦ ====================
     let oldModal = document.getElementById('ultimate-profile-modal');
     if (oldModal) oldModal.remove();
     let modal = document.createElement('div');
@@ -312,8 +344,13 @@ function showHeroProfile(hero) {
                 <div style="color:#ccaa77;">${hero.className} · Ниво ${hero.level}</div>
                 <div style="background:#2a1a0a; height:8px; border-radius:4px; margin:10px 0;"><div style="background:#d4a373; height:100%; width:${xpPercent}%; border-radius:4px;"></div></div>
                 <div style="font-size:11px; color:#ffaa66;">⚡ ${Math.floor(hero.xp)}/${needXP} XP</div>
-                <div style="margin-top:15px; display:flex; justify-content:space-between; gap:10px;"><div style="background:#0d0a07; border-radius:12px; padding:8px; flex:1;"><div>💰 Злато</div><div style="color:#ffdd99;">${hero.gold}</div></div><div style="background:#0d0a07; border-radius:12px; padding:8px; flex:1;"><div>⚔️ Армия</div><div style="color:#ffdd99;">${hero.army}</div></div><div style="background:#0d0a07; border-radius:12px; padding:8px; flex:1;"><div>💪 Сила</div><div style="color:#ffdd99;">${hero.power}</div></div></div>
+                <div style="margin-top:15px; display:flex; justify-content:space-between; gap:10px;">
+                    <div style="background:#0d0a07; border-radius:12px; padding:8px; flex:1;"><div>💰 Злато</div><div style="color:#ffdd99;">${hero.gold}</div></div>
+                    <div style="background:#0d0a07; border-radius:12px; padding:8px; flex:1;"><div>⚔️ Армия</div><div style="color:#ffdd99;">${hero.army}</div></div>
+                    <div style="background:#0d0a07; border-radius:12px; padding:8px; flex:1;"><div>💪 Сила</div><div style="color:#ffdd99;">${hero.power}</div></div>
+                </div>
                 ${inventoryHtml}
+                ${artifactsHtml}
                 ${petHtml}
                 ${skillsHtml}
                 ${autoBtnHtml}
@@ -323,15 +360,16 @@ function showHeroProfile(hero) {
     `;
     document.body.appendChild(modal);
     
+    // ==================== ЗАТВАРЯНЕ ====================
     modal.querySelector('#close-profile-modal').onclick = () => modal.remove();
     
+    // ==================== AUTO БУТОН (ФУНКЦИОНАЛНОСТ) ====================
     let autoBtnElem = modal.querySelector('#auto-mode-btn');
     if (autoBtnElem) {
         autoBtnElem.onclick = () => {
             let newState = !isAuto(hero.id);
             setAuto(hero.id, newState);
             
-            // Синхронизираме hero.isAuto с autoState
             if (window.worldData && window.worldData.clans && window.worldData.clans[hero.id]) {
                 window.worldData.clans[hero.id].isAuto = newState;
             }
@@ -340,7 +378,6 @@ function showHeroProfile(hero) {
             }
             hero.isAuto = newState;
             
-            // Стартираме или спираме таймера
             if (newState && typeof window.startAutoTimer === 'function') {
                 window.startAutoTimer(hero.id);
             } else if (!newState && typeof window.stopAutoTimer === 'function') {
@@ -352,6 +389,7 @@ function showHeroProfile(hero) {
         };
     }
     
+    // ==================== ОСИНОВЯВАНЕ НА ЛЮБИМЕЦ ====================
     let adoptBtn = modal.querySelector('#adopt-pet-btn');
     if (adoptBtn) {
         adoptBtn.onclick = () => {
@@ -365,6 +403,7 @@ function showHeroProfile(hero) {
         };
     }
     
+    // ==================== ПОВИШАВАНЕ НА УМЕНИЯ ====================
     let upgradeBtns = modal.querySelectorAll('.upgrade-skill-btn');
     upgradeBtns.forEach(btn => {
         btn.onclick = (e) => {
