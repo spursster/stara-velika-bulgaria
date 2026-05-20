@@ -543,6 +543,30 @@
             if (currentMonster.hp <= 0) {
                 addLog(`━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`);
                 addLog(`🏆 ПОБЕДА! ${monster.name} е победен! 🏆`);
+                // ==================== ДОБАВЯНЕ НА СЛУЧАЕН АРТЕФАКТ ====================
+if (window.currentHero && window.historicalArtifacts) {
+    // 20% шанс за получаване на артефакт
+    if (Math.random() < 0.2) {
+        const artifactKeys = Object.keys(window.historicalArtifacts);
+        const randomKey = artifactKeys[Math.floor(Math.random() * artifactKeys.length)];
+        const newArtifact = { ...window.historicalArtifacts[randomKey] };
+        
+        if (!window.currentHero.inventory) window.currentHero.inventory = [];
+        
+        // Максимум 30 артефакта
+        if (window.currentHero.inventory.length < 30) {
+            window.currentHero.inventory.push(newArtifact);
+            addLog(`🎁 НАМЕРИХТЕ АРТЕФАКТ: ${newArtifact.name} (${newArtifact.era})! +${newArtifact.bonus.heroPower || 0} сила`);
+            
+            // Преизчисляване на силата на героя
+            if (window.recalculateHeroPower) window.recalculateHeroPower(window.currentHero);
+            if (window.updateCharacterUI) window.updateCharacterUI(window.currentHero);
+            if (typeof window.renderSingleBar === 'function') window.renderSingleBar();
+        } else {
+            addLog(`📦 Инвентарът за артефакти е пълен! (макс 30)`);
+        }
+    }
+}
                 battleActive = false;
                 const attackBtn = document.getElementById('battle-attack');
                 if (attackBtn) attackBtn.disabled = true;
