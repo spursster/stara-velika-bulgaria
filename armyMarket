@@ -1,0 +1,347 @@
+// ======================== АРМИЯ ПАЗАР (STYLE + LOGIC) ========================
+(function() {
+    // Проверка дали данните за играча съществуват
+    if (typeof window.playerGold === 'undefined') window.playerGold = 1500;
+    if (typeof window.playerArmy === 'undefined') window.playerArmy = { 
+        infantry: 200, archers: 100, cavalry: 50, elite: 10 
+    };
+    if (typeof window.updateUI === 'undefined') {
+        window.updateUI = function() {
+            console.log("UI update placeholder");
+        };
+    }
+
+    // Дефиниране на типовете войници
+    const troopTypes = [
+        { id: "infantry", name: "🏹 Пехотинец", basePrice: 10, attack: 8, defense: 12, icon: "⚔️", desc: "Основна пехота – добра защита" },
+        { id: "archers", name: "🏹 Стрелец", basePrice: 15, attack: 15, defense: 6, icon: "🏹", desc: "Далекобойни стрелци" },
+        { id: "cavalry", name: "🐎 Конник", basePrice: 30, attack: 25, defense: 18, icon: "🐎", desc: "Бързи атакуващи части" },
+        { id: "elite", name: "🛡️ Елитен войн", basePrice: 70, attack: 45, defense: 40, icon: "🛡️", desc: "Най-добрите бойци" }
+    ];
+
+    // Функция за създаване на HTML структурата
+    function createMarketHTML() {
+        return `
+        <div id="armyMarketModal" class="market-modal" style="display: none;">
+            <div class="market-content glass-panel">
+                <div class="market-header">
+                    <h2>🏰 Военен пазар <span class="close-market">&times;</span></h2>
+                    <div class="player-resources">
+                        <div class="gold-display">💰 Злато: <span id="playerGoldAmount">${window.playerGold}</span></div>
+                        <div class="army-stats">⚔️ Обща сила: <span id="totalArmyPower">0</span></div>
+                    </div>
+                </div>
+                <div class="troop-shop">
+                    ${troopTypes.map(type => `
+                        <div class="troop-card" data-type="${type.id}">
+                            <div class="troop-icon">${type.icon}</div>
+                            <div class="troop-info">
+                                <h3>${type.name}</h3>
+                                <p>${type.desc}</p>
+                                <div class="stats">
+                                    <span>⚔️ Атака: ${type.attack}</span>
+                                    <span>🛡️ Защита: ${type.defense}</span>
+                                </div>
+                                <div class="price">💰 ${type.basePrice} злато</div>
+                            </div>
+                            <div class="troop-controls">
+                                <button class="buy-btn" data-type="${type.id}">Купи +1</button>
+                                <div class="owned-count">Имаш: <span id="count-${type.id}">${window.playerArmy[type.id] || 0}</span></div>
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
+                <div class="market-footer">
+                    <button id="closeMarketBtn">Затвори пазара</button>
+                    <button id="quickBuyMaxBtn">💰 Купи максимално (пехота)</button>
+                </div>
+            </div>
+        </div>
+        <style>
+            /* Стилове за модалния прозорец */
+            .market-modal {
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background: rgba(0,0,0,0.7);
+                backdrop-filter: blur(8px);
+                z-index: 1000;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                animation: fadeIn 0.3s ease;
+            }
+            .glass-panel {
+                background: rgba(20, 20, 40, 0.85);
+                border-radius: 28px;
+                box-shadow: 0 20px 40px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.1);
+                backdrop-filter: blur(12px);
+                border: 1px solid rgba(255,215,0,0.3);
+                width: 85%;
+                max-width: 1000px;
+                max-height: 85vh;
+                overflow-y: auto;
+                padding: 20px;
+                transition: transform 0.2s;
+            }
+            .market-header {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                border-bottom: 1px solid gold;
+                padding-bottom: 10px;
+                margin-bottom: 20px;
+                flex-wrap: wrap;
+            }
+            .close-market {
+                font-size: 32px;
+                cursor: pointer;
+                color: gold;
+                transition: 0.2s;
+            }
+            .close-market:hover { transform: scale(1.2); color: red; }
+            .player-resources {
+                display: flex;
+                gap: 30px;
+                background: rgba(0,0,0,0.5);
+                padding: 8px 18px;
+                border-radius: 40px;
+                font-weight: bold;
+            }
+            .gold-display { color: #ffd966; }
+            .army-stats { color: #aaf0ff; }
+            .troop-shop {
+                display: grid;
+                grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+                gap: 20px;
+                margin: 20px 0;
+            }
+            .troop-card {
+                background: rgba(0,0,0,0.6);
+                border-radius: 24px;
+                padding: 16px;
+                display: flex;
+                flex-direction: column;
+                transition: all 0.2s;
+                border: 1px solid rgba(255,215,0,0.3);
+            }
+            .troop-card:hover {
+                transform: translateY(-5px);
+                border-color: gold;
+                box-shadow: 0 10px 20px rgba(0,0,0,0.4);
+            }
+            .troop-icon { font-size: 48px; text-align: center; margin-bottom: 8px; }
+            .troop-info h3 { margin: 0 0 8px 0; color: #ffd966; }
+            .stats { display: flex; gap: 15px; font-size: 14px; margin: 10px 0; color: #ccc; }
+            .price { font-weight: bold; color: #ffaa44; margin: 8px 0; }
+            .troop-controls {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                margin-top: 12px;
+            }
+            .buy-btn {
+                background: linear-gradient(135deg, #b8860b, #daa520);
+                border: none;
+                padding: 8px 18px;
+                border-radius: 40px;
+                color: white;
+                font-weight: bold;
+                cursor: pointer;
+                transition: 0.2s;
+                box-shadow: 0 2px 6px black;
+            }
+            .buy-btn:hover {
+                transform: scale(1.05);
+                background: linear-gradient(135deg, #daa520, #ffcc44);
+                box-shadow: 0 0 10px gold;
+            }
+            .buy-btn:active { transform: scale(0.98); }
+            .owned-count { font-size: 14px; background: #222; padding: 4px 12px; border-radius: 30px; }
+            .market-footer {
+                display: flex;
+                justify-content: center;
+                gap: 20px;
+                margin-top: 20px;
+                padding-top: 15px;
+                border-top: 1px solid rgba(255,215,0,0.5);
+            }
+            .market-footer button {
+                background: #2c2c3a;
+                border: 1px solid #daa520;
+                padding: 8px 24px;
+                border-radius: 40px;
+                color: #ffd966;
+                cursor: pointer;
+                font-weight: bold;
+                transition: 0.2s;
+            }
+            .market-footer button:hover {
+                background: #daa520;
+                color: black;
+                border-color: white;
+            }
+            @keyframes fadeIn {
+                from { opacity: 0; transform: scale(0.95); }
+                to { opacity: 1; transform: scale(1); }
+            }
+            @keyframes coinFlip {
+                0% { transform: translateY(0); opacity: 1; }
+                100% { transform: translateY(-30px); opacity: 0; }
+            }
+            .coin-effect {
+                position: fixed;
+                pointer-events: none;
+                font-size: 24px;
+                animation: coinFlip 0.5s ease-out forwards;
+                z-index: 2000;
+            }
+        </style>
+        `;
+    }
+
+    // Показване на модала
+    function showMarket() {
+        if (document.getElementById('armyMarketModal')) {
+            document.getElementById('armyMarketModal').style.display = 'flex';
+        } else {
+            document.body.insertAdjacentHTML('beforeend', createMarketHTML());
+            attachMarketEvents();
+            document.getElementById('armyMarketModal').style.display = 'flex';
+        }
+        updateMarketUI();
+    }
+
+    function hideMarket() {
+        const modal = document.getElementById('armyMarketModal');
+        if (modal) modal.style.display = 'none';
+    }
+
+    // Анимация за монета
+    function coinAnimation(x, y) {
+        const coin = document.createElement('div');
+        coin.className = 'coin-effect';
+        coin.textContent = '💰';
+        coin.style.left = x + 'px';
+        coin.style.top = y + 'px';
+        document.body.appendChild(coin);
+        setTimeout(() => coin.remove(), 500);
+    }
+
+    // Покупка на войник
+    function buyTroop(typeId, quantity = 1) {
+        const troop = troopTypes.find(t => t.id === typeId);
+        if (!troop) return false;
+        const totalCost = troop.basePrice * quantity;
+        if (window.playerGold < totalCost) {
+            alert("❌ Нямаш достатъчно злато!");
+            return false;
+        }
+        window.playerGold -= totalCost;
+        window.playerArmy[typeId] = (window.playerArmy[typeId] || 0) + quantity;
+        
+        // Анимация на монетите (икона близо до курсора – опционално)
+        for (let i = 0; i < Math.min(5, quantity); i++) {
+            setTimeout(() => {
+                coinAnimation(window.event?.clientX || window.innerWidth/2, window.event?.clientY || window.innerHeight/2);
+            }, i * 80);
+        }
+        
+        // Актуализация на UI
+        updateMarketUI();
+        if (typeof window.updateUI === 'function') window.updateUI();
+        return true;
+    }
+
+    function buyMaxInfantry() {
+        const infantry = troopTypes.find(t => t.id === 'infantry');
+        if (!infantry) return;
+        const maxCanBuy = Math.floor(window.playerGold / infantry.basePrice);
+        if (maxCanBuy > 0) {
+            buyTroop('infantry', maxCanBuy);
+        } else {
+            alert("Нямаш злато дори за един пехотинец!");
+        }
+    }
+
+    function updateMarketUI() {
+        const goldSpan = document.getElementById('playerGoldAmount');
+        if (goldSpan) goldSpan.innerText = window.playerGold;
+        
+        for (let troop of troopTypes) {
+            const countSpan = document.getElementById(`count-${troop.id}`);
+            if (countSpan) countSpan.innerText = window.playerArmy[troop.id] || 0;
+        }
+        
+        // Изчисляване на общата военна сила (attack + defense)
+        let totalPower = 0;
+        for (let troop of troopTypes) {
+            const count = window.playerArmy[troop.id] || 0;
+            totalPower += count * (troop.attack + troop.defense);
+        }
+        const powerSpan = document.getElementById('totalArmyPower');
+        if (powerSpan) powerSpan.innerText = totalPower;
+    }
+
+    function attachMarketEvents() {
+        const modal = document.getElementById('armyMarketModal');
+        if (!modal) return;
+        
+        // Затваряне
+        const closeBtns = [modal.querySelector('.close-market'), document.getElementById('closeMarketBtn')];
+        closeBtns.forEach(btn => {
+            if (btn) btn.addEventListener('click', hideMarket);
+        });
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) hideMarket();
+        });
+        
+        // Бутони за покупка
+        document.querySelectorAll('.buy-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const type = btn.getAttribute('data-type');
+                if (type) buyTroop(type, 1);
+            });
+        });
+        
+        const maxBtn = document.getElementById('quickBuyMaxBtn');
+        if (maxBtn) maxBtn.addEventListener('click', buyMaxInfantry);
+    }
+
+    // Глобално изложение
+    window.armyMarket = {
+        show: showMarket,
+        hide: hideMarket,
+        buyTroop: buyTroop
+    };
+    
+    // Автоматично добавяне на бутон за отваряне (по желание)
+    document.addEventListener('DOMContentLoaded', () => {
+        if (!document.getElementById('openMarketBtn')) {
+            const btn = document.createElement('button');
+            btn.id = 'openMarketBtn';
+            btn.innerHTML = '⚔️ НАЕМИ АРМИЯ ⚔️';
+            btn.style.position = 'fixed';
+            btn.style.bottom = '20px';
+            btn.style.right = '20px';
+            btn.style.zIndex = '999';
+            btn.style.background = 'linear-gradient(135deg, #b8860b, #daa520)';
+            btn.style.border = 'none';
+            btn.style.padding = '12px 24px';
+            btn.style.borderRadius = '40px';
+            btn.style.color = 'white';
+            btn.style.fontWeight = 'bold';
+            btn.style.fontSize = '18px';
+            btn.style.cursor = 'pointer';
+            btn.style.boxShadow = '0 4px 12px black';
+            btn.style.transition = '0.2s';
+            btn.onmouseover = () => btn.style.transform = 'scale(1.05)';
+            btn.onmouseout = () => btn.style.transform = 'scale(1)';
+            btn.onclick = () => window.armyMarket.show();
+            document.body.appendChild(btn);
+        }
+    });
+})();
