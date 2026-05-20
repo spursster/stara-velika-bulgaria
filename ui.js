@@ -571,3 +571,20 @@ if (document.readyState === 'loading') {
     // startAllAutoTimers();  // ДЕАКТИВИРАНО
     // syncAutoStateWithHeroes();  // ДЕАКТИВИРАНО
 }
+
+
+// Автоматично добавяне на навигационни бутони след зареждане на лентата
+setTimeout(function addNavButtonsAutomatically() {
+    const heroBar = document.getElementById('single-hero-bar');
+    if (!heroBar) {
+        setTimeout(addNavButtonsAutomatically, 500);
+        return;
+    }
+    
+    // Проверяваме дали вече има бутони
+    if (document.getElementById('hero-nav-prev')) return;
+    
+    // ... (целият код от елегантните бутони, който ти хареса)
+    
+    console.log("✅ Навигационните бутони са добавени автоматично");
+}, 1000);
