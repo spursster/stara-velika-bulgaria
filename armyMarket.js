@@ -1,4 +1,4 @@
-// ======================== АРМИЯ ПАЗАР + 30 ФЕНТЪЗИ ЕДИНИЦИ (АДАПТИВЕН) ========================
+// ======================== АРМИЯ ПАЗАР + 30 ФЕНТЪЗИ ЕДИНИЦИ (АДАПТИВЕН + LOCALSTORAGE) ========================
 (function() {
     // --- 1. Проверка и синхронизация с worldData ---
     if (!window.worldData || !window.worldData.clans) {
@@ -56,12 +56,43 @@
 
     const allTroops = [...basicTroops, ...fantasyTroops];
 
-    // --- 3. Инициализация на игрални данни (синхронизация с клана) ---
+    // --- 3. Инициализация на игрални данни (синхронизация с клана + localStorage) ---
+    const STORAGE_KEY = "armyMarketData";
+    let loadedFromStorage = false;
+
+    function loadFromLocalStorage() {
+        try {
+            const saved = localStorage.getItem(STORAGE_KEY);
+            if (saved) {
+                const data = JSON.parse(saved);
+                if (data.playerGold !== undefined && data.playerArmyDetails) {
+                    window.playerGold = data.playerGold;
+                    window.playerArmyDetails = data.playerArmyDetails;
+                    loadedFromStorage = true;
+                    console.log("💾 Заредена армия от localStorage");
+                }
+            }
+        } catch(e) { console.warn("Грешка при зареждане от localStorage", e); }
+    }
+
+    function saveToLocalStorage() {
+        try {
+            const data = {
+                playerGold: window.playerGold,
+                playerArmyDetails: window.playerArmyDetails,
+                timestamp: Date.now()
+            };
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+        } catch(e) { console.warn("Грешка при запис в localStorage", e); }
+    }
+
+    // Зареждане от localStorage, ако има
+    loadFromLocalStorage();
+
     if (typeof window.playerGold === 'undefined') window.playerGold = clan.gold;
-    if (typeof window.playerArmyDetails === 'undefined') {
+    if (typeof window.playerArmyDetails === 'undefined' || !loadedFromStorage) {
         window.playerArmyDetails = {};
         allTroops.forEach(t => { window.playerArmyDetails[t.id] = 0; });
-        // Начална армия от базови единици (взема се от clan.armySize)
         const totalBase = clan.armySize;
         window.playerArmyDetails.infantry = Math.floor(totalBase * 0.5);
         window.playerArmyDetails.archers = Math.floor(totalBase * 0.25);
@@ -74,13 +105,24 @@
         clan.gold = window.playerGold;
         const newTotal = Object.values(window.playerArmyDetails).reduce((a,b) => a+b, 0);
         clan.armySize = newTotal;
+        // Обновяване на глобални променливи, ако съществуват
+        if (typeof window.totalArmy !== 'undefined') window.totalArmy = newTotal;
+        if (typeof window.armyPower !== 'undefined') {
+            let power = 0;
+            for (let troop of allTroops) {
+                power += (window.playerArmyDetails[troop.id] || 0) * (troop.attack + troop.defense);
+            }
+            window.armyPower = power;
+        }
         if (typeof window.updateGameUI === 'function') window.updateGameUI();
         else if (typeof window.updateUI === 'function') window.updateUI();
-        // Актуализиране на горната лента, ако има елементи
+        
         const goldSpan = document.getElementById('val-gold');
         if (goldSpan) goldSpan.innerText = window.playerGold;
         const armySpan = document.getElementById('val-army');
         if (armySpan) armySpan.innerText = newTotal;
+        
+        saveToLocalStorage();
         console.log(`🔄 Синхронизация: злато=${window.playerGold}, армия=${newTotal}`);
     }
 
@@ -373,7 +415,6 @@
                 0% { transform: translateY(0) rotate(0deg); opacity: 1; }
                 100% { transform: translateY(-50px) rotate(180deg); opacity: 0; }
             }
-            /* Мобилни настройки */
             @media (max-width: 768px) {
                 .glass-panel { padding: 12px; width: 98%; max-height: 95vh; }
                 .market-header h2 { font-size: 1.2rem; }
@@ -392,11 +433,12 @@
 
     function troopCard(troop) {
         const currentCount = window.playerArmyDetails[troop.id] || 0;
+        // Поправка: заглавието вече не дублира иконата
         return `
         <div class="troop-card" data-type="${troop.id}">
             <div class="troop-icon">${troop.icon}</div>
             <div class="troop-info">
-                <h3>${troop.icon} ${troop.name}</h3>
+                <h3>${troop.name}</h3>
                 <p>${troop.desc}</p>
                 <div class="stats">
                     <span>⚔️ Ат: ${troop.attack}</span>
@@ -497,6 +539,15 @@
                 document.getElementById('fantasy-tab').style.display = tabId === 'fantasy' ? 'grid' : 'none';
             });
         });
+        // Затваряне с клавиш Esc
+        document.addEventListener('keydown', function escHandler(e) {
+            if (e.key === 'Escape') {
+                const modalEl = document.getElementById('armyMarketModal');
+                if (modalEl && modalEl.style.display === 'flex') {
+                    hideMarket();
+                }
+            }
+        });
     }
 
     // --- 8. Конзолна визуализация на пазара (всички единици) ---
@@ -529,27 +580,6 @@
         consoleShow: consoleShowMarket
     };
 
-    // Показване в конзолата при зареждане
     consoleShowMarket();
-
-    // Синхронизация веднага
     syncWithGame();
-
-    // Не създаваме допълнителен бутон, защото такъв вече съществува в горната лента (index.html)
-    // Но ако някой иска плаващ бутон, може да разкоментира:
-    /*
-    if (!document.getElementById('openArmyMarketBtn')) {
-        const btn = document.createElement('button');
-        btn.id = 'openArmyMarketBtn';
-        btn.innerHTML = '⚔️ НАЕМИ АРМИЯ ⚔️';
-        Object.assign(btn.style, {
-            position: 'fixed', bottom: '20px', right: '20px', zIndex: 999,
-            background: 'linear-gradient(135deg,#b8860b,#daa520)', border: 'none',
-            padding: '12px 28px', borderRadius: '50px', color: 'white', fontWeight: 'bold',
-            fontSize: '18px', cursor: 'pointer', boxShadow: '0 6px 14px black', border: '1px solid gold'
-        });
-        btn.onclick = () => showMarket();
-        document.body.appendChild(btn);
-    }
-    */
 })();
