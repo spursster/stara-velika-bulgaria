@@ -1,6 +1,6 @@
 /**
 МОДУЛ: МИСТИЧНИ ПОРТАЛИ И ЕКСПЕДИЦИИ - Велика България
-СТАТУС: ОБНОВЕН - ДОБАВЕНА АВТОНОМНА ЕКСПЕДИЦИЯ ЗА НЕ-ЛЮБИМИТЕ ГЕРОИ
+СТАТУС: ОБНОВЕН - ДОБАВЕНА АВТОНОМНА ЕКСПЕДИЦИЯ + ЛОГОВЕ
 */
 
 // 1. База данни с 50 Неизвестни свята
@@ -84,7 +84,6 @@ window.hidePortalIndicator = function() {
 
 // ==================== АВТОНОМНА БИТКА ЗА НЕ-ЛЮБИМИТЕ ГЕРОИ ====================
 function autoBattleForHero(hero, portalWorld, enemyLevel) {
-    // Опростена симулация на битка
     const heroPower = hero.heroPower || hero.power || 100;
     const heroArmy = hero.armySize || hero.currentArmy || 200;
     const totalHeroStrength = heroPower * (heroArmy / 200);
@@ -94,26 +93,27 @@ function autoBattleForHero(hero, portalWorld, enemyLevel) {
     const isVictory = Math.random() < winChance;
     
     if (isVictory) {
-        // Успешна автономна битка
         const xpGain = 25 + Math.floor(Math.random() * 30);
         const goldGain = 100 + Math.floor(Math.random() * 200);
         
-        if (window.gainHeroXP) {
-            window.gainHeroXP(hero, xpGain);
-        } else {
-            hero.xp = (hero.xp || 0) + xpGain;
-        }
+        if (window.gainHeroXP) window.gainHeroXP(hero, xpGain);
+        else hero.xp = (hero.xp || 0) + xpGain;
         hero.gold = (hero.gold || 0) + goldGain;
+        
+        // *** ДОБАВЕН ЛОГ ***
+        if (window.addPortalLog) window.addPortalLog(hero.leaderName || hero.name, portalWorld.name, true);
         
         if (window.showAdvisorMsg && Math.random() < 0.15) {
             window.showAdvisorMsg(`✨ ${hero.name} успешно премина през портала "${portalWorld.name}"! +${xpGain} XP, +${goldGain} злато.`);
         }
         return true;
     } else {
-        // Неуспешна автономна битка – загуба на част от армията
         const lossPercent = 0.2 + Math.random() * 0.3;
         hero.armySize = Math.max(10, Math.floor((hero.armySize || 200) * (1 - lossPercent)));
         hero.currentArmy = hero.armySize;
+        
+        // *** ДОБАВЕН ЛОГ ***
+        if (window.addPortalLog) window.addPortalLog(hero.leaderName || hero.name, portalWorld.name, false);
         
         if (window.showAdvisorMsg && Math.random() < 0.1) {
             window.showAdvisorMsg(`💀 ${hero.name} не успя в портала "${portalWorld.name}"! Загуби ${Math.floor(lossPercent * 100)}% от армията си.`);
@@ -127,16 +127,13 @@ function attemptAutonomousPortalEntry() {
     if (!window.worldData || !window.worldData.clans) return;
     if (!window.currentPortalState || !window.currentPortalState.isOpen) return;
     
-    // Вземаме списъка с любими герои
     let favoriteIds = new Set();
     if (window.favoriteHeroes && typeof window.favoriteHeroes.forEach === 'function') {
         window.favoriteHeroes.forEach(id => favoriteIds.add(id));
     }
     
-    // 25% шанс някой не-любим герой да опита да влезе в портала
     if (Math.random() > 0.25) return;
     
-    // Събираме всички не-любими герои
     let autonomousHeroes = [];
     for (let key in window.worldData.clans) {
         let clan = window.worldData.clans[key];
@@ -147,16 +144,13 @@ function attemptAutonomousPortalEntry() {
     
     if (autonomousHeroes.length === 0) return;
     
-    // Избираме случаен не-любим герой
     const randomHero = autonomousHeroes[Math.floor(Math.random() * autonomousHeroes.length)];
     const portalWorld = window.currentPortalState.currentWorld;
     const enemyLevel = window.currentPortalState.enemyLevel;
     
-    // Автономна битка
     const isVictory = autoBattleForHero(randomHero, portalWorld, enemyLevel);
     
     if (isVictory) {
-        // 10% шанс за отключване на любимец
         if (Math.random() < 0.1 && !randomHero.pet) {
             randomHero.pet = portalWorld.petName;
             if (window.showAdvisorMsg) {
@@ -164,7 +158,6 @@ function attemptAutonomousPortalEntry() {
             }
         }
         
-        // Увеличаваме прогреса на проучване
         if (!window.currentPortalState.explorationProgress[portalWorld.name]) {
             window.currentPortalState.explorationProgress[portalWorld.name] = 0;
         }
@@ -172,7 +165,6 @@ function attemptAutonomousPortalEntry() {
             window.currentPortalState.explorationProgress[portalWorld.name] + 5);
     }
     
-    // Обновяваме UI
     if (typeof window.renderSingleBar === 'function') window.renderSingleBar();
     if (window.renderTop6LeadersUI) window.renderTop6LeadersUI();
 }
@@ -189,7 +181,6 @@ window.advanceExpeditionsTurn = function() {
     window.currentPortalState.enemyLevel = Math.floor(Math.random() * 1000) + 1;
     window.updatePortalContainerUI();
     
-    // Опит за автономно влизане в портала от не-любими герои
     attemptAutonomousPortalEntry();
 };
 
@@ -391,7 +382,6 @@ window.openExpeditionsMenu = function() {
     }
 };
 
-// Извикване на функцията веднага при старт на играта
 setTimeout(() => {
     createPortalIndicator();
     window.updatePortalContainerUI();
