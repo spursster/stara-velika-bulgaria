@@ -118,12 +118,42 @@
             border-radius: 10px !important;
             border: 1px solid white !important;
         }
+
+        /* Стил за новия армия бутон в горната лента */
+        .army-market-btn {
+            background: linear-gradient(135deg, #b8860b, #daa520) !important;
+            border: 1px solid #ffd700 !important;
+            padding: 6px 12px !important;
+            border-radius: 28px !important;
+            color: white !important;
+            font-weight: bold !important;
+            font-size: 14px !important;
+            cursor: pointer !important;
+            transition: 0.2s !important;
+            display: inline-flex !important;
+            align-items: center !important;
+            gap: 6px !important;
+        }
+
+        .army-market-btn:hover {
+            transform: scale(1.05) !important;
+            background: linear-gradient(135deg, #daa520, #ffcc44) !important;
+            box-shadow: 0 0 8px gold !important;
+        }
+
+        @media (max-width: 768px) {
+            .army-market-btn {
+                padding: 4px 8px !important;
+                font-size: 11px !important;
+            }
+            .army-market-btn span { font-size: 14px !important; }
+        }
     </style>
 </head>
 <body>
 
     <header id="top-bar">
-        <!-- ✅ ДОБАВЕНА СЕКЦИЯ ЗА СТАТИСТИКИ (ЗЛАТО, АРМИЯ, СИЛА, ВРЕМЕ) -->
+        <!-- ✅ СТАТИСТИКИ (ЗЛАТО, АРМИЯ, СИЛА, ВРЕМЕ) -->
         <div class="top-bar-stats">
             <div class="stat-box" id="stat-hero-power" title="Обща Бойна Мощ">⚔️ <span id="val-hero-power">0</span></div>
             <div class="stat-box" id="stat-gold" title="Родова Хазна">💰 <span id="val-gold">0</span></div>
@@ -132,8 +162,15 @@
         </div>
         
         <div class="top-bar-controls">
+            <!-- БУТОН ЗА НАЕМАНЕ НА ГЕРОЙ -->
             <button class="glass-btn glass-btn-gold" onclick="window.hireNewHero()" title="Наеми герой (500 злато)">👑</button>
+            <!-- БУТОН ЗА ЦЯЛ ЕКРАН -->
             <button class="glass-btn" onclick="window.toggleGameFullScreen()" title="Цял екран">⬚</button>
+            <!-- 🆕 БУТОН ЗА АРМИЯТА (ARMY MARKET) – ДО СЛЕДВАЩ ХОД -->
+            <button class="army-market-btn" onclick="if(window.armyMarket && window.armyMarket.show) window.armyMarket.show(); else alert('Военният пазар се зарежда...');" title="Отвори военен пазар (фентъзи армия)">
+                <span>⚔️</span> Наемна армия
+            </button>
+            <!-- БУТОН ЗА СЛЕДВАЩ ХОД -->
             <button class="glass-btn" onclick="window.processTurn()" title="Следващ ход">►</button>
         </div>
     </header>
@@ -166,6 +203,7 @@
         </aside>
     </main>
 
+    <!-- МОДАЛ ЗА ГЕРОЙ/RPG -->
     <div id="hero-rpg-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.75); backdrop-filter: blur(10px); z-index: 20000; overflow-y: auto;">
         <div style="position: relative; width: 90%; max-width: 900px; background: rgba(20,20,20,0.95); border: 2px solid #d4af37; margin: 40px auto; padding: 25px; color: #fff;">
             <button onclick="document.getElementById('hero-rpg-modal').style.display='none'" style="position: absolute; top: 15px; right: 15px; background: none; border: none; color: #ff4444; font-size: 24px; cursor: pointer;">✕</button>
@@ -184,6 +222,7 @@
         </div>
     </div>
 
+    <!-- СЪКРОВИЩНИЦА -->
     <section id="treasury-overlay" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); z-index: 10000;">
         <div style="width: 85%; max-width: 600px; background: rgba(15,15,15,0.98); border: 2px solid #d4af37; margin: 50px auto; padding: 20px; color: white;">
             <div style="display: flex; justify-content: space-between; align-items: center;">
@@ -194,6 +233,7 @@
         </div>
     </section>
 
+    <!-- ДОЛНА ЛЕНТА С БЪРЗИ ДЕЙСТВИЯ -->
     <div id="bottom-controls">
         <button class="icon-btn" onclick="window.openRegionsMap()">🗺️</button>
         <button class="icon-btn" onclick="window.openBarracksUI()">🏹</button>
@@ -204,6 +244,7 @@
         <button class="icon-btn" onclick="window.toggleTreasury()">🎒</button>
     </div>
 
+    <!-- СКРИПТОВЕ НА ИГРАТА -->
     <script src="mechanics.js"></script>
     <script src="world_data.js"></script>
     <script src="database.js"></script>
@@ -220,31 +261,30 @@
     <script src="battle.js"></script>
     <script src="logic.js"></script>
     <script src="rivalry.js"></script>
-
-    <div id="hero-rpg-modal" style="display:none; position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(0,0,0,0.85); backdrop-filter:blur(10px); z-index:9999; overflow-y:auto; font-family:'Cinzel', serif;">
-        <div style="background:#111; border:2px solid #d4af37; width:90%; max-width:600px; margin:40px auto; padding:20px; border-radius:8px; color:#fff; box-shadow:0 0 30px rgba(0,0,0,0.8);">
-            
-            <div style="display:flex; justify-content:between; align-items:center; border-bottom:1px solid #333; padding-bottom:10px; margin-bottom:15px;">
-                <div>
-                    <h2 id="rpg-modal-title" style="margin:0; color:#ffd700; font-size:1.4rem;">Водач</h2>
-                    <div id="rpg-modal-subtitle" style="font-size:11px; color:#aaa; margin-top:2px;">Клан</div>
-                </div>
-                <button onclick="document.getElementById('hero-rpg-modal').style.display='none'" style="background:none; border:1px solid #555; color:#aaa; cursor:pointer; padding:5px 10px; border-radius:4px;">Затвори</button>
-            </div>
-
-            <div style="margin-bottom:15px; background:rgba(255,255,255,0.02); padding:10px; border-radius:4px; text-align:center;">
-                Свободни точки за разпределяне: <strong id="rpg-modal-points" style="color:#00ffcc; font-size:1.1rem;">0</strong>
-            </div>
-
-            <h3 style="color:#ffd700; font-size:12px; text-transform:uppercase; margin-bottom:8px;">Оръжейна и Слотове Екипировка</h3>
-            <div id="rpg-equipment-grid" style="display:grid; grid-template-columns:repeat(3, 1fr); gap:10px; margin-bottom:20px;"></div>
-
-            <h3 style="color:#ffd700; font-size:12px; text-transform:uppercase; margin-bottom:8px;">Домашен Любимец</h3>
-            <div id="rpg-pet-slot" class="rpg-equip-box" style="width:100px; height:60px; margin-bottom:20px; border:1px dashed #555; display:flex; flex-direction:column; align-items:center; justify-content:center; cursor:pointer; background:#1a1a1a; border-radius:4px;"></div>
-
-            <h3 style="color:#ffd700; font-size:12px; text-transform:uppercase; margin-bottom:8px;">Дърво на Родовите Способности</h3>
-            <div id="rpg-modal-skills-container" style="display:flex; flex-direction:column; gap:8px; max-height:250px; overflow-y:auto; padding-right:5px;"></div>
-        </div>
-    </div>
+    
+    <!-- 🆕 МОДУЛ ЗА ФЕНТЪЗИ АРМИЯ (ТРЯБВА ДА Е СЛЕД world_data.js) -->
+    <script src="armyMarket.js"></script>
+    
+    <!-- Малък гарант за синхронизация – ако armyMarket не е готов, показва предупреждение -->
+    <script>
+        (function ensureArmyMarketButton() {
+            // Изчакваме armyMarket да се зареди
+            if (!window.armyMarket) {
+                console.warn("armyMarket.js не е зареден – бутонът няма да работи веднага.");
+                // Добавяме fallback при клик върху бутона, ако все пак не е готов
+                const btn = document.querySelector('.army-market-btn');
+                if (btn) {
+                    const originalClick = btn.onclick;
+                    btn.onclick = function(e) {
+                        if (window.armyMarket && window.armyMarket.show) {
+                            window.armyMarket.show();
+                        } else {
+                            alert("Военният пазар се зарежда... Опитайте след малко.");
+                        }
+                    };
+                }
+            }
+        })();
+    </script>
 </body>
 </html>
