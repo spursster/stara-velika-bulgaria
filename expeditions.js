@@ -1,10 +1,9 @@
 /**
 МОДУЛ: МИСТИЧНИ ПОРТАЛИ И ЕКСПЕДИЦИИ КЪМ НЕИЗВЕСТНИ СВЕТОВЕ
-СТАТУС: НАПЪЛНО СИНХРОНИЗИРАН И ПОПРАВЕН
-КОРЕКЦИЯ: Премахнати всички интервали в думи/оператори, унифицирано dynasty -> clan, изчистени trailing spaces в базата данни.
+СТАТУС: НАПЪЛНО СИНХРОНИЗИРАН + ИНДИКАТОР ЗА ПОРТАЛ
 */
 
-// 1. База данни с 50 Неизвестни свята (Изчистени интервали)
+// 1. База данни с 50 Неизвестни свята
 window.unknownWorldsDatabase = [
     { name: "Огненият Асгард", creatureType: "Плазмени Елементали", petName: "Искрящ Феникс", petBonus: "Намалява цената на войската в Казармите с 15%" },
     { name: "Ледената пустош на Волос", creatureType: "Мразовити Великани", petName: "Полярен Вълк", petBonus: "+15% пасивен добив на злато от данъци" },
@@ -18,7 +17,7 @@ window.unknownWorldsDatabase = [
     { name: "Пустинята на Анубис", creatureType: "Пясъчни Скорпиони", petName: "Скарабей от Злато", petBonus: "Търговията носи двойни приходи" }
 ];
 
-// Автоматично запълване до 50 уникални свята при старт
+// Автоматично запълване до 50 уникални свята
 if (window.unknownWorldsDatabase.length < 50) {
     const prefixes = ["Космически ", "Кървав ", "Ефирен ", "Свещен ", "Тъмен ", "Древен ", "Забравен ", "Омагьосан ", "Имперски ", "Див "];
     const suffixes = ["на Перун", "на Арес", "на Кронос", "на Зевс", "на Озирис", "на Ищар", "на Тор", "на Локи", "на Сатурн", "на Нептун"];
@@ -48,7 +47,42 @@ window.currentPortalState = {
     enemyLevel: 1
 };
 
-// 2. Функция за смяна на ходовете - Алгоритъмът обновява портала при всеки ход
+// ==================== ИНДИКАТОР ЗА ПОРТАЛ ====================
+function createPortalIndicator() {
+    const expeditionsBtn = document.getElementById('btn-expeditions');
+    if (!expeditionsBtn) return;
+    
+    let indicator = document.getElementById('portal-indicator');
+    if (indicator) return;
+    
+    indicator = document.createElement('span');
+    indicator.id = 'portal-indicator';
+    indicator.textContent = '🔴';
+    indicator.style.cssText = 'position:relative; top:-8px; margin-left:5px; font-size:14px; display:none; animation:pulse 1s infinite;';
+    
+    if (!document.getElementById('portal-pulse-style')) {
+        let style = document.createElement('style');
+        style.id = 'portal-pulse-style';
+        style.textContent = '@keyframes pulse { 0% { opacity:1; } 50% { opacity:0.3; } 100% { opacity:1; } }';
+        document.head.appendChild(style);
+    }
+    
+    expeditionsBtn.appendChild(indicator);
+}
+
+window.showPortalIndicator = function() {
+    const ind = document.getElementById('portal-indicator');
+    if (ind) ind.style.display = 'inline-block';
+    console.log("🔴 Индикатор за портал: ПОКАЗАН");
+};
+
+window.hidePortalIndicator = function() {
+    const ind = document.getElementById('portal-indicator');
+    if (ind) ind.style.display = 'none';
+    console.log("🔴 Индикатор за портал: СКРИТ");
+};
+
+// 2. Функция за смяна на ходовете
 window.advanceExpeditionsTurn = function() {
     const randomIndex = Math.floor(Math.random() * window.unknownWorldsDatabase.length);
     const selectedWorld = window.unknownWorldsDatabase[randomIndex];
@@ -61,11 +95,11 @@ window.advanceExpeditionsTurn = function() {
     window.updatePortalContainerUI();
 };
 
-// 3. Интерфейс на Контейнера - Вдъхваме живот на прозореца за кланове
+// 3. Интерфейс на Контейнера
 window.updatePortalContainerUI = function() {
     let container = document.getElementById('clans-container') || document.getElementById('clans-box') || document.querySelector('.clans-section');
     if (!container) {
-        container = document.getElementById('sidebar-clans-portal'); // FIXED ID
+        container = document.getElementById('sidebar-clans-portal');
         if (!container) {
             const sidebar = document.body;
             container = document.createElement('div');
@@ -83,7 +117,7 @@ window.updatePortalContainerUI = function() {
     let cursorStyle = state.isOpen ? "cursor: pointer; border-color: #a020f0; box-shadow: 0 0 15px rgba(160,32,240,0.4);" : "cursor: not-allowed; border-color: #333;";
     let bgAnim = state.isOpen ? "background: radial-gradient(circle, #1a0033 0%, #050505 100%);" : "background: #0d0d0d;";
 
-    if (!document.getElementById('portal-glow-style')) { // FIXED ID
+    if (!document.getElementById('portal-glow-style')) {
         const style = document.createElement('style');
         style.id = 'portal-glow-style';
         style.innerHTML = `
@@ -108,7 +142,7 @@ window.updatePortalContainerUI = function() {
 
     if (state.isOpen) {
         container.classList.add('portal-active-glow');
-        container.onclick = function() { window.enterMysticPortal(); }; // FIXED FUNC NAME
+        container.onclick = function() { window.enterMysticPortal(); };
     } else {
         container.classList.remove('portal-active-glow');
         container.onclick = null;
@@ -134,6 +168,14 @@ window.updatePortalContainerUI = function() {
             </div>
         </div>
     `;
+    
+    // ==================== АВТОМАТИЧНО ОБНОВЯВАНЕ НА ИНДИКАТОРА ====================
+    createPortalIndicator();
+    if (state.isOpen) {
+        window.showPortalIndicator();
+    } else {
+        window.hidePortalIndicator();
+    }
 };
 
 // 4. Влизане в портала и провеждане на битката
@@ -157,15 +199,15 @@ window.enterMysticPortal = function() {
     state.isOpen = false;
     window.updatePortalContainerUI();
 
-    if (window.startBattle) { // FIXED: window
+    if (window.startBattle) {
         window.startBattle(portalTargetRegion);
 
-        let originalEndGroupBattle = window.endGroupBattle; // FIXED: let
+        let originalEndGroupBattle = window.endGroupBattle;
         window.endGroupBattle = function(isVictory, reason) {
-            originalEndGroupBattle(isVictory, reason);
+            if (originalEndGroupBattle) originalEndGroupBattle(isVictory, reason);
 
             if (isVictory) {
-                let currentWorldName = state.currentWorld.name; // FIXED: state
+                let currentWorldName = state.currentWorld.name;
                 state.explorationProgress[currentWorldName] = Math.min(100, (state.explorationProgress[currentWorldName] || 0) + 10);
 
                 let logDiv = document.getElementById('heroes-battle-log');
@@ -175,14 +217,14 @@ window.enterMysticPortal = function() {
                 let diceRoll = Math.floor(Math.random() * 100) + 1;
                 if (diceRoll === 77) {
                     if (window.currentBattleState && window.currentBattleState.group) {
-                        let luckyHero = window.currentBattleState.group.find(h => h.currentArmy > 0); // FIXED: h =>
+                        let luckyHero = window.currentBattleState.group.find(h => h.currentArmy > 0);
                         if (luckyHero) {
                             luckyHero.pet = state.currentWorld.petName;
                             luckyHero.petBonusDescription = state.currentWorld.petBonus;
 
-                            if (window.worldData && window.worldData.clans && window.worldData.clans[luckyHero.clan]) { // FIXED: if, &&, clan
-                                window.worldData.clans[luckyHero.clan].pet = state.currentWorld.petName; // FIXED: window, clan
-                                window.worldData.clans[luckyHero.clan].socialPetBonus = state.currentWorld.petBonus; // FIXED: clan
+                            if (window.worldData && window.worldData.clans && window.worldData.clans[luckyHero.clan]) {
+                                window.worldData.clans[luckyHero.clan].pet = state.currentWorld.petName;
+                                window.worldData.clans[luckyHero.clan].socialPetBonus = state.currentWorld.petBonus;
                             }
 
                             portalBonusLog += `<span style="color: #ffd700; font-size: 14px; font-weight: bold;"> ЛЕГЕНДАРЕН КЪСМЕТ! [${luckyHero.name}] улови и опитоми: "${state.currentWorld.petName}"!<br>Пасивен бонус: ${state.currentWorld.petBonus}</span><br>`;
@@ -204,27 +246,18 @@ window.enterMysticPortal = function() {
     }
 };
 
-/**
-==========================================================================
-ФУНКЦИЯ: ОТВАРЯНЕ НА МЕНЮТО ЗА ЕКСПЕДИЦИИ (ЛИПСВАЩА ФУНКЦИЯ)
-КОРЕКЦИЯ: Дефинира се window.openExpeditionsMenu за да спре грешката в конзолата.
-Създава интерфейс за преглед на статуса на портала и влизане в него.
-==========================================================================
-*/
+// ==================== МЕНЮ ЗА ЕКСПЕДИЦИИ ====================
 window.openExpeditionsMenu = function() {
     const mainArea = document.getElementById('game-main-area');
     if (!mainArea) return;
 
-    // Генериране на HTML структурата на менюто
     mainArea.innerHTML = `
         <section class="rpg-section animate-fade" style="background: rgba(15, 15, 15, 0.85); border: 1px solid #d4af37; padding: 20px; border-radius: 8px; text-align: center; position: relative;">
-            <!-- Бутон за затваряне горе вляво (Мобилен стил) -->
             <button onclick="if(window.backToMainMenu) window.backToMainMenu();" style="position: absolute; top: 10px; left: 10px; width: 40px; height: 40px; background: rgba(0,0,0,0.6); border: 1px solid #ff4444; color: #ff4444; border-radius: 50%; font-size: 20px; cursor: pointer; z-index: 101; display: flex; align-items: center; justify-content: center;">✕</button>
             
             <h2 style="font-family: 'Cinzel', serif; color: #ffd700; text-transform: uppercase; margin-top: 0;">Мистични Експедиции</h2>
             <p style="font-size: 12px; color: #aaa; margin-bottom: 20px;">Изследвайте неизвестни светове чрез портала.</p>
             
-            <!-- Кутия за статус на портала -->
             <div id="expedition-portal-box" style="margin-bottom: 20px; text-align: left; background: rgba(0,0,0,0.4); padding: 15px; border-radius: 8px; border: 1px solid #333;">
                 <p style="text-align: center; color: #666;">Зареждане на данни за портала...</p>
             </div>
@@ -233,7 +266,6 @@ window.openExpeditionsMenu = function() {
         </section>
     `;
 
-    // Попълване на информацията за портала динамично
     const box = document.getElementById('expedition-portal-box');
     if (window.currentPortalState) {
         const state = window.currentPortalState;
@@ -264,5 +296,6 @@ window.openExpeditionsMenu = function() {
 
 // Извикване на функцията веднага при старт на играта
 setTimeout(() => {
+    createPortalIndicator();
     window.updatePortalContainerUI();
 }, 1000);
