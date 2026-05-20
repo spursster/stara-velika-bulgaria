@@ -128,7 +128,7 @@ window.hireNewHero = function() {
         skills: { tactics: 0, endurance: 0, economy: 0, mysticism: 0, leadership: 0 },
         skillPoints: 0,
         storedXP: 0,
-        isAuto: false,  // ✅ ФИКС: isAuto = false (ръчен режим, играчът да реши)
+        isAuto: true,  // ✅ ФИКС: isAuto = true (ръчен режим, играчът да реши)
         equipment: Array(12).fill(null),
         inventory: Array(12).fill(null),
         pet: null,
