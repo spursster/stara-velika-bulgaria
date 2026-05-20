@@ -1,10 +1,13 @@
 /**
-МОДУЛ: БАЗА ДАННИ - Велика България
-СТАТУС: АБСОЛЮТЕН И НЕПРОМЕНЯЕМ ЗАКОН (13 Равноправни Кланове)
-КОРЕКЦИЯ: Премахнати всички трейлинг интервали, поправен синтаксис, унифицирана структура на героя.
+==========================================================================
+ПРОЕКТ: ВЕЛИКА БЪЛГАРИЯ
+ФАЙЛ: database.js (БАЗА ДАННИ ЗА ГЕРОИ И ТАВЕРНА)
+СТАТУС: ОБНОВЕН - СИНХРОНИЗИРАН С НОВАТА СИСТЕМА (12 СЛОТА, worldData.clans)
+==========================================================================
 */
 
-window.clans = {
+// ==================== БАЗА ДАННИ С ГЕРОИ (13-ТЕ КЛАНОВА) ====================
+window.clansDatabase = {
     "Дуло": {
         heroes: [
             "Атила", "Ирник", "Заберган", "Сандилх", "Аскал", "Албури", "Авитохол",
@@ -25,17 +28,10 @@ window.clans = {
         heroes: ["Георги I Тертер", "Светослав Тертер", "Георги II Тертер", "Алдимир"]
     },
     "Даки": {
-        heroes: [
-            "Рубобост", "Оролес", "Дикомесе", "Котисо", "Буребиста", "Децебал", "Комозикус",
-            "Скорпило", "Дурас", "Везина", "Диурпанеус", "Дромехет", "Залмоксис"
-        ]
+        heroes: ["Рубобост", "Оролес", "Дикомесе", "Котисо", "Буребиста", "Децебал", "Комозикус", "Скорпило", "Дурас", "Везина", "Диурпанеус", "Дромехет", "Залмоксис"]
     },
     "Уния Траки": {
-        heroes: [
-            "Терей", "Диомед", "Ликург", "Рез", "Балакрос", "Вологез", "Ситас",
-            "Дигилис", "Дидалс", "Никомед I", "Абруполис", "Раскупорис I", "Реметалк I",
-            "Халес", "Сирм"
-        ]
+        heroes: ["Терей", "Диомед", "Ликург", "Рез", "Балакрос", "Вологез", "Ситас", "Дигилис", "Дидалс", "Никомед I", "Абруполис", "Раскупорис I", "Реметалк I", "Халес", "Сирм"]
     },
     "Шишмановци": {
         heroes: ["Михаил Шишман", "Иван Александър", "Иван Шишман", "Иван Срацимир", "Белаур", "Фружин", "Иван Асен IV"]
@@ -60,44 +56,55 @@ window.clans = {
     }
 };
 
-// Глобален масив за съхранение на отключените/наетите герои на играча
-window.unlockedLeaders = window.unlockedLeaders || [];
+// ==================== ПОМОЩНА ФУНКЦИЯ ЗА ПОЛУЧАВАНЕ НА ВСИЧКИ ГЕРОИ ====================
+function getAllHeroesFromWorld() {
+    let heroes = [];
+    if (window.worldData && window.worldData.clans) {
+        for (let key in window.worldData.clans) {
+            let clan = window.worldData.clans[key];
+            if (clan.isJoined === true) {
+                heroes.push(clan);
+            }
+        }
+    }
+    if (heroes.length === 0 && window.currentHero) {
+        heroes.push(window.currentHero);
+    }
+    return heroes;
+}
 
-/**
-ФУНКЦИЯ: Показване на Таверната за отключване на нови Герои директно от базата на съответния Клан
-*/
+// ==================== ТАВЕРНА ====================
 window.openTavernUI = function() {
     const mainArea = document.getElementById('game-main-area');
     if (!mainArea) return;
 
-    // Списък с вече наетите имена (trim() за сигурност срещу стари запазени данни с интервали)
-    const hiredNames = window.unlockedLeaders.map(l => (l.name || '').trim());
+    // Взимаме вече наетите герои от worldData.clans
+    const existingHeroes = getAllHeroesFromWorld();
+    const hiredNames = existingHeroes.map(h => (h.name || '').trim());
+    
     if (window.currentHero && !hiredNames.includes((window.currentHero.name || '').trim())) {
         hiredNames.push((window.currentHero.name || '').trim());
     }
 
     let htmlContent = `
     <div id="tavern-screen" style="padding:20px; background: rgba(10,10,10,0.98); border: 2px solid #d4af37; color: white; font-family: 'Cinzel', serif; box-sizing: border-box;">
-        <h2 style="margin-top:0; color:#ffd700; text-transform:uppercase; text-align:center; letter-spacing:1px;">🍻 Военен съвет и Наемане на Герои </h2>
+        <button onclick="window.backToMainMenu ? window.backToMainMenu() : location.reload()" style="position: absolute; top: 10px; left: 10px; width: 36px; height: 36px; background: rgba(0,0,0,0.6); border: 1px solid #ff4444; color: #ff4444; border-radius: 50%; font-size: 18px; cursor: pointer; z-index: 101; display: flex; align-items: center; justify-content: center;">✕</button>
+        <h2 style="margin-top:0; color:#ffd700; text-transform:uppercase; text-align:center; letter-spacing:1px;">🍻 Военен съвет и Наемане на Герои</h2>
         <p style="font-size:11px; color:#aaa; text-align:center; margin-bottom:20px;">Отключвайте свободни герои от наличните кланове, за да ги добавяте към армията си.</p>
         <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 12px; max-height: 380px; overflow-y: auto; padding-right: 5px;">
     `;
 
     let availableCount = 0;
 
-    // Обхождаме динамично твоите 13 клана и техните списъци с герои
-    Object.keys(window.clans).forEach(clanName => {
-        const clanData = window.clans[clanName];
-        clanData.heroes.forEach(heroName => {
+    for (let clanName in window.clansDatabase) {
+        const clanData = window.clansDatabase[clanName];
+        for (let heroName of clanData.heroes) {
             const cleanHeroName = heroName.trim();
             if (!hiredNames.includes(cleanHeroName)) {
                 availableCount++;
-
-                // Динамично изчисляване на цена и показатели
                 let cost = 800;
                 let heroPower = 130;
 
-                // Легендарни бонуси
                 if (["Александър III Велики", "Симеон Велики", "Кубрат", "Влад III Дракула"].includes(cleanHeroName)) {
                     cost = 1500;
                     heroPower = 190;
@@ -123,119 +130,76 @@ window.openTavernUI = function() {
                     </button>
                 </div>`;
             }
-        });
-    });
+        }
+    }
 
     if (availableCount === 0) {
         htmlContent += `<div style="grid-column: 1/-1; text-align:center; padding:30px; color:#666;">Всички достъпни герои от родовите кланове са успешно отключени!</div>`;
     }
 
-    // Поправен затварящ HTML (премахнати счупени backticks и escaped quotes)
     htmlContent += `</div>
-    <button class="menu-btn" onclick="if(window.backToMainMenu) window.backToMainMenu();" style="width: 100%; margin-top: 15px;">Назад към Главното Меню</button>
+    <button class="menu-btn" onclick="window.backToMainMenu ? window.backToMainMenu() : location.reload();" style="width: 100%; margin-top: 15px;">Назад към Главното Меню</button>
     </div>`;
 
     mainArea.innerHTML = htmlContent;
 };
 
-/**
-ФУНКЦИЯ: Механика за отключване на избрания герой и добавянето му към списъка
-*/
+// ==================== НАЕМАНЕ НА ГЕРОЙ ОТ ТАВЕРНАТА ====================
 window.hireClanHero = function(heroName, clanName, cost, heroPower) {
     if (!window.currentHero) return;
     if (window.currentHero.gold >= cost) {
         window.currentHero.gold -= cost;
 
-        // Унифицирана структура, синхронизирана с logic.js и rpg_system.js
+        // Създаваме нов герой с 12 слота (синхронизиран с новата система)
         const newHero = {
             name: heroName,
-            clan: clanName, // Промених от dynasty на clan за съвместимост
-            gold: 400,
-            armySize: 200,
-            currentArmy: 200,
-            heroPower: heroPower,
+            leaderName: heroName,
+            clan: clanName,
+            isJoined: true,
             level: 1,
             xp: 0,
+            heroPower: heroPower,
+            power: heroPower,
+            gold: 1500,
+            armySize: 200,
+            currentArmy: 200,
+            currentClass: "Воевода",
+            className: "Воевода",
+            age: 30,
+            isAuto: false,
             skillPoints: 0,
-            equipment: Array(9).fill(null), // Задължително за RPG системата
-            skills: { tactics: 0, endurance: 0, economy: 0 },
-            storedXP: 0,
-            isAuto: false
+            skills: { tactics: 0, endurance: 0, economy: 0, mysticism: 0, leadership: 0 },
+            equipment: Array(12).fill(null),
+            inventory: Array(12).fill(null),
+            pet: null
         };
 
-        // Задействане на RPG структурата, ако съществува
         if (window.initializeHeroRPGData) {
             window.initializeHeroRPGData(newHero);
         }
 
-        window.unlockedLeaders.push(newHero);
+        // Добавяме в worldData.clans
+        if (!window.worldData) window.worldData = {};
+        if (!window.worldData.clans) window.worldData.clans = {};
+        const newId = "hero_" + Date.now() + "_" + Math.floor(Math.random() * 1000);
+        window.worldData.clans[newId] = newHero;
 
-        if (window.showAdvisorMsg) {
-            window.showAdvisorMsg(` ОТКЛЮЧВАНЕ: Героят ${heroName} от Клан ${clanName} влезе в състава на верноподаниците ни!`);
-        }
-
+        // Обновяваме UI
         if (window.updateCharacterUI) window.updateCharacterUI(window.currentHero);
         if (window.renderTop6LeadersUI) window.renderTop6LeadersUI();
-        window.openTavernUI(); // Опресняване на таверната
+        if (typeof window.renderSingleBar === 'function') window.renderSingleBar();
+        
+        window.openTavernUI();
+
+        if (window.showAdvisorMsg) {
+            window.showAdvisorMsg(`👑 ОТКЛЮЧВАНЕ: Героят ${heroName} от Клан ${clanName} се присъедини!`);
+        }
     } else {
         if (window.showAdvisorMsg) {
-            window.showAdvisorMsg("❌ НЕДОСТИГ: Нямате достатъчно злато, за да убедите този герой да се присъедини!");
+            window.showAdvisorMsg("❌ НЕДОСТИГ: Нямате достатъчно злато!");
         }
     }
 };
 
-/**
-Подсигурява, че главният герой винаги присъства в отключените водачи още при стартиране
-*/
-window.ensureStartingUnlockedLeaders = function() {
-    if (window.currentHero) {
-        const dynamicHired = window.unlockedLeaders.find(l => (l.name || '').trim() === (window.currentHero.name || '').trim());
-        if (!dynamicHired) {
-            window.unlockedLeaders.push(window.currentHero);
-        }
-    }
-};
-
-/** МОДУЛ: БАЗА ДАННИ & ТАВЕРНА - АДАПТИВНА */
-window.clans = {
-    "Дуло": { heroes: ["Атила", "Кубрат", "Аспарух"] },
-    "Комитопули": { heroes: ["Самуил", "Давид"] },
-    "Асеневци": { heroes: ["Асен I", "Иван Асен II"] }
-};
-window.unlockedLeaders = window.unlockedLeaders || [];
-
-window.hireClanHero = function(name, clan, cost, power) {
-    if ((window.currentHero.gold || 0) < cost) {
-        if(window.showAdvisorMsg) window.showAdvisorMsg("❌ Нямате достатъчно злато!");
-        return;
-    }
-    window.currentHero.gold -= cost;
-    window.unlockedLeaders.push({ name, clan, level:1, xp:0, gold:100, armySize:100, heroPower:power, skills:{tactics:0,endurance:0,economy:0}, equipment:Array(9).fill(null) });
-    if(window.showAdvisorMsg) window.showAdvisorMsg(`👑 ${name} от род ${clan} се присъедини!`);
-    window.openTavernUI();
-};
-
-// 📱 МОБИЛНА ТАВЕРНА
-window.openTavernUI = function() {
-    const main = document.getElementById('game-main-area'); if(!main) return;
-    const hired = window.unlockedLeaders.map(l => l.name);
-    if(window.currentHero && !hired.includes(window.currentHero.name)) hired.push(window.currentHero.name);
-    
-    let html = `<h2 style="color:#ffd700;margin:0 0 10px 0;text-align:center;">🍻 ТАВЕРНА</h2><div style="display:grid;gap:8px;max-height:70vh;overflow-y:auto;padding-right:5px;">`;
-    
-    Object.entries(window.clans).forEach(([c, d]) => {
-        d.heroes.forEach(h => {
-            if(!hired.includes(h)) {
-                let cost = 500;
-                html += `<div style="background:rgba(20,20,20,0.8);border:1px solid #444;padding:10px;border-radius:6px;display:flex;justify-content:space-between;align-items:center;">
-                    <div><div style="color:#ffd700;font-weight:bold;">${h}</div><div style="font-size:10px;color:#aaa;">Род ${c} | ⚔️ 200</div></div>
-                    <button onclick="window.hireClanHero('${h}','${c}',${cost},150)" style="background:#d4af37;border:none;padding:5px 10px;font-weight:bold;border-radius:4px;">💰${cost}</button>
-                </div>`;
-            }
-        });
-    });
-    html += `</div><button class="menu-btn" onclick="if(window.backToMainMenu)window.backToMainMenu();" style="width:100%;margin-top:10px;">Назад</button>`;
-    main.innerHTML = `<div style="background:rgba(10,10,10,0.95);border:2px solid #d4af37;padding:15px;border-radius:8px;position:relative;">
-        <button onclick="if(window.backToMainMenu)window.backToMainMenu();" style="position:absolute;top:5px;right:10px;background:none;border:none;color:#ff3366;font-size:20px;cursor:pointer;">✕</button>
-        ${html}</div>`;
-};
+// ==================== АЛИАС ЗА СЪВМЕСТИМОСТ ====================
+window.buyHeroFromDatabase = window.hireClanHero;
