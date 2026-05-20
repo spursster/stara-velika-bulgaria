@@ -52,6 +52,80 @@ function setAuto(id, enabled) {
     saveAuto();
 }
 
+// ==================== AUTO ТАЙМЕРИ ====================
+if (!window.autoIntervals) window.autoIntervals = {};
+
+window.startAutoTimer = function(heroId) {
+    if (window.autoIntervals[heroId]) clearInterval(window.autoIntervals[heroId]);
+    window.autoIntervals[heroId] = setInterval(() => {
+        let hero = null;
+        if (window.worldData && window.worldData.clans && window.worldData.clans[heroId]) {
+            hero = window.worldData.clans[heroId];
+        } else if (window.currentHero && window.currentHero.id === heroId) {
+            hero = window.currentHero;
+        }
+        
+        if (hero && hero.isAuto === true) {
+            if (typeof window.gainHeroXP === 'function') {
+                window.gainHeroXP(hero, 2);
+                console.log(`📈 AUTO: ${hero.name} +2 XP`);
+                if (typeof window.renderSingleBar === 'function') window.renderSingleBar();
+                if (typeof window.renderTop6LeadersUI === 'function') window.renderTop6LeadersUI();
+            }
+        }
+    }, 5000);
+};
+
+window.stopAutoTimer = function(heroId) {
+    if (window.autoIntervals[heroId]) {
+        clearInterval(window.autoIntervals[heroId]);
+        delete window.autoIntervals[heroId];
+    }
+};
+
+// Стартиране на AUTO таймери за всички герои (при зареждане)
+function startAllAutoTimers() {
+    if (window.worldData && window.worldData.clans) {
+        for (let key in window.worldData.clans) {
+            let hero = window.worldData.clans[key];
+            if (hero && hero.isAuto === true) {
+                window.startAutoTimer(key);
+            }
+        }
+    }
+    if (window.currentHero && window.currentHero.isAuto === true && window.currentHero.id) {
+        window.startAutoTimer(window.currentHero.id);
+    }
+}
+
+// Синхронизиране на isAuto с autoState при промяна
+function syncAutoStateWithHeroes() {
+    if (window.worldData && window.worldData.clans) {
+        for (let key in window.worldData.clans) {
+            let hero = window.worldData.clans[key];
+            if (hero && hero.isAuto !== undefined) {
+                if (hero.isAuto === true && !isAuto(key)) {
+                    setAuto(key, true);
+                    window.startAutoTimer(key);
+                } else if (hero.isAuto === false && isAuto(key)) {
+                    setAuto(key, false);
+                    window.stopAutoTimer(key);
+                }
+            }
+        }
+    }
+}
+
+// Извикваме при стартиране
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', function() {
+        startAllAutoTimers();
+        syncAutoStateWithHeroes();
+    });
+} else {
+    startAllAutoTimers();
+    syncAutoStateWithHeroes();
+}
 // ==================== НАЕМАНЕ НА ГЕРОИ ====================
 window.hireNewHero = function() {
     console.log("📢 hireNewHero извикана");
@@ -78,8 +152,9 @@ window.hireNewHero = function() {
     ];
     
     let randomHero = heroesList[Math.floor(Math.random() * heroesList.length)];
-    let newId = "hero_" + Date.now();
+    let newId = "hero_" + Date.now() + "_" + Math.floor(Math.random() * 10000);
     
+    // ✅ ФИКС: Добавени всички задължителни свойства
     let newHero = {
         name: randomHero.name,
         leaderName: randomHero.name,
@@ -94,12 +169,21 @@ window.hireNewHero = function() {
         currentArmy: 200,
         currentClass: randomHero.class,
         className: randomHero.class,
-        skills: {},
+        skills: { tactics: 0, endurance: 0, economy: 0, mysticism: 0, leadership: 0 },
         skillPoints: 0,
+        storedXP: 0,
+        isAuto: false,  // ✅ ФИКС: isAuto = false (ръчен режим, играчът да реши)
         equipment: Array(12).fill(null),
         inventory: Array(12).fill(null),
-        pet: null
+        pet: null,
+        age: 30
     };
+
+
+     // Инициализираме RPG структурата
+    if (window.initializeHeroRPGData) {
+        window.initializeHeroRPGData(newHero);
+    }
     
     window.currentHero.gold -= cost;
     
@@ -110,6 +194,7 @@ window.hireNewHero = function() {
     if (!window.unlockedLeaders) window.unlockedLeaders = [];
     window.unlockedLeaders.push(newHero);
     
+    // ✅ ФИКС: Обновяваме UI и лентата
     const goldSpan = document.getElementById('val-gold');
     if (goldSpan) goldSpan.innerText = window.currentHero.gold;
     
@@ -118,8 +203,12 @@ window.hireNewHero = function() {
     if (typeof window.renderSingleBar === 'function') window.renderSingleBar();
     
     alert(`✅ Нает: ${newHero.name} от род ${newHero.clan}\n💰 Останало злато: ${window.currentHero.gold}`);
+    
+    // ✅ ФИКС: АКО ИМА AUTO ТАЙМЕРИ, СТАРТИРАМЕ ЗА НОВИЯ ГЕРОЙ
+    if (typeof window.startAutoTimer === 'function') {
+        window.startAutoTimer(newId);
+    }
 };
-
 // ==================== ДАННИ ЗА ГЕРОИТЕ ====================
 function getAllHeroes() {
     let heroes = [];
@@ -207,7 +296,8 @@ function showHeroProfile(hero) {
         skillsHtml += `<div style="margin-bottom:12px; border-bottom:1px solid #2a1a0a; padding-bottom:8px;"><div style="display:flex; justify-content:space-between;"><span style="color:#ffaa66;">${skill.name}</span><span style="color:#ccaa77;">Ниво ${currentLevel}</span></div><div style="font-size:10px; color:#aa8866;">${skill.desc}</div><button class="upgrade-skill-btn" data-skill="${key}" style="background:#2c1a0c; border:none; border-radius:20px; color:#ffdd99; font-size:9px; padding:2px 10px; margin-top:5px; cursor:pointer;">📈 ПОВИШИ</button></div>`;
     }
     skillsHtml += '</div>';
- let autoBtnHtml = `<button id="auto-mode-btn" style="background:${autoOn ? '#4a6a2a' : '#2c1a0c'}; border:none; border-radius:20px; color:#ffdd99; padding:8px 16px; margin-top:10px; cursor:pointer; width:100%;">${autoOn ? '✅ AUTO РЕЖИМ: ВКЛЮЧЕН' : '🤖 AUTO РЕЖИМ: ИЗКЛЮЧЕН'}</button>`;
+    
+    let autoBtnHtml = `<button id="auto-mode-btn" style="background:${autoOn ? '#4a6a2a' : '#2c1a0c'}; border:none; border-radius:20px; color:#ffdd99; padding:8px 16px; margin-top:10px; cursor:pointer; width:100%;">${autoOn ? '✅ AUTO РЕЖИМ: ВКЛЮЧЕН' : '🤖 AUTO РЕЖИМ: ИЗКЛЮЧЕН'}</button>`;
     
     let oldModal = document.getElementById('ultimate-profile-modal');
     if (oldModal) oldModal.remove();
@@ -237,7 +327,29 @@ function showHeroProfile(hero) {
     
     let autoBtnElem = modal.querySelector('#auto-mode-btn');
     if (autoBtnElem) {
-        autoBtnElem.onclick = () => { let newState = !isAuto(hero.id); setAuto(hero.id, newState); autoBtnElem.textContent = newState ? '✅ AUTO РЕЖИМ: ВКЛЮЧЕН' : '🤖 AUTO РЕЖИМ: ИЗКЛЮЧЕН'; autoBtnElem.style.background = newState ? '#4a6a2a' : '#2c1a0c'; };
+        autoBtnElem.onclick = () => {
+            let newState = !isAuto(hero.id);
+            setAuto(hero.id, newState);
+            
+            // Синхронизираме hero.isAuto с autoState
+            if (window.worldData && window.worldData.clans && window.worldData.clans[hero.id]) {
+                window.worldData.clans[hero.id].isAuto = newState;
+            }
+            if (window.currentHero && window.currentHero.id === hero.id) {
+                window.currentHero.isAuto = newState;
+            }
+            hero.isAuto = newState;
+            
+            // Стартираме или спираме таймера
+            if (newState && typeof window.startAutoTimer === 'function') {
+                window.startAutoTimer(hero.id);
+            } else if (!newState && typeof window.stopAutoTimer === 'function') {
+                window.stopAutoTimer(hero.id);
+            }
+            
+            autoBtnElem.textContent = newState ? '✅ AUTO РЕЖИМ: ВКЛЮЧЕН' : '🤖 AUTO РЕЖИМ: ИЗКЛЮЧЕН';
+            autoBtnElem.style.background = newState ? '#4a6a2a' : '#2c1a0c';
+        };
     }
     
     let adoptBtn = modal.querySelector('#adopt-pet-btn');
@@ -269,7 +381,6 @@ function showHeroProfile(hero) {
         };
     });
 }
-
 // ==================== ОРИГИНАЛНА ЛЕНТА НА ЕЛИТА ====================
 window.renderTop6LeadersUI = function() { 
     const eliteBar = document.getElementById('top-elite-bar'); 
