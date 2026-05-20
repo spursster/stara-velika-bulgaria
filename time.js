@@ -1,8 +1,7 @@
 /**
  * МОДУЛ: ВРЕМЕ И ЛЕТОБРОЕНЕ - Велика България
- * СТАТУС: НАПЪЛНО КОРИГИРАН, ИЗЧИСТЕН И СИНХРОНИЗИРАН
- * КОРЕКЦИЯ: Добавени са всички възможни HTML ID-та за визуализация на времето, за да изчезне "Зарежда се...".
- * Статистика на файловете в проекта: 15
+ * СТАТУС: НАПЪЛНО КОРИГИРАН + АВТОНОМНИ ДЕЙСТВИЯ
+ * КОРЕКЦИЯ: Добавени автономно завладяване и автономни портали
  */
 
 window.seasons = ["🌱 Пролет", "☀️ Лято", "🍂 Есен", "❄️ Зима"];
@@ -53,15 +52,29 @@ window.processTime = function() {
     // 3. Обновяване на интерфейса
     window.updateTimeUI();
 
-    // 4. Автоматично обновяване на мистичния портал при следващ сезон
+    // 4. Автоматично обновяване на мистичния портал
     if (window.advanceExpeditionsTurn) {
         window.advanceExpeditionsTurn();
     }
+    
+    // ==================== АВТОНОМНИ ДЕЙСТВИЯ ====================
+    
+    // 5. Автономно завладяване на региони от не-любимите герои
+    if (typeof window.autonomousRegionConquest === 'function') {
+        window.autonomousRegionConquest();
+    }
+    
+    // 6. Автономно нападение ( rivalry система - 3% шанс)
+    if (typeof window.checkRandomAttack === 'function') {
+        window.checkRandomAttack();
+    }
+    
+    // 7. Автономни портали (вече се извикват в advanceExpeditionsTurn, но добавяме и тук за всеки случай)
+    // Автономното влизане в портали вече е вградено в attemptAutonomousPortalEntry() в expeditions.js
 }; // Край на window.processTime
 
 window.updateTimeUI = function() {
     if (!window.gameTime) return;
-    if (typeof window.checkRandomAttack === 'function') window.checkRandomAttack();
     
     // Поддържаме абсолютно всички възможни вариации на ID-та от твоя index.html
     const timeDisplay = document.getElementById('current-time-info') || 
