@@ -123,20 +123,11 @@
 <body>
 
     <header id="top-bar">
-        <div class="top-bar-stats">
-            <div class="stat-box" id="stat-hero-power" title="Обща Бойна Мощ">⚔️ <span id="val-hero-power">0</span></div>
-            <div class="stat-box" id="stat-gold" title="Родова Хазна">💰 <span id="val-gold">0</span></div>
-            <div class="stat-box" id="stat-army" title="Текуща Армия">🏹 <span id="val-army">0</span></div>
-            <div class="stat-box" id="stat-time" title="Текущ Сезон и Година">⏳ <span id="current-time-info">Зареждане...</span></div>
-        </div>
-        <div class="top-bar-controls">
-            <!-- НОВ БУТОН ЗА НАЕМАНЕ (hireNewHero) -->
-            <button class="menu-btn action-btn" onclick="window.hireNewHero()" style="padding: 8px 12px !important; font-size: 0.8rem !important; background: linear-gradient(135deg, #a98613, #d4af37); border: 1px solid #fff; color: #000; font-weight: bold;">👑 НАЕМИ (500)</button>
-            
-            <button class="menu-btn action-btn" onclick="window.toggleGameFullScreen()" style="padding: 8px 12px !important; font-size: 0.8rem !important; background: rgba(212,175,55,0.2); border: 1px solid #d4af37;">📺 ЦЯЛ ЕКРАН</button>
-            
-            <button class="menu-btn action-btn" onclick="window.processTurn()" style="padding: 8px 15px !important; font-size: 0.8rem !important;">СЛЕДВАЩ ➔</button>
-        </div>
+    <div class="top-bar-controls">
+    <button class="glass-btn glass-btn-gold" onclick="window.hireNewHero()" title="Наеми герой (500 злато)">👑</button>
+    <button class="glass-btn" onclick="window.toggleGameFullScreen()" title="Цял екран">⬚</button>
+    <button class="glass-btn" onclick="window.processTurn()" title="Следващ ход">►</button>
+</div>
     </header>
 
     <main id="game-container">
