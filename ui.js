@@ -542,9 +542,13 @@ function initHeroBar() {
     window.addEventListener('resize', () => renderSingleBar());
 }
 
-// Стартираме, когато страницата е готова
+// AUTO таймерите са деактивирани
 if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', initHeroBar);
+    document.addEventListener('DOMContentLoaded', function() {
+        // startAllAutoTimers();  // ДЕАКТИВИРАНО
+        // syncAutoStateWithHeroes();  // ДЕАКТИВИРАНО
+    });
 } else {
-    initHeroBar();
+    // startAllAutoTimers();  // ДЕАКТИВИРАНО
+    // syncAutoStateWithHeroes();  // ДЕАКТИВИРАНО
 }
