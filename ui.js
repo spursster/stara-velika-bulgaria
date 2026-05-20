@@ -52,69 +52,6 @@ function setAuto(id, enabled) {
     saveAuto();
 }
 
-// ==================== AUTO ТАЙМЕРИ ====================
-if (!window.autoIntervals) window.autoIntervals = {};
-
-window.startAutoTimer = function(heroId) {
-    if (window.autoIntervals[heroId]) clearInterval(window.autoIntervals[heroId]);
-    window.autoIntervals[heroId] = setInterval(() => {
-        let hero = null;
-        if (window.worldData && window.worldData.clans && window.worldData.clans[heroId]) {
-            hero = window.worldData.clans[heroId];
-        } else if (window.currentHero && window.currentHero.id === heroId) {
-            hero = window.currentHero;
-        }
-        
-        if (hero && hero.isAuto === true) {
-            if (typeof window.gainHeroXP === 'function') {
-                window.gainHeroXP(hero, 2);
-                console.log(`📈 AUTO: ${hero.name} +2 XP`);
-                if (typeof window.renderSingleBar === 'function') window.renderSingleBar();
-                if (typeof window.renderTop6LeadersUI === 'function') window.renderTop6LeadersUI();
-            }
-        }
-    }, 5000);
-};
-
-window.stopAutoTimer = function(heroId) {
-    if (window.autoIntervals[heroId]) {
-        clearInterval(window.autoIntervals[heroId]);
-        delete window.autoIntervals[heroId];
-    }
-};
-
-// Стартиране на AUTO таймери за всички герои (при зареждане)
-function startAllAutoTimers() {
-    if (window.worldData && window.worldData.clans) {
-        for (let key in window.worldData.clans) {
-            let hero = window.worldData.clans[key];
-            if (hero && hero.isAuto === true) {
-                window.startAutoTimer(key);
-            }
-        }
-    }
-    if (window.currentHero && window.currentHero.isAuto === true && window.currentHero.id) {
-        window.startAutoTimer(window.currentHero.id);
-    }
-}
-
-// Синхронизиране на isAuto с autoState при промяна
-function syncAutoStateWithHeroes() {
-    if (window.worldData && window.worldData.clans) {
-        for (let key in window.worldData.clans) {
-            let hero = window.worldData.clans[key];
-            if (hero && hero.isAuto !== undefined) {
-                if (hero.isAuto === true && !isAuto(key)) {
-                    setAuto(key, true);
-                    window.startAutoTimer(key);
-                } else if (hero.isAuto === false && isAuto(key)) {
-                    setAuto(key, false);
-                    window.stopAutoTimer(key);
-                }
-            }
-        }
-    }
-}
 
 // Извикваме при стартиране
 if (document.readyState === 'loading') {
