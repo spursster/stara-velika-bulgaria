@@ -2,7 +2,7 @@
 ==========================================================================
 ПРОЕКТ: ВЕЛИКА БЪЛГАРИЯ
 ФАЙЛ: battle.js (НАПЪЛНО НОВ ДИЗАЙН - 5 СЛОТА, АНИМАЦИИ, АДАПТИВЕН)
-СТАТУС: ГОТОВ ЗА ИНТЕГРАЦИЯ - КОРИГИРАН
+СТАТУС: ГОТОВ ЗА ИНТЕГРАЦИЯ - ДОБАВЕНА XP НАГРАДА
 ==========================================================================
 */
 
@@ -334,7 +334,8 @@
                         hp: 100,
                         maxHp: 100,
                         icon: "⚔️",
-                        armySize: armySize
+                        armySize: armySize,
+                        clanObj: clan
                     });
                 }
             }
@@ -351,7 +352,8 @@
                 hp: 100,
                 maxHp: 100,
                 icon: "⚔️",
-                armySize: armySize
+                armySize: armySize,
+                clanObj: window.currentHero
             });
         }
 
@@ -526,6 +528,44 @@
                 addLog(`━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`);
                 addLog(`🏆 ПОБЕДА! ${monster.name} е победен! 🏆`);
 
+                // ==================== XP НАГРАДА ====================
+                // Главен герой (currentHero) получава 150 XP
+                if (window.currentHero) {
+                    if (window.gainHeroXP) {
+                        window.gainHeroXP(window.currentHero, 150);
+                        addLog(`📈 ${window.currentHero.name} получава 150 опит!`);
+                    } else {
+                        window.currentHero.xp = (window.currentHero.xp || 0) + 150;
+                        addLog(`📈 ${window.currentHero.name} получава 150 опит! (без gainHeroXP)`);
+                    }
+                    if (window.updateCharacterUI) window.updateCharacterUI(window.currentHero);
+                }
+
+                // Останалите живи герои в битката получават по 75 XP
+                const aliveBattleHeroes = currentHeroes.filter(h => h.hp > 0 && h.id !== (window.currentHero?.clan || "hero"));
+                aliveBattleHeroes.forEach(hero => {
+                    // Намираме реалния обект на героя в worldData.clans
+                    let realHero = null;
+                    if (window.worldData && window.worldData.clans) {
+                        for (let key in window.worldData.clans) {
+                            let clan = window.worldData.clans[key];
+                            if (clan.isJoined === true && (clan.leaderName || clan.name || key) === hero.name) {
+                                realHero = clan;
+                                break;
+                            }
+                        }
+                    }
+                    if (realHero) {
+                        if (window.gainHeroXP) {
+                            window.gainHeroXP(realHero, 75);
+                            addLog(`📈 ${realHero.name} получава 75 опит!`);
+                        } else {
+                            realHero.xp = (realHero.xp || 0) + 75;
+                            addLog(`📈 ${realHero.name} получава 75 опит!`);
+                        }
+                    }
+                });
+
                 // Артефакт (20% шанс)
                 if (window.currentHero && window.historicalArtifacts && Math.random() < 0.2) {
                     const artifactKeys = Object.keys(window.historicalArtifacts);
@@ -662,5 +702,5 @@
         console.log("✅ Битката е готова!");
     };
 
-    console.log("✅ battle.js зареден (нов дизайн)");
+    console.log("✅ battle.js зареден (нов дизайн + XP награда)");
 })();
