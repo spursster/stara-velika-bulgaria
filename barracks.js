@@ -1,10 +1,8 @@
 /**
 ==========================================================================
 ПРОЕКТ: ВЕЛИКА БЪЛГАРИЯ
-ФАЙЛ: barracks.js (КАЗАРМИ - МОБИЛНО ОПТИМИЗИРАН)
-СТАТУС: НАПЪЛНО ИЗЧИСТЕН И АДАПТИВЕН ЗА ТЕЛЕФОН
-КОРЕКЦИЯ: Добавен бутон ✕ горе вляво, scrollable контейнер, flex-wrap слотове, 
-          премахнати всички синтактични грешки и интервали в думи.
+ФАЙЛ: barracks.js (КАЗАРМИ - СИНХРОНИЗИРАН С НОВАТА СИСТЕМА)
+СТАТУС: ОБНОВЕН - ИЗПОЛЗВА worldData.clans И renderSingleBar()
 ==========================================================================
 */
 
@@ -20,19 +18,34 @@ window.openBarracksUI = function() {
     window.renderBarracksLayout();
 };
 
+// Помощна функция за получаване на всички отключени герои (от worldData.clans)
+function getAllUnlockedHeroes() {
+    let heroes = [];
+    if (window.worldData && window.worldData.clans) {
+        for (let key in window.worldData.clans) {
+            let clan = window.worldData.clans[key];
+            if (clan.isJoined === true) {
+                heroes.push(clan);
+            }
+        }
+    }
+    if (heroes.length === 0 && window.currentHero) {
+        heroes.push(window.currentHero);
+    }
+    return heroes;
+}
+
 window.renderBarracksLayout = function() {
     const barracksContainer = document.getElementById('barracks-screen');
     if (!barracksContainer) return;
 
-    let listHeroes = window.unlockedLeaders || [];
-    if (window.currentHero && !listHeroes.some(h => h.name === window.currentHero.name)) {
-        listHeroes.unshift(window.currentHero);
-    }
-
-    let favoriteLeaders = listHeroes.filter(h => h.isFavoriteInBarracks).slice(0, 5);
+    // Взимаме всички отключени герои от worldData.clans
+    let allHeroes = getAllUnlockedHeroes();
+    
+    // Филтрираме любимите за отряда (5 слота)
+    let favoriteLeaders = allHeroes.filter(h => h.isFavoriteInBarracks).slice(0, 5);
 
     let topSlotsHTML = '';
-    // Адаптивни слотове с flex-wrap за мобилни
     for (let i = 0; i < 5; i++) {
         let hero = favoriteLeaders[i];
         if (hero) {
@@ -67,7 +80,6 @@ window.renderBarracksLayout = function() {
     let playerGold = window.currentHero ? (window.currentHero.gold || 0) : 0;
     const unitCost = 10;
 
-    // ✅ МОБИЛНО-ОПТИМИЗИРАН КОНТЕЙНЕР С БУТОН ЗА ЗАТВАРЯНЕ ГОРЕ-ВЛЯВО
     barracksContainer.innerHTML = `
         <div style="position: relative; width: 100%; max-width: 550px; max-height: 90vh; background: #111; border: 2px solid #d4af37; border-radius: 12px; padding: 50px 15px 15px 15px; box-sizing: border-box; display: flex; flex-direction: column; gap: 12px; overflow-y: auto; box-shadow: 0 0 40px rgba(0,0,0,0.9);">
             <button onclick="window.closeBarracksUI()" style="position: absolute; top: 8px; left: 8px; width: 44px; height: 44px; background: rgba(20, 20, 20, 0.9); border: 1px solid #ff4444; color: #ff4444; border-radius: 50%; font-size: 20px; cursor: pointer; z-index: 100; display: flex; align-items: center; justify-content: center; touch-action: manipulation;">✕</button>
@@ -147,15 +159,17 @@ window.buyUnits = function() {
 
     window.renderBarracksLayout();
     if (window.updateCharacterUI) window.updateCharacterUI(window.currentHero);
+    
+    // Обновяваме и основната лента с героите (ако има такава функция)
+    if (typeof window.renderSingleBar === 'function') {
+        window.renderSingleBar();
+    }
 };
 
 window.showLeaderSelectionModal = function() {
-    let listHeroes = window.unlockedLeaders || [];
-    if (window.currentHero && !listHeroes.some(h => h.name === window.currentHero.name)) {
-        listHeroes.unshift(window.currentHero);
-    }
-
-    let availableToChoose = listHeroes.filter(h => !h.isFavoriteInBarracks);
+    // Взимаме всички отключени герои от worldData.clans
+    let allHeroes = getAllUnlockedHeroes();
+    let availableToChoose = allHeroes.filter(h => !h.isFavoriteInBarracks);
 
     let modal = document.getElementById('leader-selection-modal');
     if (!modal) {
@@ -194,14 +208,14 @@ window.showLeaderSelectionModal = function() {
 };
 
 window.selectLeaderAsFavorite = function(heroName) {
-    let listHeroes = window.unlockedLeaders || [];
-    let hero = listHeroes.find(h => h.name === heroName);
+    let allHeroes = getAllUnlockedHeroes();
+    let hero = allHeroes.find(h => h.name === heroName);
     if (!hero && window.currentHero && window.currentHero.name === heroName) {
         hero = window.currentHero;
     }
 
     if (hero) {
-        let currentFavs = listHeroes.filter(h => h.isFavoriteInBarracks).length;
+        let currentFavs = allHeroes.filter(h => h.isFavoriteInBarracks).length;
         if (currentFavs >= 5) {
             alert("Можеш да имаш максимум 5 избрани героя в тактическата петица! Премахни някой първо.");
             return;
@@ -214,8 +228,8 @@ window.selectLeaderAsFavorite = function(heroName) {
 };
 
 window.toggleLeaderFavoriteInBarracks = function(heroName) {
-    let listHeroes = window.unlockedLeaders || [];
-    let hero = listHeroes.find(h => h.name === heroName);
+    let allHeroes = getAllUnlockedHeroes();
+    let hero = allHeroes.find(h => h.name === heroName);
     if (!hero && window.currentHero && window.currentHero.name === heroName) {
         hero = window.currentHero;
     }
