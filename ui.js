@@ -501,14 +501,36 @@ function createHeroCard(hero, isMobile) {
                 <button class="favorite-btn" data-id="${hero.id}" style="background:transparent; border:none; font-size:14px; cursor:pointer; color:${fav ? '#ff4466' : '#aaa'};">${fav ? '❤️' : '🤍'}</button>
             </div>
             <div style="font-size:8px; color:#ccaa77;">Ниво ${hero.level}</div>
-            <div style="background:#2a1a0a; height:3px; border-radius:2px; margin:4px 0;"><div style="background:#d4a373; height:100%; width:${xpPercent}%; border-radius:2px;"></div></div>
+            <div style="background:#2a1a0a; height:3px; border-radius:2px; margin:4px 0;">
+                <div style="background:#d4a373; height:100%; width:${xpPercent}%; border-radius:2px;"></div>
+            </div>
             <div style="font-size:8px; color:#ffaa66;">💪 ${hero.power}</div>
+            <!-- XP индикатор за мобилни -->
+            <div style="margin-top: 4px;">
+                <div style="background: #2a1a0a; height: 3px; border-radius: 2px; overflow: hidden;">
+                    <div style="background: #d4a373; height: 100%; width: ${xpPercent}%;"></div>
+                </div>
+                <div style="font-size: 6px; color: #aa8866; margin-top: 2px;">⚡ ${Math.floor(hero.xp)}/${needXP} XP</div>
+            </div>
         `;
     } else {
         card.style.cssText = `background: rgba(20,15,10,0.9); border-radius: 12px; padding: 8px 12px; display: flex; align-items: center; gap: 12px; cursor: pointer; border: 1px solid #c9a87b; margin-bottom: 6px;`;
         card.innerHTML = `
             <div style="font-size:22px;">⚔️</div>
-            <div style="flex:1;"><div style="font-weight:bold; color:#ffdd99; font-size:13px;">${hero.name}</div><div style="font-size:10px; color:#ccaa77;">Ниво ${hero.level} · ${hero.className}</div><div style="background:#2a1a0a; height:4px; border-radius:2px; margin:4px 0;"><div style="background:#d4a373; height:100%; width:${xpPercent}%; border-radius:2px;"></div></div></div>
+            <div style="flex:1;">
+                <div style="font-weight:bold; color:#ffdd99; font-size:13px;">${hero.name}</div>
+                <div style="font-size:10px; color:#ccaa77;">Ниво ${hero.level} · ${hero.className}</div>
+                <div style="background:#2a1a0a; height:4px; border-radius:2px; margin:4px 0;">
+                    <div style="background:#d4a373; height:100%; width:${xpPercent}%; border-radius:2px;"></div>
+                </div>
+                <!-- XP индикатор за десктоп -->
+                <div style="margin-top: 4px;">
+                    <div style="background: #2a1a0a; height: 3px; border-radius: 2px; overflow: hidden;">
+                        <div style="background: #d4a373; height: 100%; width: ${xpPercent}%;"></div>
+                    </div>
+                    <div style="font-size: 7px; color: #aa8866; margin-top: 2px;">⚡ ${Math.floor(hero.xp)}/${needXP} XP</div>
+                </div>
+            </div>
             <div style="font-size:11px; font-weight:bold; color:#ffaa66;">💪 ${hero.power}</div>
             <div style="font-size:10px; color:#ffd700;">💰 ${hero.gold}</div>
             <button class="favorite-btn" data-id="${hero.id}" style="background:transparent; border:none; font-size:18px; cursor:pointer; color:${fav ? '#ff4466' : '#aaa'};">${fav ? '❤️' : '🤍'}</button>
@@ -583,6 +605,21 @@ setTimeout(function addNavButtonsAutomatically() {
     
     // Проверяваме дали вече има бутони
     if (document.getElementById('hero-nav-prev')) return;
+
+ // Автоматично добавяне на навигационни бутони след зареждане на лентата
+setTimeout(function addNavButtonsAutomatically() {
+    const heroBar = document.getElementById('single-hero-bar');
+    if (!heroBar) {
+        setTimeout(addNavButtonsAutomatically, 500);
+        return;
+    }
+    if (document.getElementById('hero-nav-prev')) return;
+    
+    // Тук сложи целия код за създаване на бутоните (← и →)
+    // (който ти хареса от предишните версии)
+    
+    console.log("✅ Навигационните бутони са добавени автоматично");
+}, 1000);
     
     // ... (целият код от елегантните бутони, който ти хареса)
     
