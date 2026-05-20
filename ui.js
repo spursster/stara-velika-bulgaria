@@ -1,7 +1,7 @@
 /** ========================================================================== 
 ПРОЕКТ: ВЕЛИКА БЪЛГАРИЯ ФАЙЛ: ui.js (УНИВЕРСАЛЕН ГЛОБАЛЕН ПРОФИЛ, ЛЕНТА НА ЕЛИТА
  И ИНСПЕКЦИЯ НА КЛАНОВЕТЕ) 
-СТАТУС: НАПЪЛНО ОБНОВЕН С АДАПТИВНА ЛЕНТА, ЛЮБИМИ, 12 СЛОТА ИНВЕНТАР, AUTO, УМЕНИЯ
+СТАТУС: НАПЪЛНО ОБНОВЕН + hireNewHero
 ========================================================================== */ 
 
 window.eventHistory = []; 
@@ -51,6 +51,74 @@ function setAuto(id, enabled) {
     else delete autoState[id];
     saveAuto();
 }
+
+// ==================== НАЕМАНЕ НА ГЕРОИ ====================
+window.hireNewHero = function() {
+    console.log("📢 hireNewHero извикана");
+    
+    if (!window.currentHero) {
+        alert("Няма активен герой!");
+        return;
+    }
+    
+    let cost = 500;
+    if (window.currentHero.gold < cost) {
+        alert("❌ Нямате достатъчно злато! Нужни: " + cost);
+        return;
+    }
+    
+    let heroesList = [
+        { name: "Аспарух", clan: "Дуло", power: 130, class: "Войн" },
+        { name: "Тервел", clan: "Комитопули", power: 125, class: "Стрелец" },
+        { name: "Крум", clan: "Асеневци", power: 140, class: "Рицар" },
+        { name: "Омуртаг", clan: "Тертер", power: 120, class: "Маг" },
+        { name: "Борис I", clan: "Шишмановци", power: 135, class: "Лечител" },
+        { name: "Симеон Велики", clan: "Дуло", power: 150, class: "Багатур" },
+        { name: "Самуил", clan: "Комитопули", power: 145, class: "Вълхв" }
+    ];
+    
+    let randomHero = heroesList[Math.floor(Math.random() * heroesList.length)];
+    let newId = "hero_" + Date.now();
+    
+    let newHero = {
+        name: randomHero.name,
+        leaderName: randomHero.name,
+        clan: randomHero.clan,
+        isJoined: true,
+        level: 1,
+        xp: 0,
+        heroPower: randomHero.power,
+        power: randomHero.power,
+        gold: 1500,
+        armySize: 200,
+        currentArmy: 200,
+        currentClass: randomHero.class,
+        className: randomHero.class,
+        skills: {},
+        skillPoints: 0,
+        equipment: Array(12).fill(null),
+        inventory: Array(12).fill(null),
+        pet: null
+    };
+    
+    window.currentHero.gold -= cost;
+    
+    if (!window.worldData) window.worldData = {};
+    if (!window.worldData.clans) window.worldData.clans = {};
+    window.worldData.clans[newId] = newHero;
+    
+    if (!window.unlockedLeaders) window.unlockedLeaders = [];
+    window.unlockedLeaders.push(newHero);
+    
+    const goldSpan = document.getElementById('val-gold');
+    if (goldSpan) goldSpan.innerText = window.currentHero.gold;
+    
+    if (window.updateCharacterUI) window.updateCharacterUI(window.currentHero);
+    if (window.renderTop6LeadersUI) window.renderTop6LeadersUI();
+    if (typeof window.renderSingleBar === 'function') window.renderSingleBar();
+    
+    alert(`✅ Нает: ${newHero.name} от род ${newHero.clan}\n💰 Останало злато: ${window.currentHero.gold}`);
+};
 
 // ==================== ДАННИ ЗА ГЕРОИТЕ ====================
 function getAllHeroes() {
@@ -139,8 +207,7 @@ function showHeroProfile(hero) {
         skillsHtml += `<div style="margin-bottom:12px; border-bottom:1px solid #2a1a0a; padding-bottom:8px;"><div style="display:flex; justify-content:space-between;"><span style="color:#ffaa66;">${skill.name}</span><span style="color:#ccaa77;">Ниво ${currentLevel}</span></div><div style="font-size:10px; color:#aa8866;">${skill.desc}</div><button class="upgrade-skill-btn" data-skill="${key}" style="background:#2c1a0c; border:none; border-radius:20px; color:#ffdd99; font-size:9px; padding:2px 10px; margin-top:5px; cursor:pointer;">📈 ПОВИШИ</button></div>`;
     }
     skillsHtml += '</div>';
-    
-    let autoBtnHtml = `<button id="auto-mode-btn" style="background:${autoOn ? '#4a6a2a' : '#2c1a0c'}; border:none; border-radius:20px; color:#ffdd99; padding:8px 16px; margin-top:10px; cursor:pointer; width:100%;">${autoOn ? '✅ AUTO РЕЖИМ: ВКЛЮЧЕН' : '🤖 AUTO РЕЖИМ: ИЗКЛЮЧЕН'}</button>`;
+ let autoBtnHtml = `<button id="auto-mode-btn" style="background:${autoOn ? '#4a6a2a' : '#2c1a0c'}; border:none; border-radius:20px; color:#ffdd99; padding:8px 16px; margin-top:10px; cursor:pointer; width:100%;">${autoOn ? '✅ AUTO РЕЖИМ: ВКЛЮЧЕН' : '🤖 AUTO РЕЖИМ: ИЗКЛЮЧЕН'}</button>`;
     
     let oldModal = document.getElementById('ultimate-profile-modal');
     if (oldModal) oldModal.remove();
@@ -309,7 +376,6 @@ window.inspectLeaderProfile = function(clanKey) {
     document.body.appendChild(overlay); 
     document.getElementById('close-profile-btn').onclick = function() { overlay.remove(); }; 
 };
-
 // ==================== АДАПТИВНА ЛЕНТА С ГЕРОИ ====================
 let startIdx = 0;
 let perPage = 3;
