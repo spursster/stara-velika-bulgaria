@@ -1,11 +1,10 @@
 /**
-МОДУЛ: ДИПЛОМАЦИЯ И БРАК (МОДАЛНА ВЕРСИЯ – НЕ ПРЕЗАПИСВА КАРТАТА)
+МОДУЛ: ДИПЛОМАЦИЯ И БРАК (МОДАЛНА ВЕРСИЯ – С БУТОН "✕" ГОРЕ ВЛЯВО)
 */
 
 window.clanRelations = window.clanRelations || {};
 if (!window.prisoners) window.prisoners = [];
 
-// Инициализация на отношенията
 window.initDiplomacy = function() {
     const allClans = [
         "Дуло", "Комитопули", "Асеневци", "Тертер", "Даки", "Уния Траки",
@@ -44,7 +43,6 @@ window.processClanDiplomacyAutomation = function() {
     if (window.renderTop6LeadersUI) window.renderTop6LeadersUI();
 };
 
-// ==================== БРАК С ПЛЕННИЦИ ====================
 window.marryPrisoner = function(index) {
     if (!window.prisoners || !window.prisoners[index]) return alert("Грешка: Пленницата не е намерена!");
     const prisoner = window.prisoners[index];
@@ -58,7 +56,7 @@ window.marryPrisoner = function(index) {
         currentClass: prisoner.name, className: prisoner.name, skills: {}, skillPoints: 0,
         equipment: Array(12).fill(null), inventory: Array(12).fill(null), pet: null, age: 25,
         race: prisoner.raceId, raceBonus: prisoner.bonus,
-        armyDetails: { infantry: 80, archers: 40, cavalry: 20, elite: 10 } // минимум за armyMarket
+        armyDetails: { infantry: 80, archers: 40, cavalry: 20, elite: 10 }
     };
     if (window.initializeHeroRPGData) window.initializeHeroRPGData(wifeHero);
     if (!window.worldData) window.worldData = {};
@@ -76,10 +74,9 @@ window.marryPrisoner = function(index) {
     const bonusText = Object.entries(prisoner.bonus || {}).map(([k,v]) => `${k}+${v}`).join(', ');
     if (window.showAdvisorMsg) window.showAdvisorMsg(`💍 БРАК! ${prisoner.name} се присъедини към вашия род! Бонуси: ${bonusText}`);
     alert(`💍 Оженихте се за ${prisoner.name}!\n🎉 Тя се присъедини към вашите герои!\n✨ Бонуси: ${bonusText}`);
-    if (window.openRegionsMap) window.openRegionsMap(); // връща към картата
+    if (window.openRegionsMap) window.openRegionsMap();
 };
 
-// ==================== МОДАЛНО МЕНЮ ЗА БРАК ====================
 window.openMarriageMenu = function() {
     if (document.getElementById('marriage-modal')) return;
     const hero = window.currentHero;
@@ -93,7 +90,6 @@ window.openMarriageMenu = function() {
     let diplomacyBonus = (skills.economy || 0) * 5;
     let baseSuccessChance = 50 + diplomacyBonus;
     
-    // Списък с пленници
     let prisonersHtml = '';
     if (window.prisoners && window.prisoners.length > 0) {
         prisonersHtml = `<div style="margin-bottom:20px; border-bottom:1px solid #d4af37; padding-bottom:10px;"><h3 style="color:#ffd700;">💍 Кандидатки за брак (пленници)</h3>`;
@@ -110,7 +106,6 @@ window.openMarriageMenu = function() {
         prisonersHtml += `</div>`;
     }
     
-    // Списък с кланове
     let clansHtml = `<div><h3 style="color:#ffd700;">🏛️ Династични бракове с кланове</h3><div style="max-height:300px; overflow-y:auto;">`;
     for (let clan in window.clanRelations) {
         if (clan !== hero.clan) {
@@ -145,7 +140,9 @@ window.openMarriageMenu = function() {
         box-sizing: border-box;
     `;
     modal.innerHTML = `
-        <div style="background: #0a0a1a; border: 2px solid #d4af37; border-radius: 24px; max-width: 500px; width: 90%; max-height: 90%; overflow-y: auto; padding: 20px;">
+        <div style="background: #0a0a1a; border: 2px solid #d4af37; border-radius: 24px; max-width: 500px; width: 90%; max-height: 90%; overflow-y: auto; padding: 20px; position: relative;">
+            <!-- БУТОН ЗА ЗАТВАРЯНЕ ГОРЕ ВЛЯВО -->
+            <button id="close-marriage-x" style="position: absolute; top: 10px; left: 10px; background: rgba(255,80,80,0.2); border: none; color: #ff8888; font-size: 20px; width: 32px; height: 32px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center;">✕</button>
             <h2 style="color:#ffd700; text-align:center; margin-top:0;">💍 Династични Бракове</h2>
             ${prisonersHtml}
             ${clansHtml}
@@ -156,30 +153,31 @@ window.openMarriageMenu = function() {
     `;
     document.body.appendChild(modal);
     
-    // Обработка на бутоните за пленници
+    // Функция за затваряне на модала
+    const closeModal = () => modal.remove();
+    modal.querySelector('#close-marriage-x')?.addEventListener('click', closeModal);
+    modal.querySelector('#close-marriage-modal')?.addEventListener('click', closeModal);
+    modal.addEventListener('click', (e) => { if (e.target === modal) closeModal(); });
+    
+    // Бутони за пленници (затварят модала преди действие)
     modal.querySelectorAll('.marry-prisoner-modal-btn').forEach(btn => {
         btn.onclick = () => {
             const idx = parseInt(btn.getAttribute('data-index'));
-            modal.remove();  // затваряме модала
+            closeModal();
             window.marryPrisoner(idx);
         };
     });
     
-    // Обработка на бутоните за кланове
+    // Бутони за кланове
     modal.querySelectorAll('.propose-marriage-modal-btn').forEach(btn => {
         btn.onclick = () => {
             const clan = btn.getAttribute('data-clan');
-            modal.remove();
+            closeModal();
             window.proposeMarriage(clan, finalMarriageCost, baseSuccessChance);
         };
     });
-    
-    const closeBtn = modal.querySelector('#close-marriage-modal');
-    if (closeBtn) closeBtn.onclick = () => modal.remove();
-    modal.addEventListener('click', (e) => { if (e.target === modal) modal.remove(); });
 };
 
-// ==================== ПРЕДЛАГАНЕ НА БРАК С КЛАН ====================
 window.proposeMarriage = function(clan, cost, successChance) {
     const hero = window.currentHero;
     if (!hero) return;
@@ -218,6 +216,5 @@ window.proposeMarriage = function(clan, cost, successChance) {
     }
     if (window.updateCharacterUI) window.updateCharacterUI(hero);
     if (window.armyMarket && typeof window.armyMarket.sync === 'function') window.armyMarket.sync(hero);
-    // След брака връщаме към картата (затваряме всички модали)
     if (window.openRegionsMap) window.openRegionsMap();
 };
