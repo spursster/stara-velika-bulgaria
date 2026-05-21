@@ -48,7 +48,6 @@
             border-radius: 30px;
             font-size: 0.9rem;
         }
-        /* Име на активния герой в горната лента */
         .active-hero-name {
             background: rgba(0,0,0,0.6);
             border-radius: 30px;
@@ -170,7 +169,6 @@
             gap: 6px;
             cursor: pointer;
         }
-        /* Скриване на грозния бутон на активния герой (ако някой скрипт го добави) */
         #bottom-controls .hero-profile-btn,
         #bottom-controls button[onclick*="showHeroProfile"],
         .bottom-hero-btn {
@@ -206,7 +204,6 @@
                 grid-template-columns: 1fr;
                 gap: 15px;
             }
-            /* Пренареждане: летописът да е първи, страничните панели отдолу */
             #game-main-area { order: 1; }
             #sidebar-left { order: 2; margin-top: 20px; }
             #sidebar-right { order: 3; }
@@ -223,7 +220,6 @@
         <div class="stat-box">💰 <span id="val-gold">0</span></div>
         <div class="stat-box">🏹 <span id="val-army">0</span></div>
         <div class="stat-box">⏳ <span id="current-time-info">пролет, 480 г. пр.н.е.</span></div>
-        <!-- Името на активния герой ще се добави тук динамично -->
     </div>
     <div class="top-bar-controls">
         <button class="glass-btn" onclick="window.hireNewHero?.()">👑 Наеми</button>
@@ -232,8 +228,6 @@
         <button class="glass-btn" onclick="window.openMarriageMenu?.()">💍 Брак</button>
     </div>
 </header>
-
-<div id="top-elite-bar" style="display: flex; gap: 8px; overflow-x: auto; padding: 6px 12px; background: rgba(0,0,0,0.4); border-bottom: 1px solid #d4af37;"></div>
 
 <main id="game-container">
     <aside id="sidebar-left">
@@ -264,6 +258,9 @@
     </aside>
 </main>
 
+<!-- ЛЕНТА С НЕЛЮБИМИТЕ ГЕРОИ – ПРЕМЕСТЕНА НАЙ-ОТДОЛУ (НАД ДОЛНИТЕ БУТОНИ) -->
+<div id="top-elite-bar" style="display: flex; gap: 8px; overflow-x: auto; padding: 6px 12px; background: rgba(0,0,0,0.4); border-top: 1px solid #d4af37; margin-top: 0; margin-bottom: 0;"></div>
+
 <div id="bottom-controls">
     <button class="icon-btn" onclick="window.openRegionsMap()" title="Карта">🗺️</button>
     <button class="icon-btn" onclick="window.openBarracksUI?.()" title="Казарми">🏹</button>
@@ -274,7 +271,7 @@
     <button class="icon-btn" onclick="window.toggleTreasury()" title="Съкровищница">🎒</button>
 </div>
 
-<!-- ВСИЧКИ JS МОДУЛИ -->
+<!-- СКРИПТОВЕ -->
 <script src="mechanics.js"></script>
 <script src="world_data.js"></script>
 <script src="database.js"></script>
@@ -293,7 +290,7 @@
 <script src="rivalry.js"></script>
 <script src="armyMarket.js"></script>
 
-<!-- ФИНАЛЕН СКРИПТ – ГАРАНТИРА РАБОТА НА КАРТА, XP, НИВА, ФИКСИРА ДУБЛИРАНЕ И ГРОЗЕН БУТОН -->
+<!-- ФИНАЛЕН СКРИПТ -->
 <script>
 (function() {
     // ========== 0. ФИКС ЗА ДУБЛИРАЩИ СЕ НЕЛЮБИМИ ГЕРОИ (rivalry) ==========
