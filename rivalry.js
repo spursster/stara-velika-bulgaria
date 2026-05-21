@@ -167,17 +167,11 @@
                 isRivalAction: true
             });
             if (window.worldEvents.length > 100) window.worldEvents.pop();
-            // Опит за обновяване на дисплея
             if (typeof displayEvents === 'function') displayEvents();
         }
         
-        // Допълнителен лог в конзолата
         console.log(`📜 [ЛЕТОПИС] ${message}`);
     }
-
-    // ========== ПРЕМАХНАТА ФУНКЦИЯ ЗА ПЛАВАЩ ПАНЕЛ ==========
-    // Старата функция showAttackNotification е напълно премахната!
-    // Събитията вече отиват директно в летописа.
 
     window.checkRandomAttack = function() {
         turnCounter++;
@@ -210,7 +204,6 @@
     window.startRevengeBattle = function(aggressor, victim, stolenInfo) {
         console.log(`⚔️ ЗАПОЧВА БИТКА ЗА ОТМЪЩЕНИЕ: ${victim.name} срещу ${aggressor.name}`);
         
-        // Добавяне в летописа за начало на отмъщението
         if (window.addWorldEvent) {
             window.addWorldEvent(`⚔️ ОТМЪЩЕНИЕ`, `${victim.name} започва битка срещу ${aggressor.name}!`, "⚔️", window.currentYear);
         }
@@ -267,13 +260,11 @@
         const year = window.currentYear || "480 г. пр.н.е.";
         
         if (isVictory) {
-            // Победа - добавяне в летописа
             if (window.addWorldEvent) {
                 window.addWorldEvent(`🏆 ПОБЕДА В ОТМЪЩЕНИЕ`, `${playerHero.name} победи ${aggressor.name} и си върна откраднатото!`, "🏆", year);
             }
             if (window.showAdvisorMsg) window.showAdvisorMsg(`🏆 Отмъщението бе успешно! ${victim.name} си върна откраднатото!`);
         } else {
-            // Загуба - добавяне в летописа
             if (window.addWorldEvent) {
                 window.addWorldEvent(`💀 ПРОВАЛЕНО ОТМЪЩЕНИЕ`, `${playerHero.name} загуби от ${aggressor.name}!`, "💀", year);
             }
