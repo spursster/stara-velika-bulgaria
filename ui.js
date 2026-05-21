@@ -1,7 +1,7 @@
 /** ========================================================================== 
 ПРОЕКТ: ВЕЛИКА БЪЛГАРИЯ
-ФАЙЛ: ui.js (УНИВЕРСАЛЕН ГЛОБАЛЕН ПРОФИЛ, ЛЕНТА НА ЕЛИТА, ЛОГ ПАНЕЛ)
-СТАТУС: ФИНАЛНА ВЕРСИЯ - БЕЗ ПЛАВАЩ ПАНЕЛ
+ФАЙЛ: ui.js (УНИВЕРСАЛЕН ГЛОБАЛЕН ПРОФИЛ, ЛЕНТА НА ЕЛИТА)
+ВЕРСИЯ: 3.0 - СЪВМЕСТИМ С НОВИТЕ КЛАСОВЕ И УМЕНИЯ (classes.js, skills.js)
 ========================================================================== */ 
 
 window.eventHistory = []; 
@@ -104,7 +104,7 @@ window.hireNewHero = function() {
         armySize: 200, currentArmy: 200, currentClass: randomHero.className, className: randomHero.className,
         skills: { tactics:0, endurance:0, economy:0, mysticism:0, leadership:0 },
         skillPoints:0, storedXP:0, isAuto: true, equipment: Array(12).fill(null), inventory: Array(12).fill(null),
-        pet: null, age: 30
+        pet: null, age: 30, learnedSkills: {} // за новите умения
     };
     if (window.initializeHeroRPGData) window.initializeHeroRPGData(newHero);
     window.currentHero.gold -= randomHero.cost;
@@ -166,16 +166,9 @@ function getAllHeroes() {
     return heroes;
 }
 
-// ==================== УМЕНИЯ ====================
-const skillTree = {
-    tactics: { name: "🎯 Военна Тактика", desc: "Увеличава бойната мощ с +15", cost: 1 },
-    endurance: { name: "🛡️ Издръжливост", desc: "Увеличава защитата на армията", cost: 1 },
-    economy: { name: "💰 Родово Управление", desc: "Увеличава дохода от региони", cost: 1 },
-    mysticism: { name: "🔮 Мистицизъм", desc: "Увеличава шанса за артефакти", cost: 1 },
-    leadership: { name: "🏆 Лидерство", desc: "Увеличава максималния брой войници", cost: 1 }
-};
+// ==================== СТАРИТЕ УМЕНИЯ (SKILLTREE) СА ПРЕМАХНАТИ – НОВИТЕ УМЕНИЯ СА В skills.js ====================
 
-// ==================== ПРОФИЛ С 12 СЛОТА + АРТЕФАКТИ ====================
+// ==================== ПРОФИЛ С 12 СЛОТА + АРТЕФАКТИ (БЕЗ СТАРИ УМЕНИЯ) ====================
 function showHeroProfile(hero) {
     let needXP = 100 + (hero.level - 1) * 50;
     let xpPercent = Math.min(100, Math.floor((hero.xp / needXP) * 100));
@@ -218,19 +211,14 @@ function showHeroProfile(hero) {
     }
     petHtml += '</div>';
     
-    let skillsHtml = '<div style="background:#0d0a07; border-radius:12px; padding:12px; margin-top:10px;"><h4 style="color:#ffdd99; margin:0 0 10px 0;">📖 ДЪРВО НА УМЕНИЯТА</h4><div style="color:#ffaa66; font-size:11px; margin-bottom:8px;">✨ Свободни точки: ' + (hero.skillPoints || 0) + '</div>';
-    for (let [key, skill] of Object.entries(skillTree)) {
-        let currentLevel = hero.skills?.[key] || 0;
-        skillsHtml += `<div style="margin-bottom:12px; border-bottom:1px solid #2a1a0a; padding-bottom:8px;">
-            <div style="display:flex; justify-content:space-between;">
-                <span style="color:#ffaa66;">${skill.name}</span>
-                <span style="color:#ccaa77;">Ниво ${currentLevel}</span>
-            </div>
-            <div style="font-size:10px; color:#aa8866;">${skill.desc}</div>
-            <button class="upgrade-skill-btn" data-skill="${key}" style="background:#2c1a0c; border:none; border-radius:20px; color:#ffdd99; font-size:9px; padding:2px 10px; margin-top:5px; cursor:pointer;">📈 ПОВИШИ</button>
-        </div>`;
-    }
-    skillsHtml += '</div>';
+    // Вместо старите умения – бутон към новата система
+    let skillsHtml = `
+        <div style="background:#0d0a07; border-radius:12px; padding:12px; margin-top:10px;">
+            <h4 style="color:#ffdd99; margin:0 0 10px 0;">⭐ НОВА СИСТЕМА ЗА УМЕНИЯ</h4>
+            <p style="font-size:11px; color:#ccc;">Свободни точки: <strong style="color:#ffd700;">${hero.skillPoints}</strong></p>
+            <button id="open-new-skills-btn" style="width:100%; background:#daa520; border:none; border-radius:30px; padding:6px; color:#000; font-weight:bold; cursor:pointer;">⭐ ОТВОРИ ДЪРВЕТАТА НА УМЕНИЯТА</button>
+        </div>
+    `;
     
     let autoBtnHtml = `<button id="auto-mode-btn" style="background:${autoOn ? '#4a6a2a' : '#2c1a0c'}; border:none; border-radius:20px; color:#ffdd99; padding:8px 16px; margin-top:10px; cursor:pointer; width:100%;">${autoOn ? '✅ AUTO РЕЖИМ: ВКЛЮЧЕН' : '🤖 AUTO РЕЖИМ: ИЗКЛЮЧЕН'}</button>`;
     
@@ -244,7 +232,7 @@ function showHeroProfile(hero) {
             <div style="text-align:center;">
                 <div style="font-size:48px;">⚔️</div>
                 <div style="font-size:22px; font-weight:bold; color:#ffdd99;">${hero.name}</div>
-                <div style="color:#ccaa77;">${hero.className} · Ниво ${hero.level}</div>
+                <div style="color:#ccaa77;">${hero.currentClass} · Ниво ${hero.level}</div>
                 <div style="background:#2a1a0a; height:8px; border-radius:4px; margin:10px 0;"><div style="background:#d4a373; height:100%; width:${xpPercent}%; border-radius:4px;"></div></div>
                 <div style="font-size:11px; color:#ffaa66;">⚡ ${Math.floor(hero.xp)}/${needXP} XP</div>
                 <div style="margin-top:15px; display:flex; justify-content:space-between; gap:10px;">
@@ -293,21 +281,14 @@ function showHeroProfile(hero) {
         };
     }
     
-    let upgradeBtns = modal.querySelectorAll('.upgrade-skill-btn');
-    upgradeBtns.forEach(btn => {
-        btn.onclick = (e) => {
-            e.stopPropagation();
-            let skillKey = btn.getAttribute('data-skill');
-            if ((hero.skillPoints || 0) > 0) {
-                if (!hero.skills) hero.skills = {};
-                hero.skills[skillKey] = (hero.skills[skillKey] || 0) + 1;
-                hero.skillPoints--;
-                if (skillKey === 'tactics') hero.power = (hero.power || 100) + 15;
-                if (skillKey === 'endurance') hero.army = (hero.army || 300) + 50;
-                modal.remove(); showHeroProfile(hero);
-            } else { alert("❌ Нямате свободни точки!"); }
+    let openSkillsBtn = modal.querySelector('#open-new-skills-btn');
+    if (openSkillsBtn) {
+        openSkillsBtn.onclick = () => {
+            modal.remove();
+            if (typeof window.openSkillsUI === 'function') window.openSkillsUI();
+            else alert("Интерфейсът за умения не е зареден (skills-ui.js).");
         };
-    });
+    }
 }
 
 // ==================== ОРИГИНАЛНА ЛЕНТА НА ЕЛИТА ====================
@@ -384,21 +365,33 @@ window.showAdvisorMsg = function(msg) {
     journal.innerHTML = window.eventHistory.map(function(line) { return '<p style="margin:4px 0; border-left:2px solid #ffaa44; padding-left:8px;">📜 ' + line + '</p>'; }).reverse().join(''); 
 }; 
 
-// ==================== ИНСПЕКЦИЯ НА КЛАН ====================
+// ==================== ИНСПЕКЦИЯ НА КЛАН (без старите skillTrees) ====================
 window.inspectLeaderProfile = function(clanKey) { 
     if (!window.worldData || !window.worldData.clans || !window.worldData.clans[clanKey]) { alert("Грешка: Неуспешно извличане на данни за избрания род."); return; } 
     const leader = window.worldData.clans[clanKey]; 
     const oldProfile = document.getElementById('dynamic-leader-profile'); if (oldProfile) oldProfile.remove(); 
-    let skillsHTML = "<h4>Придобити Способности:</h4><ul>"; 
+    let skillsHTML = "<h4>Придобити Способности (нови):</h4><ul>"; 
     let hasSkills = false; 
-    if (leader.skills) { 
-        for (let sKey in leader.skills) { 
-            let sVal = leader.skills[sKey];
-            if (sVal > 0 && window.rpgDatabase && window.rpgDatabase.skillTrees && window.rpgDatabase.skillTrees[sKey]) { skillsHTML += "<li>• " + window.rpgDatabase.skillTrees[sKey].name + ": Ниво " + sVal + "</li>"; hasSkills = true; } 
-        } 
+    if (leader.learnedSkills) { 
+        for (let skillKey in leader.learnedSkills) { 
+            let level = leader.learnedSkills[skillKey];
+            if (level > 0) {
+                // търсим името на умението от advancedSkills
+                let skillName = skillKey;
+                for (let treeKey in window.advancedSkills) {
+                    if (window.advancedSkills[treeKey].skills[skillKey]) {
+                        skillName = window.advancedSkills[treeKey].skills[skillKey].name;
+                        break;
+                    }
+                }
+                skillsHTML += "<li>• " + skillName + " (Ниво " + level + ")</li>"; 
+                hasSkills = true;
+            }
+        }
     } 
-    if (!hasSkills) skillsHTML += "<li>Все още няма развити умения.</li>"; 
+    if (!hasSkills) skillsHTML += "<li>Все още няма научени нови умения.</li>"; 
     skillsHTML += "</ul>"; 
+    
     let inventoryHTML = "<h4>Налична Екипировка:</h4><div>"; 
     let hasEquipment = false; 
     if (leader.equipment) { 
