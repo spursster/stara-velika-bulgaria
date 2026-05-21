@@ -37,6 +37,7 @@
             display: flex;
             gap: 15px;
             flex-wrap: wrap;
+            align-items: center;
         }
         .stat-box {
             font-family: 'Cinzel', serif;
@@ -46,6 +47,20 @@
             padding: 4px 12px;
             border-radius: 30px;
             font-size: 0.9rem;
+        }
+        /* Име на активния герой в горната лента */
+        .active-hero-name {
+            background: rgba(0,0,0,0.6);
+            border-radius: 30px;
+            padding: 4px 12px;
+            margin-left: 10px;
+            font-size: 0.85rem;
+            color: #ffd700;
+            font-weight: bold;
+            white-space: nowrap;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
         }
         .top-bar-controls {
             display: flex;
@@ -67,7 +82,7 @@
             background: rgba(255,215,0,0.2);
             transform: scale(1.02);
         }
-        /* Главен контейнер */
+        /* Главен контейнер – десктоп */
         #game-container {
             display: grid;
             grid-template-columns: 260px 1fr 260px;
@@ -155,6 +170,12 @@
             gap: 6px;
             cursor: pointer;
         }
+        /* Скриване на грозния бутон на активния герой (ако някой скрипт го добави) */
+        #bottom-controls .hero-profile-btn,
+        #bottom-controls button[onclick*="showHeroProfile"],
+        .bottom-hero-btn {
+            display: none !important;
+        }
         /* Модали */
         .modal-overlay {
             position: fixed;
@@ -179,9 +200,18 @@
             overflow: auto;
             padding: 20px;
         }
+        /* Мобилен изглед – пренареждане, за да не застъпва */
         @media (max-width: 800px) {
-            #game-container { grid-template-columns: 1fr; gap: 10px; }
+            #game-container {
+                grid-template-columns: 1fr;
+                gap: 15px;
+            }
+            /* Пренареждане: летописът да е първи, страничните панели отдолу */
+            #game-main-area { order: 1; }
+            #sidebar-left { order: 2; margin-top: 20px; }
+            #sidebar-right { order: 3; }
             .stat-box { font-size: 0.7rem; padding: 2px 8px; }
+            .active-hero-name { font-size: 0.7rem; padding: 2px 8px; }
         }
     </style>
 </head>
@@ -193,6 +223,7 @@
         <div class="stat-box">💰 <span id="val-gold">0</span></div>
         <div class="stat-box">🏹 <span id="val-army">0</span></div>
         <div class="stat-box">⏳ <span id="current-time-info">пролет, 480 г. пр.н.е.</span></div>
+        <!-- Името на активния герой ще се добави тук динамично -->
     </div>
     <div class="top-bar-controls">
         <button class="glass-btn" onclick="window.hireNewHero?.()">👑 Наеми</button>
@@ -262,10 +293,49 @@
 <script src="rivalry.js"></script>
 <script src="armyMarket.js"></script>
 
-<!-- ФИНАЛЕН СКРИПТ – ГАРАНТИРА РАБОТА НА КАРТА, XP, НИВА -->
+<!-- ФИНАЛЕН СКРИПТ – ГАРАНТИРА РАБОТА НА КАРТА, XP, НИВА, ФИКСИРА ДУБЛИРАНЕ И ГРОЗЕН БУТОН -->
 <script>
 (function() {
-    // ---------- 1. АКО НЯМА КАРТА, ПРАВИМ РАБОТЕЩА ----------
+    // ========== 0. ФИКС ЗА ДУБЛИРАЩИ СЕ НЕЛЮБИМИ ГЕРОИ (rivalry) ==========
+    if (window.rivalrySystem && typeof window.rivalrySystem.getEnemyHeroes === 'function') {
+        const originalGetEnemy = window.rivalrySystem.getEnemyHeroes;
+        window.rivalrySystem.getEnemyHeroes = function() {
+            let enemies = originalGetEnemy();
+            let unique = [];
+            let seen = new Set();
+            for (let e of enemies) {
+                let id = e.id || e.name || e.clan;
+                if (!seen.has(id)) {
+                    seen.add(id);
+                    unique.push(e);
+                }
+            }
+            return unique;
+        };
+        console.log("✅ Филтър за дублиращи се врагове активиран.");
+    }
+
+    // ========== 1. ПОКАЗВАНЕ НА ИМЕТО НА АКТИВНИЯ ГЕРОЙ В ГОРНАТА ЛЕНТА ==========
+    function updateHeroNameInTopBar() {
+        let hero = window.currentHero;
+        if (!hero) return;
+        let heroName = hero.name || "Герой";
+        let container = document.querySelector('#top-bar .top-bar-stats');
+        if (!container) return;
+        let existing = container.querySelector('.active-hero-name');
+        if (!existing) {
+            let span = document.createElement('span');
+            span.className = 'active-hero-name';
+            span.innerHTML = `👑 ${heroName}`;
+            container.appendChild(span);
+        } else {
+            existing.innerHTML = `👑 ${heroName}`;
+        }
+    }
+    setInterval(updateHeroNameInTopBar, 1000);
+    updateHeroNameInTopBar();
+
+    // ========== 2. АКО НЯМА КАРТА, ПРАВИМ РАБОТЕЩА ==========
     if (typeof window.openRegionsMap !== 'function') {
         window.openRegionsMap = function() {
             const old = document.getElementById('custom-map');
@@ -306,7 +376,7 @@
         };
     }
 
-    // ---------- 2. ГАРАНЦИЯ ЗА БИТКА (ако battle.js не работи) ----------
+    // ---------- 3. ГАРАНЦИЯ ЗА БИТКА (ако battle.js не работи) ----------
     if (typeof window.startBattle !== 'function') {
         window.startBattle = function(region) {
             console.log(`Битка в ${region} (симулация)`);
@@ -319,7 +389,7 @@
         };
     }
 
-    // ---------- 3. ЛЕТОПИС И XP ТРЪГВАНЕ ----------
+    // ---------- 4. ЛЕТОПИС И XP ТРЪГВАНЕ ----------
     if (!window.worldEvents) window.worldEvents = [];
     window.addWorldEvent = function(title, desc, icon, year) {
         window.worldEvents.unshift({ id: Date.now(), title, description: desc, icon: icon || '📜', time: year || window.currentYear || "480 г. пр.н.е." });
@@ -349,7 +419,7 @@
         cont.innerHTML = html;
     };
 
-    // ---------- 4. ИНИЦИАЛИЗАЦИЯ НА ГЕРОЙ ----------
+    // ---------- 5. ИНИЦИАЛИЗАЦИЯ НА ГЕРОЙ ----------
     if (!window.currentHero) {
         window.currentHero = {
             name: "Кубрат",
@@ -372,7 +442,7 @@
         if (window.initializeHeroRPGData) window.initializeHeroRPGData(window.currentHero);
     }
 
-    // ---------- 5. ПРИНУДИТЕЛНО XP ПРИ ХОД ----------
+    // ---------- 6. ПРИНУДИТЕЛНО XP ПРИ ХОД ----------
     const oldProcess = window.processTurn;
     window.processTurn = function() {
         if (oldProcess) oldProcess();
@@ -384,7 +454,7 @@
         if (window.renderTop6LeadersUI) window.renderTop6LeadersUI();
     };
 
-    // ---------- 6. СЪКРОВИЩНИЦА ----------
+    // ---------- 7. СЪКРОВИЩНИЦА ----------
     if (typeof window.toggleTreasury !== 'function') {
         window.toggleTreasury = function() {
             const hero = window.currentHero;
@@ -414,21 +484,21 @@
         };
     }
 
-    // ---------- 7. ПЪРВОНАЧАЛНИ СЪБИТИЯ ----------
+    // ---------- 8. ПЪРВОНАЧАЛНИ СЪБИТИЯ ----------
     if (window.worldEvents.length === 0) {
         window.addWorldEvent("🏛️ Основаване на Тракийското царство", "Тракийските племена се обединяват", "🏰", "480 г. пр.н.е.");
         window.addWorldEvent("⚔️ Подготовка за война", "Персийската империя набира войски", "⚔️", "480 г. пр.н.е.");
     }
     window.displayEvents();
 
-    // ---------- 8. ОПРЕСНЯВАНЕ НА ИНТЕРФЕЙСА ----------
+    // ---------- 9. ОПРЕСНЯВАНЕ НА ИНТЕРФЕЙСА ----------
     if (window.updateCharacterUI) window.updateCharacterUI(window.currentHero);
     if (window.renderTop6LeadersUI) window.renderTop6LeadersUI();
     if (window.initHeroBar) window.initHeroBar();
     document.getElementById('clearChronicleBtn')?.addEventListener('click', () => {
         if(confirm("Изчисти летописа?")) { window.worldEvents = []; window.displayEvents(); }
     });
-    console.log("✅ Играта е напълно готова – битки, карта, XP, нива работят!");
+    console.log("✅ Играта е напълно готова – битки, карта, XP, нива, филтрирани врагове, без грозен бутон!");
 })();
 </script>
 </body>
