@@ -1,42 +1,57 @@
 // ==================== regions.js – КАРТА И ИНСПЕКЦИЯ ====================
 window.openRegionsMap = function() {
-    if (!window.worldData || !window.worldData.regions) {
-        console.error("Няма региони");
-        return;
-    }
-    const regions = window.worldData.regions;
-    const regionKeys = Object.keys(regions);
-    const owned = Array.isArray(window.playerRegions) ? window.playerRegions.flat() : [];
+    const oldModal = document.getElementById('regions-map-overlay');
+    if (oldModal) oldModal.remove();
 
-    let overlay = document.getElementById('regions-map-overlay');
-    if (overlay) overlay.remove();
-    overlay = document.createElement('div');
-    overlay.id = 'regions-map-overlay';
-    overlay.style.cssText = `position: fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.9); backdrop-filter:blur(8px); z-index:50000; display:flex; justify-content:center; align-items:center; font-family:'Cinzel',serif; overflow:auto; padding:20px;`;
-    
-    const container = document.createElement('div');
-    container.style.cssText = `background:rgba(0,0,0,0.85); border-radius:32px; border:1px solid #c9a87b; max-width:800px; width:100%; max-height:90vh; overflow:auto; padding:20px;`;
-    container.innerHTML = `<h2 style="color:#ffdd99; text-align:center;">🗺️ Карта на Регионите</h2><div id="regions-grid" style="display:grid; grid-template-columns:repeat(auto-fill,minmax(180px,1fr)); gap:12px; margin-top:20px;"></div><button id="close-map-btn" style="display:block; margin:20px auto 0; background:#2c1a0c; border:none; border-bottom:2px solid #a05a2c; padding:8px 24px; border-radius:40px; color:#ffdd99; cursor:pointer;">🔒 Затвори</button>`;
-    overlay.appendChild(container);
-    document.body.appendChild(overlay);
-    
-    const grid = container.querySelector('#regions-grid');
-    regionKeys.forEach(key => {
-        const reg = regions[key];
-        const isOwned = owned.includes(key);
-        const controllingClan = (reg.nativeClans && reg.nativeClans[0]) || "Независим";
-        const border = isOwned ? "2px solid #00ffcc" : "1px solid #c9a87b";
-        const bg = isOwned ? "rgba(0,255,204,0.1)" : "rgba(0,0,0,0.5)";
-        const card = document.createElement('div');
-        card.style.cssText = `border:${border}; background:${bg}; border-radius:12px; padding:10px; cursor:pointer;`;
-        card.innerHTML = `<div style="font-size:1.2rem;">🏰 ${key}</div><div style="font-size:0.8rem;">🏴 ${controllingClan}</div><div style="font-size:0.8rem;">💰 ${reg.resource}</div>`;
-        card.onclick = () => {
-            window.inspectRegion(key);
-            overlay.remove();
-        };
-        grid.appendChild(card);
+    const regions = window.worldData?.regions ? Object.values(window.worldData.regions) : [
+        { name: "Мизия", armySize: 150, defenseLevel: 1 },
+        { name: "Тракия", armySize: 200, defenseLevel: 2 }
+    ];
+
+    const modal = document.createElement('div');
+    modal.id = 'regions-map-overlay';
+    modal.style.cssText = `
+        position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+        background: rgba(0,0,0,0.85); backdrop-filter: blur(8px);
+        z-index: 200000; display: flex; align-items: center; justify-content: center;
+        font-family: 'Cinzel', serif; padding: 20px; box-sizing: border-box;
+    `;
+
+    let regionsHtml = '';
+    regions.forEach(region => {
+        regionsHtml += `<div style="background:rgba(20,20,30,0.6); border:1px solid #d4af37; border-radius:12px; padding:10px; margin:8px; text-align:center; width:140px; display:inline-block;">
+            <div style="font-size:24px;">🏰</div>
+            <div style="font-weight:bold; color:#ffd700;">${region.name}</div>
+            <div style="font-size:10px; color:#aaa;">⚔️ ${region.armySize || 0} войска</div>
+            <button class="conquer-btn" data-region="${region.name}" style="background:#7a2e1a; border:none; padding:4px 8px; border-radius:20px; color:#ffdd99; margin-top:6px; cursor:pointer;">⚔️ Завладяй</button>
+        </div>`;
     });
-    container.querySelector('#close-map-btn').onclick = () => overlay.remove();
+
+    modal.innerHTML = `
+        <div style="background:#0a0a1a; border:2px solid #d4af37; border-radius:24px; max-width:90%; max-height:90%; overflow-y:auto; padding:20px;">
+            <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #d4af37; padding-bottom:10px; margin-bottom:15px;">
+                <h2 style="color:#ffd700;">🗺️ Карта на регионите</h2>
+                <button id="closeMapBtn" style="background:rgba(255,80,80,0.2); border:none; color:#ff8888; font-size:24px; cursor:pointer; width:36px; height:36px; border-radius:50%;">✕</button>
+            </div>
+            <div style="display:flex; flex-wrap:wrap; justify-content:center; gap:10px;">${regionsHtml}</div>
+            <div style="text-align:center; margin-top:20px;">
+                <button id="closeMapFooter" style="background:#2c2c3a; border:1px solid #d4af37; color:#ffd700; padding:8px 20px; border-radius:30px; cursor:pointer;">Затвори</button>
+            </div>
+        </div>
+    `;
+
+    document.body.appendChild(modal);
+    const close = () => modal.remove();
+    modal.querySelector('#closeMapBtn')?.addEventListener('click', close);
+    modal.querySelector('#closeMapFooter')?.addEventListener('click', close);
+    modal.addEventListener('click', (e) => { if (e.target === modal) close(); });
+    modal.querySelectorAll('.conquer-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            alert(`Завладяване на ${btn.dataset.region} – все още не е имплементирано.`);
+            close();
+        });
+    });
 };
 
 window.inspectRegion = function(regionName) {
