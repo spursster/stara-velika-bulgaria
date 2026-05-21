@@ -1,17 +1,50 @@
 /**
 ==========================================================================
 ПРОЕКТ: ВЕЛИКА БЪЛГАРИЯ
-ФАЙЛ: barracks.js (ГРАНДИОЗНА ВЕРСИЯ 3.0)
-ВЕРСИЯ: 3.0 - ПЪЛНА ИНТЕГРАЦИЯ С ARMY MARKET, БЪРЗО КУПУВАНЕ, ТАБОВЕ
+ФАЙЛ: barracks.js (ГРАНДИОЗНА ВЕРСИЯ 3.1)
+ВЕРСИЯ: 3.1 - ЗАПАЗВАНЕ НА ЛЮБИМИТЕ, СИНХРОНИЗАЦИЯ С ARMY MARKET
 ==========================================================================
 */
 
 // ==================== ГЛОБАЛНИ НАСТРОЙКИ ====================
 window.barracksState = window.barracksState || {
-    currentTab: 'basic',     // 'basic', 'fantasy', или id на фентъзи единица
+    currentTab: 'basic',
     currentPage: 0,
     perPage: 5
 };
+
+// ==================== ЗАПАЗВАНЕ НА ЛЮБИМИТЕ ====================
+function saveFavoriteHeroes() {
+    try {
+        let favorites = [];
+        if (window.worldData && window.worldData.clans) {
+            for (let key in window.worldData.clans) {
+                let clan = window.worldData.clans[key];
+                if (clan.isJoined === true && clan.isFavoriteInBarracks === true) {
+                    favorites.push(clan.leaderName || clan.name || key);
+                }
+            }
+        }
+        localStorage.setItem('barracksFavorites', JSON.stringify(favorites));
+    } catch(e) {}
+}
+
+function loadFavoriteHeroes() {
+    try {
+        const saved = localStorage.getItem('barracksFavorites');
+        if (saved) {
+            const favorites = JSON.parse(saved);
+            if (window.worldData && window.worldData.clans) {
+                for (let key in window.worldData.clans) {
+                    let clan = window.worldData.clans[key];
+                    if (clan.isJoined === true) {
+                        clan.isFavoriteInBarracks = favorites.includes(clan.leaderName || clan.name || key);
+                    }
+                }
+            }
+        }
+    } catch(e) {}
+}
 
 // ==================== HELPER ФУНКЦИИ ====================
 function getAllUnlockedHeroes() {
@@ -43,12 +76,10 @@ function getClassIcon(className) {
     return "⚔️";
 }
 
-// Вземаме списък с всички налични единици от armyMarket (ако има)
 function getAllTroops() {
     if (window.armyMarket && window.armyMarket.getAllTroops) {
         return window.armyMarket.getAllTroops();
     }
-    // fallback: основни типове
     return {
         infantry: { id: "infantry", name: "Пехотинец", basePrice: 10, attack: 8, defense: 12, icon: "⚔️", desc: "Основна пехота" },
         archers: { id: "archers", name: "Стрелец", basePrice: 15, attack: 15, defense: 6, icon: "🏹", desc: "Далекобойни" },
@@ -57,7 +88,6 @@ function getAllTroops() {
     };
 }
 
-// Изчислява общата бойна мощ (атака+защита) на армията на герой
 function calculateArmyPower(hero) {
     if (!hero.armyDetails) return 0;
     const troops = getAllTroops();
@@ -96,7 +126,6 @@ window.renderBarracksLayout = function() {
     let startIdx = currentPage * maxPerPage;
     let visibleFavorites = favoriteLeaders.slice(startIdx, startIdx + maxPerPage);
 
-    // Генериране на отряда
     let topSlotsHTML = '';
     for (let i = 0; i < maxPerPage; i++) {
         let hero = visibleFavorites[i];
@@ -130,7 +159,6 @@ window.renderBarracksLayout = function() {
         }
     }
 
-    // Пагинация
     let paginationHTML = '';
     if (totalPages > 1) {
         paginationHTML = `
@@ -144,12 +172,10 @@ window.renderBarracksLayout = function() {
         `;
     }
 
-    // Списък с герои за падащото меню
     const heroesForSelect = getAllUnlockedHeroes();
     let heroOptions = heroesForSelect.map(h => `<option value="${h.name}">${getClassIcon(h.currentClass)} ${h.name} (💰${h.gold} злато, ⚔️${h.armySize})</option>`).join('');
     let selectedHeroName = window.selectedHeroForBuying || (heroesForSelect[0] ? heroesForSelect[0].name : "");
 
-    // ТАБОВЕ ЗА ТИПОВЕ ВОЙНИЦИ
     const allTroops = getAllTroops();
     const basicTroops = ["infantry", "archers", "cavalry", "elite"];
     const fantasyTroops = Object.keys(allTroops).filter(id => !basicTroops.includes(id));
@@ -161,7 +187,6 @@ window.renderBarracksLayout = function() {
     }
     tabsHTML += `</div>`;
 
-    // Съдържание на активния таб
     let shopContent = '';
     if (window.barracksState.currentTab === 'basic') {
         shopContent = basicTroops.map(id => renderTroopCard(allTroops[id])).join('');
@@ -205,7 +230,6 @@ window.renderBarracksLayout = function() {
         </div>
     `;
 
-    // ========== СЪБИТИЯ ==========
     const selectedHero = heroesForSelect.find(h => h.name === selectedHeroName);
     const goldSpan = document.getElementById('barracksGoldDisplay');
     if (goldSpan && selectedHero) goldSpan.innerText = selectedHero.gold || 0;
@@ -225,7 +249,6 @@ window.renderBarracksLayout = function() {
         });
     }
 
-    // Пагинация
     document.querySelectorAll('.barracks-page-btn').forEach(btn => {
         btn.onclick = () => {
             if (btn.dataset.page === 'prev') window.barracksState.currentPage--;
@@ -244,7 +267,6 @@ window.renderBarracksLayout = function() {
         };
     }
 
-    // Табове
     document.querySelectorAll('.barracks-tab-btn').forEach(btn => {
         btn.onclick = () => {
             window.barracksState.currentTab = btn.dataset.tab;
@@ -252,14 +274,12 @@ window.renderBarracksLayout = function() {
         };
     });
 
-    // Затваряне
     const closeModal = () => barracksContainer.style.display = 'none';
     document.getElementById('close-barracks-x')?.addEventListener('click', closeModal);
     document.getElementById('close-barracks-footer')?.addEventListener('click', closeModal);
     barracksContainer.addEventListener('click', (e) => { if (e.target === barracksContainer) closeModal(); });
 };
 
-// ==================== РЕНДИРАНЕ НА КАРТА ЗА ЕДИНИЦА ====================
 function renderTroopCard(troop) {
     const heroName = document.getElementById('heroBuySelect')?.value;
     let hero = null;
@@ -286,7 +306,6 @@ function renderTroopCard(troop) {
     `;
 }
 
-// ==================== ПОКУПКА НА ВОЙНИЦИ (ИЗПОЛЗВА ARMY MARKET) ====================
 function buyTroops(troopId, quantity) {
     const heroSelect = document.getElementById('heroBuySelect');
     if (!heroSelect) return;
@@ -302,12 +321,10 @@ function buyTroops(troopId, quantity) {
         alert(`❌ ${hero.name} няма достатъчно злато! (Нужни: ${totalCost})`);
         return;
     }
-    // Използваме armyMarket.buy, ако съществува
     if (window.armyMarket && typeof window.armyMarket.buy === 'function') {
         const result = window.armyMarket.buy(troopId, quantity, hero);
         if (result === false) return;
     } else {
-        // Резервна логика
         hero.gold -= totalCost;
         if (!hero.armyDetails) hero.armyDetails = {};
         hero.armyDetails[troopId] = (hero.armyDetails[troopId] || 0) + quantity;
@@ -322,18 +339,15 @@ function buyTroops(troopId, quantity) {
         }
         if (window.armyMarket && typeof window.armyMarket.sync === 'function') window.armyMarket.sync(hero);
     }
-    // Обновяване на UI
     window.renderBarracksLayout();
     if (window.updateCharacterUI) window.updateCharacterUI(hero);
     if (typeof window.renderSingleBar === 'function') window.renderSingleBar();
     if (typeof window.renderTop6LeadersUI === 'function') window.renderTop6LeadersUI();
-    // Летопис
     if (window.addWorldEvent) {
         window.addWorldEvent(`🛒 КУПУВА НА АРМИЯ`, `${hero.name} купи ${quantity} × ${troop.name} за ${totalCost} злато.`, "💰");
     }
 }
 
-// ==================== ОБРАБОТЧИЦИ НА СЪБИТИЯ (делегиране) ====================
 document.addEventListener('click', function(e) {
     const target = e.target;
     if (target.classList && target.classList.contains('buy-quick')) {
@@ -358,7 +372,6 @@ document.addEventListener('click', function(e) {
     }
 });
 
-// ==================== ОСТАНАЛИТЕ ФУНКЦИИ (ИНВЕНТАР, ЛЮБИМИ, ЗАТВАРЯНЕ) ====================
 window.showHeroInventoryInBarracks = function(heroName) {
     let allHeroes = getAllUnlockedHeroes();
     let hero = allHeroes.find(h => h.name === heroName);
@@ -403,6 +416,7 @@ window.showLeaderSelectionModal = function() {
                 let currentFavs = allHeroes.filter(h => h.isFavoriteInBarracks === true).length;
                 if (currentFavs >= 5) { alert("Можеш да имаш максимум 5 избрани героя в отряда!"); return; }
                 hero.isFavoriteInBarracks = true;
+                saveFavoriteHeroes();
                 modal.remove();
                 window.barracksState.currentPage = 0;
                 window.renderBarracksLayout();
@@ -421,6 +435,7 @@ window.selectLeaderAsFavorite = function(heroName) {
         let currentFavs = allHeroes.filter(h => h.isFavoriteInBarracks === true).length;
         if (currentFavs >= 5) { alert("Максимум 5 героя в отряда!"); return; }
         hero.isFavoriteInBarracks = true;
+        saveFavoriteHeroes();
         let modal = document.getElementById('leader-selection-modal');
         if (modal) modal.remove();
         window.barracksState.currentPage = 0;
@@ -434,6 +449,7 @@ window.toggleLeaderFavoriteInBarracks = function(heroName) {
     if (!hero && window.currentHero && window.currentHero.name === heroName) hero = window.currentHero;
     if (hero) {
         hero.isFavoriteInBarracks = !hero.isFavoriteInBarracks;
+        saveFavoriteHeroes();
         window.renderBarracksLayout();
     }
 };
@@ -443,7 +459,6 @@ window.closeBarracksUI = function() {
     if (screen) screen.style.display = 'none';
 };
 
-// Анимация за монетите (ако няма)
 (function addCoinAnimationStyle() {
     if (document.getElementById('coin-animation-style')) return;
     const style = document.createElement('style');
@@ -456,3 +471,6 @@ window.closeBarracksUI = function() {
     `;
     document.head.appendChild(style);
 })();
+
+// Зареждане на любимите при стартиране
+loadFavoriteHeroes();
