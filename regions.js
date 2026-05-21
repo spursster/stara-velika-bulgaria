@@ -1,4 +1,4 @@
-// ==================== regions.js – КАРТА И ИНСПЕКЦИЯ ====================
+// ==================== regions.js – КАРТА И ИНСПЕКЦИЯ (КОРИГИРАН – СТАРТИРА БИТКА) ====================
 window.openRegionsMap = function() {
     const oldModal = document.getElementById('regions-map-overlay');
     if (oldModal) oldModal.remove();
@@ -45,15 +45,24 @@ window.openRegionsMap = function() {
     modal.querySelector('#closeMapBtn')?.addEventListener('click', close);
     modal.querySelector('#closeMapFooter')?.addEventListener('click', close);
     modal.addEventListener('click', (e) => { if (e.target === modal) close(); });
+    
+    // ФИКС: Стартира битка, а не предупреждение
     modal.querySelectorAll('.conquer-btn').forEach(btn => {
         btn.addEventListener('click', (e) => {
             e.stopPropagation();
-            alert(`Завладяване на ${btn.dataset.region} – все още не е имплементирано.`);
-            close();
+            const regionName = btn.getAttribute('data-region');
+            close(); // затваря картата
+            if (typeof window.startBattle === 'function') {
+                window.startBattle(regionName);
+            } else {
+                console.error("startBattle не е дефинирана!");
+                alert("Битката не може да започне – липсва функция startBattle.");
+            }
         });
     });
 };
 
+// ==================== ОСТАНАЛИТЕ ФУНКЦИИ (НЕПРОМЕНЕНИ) ====================
 window.inspectRegion = function(regionName) {
     if (!window.worldData || !window.worldData.regions[regionName]) return;
     const reg = window.worldData.regions[regionName];
