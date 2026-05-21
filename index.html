@@ -215,6 +215,14 @@
             background: rgba(212, 175, 55, 0.25);
             border-color: #d4af37;
         }
+
+        /* ========== ПРЕМАХВАНЕ НА ПЛАВАЩИЯ ПАНЕЛ ========== */
+        #autonomous-event-log {
+            display: none !important;
+            visibility: hidden !important;
+            opacity: 0 !important;
+            pointer-events: none !important;
+        }
     </style>
 </head>
 <body>
@@ -533,6 +541,18 @@
                 };
             }
         }
+    })();
+    </script>
+
+    <!-- ПРЕМАХВАНЕ НА ПЛАВАЩИЯ ПАНЕЛ #autonomous-event-log (ДИНАМИЧНО) -->
+    <script>
+    (function() {
+        function removeFloatingPanel() {
+            const panel = document.getElementById('autonomous-event-log');
+            if (panel) panel.remove();
+        }
+        removeFloatingPanel();
+        setInterval(removeFloatingPanel, 500);
     })();
     </script>
 </body>
