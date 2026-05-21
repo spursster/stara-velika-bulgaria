@@ -53,36 +53,17 @@
             bottom: 0 !important;
             left: 0 !important;
             width: 100% !important;
-            height: 80px !important;
             background: rgba(17, 17, 17, 0.85) !important;
             backdrop-filter: blur(10px) !important;
             border-top: 2px solid #d4af37 !important;
             display: flex !important;
-            justify-content: space-around !important;
+            justify-content: space-evenly !important;
             align-items: center !important;
-            padding: 0 10px !important;
+            padding: 8px 5px !important;
             box-sizing: border-box !important;
             z-index: 9999 !important;
-        }
-        /* Специален стил за централния бутон "Следващ ход" */
-        .next-turn-btn {
-            background: linear-gradient(135deg, #ffd700, #b8860b) !important;
-            border: 2px solid #fff !important;
-            color: #000 !important;
-            font-weight: bold !important;
-            font-size: 1.2rem !important;
-            padding: 8px 20px !important;
-            border-radius: 50px !important;
-            box-shadow: 0 0 15px rgba(255,215,0,0.6) !important;
-            transition: all 0.2s ease !important;
-            display: inline-flex !important;
-            align-items: center !important;
-            gap: 8px !important;
-        }
-        .next-turn-btn:hover {
-            transform: scale(1.05) !important;
-            background: linear-gradient(135deg, #ffea00, #daa520) !important;
-            box-shadow: 0 0 25px gold !important;
+            gap: 5px;
+            flex-wrap: wrap;
         }
         .icon-btn {
             background: none !important;
@@ -90,17 +71,38 @@
             font-size: 24px !important;
             cursor: pointer !important;
             position: relative !important;
-            padding: 10px !important;
+            padding: 8px !important;
             transition: transform 0.2s, text-shadow 0.2s !important;
-            display: flex !important;
+            display: inline-flex !important;
             align-items: center !important;
             justify-content: center !important;
-            width: 50px !important;
-            height: 50px !important;
+            min-width: 50px;
+            border-radius: 40px;
         }
         .icon-btn:hover {
-            transform: scale(1.15) !important;
+            transform: scale(1.1) !important;
             text-shadow: 0 0 10px #ffd700 !important;
+        }
+        /* Нормален стил за бутона "Следващ ход" (четвърти от ляво) */
+        .next-turn-btn {
+            background: linear-gradient(135deg, #ffd700, #b8860b) !important;
+            border: 1px solid #fff !important;
+            color: #000 !important;
+            font-weight: bold !important;
+            font-size: 1.1rem !important;
+            padding: 6px 12px !important;
+            border-radius: 40px !important;
+            display: inline-flex !important;
+            align-items: center !important;
+            gap: 6px !important;
+            cursor: pointer !important;
+            transition: 0.2s !important;
+            box-shadow: 0 0 8px rgba(255,215,0,0.5);
+        }
+        .next-turn-btn:hover {
+            transform: scale(1.05);
+            background: linear-gradient(135deg, #ffea00, #daa520);
+            box-shadow: 0 0 15px gold;
         }
         .badge {
             position: absolute !important;
@@ -111,6 +113,8 @@
             padding: 2px 6px !important;
             border-radius: 10px !important;
             border: 1px solid white !important;
+            top: -5px;
+            right: -5px;
         }
         .army-market-btn {
             background: linear-gradient(135deg, #b8860b, #daa520) !important;
@@ -136,11 +140,16 @@
                 padding: 4px 8px !important;
                 font-size: 11px !important;
             }
-            .army-market-btn span { font-size: 14px !important; }
+            .icon-btn {
+                font-size: 20px !important;
+                padding: 5px !important;
+                min-width: 40px;
+            }
             .next-turn-btn {
                 font-size: 0.9rem !important;
-                padding: 5px 12px !important;
+                padding: 4px 10px !important;
             }
+            .next-turn-btn span:first-child { font-size: 16px; }
         }
         /* ------------------- ЛЕТОПИС ------------------- */
         #unifiedChronicle {
@@ -253,7 +262,6 @@
         <button class="glass-btn glass-btn-gold" onclick="window.hireNewHero()" title="Наеми герой (500 злато)">👑</button>
         <button class="glass-btn" onclick="window.toggleGameFullScreen()" title="Цял екран">⬚</button>
         <button class="army-market-btn" onclick="if(window.armyMarket && window.armyMarket.show) window.armyMarket.show(); else alert('Военният пазар се зарежда...');" title="Отвори военен пазар"><span>⚔️</span> Наемна армия</button>
-        <!-- БУТОН ЗА БРАК (преместен от долната лента) -->
         <button class="glass-btn" id="btn-marriage-top" onclick="window.openMarriageMenu()" title="Династични бракове">💍</button>
     </div>
 </header>
@@ -324,17 +332,18 @@
     </div>
 </section>
 
+<!-- ДОЛНА ЛЕНТА – ПРОМЕНЕН РЕД НА БУТОНИТЕ -->
 <div id="bottom-controls">
-    <button class="icon-btn" onclick="window.openRegionsMap()">🗺️</button>
-    <button class="icon-btn" onclick="window.openBarracksUI()">🏹</button>
-    <button class="icon-btn" id="btn-battle" onclick="window.startBattle()">⚔️</button>
-    <button class="icon-btn" id="btn-events" onclick="window.openEventsMenu()">📜</button>
-    <button class="icon-btn" id="btn-expeditions" onclick="window.openExpeditionsMenu()">🧭 <span id="expeditions-badge-mobile" class="badge">0</span></button>
-    <!-- БУТОН ЗА СЛЕДВАЩ ХОД – ЦЕНТРАЛЕН, СПЕЦИАЛЕН -->
+    <button class="icon-btn" onclick="window.openRegionsMap()" title="Карта">🗺️</button>
+    <button class="icon-btn" onclick="window.openBarracksUI()" title="Казарми">🏹</button>
+    <button class="icon-btn" id="btn-battle" onclick="window.startBattle()" title="Битка">⚔️</button>
+    <!-- БУТОН ЗА СЛЕДВАЩ ХОД – ЧЕТВЪРТИ ОТ ЛЯВО, НОРМАЛЕН РАЗМЕР -->
     <button class="next-turn-btn" onclick="window.processTurn()" title="Следващ ход">
-        ⭐ СЛЕДВАЩ ХОД ⭐
+        ► <span>Ход</span>
     </button>
-    <button class="icon-btn" onclick="window.toggleTreasury()">🎒</button>
+    <button class="icon-btn" id="btn-events" onclick="window.openEventsMenu()" title="Събития">📜</button>
+    <button class="icon-btn" id="btn-expeditions" onclick="window.openExpeditionsMenu()" title="Експедиции">🧭 <span id="expeditions-badge-mobile" class="badge">0</span></button>
+    <button class="icon-btn" onclick="window.toggleTreasury()" title="Съкровищница">🎒</button>
 </div>
 
 <!-- СКРИПТОВЕ -->
@@ -356,7 +365,7 @@
 <script src="rivalry.js"></script>
 <script src="armyMarket.js"></script>
 
-<!-- ГЛАВЕН СКРИПТ (летопис + модални менюта за всичко) -->
+<!-- ГЛАВЕН СКРИПТ (летопис + модални менюта) -->
 <script>
 (function() {
     // ========== ИНИЦИАЛИЗАЦИЯ ==========
@@ -669,29 +678,11 @@
         };
     }
     
-    // ========== ОСНОВЕН ХОД НА ИГРАТА ==========
-    window.backToMainMenu = function() { if (typeof window.openRegionsMap === 'function') window.openRegionsMap(); else location.reload(); };
-    
-    if (typeof window.processTurn !== 'function') {
-        window.processTurn = function() {
-            if (typeof window.calculateEconomy === 'function') window.calculateEconomy();
-            if (typeof window.processClanDiplomacyAutomation === 'function') window.processClanDiplomacyAutomation();
-            if (typeof window.advanceExpeditionsTurn === 'function') window.advanceExpeditionsTurn();
-            if (typeof window.checkRandomAttack === 'function') window.checkRandomAttack();
-            if (typeof window.advanceGameTime === 'function') window.advanceGameTime();
-            else if (typeof window.nextTurn === 'function') window.nextTurn();
-            if (typeof window.updateCharacterUI === 'function') window.updateCharacterUI(window.currentHero);
-            if (typeof window.renderSingleBar === 'function') window.renderSingleBar();
-            if (typeof window.renderTop6LeadersUI === 'function') window.renderTop6LeadersUI();
-        };
-    }
-    
-    // Добавяне на затварящ бутон в картата (ако не съществува)
+    // ========== ФИКС ЗА КАРТАТА (добавяне на бутон за затваряне) ==========
     if (typeof window.openRegionsMap === 'function') {
         const originalOpenMap = window.openRegionsMap;
         window.openRegionsMap = function() {
             originalOpenMap();
-            // След като картата се отвори, добавяме бутон "✕" горе вляво, ако липсва
             setTimeout(() => {
                 const mapModal = document.getElementById('regions-map-overlay');
                 if (mapModal && !mapModal.querySelector('.custom-close-map-btn')) {
@@ -723,6 +714,23 @@
                     mapModal.appendChild(closeBtn);
                 }
             }, 100);
+        };
+    }
+    
+    // ========== ОСНОВЕН ХОД НА ИГРАТА ==========
+    window.backToMainMenu = function() { if (typeof window.openRegionsMap === 'function') window.openRegionsMap(); else location.reload(); };
+    
+    if (typeof window.processTurn !== 'function') {
+        window.processTurn = function() {
+            if (typeof window.calculateEconomy === 'function') window.calculateEconomy();
+            if (typeof window.processClanDiplomacyAutomation === 'function') window.processClanDiplomacyAutomation();
+            if (typeof window.advanceExpeditionsTurn === 'function') window.advanceExpeditionsTurn();
+            if (typeof window.checkRandomAttack === 'function') window.checkRandomAttack();
+            if (typeof window.advanceGameTime === 'function') window.advanceGameTime();
+            else if (typeof window.nextTurn === 'function') window.nextTurn();
+            if (typeof window.updateCharacterUI === 'function') window.updateCharacterUI(window.currentHero);
+            if (typeof window.renderSingleBar === 'function') window.renderSingleBar();
+            if (typeof window.renderTop6LeadersUI === 'function') window.renderTop6LeadersUI();
         };
     }
     
