@@ -184,6 +184,267 @@
         </aside>
 
         <section id="game-main-area">
+            <!-- ==================== СВЕЩЕН ЛЕТОПИС (ЦЕНТРАЛЕН ПАНЕЛ) ==================== -->
+<div id="sacredChronicle" class="chronicle-panel" style="display: none;">
+    <div class="chronicle-header">
+        <h3>📜 Свещен Летопис на Събития</h3>
+        <button id="clearChronicleBtn" class="chronicle-clear" title="Изчисти летописа">🗑️</button>
+    </div>
+    <div id="chronicleList" class="chronicle-list">
+        <!-- Събитията ще се зареждат динамично -->
+    </div>
+</div>
+
+<style>
+    /* ----- ОСНОВЕН СТИЛ ЗА ЦЕНТРАЛНИЯ ПАНЕЛ ----- */
+    .chronicle-panel {
+        background: rgba(10, 10, 20, 0.85);
+        backdrop-filter: blur(10px);
+        border: 1px solid #d4af37;
+        border-radius: 28px;
+        width: 90%;
+        max-width: 800px;
+        margin: 0 auto 20px auto;
+        overflow: hidden;
+        font-family: 'Montserrat', sans-serif;
+        transition: all 0.3s ease;
+        box-shadow: 0 8px 20px rgba(0,0,0,0.5);
+    }
+
+    .chronicle-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 12px 20px;
+        background: rgba(0, 0, 0, 0.6);
+        border-bottom: 1px solid #d4af37;
+        cursor: pointer;
+    }
+
+    .chronicle-header h3 {
+        margin: 0;
+        color: #ffd700;
+        font-family: 'Cinzel', serif;
+        font-size: 1.4rem;
+        letter-spacing: 1px;
+    }
+
+    .chronicle-clear {
+        background: rgba(255, 100, 100, 0.2);
+        border: none;
+        font-size: 1.2rem;
+        cursor: pointer;
+        color: #ffaa88;
+        padding: 4px 12px;
+        border-radius: 30px;
+        transition: 0.2s;
+    }
+
+    .chronicle-clear:hover {
+        background: rgba(255, 50, 50, 0.7);
+        color: white;
+        transform: scale(1.02);
+    }
+
+    .chronicle-list {
+        max-height: 220px;
+        overflow-y: auto;
+        padding: 10px 15px;
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        scrollbar-width: thin;
+    }
+
+    .chronicle-event {
+        background: rgba(30, 30, 50, 0.7);
+        border-left: 4px solid #d4af37;
+        padding: 8px 12px;
+        border-radius: 12px;
+        font-size: 0.9rem;
+        color: #e0e0e0;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        flex-wrap: wrap;
+        transition: 0.1s;
+    }
+
+    .chronicle-icon {
+        font-size: 1.4rem;
+        min-width: 40px;
+        text-align: center;
+    }
+
+    .chronicle-text {
+        flex: 1;
+        word-break: break-word;
+    }
+
+    .chronicle-text strong {
+        color: #ffd966;
+    }
+
+    .chronicle-time {
+        font-size: 0.7rem;
+        color: #aaa;
+        background: rgba(0,0,0,0.4);
+        padding: 2px 8px;
+        border-radius: 20px;
+        white-space: nowrap;
+    }
+
+    /* ----- АДАПТАЦИЯ ЗА МАЛКИ ЕКРАНИ (ТЕЛЕФОН) ----- */
+    @media (max-width: 768px) {
+        .chronicle-panel {
+            width: 95%;
+            margin-bottom: 15px;
+        }
+        .chronicle-header h3 {
+            font-size: 1.1rem;
+        }
+        .chronicle-list {
+            max-height: 160px;
+            padding: 6px 10px;
+            gap: 6px;
+        }
+        .chronicle-event {
+            padding: 6px 8px;
+            font-size: 0.75rem;
+            gap: 8px;
+        }
+        .chronicle-icon {
+            font-size: 1.1rem;
+            min-width: 28px;
+        }
+        .chronicle-time {
+            font-size: 0.6rem;
+        }
+    }
+</style>
+
+<script>
+    (function() {
+        // --- Използваме глобалния масив от събития (създаваме го, ако липсва) ---
+        if (!window.worldEvents) window.worldEvents = [];
+
+        // --- Взимаме референции към DOM елементите ---
+        const panel = document.getElementById('sacredChronicle');
+        const listContainer = document.getElementById('chronicleList');
+        const clearBtn = document.getElementById('clearChronicleBtn');
+
+        // --- Функция за визуализиране на събитията в панела ---
+        function renderChronicle() {
+            if (!listContainer) return;
+            const events = window.worldEvents;
+            // Ако няма събития – скриваме панела
+            if (!events || events.length === 0) {
+                if (panel) panel.style.display = 'none';
+                return;
+            }
+            // Ако има събития – показваме панела
+            if (panel) panel.style.display = 'block';
+
+            // Показваме само последните 5 събития (най-новите са отпред)
+            const latestEvents = events.slice(0, 5);
+            listContainer.innerHTML = latestEvents.map(ev => {
+                const icon = ev.icon || getIconFromTitle(ev.title);
+                const title = escapeHtml(ev.title || 'Без заглавие');
+                const desc = escapeHtml(ev.description || '');
+                const time = escapeHtml(ev.time || '?');
+                return `
+                    <div class="chronicle-event">
+                        <div class="chronicle-icon">${icon}</div>
+                        <div class="chronicle-text">
+                            <strong>${title}</strong> — ${desc}
+                        </div>
+                        <div class="chronicle-time">${time}</div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // --- Помощна функция за икона по подразбиране (ако липсва) ---
+        function getIconFromTitle(title) {
+            if (!title) return '📜';
+            const t = title.toLowerCase();
+            if (t.includes('битка') || t.includes('война')) return '⚔️';
+            if (t.includes('съюз') || t.includes('договор')) return '🤝';
+            if (t.includes('ражда') || t.includes('наследник')) return '👑';
+            if (t.includes('строеж') || t.includes('крепост')) return '🏰';
+            if (t.includes('магия') || t.includes('заклинание')) return '🧙';
+            return '📜';
+        }
+
+        function escapeHtml(str) {
+            if (!str) return '';
+            return str.replace(/[&<>]/g, function(m) {
+                if (m === '&') return '&amp;';
+                if (m === '<') return '&lt;';
+                if (m === '>') return '&gt;';
+                return m;
+            });
+        }
+
+        // --- Функция за изчистване на летописа (със скриване на панела) ---
+        function clearChronicle() {
+            if (confirm('Сигурни ли сте, че искате да изтриете целия летопис?')) {
+                window.worldEvents = [];
+                renderChronicle();
+                // Ако съществува и глобалната функция за изчистване, я извикваме
+                if (typeof window.clearEventsChronicle === 'function') {
+                    window.clearEventsChronicle();
+                } else {
+                    // Иначе просто запазваме празния масив
+                }
+            }
+        }
+
+        // --- Прихващаме добавянето на нови събития, за да обновим панела ---
+        // Запазваме оригиналната функция addWorldEvent, ако съществува, или създаваме нова
+        const originalAddWorldEvent = window.addWorldEvent;
+        window.addWorldEvent = function(title, description, icon, year) {
+            if (originalAddWorldEvent) {
+                originalAddWorldEvent(title, description, icon, year);
+            } else {
+                // Проста реализация, ако липсва
+                const eventObj = {
+                    id: Date.now(),
+                    title: title,
+                    description: description,
+                    icon: icon,
+                    time: year || (window.gameYear || 'неизвестна дата'),
+                    timestamp: Date.now()
+                };
+                if (!window.worldEvents) window.worldEvents = [];
+                window.worldEvents.unshift(eventObj);
+                if (window.worldEvents.length > 50) window.worldEvents.pop();
+            }
+            renderChronicle(); // обновяваме панела
+        };
+
+        // Ако вече има дефинирана addGameEvent (от предишни модули) – също я прихващаме
+        if (typeof window.addGameEvent === 'function') {
+            const originalAddGameEvent = window.addGameEvent;
+            window.addGameEvent = function(title, desc, icon, year) {
+                originalAddGameEvent(title, desc, icon, year);
+                renderChronicle();
+            };
+        }
+
+        // Свързваме бутона за изчистване
+        if (clearBtn) {
+            clearBtn.onclick = clearChronicle;
+        }
+
+        // Първоначално рендиране (ако има събития, панелът ще се покаже)
+        renderChronicle();
+
+        // Ако няма събития, но по-късно се добавят от други части на играта,
+        // renderChronicle ще бъде извикана от addWorldEvent.
+        console.log('📜 Централен летопис зареден – панелът се показва само когато има събития.');
+    })();
+</script>
             <div style="text-align: center; padding: 40px; font-family: 'Cinzel', serif;">
                 <h1 style="color: #ffd700; font-size: 2.5rem; text-shadow: 0 4px 10px rgba(0,0,0,0.9); margin-bottom: 10px;">ВЕЛИКА БЪЛГАРИЯ</h1>
                 <p style="color: #ccc; font-family: 'Montserrat'; font-size: 1.1rem; max-width: 600px; margin: 0 auto 30px auto; line-height: 1.6;">
