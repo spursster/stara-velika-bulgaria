@@ -682,3 +682,40 @@ if (typeof window.recalculateHeroPower === 'function') {
 }
 
 console.log("✅ items.js обновен – добавени 20 стандартни сета, 20 легендарни сета и 10 божествени питомци.");
+
+if (typeof window.toggleTreasury !== 'function') {
+    window.toggleTreasury = function() {
+        const hero = window.currentHero;
+        if (!hero) return alert("Няма активен герой!");
+        const inventory = hero.inventory || [];
+        const old = document.getElementById('treasury-custom-modal');
+        if (old) old.remove();
+        const modal = document.createElement('div');
+        modal.id = 'treasury-custom-modal';
+        modal.style.cssText = 'position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.85); backdrop-filter:blur(8px); z-index:200000; display:flex; align-items:center; justify-content:center; font-family:"Cinzel",serif; padding:20px;';
+        let itemsHtml = inventory.length === 0 ? '<div style="text-align:center; padding:20px; color:#aaa;">Няма артефакти.</div>' :
+            '<div style="display:grid; grid-template-columns:repeat(auto-fill, minmax(120px,1fr)); gap:12px;">' +
+            inventory.map(item => `<div style="background:rgba(20,20,30,0.6); border:1px solid #d4af37; border-radius:12px; padding:8px; text-align:center;">
+                <div style="font-size:32px;">${item.icon || '🏺'}</div>
+                <div style="font-size:12px; color:#ffd700;">${item.name}</div>
+                <div style="font-size:9px; color:#88ff88;">+${item.bonus?.heroPower || 0} сила</div>
+            </div>`).join('') + '</div>';
+        modal.innerHTML = `
+            <div style="background:#0a0a1a; border:2px solid #d4af37; border-radius:24px; max-width:90%; max-height:90%; overflow-y:auto; padding:20px;">
+                <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #d4af37; margin-bottom:15px;">
+                    <h2 style="color:#ffd700;">🏺 Съкровищница</h2>
+                    <button id="closeTreasuryBtn" style="background:rgba(255,80,80,0.2); border:none; color:#ff8888; font-size:24px; cursor:pointer; width:36px; height:36px; border-radius:50%;">✕</button>
+                </div>
+                ${itemsHtml}
+                <div style="text-align:center; margin-top:20px;">
+                    <button id="closeTreasuryFooter" style="background:#2c2c3a; border:1px solid #d4af37; color:#ffd700; padding:8px 20px; border-radius:30px; cursor:pointer;">Затвори</button>
+                </div>
+            </div>
+        `;
+        document.body.appendChild(modal);
+        const close = () => modal.remove();
+        modal.querySelector('#closeTreasuryBtn')?.addEventListener('click', close);
+        modal.querySelector('#closeTreasuryFooter')?.addEventListener('click', close);
+        modal.addEventListener('click', (e) => { if (e.target === modal) close(); });
+    };
+}
