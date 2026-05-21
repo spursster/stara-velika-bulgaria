@@ -696,7 +696,7 @@ if (typeof window.toggleTreasury !== 'function') {
         let itemsHtml = inventory.length === 0 ? '<div style="text-align:center; padding:20px; color:#aaa;">Няма артефакти.</div>' :
             '<div style="display:grid; grid-template-columns:repeat(auto-fill, minmax(120px,1fr)); gap:12px;">' +
             inventory.map(item => `<div style="background:rgba(20,20,30,0.6); border:1px solid #d4af37; border-radius:12px; padding:8px; text-align:center;">
-                <div style="font-size:32px;">${item.icon || '🏺'}</div>
+               <div style="font-size:32px;">${item.icon || '🏺'}</div>
                 <div style="font-size:12px; color:#ffd700;">${item.name}</div>
                 <div style="font-size:9px; color:#88ff88;">+${item.bonus?.heroPower || 0} сила</div>
             </div>`).join('') + '</div>';
