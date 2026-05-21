@@ -762,5 +762,82 @@
     setInterval(removeFloatingPanel, 500);
 })();
 </script>
+
+    <script>
+// ========== ФИКС ЗА ЛИПСВАЩА СЪКРОВИЩНИЦА ==========
+if (typeof window.toggleTreasury !== 'function') {
+    console.warn("⚠️ toggleTreasury липсва – използвам резервна функция");
+    window.toggleTreasury = function() {
+        // Ако няма items.js, създаваме прост изглед на инвентара от текущия герой
+        const hero = window.currentHero;
+        if (!hero) { alert("Няма активен герой!"); return; }
+        const inventory = hero.inventory || [];
+        let html = '<div style="background:#0a0a0a; border:2px solid #d4af37; padding:20px; max-width:500px; margin:auto; color:#fff;"><h3>Съкровищница</h3>';
+        if (inventory.length === 0) html += '<p>Няма артефакти.</p>';
+        else {
+            html += '<ul>';
+            inventory.forEach(item => {
+                html += `<li>${item.icon || '🏺'} ${item.name} (${item.era || 'неизвестен'})</li>`;
+            });
+            html += '</ul>';
+        }
+        html += '<button onclick="this.parentElement.parentElement.remove()" style="background:#d4af37; color:#000; padding:5px 10px;">Затвори</button></div>';
+        const modal = document.createElement('div');
+        modal.style.cssText = 'position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); display:flex; align-items:center; justify-content:center; z-index:100000;';
+        modal.innerHTML = html;
+        document.body.appendChild(modal);
+    };
+}
+
+// ========== ФИКС ЗА КАРТАТА – ДОБАВЯНЕ НА БУТОН ЗА ЗАТВАРЯНЕ ==========
+if (typeof window.openRegionsMap === 'function') {
+    const originalOpenMap = window.openRegionsMap;
+    window.openRegionsMap = function() {
+        originalOpenMap();
+        setTimeout(() => {
+            const mapModal = document.getElementById('regions-map-overlay');
+            if (mapModal && !mapModal.querySelector('.custom-close-map-btn')) {
+                const closeBtn = document.createElement('button');
+                closeBtn.className = 'custom-close-map-btn';
+                closeBtn.innerHTML = '✕';
+                closeBtn.style.cssText = `
+                    position: absolute;
+                    top: 10px;
+                    left: 10px;
+                    width: 40px;
+                    height: 40px;
+                    background: rgba(0,0,0,0.6);
+                    border: 1px solid #ff4444;
+                    color: #ff4444;
+                    border-radius: 50%;
+                    font-size: 20px;
+                    cursor: pointer;
+                    z-index: 10001;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                `;
+                closeBtn.onclick = () => {
+                    if (typeof window.closeRegionsMap === 'function') window.closeRegionsMap();
+                    else mapModal.remove();
+                };
+                mapModal.style.position = 'relative';
+                mapModal.appendChild(closeBtn);
+            }
+        }, 100);
+    };
+}
+
+// Допълнително: ако бутонът за следващ ход не извиква processTurn, оправяме
+if (typeof window.processTurn !== 'function') {
+    window.processTurn = function() {
+        console.log("⚠️ processTurn не е дефиниран – изпълнявам основни механики");
+        if (typeof window.calculateEconomy === 'function') window.calculateEconomy();
+        if (typeof window.advanceGameTime === 'function') window.advanceGameTime();
+        if (typeof window.updateCharacterUI === 'function') window.updateCharacterUI(window.currentHero);
+        if (typeof window.renderTop6LeadersUI === 'function') window.renderTop6LeadersUI();
+    };
+}
+</script>
 </body>
 </html>
