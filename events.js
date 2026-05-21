@@ -1,8 +1,8 @@
 /**
 ==========================================================================
 ПРОЕКТ: ВЕЛИКА БЪЛГАРИЯ
-ФАЙЛ: events.js (ДИНАМИЧНИ СЪБИТИЯ И КРИЗИ)
-ВЕРСИЯ: 3.0 - 140+ УНИКАЛНИ СЪБИТИЯ, ИНТЕГРАЦИЯ С ЛЕТОПИСА
+ФАЙЛ: events.js (ПЪЛЕН – 140+ СЪБИТИЯ, МОДАЛЕН ИНТЕРФЕЙС, ЛЕТОПИС)
+ВЕРСИЯ: 4.0 – ГОТОВ ЗА УПОТРЕБА
 ==========================================================================
 */
 
@@ -135,31 +135,54 @@ window.eventTemplates = {
 };
 
 // =========================================================================
-// ОСНОВНИ ФУНКЦИИ
+// МОДАЛНО МЕНЮ (НЕ ПРЕЗАПИСВА КАРТАТА)
 // =========================================================================
-
 window.openEventsMenu = function() {
-    const mainArea = document.getElementById('game-main-area');
-    if (!mainArea) return;
-    mainArea.innerHTML = `
-        <section class="rpg-section animate-fade" style="background: rgba(15, 15, 15, 0.85); border: 1px solid #d4af37; padding: 20px; border-radius: 8px; text-align: center;">
-            <h2 style="font-family: 'Cinzel', serif; color: #ffd700; text-transform: uppercase;">Свещен Летопис на Събитията</h2>
-            <p style="font-size: 12px; color: #aaa; margin-bottom: 20px;">Предизвикайте съдбата на рода си или проверете знаменията на времето.</p>
-            <div style="background: rgba(0,0,0,0.5); border: 1px solid #222; padding: 20px; border-radius: 6px; margin-bottom: 20px;">
-                <button class="action-btn" style="width: 100%; padding: 15px; font-weight: bold;" onclick="window.triggerRandomEvent()">📜 ИЗВЕСТИНУВАЙ СЪБИТИЕ (НОВ ХОД)</button>
-            </div>
-            <button class="menu-btn" onclick="if(window.openRegionsMap){window.openRegionsMap();}else{location.reload();}" style="width: 100%;">Върни се към Картата</button>
-        </section>
+    if (document.getElementById('events-menu-modal')) return;
+    const modal = document.createElement('div');
+    modal.id = 'events-menu-modal';
+    modal.style.cssText = `
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0,0,0,0.85);
+        backdrop-filter: blur(8px);
+        z-index: 200000;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-family: 'Cinzel', serif;
     `;
+    modal.innerHTML = `
+        <div style="background: #1a1a2e; border: 2px solid #d4af37; border-radius: 24px; padding: 25px; max-width: 400px; width: 90%; text-align: center;">
+            <h2 style="color: #ffd700;">📜 Свещен Летопис</h2>
+            <p style="color: #ccc;">Предизвикайте съдбата си – всяко събитие променя хода на историята.</p>
+            <button id="trigger-event-btn" style="background: #daa520; color: #000; border: none; padding: 12px 20px; border-radius: 40px; font-weight: bold; cursor: pointer; width: 100%; margin: 15px 0;">
+                📜 ИЗВЕСТИНУВАЙ СЪБИТИЕ
+            </button>
+            <button id="close-events-modal" style="background: #2c2c3a; border: 1px solid #d4af37; color: #ffd700; padding: 8px 16px; border-radius: 30px; cursor: pointer; width: 100%;">
+                Затвори
+            </button>
+        </div>
+    `;
+    document.body.appendChild(modal);
+    document.getElementById('trigger-event-btn').onclick = () => { modal.remove(); window.triggerRandomEvent(); };
+    document.getElementById('close-events-modal').onclick = () => modal.remove();
+    modal.addEventListener('click', (e) => { if (e.target === modal) modal.remove(); });
 };
 
+// =========================================================================
+// ГЕНЕРИРАНЕ НА СЛУЧАЙНО СЪБИТИЕ (С ДОБАВЯНЕ В ЛЕТОПИСА)
+// =========================================================================
 window.triggerRandomEvent = function() {
     const hero = window.currentHero;
     if (!hero) return;
     if (window.initializeHeroRPGData) window.initializeHeroRPGData(hero);
     
     let skills = hero.skills || {};
-    let isPositive = Math.random() > 0.4; // 60% позитивни, 40% негативни
+    let isPositive = Math.random() > 0.4;
     let pool = isPositive ? window.eventTemplates.positive : window.eventTemplates.negative;
     let template = pool[Math.floor(Math.random() * pool.length)];
 
@@ -176,18 +199,16 @@ window.triggerRandomEvent = function() {
     let armyEffect = template.effect.army || 0;
     let powerEffect = template.effect.power || 0;
 
-    // Пасив 1: Родово Управление (economy) +30% злато при позитивни събития
+    // Пасивни умения
     if (isPositive && goldEffect > 0 && (skills.economy || 0) > 0) {
         goldEffect = Math.floor(goldEffect * (1 + (skills.economy * 0.30)));
         eventText += `<br><span style="color:#00ffcc;">[УПРАВЛЕНИЕ]: Икономическите умения донесоха по-голям приход!</span>`;
     }
-
-    // Пасив 2: Мистицизъм неутрализира щети от проклятия
     if (!isPositive && (skills.mysticism || 0) > 0 && eventTitle.includes("Проклятието")) {
         let mitigation = skills.mysticism * 0.25;
         goldEffect = Math.floor(goldEffect * (1 - Math.min(1, mitigation)));
         powerEffect = 0;
-        eventText += `<br><span style="color:#ffd700;">[МИСТИЦИЗЪМ]: Мистичните знания защитиха рода от пълния размер на проклятието!</span>`;
+        eventText += `<br><span style="color:#ffd700;">[МИСТИЦИЗЪМ]: Мистичните знания защитиха рода!</span>`;
     }
 
     // Прилагане на ефектите
@@ -196,7 +217,7 @@ window.triggerRandomEvent = function() {
         hero.currentArmy = Math.max(0, (hero.currentArmy || 0) + armyEffect);
         hero.armySize = hero.currentArmy;
     }
-    if (powerEffect !== 0) hero.heroPower = Math.max(10, (hero.heroPower || 100) + powerEffect); 
+    if (powerEffect !== 0) hero.heroPower = Math.max(10, (hero.heroPower || 100) + powerEffect);
 
     // Синхронизация с worldData
     if (window.worldData && window.worldData.clans && window.worldData.clans[hero.clan]) {
@@ -213,7 +234,7 @@ window.triggerRandomEvent = function() {
         window.addWorldEvent(eventTitle, eventText + " " + effectText, isPositive ? "✨" : "⚠️", window.currentYear);
     }
 
-    // Показване на модал
+    // Показване на модал с резултата
     window.showEventModal(eventTitle, eventText, [{
         text: "ПРИЕМИ СЪДБАТА И ПРОДЪЛЖИ",
         action: function() {
@@ -221,14 +242,16 @@ window.triggerRandomEvent = function() {
             if (modal) modal.remove();
             if (window.updateCharacterUI) window.updateCharacterUI(hero);
             if (window.renderTop6LeadersUI) window.renderTop6LeadersUI();
-            if (window.openEventsMenu) window.openEventsMenu();
+            // НЕ отваряме отново менюто – оставаме на картата
         }
     }]);
 
-    // Само лог в конзолата, без плаващ панел
     console.log(`📜 СЪБИТИЕ: ${eventTitle} | Ефекти: злато ${goldEffect}, армия ${armyEffect}, сила ${powerEffect}`);
 };
 
+// =========================================================================
+// ПОКАЗВАНЕ НА МОДАЛ С РЕЗУЛТАТА
+// =========================================================================
 window.showEventModal = function(title, text, options) {
     let modal = document.getElementById('event-overlay-modal');
     if (modal) modal.remove();
