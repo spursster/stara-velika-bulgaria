@@ -1,10 +1,17 @@
 /**
 МОДУЛ: ДИПЛОМАЦИЯ И ПРОГРЕС НА КУПЕНИ ЛИДЕРИ - Велика България
-СТАТУС: НАПЪЛНО СИНХРОНИЗИРАН + ДОБАВЕНА ФУНКЦИЯ ЗА БРАК С ПЛЕННИЦИ
-КОРЕКЦИЯ: Добавена поддръжка за фентъзи раси и пленници след битка
+ВЕРСИЯ: 3.0 - ПЪЛНА СИНХРОНИЗАЦИЯ С МУЛТИ-ГЕРОЙ СИСТЕМАТА
+КОРЕКЦИИ: 
+- Добавени armyDetails за съпрузи
+- Инициализация на prisoners и clanRelations
+- Заменени несъществуващи умения със съществуващи (leadership, economy)
+- Коригирано използването на playerRegions
 */
 
-window.clanRelations = {};
+window.clanRelations = window.clanRelations || {};
+
+// Инициализиране на пленниците, ако липсват
+if (!window.prisoners) window.prisoners = [];
 
 /**
 ИНИЦИАЛИЗАЦИЯ НА ДИПЛОМАТИЧЕСКИ ОТНОШЕНИЯ
@@ -19,8 +26,9 @@ window.initDiplomacy = function() {
     let initialBonus = 0;
 
     if (hero && hero.skills) {
-        if ((hero.skills.royalBlood || 0) > 0) {
-            initialBonus += (hero.skills.royalBlood * 15);
+        // Използваме leadership вместо несъществуващото royalBlood
+        if ((hero.skills.leadership || 0) > 0) {
+            initialBonus += (hero.skills.leadership * 15);
         }
     }
 
@@ -41,8 +49,12 @@ window.processClanDiplomacyAutomation = function() {
     
     const hero = window.currentHero;
     
-    Object.entries(window.worldData.clans).forEach(([clanKey, clan]) => {
-        if (hero && clanKey === hero.clan) return;
+    for (let clanKey in window.worldData.clans) {
+        const clan = window.worldData.clans[clanKey];
+        if (hero && clanKey === hero.clan) continue;
+        
+        // Увери се, че clan е инициализиран за RPG
+        if (window.initializeHeroRPGData) window.initializeHeroRPGData(clan);
         
         if ((clan.gold || 0) >= 150) {
             clan.gold -= 100;
@@ -61,22 +73,23 @@ window.processClanDiplomacyAutomation = function() {
                 clan.heroPower = (clan.heroPower || 100) + 35;
             }
         }
-    });
+    }
     
     if (window.renderTop6LeadersUI) window.renderTop6LeadersUI();
 };
 
-// ==================== БРАК С ПЛЕННИЦИ (НОВА ФУНКЦИОНАЛНОСТ) ====================
+// ==================== БРАК С ПЛЕННИЦИ ====================
 
 /**
-ФУНКЦИЯ ЗА ОЖЕНЯВАНЕ НА ПЛЕННИЦА
+ФУНКЦИЯ ЗА ОЖЕНЯВАНЕ НА ПЛЕННИЦА (СЪЗДАВА НОВ ГЕРОЙ С ARMYDETAILS)
 */
 window.marryPrisoner = function(index) {
-    const prisoner = window.prisoners[index];
-    if (!prisoner) {
+    if (!window.prisoners || !window.prisoners[index]) {
         alert("Грешка: Пленницата не е намерена!");
         return;
     }
+    
+    const prisoner = window.prisoners[index];
     
     if (!window.currentHero) {
         alert("Няма активен герой!");
@@ -102,12 +115,25 @@ window.marryPrisoner = function(index) {
         skills: {},
         skillPoints: 0,
         equipment: Array(12).fill(null),
-        inventory: [],
+        inventory: Array(12).fill(null),
         pet: null,
         age: 25,
         race: prisoner.raceId,
-        raceBonus: prisoner.bonus
+        raceBonus: prisoner.bonus,
+        // Добавяне на armyDetails за синхронизация с armyMarket
+        armyDetails: {
+            infantry: 80, archers: 40, cavalry: 20, elite: 10,
+            vampire: 0, werewolf: 0, highelf: 0, troll: 0, dragon_young: 0,
+            wizard: 0, lich: 0, fairy_healer: 0, bear_ancient: 0, harpy: 0,
+            mermaid: 0, genie: 0, vampire_queen: 0, ice_dragon: 0, ogre_mage: 0,
+            dark_elf: 0, alpha_werewolf: 0, stone_troll: 0, archmage: 0, demon: 0,
+            ancient_vampire: 0, weird_witch: 0, griffin: 0, golden_dragon: 0,
+            elf_archer: 0, swamp_troll: 0, necromancer: 0, vampire_samurai: 0,
+            bronze_dragon: 0, titan: 0
+        }
     };
+    
+    if (window.initializeHeroRPGData) window.initializeHeroRPGData(wifeHero);
     
     if (!window.worldData) window.worldData = {};
     if (!window.worldData.clans) window.worldData.clans = {};
@@ -115,6 +141,11 @@ window.marryPrisoner = function(index) {
     
     if (!window.unlockedLeaders) window.unlockedLeaders = [];
     window.unlockedLeaders.push(wifeHero);
+    
+    // Синхронизация с armyMarket
+    if (window.armyMarket && typeof window.armyMarket.sync === 'function') {
+        window.armyMarket.sync(wifeHero);
+    }
     
     window.prisoners.splice(index, 1);
     
@@ -212,11 +243,13 @@ window.openMarriageMenu = function() {
     if (window.initializeHeroRPGData) window.initializeHeroRPGData(hero);
     
     let skills = hero.skills || {};
-    let charismaDiscount = Math.min(0.50, (skills.charisma || 0) * 0.10);
+    // Използваме leadership вместо charisma
+    let charismaDiscount = Math.min(0.50, (skills.leadership || 0) * 0.10);
     let baseMarriageCost = 300;
     let finalMarriageCost = Math.max(50, Math.floor(baseMarriageCost * (1 - charismaDiscount)));
     
-    let diplomacyBonus = (skills.diplomacy || 0) * 5;
+    // Използваме economy вместо diplomacy за бонус към успеха
+    let diplomacyBonus = (skills.economy || 0) * 5;
     let baseSuccessChance = 50 + diplomacyBonus;
     
     let html = `
@@ -232,7 +265,7 @@ window.openMarriageMenu = function() {
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; max-height: 280px; overflow-y: auto; padding-right: 5px;">
     `;
     
-    Object.keys(window.clanRelations).forEach(clan => {
+    for (let clan in window.clanRelations) {
         if (clan !== hero.clan) {
             let rel = window.clanRelations[clan] || 40;
             html += `
@@ -245,7 +278,7 @@ window.openMarriageMenu = function() {
                 </div>
             `;
         }
-    });
+    }
     
     html += `
             </div>
@@ -259,7 +292,7 @@ window.openMarriageMenu = function() {
 };
 
 /**
-ОРИГИНАЛНА ФУНКЦИЯ ЗА ПРЕДЛАГАНЕ НА БРАК НА КЛАН
+ПРЕДЛАГАНЕ НА БРАК НА КЛАН (ОРИГИНАЛНА ФУНКЦИЯ)
 */
 window.proposeMarriage = function(clan, cost, successChance) {
     const hero = window.currentHero;
@@ -298,12 +331,24 @@ window.proposeMarriage = function(clan, cost, successChance) {
         const region = dowryMap[clan] || "Мизия";
         window.currentSpouse = { name: `Княгиня от рода ${clan}`, clan: clan };
 
+        // Нормализиране на playerRegions – винаги да бъде масив от масиви (за flat())
         if (!window.playerRegions) window.playerRegions = [];
+        if (!Array.isArray(window.playerRegions[0])) {
+            // Ако е плосък масив, преобразуваме го
+            if (window.playerRegions.length > 0 && typeof window.playerRegions[0] === 'string') {
+                window.playerRegions = [window.playerRegions];
+            } else {
+                window.playerRegions = [[]];
+            }
+        }
         
         const ownedRegionsFlat = window.playerRegions.flat();
-
         if (!ownedRegionsFlat.includes(region)) {
-            window.playerRegions.push(region);
+            if (window.playerRegions[0]) {
+                window.playerRegions[0].push(region);
+            } else {
+                window.playerRegions.push([region]);
+            }
             if (window.worldData && window.worldData.regions && window.worldData.regions[region]) {
                 window.worldData.regions[region].armySize = 0;
             }
@@ -321,6 +366,23 @@ window.proposeMarriage = function(clan, cost, successChance) {
         alert("Предложението беше отхвърлено! Старейшините на рода сметнаха даровете за недостатъчни.");
     }
     
+    // Актуализиране на златото и силата на героя
     if (window.updateCharacterUI) window.updateCharacterUI(hero);
+    if (window.armyMarket && typeof window.armyMarket.sync === 'function') {
+        window.armyMarket.sync(hero);
+    }
     window.openMarriageMenu();
 };
+
+// Автоматично инициализиране на дипломацията при стартиране
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', function() {
+        if (!window.clanRelations || Object.keys(window.clanRelations).length === 0) {
+            window.initDiplomacy();
+        }
+    });
+} else {
+    if (!window.clanRelations || Object.keys(window.clanRelations).length === 0) {
+        window.initDiplomacy();
+    }
+}
