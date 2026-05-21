@@ -1,12 +1,12 @@
 /**
 ==========================================================================
 ПРОЕКТ: ВЕЛИКА БЪЛГАРИЯ
-ФАЙЛ: rivalry.js (ПЪЛЕН – УНИКАЛНИ ГЕРОИ, ЛЕТОПИС, БЕЗ ДУБЛИКАТИ)
+ФАЙЛ: rivalry.js (ПЪЛЕН – ДЕЙСТВИЯТА НА НЕЛЮБИМИТЕ ГЕРОИ СЕ ВИЖДАТ В ЛЕТОПИСА)
 ==========================================================================
 */
 
 (function() {
-    console.log("🔥 Инициализация на системата за съперничество (уникални герои)...");
+    console.log("🔥 Инициализация на системата за съперничество (с летопис)...");
 
     const RIVALRY_CONFIG = {
         attackChance: 0.03,
@@ -21,7 +21,7 @@
     let lastAttackTurn = 0;
     let turnCounter = 0;
 
-    // ========== УНИКАЛНИ ВРАГОВЕ ==========
+    // ========== УНИКАЛНИ ВРАГОВЕ (без дублиране) ==========
     function getEnemyHeroes() {
         let enemies = [];
         if (!window.worldData || !window.worldData.clans) return enemies;
@@ -45,7 +45,6 @@
         return enemies;
     }
 
-    // ========== УНИКАЛНИ ПРИЯТЕЛСКИ ГЕРОИ ==========
     function getPlayerHeroes(excludeMain = true) {
         let heroes = [];
         if (!window.worldData || !window.worldData.clans) return heroes;
@@ -144,7 +143,7 @@
         return result;
     }
 
-    // ========== ДОБАВЯНЕ В ЛЕТОПИСА ==========
+    // ========== ДОБАВЯНЕ В ЛЕТОПИСА (чрез addWorldEvent) ==========
     function addAttackToChronicle(aggressor, victim, stolenInfo) {
         let stolenText = "";
         switch(stolenInfo.type) {
@@ -156,9 +155,9 @@
         }
         const year = window.currentYear || "480 г. пр.н.е.";
         const message = `${aggressor.name} нападна ${victim.name} и открадна ${stolenText}!`;
-        if (window.addWorldEvent) {
+        if (typeof window.addWorldEvent === 'function') {
             window.addWorldEvent(`⚔️ НАПАДЕНИЕ от ${aggressor.name}`, message, "⚔️", year);
-        } else if (window.addGameEvent) {
+        } else if (typeof window.addGameEvent === 'function') {
             window.addGameEvent(`⚔️ НАПАДЕНИЕ от ${aggressor.name}`, message, "⚔️", year);
         } else {
             if (!window.worldEvents) window.worldEvents = [];
@@ -204,7 +203,7 @@
         console.log(`🔥 НАПАДЕНИЕ (${turnCounter} ход): ${aggressor.name} нападна ${victim.name} и открадна ${stolenInfo.type}`);
     };
 
-    // ========== ОТМЪЩЕНИЕ ==========
+    // ========== ОТМЪЩЕНИЕ (също добавя в летописа) ==========
     window.startRevengeBattle = function(aggressor, victim, stolenInfo) {
         console.log(`⚔️ ЗАПОЧВА БИТКА ЗА ОТМЪЩЕНИЕ: ${victim.name} срещу ${aggressor.name}`);
         if (window.addWorldEvent) {
@@ -268,5 +267,5 @@
         window.pendingAttack = null;
     }
 
-    console.log("✅ Системата за съперничество е инициализирана (уникални герои).");
+    console.log("✅ Системата за съперничество е инициализирана (действията се записват в летописа).");
 })();
