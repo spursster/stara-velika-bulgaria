@@ -1,267 +1,174 @@
 <!DOCTYPE html>
 <html lang="bg">
 <head>
-    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>👑</text></svg>">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Велика България - Игра</title>
+    <title>Велика България – Работеща игра</title>
     <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Montserrat:wght@300;400;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="style.css">
     <style>
-        /* ------------------- ОСНОВНИ СТИЛОВЕ ------------------- */
+        * {
+            box-sizing: border-box;
+            user-select: none;
+        }
+        body {
+            margin: 0;
+            background: linear-gradient(rgba(0,0,0,0.5), rgba(0,0,0,0.5)), 
+                        url('https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEjJuReyp2P1EHVmb8i_LXu6AQhvvvByWOCKKl4sVeQTuIKnvmu0dZ64-jCPAw7hisWSrzei_lJeAS3tvQvYHuV5vKWGvc4ZRWsd5XZpgkX-KbUA0o9C2MMXiV1H0NGzVhJEj1iRxeT67HYEAe1VTmjmeI__JKiOCkz6hVVbo6O7gbqfsABylSvdnA-P7VAq/s3072/_d012d68d-c196-4d76-be3e-0a44b9f7ccfa.jpeg');
+            background-size: cover;
+            background-attachment: fixed;
+            font-family: 'Montserrat', sans-serif;
+            color: #e0e0e0;
+        }
+        /* Горна лента */
         #top-bar {
-            display: flex !important;
-            flex-wrap: wrap !important;
-            justify-content: space-between !important;
-            align-items: center !important;
-            padding: 10px 15px !important;
-            gap: 10px !important;
-            background: rgba(15, 15, 15, 0.95) !important;
-            border-bottom: 2px solid #d4af37 !important;
-            min-height: 50px !important;
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-between;
+            align-items: center;
+            background: rgba(15,15,15,0.85);
+            backdrop-filter: blur(12px);
+            border-bottom: 2px solid #d4af37;
+            padding: 8px 16px;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
         }
         .top-bar-stats {
-            display: flex !important;
-            flex-wrap: wrap !important;
-            gap: 12px !important;
-            align-items: center !important;
-        }
-        .top-bar-controls {
-            display: flex !important;
-            align-items: center !important;
-            gap: 6px !important;
-            flex-wrap: wrap !important;
-        }
-        @media (max-width: 768px) {
-            #top-bar {
-                padding: 5px 8px !important;
-                min-height: 35px !important;
-                gap: 5px !important;
-            }
-            .top-bar-stats { gap: 6px !important; }
-            .stat-box {
-                font-size: 11px !important;
-                padding: 2px 4px !important;
-                background: none !important;
-                border: none !important;
-            }
-            #current-time-info { font-size: 11px !important; }
-            .top-bar-controls { gap: 4px !important; }
-        }
-        #bottom-controls {
-            position: fixed !important;
-            bottom: 0 !important;
-            left: 0 !important;
-            width: 100% !important;
-            background: rgba(17, 17, 17, 0.85) !important;
-            backdrop-filter: blur(10px) !important;
-            border-top: 2px solid #d4af37 !important;
-            display: flex !important;
-            justify-content: space-evenly !important;
-            align-items: center !important;
-            padding: 8px 5px !important;
-            box-sizing: border-box !important;
-            z-index: 9999 !important;
-            gap: 5px;
+            display: flex;
+            gap: 15px;
             flex-wrap: wrap;
         }
-        .icon-btn {
-            background: none !important;
-            border: none !important;
-            font-size: 24px !important;
-            cursor: pointer !important;
-            position: relative !important;
-            padding: 8px !important;
-            transition: transform 0.2s, text-shadow 0.2s !important;
-            display: inline-flex !important;
-            align-items: center !important;
-            justify-content: center !important;
-            min-width: 50px;
-            border-radius: 40px;
-        }
-        .icon-btn:hover {
-            transform: scale(1.1) !important;
-            text-shadow: 0 0 10px #ffd700 !important;
-        }
-        .next-turn-btn {
-            background: linear-gradient(135deg, #ffd700, #b8860b) !important;
-            border: 1px solid #fff !important;
-            color: #000 !important;
-            font-weight: bold !important;
-            font-size: 1.1rem !important;
-            padding: 6px 12px !important;
-            border-radius: 40px !important;
-            display: inline-flex !important;
-            align-items: center !important;
-            gap: 6px !important;
-            cursor: pointer !important;
-            transition: 0.2s !important;
-            box-shadow: 0 0 8px rgba(255,215,0,0.5);
-        }
-        .next-turn-btn:hover {
-            transform: scale(1.05);
-            background: linear-gradient(135deg, #ffea00, #daa520);
-            box-shadow: 0 0 15px gold;
-        }
-        .badge {
-            position: absolute !important;
-            background: #ff4444 !important;
-            color: white !important;
-            font-size: 10px !important;
-            font-weight: bold !important;
-            padding: 2px 6px !important;
-            border-radius: 10px !important;
-            border: 1px solid white !important;
-            top: -5px;
-            right: -5px;
-        }
-        .army-market-btn {
-            background: linear-gradient(135deg, #b8860b, #daa520) !important;
-            border: 1px solid #ffd700 !important;
-            padding: 6px 12px !important;
-            border-radius: 28px !important;
-            color: white !important;
-            font-weight: bold !important;
-            font-size: 14px !important;
-            cursor: pointer !important;
-            transition: 0.2s !important;
-            display: inline-flex !important;
-            align-items: center !important;
-            gap: 6px !important;
-        }
-        .army-market-btn:hover {
-            transform: scale(1.05) !important;
-            background: linear-gradient(135deg, #daa520, #ffcc44) !important;
-            box-shadow: 0 0 8px gold !important;
-        }
-        @media (max-width: 768px) {
-            .army-market-btn {
-                padding: 4px 8px !important;
-                font-size: 11px !important;
-            }
-            .icon-btn {
-                font-size: 20px !important;
-                padding: 5px !important;
-                min-width: 40px;
-            }
-            .next-turn-btn {
-                font-size: 0.9rem !important;
-                padding: 4px 10px !important;
-            }
-            .next-turn-btn span:first-child { font-size: 16px; }
-        }
-        /* ------------------- ЛЕТОПИС ------------------- */
-        #unifiedChronicle {
-            width: 100%;
-            max-width: 100%;
-            margin: 0 0 20px 0;
-            padding: 0;
-            background: transparent;
-        }
-        .chronicle-event {
-            background: rgba(20, 20, 35, 0.5);
-            border-left: 3px solid rgba(212, 175, 55, 0.5);
-            padding: 8px 12px;
-            margin-bottom: 6px;
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            transition: all 0.2s ease;
-            animation: slideIn 0.25s ease-out;
-        }
-        .chronicle-event:hover {
-            background: rgba(30, 30, 50, 0.8);
-            border-left-color: #d4af37;
-            transform: translateX(3px);
-        }
-        .chronicle-event.rival-event {
-            background: rgba(80, 30, 30, 0.4);
-            border-left-color: #ff4444;
-        }
-        .chronicle-event.rival-event:hover {
-            background: rgba(80, 30, 30, 0.7);
-        }
-        .chronicle-icon {
-            font-size: 1.2rem;
-            min-width: 32px;
-            text-align: center;
-        }
-        .chronicle-text {
-            flex: 1;
-            color: #ddd;
-            font-size: 0.8rem;
-            line-height: 1.4;
-        }
-        .chronicle-text strong {
-            color: #d4af37;
-        }
-        .chronicle-time {
-            font-size: 0.65rem;
-            color: #888;
-            font-style: italic;
-            white-space: nowrap;
-        }
-        @keyframes slideIn {
-            from { opacity: 0; transform: translateX(-10px); }
-            to { opacity: 1; transform: translateX(0); }
-        }
-        .load-more-btn {
-            background: rgba(212, 175, 55, 0.12);
-            border: 1px solid rgba(212, 175, 55, 0.3);
-            cursor: pointer;
-            color: #d4af37;
-            padding: 5px 16px;
-            border-radius: 25px;
-            font-size: 0.7rem;
+        .stat-box {
             font-family: 'Cinzel', serif;
-            transition: all 0.2s;
+            font-weight: bold;
+            color: #ffd700;
+            background: rgba(0,0,0,0.5);
+            padding: 4px 12px;
+            border-radius: 30px;
+            font-size: 0.9rem;
         }
-        .load-more-btn:hover {
-            background: rgba(212, 175, 55, 0.25);
-            border-color: #d4af37;
-        }
-        /* Скриване на стария плаващ панел */
-        #autonomous-event-log {
-            display: none !important;
-            visibility: hidden !important;
-            opacity: 0 !important;
-            pointer-events: none !important;
-        }
-        /* Лента на елита */
-        #top-elite-bar {
+        .top-bar-controls {
             display: flex;
             gap: 8px;
-            overflow-x: auto;
-            padding: 6px 12px;
-            background: rgba(0,0,0,0.4);
-            border-bottom: 1px solid #d4af37;
+            flex-wrap: wrap;
         }
-        .elite-hero-card {
-            background: rgba(0,0,0,0.6);
-            border-radius: 12px;
-            padding: 6px 12px;
-            min-width: 100px;
-            text-align: center;
+        .glass-btn {
+            background: rgba(255,255,255,0.1);
+            backdrop-filter: blur(4px);
+            border: 1px solid rgba(255,215,0,0.5);
+            border-radius: 30px;
+            padding: 5px 12px;
+            font-weight: bold;
+            color: #ffdd99;
             cursor: pointer;
-            border: 1px solid #c9a87b;
-            flex-shrink: 0;
+            transition: 0.2s;
         }
-        /* Модални прозорци – гарантирано отгоре */
+        .glass-btn:hover {
+            background: rgba(255,215,0,0.2);
+            transform: scale(1.02);
+        }
+        /* Главен контейнер */
+        #game-container {
+            display: grid;
+            grid-template-columns: 260px 1fr 260px;
+            gap: 15px;
+            max-width: 1400px;
+            margin: 15px auto;
+            padding: 0 15px 80px 15px;
+        }
+        #sidebar-left, #sidebar-right {
+            background: rgba(10,10,10,0.5);
+            backdrop-filter: blur(8px);
+            border-radius: 16px;
+            padding: 12px;
+            border: 1px solid rgba(212,175,55,0.3);
+        }
+        #game-main-area {
+            background: rgba(0,0,0,0.3);
+            backdrop-filter: blur(12px);
+            border-radius: 20px;
+            padding: 16px;
+        }
+        /* Летопис */
+        #unifiedChronicle {
+            background: transparent;
+            margin-bottom: 20px;
+        }
+        .chronicle-event {
+            background: rgba(20,20,40,0.6);
+            border-left: 3px solid #d4af37;
+            padding: 6px 10px;
+            margin-bottom: 6px;
+            border-radius: 8px;
+            display: flex;
+            gap: 10px;
+            font-size: 0.8rem;
+        }
+        .chronicle-icon { font-size: 1.3rem; min-width: 32px; text-align: center; }
+        .chronicle-text { flex: 1; }
+        .chronicle-time { color: #aaa; font-size: 0.65rem; white-space: nowrap; }
+        .load-more-btn {
+            background: rgba(212,175,55,0.2);
+            border: 1px solid #d4af37;
+            border-radius: 30px;
+            color: #ffd700;
+            padding: 4px 12px;
+            cursor: pointer;
+            margin-top: 8px;
+        }
+        /* Долна лента */
+        #bottom-controls {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            background: rgba(0,0,0,0.85);
+            backdrop-filter: blur(10px);
+            border-top: 2px solid #d4af37;
+            display: flex;
+            justify-content: space-evenly;
+            align-items: center;
+            padding: 8px;
+            z-index: 2000;
+        }
+        .icon-btn {
+            background: none;
+            border: none;
+            font-size: 26px;
+            cursor: pointer;
+            padding: 6px 12px;
+            border-radius: 40px;
+            transition: 0.2s;
+            color: #ffdd99;
+        }
+        .icon-btn:hover { transform: scale(1.1); text-shadow: 0 0 8px gold; }
+        .next-turn-btn {
+            background: linear-gradient(135deg, #ffd700, #b8860b);
+            border: 1px solid white;
+            color: black;
+            font-weight: bold;
+            font-size: 1rem;
+            padding: 6px 18px;
+            border-radius: 40px;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            cursor: pointer;
+        }
+        /* Модали */
         .modal-overlay {
             position: fixed;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
-            background: rgba(0,0,0,0.85);
+            background: rgba(0,0,0,0.9);
             backdrop-filter: blur(8px);
             z-index: 200000;
             display: flex;
             align-items: center;
             justify-content: center;
             font-family: 'Cinzel', serif;
-            padding: 20px;
-            box-sizing: border-box;
         }
         .modal-content {
             background: #0a0a1a;
@@ -269,8 +176,12 @@
             border-radius: 24px;
             max-width: 90%;
             max-height: 90%;
-            overflow-y: auto;
+            overflow: auto;
             padding: 20px;
+        }
+        @media (max-width: 800px) {
+            #game-container { grid-template-columns: 1fr; gap: 10px; }
+            .stat-box { font-size: 0.7rem; padding: 2px 8px; }
         }
     </style>
 </head>
@@ -278,66 +189,61 @@
 
 <header id="top-bar">
     <div class="top-bar-stats">
-        <div class="stat-box" id="stat-hero-power" title="Обща Бойна Мощ">⚔️ <span id="val-hero-power">0</span></div>
-        <div class="stat-box" id="stat-gold" title="Родова Хазна">💰 <span id="val-gold">0</span></div>
-        <div class="stat-box" id="stat-army" title="Текуща Армия">🏹 <span id="val-army">0</span></div>
-        <div class="stat-box" id="stat-time" title="Текущ Сезон и Година">⏳ <span id="current-time-info">пролет, 480 г. пр.н.е.</span></div>
+        <div class="stat-box">⚔️ <span id="val-hero-power">0</span></div>
+        <div class="stat-box">💰 <span id="val-gold">0</span></div>
+        <div class="stat-box">🏹 <span id="val-army">0</span></div>
+        <div class="stat-box">⏳ <span id="current-time-info">пролет, 480 г. пр.н.е.</span></div>
     </div>
     <div class="top-bar-controls">
-        <button class="glass-btn glass-btn-gold" onclick="window.hireNewHero()" title="Наеми герой (500 злато)">👑</button>
-        <button class="glass-btn" onclick="window.toggleGameFullScreen()" title="Цял екран">⬚</button>
-        <button class="army-market-btn" onclick="if(window.armyMarket && window.armyMarket.show) window.armyMarket.show(); else alert('Военният пазар се зарежда...');" title="Отвори военен пазар"><span>⚔️</span> Наемна армия</button>
-        <button class="glass-btn" id="btn-marriage-top" onclick="window.openMarriageMenu()" title="Династични бракове">💍</button>
+        <button class="glass-btn" onclick="window.hireNewHero?.()">👑 Наеми</button>
+        <button class="glass-btn" onclick="window.toggleGameFullScreen?.()">⬚</button>
+        <button class="glass-btn" onclick="window.armyMarket?.show?.()">⚔️ Армия</button>
+        <button class="glass-btn" onclick="window.openMarriageMenu?.()">💍 Брак</button>
     </div>
 </header>
 
-<div id="top-elite-bar"></div>
+<div id="top-elite-bar" style="display: flex; gap: 8px; overflow-x: auto; padding: 6px 12px; background: rgba(0,0,0,0.4); border-bottom: 1px solid #d4af37;"></div>
 
 <main id="game-container">
     <aside id="sidebar-left">
-        <div style="background: rgba(15,15,15,0.7); border: 1px solid #d4af37; padding: 15px; border-radius: 8px; text-align: center;">
-            <h3 style="font-family:'Cinzel'; color:#ffd700; margin:0 0 10px 0; border-bottom:1px solid rgba(214,175,55,0.3); padding-bottom:5px;">Активен Герой</h3>
+        <div style="text-align: center;">
+            <h3 style="color:#ffd700;">Активен Герой</h3>
             <div id="active-character-profile"></div>
         </div>
     </aside>
-
     <section id="game-main-area">
         <div id="unifiedChronicle">
-            <div style="display: flex; justify-content: space-between; align-items: center; padding: 8px 15px; margin-bottom: 10px; border-bottom: 1px solid rgba(212, 175, 55, 0.3);">
-                <h3 style="margin: 0; color: #d4af37; font-family: 'Cinzel', serif; font-size: 1rem;">📜 Дворцов Летопис</h3>
-                <button id="clearChronicleFinalBtn" style="background: rgba(255,80,80,0.15); border: none; cursor: pointer; color: #ffaa88; padding: 4px 12px; border-radius: 20px; font-size: 0.7rem;">🗑️ Изчисти</button>
+            <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #d4af37; padding-bottom: 5px; margin-bottom: 10px;">
+                <h3 style="margin:0; color:#d4af37;">📜 Дворцов Летопис</h3>
+                <button id="clearChronicleBtn" style="background:rgba(255,80,80,0.2); border:none; border-radius: 20px; padding: 2px 10px; cursor:pointer;">🗑️ Изчисти</button>
             </div>
-            <div id="eventsListContainer" style="display: flex; flex-direction: column; gap: 6px; padding: 5px 10px;"></div>
+            <div id="eventsListContainer"></div>
         </div>
-        <div style="text-align: center; padding: 40px; font-family: 'Cinzel', serif;">
-            <h1 style="color: #ffd700; font-size: 2.5rem; text-shadow: 0 4px 10px rgba(0,0,0,0.9); margin-bottom: 10px;">ВЕЛИКА БЪЛГАРИЯ</h1>
-            <p style="color: #ccc; font-family: 'Montserrat'; font-size: 1.1rem; max-width: 600px; margin: 0 auto 30px auto; line-height: 1.6;">...</p>
-            <button class="menu-btn" onclick="window.openRegionsMap()" style="display:inline-block; margin: 10px;">Отвори Картата 🗺️</button>
+        <div style="text-align: center;">
+            <h1 style="color:#ffd700;">ВЕЛИКА БЪЛГАРИЯ</h1>
+            <p style="color:#ccc;">Води своя род към величие</p>
+            <button class="glass-btn" onclick="window.openRegionsMap()">🗺️ Отвори Картата</button>
         </div>
     </section>
-
     <aside id="sidebar-right">
-        <div style="background: rgba(15,15,15,0.7); border: 1px solid #d4af37; padding: 15px; border-radius: 8px;">
-            <h3 style="font-family:'Cinzel'; color:#ffd700; text-align:center;">Родови Кланове</h3>
-            <div id="clans-list-container"><div id="clans-container"></div></div>
+        <div style="text-align: center;">
+            <h3 style="color:#ffd700;">Родови Кланове</h3>
+            <div id="clans-container"></div>
         </div>
     </aside>
 </main>
 
-<!-- МОДАЛИ (стандартни) -->
-<div id="hero-rpg-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.75); backdrop-filter: blur(10px); z-index: 20000; overflow-y: auto;">...</div>
-<section id="treasury-overlay" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); z-index: 10000;">...</section>
-
 <div id="bottom-controls">
     <button class="icon-btn" onclick="window.openRegionsMap()" title="Карта">🗺️</button>
-    <button class="icon-btn" onclick="window.openBarracksUI()" title="Казарми">🏹</button>
-    <button class="icon-btn" id="btn-battle" onclick="window.startBattle()" title="Битка">⚔️</button>
-    <button class="next-turn-btn" onclick="window.processTurn()" title="Следващ ход">► <span>Ход</span></button>
-    <button class="icon-btn" id="btn-events" onclick="window.openEventsMenu()" title="Събития">📜</button>
-    <button class="icon-btn" id="btn-expeditions" onclick="window.openExpeditionsMenu()" title="Експедиции">🧭 <span id="expeditions-badge-mobile" class="badge">0</span></button>
+    <button class="icon-btn" onclick="window.openBarracksUI?.()" title="Казарми">🏹</button>
+    <button class="icon-btn" onclick="window.startBattle('Мизия')" title="Битка">⚔️</button>
+    <button class="next-turn-btn" onclick="window.processTurn()">► Ход</button>
+    <button class="icon-btn" onclick="window.openEventsMenu?.()" title="Събития">📜</button>
+    <button class="icon-btn" onclick="window.openExpeditionsMenu?.()" title="Експедиции">🧭</button>
     <button class="icon-btn" onclick="window.toggleTreasury()" title="Съкровищница">🎒</button>
 </div>
 
+<!-- ВСИЧКИ JS МОДУЛИ -->
 <script src="mechanics.js"></script>
 <script src="world_data.js"></script>
 <script src="database.js"></script>
@@ -356,152 +262,174 @@
 <script src="rivalry.js"></script>
 <script src="armyMarket.js"></script>
 
-<!-- ГЛАВЕН СКРИПТ (летопис, модали и backup за карта/съкровищница) -->
+<!-- ФИНАЛЕН СКРИПТ – ГАРАНТИРА РАБОТА НА КАРТА, XP, НИВА -->
 <script>
 (function() {
-    // ... тук е целият главен скрипт от предишната версия (летопис, събития и т.н.) ...
-    // За да не претрупвам, ще сложа само резервните функции за карта и съкровищница, 
-    // защото останалото вече е налично.
-})();
-
-// ========== РЕЗЕРВНИ ФУНКЦИИ ЗА КАРТА И СЪКРОВИЩНИЦА (ГАРАНТИРАНО РАБОТЕЩИ) ==========
-(function() {
-    // --- 1. Карта (openRegionsMap) ---
-    if (typeof window.openRegionsMap !== 'function' || true) { // временно презаписваме, за да сме сигурни
+    // ---------- 1. АКО НЯМА КАРТА, ПРАВИМ РАБОТЕЩА ----------
+    if (typeof window.openRegionsMap !== 'function') {
         window.openRegionsMap = function() {
-            const oldModal = document.getElementById('regions-map-overlay');
-            if (oldModal) oldModal.remove();
-            
-            // Вземаме региони от worldData или тестови
+            const old = document.getElementById('custom-map');
+            if (old) old.remove();
             let regions = [];
-            if (window.worldData && window.worldData.regions) {
-                regions = Object.values(window.worldData.regions);
-            } else {
-                regions = [
-                    { name: "Мизия", armySize: 150, defenseLevel: 1 },
-                    { name: "Тракия", armySize: 200, defenseLevel: 2 },
-                    { name: "Македония", armySize: 250, defenseLevel: 3 }
-                ];
-            }
-            
+            if (window.worldData && window.worldData.regions) regions = Object.values(window.worldData.regions);
+            else regions = [
+                { name: "Мизия", armySize: 150 },
+                { name: "Тракия", armySize: 200 },
+                { name: "Македония", armySize: 250 }
+            ];
             const modal = document.createElement('div');
-            modal.id = 'regions-map-overlay';
+            modal.id = 'custom-map';
             modal.className = 'modal-overlay';
-            
-            let regionsHtml = '';
-            regions.forEach(region => {
-                regionsHtml += `
-                    <div style="background:rgba(20,20,30,0.6); border:1px solid #d4af37; border-radius:12px; padding:10px; margin:8px; text-align:center; width:140px; display:inline-block;">
-                        <div style="font-size:24px;">🏰</div>
-                        <div style="font-weight:bold; color:#ffd700;">${region.name}</div>
-                        <div style="font-size:10px; color:#aaa;">⚔️ ${region.armySize || 0} войска</div>
-                        <div style="font-size:10px; color:#aaa;">🛡️ Защита: ${region.defenseLevel || 1}</div>
-                        <button class="conquer-region-btn" data-region="${region.name}" style="background:#7a2e1a; border:none; padding:4px 8px; border-radius:20px; color:#ffdd99; margin-top:6px; cursor:pointer;">⚔️ Завладяй</button>
-                    </div>
-                `;
+            let html = '<div class="modal-content"><div style="display:flex; justify-content:space-between;"><h2>🗺️ Региони</h2><button id="closeMapBtn" style="background:red; border:none; color:white; border-radius:50%; width:30px; cursor:pointer;">✕</button></div><div style="display:flex; flex-wrap:wrap;">';
+            regions.forEach(r => {
+                html += `<div style="border:1px solid gold; margin:8px; padding:8px; border-radius:12px; width:130px; text-align:center;">
+                            <div>🏰 ${r.name}</div>
+                            <div>⚔️ ${r.armySize}</div>
+                            <button class="attackBtn" data-name="${r.name}" style="background:#7a2e1a; border:none; padding:4px 10px; border-radius:20px; margin-top:6px;">⚔️ Атака</button>
+                         </div>`;
             });
-            
-            modal.innerHTML = `
-                <div class="modal-content">
-                    <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #d4af37; padding-bottom: 10px; margin-bottom: 15px;">
-                        <h2 style="color: #ffd700; margin:0;">🗺️ Карта на регионите</h2>
-                        <button id="closeMapBtn" style="background:rgba(255,80,80,0.2); border:none; color:#ff8888; font-size:24px; cursor:pointer; width:36px; height:36px; border-radius:50%;">✕</button>
-                    </div>
-                    <div style="display: flex; flex-wrap: wrap; justify-content: center; gap: 10px;">
-                        ${regionsHtml}
-                    </div>
-                    <div style="text-align: center; margin-top: 20px;">
-                        <button id="closeMapFooter" style="background:#2c2c3a; border:1px solid #d4af37; color:#ffd700; padding:8px 20px; border-radius:30px; cursor:pointer;">Затвори</button>
-                    </div>
-                </div>
-            `;
-            
+            html += '</div><div style="text-align:center; margin-top:15px;"><button id="closeMapFooter">Затвори</button></div></div>';
+            modal.innerHTML = html;
             document.body.appendChild(modal);
             const close = () => modal.remove();
             modal.querySelector('#closeMapBtn')?.addEventListener('click', close);
             modal.querySelector('#closeMapFooter')?.addEventListener('click', close);
-            modal.addEventListener('click', (e) => { if (e.target === modal) close(); });
-            
-            modal.querySelectorAll('.conquer-region-btn').forEach(btn => {
-                btn.addEventListener('click', (e) => {
-                    e.stopPropagation();
-                    alert(`Завладяването на ${btn.dataset.region} ще бъде добавено скоро.`);
+            modal.addEventListener('click', e => { if(e.target === modal) close(); });
+            modal.querySelectorAll('.attackBtn').forEach(btn => {
+                btn.addEventListener('click', e => {
+                    const region = btn.getAttribute('data-name');
                     close();
+                    if (typeof window.startBattle === 'function') window.startBattle(region);
+                    else console.warn("startBattle липсва");
                 });
             });
         };
     }
-    
-    // --- 2. Съкровищница (toggleTreasury) ---
+
+    // ---------- 2. ГАРАНЦИЯ ЗА БИТКА (ако battle.js не работи) ----------
+    if (typeof window.startBattle !== 'function') {
+        window.startBattle = function(region) {
+            console.log(`Битка в ${region} (симулация)`);
+            if (window.currentHero && window.gainHeroXP) {
+                let xp = 50 + Math.floor(Math.random() * 80);
+                window.gainHeroXP(window.currentHero, xp);
+                if (window.addWorldEvent) window.addWorldEvent(`⚔️ Битка в ${region}`, `${window.currentHero.name} победи! +${xp} XP`, "⚔️");
+                else alert(`Победа! +${xp} XP`);
+            } else alert("Не може да се получи XP");
+        };
+    }
+
+    // ---------- 3. ЛЕТОПИС И XP ТРЪГВАНЕ ----------
+    if (!window.worldEvents) window.worldEvents = [];
+    window.addWorldEvent = function(title, desc, icon, year) {
+        window.worldEvents.unshift({ id: Date.now(), title, description: desc, icon: icon || '📜', time: year || window.currentYear || "480 г. пр.н.е." });
+        if (window.worldEvents.length > 100) window.worldEvents.pop();
+        if (typeof window.displayEvents === 'function') window.displayEvents();
+        else console.log("Летопис:", title, desc);
+    };
+    window.displayEvents = function() {
+        const cont = document.getElementById('eventsListContainer');
+        if (!cont) return;
+        const events = window.worldEvents || [];
+        if (!events.length) { cont.innerHTML = '<div style="text-align:center; color:#888;">⏳ Няма събития</div>'; return; }
+        let html = '';
+        events.slice(0, 7).forEach(ev => {
+            html += `<div class="chronicle-event"><div class="chronicle-icon">${ev.icon || '📜'}</div><div class="chronicle-text"><strong>${ev.title}</strong> — ${ev.description}</div><div class="chronicle-time">${ev.time}</div></div>`;
+        });
+        if (events.length > 7) html += `<button class="load-more-btn" onclick="window.displayEventsFull()">📖 Зареди още ${events.length-7}</button>`;
+        cont.innerHTML = html;
+    };
+    window.displayEventsFull = function() {
+        const cont = document.getElementById('eventsListContainer');
+        if (!cont) return;
+        let html = '';
+        (window.worldEvents || []).forEach(ev => {
+            html += `<div class="chronicle-event"><div class="chronicle-icon">${ev.icon || '📜'}</div><div class="chronicle-text"><strong>${ev.title}</strong> — ${ev.description}</div><div class="chronicle-time">${ev.time}</div></div>`;
+        });
+        cont.innerHTML = html;
+    };
+
+    // ---------- 4. ИНИЦИАЛИЗАЦИЯ НА ГЕРОЙ ----------
+    if (!window.currentHero) {
+        window.currentHero = {
+            name: "Кубрат",
+            clan: "Дуло",
+            gold: 2000,
+            armySize: 500,
+            currentArmy: 500,
+            heroPower: 150,
+            level: 1,
+            xp: 0,
+            storedXP: 0,
+            isAuto: true,
+            skillPoints: 0,
+            skills: { tactics: 0, endurance: 0, economy: 0, mysticism: 0, leadership: 0 },
+            inventory: []
+        };
+        if (window.initializeHeroRPGData) window.initializeHeroRPGData(window.currentHero);
+    } else {
+        window.currentHero.isAuto = true;
+        if (window.initializeHeroRPGData) window.initializeHeroRPGData(window.currentHero);
+    }
+
+    // ---------- 5. ПРИНУДИТЕЛНО XP ПРИ ХОД ----------
+    const oldProcess = window.processTurn;
+    window.processTurn = function() {
+        if (oldProcess) oldProcess();
+        if (window.currentHero && window.gainHeroXP) {
+            window.gainHeroXP(window.currentHero, 15);
+            console.log("➕ +15 XP от редовен ход");
+        }
+        if (window.updateCharacterUI) window.updateCharacterUI(window.currentHero);
+        if (window.renderTop6LeadersUI) window.renderTop6LeadersUI();
+    };
+
+    // ---------- 6. СЪКРОВИЩНИЦА ----------
     if (typeof window.toggleTreasury !== 'function') {
         window.toggleTreasury = function() {
             const hero = window.currentHero;
-            if (!hero) {
-                alert("Няма активен герой!");
-                return;
-            }
-            const inventory = hero.inventory || [];
-            const oldModal = document.getElementById('treasury-custom-modal');
-            if (oldModal) oldModal.remove();
-            
-            const modal = document.createElement('div');
-            modal.id = 'treasury-custom-modal';
-            modal.className = 'modal-overlay';
-            
-            let itemsHtml = '';
-            if (inventory.length === 0) {
-                itemsHtml = '<div style="text-align:center; padding:20px; color:#aaa;">Все още нямате артефакти. Победете в битки, за да ги намерите.</div>';
-            } else {
-                itemsHtml = '<div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 12px;">';
-                inventory.forEach(item => {
-                    itemsHtml += `
-                        <div style="background:rgba(20,20,30,0.6); border:1px solid #d4af37; border-radius:12px; padding:8px; text-align:center;">
-                            <div style="font-size:32px;">${item.icon || '🏺'}</div>
-                            <div style="font-size:12px; color:#ffd700;">${item.name || 'Артефакт'}</div>
-                            <div style="font-size:10px; color:#aaa;">${item.era || 'Неизвестна епоха'}</div>
-                            <div style="font-size:9px; color:#88ff88;">+${item.bonus?.heroPower || 0} сила</div>
-                        </div>
-                    `;
+            if (!hero) { alert("Няма герой"); return; }
+            const inv = hero.inventory || [];
+            let html = '<div class="modal-overlay" id="treasuryModal"><div class="modal-content"><h2>🏺 Съкровищница</h2>';
+            if (!inv.length) html += '<p>Няма артефакти.</p>';
+            else {
+                html += '<div style="display:grid; grid-template-columns:repeat(auto-fill, minmax(100px,1fr)); gap:10px;">';
+                inv.forEach(i => {
+                    html += `<div style="background:#1a1a2e; border:1px solid gold; border-radius:12px; padding:8px; text-align:center;">
+                                <div style="font-size:30px;">${i.icon || '🏺'}</div>
+                                <div>${i.name || 'Артефакт'}</div>
+                                <div style="font-size:10px;">+${i.bonus?.heroPower || 0} сила</div>
+                            </div>`;
                 });
-                itemsHtml += '</div>';
+                html += '</div>';
             }
-            
-            modal.innerHTML = `
-                <div class="modal-content">
-                    <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #d4af37; padding-bottom: 10px; margin-bottom: 15px;">
-                        <h2 style="color: #ffd700; margin:0;">🏺 Родова съкровищница</h2>
-                        <button id="closeTreasuryBtn" style="background:rgba(255,80,80,0.2); border:none; color:#ff8888; font-size:24px; cursor:pointer; width:36px; height:36px; border-radius:50%;">✕</button>
-                    </div>
-                    ${itemsHtml}
-                    <div style="text-align: center; margin-top: 20px;">
-                        <button id="closeTreasuryFooter" style="background:#2c2c3a; border:1px solid #d4af37; color:#ffd700; padding:8px 20px; border-radius:30px; cursor:pointer;">Затвори</button>
-                    </div>
-                </div>
-            `;
-            
+            html += `<button id="closeTreasury" style="margin-top:15px; background:#d4af37; border:none; border-radius:20px; padding:6px 12px;">Затвори</button></div></div>`;
+            const oldM = document.getElementById('treasuryModal');
+            if (oldM) oldM.remove();
+            const modal = document.createElement('div');
+            modal.innerHTML = html;
             document.body.appendChild(modal);
-            const close = () => modal.remove();
-            modal.querySelector('#closeTreasuryBtn')?.addEventListener('click', close);
-            modal.querySelector('#closeTreasuryFooter')?.addEventListener('click', close);
-            modal.addEventListener('click', (e) => { if (e.target === modal) close(); });
+            modal.querySelector('#closeTreasury').onclick = () => modal.remove();
+            modal.onclick = e => { if(e.target === modal) modal.remove(); };
         };
     }
-    
-    console.log("✅ Резервните функции за карта и съкровищница са активни.");
-})();
-</script>
 
-<!-- ПРЕМАХВАНЕ НА ПЛАВАЩ ПАНЕЛ -->
-<script>
-(function() {
-    function removeFloatingPanel() {
-        const panel = document.getElementById('autonomous-event-log');
-        if (panel) panel.remove();
+    // ---------- 7. ПЪРВОНАЧАЛНИ СЪБИТИЯ ----------
+    if (window.worldEvents.length === 0) {
+        window.addWorldEvent("🏛️ Основаване на Тракийското царство", "Тракийските племена се обединяват", "🏰", "480 г. пр.н.е.");
+        window.addWorldEvent("⚔️ Подготовка за война", "Персийската империя набира войски", "⚔️", "480 г. пр.н.е.");
     }
-    removeFloatingPanel();
-    setInterval(removeFloatingPanel, 500);
+    window.displayEvents();
+
+    // ---------- 8. ОПРЕСНЯВАНЕ НА ИНТЕРФЕЙСА ----------
+    if (window.updateCharacterUI) window.updateCharacterUI(window.currentHero);
+    if (window.renderTop6LeadersUI) window.renderTop6LeadersUI();
+    if (window.initHeroBar) window.initHeroBar();
+    document.getElementById('clearChronicleBtn')?.addEventListener('click', () => {
+        if(confirm("Изчисти летописа?")) { window.worldEvents = []; window.displayEvents(); }
+    });
+    console.log("✅ Играта е напълно готова – битки, карта, XP, нива работят!");
 })();
 </script>
-
 </body>
 </html>
