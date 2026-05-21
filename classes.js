@@ -1,36 +1,13 @@
 /**
  * =========================================================================
  * ВЕЛИКА БЪЛГАРИЯ – ХИБРИДНА КЛАСОВА СИСТЕМА (ArcheAge + Diablo + Heroes)
- * ВЕРСИЯ: 1.0 – НАД 50 УНИКАЛНИ КЛАСА
+ * ВЕРСИЯ: 2.0 – САМО КЛАСОВЕ И БОНУСИ (БЕЗ ДУБЛИРАНЕ НА ЛОГИКАТА)
  * =========================================================================
- * Всеки клас се определя от комбинация от 3 дървета на умения:
- * - tactics (военна тактика)
- * - endurance (издръжливост)
- * - heavyStrike (смазващ удар)
- * - shieldWall (стена от щитове)
- * - berserk (ярост)
- * - ambush (засада)
- * - poisonBlade (отровено острие)
- * - assassinate (покушение)
- * - shadowStep (сенчеста стъпка)
- * - smokeBomb (димна завеса)
- * - mysticism (мистицизъм)
- * - tangraFire (огънят на Тангра)
- * - vampirism (кръвен устрем)
- * - raiseDead (въздигане на падналите)
- * - totemGlow (тотемна закрила)
- * - economy (родово управление)
- * - goldRush (златна треска)
- * - cartel (търговски съюз)
- * - logistics (логистика)
- * - bazaars (родови пазари)
- * 
- * Всяка комбинация от 3 умения (всяко на ниво поне 1) дава достъп до клас.
- * Бонусите се активират, когато героят достигне този клас.
  */
 
+// 50+ хибридни класа, базирани на комбинации от 3 основни умения
 window.hybridClasses = [
-    // ==================== ВОИНСКИ КЛАСОВЕ (Tactics + Endurance + HeavyStrike) ====================
+    // ==================== ВОИНСКИ КЛАСОВЕ ====================
     {
         name: "Легионер",
         reqLevel: 3,
@@ -67,7 +44,7 @@ window.hybridClasses = [
         ultimate: "Тотем на бурята – всеки рунд нанася 50 магически щети на враговете."
     },
 
-    // ==================== МАГИЧЕСКИ КЛАСОВЕ (Mysticism + TangraFire + RaiseDead) ====================
+    // ==================== МАГИЧЕСКИ КЛАСОВЕ ====================
     {
         name: "Върховен жрец",
         reqLevel: 3,
@@ -104,7 +81,7 @@ window.hybridClasses = [
         ultimate: "Огнена стихия – цялото поле гори 3 рунда (50 щети/рунд)."
     },
 
-    // ==================== КРАДЕЦКИ / АСАСИНСКИ КЛАСОВЕ (Ambush + PoisonBlade + ShadowStep) ====================
+    // ==================== КРАДЕЦКИ / АСАСИНСКИ КЛАСОВЕ ====================
     {
         name: "Ножар",
         reqLevel: 3,
@@ -134,7 +111,7 @@ window.hybridClasses = [
         ultimate: "Размножаване – създава 2 илюзии на героя, които привличат атаките."
     },
 
-    // ==================== КОМАНДИРСКИ / ЛИДЕРСКИ КЛАСОВЕ (Economy + Logistics + Leadership) ====================
+    // ==================== КОМАНДИРСКИ / ЛИДЕРСКИ КЛАСОВЕ ====================
     {
         name: "Воевода",
         reqLevel: 3,
@@ -249,10 +226,9 @@ window.applyClassBonuses = function(hero, className) {
     const classData = window.hybridClasses.find(c => c.name === className);
     if (!classData) return;
     if (!classData.bonuses) return;
-    // Бонусите се добавят към hero.passiveBonuses или директно към статистиките
     if (!hero.classBonuses) hero.classBonuses = {};
     hero.classBonuses[className] = classData.bonuses;
-    // Актуализиране на heroPower и други
+    // Актуализиране на статистиките
     if (classData.bonuses.heroPower) {
         hero.heroPower = (hero.heroPower || 0) + classData.bonuses.heroPower;
     }
@@ -265,62 +241,5 @@ window.applyClassBonuses = function(hero, className) {
     // Може да се разшири с други бонуси
     console.log(`✨ Бонусите на клас ${className} са активирани:`, classData.bonuses);
 };
-
-// ==================== ПРЕЗАПИСВАНЕ НА СИСТЕМАТА ЗА ЕВОЛЮЦИЯ ====================
-// Запазваме оригиналната функция, но я разширяваме с новите класове
-if (typeof window.checkArcheAgeClass === 'function') {
-    const originalCheck = window.checkArcheAgeClass;
-    window.checkArcheAgeClass = function(hero) {
-        // Извикваме оригиналната (която използва старите рецепти)
-        originalCheck(hero);
-        // После проверяваме и новите хибридни класове
-        let skillLevels = {};
-        for (let key in hero.skills) {
-            if (hero.skills[key] > 0) skillLevels[key] = hero.skills[key];
-        }
-        // Филтрираме класове, които отговарят на изискванията (всички 3 умения са поне на ниво 1)
-        const available = window.hybridClasses.filter(cls => {
-            if (hero.level < cls.reqLevel) return false;
-            return cls.reqSkills.every(skill => skillLevels[skill] >= 1);
-        });
-        if (available.length > 0) {
-            // Сортираме по изисквано ниво (най-високото)
-            available.sort((a,b) => b.reqLevel - a.reqLevel);
-            const newClass = available[0];
-            if (hero.currentClass !== newClass.name) {
-                const oldClass = hero.currentClass;
-                hero.currentClass = newClass.name;
-                // Активираме бонусите на новия клас (и премахваме бонусите на стария, ако има)
-                if (window.applyClassBonuses) window.applyClassBonuses(hero, newClass.name);
-                if (window.showAdvisorMsg) {
-                    window.showAdvisorMsg(`👑 ЕВОЛЮЦИЯ: ${hero.name} се издигна от "${oldClass}" до "${hero.currentClass}" (${newClass.reqSkills.join(' + ')})!`);
-                }
-            }
-        }
-    };
-} else {
-    // Ако няма оригинална, дефинираме нова
-    window.checkArcheAgeClass = function(hero) {
-        let skillLevels = {};
-        for (let key in hero.skills) {
-            if (hero.skills[key] > 0) skillLevels[key] = hero.skills[key];
-        }
-        const available = window.hybridClasses.filter(cls => {
-            if (hero.level < cls.reqLevel) return false;
-            return cls.reqSkills.every(skill => skillLevels[skill] >= 1);
-        });
-        if (available.length > 0) {
-            available.sort((a,b) => b.reqLevel - a.reqLevel);
-            const newClass = available[0];
-            if (hero.currentClass !== newClass.name) {
-                hero.currentClass = newClass.name;
-                if (window.applyClassBonuses) window.applyClassBonuses(hero, newClass.name);
-                if (window.showAdvisorMsg) {
-                    window.showAdvisorMsg(`👑 ЕВОЛЮЦИЯ: ${hero.name} достигна клас "${hero.currentClass}"!`);
-                }
-            }
-        }
-    };
-}
 
 console.log("✅ classes.js зареден – над 50 хибридни класа са готови!");
