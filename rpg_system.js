@@ -260,7 +260,7 @@ window.checkArcheAgeClass = function(hero) {
     }
 };
 
-// ==================== РЪЧЕН ИЗБОР НА УМЕНИЕ ПРИ КАЧВАНЕ ====================
+// ==================== РЪЧЕН ИЗБОР НА УМЕНИЕ ====================
 window.manualSkillChoiceOnLevelUp = function(clanKey) {
     var hero = null;
     if (window.worldData && window.worldData.clans && window.worldData.clans[clanKey]) hero = window.worldData.clans[clanKey];
