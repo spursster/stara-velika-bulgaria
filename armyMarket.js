@@ -1,4 +1,4 @@
-// ======================== АРМИЯ ПАЗАР + 30 ФЕНТЪЗИ ЕДИНИЦИ + ПОДДРЪЖКА ЗА МНОГО ГЕРОИ ========================
+// ======================== АРМИЯ ПАЗАР + 30 ФЕНТЪЗИ ЕДИНИЦИ + ПОДДРЪЖКА ЗА МНОГО ГЕРОИ (КОРИГИРАН) ========================
 (function() {
     // --- Проверка на зависимости ---
     if (!window.worldData || !window.worldData.clans) {
@@ -48,54 +48,64 @@
     ];
 
     const allTroops = [...basicTroops, ...fantasyTroops];
+    const allTroopIds = allTroops.map(t => t.id);
 
-    // --- Помощна функция: получаване на списък с всички наети герои ---
+    // --- Помощна функция: гарантира, че hero.armyDetails съществува и има всички типове ---
+    function ensureArmyDetails(hero) {
+        if (!hero) return;
+        if (!hero.armyDetails) hero.armyDetails = {};
+        let changed = false;
+        for (let id of allTroopIds) {
+            if (hero.armyDetails[id] === undefined) {
+                hero.armyDetails[id] = 0;
+                changed = true;
+            }
+        }
+        let total = 0;
+        for (let id of allTroopIds) total += hero.armyDetails[id] || 0;
+        if (hero.armySize === undefined || hero.armySize !== total) {
+            hero.armySize = total;
+            hero.currentArmy = total;
+            changed = true;
+        }
+        if (changed && window.showAdvisorMsg && Math.random() < 0.05) {
+            window.showAdvisorMsg(`🛡️ Армията на ${hero.name} е синхронизирана: ${total} войници.`);
+        }
+        return hero.armyDetails;
+    }
+
     function getAllHeroes() {
         let heroes = [];
         if (window.worldData && window.worldData.clans) {
             for (let key in window.worldData.clans) {
                 let clan = window.worldData.clans[key];
                 if (clan.isJoined === true) {
+                    ensureArmyDetails(clan);
                     heroes.push({
                         id: key,
                         name: clan.leaderName || clan.name || key,
                         clan: clan,
                         gold: clan.gold || 0,
                         armySize: clan.armySize || 0,
-                        armyDetails: clan.armyDetails || {}
+                        armyDetails: clan.armyDetails
                     });
                 }
             }
         }
         if (heroes.length === 0 && window.currentHero) {
+            ensureArmyDetails(window.currentHero);
             heroes.push({
                 id: window.currentHero.clan || "hero",
                 name: window.currentHero.name || "Воевода",
                 clan: window.currentHero,
                 gold: window.currentHero.gold || 0,
                 armySize: window.currentHero.armySize || 0,
-                armyDetails: window.currentHero.armyDetails || {}
+                armyDetails: window.currentHero.armyDetails
             });
         }
         return heroes;
     }
 
-    // --- Инициализация на armyDetails за герой, ако липсва ---
-    function ensureArmyDetails(hero) {
-        if (!hero.armyDetails) {
-            hero.armyDetails = {};
-            allTroops.forEach(t => { hero.armyDetails[t.id] = 0; });
-            // Ако няма детайли, но има обща армия, разпределяме я приблизително
-            if (hero.armySize > 0 && hero.armySize !== hero.armyDetails.total) {
-                hero.armyDetails.infantry = Math.floor(hero.armySize * 0.5);
-                hero.armyDetails.archers = Math.floor(hero.armySize * 0.25);
-                hero.armyDetails.cavalry = Math.floor(hero.armySize * 0.15);
-                hero.armyDetails.elite = hero.armySize - (hero.armyDetails.infantry + hero.armyDetails.archers + hero.armyDetails.cavalry);
-            }
-        }
-    }
-
-    // --- Избран герой (по подразбиране – текущият активен) ---
     let selectedHeroId = null;
     function getSelectedHero() {
         if (!selectedHeroId) {
@@ -105,14 +115,12 @@
                 if (heroes.length) selectedHeroId = heroes[0].id;
             }
         }
-        // Намираме реалния обект на героя
         let hero = null;
         if (window.worldData && window.worldData.clans && window.worldData.clans[selectedHeroId]) {
             hero = window.worldData.clans[selectedHeroId];
         } else if (window.currentHero && window.currentHero.clan === selectedHeroId) {
             hero = window.currentHero;
         } else {
-            // fallback
             const heroes = getAllHeroes();
             if (heroes.length) hero = heroes[0].clan;
         }
@@ -120,130 +128,109 @@
         return hero;
     }
 
-    // --- Синхронизиране на UI и worldData след промяна ---
     function syncWithGame(hero) {
         if (!hero) hero = getSelectedHero();
         if (!hero) return;
-        // Обновяване на общата армия от armyDetails
+        ensureArmyDetails(hero);
         let total = 0;
-        for (let t of allTroops) {
-            total += (hero.armyDetails[t.id] || 0);
-        }
+        for (let id of allTroopIds) total += hero.armyDetails[id] || 0;
         hero.armySize = total;
-        // Ако героят е текущият активен, обновяваме горната лента
+        hero.currentArmy = total;
         if (window.currentHero && window.currentHero.clan === hero.clan) {
-            const goldSpan = document.getElementById('val-gold');
+            let goldSpan = document.getElementById('val-gold');
             if (goldSpan) goldSpan.innerText = hero.gold;
-            const armySpan = document.getElementById('val-army');
+            let armySpan = document.getElementById('val-army');
             if (armySpan) armySpan.innerText = total;
         }
-        // Обновяваме лентата на елита
         if (window.renderTop6LeadersUI) window.renderTop6LeadersUI();
         if (window.updateCharacterUI) window.updateCharacterUI(window.currentHero);
-        // Запазване в localStorage за избрания герой
         saveHeroData(hero);
     }
 
-    // --- Запазване на данните за героя в localStorage ---
     function saveHeroData(hero) {
         try {
-            const key = `armyMarket_${hero.clan}`;
-            const data = {
-                gold: hero.gold,
-                armyDetails: hero.armyDetails
-            };
-            localStorage.setItem(key, JSON.stringify(data));
+            localStorage.setItem(`armyMarket_${hero.clan}`, JSON.stringify({ gold: hero.gold, armyDetails: hero.armyDetails }));
         } catch(e) {}
     }
 
     function loadHeroData(hero) {
         try {
-            const key = `armyMarket_${hero.clan}`;
-            const saved = localStorage.getItem(key);
+            let saved = localStorage.getItem(`armyMarket_${hero.clan}`);
             if (saved) {
-                const data = JSON.parse(saved);
+                let data = JSON.parse(saved);
                 hero.gold = data.gold;
                 hero.armyDetails = data.armyDetails;
-                ensureArmyDetails(hero); // попълва липсващи нули
+                ensureArmyDetails(hero);
                 return true;
             }
         } catch(e) {}
         return false;
     }
 
-    // --- Инициализация на герой при първо отваряне ---
     function initHero(hero) {
         if (!hero.armyDetails) {
             if (!loadHeroData(hero)) {
                 hero.armyDetails = {};
-                allTroops.forEach(t => { hero.armyDetails[t.id] = 0; });
-                // Ако има стара армия, разпределяме я
+                for (let id of allTroopIds) hero.armyDetails[id] = 0;
                 if (hero.armySize > 0) {
                     hero.armyDetails.infantry = Math.floor(hero.armySize * 0.5);
                     hero.armyDetails.archers = Math.floor(hero.armySize * 0.25);
                     hero.armyDetails.cavalry = Math.floor(hero.armySize * 0.15);
                     hero.armyDetails.elite = hero.armySize - (hero.armyDetails.infantry + hero.armyDetails.archers + hero.armyDetails.cavalry);
                 } else {
-                    // Начална армия по подразбиране
                     hero.armyDetails.infantry = 100;
                     hero.armyDetails.archers = 50;
                     hero.armyDetails.cavalry = 30;
                     hero.armyDetails.elite = 20;
                 }
+                for (let id of fantasyTroops.map(t => t.id)) if (hero.armyDetails[id] === undefined) hero.armyDetails[id] = 0;
             }
         }
+        ensureArmyDetails(hero);
         syncWithGame(hero);
     }
 
-    // --- Покупка на единици за избрания герой ---
-    function buyTroop(typeId, quantity = 1) {
-        const hero = getSelectedHero();
-        if (!hero) {
-            alert("Няма избран герой!");
-            return false;
-        }
-        const troop = allTroops.find(t => t.id === typeId);
+    function buyTroop(typeId, quantity = 1, heroParam = null) {
+        let hero = heroParam || getSelectedHero();
+        if (!hero) { alert("Няма избран герой!"); return false; }
+        ensureArmyDetails(hero);
+        let troop = allTroops.find(t => t.id === typeId);
         if (!troop) return false;
-        const totalCost = troop.basePrice * quantity;
-        if (hero.gold < totalCost) {
-            alert(`❌ ${hero.name} няма достатъчно злато! (Нужни: ${totalCost})`);
-            return false;
-        }
+        let totalCost = troop.basePrice * quantity;
+        if (hero.gold < totalCost) { alert(`❌ ${hero.name} няма достатъчно злато! (Нужни: ${totalCost})`); return false; }
         hero.gold -= totalCost;
         hero.armyDetails[typeId] = (hero.armyDetails[typeId] || 0) + quantity;
         syncWithGame(hero);
         saveHeroData(hero);
-        updateMarketUI();
-        console.log(`✅ ${hero.name} купи ${quantity} × ${troop.name} | -${totalCost}💰 | Оставащо злато: ${hero.gold}`);
+        if (window.updateCharacterUI) window.updateCharacterUI(hero);
+        if (window.renderTop6LeadersUI) window.renderTop6LeadersUI();
+        if (typeof window.renderSingleBar === 'function') window.renderSingleBar();
+        if (window.addWorldEvent) window.addWorldEvent(`🛒 Покупка на армия`, `${hero.name} купи ${quantity} × ${troop.name} за ${totalCost} злато.`, "💰");
         return true;
     }
 
-    function sellTroop(typeId, quantity = 1) {
-        const hero = getSelectedHero();
+    function sellTroop(typeId, quantity = 1, heroParam = null) {
+        let hero = heroParam || getSelectedHero();
         if (!hero) return false;
-        const troop = allTroops.find(t => t.id === typeId);
+        ensureArmyDetails(hero);
+        let troop = allTroops.find(t => t.id === typeId);
         if (!troop) return false;
-        const current = hero.armyDetails[typeId] || 0;
-        if (current < quantity) {
-            alert("Нямаш толкова войници за продажба!");
-            return false;
-        }
-        const refund = Math.floor(troop.basePrice * 0.6 * quantity);
+        let current = hero.armyDetails[typeId] || 0;
+        if (current < quantity) { alert("Нямаш толкова войници за продажба!"); return false; }
+        let refund = Math.floor(troop.basePrice * 0.6 * quantity);
         hero.gold += refund;
         hero.armyDetails[typeId] = current - quantity;
         syncWithGame(hero);
         saveHeroData(hero);
-        updateMarketUI();
-        console.log(`💸 ${hero.name} продаде ${quantity} × ${troop.name} | +${refund}💰`);
         return true;
     }
 
-    // --- UI функции (адаптивен модал с избор на герой) ---
+    // --- UI функции ---
     function createMarketHTML() {
-        const heroes = getAllHeroes();
-        const heroOptions = heroes.map(h => `<option value="${h.id}" ${selectedHeroId === h.id ? 'selected' : ''}>${h.name} (💰${h.gold} злато, ⚔️${h.armySize})</option>`).join('');
-        const basicSection = basicTroops.map(troopCard).join('');
-        const fantasySection = fantasyTroops.map(troopCard).join('');
+        let heroes = getAllHeroes();
+        let heroOptions = heroes.map(h => `<option value="${h.id}" ${selectedHeroId === h.id ? 'selected' : ''}>${h.name} (💰${h.gold} злато, ⚔️${h.armySize})</option>`).join('');
+        let basicSection = basicTroops.map(t => troopCard(t)).join('');
+        let fantasySection = fantasyTroops.map(t => troopCard(t)).join('');
         return `
         <div id="armyMarketModal" class="market-modal" style="display: none;">
             <div class="market-content glass-panel">
@@ -252,9 +239,7 @@
                     <div class="player-resources">
                         <div class="resource-box gold">💰 Злато: <span id="playerGoldAmount">0</span></div>
                         <div class="resource-box power">⚔️ Сила: <span id="totalArmyPower">0</span></div>
-                        <div class="resource-box hero-select">👤 Герой: 
-                            <select id="heroSelect" style="background:#2c2c3a; color:#ffd966; border:1px solid #daa520; border-radius:20px; padding:2px 8px;">${heroOptions}</select>
-                        </div>
+                        <div class="resource-box hero-select">👤 Герой: <select id="heroSelect" style="background:#2c2c3a; color:#ffd966; border:1px solid #daa520; border-radius:20px; padding:2px 8px;">${heroOptions}</select></div>
                     </div>
                 </div>
                 <div class="market-tabs">
@@ -271,244 +256,56 @@
             </div>
         </div>
         <style>
-            /* стиловете остават същите като в оригиналния файл – запазваме ги */
-            .market-modal {
-                position: fixed;
-                top: 0;
-                left: 0;
-                width: 100%;
-                height: 100%;
-                background: rgba(0,0,0,0.85);
-                backdrop-filter: blur(10px);
-                z-index: 10000;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                animation: fadeIn 0.2s ease;
-            }
-            .glass-panel {
-                background: rgba(20,20,40,0.96);
-                border-radius: 32px;
-                width: 95%;
-                max-width: 1400px;
-                max-height: 90vh;
-                overflow-y: auto;
-                padding: 20px;
-                border: 1px solid rgba(255,215,0,0.5);
-                box-shadow: 0 20px 40px rgba(0,0,0,0.5);
-            }
-            .market-header {
-                display: flex;
-                flex-wrap: wrap;
-                justify-content: space-between;
-                align-items: center;
-                border-bottom: 1px solid #d4af37;
-                padding-bottom: 12px;
-                margin-bottom: 20px;
-                gap: 15px;
-            }
-            .market-header h2 {
-                font-family: 'Cinzel', serif;
-                color: #ffd700;
-                margin: 0;
-                font-size: 1.6rem;
-            }
-            .player-resources {
-                display: flex;
-                gap: 15px;
-                flex-wrap: wrap;
-                align-items: center;
-            }
-            .resource-box {
-                background: rgba(0,0,0,0.6);
-                padding: 5px 12px;
-                border-radius: 40px;
-                font-weight: bold;
-                font-size: 0.9rem;
-            }
-            .resource-box.gold { color: #ffd966; }
-            .resource-box.power { color: #88ffaa; }
-            .resource-box.hero-select { color: #dd88ff; }
-            .close-market {
-                font-size: 32px;
-                cursor: pointer;
-                color: #ffd700;
-                transition: 0.2s;
-                line-height: 1;
-            }
-            .close-market:hover { transform: scale(1.2); color: #ff6666; }
-            .market-tabs {
-                display: flex;
-                gap: 10px;
-                margin-bottom: 20px;
-                border-bottom: 1px solid rgba(255,215,0,0.3);
-                padding-bottom: 8px;
-                flex-wrap: wrap;
-            }
-            .tab-btn {
-                background: #2c2c3a;
-                border: none;
-                padding: 8px 20px;
-                border-radius: 40px;
-                color: #ffd966;
-                cursor: pointer;
-                font-weight: bold;
-                transition: 0.2s;
-            }
-            .tab-btn.active {
-                background: #daa520;
-                color: black;
-                box-shadow: 0 0 8px gold;
-            }
-            .troop-shop {
-                display: grid;
-                grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-                gap: 20px;
-                max-height: 55vh;
-                overflow-y: auto;
-                padding: 5px;
-            }
-            .troop-card {
-                background: rgba(0,0,0,0.65);
-                border-radius: 24px;
-                padding: 15px;
-                transition: all 0.2s;
-                border: 1px solid rgba(255,215,0,0.3);
-                display: flex;
-                flex-direction: column;
-            }
-            .troop-card:hover {
-                transform: translateY(-5px);
-                border-color: gold;
-                box-shadow: 0 10px 20px rgba(0,0,0,0.4);
-            }
-            .troop-icon {
-                font-size: 48px;
-                text-align: center;
-                margin-bottom: 8px;
-            }
-            .troop-info h3 {
-                margin: 0 0 8px 0;
-                color: #ffd966;
-                font-size: 1.2rem;
-            }
-            .troop-info p {
-                font-size: 0.8rem;
-                color: #ccc;
-                margin: 5px 0;
-            }
-            .stats {
-                display: flex;
-                gap: 15px;
-                font-size: 0.8rem;
-                color: #aaa;
-                margin: 8px 0;
-            }
-            .price {
-                font-weight: bold;
-                color: #ffaa44;
-                margin: 8px 0;
-            }
-            .special {
-                font-size: 0.7rem;
-                color: #d4af37;
-                background: rgba(0,0,0,0.4);
-                display: inline-block;
-                padding: 2px 8px;
-                border-radius: 20px;
-            }
-            .troop-controls {
-                display: flex;
-                justify-content: space-between;
-                align-items: center;
-                margin-top: 12px;
-                gap: 8px;
-                flex-wrap: wrap;
-            }
-            .buy-btn, .sell-btn {
-                background: linear-gradient(135deg, #b8860b, #daa520);
-                border: none;
-                padding: 6px 14px;
-                border-radius: 40px;
-                color: white;
-                font-weight: bold;
-                cursor: pointer;
-                transition: 0.2s;
-            }
-            .sell-btn { background: linear-gradient(135deg, #8b3a3a, #b55a5a); }
-            .buy-btn:hover, .sell-btn:hover { transform: scale(1.05); filter: brightness(1.1); }
-            .owned-count {
-                font-size: 0.8rem;
-                background: #222;
-                padding: 4px 10px;
-                border-radius: 30px;
-            }
-            .market-footer {
-                display: flex;
-                justify-content: center;
-                gap: 15px;
-                margin-top: 20px;
-                padding-top: 15px;
-                border-top: 1px solid rgba(255,215,0,0.3);
-                flex-wrap: wrap;
-            }
-            .footer-btn {
-                background: #2c2c3a;
-                border: 1px solid #daa520;
-                padding: 8px 20px;
-                border-radius: 40px;
-                color: #ffd966;
-                cursor: pointer;
-                font-weight: bold;
-                transition: 0.2s;
-            }
-            .footer-btn.gold { background: #daa520; color: black; }
-            .footer-btn.danger { background: #5a2a2a; border-color: #ff6666; color: #ffaaaa; }
-            .footer-btn:hover { transform: scale(1.03); filter: brightness(1.1); }
-            .coin-effect {
-                position: fixed;
-                pointer-events: none;
-                font-size: 26px;
-                animation: coinFlip 0.6s ease-out forwards;
-                z-index: 20001;
-            }
-            @keyframes fadeIn {
-                from { opacity: 0; transform: scale(0.96); }
-                to { opacity: 1; transform: scale(1); }
-            }
-            @keyframes coinFlip {
-                0% { transform: translateY(0) rotate(0deg); opacity: 1; }
-                100% { transform: translateY(-50px) rotate(180deg); opacity: 0; }
-            }
-            @media (max-width: 768px) {
-                .glass-panel { padding: 12px; width: 98%; max-height: 95vh; }
-                .market-header h2 { font-size: 1.2rem; }
-                .resource-box { font-size: 0.7rem; padding: 3px 8px; }
-                .tab-btn { padding: 4px 12px; font-size: 0.8rem; }
-                .troop-shop { grid-template-columns: 1fr; gap: 12px; max-height: 60vh; }
-                .troop-card { padding: 10px; }
-                .troop-icon { font-size: 36px; }
-                .troop-info h3 { font-size: 1rem; }
-                .buy-btn, .sell-btn { padding: 4px 10px; font-size: 0.8rem; }
-                .footer-btn { padding: 5px 12px; font-size: 0.8rem; }
-            }
-        </style>
-        `;
+            .market-modal { position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.85); backdrop-filter:blur(10px); z-index:10000; display:flex; align-items:center; justify-content:center; animation:fadeIn 0.2s ease; }
+            .glass-panel { background:rgba(20,20,40,0.96); border-radius:32px; width:95%; max-width:1400px; max-height:90vh; overflow-y:auto; padding:20px; border:1px solid rgba(255,215,0,0.5); box-shadow:0 20px 40px rgba(0,0,0,0.5); }
+            .market-header { display:flex; flex-wrap:wrap; justify-content:space-between; align-items:center; border-bottom:1px solid #d4af37; padding-bottom:12px; margin-bottom:20px; gap:15px; }
+            .market-header h2 { font-family:'Cinzel',serif; color:#ffd700; margin:0; font-size:1.6rem; }
+            .player-resources { display:flex; gap:15px; flex-wrap:wrap; align-items:center; }
+            .resource-box { background:rgba(0,0,0,0.6); padding:5px 12px; border-radius:40px; font-weight:bold; font-size:0.9rem; }
+            .resource-box.gold { color:#ffd966; }
+            .resource-box.power { color:#88ffaa; }
+            .resource-box.hero-select { color:#dd88ff; }
+            .close-market { font-size:32px; cursor:pointer; color:#ffd700; transition:0.2s; line-height:1; }
+            .close-market:hover { transform:scale(1.2); color:#ff6666; }
+            .market-tabs { display:flex; gap:10px; margin-bottom:20px; border-bottom:1px solid rgba(255,215,0,0.3); padding-bottom:8px; flex-wrap:wrap; }
+            .tab-btn { background:#2c2c3a; border:none; padding:8px 20px; border-radius:40px; color:#ffd966; cursor:pointer; font-weight:bold; transition:0.2s; }
+            .tab-btn.active { background:#daa520; color:black; box-shadow:0 0 8px gold; }
+            .troop-shop { display:grid; grid-template-columns:repeat(auto-fill, minmax(280px,1fr)); gap:20px; max-height:55vh; overflow-y:auto; padding:5px; }
+            .troop-card { background:rgba(0,0,0,0.65); border-radius:24px; padding:15px; transition:all 0.2s; border:1px solid rgba(255,215,0,0.3); display:flex; flex-direction:column; }
+            .troop-card:hover { transform:translateY(-5px); border-color:gold; box-shadow:0 10px 20px rgba(0,0,0,0.4); }
+            .troop-icon { font-size:48px; text-align:center; margin-bottom:8px; }
+            .troop-info h3 { margin:0 0 8px 0; color:#ffd966; font-size:1.2rem; }
+            .troop-info p { font-size:0.8rem; color:#ccc; margin:5px 0; }
+            .stats { display:flex; gap:15px; font-size:0.8rem; color:#aaa; margin:8px 0; }
+            .price { font-weight:bold; color:#ffaa44; margin:8px 0; }
+            .special { font-size:0.7rem; color:#d4af37; background:rgba(0,0,0,0.4); display:inline-block; padding:2px 8px; border-radius:20px; }
+            .troop-controls { display:flex; justify-content:space-between; align-items:center; margin-top:12px; gap:8px; flex-wrap:wrap; }
+            .buy-btn, .sell-btn { background:linear-gradient(135deg,#b8860b,#daa520); border:none; padding:6px 14px; border-radius:40px; color:white; font-weight:bold; cursor:pointer; transition:0.2s; }
+            .sell-btn { background:linear-gradient(135deg,#8b3a3a,#b55a5a); }
+            .buy-btn:hover, .sell-btn:hover { transform:scale(1.05); filter:brightness(1.1); }
+            .owned-count { font-size:0.8rem; background:#222; padding:4px 10px; border-radius:30px; }
+            .market-footer { display:flex; justify-content:center; gap:15px; margin-top:20px; padding-top:15px; border-top:1px solid rgba(255,215,0,0.3); flex-wrap:wrap; }
+            .footer-btn { background:#2c2c3a; border:1px solid #daa520; padding:8px 20px; border-radius:40px; color:#ffd966; cursor:pointer; font-weight:bold; transition:0.2s; }
+            .footer-btn.gold { background:#daa520; color:black; }
+            .footer-btn.danger { background:#5a2a2a; border-color:#ff6666; color:#ffaaaa; }
+            .footer-btn:hover { transform:scale(1.03); filter:brightness(1.1); }
+            .coin-effect { position:fixed; pointer-events:none; font-size:26px; animation:coinFlip 0.6s ease-out forwards; z-index:20001; }
+            @keyframes fadeIn { from { opacity:0; transform:scale(0.96); } to { opacity:1; transform:scale(1); } }
+            @keyframes coinFlip { 0% { transform:translateY(0) rotate(0deg); opacity:1; } 100% { transform:translateY(-50px) rotate(180deg); opacity:0; } }
+            @media (max-width:768px) { .glass-panel { padding:12px; width:98%; max-height:95vh; } .market-header h2 { font-size:1.2rem; } .resource-box { font-size:0.7rem; padding:3px 8px; } .tab-btn { padding:4px 12px; font-size:0.8rem; } .troop-shop { grid-template-columns:1fr; gap:12px; max-height:60vh; } .troop-card { padding:10px; } .troop-icon { font-size:36px; } .troop-info h3 { font-size:1rem; } .buy-btn,.sell-btn { padding:4px 10px; font-size:0.8rem; } .footer-btn { padding:5px 12px; font-size:0.8rem; } }
+        </style>`;
     }
 
     function troopCard(troop) {
-        const hero = getSelectedHero();
-        const currentCount = hero ? (hero.armyDetails[troop.id] || 0) : 0;
+        let hero = getSelectedHero();
+        let currentCount = hero ? (hero.armyDetails[troop.id] || 0) : 0;
         return `
         <div class="troop-card" data-type="${troop.id}">
             <div class="troop-icon">${troop.icon}</div>
             <div class="troop-info">
                 <h3>${troop.name}</h3>
                 <p>${troop.desc}</p>
-                <div class="stats">
-                    <span>⚔️ Ат: ${troop.attack}</span>
-                    <span>🛡️ Деф: ${troop.defense}</span>
-                </div>
+                <div class="stats"><span>⚔️ Ат: ${troop.attack}</span><span>🛡️ Деф: ${troop.defense}</span></div>
                 <div class="price">💰 ${troop.basePrice} злато</div>
                 ${troop.special ? `<div class="special">✨ ${troop.special}</div>` : ''}
             </div>
@@ -521,101 +318,87 @@
     }
 
     function updateMarketUI() {
-        const hero = getSelectedHero();
+        let hero = getSelectedHero();
         if (!hero) return;
-        const goldSpan = document.getElementById('playerGoldAmount');
+        let goldSpan = document.getElementById('playerGoldAmount');
         if (goldSpan) goldSpan.innerText = hero.gold;
         let totalPower = 0;
         for (let troop of allTroops) {
-            const cnt = hero.armyDetails[troop.id] || 0;
+            let cnt = hero.armyDetails[troop.id] || 0;
             totalPower += cnt * (troop.attack + troop.defense);
-            const span = document.getElementById(`count-${troop.id}`);
+            let span = document.getElementById(`count-${troop.id}`);
             if (span) span.innerText = cnt;
         }
-        const powerSpan = document.getElementById('totalArmyPower');
+        let powerSpan = document.getElementById('totalArmyPower');
         if (powerSpan) powerSpan.innerText = totalPower;
-        // Обновяване на селектора (златото в списъка)
-        const heroSelect = document.getElementById('heroSelect');
+        let heroSelect = document.getElementById('heroSelect');
         if (heroSelect) {
             Array.from(heroSelect.options).forEach(opt => {
-                const heroId = opt.value;
-                let h = null;
-                if (window.worldData.clans[heroId]) h = window.worldData.clans[heroId];
+                let h = window.worldData.clans[opt.value];
                 if (h) opt.text = `${h.name} (💰${h.gold} злато, ⚔️${h.armySize})`;
             });
         }
     }
 
-    // --- Смяна на избрания герой ---
     function setSelectedHero(heroId) {
         selectedHeroId = heroId;
-        const hero = getSelectedHero();
-        if (hero) {
-            initHero(hero);
-            updateMarketUI();
-        }
+        let hero = getSelectedHero();
+        if (hero) initHero(hero);
+        updateMarketUI();
     }
 
-    // --- Показване на модала ---
     function showMarket() {
-        // Актуализираме списъка с герои преди показване
-        const heroes = getAllHeroes();
-        if (heroes.length === 0) {
-            alert("Няма наети герои! Първо наемете герой.");
-            return;
-        }
-        if (!selectedHeroId || !heroes.find(h => h.id === selectedHeroId)) {
-            selectedHeroId = heroes[0].id;
-        }
-        const hero = getSelectedHero();
+        let heroes = getAllHeroes();
+        if (heroes.length === 0) { alert("Няма наети герои! Първо наемете герой."); return; }
+        if (!selectedHeroId || !heroes.find(h => h.id === selectedHeroId)) selectedHeroId = heroes[0].id;
+        let hero = getSelectedHero();
         if (hero) initHero(hero);
         if (!document.getElementById('armyMarketModal')) {
             document.body.insertAdjacentHTML('beforeend', createMarketHTML());
             attachMarketEvents();
         }
-        const modal = document.getElementById('armyMarketModal');
+        let modal = document.getElementById('armyMarketModal');
         if (modal) modal.style.display = 'flex';
         updateMarketUI();
-        console.log("🛒 Военният пазар е отворен");
     }
 
     function hideMarket() {
-        const modal = document.getElementById('armyMarketModal');
+        let modal = document.getElementById('armyMarketModal');
         if (modal) modal.style.display = 'none';
     }
 
     function attachMarketEvents() {
-        const modal = document.getElementById('armyMarketModal');
+        let modal = document.getElementById('armyMarketModal');
         if (!modal) return;
         modal.querySelector('.close-market')?.addEventListener('click', hideMarket);
         document.getElementById('closeMarketBtn')?.addEventListener('click', hideMarket);
-        modal.addEventListener('click', (e) => { if(e.target === modal) hideMarket(); });
-        document.querySelectorAll('.buy-btn').forEach(btn => {
+        modal.addEventListener('click', (e) => { if (e.target === modal) hideMarket(); });
+        modal.querySelectorAll('.buy-btn').forEach(btn => {
             btn.addEventListener('click', (e) => {
                 e.stopPropagation();
                 buyTroop(btn.getAttribute('data-type'), 1);
             });
         });
-        document.querySelectorAll('.sell-btn').forEach(btn => {
+        modal.querySelectorAll('.sell-btn').forEach(btn => {
             btn.addEventListener('click', (e) => {
                 e.stopPropagation();
                 sellTroop(btn.getAttribute('data-type'), 1);
             });
         });
         document.getElementById('quickBuyMaxBtn')?.addEventListener('click', () => {
-            const hero = getSelectedHero();
+            let hero = getSelectedHero();
             if (hero) {
-                const infantry = basicTroops.find(t => t.id === 'infantry');
-                if(infantry) buyTroop('infantry', Math.floor(hero.gold / infantry.basePrice));
+                let infantry = basicTroops.find(t => t.id === 'infantry');
+                if (infantry) buyTroop('infantry', Math.floor(hero.gold / infantry.basePrice));
             }
         });
         document.getElementById('resetArmyBtn')?.addEventListener('click', () => {
-            const hero = getSelectedHero();
-            if(hero && confirm(`⚠️ Демобилизацията ще продаде цялата армия на ${hero.name} с 60% от стойността! Сигурни ли сте?`)) {
+            let hero = getSelectedHero();
+            if (hero && confirm(`⚠️ Демобилизацията ще продаде цялата армия на ${hero.name} с 60% от стойността! Сигурни ли сте?`)) {
                 let totalRefund = 0;
-                for(let t of allTroops) {
+                for (let t of allTroops) {
                     let cnt = hero.armyDetails[t.id] || 0;
-                    if(cnt) {
+                    if (cnt) {
                         totalRefund += Math.floor(t.basePrice * 0.6 * cnt);
                         hero.armyDetails[t.id] = 0;
                     }
@@ -627,36 +410,26 @@
                 alert(`Цялата армия на ${hero.name} е демобилизирана. Получихте ${totalRefund} злато.`);
             }
         });
-        // Табове
-        const tabs = modal.querySelectorAll('.tab-btn');
+        let tabs = modal.querySelectorAll('.tab-btn');
         tabs.forEach(btn => {
             btn.addEventListener('click', () => {
                 tabs.forEach(b => b.classList.remove('active'));
                 btn.classList.add('active');
-                const tabId = btn.getAttribute('data-tab');
+                let tabId = btn.getAttribute('data-tab');
                 document.getElementById('basic-tab').style.display = tabId === 'basic' ? 'grid' : 'none';
                 document.getElementById('fantasy-tab').style.display = tabId === 'fantasy' ? 'grid' : 'none';
             });
         });
-        // Селект за смяна на герой
-        const heroSelect = document.getElementById('heroSelect');
-        if (heroSelect) {
-            heroSelect.addEventListener('change', (e) => {
-                setSelectedHero(e.target.value);
-            });
-        }
-        // Затваряне с Esc
+        let heroSelect = document.getElementById('heroSelect');
+        if (heroSelect) heroSelect.addEventListener('change', (e) => setSelectedHero(e.target.value));
         document.addEventListener('keydown', function escHandler(e) {
             if (e.key === 'Escape') {
-                const modalEl = document.getElementById('armyMarketModal');
-                if (modalEl && modalEl.style.display === 'flex') {
-                    hideMarket();
-                }
+                let modalEl = document.getElementById('armyMarketModal');
+                if (modalEl && modalEl.style.display === 'flex') hideMarket();
             }
         });
     }
 
-    // --- Експорт на глобалния обект ---
     window.armyMarket = {
         show: showMarket,
         hide: hideMarket,
@@ -667,7 +440,6 @@
         getHero: getSelectedHero
     };
 
-    // Инициализация: първоначално зареждане на данните за избрания герой
-    const initialHero = getSelectedHero();
+    let initialHero = getSelectedHero();
     if (initialHero) initHero(initialHero);
 })();
