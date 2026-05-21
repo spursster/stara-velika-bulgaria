@@ -8,6 +8,32 @@
     <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Montserrat:wght@300;400;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
     <style>
+        /* Стиловете остават същите като в твоя index.html, добавяме само няколко нови */
+        #top-elite-bar {
+            display: flex;
+            gap: 12px;
+            overflow-x: auto;
+            padding: 8px 15px;
+            background: rgba(0,0,0,0.5);
+            border-bottom: 1px solid #d4af37;
+            white-space: nowrap;
+        }
+        .advisor-journal {
+            background: rgba(0,0,0,0.6);
+            border: 1px solid #d4af37;
+            border-radius: 8px;
+            padding: 8px;
+            margin: 10px 0;
+            max-height: 150px;
+            overflow-y: auto;
+            font-size: 11px;
+            color: #ccc;
+        }
+        #advisor-journal p {
+            margin: 3px 0;
+            border-left: 2px solid #ffaa44;
+            padding-left: 6px;
+        }
         #top-bar {
             display: flex !important;
             flex-wrap: wrap !important;
@@ -55,6 +81,8 @@
                 font-size: 10px !important;
                 letter-spacing: 0px !important;
             }
+            #top-elite-bar { padding: 5px 8px; gap: 6px; }
+            .elite-hero-card { min-width: 80px; padding: 4px 6px; font-size: 9px; }
         }
 
         #bottom-controls {
@@ -245,6 +273,9 @@
         </div>
     </header>
 
+    <!-- Лента на елита (топ 6 герои) -->
+    <div id="top-elite-bar" style="display: flex; gap: 8px; overflow-x: auto; padding: 6px 12px; background: rgba(0,0,0,0.4); border-bottom: 1px solid #d4af37;"></div>
+
     <main id="game-container">
         <aside id="sidebar-left">
             <div style="background: rgba(15,15,15,0.7); border: 1px solid #d4af37; padding: 15px; border-radius: 8px; text-align: center;">
@@ -262,6 +293,9 @@
                 </div>
                 <div id="eventsListContainer" style="display: flex; flex-direction: column; gap: 6px; padding: 5px 10px;"></div>
             </div>
+
+            <!-- Журнал на съветника (скрит, но използван от showAdvisorMsg) -->
+            <div id="advisor-journal" class="advisor-journal" style="display: none;"></div>
 
             <div style="text-align: center; padding: 40px; font-family: 'Cinzel', serif;">
                 <h1 style="color: #ffd700; font-size: 2.5rem; text-shadow: 0 4px 10px rgba(0,0,0,0.9); margin-bottom: 10px;">ВЕЛИКА БЪЛГАРИЯ</h1>
@@ -282,7 +316,7 @@
         </aside>
     </main>
 
-    <!-- МОДАЛИ -->
+    <!-- МОДАЛИ (същите) -->
     <div id="hero-rpg-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.75); backdrop-filter: blur(10px); z-index: 20000; overflow-y: auto;">
         <div style="position: relative; width: 90%; max-width: 900px; background: rgba(20,20,20,0.95); border: 2px solid #d4af37; margin: 40px auto; padding: 25px; color: #fff;">
             <button onclick="document.getElementById('hero-rpg-modal').style.display='none'" style="position: absolute; top: 15px; right: 15px; background: none; border: none; color: #ff4444; font-size: 24px; cursor: pointer;">✕</button>
@@ -340,7 +374,7 @@
     <script src="rivalry.js"></script>
     <script src="armyMarket.js"></script>
 
-    <!-- ГЛАВЕН СКРИПТ ЗА ЛЕТОПИС -->
+    <!-- ГЛАВЕН СКРИПТ ЗА ЛЕТОПИС И ИГРА -->
     <script>
     (function() {
         // ========== ИНИЦИАЛИЗАЦИЯ ==========
@@ -352,73 +386,40 @@
         const timeEl = document.getElementById('current-time-info');
         if (timeEl) timeEl.innerText = window.currentYear;
         
-        // Начални събития ако няма
+        // Начални събития
         if (window.worldEvents.length === 0) {
-            window.worldEvents.push({
-                id: Date.now(),
-                title: "🏛️ Основаване на Тракийското царство",
-                description: "Тракийските племена се обединяват",
-                icon: "🏰",
-                time: "480 г. пр.н.е."
-            });
-            window.worldEvents.push({
-                id: Date.now() + 1,
-                title: "⚔️ Подготовка за война",
-                description: "Персийската империя набира войски",
-                icon: "⚔️",
-                time: "480 г. пр.н.е."
-            });
-            window.worldEvents.push({
-                id: Date.now() + 2,
-                title: "🌾 Тракийски племена",
-                description: "Земите са населени с древни български прадеди",
-                icon: "🌾",
-                time: "480 г. пр.н.е."
-            });
+            window.worldEvents.push({ id: Date.now(), title: "🏛️ Основаване на Тракийското царство", description: "Тракийските племена се обединяват", icon: "🏰", time: "480 г. пр.н.е." });
+            window.worldEvents.push({ id: Date.now() + 1, title: "⚔️ Подготовка за война", description: "Персийската империя набира войски", icon: "⚔️", time: "480 г. пр.н.е." });
+            window.worldEvents.push({ id: Date.now() + 2, title: "🌾 Тракийски племена", description: "Земите са населени с древни български прадеди", icon: "🌾", time: "480 г. пр.н.е." });
         }
         
-        // ========== ФУНКЦИЯ ЗА РЕНДИРАНЕ ==========
         function displayEvents() {
             const container = document.getElementById('eventsListContainer');
             if (!container) return;
-            
             const events = window.worldEvents || [];
             const showCount = Math.min(7, events.length);
             const visibleEvents = events.slice(0, showCount);
             const remainingCount = events.length - showCount;
-            
             if (events.length === 0) {
                 container.innerHTML = '<div style="text-align: center; padding: 30px; color: #666;">⏳ Все още няма събития...</div>';
                 return;
             }
-            
             let html = '';
             for (let i = 0; i < visibleEvents.length; i++) {
                 const ev = visibleEvents[i];
                 const isRival = ev.isRivalAction || (ev.title && (ev.title.includes('⚔️') || ev.title.includes('🗡️') || ev.title.includes('🔥')));
-                html += `
-                    <div class="chronicle-event ${isRival ? 'rival-event' : ''}">
-                        <div class="chronicle-icon">${ev.icon || '📜'}</div>
-                        <div class="chronicle-text">
-                            <strong>${escapeHtml(ev.title || 'Без заглавие')}</strong> — ${escapeHtml(ev.description || '')}
-                        </div>
-                        <div class="chronicle-time">${escapeHtml(ev.time || '?')}</div>
-                    </div>
-                `;
+                html += `<div class="chronicle-event ${isRival ? 'rival-event' : ''}">
+                            <div class="chronicle-icon">${ev.icon || '📜'}</div>
+                            <div class="chronicle-text"><strong>${escapeHtml(ev.title || 'Без заглавие')}</strong> — ${escapeHtml(ev.description || '')}</div>
+                            <div class="chronicle-time">${escapeHtml(ev.time || '?')}</div>
+                         </div>`;
             }
-            
             if (remainingCount > 0) {
-                html += `
-                    <div style="text-align: center; margin-top: 10px; padding: 5px;">
-                        <button id="loadMoreEventsBtn" class="load-more-btn">
-                            📖 Зареди още ${remainingCount} събития
-                        </button>
-                    </div>
-                `;
+                html += `<div style="text-align: center; margin-top: 10px; padding: 5px;">
+                            <button id="loadMoreEventsBtn" class="load-more-btn">📖 Зареди още ${remainingCount} събития</button>
+                         </div>`;
             }
-            
             container.innerHTML = html;
-            
             const loadBtn = document.getElementById('loadMoreEventsBtn');
             if (loadBtn) {
                 loadBtn.onclick = function() {
@@ -426,15 +427,11 @@
                     for (let i = 0; i < events.length; i++) {
                         const ev = events[i];
                         const isRival = ev.isRivalAction || (ev.title && (ev.title.includes('⚔️') || ev.title.includes('🗡️') || ev.title.includes('🔥')));
-                        allHtml += `
-                            <div class="chronicle-event ${isRival ? 'rival-event' : ''}">
-                                <div class="chronicle-icon">${ev.icon || '📜'}</div>
-                                <div class="chronicle-text">
-                                    <strong>${escapeHtml(ev.title || 'Без заглавие')}</strong> — ${escapeHtml(ev.description || '')}
-                                </div>
-                                <div class="chronicle-time">${escapeHtml(ev.time || '?')}</div>
-                            </div>
-                        `;
+                        allHtml += `<div class="chronicle-event ${isRival ? 'rival-event' : ''}">
+                                        <div class="chronicle-icon">${ev.icon || '📜'}</div>
+                                        <div class="chronicle-text"><strong>${escapeHtml(ev.title || 'Без заглавие')}</strong> — ${escapeHtml(ev.description || '')}</div>
+                                        <div class="chronicle-time">${escapeHtml(ev.time || '?')}</div>
+                                    </div>`;
                     }
                     container.innerHTML = allHtml;
                 };
@@ -446,7 +443,6 @@
             return str.replace(/[&<>]/g, m => m === '&' ? '&amp;' : (m === '<' ? '&lt;' : '&gt;'));
         }
         
-        // ========== ДОБАВЯНЕ НА СЪБИТИЯ ==========
         window.addWorldEvent = function(title, description, icon, year) {
             const eventObj = {
                 id: Date.now(),
@@ -461,44 +457,20 @@
             displayEvents();
         };
         
-        // ========== ДЕЙСТВИЯ НА НЕЛЮБИМИ ГЕРОИ ==========
         window.addRivalActionToChronicle = function(rivalName, action, details) {
             const year = window.currentYear || "480 г. пр.н.е.";
             let message = "", icon = "⚔️", title = "";
-            
             switch(action) {
-                case 'attack':
-                    title = `⚔️ Атака от ${rivalName}`;
-                    message = `${rivalName} нападна вашите земи! ${details || ''}`;
-                    icon = "⚔️";
-                    break;
-                case 'spy':
-                    title = `🕵️ Шпионаж от ${rivalName}`;
-                    message = `${rivalName} изпрати шпиони! ${details || ''}`;
-                    icon = "🕵️";
-                    break;
-                case 'steal':
-                    title = `💰 Кражба от ${rivalName}`;
-                    message = `${rivalName} открадна ${details || 'ресурси'}!`;
-                    icon = "💰";
-                    break;
-                case 'alliance':
-                    title = `🤝 Съюз срещу вас`;
-                    message = `${rivalName} сключи съюз срещу вас! ${details || ''}`;
-                    icon = "🤝";
-                    break;
-                default:
-                    title = `📢 ${rivalName}`;
-                    message = `${rivalName} ${action} ${details || ''}`;
-                    icon = "📢";
+                case 'attack': title = `⚔️ Атака от ${rivalName}`; message = `${rivalName} нападна вашите земи! ${details || ''}`; icon = "⚔️"; break;
+                case 'spy': title = `🕵️ Шпионаж от ${rivalName}`; message = `${rivalName} изпрати шпиони! ${details || ''}`; icon = "🕵️"; break;
+                case 'steal': title = `💰 Кражба от ${rivalName}`; message = `${rivalName} открадна ${details || 'ресурси'}!`; icon = "💰"; break;
+                case 'alliance': title = `🤝 Съюз срещу вас`; message = `${rivalName} сключи съюз срещу вас! ${details || ''}`; icon = "🤝"; break;
+                default: title = `📢 ${rivalName}`; message = `${rivalName} ${action} ${details || ''}`; icon = "📢";
             }
-            
             window.addWorldEvent(title, message, icon, year);
         };
         
         window.addGameEvent = window.addWorldEvent;
-        
-        // ========== ИЗЧИСТВАНЕ ==========
         window.clearEventsChronicle = function() {
             if (confirm("Сигурни ли сте, че искате да изтриете целия летопис?")) {
                 window.worldEvents = [];
@@ -507,11 +479,10 @@
             }
         };
         
-        // ========== БУТОН ЗА ИЗЧИСТВАНЕ ==========
         const clearBtn = document.getElementById('clearChronicleFinalBtn');
         if (clearBtn) clearBtn.onclick = () => window.clearEventsChronicle();
         
-        // ========== ПРИХВАЩАНЕ НА RIVALRY СИСТЕМАТА ==========
+        // Прехващане на rivalry системата (ако има)
         if (window.rivalrySystem && typeof window.rivalrySystem.processRivalAction === 'function') {
             const originalProcess = window.rivalrySystem.processRivalAction;
             window.rivalrySystem.processRivalAction = function(rival, action, details) {
@@ -521,9 +492,49 @@
             };
         }
         
-        // ========== СТАРТИРАНЕ ==========
         displayEvents();
-        console.log("✅ Летописът е готов! Показва действия на герои и съперници.");
+        console.log("✅ Летописът е готов!");
+        
+        // ========== ГЛОБАЛНА ФУНКЦИЯ ЗА ВРЪЩАНЕ НАЗАД ==========
+        window.backToMainMenu = function() {
+            // Връща главния изглед на картата (ако съществува)
+            if (typeof window.openRegionsMap === 'function') {
+                window.openRegionsMap();
+            } else {
+                location.reload();
+            }
+        };
+        
+        // ========== ОСНОВЕН ХОД НА ИГРАТА ==========
+        if (typeof window.processTurn !== 'function') {
+            window.processTurn = function() {
+                console.log("⏳ Изпълняване на ход...");
+                // 1. Икономика на главния герой
+                if (typeof window.calculateEconomy === 'function') window.calculateEconomy();
+                else console.warn("calculateEconomy не е дефинирана");
+                // 2. Автономно развитие на не-любимите герои (дипломация)
+                if (typeof window.processClanDiplomacyAutomation === 'function') window.processClanDiplomacyAutomation();
+                // 3. Автономна експедиция (проверка на портал)
+                if (typeof window.advanceExpeditionsTurn === 'function') window.advanceExpeditionsTurn();
+                // 4. Автоматична атака от съперници (rivalry)
+                if (typeof window.checkRandomAttack === 'function') window.checkRandomAttack();
+                // 5. Превъртане на времето (ако има time.js)
+                if (typeof window.advanceGameTime === 'function') window.advanceGameTime();
+                else if (typeof window.nextTurn === 'function') window.nextTurn();
+                // 6. Обновяване на UI
+                if (typeof window.updateCharacterUI === 'function') window.updateCharacterUI(window.currentHero);
+                if (typeof window.renderSingleBar === 'function') window.renderSingleBar();
+                if (typeof window.renderTop6LeadersUI === 'function') window.renderTop6LeadersUI();
+                console.log("✅ Ходът завърши.");
+            };
+        }
+        
+        // Инициализация на лентата на елита
+        setTimeout(() => {
+            if (typeof window.renderTop6LeadersUI === 'function') window.renderTop6LeadersUI();
+            if (typeof window.initHeroBar === 'function') window.initHeroBar();
+            if (typeof window.initDiplomacy === 'function') window.initDiplomacy();
+        }, 500);
     })();
     </script>
     
@@ -544,7 +555,7 @@
     })();
     </script>
 
-    <!-- ПРЕМАХВАНЕ НА ПЛАВАЩИЯ ПАНЕЛ #autonomous-event-log (ДИНАМИЧНО) -->
+    <!-- ПРЕМАХВАНЕ НА ПЛАВАЩИЯ ПАНЕЛ #autonomous-event-log -->
     <script>
     (function() {
         function removeFloatingPanel() {
