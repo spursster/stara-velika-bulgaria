@@ -1,13 +1,12 @@
 /**
 ==========================================================================
 ПРОЕКТ: ВЕЛИКА БЪЛГАРИЯ
-ФАЙЛ: rivalry.js (СИСТЕМА ЗА СЛУЧАЙНИ НАПАДЕНИЯ МЕЖДУ ГЕРОИТЕ)
-СТАТУС: ВЕРСИЯ 2.0 - СЪБИТИЯТА ОТИВАТ В ЛЕТОПИСА, БЕЗ ПЛАВАЩ ПАНЕЛ
+ФАЙЛ: rivalry.js (ПЪЛЕН – УНИКАЛНИ ГЕРОИ, ЛЕТОПИС, БЕЗ ДУБЛИКАТИ)
 ==========================================================================
 */
 
 (function() {
-    console.log("🔥 Инициализация на системата за съперничество...");
+    console.log("🔥 Инициализация на системата за съперничество (уникални герои)...");
 
     const RIVALRY_CONFIG = {
         attackChance: 0.03,
@@ -22,12 +21,17 @@
     let lastAttackTurn = 0;
     let turnCounter = 0;
 
+    // ========== УНИКАЛНИ ВРАГОВЕ ==========
     function getEnemyHeroes() {
         let enemies = [];
-        if (window.worldData && window.worldData.clans) {
-            for (let key in window.worldData.clans) {
-                let clan = window.worldData.clans[key];
-                if (window.currentHero && clan.name !== window.currentHero.name && clan.isJoined !== true) {
+        if (!window.worldData || !window.worldData.clans) return enemies;
+        const seen = new Set();
+        for (let key in window.worldData.clans) {
+            let clan = window.worldData.clans[key];
+            if (window.currentHero && clan.name !== window.currentHero.name && clan.isJoined !== true) {
+                let id = clan.leaderName || clan.name || key;
+                if (!seen.has(id)) {
+                    seen.add(id);
                     enemies.push({
                         id: key,
                         name: clan.leaderName || clan.name || key,
@@ -41,31 +45,36 @@
         return enemies;
     }
 
+    // ========== УНИКАЛНИ ПРИЯТЕЛСКИ ГЕРОИ ==========
     function getPlayerHeroes(excludeMain = true) {
         let heroes = [];
-        if (window.worldData && window.worldData.clans) {
-            for (let key in window.worldData.clans) {
-                let clan = window.worldData.clans[key];
-                if (clan.isJoined === true) {
-                    if (excludeMain && window.currentHero && clan.name === window.currentHero.name) continue;
-                    heroes.push({
-                        id: key,
-                        name: clan.leaderName || clan.name || key,
-                        clan: clan,
-                        power: clan.heroPower || 100,
-                        army: clan.armySize || 200,
-                        xp: clan.xp || 0,
-                        skills: clan.skills || {},
-                        pet: clan.pet || null,
-                        inventory: clan.inventory || [],
-                        spouse: clan.spouse || null
-                    });
-                }
+        if (!window.worldData || !window.worldData.clans) return heroes;
+        const seen = new Set();
+        for (let key in window.worldData.clans) {
+            let clan = window.worldData.clans[key];
+            if (clan.isJoined === true) {
+                let id = clan.leaderName || clan.name || key;
+                if (seen.has(id)) continue;
+                if (excludeMain && window.currentHero && clan.name === window.currentHero.name) continue;
+                seen.add(id);
+                heroes.push({
+                    id: key,
+                    name: clan.leaderName || clan.name || key,
+                    clan: clan,
+                    power: clan.heroPower || 100,
+                    army: clan.armySize || 200,
+                    xp: clan.xp || 0,
+                    skills: clan.skills || {},
+                    pet: clan.pet || null,
+                    inventory: clan.inventory || [],
+                    spouse: clan.spouse || null
+                });
             }
         }
         return heroes;
     }
 
+    // ========== КРАЖБИ ==========
     function stealArtifact(victim, aggressor) {
         if (!victim.inventory || victim.inventory.length === 0) return false;
         const artifactIndex = Math.floor(Math.random() * victim.inventory.length);
@@ -135,7 +144,7 @@
         return result;
     }
 
-    // ========== НОВА ФУНКЦИЯ - ДОБАВЯНЕ В ЛЕТОПИСА (БЕЗ ПЛАВАЩ ПАНЕЛ) ==========
+    // ========== ДОБАВЯНЕ В ЛЕТОПИСА ==========
     function addAttackToChronicle(aggressor, victim, stolenInfo) {
         let stolenText = "";
         switch(stolenInfo.type) {
@@ -145,17 +154,13 @@
             case "skill": stolenText = `умение "${stolenInfo.item}" (Ниво ${stolenInfo.level})`; break;
             case "xp": stolenText = `${stolenInfo.amount} опит`; break;
         }
-        
         const year = window.currentYear || "480 г. пр.н.е.";
         const message = `${aggressor.name} нападна ${victim.name} и открадна ${stolenText}!`;
-        
-        // Добавяне в летописа
         if (window.addWorldEvent) {
             window.addWorldEvent(`⚔️ НАПАДЕНИЕ от ${aggressor.name}`, message, "⚔️", year);
         } else if (window.addGameEvent) {
             window.addGameEvent(`⚔️ НАПАДЕНИЕ от ${aggressor.name}`, message, "⚔️", year);
         } else {
-            // Ако няма функции за летопис, добавяме директно в масива
             if (!window.worldEvents) window.worldEvents = [];
             window.worldEvents.unshift({
                 id: Date.now(),
@@ -167,12 +172,12 @@
                 isRivalAction: true
             });
             if (window.worldEvents.length > 100) window.worldEvents.pop();
-            if (typeof displayEvents === 'function') displayEvents();
+            if (typeof window.displayEvents === 'function') window.displayEvents();
         }
-        
         console.log(`📜 [ЛЕТОПИС] ${message}`);
     }
 
+    // ========== ОСНОВНА АТАКА (СЛУЧАЙНА) ==========
     window.checkRandomAttack = function() {
         turnCounter++;
         if (turnCounter - lastAttackTurn < RIVALRY_CONFIG.cooldownTurns) return;
@@ -191,8 +196,6 @@
         if (!stolenInfo) return;
         
         lastAttackTurn = turnCounter;
-        
-        // Добавяне в летописа вместо плаващ панел
         addAttackToChronicle(aggressor, victim, stolenInfo);
         
         if (window.updateCharacterUI) window.updateCharacterUI(window.currentHero);
@@ -201,19 +204,17 @@
         console.log(`🔥 НАПАДЕНИЕ (${turnCounter} ход): ${aggressor.name} нападна ${victim.name} и открадна ${stolenInfo.type}`);
     };
 
+    // ========== ОТМЪЩЕНИЕ ==========
     window.startRevengeBattle = function(aggressor, victim, stolenInfo) {
         console.log(`⚔️ ЗАПОЧВА БИТКА ЗА ОТМЪЩЕНИЕ: ${victim.name} срещу ${aggressor.name}`);
-        
         if (window.addWorldEvent) {
             window.addWorldEvent(`⚔️ ОТМЪЩЕНИЕ`, `${victim.name} започва битка срещу ${aggressor.name}!`, "⚔️", window.currentYear);
         }
-        
         const playerHeroes = getPlayerHeroes(false);
         if (playerHeroes.length === 0) { 
             if (window.showAdvisorMsg) window.showAdvisorMsg("Нямате герой за отмъщение!");
             return; 
         }
-        
         if (playerHeroes.length === 1) {
             startOneVsOneBattle(playerHeroes[0], aggressor, victim, stolenInfo);
             return;
@@ -224,21 +225,16 @@
     function showHeroSelectionModal(heroes, aggressor, victim, stolenInfo) {
         const oldModal = document.getElementById('revenge-selection-modal');
         if (oldModal) oldModal.remove();
-        
         const modal = document.createElement('div');
         modal.id = 'revenge-selection-modal';
         modal.style.cssText = `position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.85); backdrop-filter:blur(8px); z-index:100001; display:flex; justify-content:center; align-items:center; font-family:'Cinzel',serif;`;
-        
         let heroesHtml = '<div style="background: #1a1a2e; border-radius: 24px; padding: 20px; max-width: 500px; width: 90%; border: 2px solid #c9a87b;"><h2 style="color: #ffdd99; text-align: center;">⚔️ ИЗБЕРИ ГЕРОЙ ЗА БИТКА ⚔️</h2><div style="display: flex; flex-direction: column; gap: 10px; margin: 20px 0;">';
-        
         heroes.forEach(hero => {
             heroesHtml += `<button class="revenge-hero-btn" data-id="${hero.id}" style="background: #2c1a0c; border: 1px solid #c9a87b; border-radius: 12px; padding: 12px; color: #ffdd99; cursor: pointer; text-align: left; display: flex; justify-content: space-between;"><span>⚔️ ${hero.name}</span><span>💪 ${hero.power} сила</span></button>`;
         });
-        
         heroesHtml += `<button id="cancel-revenge" style="background: #333; border: none; border-radius: 12px; padding: 12px; color: #aaa; cursor: pointer; margin-top: 10px;">❌ ОТКАЖИ</button></div>`;
         modal.innerHTML = heroesHtml;
         document.body.appendChild(modal);
-        
         document.querySelectorAll('.revenge-hero-btn').forEach(btn => {
             btn.onclick = () => {
                 const heroId = btn.getAttribute('data-id');
@@ -247,7 +243,6 @@
                 startOneVsOneBattle(selectedHero, aggressor, victim, stolenInfo);
             };
         });
-        
         document.getElementById('cancel-revenge').onclick = () => modal.remove();
     }
     
@@ -256,9 +251,7 @@
         const enemyPower = aggressor.power;
         const playerChance = playerPower / (playerPower + enemyPower);
         const isVictory = Math.random() < playerChance;
-        
         const year = window.currentYear || "480 г. пр.н.е.";
-        
         if (isVictory) {
             if (window.addWorldEvent) {
                 window.addWorldEvent(`🏆 ПОБЕДА В ОТМЪЩЕНИЕ`, `${playerHero.name} победи ${aggressor.name} и си върна откраднатото!`, "🏆", year);
@@ -270,13 +263,10 @@
             }
             if (window.showAdvisorMsg) window.showAdvisorMsg(`💀 Отмъщението се провали! ${victim.name} не успя да си върне откраднатото.`);
         }
-        
         if (window.updateCharacterUI) window.updateCharacterUI(window.currentHero);
         if (typeof window.renderSingleBar === 'function') window.renderSingleBar();
-        
         window.pendingAttack = null;
     }
 
-    console.log("✅ Системата за съперничество е инициализирана (3% шанс, 5 хода cooldown)");
-    console.log("📜 Събитията от нападения отиват директно в летописа!");
+    console.log("✅ Системата за съперничество е инициализирана (уникални герои).");
 })();
