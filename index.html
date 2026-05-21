@@ -439,17 +439,46 @@
         if (window.initializeHeroRPGData) window.initializeHeroRPGData(window.currentHero);
     }
 
-    // ---------- 6. ПРИНУДИТЕЛНО XP ПРИ ХОД ----------
-    const oldProcess = window.processTurn;
-    window.processTurn = function() {
-        if (oldProcess) oldProcess();
-        if (window.currentHero && window.gainHeroXP) {
-            window.gainHeroXP(window.currentHero, 15);
-            console.log("➕ +15 XP от редовен ход");
-        }
-        if (window.updateCharacterUI) window.updateCharacterUI(window.currentHero);
-        if (window.renderTop6LeadersUI) window.renderTop6LeadersUI();
-    };
+// ---------- 6. ОСНОВЕН ХОД НА ИГРАТА (АВТОНОМНИ ГЕРОИ + XP) ----------
+const oldProcess = window.processTurn;
+window.processTurn = function() {
+    // 1. Извикваме оригиналния processTurn (ако съществува)
+    if (oldProcess) oldProcess();
+    
+    // 2. Автономна икономика – дава XP, злато и войски на не-любимите герои
+    if (typeof window.calculateEconomy === 'function') {
+        window.calculateEconomy();
+        console.log("📊 Изпълнена автономна икономика.");
+    } else {
+        console.warn("⚠️ calculateEconomy не е дефинирана!");
+    }
+    
+    // 3. Автономна дипломация (развитие на купените лидери)
+    if (typeof window.processClanDiplomacyAutomation === 'function') {
+        window.processClanDiplomacyAutomation();
+    }
+    
+    // 4. Автономни експедиции (портали)
+    if (typeof window.advanceExpeditionsTurn === 'function') {
+        window.advanceExpeditionsTurn();
+    }
+    
+    // 5. Автоматична атака от съперници (rivalry)
+    if (typeof window.checkRandomAttack === 'function') {
+        window.checkRandomAttack();
+    }
+    
+    // 6. Допълнителен опит за активния герой (ако искаш да расте по-бързо)
+    if (window.currentHero && window.gainHeroXP) {
+        window.gainHeroXP(window.currentHero, 15);
+        console.log("➕ +15 XP за активния герой от редовен ход");
+    }
+    
+    // 7. Обновяване на интерфейса
+    if (window.updateCharacterUI) window.updateCharacterUI(window.currentHero);
+    if (window.renderTop6LeadersUI) window.renderTop6LeadersUI();
+    if (typeof window.renderSingleBar === 'function') window.renderSingleBar();
+};
 
     // ---------- 7. СЪКРОВИЩНИЦА ----------
     if (typeof window.toggleTreasury !== 'function') {
