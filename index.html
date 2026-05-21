@@ -328,7 +328,7 @@
 <script src="rivalry.js"></script>
 <script src="armyMarket.js"></script>
 
-<!-- ГЛАВЕН СКРИПТ (летопис + модално меню за събития) -->
+<!-- ГЛАВЕН СКРИПТ (летопис + модални менюта за събития и експедиции) -->
 <script>
 (function() {
     // ========== ИНИЦИАЛИЗАЦИЯ ==========
@@ -438,7 +438,7 @@
         };
     }
     
-    // МОДАЛНО МЕНЮ ЗА СЪБИТИЯ (без да презаписва картата)
+    // ========== МОДАЛНО МЕНЮ ЗА СЪБИТИЯ ==========
     if (typeof window.openEventsMenu === 'function') {
         const oldOpen = window.openEventsMenu;
         window.openEventsMenu = function() {
@@ -506,6 +506,53 @@
         };
     }
     
+    // ========== МОДАЛНО МЕНЮ ЗА ЕКСПЕДИЦИИ ==========
+    // Запазваме оригиналната функция, но я заместваме с модал, който показва информация за портала
+    if (typeof window.openExpeditionsMenu === 'function') {
+        const originalOpenExpeditions = window.openExpeditionsMenu;
+        window.openExpeditionsMenu = function() {
+            if (document.getElementById('expeditions-modal')) return;
+            const state = window.currentPortalState;
+            if (!state) {
+                alert("Порталната система не е готова.");
+                return;
+            }
+            const world = state.currentWorld;
+            const isOpen = state.isOpen;
+            const enemyLevel = state.enemyLevel;
+            const progress = (state.explorationProgress && state.explorationProgress[world.name]) || 0;
+            
+            const modal = document.createElement('div');
+            modal.id = 'expeditions-modal';
+            modal.style.cssText = `position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.85); backdrop-filter:blur(8px); z-index:100000; display:flex; align-items:center; justify-content:center; font-family:'Cinzel',serif;`;
+            modal.innerHTML = `
+                <div style="background:#1a1a2e; border:2px solid #d4af37; border-radius:24px; padding:25px; max-width:400px; width:90%; text-align:center;">
+                    <h2 style="color:#ffd700;">🌌 Мистични Експедиции</h2>
+                    <div style="margin:15px 0; text-align:left;">
+                        <div>🪐 Свят: <span style="color:#ffd700;">${world.name}</span></div>
+                        <div>📡 Статус: <span style="color:${isOpen ? '#00ffcc' : '#ff6666'};">${isOpen ? 'ОТВОРЕН' : 'ЗАТВОРЕН'}</span></div>
+                        <div>🔥 Опасност: Ниво ${enemyLevel}</div>
+                        <div>🧬 Същества: ${world.creatureType}</div>
+                        <div>📊 Проучване: ${progress}%</div>
+                    </div>
+                    ${isOpen ? `<button id="enter-portal-btn" style="background:#daa520; color:#000; border:none; padding:12px 20px; border-radius:40px; font-weight:bold; cursor:pointer; width:100%; margin-top:10px;">🌌 ВЛЕЗ В ПОРТАЛА</button>` : `<button style="background:#2c2c3a; border:1px solid #d4af37; color:#666; padding:12px 20px; border-radius:40px; width:100%; cursor:not-allowed;" disabled>🔒 Порталът е затворен</button>`}
+                    <button id="close-expeditions-modal" style="background:#2c2c3a; border:1px solid #d4af37; color:#ffd700; padding:8px 16px; border-radius:30px; cursor:pointer; width:100%; margin-top:15px;">Затвори</button>
+                </div>
+            `;
+            document.body.appendChild(modal);
+            if (isOpen) {
+                document.getElementById('enter-portal-btn').onclick = () => {
+                    modal.remove();
+                    if (typeof window.enterMysticPortal === 'function') window.enterMysticPortal();
+                    else alert("Функцията за влизане в портала не е налична.");
+                };
+            }
+            document.getElementById('close-expeditions-modal').onclick = () => modal.remove();
+            modal.addEventListener('click', (e) => { if (e.target === modal) modal.remove(); });
+        };
+    }
+    
+    // ========== ОСНОВЕН ХОД НА ИГРАТА ==========
     window.backToMainMenu = function() { if (typeof window.openRegionsMap === 'function') window.openRegionsMap(); else location.reload(); };
     
     if (typeof window.processTurn !== 'function') {
