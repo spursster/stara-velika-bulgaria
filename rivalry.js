@@ -1,7 +1,7 @@
 /**
 ==========================================================================
 ПРОЕКТ: ВЕЛИКА БЪЛГАРИЯ
-ФАЙЛ: rivalry.js (ПЪЛЕН – ДЕЙСТВИЯТА НА НЕЛЮБИМИТЕ ГЕРОИ СЕ ВИЖДАТ В ЛЕТОПИСА)
+ФАЙЛ: rivalry.js (ВЕРСИЯ 3.0 – ДЕЙСТВИЯТА СЕ ЗАПИСВАТ В ЛЕТОПИСА)
 ==========================================================================
 */
 
@@ -157,9 +157,8 @@
         const message = `${aggressor.name} нападна ${victim.name} и открадна ${stolenText}!`;
         if (typeof window.addWorldEvent === 'function') {
             window.addWorldEvent(`⚔️ НАПАДЕНИЕ от ${aggressor.name}`, message, "⚔️", year);
-        } else if (typeof window.addGameEvent === 'function') {
-            window.addGameEvent(`⚔️ НАПАДЕНИЕ от ${aggressor.name}`, message, "⚔️", year);
         } else {
+            // fallback, ако addWorldEvent не съществува (почти невъзможно, но за всеки случай)
             if (!window.worldEvents) window.worldEvents = [];
             window.worldEvents.unshift({
                 id: Date.now(),
