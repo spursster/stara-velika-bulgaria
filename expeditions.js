@@ -1,6 +1,6 @@
 /**
 МОДУЛ: МИСТИЧНИ ПОРТАЛИ И ЕКСПЕДИЦИИ – ВЕЛИКА БЪЛГАРИЯ
-ВЕРСИЯ: МОДАЛ С БУТОН ЗА ЗАТВАРЯНЕ
+СТАТУС: ОБНОВЕН – МОДАЛЕН ПРОЗОРЕЦ С РАБОТЕЩО ЗАТВАРЯНЕ
 */
 
 window.unknownWorldsDatabase = [
@@ -133,11 +133,9 @@ window.updatePortalContainerUI = function() {
     if (!container) {
         container = document.getElementById('sidebar-clans-portal');
         if (!container) {
-            const sidebar = document.body;
             container = document.createElement('div');
             container.id = 'sidebar-clans-portal';
-            let mainUI = document.getElementById('main-ui-wrapper') || document.body;
-            mainUI.appendChild(container);
+            document.body.appendChild(container);
         }
     }
     const state = window.currentPortalState;
@@ -220,7 +218,7 @@ window.enterMysticPortal = function() {
     }
 };
 
-// ========== МОДАЛЕН ПРОЗОРЕЦ ЗА ЕКСПЕДИЦИИ С БУТОН ЗА ЗАТВАРЯНЕ ==========
+// ========== МОДАЛЕН ПРОЗОРЕЦ ЗА ЕКСПЕДИЦИИ (С РАБОТЕЩО ЗАТВАРЯНЕ) ==========
 window.openExpeditionsMenu = function() {
     if (document.getElementById('expeditions-modal')) return;
     const state = window.currentPortalState;
@@ -238,7 +236,7 @@ window.openExpeditionsMenu = function() {
     modal.style.cssText = `position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); backdrop-filter: blur(8px); z-index: 200000; display: flex; align-items: center; justify-content: center; font-family: 'Cinzel', serif;`;
     modal.innerHTML = `
         <div style="background: #0a0a1a; border: 2px solid #d4af37; border-radius: 24px; padding: 25px; max-width: 400px; width: 90%; text-align: center; position: relative;">
-            <button id="close-expeditions-x" style="position: absolute; top: 10px; left: 10px; background: rgba(255,80,80,0.2); border: none; color: #ff8888; font-size: 20px; width: 32px; height: 32px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center;">✕</button>
+            <button class="close-modal-x" style="position: absolute; top: 10px; left: 10px; background: rgba(255,80,80,0.2); border: none; color: #ff8888; font-size: 20px; width: 32px; height: 32px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center;">✕</button>
             <h2 style="color: #ffd700;">🌌 Мистични Експедиции</h2>
             <div style="margin: 15px 0; text-align: left;">
                 <div>🪐 Свят: <span style="color: #ffd700;">${world.name}</span></div>
@@ -248,23 +246,18 @@ window.openExpeditionsMenu = function() {
                 <div>📊 Проучване: ${progress}%</div>
             </div>
             ${isOpen ? `<button id="enter-portal-btn" style="background:#daa520; color:#000; border:none; padding:12px 20px; border-radius:40px; font-weight:bold; cursor:pointer; width:100%; margin-top:10px;">🌌 ВЛЕЗ В ПОРТАЛА</button>` : `<button style="background:#2c2c3a; border:1px solid #d4af37; color:#666; padding:12px 20px; border-radius:40px; width:100%; cursor:not-allowed;" disabled>🔒 Порталът е затворен</button>`}
-            <button id="close-expeditions-footer" style="background:#2c2c3a; border:1px solid #d4af37; color:#ffd700; padding:8px 16px; border-radius:30px; cursor:pointer; width:100%; margin-top:15px;">Затвори</button>
+            <button class="close-modal-footer" style="background:#2c2c3a; border:1px solid #d4af37; color:#ffd700; padding:8px 16px; border-radius:30px; cursor:pointer; width:100%; margin-top:15px;">Затвори</button>
         </div>
     `;
     document.body.appendChild(modal);
     const closeModal = () => modal.remove();
-    modal.querySelector('#close-expeditions-x')?.addEventListener('click', closeModal);
-    modal.querySelector('#close-expeditions-footer')?.addEventListener('click', closeModal);
+    modal.querySelectorAll('.close-modal-x, .close-modal-footer').forEach(btn => btn.addEventListener('click', closeModal));
     modal.addEventListener('click', (e) => { if (e.target === modal) closeModal(); });
     if (isOpen) {
-        const enterBtn = modal.querySelector('#enter-portal-btn');
-        if (enterBtn) {
-            enterBtn.addEventListener('click', () => {
-                closeModal();
-                if (typeof window.enterMysticPortal === 'function') window.enterMysticPortal();
-                else console.error("enterMysticPortal не е дефинирана");
-            });
-        }
+        modal.querySelector('#enter-portal-btn')?.addEventListener('click', () => {
+            closeModal();
+            if (typeof window.enterMysticPortal === 'function') window.enterMysticPortal();
+        });
     }
 };
 
