@@ -2,7 +2,7 @@
 ==========================================================================
 ПРОЕКТ: ВЕЛИКА БЪЛГАРИЯ
 ФАЙЛ: database.js (БАЗА ДАННИ ЗА ГЕРОИ И ТАВЕРНА)
-СТАТУС: ОБНОВЕН - СИНХРОНИЗИРАН С НОВАТА СИСТЕМА (12 СЛОТА, worldData.clans)
+СТАТУС: ОБНОВЕН - СИНХРОНИЗИРАН С НОВАТА СИСТЕМА (12 СЛОТА, worldData.clans, armyDetails)
 ==========================================================================
 */
 
@@ -144,13 +144,13 @@ window.openTavernUI = function() {
     mainArea.innerHTML = htmlContent;
 };
 
-// ==================== НАЕМАНЕ НА ГЕРОЙ ОТ ТАВЕРНАТА ====================
+// ==================== НАЕМАНЕ НА ГЕРОЙ ОТ ТАВЕРНАТА (с armyDetails) ====================
 window.hireClanHero = function(heroName, clanName, cost, heroPower) {
     if (!window.currentHero) return;
     if (window.currentHero.gold >= cost) {
         window.currentHero.gold -= cost;
 
-        // Създаваме нов герой с 12 слота (синхронизиран с новата система)
+        // Създаваме нов герой с 12 слота, армията и armyDetails (за armyMarket и barracks)
         const newHero = {
             name: heroName,
             leaderName: heroName,
@@ -171,7 +171,22 @@ window.hireClanHero = function(heroName, clanName, cost, heroPower) {
             skills: { tactics: 0, endurance: 0, economy: 0, mysticism: 0, leadership: 0 },
             equipment: Array(12).fill(null),
             inventory: Array(12).fill(null),
-            pet: null
+            pet: null,
+            // Подробна армия за пазара и казармите
+            armyDetails: {
+                infantry: 100,   // начални пехотинци
+                archers: 50,
+                cavalry: 30,
+                elite: 20,
+                // нули за всички фентъзи единици (за да няма undefined)
+                vampire: 0, werewolf: 0, highelf: 0, troll: 0, dragon_young: 0,
+                wizard: 0, lich: 0, fairy_healer: 0, bear_ancient: 0, harpy: 0,
+                mermaid: 0, genie: 0, vampire_queen: 0, ice_dragon: 0, ogre_mage: 0,
+                dark_elf: 0, alpha_werewolf: 0, stone_troll: 0, archmage: 0, demon: 0,
+                ancient_vampire: 0, weird_witch: 0, griffin: 0, golden_dragon: 0,
+                elf_archer: 0, swamp_troll: 0, necromancer: 0, vampire_samurai: 0,
+                bronze_dragon: 0, titan: 0
+            }
         };
 
         if (window.initializeHeroRPGData) {
@@ -183,6 +198,11 @@ window.hireClanHero = function(heroName, clanName, cost, heroPower) {
         if (!window.worldData.clans) window.worldData.clans = {};
         const newId = "hero_" + Date.now() + "_" + Math.floor(Math.random() * 1000);
         window.worldData.clans[newId] = newHero;
+
+        // Ако съществува syncWithGame в armyMarket, синхронизираме
+        if (window.armyMarket && typeof window.armyMarket.sync === 'function') {
+            window.armyMarket.sync(newHero);
+        }
 
         // Обновяваме UI
         if (window.updateCharacterUI) window.updateCharacterUI(window.currentHero);
