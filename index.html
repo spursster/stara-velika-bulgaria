@@ -763,81 +763,174 @@
 })();
 </script>
 
-    <script>
-// ========== ФИКС ЗА ЛИПСВАЩА СЪКРОВИЩНИЦА ==========
-if (typeof window.toggleTreasury !== 'function') {
-    console.warn("⚠️ toggleTreasury липсва – използвам резервна функция");
-    window.toggleTreasury = function() {
-        // Ако няма items.js, създаваме прост изглед на инвентара от текущия герой
-        const hero = window.currentHero;
-        if (!hero) { alert("Няма активен герой!"); return; }
-        const inventory = hero.inventory || [];
-        let html = '<div style="background:#0a0a0a; border:2px solid #d4af37; padding:20px; max-width:500px; margin:auto; color:#fff;"><h3>Съкровищница</h3>';
-        if (inventory.length === 0) html += '<p>Няма артефакти.</p>';
-        else {
-            html += '<ul>';
-            inventory.forEach(item => {
-                html += `<li>${item.icon || '🏺'} ${item.name} (${item.era || 'неизвестен'})</li>`;
-            });
-            html += '</ul>';
-        }
-        html += '<button onclick="this.parentElement.parentElement.remove()" style="background:#d4af37; color:#000; padding:5px 10px;">Затвори</button></div>';
-        const modal = document.createElement('div');
-        modal.style.cssText = 'position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); display:flex; align-items:center; justify-content:center; z-index:100000;';
-        modal.innerHTML = html;
-        document.body.appendChild(modal);
-    };
-}
-
-// ========== ФИКС ЗА КАРТАТА – ДОБАВЯНЕ НА БУТОН ЗА ЗАТВАРЯНЕ ==========
-if (typeof window.openRegionsMap === 'function') {
-    const originalOpenMap = window.openRegionsMap;
+  <script>
+// ========== ПЪЛНО ПРЕЗАПИСВАНЕ НА КАРТАТА И СЪКРОВИЩНИЦАТА ==========
+(function() {
+    // ------------------- 1. КАРТА (regions) -------------------
     window.openRegionsMap = function() {
-        originalOpenMap();
-        setTimeout(() => {
-            const mapModal = document.getElementById('regions-map-overlay');
-            if (mapModal && !mapModal.querySelector('.custom-close-map-btn')) {
-                const closeBtn = document.createElement('button');
-                closeBtn.className = 'custom-close-map-btn';
-                closeBtn.innerHTML = '✕';
-                closeBtn.style.cssText = `
-                    position: absolute;
-                    top: 10px;
-                    left: 10px;
-                    width: 40px;
-                    height: 40px;
-                    background: rgba(0,0,0,0.6);
-                    border: 1px solid #ff4444;
-                    color: #ff4444;
-                    border-radius: 50%;
-                    font-size: 20px;
-                    cursor: pointer;
-                    z-index: 10001;
-                    display: flex;
-                    align-items: center;
-                    justify-content: center;
-                `;
-                closeBtn.onclick = () => {
-                    if (typeof window.closeRegionsMap === 'function') window.closeRegionsMap();
-                    else mapModal.remove();
-                };
-                mapModal.style.position = 'relative';
-                mapModal.appendChild(closeBtn);
-            }
-        }, 100);
-    };
-}
+        // Премахваме стар модал, ако има
+        const oldModal = document.getElementById('regions-map-overlay');
+        if (oldModal) oldModal.remove();
 
-// Допълнително: ако бутонът за следващ ход не извиква processTurn, оправяме
-if (typeof window.processTurn !== 'function') {
-    window.processTurn = function() {
-        console.log("⚠️ processTurn не е дефиниран – изпълнявам основни механики");
-        if (typeof window.calculateEconomy === 'function') window.calculateEconomy();
-        if (typeof window.advanceGameTime === 'function') window.advanceGameTime();
-        if (typeof window.updateCharacterUI === 'function') window.updateCharacterUI(window.currentHero);
-        if (typeof window.renderTop6LeadersUI === 'function') window.renderTop6LeadersUI();
+        // Вземаме регионите от worldData (или създаваме тестови)
+        let regions = [];
+        if (window.worldData && window.worldData.regions) {
+            regions = Object.values(window.worldData.regions);
+        } else {
+            // тестови региони, ако няма
+            regions = [
+                { name: "Мизия", armySize: 150, defenseLevel: 1 },
+                { name: "Тракия", armySize: 200, defenseLevel: 2 },
+                { name: "Македония", armySize: 250, defenseLevel: 3 },
+                { name: "Дакия", armySize: 180, defenseLevel: 2 }
+            ];
+        }
+
+        // Създаваме модала
+        const modal = document.createElement('div');
+        modal.id = 'regions-map-overlay';
+        modal.style.cssText = `
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.85);
+            backdrop-filter: blur(8px);
+            z-index: 200000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Cinzel', serif;
+            padding: 20px;
+            box-sizing: border-box;
+        `;
+
+        // Генерираме HTML за регионите
+        let regionsHtml = '';
+        regions.forEach(region => {
+            regionsHtml += `
+                <div style="background: rgba(20,20,30,0.6); border: 1px solid #d4af37; border-radius: 12px; padding: 10px; margin: 8px; text-align: center; width: 140px; display: inline-block;">
+                    <div style="font-size: 24px;">🏰</div>
+                    <div style="font-weight: bold; color: #ffd700;">${region.name}</div>
+                    <div style="font-size: 10px; color: #aaa;">⚔️ ${region.armySize || 0} войска</div>
+                    <div style="font-size: 10px; color: #aaa;">🛡️ Защита: ${region.defenseLevel || 1}</div>
+                    <button class="conquer-region-btn" data-region="${region.name}" style="background:#7a2e1a; border:none; padding: 4px 8px; border-radius: 20px; color:#ffdd99; margin-top:6px; cursor:pointer;">⚔️ Завладяй</button>
+                </div>
+            `;
+        });
+
+        modal.innerHTML = `
+            <div style="background: #0a0a1a; border: 2px solid #d4af37; border-radius: 24px; max-width: 90%; max-height: 90%; overflow-y: auto; padding: 20px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #d4af37; padding-bottom: 10px; margin-bottom: 15px;">
+                    <h2 style="color: #ffd700; margin:0;">🗺️ Карта на регионите</h2>
+                    <button id="close-map-btn" style="background: rgba(255,80,80,0.2); border: none; color: #ff8888; font-size: 24px; cursor: pointer; width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center;">✕</button>
+                </div>
+                <div style="display: flex; flex-wrap: wrap; justify-content: center; gap: 10px;">
+                    ${regionsHtml}
+                </div>
+                <div style="text-align: center; margin-top: 20px;">
+                    <button id="close-map-footer" style="background: #2c2c3a; border: 1px solid #d4af37; color: #ffd700; padding: 8px 20px; border-radius: 30px; cursor: pointer;">Затвори</button>
+                </div>
+            </div>
+        `;
+
+        document.body.appendChild(modal);
+
+        // Затваряне
+        const closeButtons = ['close-map-btn', 'close-map-footer'];
+        closeButtons.forEach(id => {
+            const btn = modal.querySelector('#' + id);
+            if (btn) btn.onclick = () => modal.remove();
+        });
+        modal.addEventListener('click', (e) => { if (e.target === modal) modal.remove(); });
+
+        // Бутони за завладяване (може да се свържат с вашата логика)
+        modal.querySelectorAll('.conquer-region-btn').forEach(btn => {
+            btn.onclick = (e) => {
+                e.stopPropagation();
+                const regionName = btn.getAttribute('data-region');
+                alert(`Функцията за завладяване на ${regionName} ще бъде добавена скоро.`);
+                // Тук може да извикате вашата логика за битка
+                modal.remove();
+            };
+        });
     };
-}
+
+    // ------------------- 2. СЪКРОВИЩНИЦА (treasury) -------------------
+    window.toggleTreasury = function() {
+        const hero = window.currentHero;
+        if (!hero) {
+            alert("Няма активен герой!");
+            return;
+        }
+        const inventory = hero.inventory || [];
+        // Премахваме стар модал, ако има
+        const oldModal = document.getElementById('treasury-custom-modal');
+        if (oldModal) oldModal.remove();
+
+        const modal = document.createElement('div');
+        modal.id = 'treasury-custom-modal';
+        modal.style.cssText = `
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.85);
+            backdrop-filter: blur(8px);
+            z-index: 200000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Cinzel', serif;
+            padding: 20px;
+            box-sizing: border-box;
+        `;
+
+        let itemsHtml = '';
+        if (inventory.length === 0) {
+            itemsHtml = '<div style="text-align:center; padding:20px; color:#aaa;">Все още нямате артефакти. Победете в битки, за да ги намерите.</div>';
+        } else {
+            itemsHtml = '<div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 12px;">';
+            inventory.forEach(item => {
+                itemsHtml += `
+                    <div style="background: rgba(20,20,30,0.6); border: 1px solid #d4af37; border-radius: 12px; padding: 8px; text-align: center;">
+                        <div style="font-size: 32px;">${item.icon || '🏺'}</div>
+                        <div style="font-size: 12px; color: #ffd700;">${item.name || 'Артефакт'}</div>
+                        <div style="font-size: 10px; color: #aaa;">${item.era || 'Неизвестна епоха'}</div>
+                        <div style="font-size: 9px; color: #88ff88;">+${item.bonus?.heroPower || 0} сила</div>
+                    </div>
+                `;
+            });
+            itemsHtml += '</div>';
+        }
+
+        modal.innerHTML = `
+            <div style="background: #0a0a1a; border: 2px solid #d4af37; border-radius: 24px; max-width: 90%; max-height: 90%; overflow-y: auto; padding: 20px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #d4af37; padding-bottom: 10px; margin-bottom: 15px;">
+                    <h2 style="color: #ffd700; margin:0;">🏺 Родова съкровищница</h2>
+                    <button id="close-treasury-btn" style="background: rgba(255,80,80,0.2); border: none; color: #ff8888; font-size: 24px; cursor: pointer; width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center;">✕</button>
+                </div>
+                ${itemsHtml}
+                <div style="text-align: center; margin-top: 20px;">
+                    <button id="close-treasury-footer" style="background: #2c2c3a; border: 1px solid #d4af37; color: #ffd700; padding: 8px 20px; border-radius: 30px; cursor: pointer;">Затвори</button>
+                </div>
+            </div>
+        `;
+
+        document.body.appendChild(modal);
+
+        const closeButtons = ['close-treasury-btn', 'close-treasury-footer'];
+        closeButtons.forEach(id => {
+            const btn = modal.querySelector('#' + id);
+            if (btn) btn.onclick = () => modal.remove();
+        });
+        modal.addEventListener('click', (e) => { if (e.target === modal) modal.remove(); });
+    };
+
+    console.log("✅ Картата и съкровищницата са презаписани с работещи версии.");
+})();
 </script>
 </body>
 </html>
