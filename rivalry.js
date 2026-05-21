@@ -2,7 +2,7 @@
 ==========================================================================
 ПРОЕКТ: ВЕЛИКА БЪЛГАРИЯ
 ФАЙЛ: rivalry.js (СИСТЕМА ЗА СЛУЧАЙНИ НАПАДЕНИЯ МЕЖДУ ГЕРОИТЕ)
-СТАТУС: ВЕРСИЯ 1.2 - ДОБАВЕНИ ЛОГОВЕ ЗА ПАНЕЛА
+СТАТУС: ВЕРСИЯ 2.0 - СЪБИТИЯТА ОТИВАТ В ЛЕТОПИСА, БЕЗ ПЛАВАЩ ПАНЕЛ
 ==========================================================================
 */
 
@@ -135,120 +135,92 @@
         return result;
     }
 
-    function showAttackNotification(aggressor, victim, stolenInfo) {
-        const oldNotify = document.getElementById('rivalry-notification');
-        if (oldNotify) oldNotify.remove();
-        
+    // ========== НОВА ФУНКЦИЯ - ДОБАВЯНЕ В ЛЕТОПИСА (БЕЗ ПЛАВАЩ ПАНЕЛ) ==========
+    function addAttackToChronicle(aggressor, victim, stolenInfo) {
         let stolenText = "";
         switch(stolenInfo.type) {
-            case "artifact": stolenText = `Артефакт "${stolenInfo.item.name}"`; break;
-            case "spouse": stolenText = `Съпруга "${stolenInfo.item}"`; break;
-            case "pet": stolenText = `Любимец`; break;
-            case "skill": stolenText = `Способност "${stolenInfo.item}" (Ниво ${stolenInfo.level})`; break;
+            case "artifact": stolenText = `артефакт "${stolenInfo.item.name}"`; break;
+            case "spouse": stolenText = `съпруга/съпруг "${stolenInfo.item}"`; break;
+            case "pet": stolenText = `домашен любимец`; break;
+            case "skill": stolenText = `умение "${stolenInfo.item}" (Ниво ${stolenInfo.level})`; break;
             case "xp": stolenText = `${stolenInfo.amount} опит`; break;
         }
         
-        // *** ДОБАВЕН ЛОГ В ПАНЕЛА ***
-        if (window.addAttackLog) {
-            window.addAttackLog(aggressor.name, victim.name, stolenText);
-        } else if (window.addEventLogMessage) {
-            window.addEventLogMessage(`⚔️ ${aggressor.name} нападна ${victim.name} и открадна ${stolenText}`, 'attack');
+        const year = window.currentYear || "480 г. пр.н.е.";
+        const message = `${aggressor.name} нападна ${victim.name} и открадна ${stolenText}!`;
+        
+        // Добавяне в летописа
+        if (window.addWorldEvent) {
+            window.addWorldEvent(`⚔️ НАПАДЕНИЕ от ${aggressor.name}`, message, "⚔️", year);
+        } else if (window.addGameEvent) {
+            window.addGameEvent(`⚔️ НАПАДЕНИЕ от ${aggressor.name}`, message, "⚔️", year);
+        } else {
+            // Ако няма функции за летопис, добавяме директно в масива
+            if (!window.worldEvents) window.worldEvents = [];
+            window.worldEvents.unshift({
+                id: Date.now(),
+                title: `⚔️ НАПАДЕНИЕ от ${aggressor.name}`,
+                description: message,
+                icon: "⚔️",
+                time: year,
+                timestamp: Date.now(),
+                isRivalAction: true
+            });
+            if (window.worldEvents.length > 100) window.worldEvents.pop();
+            // Опит за обновяване на дисплея
+            if (typeof displayEvents === 'function') displayEvents();
         }
         
-        const notification = document.createElement('div');
-        notification.id = 'rivalry-notification';
-        notification.style.cssText = `
-            position: fixed;
-            bottom: 20px;
-            right: 20px;
-            width: 320px;
-            background: linear-gradient(135deg, #2a0a0a, #1a0505);
-            border-left: 6px solid #ff3333;
-            border-radius: 12px;
-            padding: 15px;
-            color: #ffdd99;
-            font-family: 'Cinzel', serif;
-            z-index: 100000;
-            box-shadow: 0 0 20px rgba(255,0,0,0.3);
-            animation: slideInRight 0.3s ease;
-            backdrop-filter: blur(8px);
-        `;
-        notification.innerHTML = `
-            <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 10px;">
-                <div style="font-size: 32px;">🔥</div>
-                <div style="flex: 1;">
-                    <div style="font-weight: bold; color: #ff6666;">НАПАДЕНИЕ!</div>
-                    <div style="font-size: 12px;">${aggressor.name} нападна ${victim.name}</div>
-                </div>
-                <button id="close-notification" style="background: none; border: none; color: #ff6666; font-size: 18px; cursor: pointer;">✕</button>
-            </div>
-            <div style="background: rgba(0,0,0,0.5); border-radius: 8px; padding: 8px; margin-bottom: 12px; font-size: 11px;">
-                💢 Откраднато: ${stolenText}
-            </div>
-            <div style="display: flex; gap: 10px;">
-                <button id="revenge-btn" class="revenge-btn" style="flex: 1; background: #7a2e1a; border: none; padding: 8px; border-radius: 20px; color: #ffdd99; cursor: pointer; font-weight: bold;">⚔️ ОТМЪСТИ</button>
-                <button id="ignore-btn" style="flex: 1; background: #2c1a0c; border: none; padding: 8px; border-radius: 20px; color: #888; cursor: pointer;">🚫 ИГНОРИРАЙ</button>
-            </div>
-        `;
-        document.body.appendChild(notification);
-        
-        if (!document.getElementById('rivalry-animations')) {
-            const style = document.createElement('style');
-            style.id = 'rivalry-animations';
-            style.textContent = `
-                @keyframes slideInRight {
-                    from { transform: translateX(100%); opacity: 0; }
-                    to { transform: translateX(0); opacity: 1; }
-                }
-                @keyframes slideOutRight {
-                    from { transform: translateX(0); opacity: 1; }
-                    to { transform: translateX(100%); opacity: 0; }
-                }
-            `;
-            document.head.appendChild(style);
-        }
-        
-        document.getElementById('close-notification').onclick = () => {
-            notification.style.animation = 'slideOutRight 0.3s ease';
-            setTimeout(() => notification.remove(), 300);
-            window.pendingAttack = null;
-        };
-        document.getElementById('ignore-btn').onclick = () => {
-            notification.style.animation = 'slideOutRight 0.3s ease';
-            setTimeout(() => notification.remove(), 300);
-            window.pendingAttack = null;
-        };
-        document.getElementById('revenge-btn').onclick = () => {
-            notification.style.animation = 'slideOutRight 0.3s ease';
-            setTimeout(() => notification.remove(), 300);
-            window.startRevengeBattle(aggressor, victim, stolenInfo);
-        };
-        window.pendingAttack = { aggressor, victim, stolenInfo };
+        // Допълнителен лог в конзолата
+        console.log(`📜 [ЛЕТОПИС] ${message}`);
     }
+
+    // ========== ПРЕМАХНАТА ФУНКЦИЯ ЗА ПЛАВАЩ ПАНЕЛ ==========
+    // Старата функция showAttackNotification е напълно премахната!
+    // Събитията вече отиват директно в летописа.
 
     window.checkRandomAttack = function() {
         turnCounter++;
         if (turnCounter - lastAttackTurn < RIVALRY_CONFIG.cooldownTurns) return;
         if (window.pendingAttack) return;
         if (Math.random() > RIVALRY_CONFIG.attackChance) return;
+        
         const enemies = getEnemyHeroes();
         const playerHeroes = getPlayerHeroes(true);
+        
         if (enemies.length === 0 || playerHeroes.length < RIVALRY_CONFIG.minHeroesForAttack) return;
+        
         const aggressor = enemies[Math.floor(Math.random() * enemies.length)];
         const victim = playerHeroes[Math.floor(Math.random() * playerHeroes.length)];
         const stolenInfo = performTheft(victim.clan, aggressor.clan);
+        
         if (!stolenInfo) return;
+        
         lastAttackTurn = turnCounter;
-        showAttackNotification(aggressor, victim, stolenInfo);
+        
+        // Добавяне в летописа вместо плаващ панел
+        addAttackToChronicle(aggressor, victim, stolenInfo);
+        
         if (window.updateCharacterUI) window.updateCharacterUI(window.currentHero);
         if (typeof window.renderSingleBar === 'function') window.renderSingleBar();
+        
         console.log(`🔥 НАПАДЕНИЕ (${turnCounter} ход): ${aggressor.name} нападна ${victim.name} и открадна ${stolenInfo.type}`);
     };
 
     window.startRevengeBattle = function(aggressor, victim, stolenInfo) {
         console.log(`⚔️ ЗАПОЧВА БИТКА ЗА ОТМЪЩЕНИЕ: ${victim.name} срещу ${aggressor.name}`);
+        
+        // Добавяне в летописа за начало на отмъщението
+        if (window.addWorldEvent) {
+            window.addWorldEvent(`⚔️ ОТМЪЩЕНИЕ`, `${victim.name} започва битка срещу ${aggressor.name}!`, "⚔️", window.currentYear);
+        }
+        
         const playerHeroes = getPlayerHeroes(false);
-        if (playerHeroes.length === 0) { alert("Нямате герой!"); return; }
+        if (playerHeroes.length === 0) { 
+            if (window.showAdvisorMsg) window.showAdvisorMsg("Нямате герой за отмъщение!");
+            return; 
+        }
+        
         if (playerHeroes.length === 1) {
             startOneVsOneBattle(playerHeroes[0], aggressor, victim, stolenInfo);
             return;
@@ -259,16 +231,21 @@
     function showHeroSelectionModal(heroes, aggressor, victim, stolenInfo) {
         const oldModal = document.getElementById('revenge-selection-modal');
         if (oldModal) oldModal.remove();
+        
         const modal = document.createElement('div');
         modal.id = 'revenge-selection-modal';
         modal.style.cssText = `position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.85); backdrop-filter:blur(8px); z-index:100001; display:flex; justify-content:center; align-items:center; font-family:'Cinzel',serif;`;
+        
         let heroesHtml = '<div style="background: #1a1a2e; border-radius: 24px; padding: 20px; max-width: 500px; width: 90%; border: 2px solid #c9a87b;"><h2 style="color: #ffdd99; text-align: center;">⚔️ ИЗБЕРИ ГЕРОЙ ЗА БИТКА ⚔️</h2><div style="display: flex; flex-direction: column; gap: 10px; margin: 20px 0;">';
+        
         heroes.forEach(hero => {
             heroesHtml += `<button class="revenge-hero-btn" data-id="${hero.id}" style="background: #2c1a0c; border: 1px solid #c9a87b; border-radius: 12px; padding: 12px; color: #ffdd99; cursor: pointer; text-align: left; display: flex; justify-content: space-between;"><span>⚔️ ${hero.name}</span><span>💪 ${hero.power} сила</span></button>`;
         });
+        
         heroesHtml += `<button id="cancel-revenge" style="background: #333; border: none; border-radius: 12px; padding: 12px; color: #aaa; cursor: pointer; margin-top: 10px;">❌ ОТКАЖИ</button></div>`;
         modal.innerHTML = heroesHtml;
         document.body.appendChild(modal);
+        
         document.querySelectorAll('.revenge-hero-btn').forEach(btn => {
             btn.onclick = () => {
                 const heroId = btn.getAttribute('data-id');
@@ -277,6 +254,7 @@
                 startOneVsOneBattle(selectedHero, aggressor, victim, stolenInfo);
             };
         });
+        
         document.getElementById('cancel-revenge').onclick = () => modal.remove();
     }
     
@@ -285,17 +263,29 @@
         const enemyPower = aggressor.power;
         const playerChance = playerPower / (playerPower + enemyPower);
         const isVictory = Math.random() < playerChance;
+        
+        const year = window.currentYear || "480 г. пр.н.е.";
+        
         if (isVictory) {
-            alert(`🏆 ПОБЕДА! ${playerHero.name} победи ${aggressor.name}!`);
+            // Победа - добавяне в летописа
+            if (window.addWorldEvent) {
+                window.addWorldEvent(`🏆 ПОБЕДА В ОТМЪЩЕНИЕ`, `${playerHero.name} победи ${aggressor.name} и си върна откраднатото!`, "🏆", year);
+            }
             if (window.showAdvisorMsg) window.showAdvisorMsg(`🏆 Отмъщението бе успешно! ${victim.name} си върна откраднатото!`);
-            if (window.updateCharacterUI) window.updateCharacterUI(window.currentHero);
-            if (typeof window.renderSingleBar === 'function') window.renderSingleBar();
         } else {
-            alert(`💀 ЗАГУБА! ${playerHero.name} загуби от ${aggressor.name}!`);
+            // Загуба - добавяне в летописа
+            if (window.addWorldEvent) {
+                window.addWorldEvent(`💀 ПРОВАЛЕНО ОТМЪЩЕНИЕ`, `${playerHero.name} загуби от ${aggressor.name}!`, "💀", year);
+            }
             if (window.showAdvisorMsg) window.showAdvisorMsg(`💀 Отмъщението се провали! ${victim.name} не успя да си върне откраднатото.`);
         }
+        
+        if (window.updateCharacterUI) window.updateCharacterUI(window.currentHero);
+        if (typeof window.renderSingleBar === 'function') window.renderSingleBar();
+        
         window.pendingAttack = null;
     }
 
-    console.log("✅ Системата за съперничество е инициализирана (3% шанс, 5 хода cooldown) + логове!");
+    console.log("✅ Системата за съперничество е инициализирана (3% шанс, 5 хода cooldown)");
+    console.log("📜 Събитията от нападения отиват директно в летописа!");
 })();
