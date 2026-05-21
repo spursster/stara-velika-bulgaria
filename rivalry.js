@@ -1,10 +1,9 @@
 /**
 ==========================================================================
 ПРОЕКТ: ВЕЛИКА БЪЛГАРИЯ
-ФАЙЛ: rivalry.js (ВЕРСИЯ 3.0 – ДЕЙСТВИЯТА СЕ ЗАПИСВАТ В ЛЕТОПИСА)
+ФАЙЛ: rivalry.js (ВЕРСИЯ 3.0 – ДЕЙСТВИЯТА В ЛЕТОПИСА)
 ==========================================================================
 */
-
 (function() {
     console.log("🔥 Инициализация на системата за съперничество (с летопис)...");
 
@@ -21,7 +20,6 @@
     let lastAttackTurn = 0;
     let turnCounter = 0;
 
-    // ========== УНИКАЛНИ ВРАГОВЕ (без дублиране) ==========
     function getEnemyHeroes() {
         let enemies = [];
         if (!window.worldData || !window.worldData.clans) return enemies;
@@ -73,7 +71,6 @@
         return heroes;
     }
 
-    // ========== КРАЖБИ ==========
     function stealArtifact(victim, aggressor) {
         if (!victim.inventory || victim.inventory.length === 0) return false;
         const artifactIndex = Math.floor(Math.random() * victim.inventory.length);
@@ -143,7 +140,6 @@
         return result;
     }
 
-    // ========== ДОБАВЯНЕ В ЛЕТОПИСА (чрез addWorldEvent) ==========
     function addAttackToChronicle(aggressor, victim, stolenInfo) {
         let stolenText = "";
         switch(stolenInfo.type) {
@@ -158,7 +154,6 @@
         if (typeof window.addWorldEvent === 'function') {
             window.addWorldEvent(`⚔️ НАПАДЕНИЕ от ${aggressor.name}`, message, "⚔️", year);
         } else {
-            // fallback, ако addWorldEvent не съществува (почти невъзможно, но за всеки случай)
             if (!window.worldEvents) window.worldEvents = [];
             window.worldEvents.unshift({
                 id: Date.now(),
@@ -175,34 +170,25 @@
         console.log(`📜 [ЛЕТОПИС] ${message}`);
     }
 
-    // ========== ОСНОВНА АТАКА (СЛУЧАЙНА) ==========
     window.checkRandomAttack = function() {
         turnCounter++;
         if (turnCounter - lastAttackTurn < RIVALRY_CONFIG.cooldownTurns) return;
         if (window.pendingAttack) return;
         if (Math.random() > RIVALRY_CONFIG.attackChance) return;
-        
         const enemies = getEnemyHeroes();
         const playerHeroes = getPlayerHeroes(true);
-        
         if (enemies.length === 0 || playerHeroes.length < RIVALRY_CONFIG.minHeroesForAttack) return;
-        
         const aggressor = enemies[Math.floor(Math.random() * enemies.length)];
         const victim = playerHeroes[Math.floor(Math.random() * playerHeroes.length)];
         const stolenInfo = performTheft(victim.clan, aggressor.clan);
-        
         if (!stolenInfo) return;
-        
         lastAttackTurn = turnCounter;
         addAttackToChronicle(aggressor, victim, stolenInfo);
-        
         if (window.updateCharacterUI) window.updateCharacterUI(window.currentHero);
         if (typeof window.renderSingleBar === 'function') window.renderSingleBar();
-        
         console.log(`🔥 НАПАДЕНИЕ (${turnCounter} ход): ${aggressor.name} нападна ${victim.name} и открадна ${stolenInfo.type}`);
     };
 
-    // ========== ОТМЪЩЕНИЕ (също добавя в летописа) ==========
     window.startRevengeBattle = function(aggressor, victim, stolenInfo) {
         console.log(`⚔️ ЗАПОЧВА БИТКА ЗА ОТМЪЩЕНИЕ: ${victim.name} срещу ${aggressor.name}`);
         if (window.addWorldEvent) {
