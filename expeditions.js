@@ -1,10 +1,10 @@
 /**
 МОДУЛ: МИСТИЧНИ ПОРТАЛИ И ЕКСПЕДИЦИИ - Велика България
-СТАТУС: ОБНОВЕН - ДОБАВЕНА АВТОНОМНА ЕКСПЕДИЦИЯ + ЛОГОВЕ
+ВЕРСИЯ: 2.0 - ПЪЛНА СИНХРОНИЗАЦИЯ С ЛЕТОПИСА И МУЛТИ-ГЕРОЙ СИСТЕМАТА
 */
 
 // 1. База данни с 50 Неизвестни свята
-window.unknownWorldsDatabase = [
+window.unknownWorldsDatabase = window.unknownWorldsDatabase || [
     { name: "Огненият Асгард", creatureType: "Плазмени Елементали", petName: "Искрящ Феникс", petBonus: "Намалява цената на войската в Казармите с 15%" },
     { name: "Ледената пустош на Волос", creatureType: "Мразовити Великани", petName: "Полярен Вълк", petBonus: "+15% пасивен добив на злато от данъци" },
     { name: "Мъртвите полета на Аид", creatureType: "Некротични Сенки", petName: "Призрачен Гарван", petBonus: "+20% бонус при дипломатически преговори" },
@@ -40,12 +40,30 @@ if (window.unknownWorldsDatabase.length < 50) {
 }
 
 // Глобално състояние на текущата експедиция
-window.currentPortalState = {
-    currentWorld: window.unknownWorldsDatabase[0],
-    isOpen: false,
-    explorationProgress: {},
-    enemyLevel: 1
-};
+if (!window.currentPortalState) {
+    window.currentPortalState = {
+        currentWorld: window.unknownWorldsDatabase[0],
+        isOpen: false,
+        explorationProgress: {},
+        enemyLevel: 1
+    };
+}
+
+// Инициализираме прогреса за всички светове (ако липсва)
+for (let world of window.unknownWorldsDatabase) {
+    if (window.currentPortalState.explorationProgress[world.name] === undefined) {
+        window.currentPortalState.explorationProgress[world.name] = 0;
+    }
+}
+
+// ==================== ПОМОЩНИ ФУНКЦИИ ЗА ЛЕТОПИС ====================
+function addChronicleEvent(title, message, icon, year) {
+    if (window.addWorldEvent) {
+        window.addWorldEvent(title, message, icon, year || window.currentYear);
+    } else {
+        console.log(`📜 ${title}: ${message}`);
+    }
+}
 
 // ==================== ИНДИКАТОР ЗА ПОРТАЛ ====================
 function createPortalIndicator() {
@@ -73,13 +91,11 @@ function createPortalIndicator() {
 window.showPortalIndicator = function() {
     const ind = document.getElementById('portal-indicator');
     if (ind) ind.style.display = 'inline-block';
-    console.log("🔴 Индикатор за портал: ПОКАЗАН");
 };
 
 window.hidePortalIndicator = function() {
     const ind = document.getElementById('portal-indicator');
     if (ind) ind.style.display = 'none';
-    console.log("🔴 Индикатор за портал: СКРИТ");
 };
 
 // ==================== АВТОНОМНА БИТКА ЗА НЕ-ЛЮБИМИТЕ ГЕРОИ ====================
@@ -100,24 +116,26 @@ function autoBattleForHero(hero, portalWorld, enemyLevel) {
         else hero.xp = (hero.xp || 0) + xpGain;
         hero.gold = (hero.gold || 0) + goldGain;
         
-        // *** ДОБАВЕН ЛОГ ***
-        if (window.addPortalLog) window.addPortalLog(hero.leaderName || hero.name, portalWorld.name, true);
-        
-        if (window.showAdvisorMsg && Math.random() < 0.15) {
-            window.showAdvisorMsg(`✨ ${hero.name} успешно премина през портала "${portalWorld.name}"! +${xpGain} XP, +${goldGain} злато.`);
+        // Синхронизация с armyDetails (ако има)
+        if (window.armyMarket && typeof window.armyMarket.sync === 'function') {
+            window.armyMarket.sync(hero);
         }
+        
+        addChronicleEvent(`🌌 ${hero.name} премина портала`, `${hero.name} успешно премина през "${portalWorld.name}"! +${xpGain} XP, +${goldGain} злато.`, "🌌");
         return true;
     } else {
         const lossPercent = 0.2 + Math.random() * 0.3;
-        hero.armySize = Math.max(10, Math.floor((hero.armySize || 200) * (1 - lossPercent)));
-        hero.currentArmy = hero.armySize;
+        const newArmy = Math.max(10, Math.floor((hero.armySize || 200) * (1 - lossPercent)));
+        hero.armySize = newArmy;
+        hero.currentArmy = newArmy;
         
-        // *** ДОБАВЕН ЛОГ ***
-        if (window.addPortalLog) window.addPortalLog(hero.leaderName || hero.name, portalWorld.name, false);
-        
-        if (window.showAdvisorMsg && Math.random() < 0.1) {
-            window.showAdvisorMsg(`💀 ${hero.name} не успя в портала "${portalWorld.name}"! Загуби ${Math.floor(lossPercent * 100)}% от армията си.`);
+        // Ако има armyDetails, намаляваме пропорционално пехотинците
+        if (hero.armyDetails && hero.armyDetails.infantry) {
+            let reduction = Math.floor(hero.armyDetails.infantry * lossPercent);
+            hero.armyDetails.infantry = Math.max(0, hero.armyDetails.infantry - reduction);
         }
+        
+        addChronicleEvent(`💀 ${hero.name} не успя в портала`, `${hero.name} се провали в "${portalWorld.name}"! Загуби ${Math.floor(lossPercent * 100)}% от армията си.`, "💀");
         return false;
     }
 }
@@ -130,6 +148,15 @@ function attemptAutonomousPortalEntry() {
     let favoriteIds = new Set();
     if (window.favoriteHeroes && typeof window.favoriteHeroes.forEach === 'function') {
         window.favoriteHeroes.forEach(id => favoriteIds.add(id));
+    }
+    
+    // Проверка и за isFavoriteInBarracks
+    if (window.worldData.clans) {
+        for (let key in window.worldData.clans) {
+            if (window.worldData.clans[key].isFavoriteInBarracks === true) {
+                favoriteIds.add(key);
+            }
+        }
     }
     
     if (Math.random() > 0.25) return;
@@ -153,9 +180,7 @@ function attemptAutonomousPortalEntry() {
     if (isVictory) {
         if (Math.random() < 0.1 && !randomHero.pet) {
             randomHero.pet = portalWorld.petName;
-            if (window.showAdvisorMsg) {
-                window.showAdvisorMsg(`🎉 ${randomHero.name} опитоми ${portalWorld.petName} от портала "${portalWorld.name}"!`);
-            }
+            addChronicleEvent(`🐾 ${randomHero.name} опитоми любимец`, `${randomHero.name} опитоми ${portalWorld.petName} от портала "${portalWorld.name}"!`, "🐾");
         }
         
         if (!window.currentPortalState.explorationProgress[portalWorld.name]) {
@@ -280,9 +305,7 @@ window.enterMysticPortal = function() {
         isPortalWorld: true
     };
 
-    if (window.showAdvisorMsg) {
-        window.showAdvisorMsg(`🌌 Преминаване през пространството! Петицата навлиза в "${state.currentWorld.name}"!`);
-    }
+    addChronicleEvent(`🌌 Преминаване през портала`, `Петицата навлиза в "${state.currentWorld.name}"!`, "🌌");
 
     state.isOpen = false;
     window.updatePortalContainerUI();
@@ -290,44 +313,34 @@ window.enterMysticPortal = function() {
     if (window.startBattle) {
         window.startBattle(portalTargetRegion);
 
+        // Запазваме оригиналния endGroupBattle, ако съществува
         let originalEndGroupBattle = window.endGroupBattle;
+        
         window.endGroupBattle = function(isVictory, reason) {
             if (originalEndGroupBattle) originalEndGroupBattle(isVictory, reason);
 
             if (isVictory) {
                 let currentWorldName = state.currentWorld.name;
                 state.explorationProgress[currentWorldName] = Math.min(100, (state.explorationProgress[currentWorldName] || 0) + 10);
-
-                let logDiv = document.getElementById('heroes-battle-log');
-                let portalBonusLog = `<div style="color: #8a2be2; font-weight: bold; margin-top: 10px; border-top: 1px dashed #8a2be2; padding-top: 8px;">🌌 РЕЗУЛТАТ ОТ ЕКСПЕДИЦИЯТА:</div>`;
-                portalBonusLog += `• Колонизацията на "${currentWorldName}" достигна <b style="color:#fff;">${state.explorationProgress[currentWorldName]}%</b>!<br>`;
+                
+                addChronicleEvent(`🌌 Резултат от експедицията`, `Колонизацията на "${currentWorldName}" достигна ${state.explorationProgress[currentWorldName]}%!`, "🌌");
 
                 let diceRoll = Math.floor(Math.random() * 100) + 1;
                 if (diceRoll === 77) {
-                    if (window.currentBattleState && window.currentBattleState.group) {
-                        let luckyHero = window.currentBattleState.group.find(h => h.currentArmy > 0);
-                        if (luckyHero) {
-                            luckyHero.pet = state.currentWorld.petName;
-                            luckyHero.petBonusDescription = state.currentWorld.petBonus;
-
-                            if (window.worldData && window.worldData.clans && window.worldData.clans[luckyHero.clan]) {
-                                window.worldData.clans[luckyHero.clan].pet = state.currentWorld.petName;
-                                window.worldData.clans[luckyHero.clan].socialPetBonus = state.currentWorld.petBonus;
-                            }
-
-                            portalBonusLog += `<span style="color: #ffd700; font-size: 14px; font-weight: bold;"> ЛЕГЕНДАРЕН КЪСМЕТ! [${luckyHero.name}] улови и опитоми: "${state.currentWorld.petName}"!<br>Пасивен бонус: ${state.currentWorld.petBonus}</span><br>`;
+                    if (window.currentHero) {
+                        let luckyHero = window.currentHero;
+                        luckyHero.pet = state.currentWorld.petName;
+                        
+                        if (window.worldData && window.worldData.clans && window.worldData.clans[luckyHero.clan]) {
+                            window.worldData.clans[luckyHero.clan].pet = state.currentWorld.petName;
                         }
+                        
+                        addChronicleEvent(`🐾 ЛЕГЕНДАРЕН КЪСМЕТ!`, `${luckyHero.name} улови и опитоми "${state.currentWorld.petName}"! Бонус: ${state.currentWorld.petBonus}`, "🐾");
                     }
-                } else {
-                    portalBonusLog += `<span style="color: #666; font-style: italic;">• Световната фауна се изплаши и избяга. (1% шанс за улавяне на любимец не се задейства този път).</span><br>`;
-                }
-
-                if (logDiv) {
-                    logDiv.innerHTML += portalBonusLog;
-                    logDiv.scrollTop = logDiv.scrollHeight;
                 }
             }
 
+            // Възстановяваме оригиналната функция
             window.endGroupBattle = originalEndGroupBattle;
             window.updatePortalContainerUI();
         };
@@ -382,6 +395,7 @@ window.openExpeditionsMenu = function() {
     }
 };
 
+// Стартиране на индикатора и контейнера след зареждане на DOM
 setTimeout(() => {
     createPortalIndicator();
     window.updatePortalContainerUI();
