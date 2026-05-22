@@ -1,7 +1,13 @@
 /**
 МОДУЛ: МИСТИЧНИ ПОРТАЛИ И ЕКСПЕДИЦИИ – ВЕЛИКА БЪЛГАРИЯ
-СТАТУС: КОРИГИРАН – РАБОТИ С НОВАТА БОЙНА СИСТЕМА
+СТАТУС: ФИНАЛНО КОРИГИРАН
 */
+
+// Дефиниране на липсващата функция addPortalLog, за да няма грешки
+window.addPortalLog = window.addPortalLog || function(heroName, worldName, isVictory) {
+    // Може да се добави реална имплементация, ако е необходимо
+    console.log(`[PortalLog] ${heroName} ${isVictory ? 'победи' : 'загуби'} в ${worldName}`);
+};
 
 window.unknownWorldsDatabase = [
     { name: "Огненият Асгард", creatureType: "Плазмени Елементали", petName: "Искрящ Феникс", petBonus: "Намалява цената на войската в Казармите с 15%" },
@@ -86,6 +92,8 @@ function autoBattleForHero(hero, portalWorld, enemyLevel) {
         const lossPercent = 0.2 + Math.random() * 0.3;
         hero.armySize = Math.max(10, Math.floor((hero.armySize || 200) * (1 - lossPercent)));
         hero.currentArmy = hero.armySize;
+        // Синхронизиране на армията след загуба
+        if (window.ensureCompleteArmyDetails) window.ensureCompleteArmyDetails(hero);
         if (window.addPortalLog) window.addPortalLog(hero.leaderName || hero.name, portalWorld.name, false);
         return false;
     }
