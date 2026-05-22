@@ -1,7 +1,7 @@
 /**
 ==========================================================================
 ПРОЕКТ: ВЕЛИКА БЪЛГАРИЯ
-ФАЙЛ: logic.js (КОРИГИРАН – АКТИВЕН ГЕРОЙ В ЛЮБИМИ)
+ФАЙЛ: logic.js (КОРИГИРАН – АКТИВЕН ГЕРОЙ В ЛЮБИМИ + ПРОЦЕДУРНИ РЕГИОНИ)
 ==========================================================================
 */
 
@@ -51,21 +51,26 @@ window.startFreshGameLogic = function() {
         equipment: Array(12).fill(null),
         skills: { tactics: 0, endurance: 0, economy: 0, mysticism: 0, leadership: 0 },
         inventory: Array(12).fill(null),
-        isFavoriteInBarracks: true  // *** Активният герой да е любим по подразбиране ***
+        isFavoriteInBarracks: true
     };
 
     window.unlockedLeaders = [window.currentHero];
 
-    // *** ФИКС: Гарантираме, че worldData.clans съществува и съдържа активния герой ***
     if (!window.worldData) window.worldData = {};
     if (!window.worldData.clans) window.worldData.clans = {};
     window.worldData.clans[selectedClan] = window.currentHero;
 
-    // *** Запазваме любимите в localStorage веднага ***
     const favorites = [selectedName];
     localStorage.setItem('barracksFavorites', JSON.stringify(favorites));
 
     window.gameTime = { seasonIndex: 0, year: 480, era: "пр.н.е." };
+
+    // *** Генериране на 30 процедурни региона при нова игра ***
+    if (typeof window.generateProceduralRegions === 'function') {
+        window.generateProceduralRegions(30, true);
+    } else {
+        console.warn("generateProceduralRegions не е дефинирана – пропускам генерирането.");
+    }
 
     if (window.updateCharacterUI) window.updateCharacterUI(window.currentHero);
     if (window.renderTop6LeadersUI) window.renderTop6LeadersUI();
@@ -134,7 +139,6 @@ window.loadGreatBulgariaGame = function() {
                 }
             });
 
-            // Премахване на дубликати
             const uniqueClans = new Map();
             for (let key in window.worldData.clans) {
                 let clan = window.worldData.clans[key];
@@ -226,7 +230,7 @@ window.handleStartChoice = function(action) {
         localStorage.removeItem('GreatBulgaria_SaveGame');
         localStorage.removeItem('favoriteHeroesFinal');
         localStorage.removeItem('heroAutoState');
-        localStorage.removeItem('barracksFavorites'); // *** Изчистваме и любимите от казармите ***
+        localStorage.removeItem('barracksFavorites');
         window.startFreshGameLogic();
     }
 };
