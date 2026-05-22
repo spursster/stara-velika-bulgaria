@@ -1,4 +1,4 @@
-// ======================== АРМИЯ ПАЗАР (КОРИГИРАН - РАБОТЕЩИ БУТОНИ ЗА ВСИЧКИ ГЕРОИ) ========================
+// ======================== АРМИЯ ПАЗАР (ФИНАЛНА ВЕРСИЯ – РАБОТЕЩИ БУТОНИ ЗА ВСИЧКИ ГЕРОИ) ========================
 (function() {
     // --- Проверка на зависимости ---
     if (!window.worldData || !window.worldData.clans) {
@@ -337,17 +337,92 @@
         document.getElementById('closeMarketBtn')?.addEventListener('click', hideMarket);
         modal.addEventListener('click', (e) => { if (e.target === modal) hideMarket(); });
         
+        // *** ПРЕЗАПИСВАНЕ НА БУТОНИТЕ ЗА ПОКУПКА, ЗА ДА РАБОТЯТ ЗА ИЗБРАНИЯ ГЕРОЙ ОТ СЕЛЕКТА ***
+        const heroSelect = document.getElementById('heroSelect');
+        
         modal.querySelectorAll('.buy-btn').forEach(btn => {
-            btn.addEventListener('click', (e) => {
+            // Премахваме старите слушатели, като заместваме бутона с негово копие
+            const newBtn = btn.cloneNode(true);
+            btn.parentNode.replaceChild(newBtn, btn);
+            newBtn.addEventListener('click', (e) => {
                 e.stopPropagation();
-                buyTroop(btn.getAttribute('data-type'), 1);
+                const troopId = newBtn.getAttribute('data-type');
+                if (!troopId) return;
+                let hero = null;
+                if (heroSelect && heroSelect.value && window.worldData.clans[heroSelect.value]) {
+                    hero = window.worldData.clans[heroSelect.value];
+                } else {
+                    hero = window.currentHero;
+                }
+                if (!hero) {
+                    if (window.showAdvisorMsg) window.showAdvisorMsg("❌ Няма избран герой!");
+                    return;
+                }
+                const troop = allTroops.find(t => t.id === troopId);
+                if (!troop) return;
+                const totalCost = troop.basePrice;
+                if (hero.gold >= totalCost) {
+                    hero.gold -= totalCost;
+                    hero.armyDetails[troopId] = (hero.armyDetails[troopId] || 0) + 1;
+                    // Обновяване на UI
+                    const goldSpan = document.getElementById('playerGoldAmount');
+                    if (goldSpan) goldSpan.innerText = hero.gold;
+                    const countSpan = document.getElementById(`count-${troopId}`);
+                    if (countSpan) countSpan.innerText = hero.armyDetails[troopId];
+                    // Синхронизация с играта
+                    syncWithGame(hero);
+                    saveHeroData(hero);
+                    if (window.updateCharacterUI) window.updateCharacterUI(hero);
+                    if (window.renderTop6LeadersUI) window.renderTop6LeadersUI();
+                    if (typeof window.renderSingleBar === 'function') window.renderSingleBar();
+                    if (window.addWorldEvent) window.addWorldEvent(`🛒 Покупка на армия`, `${hero.name} купи ${troop.name} за ${totalCost} злато.`, "💰");
+                    console.log(`✅ Купено: ${troop.name} за ${totalCost} злато. Оставащо злато: ${hero.gold}`);
+                } else {
+                    if (window.showAdvisorMsg) window.showAdvisorMsg(`❌ ${hero.name} няма достатъчно злато! (Нужни: ${totalCost})`);
+                    else alert(`❌ ${hero.name} няма достатъчно злато!`);
+                }
             });
         });
         
+        // Същото за бутоните за продажба (аналогично)
         modal.querySelectorAll('.sell-btn').forEach(btn => {
-            btn.addEventListener('click', (e) => {
+            const newBtn = btn.cloneNode(true);
+            btn.parentNode.replaceChild(newBtn, btn);
+            newBtn.addEventListener('click', (e) => {
                 e.stopPropagation();
-                sellTroop(btn.getAttribute('data-type'), 1);
+                const troopId = newBtn.getAttribute('data-type');
+                if (!troopId) return;
+                let hero = null;
+                if (heroSelect && heroSelect.value && window.worldData.clans[heroSelect.value]) {
+                    hero = window.worldData.clans[heroSelect.value];
+                } else {
+                    hero = window.currentHero;
+                }
+                if (!hero) {
+                    if (window.showAdvisorMsg) window.showAdvisorMsg("❌ Няма избран герой!");
+                    return;
+                }
+                const troop = allTroops.find(t => t.id === troopId);
+                if (!troop) return;
+                const current = hero.armyDetails[troopId] || 0;
+                if (current < 1) {
+                    if (window.showAdvisorMsg) window.showAdvisorMsg("❌ Нямаш толкова войници за продажба!");
+                    return;
+                }
+                const refund = Math.floor(troop.basePrice * 0.6);
+                hero.gold += refund;
+                hero.armyDetails[troopId] = current - 1;
+                // Обновяване на UI
+                const goldSpan = document.getElementById('playerGoldAmount');
+                if (goldSpan) goldSpan.innerText = hero.gold;
+                const countSpan = document.getElementById(`count-${troopId}`);
+                if (countSpan) countSpan.innerText = hero.armyDetails[troopId];
+                syncWithGame(hero);
+                saveHeroData(hero);
+                if (window.updateCharacterUI) window.updateCharacterUI(hero);
+                if (window.renderTop6LeadersUI) window.renderTop6LeadersUI();
+                if (typeof window.renderSingleBar === 'function') window.renderSingleBar();
+                if (window.showAdvisorMsg) window.showAdvisorMsg(`💰 Продадохте ${troop.name} за ${refund} злато.`);
             });
         });
         
@@ -389,7 +464,6 @@
             });
         });
         
-        let heroSelect = document.getElementById('heroSelect');
         if (heroSelect) {
             if (selectedHeroId) heroSelect.value = selectedHeroId;
             heroSelect.addEventListener('change', (e) => setSelectedHero(e.target.value));
@@ -416,5 +490,5 @@
     let initialHero = getSelectedHero();
     if (initialHero) initHero(initialHero);
     
-    console.log("✅ armyMarket.js зареден (коригиран - работят бутоните за всички герои)");
+    console.log("✅ armyMarket.js зареден (финална версия – работят бутоните за всички герои)");
 })();
