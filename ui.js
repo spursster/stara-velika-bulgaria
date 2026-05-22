@@ -1,7 +1,7 @@
 /** ========================================================================== 
 ПРОЕКТ: ВЕЛИКА БЪЛГАРИЯ
 ФАЙЛ: ui.js (УНИВЕРСАЛЕН ГЛОБАЛЕН ПРОФИЛ, ЛЕНТА НА ЕЛИТА)
-ВЕРСИЯ: 3.0 - СЪВМЕСТИМ С НОВИТЕ КЛАСОВЕ И УМЕНИЯ (classes.js, skills.js)
+ВЕРСИЯ: 3.1 - КОРИГИРАН XP ИНДИКАТОР ЗА РЪЧНИ ГЕРОИ
 ========================================================================== */ 
 
 window.eventHistory = []; 
@@ -51,7 +51,6 @@ function setAuto(id, enabled) {
     else delete autoState[id];
     saveAuto();
 }
-
 // ==================== НАЕМАНЕ НА ГЕРОИ (ОТ DATABASE.JS) ====================
 function getAllHeroesFromDatabase() {
     let heroesList = [];
@@ -104,7 +103,7 @@ window.hireNewHero = function() {
         armySize: 200, currentArmy: 200, currentClass: randomHero.className, className: randomHero.className,
         skills: { tactics:0, endurance:0, economy:0, mysticism:0, leadership:0 },
         skillPoints:0, storedXP:0, isAuto: true, equipment: Array(12).fill(null), inventory: Array(12).fill(null),
-        pet: null, age: 30, learnedSkills: {} // за новите умения
+        pet: null, age: 30, learnedSkills: {}
     };
     if (window.initializeHeroRPGData) window.initializeHeroRPGData(newHero);
     window.currentHero.gold -= randomHero.cost;
@@ -135,6 +134,8 @@ function getAllHeroes() {
                     level: clan.level || 1,
                     className: clan.currentClass || "Воевода",
                     xp: clan.xp || 0,
+                    storedXP: clan.storedXP || 0,
+                    isAuto: clan.isAuto !== undefined ? clan.isAuto : true,
                     power: clan.heroPower || 100,
                     gold: clan.gold || 1500,
                     army: clan.armySize || 300,
@@ -153,6 +154,8 @@ function getAllHeroes() {
             level: window.currentHero.level || 1,
             className: window.currentHero.currentClass || "Багатур",
             xp: window.currentHero.xp || 0,
+            storedXP: window.currentHero.storedXP || 0,
+            isAuto: window.currentHero.isAuto !== undefined ? window.currentHero.isAuto : true,
             power: window.currentHero.heroPower || 100,
             gold: window.currentHero.gold || 1500,
             army: window.currentHero.armySize || 500,
@@ -165,13 +168,11 @@ function getAllHeroes() {
     heroes.sort((a,b) => b.level - a.level);
     return heroes;
 }
-
-// ==================== СТАРИТЕ УМЕНИЯ (SKILLTREE) СА ПРЕМАХНАТИ – НОВИТЕ УМЕНИЯ СА В skills.js ====================
-
 // ==================== ПРОФИЛ С 12 СЛОТА + АРТЕФАКТИ (БЕЗ СТАРИ УМЕНИЯ) ====================
 function showHeroProfile(hero) {
     let needXP = 100 + (hero.level - 1) * 50;
-    let xpPercent = Math.min(100, Math.floor((hero.xp / needXP) * 100));
+    let currentXP = hero.isAuto ? (hero.xp || 0) : (hero.storedXP || 0);
+    let xpPercent = Math.min(100, Math.floor((currentXP / needXP) * 100));
     let autoOn = isAuto(hero.id);
     let slotNames = ["⚔️ ОРЪЖИЕ", "🛡️ ЩИТ", "🪖 ШЛЕМ", "🦺 НАГРЪДНИК", "🧤 РЪКАВИЦИ", "👖 КРАЧОЛИ", "👢 БОТУШИ", "💍 ПРЪСТЕН", "💍 ПРЪСТЕН 2", "📿 АМУЛЕТ", "🧣 НАМЕТАЛО", "🔱 РЕЛИКВИЯ"];
     
@@ -211,7 +212,6 @@ function showHeroProfile(hero) {
     }
     petHtml += '</div>';
     
-    // Вместо старите умения – бутон към новата система
     let skillsHtml = `
         <div style="background:#0d0a07; border-radius:12px; padding:12px; margin-top:10px;">
             <h4 style="color:#ffdd99; margin:0 0 10px 0;">⭐ НОВА СИСТЕМА ЗА УМЕНИЯ</h4>
@@ -234,7 +234,7 @@ function showHeroProfile(hero) {
                 <div style="font-size:22px; font-weight:bold; color:#ffdd99;">${hero.name}</div>
                 <div style="color:#ccaa77;">${hero.currentClass} · Ниво ${hero.level}</div>
                 <div style="background:#2a1a0a; height:8px; border-radius:4px; margin:10px 0;"><div style="background:#d4a373; height:100%; width:${xpPercent}%; border-radius:4px;"></div></div>
-                <div style="font-size:11px; color:#ffaa66;">⚡ ${Math.floor(hero.xp)}/${needXP} XP</div>
+                <div style="font-size:11px; color:#ffaa66;">⚡ ${Math.floor(currentXP)}/${needXP} XP</div>
                 <div style="margin-top:15px; display:flex; justify-content:space-between; gap:10px;">
                     <div style="background:#0d0a07; border-radius:12px; padding:8px; flex:1;"><div>💰 Злато</div><div style="color:#ffdd99;">${hero.gold}</div></div>
                     <div style="background:#0d0a07; border-radius:12px; padding:8px; flex:1;"><div>⚔️ Армия</div><div style="color:#ffdd99;">${hero.army}</div></div>
@@ -290,8 +290,7 @@ function showHeroProfile(hero) {
         };
     }
 }
-
-// ==================== ОРИГИНАЛНА ЛЕНТА НА ЕЛИТА ====================
+// ==================== ОРИГИНАЛНА ЛЕНТА НА ЕЛИТА (КОРИГИРАНА XP) ====================
 window.renderTop6LeadersUI = function() { 
     const eliteBar = document.getElementById('top-elite-bar'); 
     if (!eliteBar) return; 
@@ -313,14 +312,19 @@ window.renderTop6LeadersUI = function() {
         card.className = "elite-hero-card"; 
         card.style.cssText = "background: rgba(0,0,0,0.6); border-radius: 12px; padding: 6px 12px; min-width: 100px; text-align: center; cursor: pointer; border: 1px solid #c9a87b; flex-shrink: 0;";
         card.onclick = (e) => { if (e.target.classList.contains('auto-btn')) return; if (window.openHeroRPGModal) window.openHeroRPGModal(leader.clanKey); }; 
-        let currentXP = leader.xp || 0; 
+        
+        // КОРИГИРАН XP - за auto режим xp, за manual storedXP
+        let currentXP = leader.isAuto ? (leader.xp || 0) : (leader.storedXP || 0);
         let reqXP = 150; 
-        if (window.rpgDatabase && window.rpgDatabase.getXPRequiredForLevel) { reqXP = window.rpgDatabase.getXPRequiredForLevel(leader.level || 1); } 
-        if (!leader.isAuto) { currentXP = leader.storedXP || 0; } 
+        if (window.rpgDatabase && window.rpgDatabase.getXPRequiredForLevel) { 
+            reqXP = window.rpgDatabase.getXPRequiredForLevel(leader.level || 1); 
+        } 
         if (reqXP <= 0) reqXP = 1; 
         let xpPercent = Math.min(100, Math.floor((currentXP / reqXP) * 100)); 
         let petIcon = ""; 
-        if (leader.pet && window.rpgDatabase && window.rpgDatabase.petsDatabase && window.rpgDatabase.petsDatabase[leader.pet]) { petIcon = window.rpgDatabase.petsDatabase[leader.pet].icon; } 
+        if (leader.pet && window.rpgDatabase && window.rpgDatabase.petsDatabase && window.rpgDatabase.petsDatabase[leader.pet]) { 
+            petIcon = window.rpgDatabase.petsDatabase[leader.pet].icon; 
+        } 
         const autoClass = leader.isAuto ? "auto-btn active" : "auto-btn"; 
         const autoText = leader.isAuto ? "Auto" : "Manual"; 
         card.innerHTML = petIcon + '<div style="font-weight:bold;color:#ffdd99;">' + (leader.name || leader.hero || "Воевода") + '</div><div style="font-size:10px;color:#ccaa77;">Ниво ' + (leader.level || 1) + ' | ' + (leader.currentClass || "Багатур") + '</div><div style="background:#2a1a0a;height:3px;border-radius:2px;margin:4px 0;"><div style="background:#44aa44;height:100%;width:' + xpPercent + '%;border-radius:2px;"></div></div><button class="' + autoClass + '" style="background:#2c1a0c;border:none;font-size:9px;padding:2px 6px;border-radius:20px;color:#ffdd99;margin-top:4px;cursor:pointer;">' + autoText + '</button>'; 
@@ -365,7 +369,7 @@ window.showAdvisorMsg = function(msg) {
     journal.innerHTML = window.eventHistory.map(function(line) { return '<p style="margin:4px 0; border-left:2px solid #ffaa44; padding-left:8px;">📜 ' + line + '</p>'; }).reverse().join(''); 
 }; 
 
-// ==================== ИНСПЕКЦИЯ НА КЛАН (без старите skillTrees) ====================
+// ==================== ИНСПЕКЦИЯ НА КЛАН ====================
 window.inspectLeaderProfile = function(clanKey) { 
     if (!window.worldData || !window.worldData.clans || !window.worldData.clans[clanKey]) { alert("Грешка: Неуспешно извличане на данни за избрания род."); return; } 
     const leader = window.worldData.clans[clanKey]; 
@@ -376,7 +380,6 @@ window.inspectLeaderProfile = function(clanKey) {
         for (let skillKey in leader.learnedSkills) { 
             let level = leader.learnedSkills[skillKey];
             if (level > 0) {
-                // търсим името на умението от advancedSkills
                 let skillName = skillKey;
                 for (let treeKey in window.advancedSkills) {
                     if (window.advancedSkills[treeKey].skills[skillKey]) {
@@ -418,7 +421,9 @@ let currentContainer = null;
 function createHeroCard(hero, isMobile) {
     let card = document.createElement('div');
     let needXP = 100 + (hero.level - 1) * 50;
-    let xpPercent = Math.min(100, Math.floor((hero.xp / needXP) * 100));
+    // КОРИГИРАН XP - за auto режим xp, за manual storedXP
+    let currentXP = hero.isAuto ? (hero.xp || 0) : (hero.storedXP || 0);
+    let xpPercent = Math.min(100, Math.floor((currentXP / needXP) * 100));
     let fav = isFavorite(hero.id);
     
     if (isMobile) {
@@ -435,7 +440,7 @@ function createHeroCard(hero, isMobile) {
                 <div style="background: #2a1a0a; height: 3px; border-radius: 2px; overflow: hidden;">
                     <div style="background: #d4a373; height: 100%; width: ${xpPercent}%;"></div>
                 </div>
-                <div style="font-size: 6px; color: #aa8866; margin-top: 2px;">⚡ ${Math.floor(hero.xp)}/${needXP} XP</div>
+                <div style="font-size: 6px; color: #aa8866; margin-top: 2px;">⚡ ${Math.floor(currentXP)}/${needXP} XP</div>
             </div>
         `;
     } else {
@@ -452,7 +457,7 @@ function createHeroCard(hero, isMobile) {
                     <div style="background: #2a1a0a; height: 3px; border-radius: 2px; overflow: hidden;">
                         <div style="background: #d4a373; height: 100%; width: ${xpPercent}%;"></div>
                     </div>
-                    <div style="font-size: 7px; color: #aa8866; margin-top: 2px;">⚡ ${Math.floor(hero.xp)}/${needXP} XP</div>
+                    <div style="font-size: 7px; color: #aa8866; margin-top: 2px;">⚡ ${Math.floor(currentXP)}/${needXP} XP</div>
                 </div>
             </div>
             <div style="font-size:11px; font-weight:bold; color:#ffaa66;">💪 ${hero.power}</div>
@@ -563,6 +568,7 @@ setTimeout(function addNavButtonsAutomatically() {
                     allHeroes.push({
                         id: key, name: clan.leaderName || clan.name || key, level: clan.level || 1,
                         className: clan.currentClass || "Воевода", xp: clan.xp || 0,
+                        storedXP: clan.storedXP || 0, isAuto: clan.isAuto !== undefined ? clan.isAuto : true,
                         power: clan.heroPower || 100, gold: clan.gold || 1500, army: clan.armySize || 300
                     });
                 }
@@ -572,8 +578,10 @@ setTimeout(function addNavButtonsAutomatically() {
             allHeroes.push({
                 id: window.currentHero.clan || "hero", name: window.currentHero.name || "Воевода",
                 level: window.currentHero.level || 1, className: window.currentHero.currentClass || "Багатур",
-                xp: window.currentHero.xp || 0, power: window.currentHero.heroPower || 100,
-                gold: window.currentHero.gold || 1500, army: window.currentHero.armySize || 500
+                xp: window.currentHero.xp || 0, storedXP: window.currentHero.storedXP || 0,
+                isAuto: window.currentHero.isAuto !== undefined ? window.currentHero.isAuto : true,
+                power: window.currentHero.heroPower || 100, gold: window.currentHero.gold || 1500,
+                army: window.currentHero.armySize || 500
             });
         }
         allHeroes.sort((a,b) => b.level - a.level);
