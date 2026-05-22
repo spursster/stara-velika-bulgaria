@@ -1,5 +1,5 @@
 // =========================================================================
-// ВЕЛИКА БЪЛГАРИЯ - rpg_system.js (КОРИГИРАН – ПРАВИЛНО STOREDXP + ФИКС НА autoAssignSkillPoint)
+// ВЕЛИКА БЪЛГАРИЯ - rpg_system.js (КОРИГИРАН – ДОБАВЕНИ БОНУСИ ОТ ДОМАШНИ ЛЮБИМЦИ)
 // =========================================================================
 
 window.rpgDatabase = window.rpgDatabase || {};
@@ -265,12 +265,41 @@ window.calculateArtifactSetBonuses = function(hero) {
     return totalSetBonus;
 };
 
+// Нова помощна функция за получаване на бонуси от домашен любимец
+function getPetBonuses(hero) {
+    if (!hero || !hero.pet) return {};
+    let petId = hero.pet;
+    // Първо търсим в божествените питомци (divinePets)
+    if (window.divinePets && window.divinePets[petId]) {
+        return window.divinePets[petId].bonus || {};
+    }
+    // След това в обикновените (rpgDatabase.petsDatabase)
+    if (window.rpgDatabase && window.rpgDatabase.petsDatabase && window.rpgDatabase.petsDatabase[petId]) {
+        let pet = window.rpgDatabase.petsDatabase[petId];
+        // Обикновените питомци нямат дефиниран 'bonus' обект, затова преобразуваме описанието в бонуси
+        // За опростяване ще добавим предварително дефинирани бонуси за тях
+        // Но за да не усложняваме, ще използваме следните правила:
+        // Сокол: +15% сила (attackBonus)
+        // Вълк: +10% критичен шанс
+        // Жребец: -15% получени щети (damageReduction)
+        // Мечка: +20% защита (defenseBonus)
+        // Усойница: -5% вражеска защита (игнорираме за момента)
+        if (pet.name === "Родов Сокол") return { attackBonusPercent: 0.15 };
+        if (pet.name === "Вълк Единак") return { critChanceBonus: 0.10 };
+        if (pet.name === "Степен Жребец") return { damageReduction: 0.15 };
+        if (pet.name === "Балканска Мечка") return { defenseBonus: 20 };
+        // За Усойница: не добавяме нищо засега (може да се добави armorPenetration)
+    }
+    return {};
+}
+
 window.recalculateHeroPower = function(hero) {
     if (!hero) return;
     var basePower = hero.baseHeroPower || hero.heroPower || 100;
     var artifactBonus = 0;
     var setBonus = 0;
     var skillBonus = 0;
+    var petBonus = 0;
     
     if (hero.inventory) {
         for (var i = 0; i < hero.inventory.length; i++) {
@@ -286,7 +315,16 @@ window.recalculateHeroPower = function(hero) {
     
     var setBonuses = window.calculateArtifactSetBonuses(hero);
     setBonus = setBonuses.heroPower || 0;
-    hero.heroPower = basePower + artifactBonus + setBonus + skillBonus;
+    
+    // Добавяне на бонус от домашен любимец
+    const petBonuses = getPetBonuses(hero);
+    if (petBonuses.heroPower) petBonus += petBonuses.heroPower;
+    if (petBonuses.attackBonusPercent) petBonus += Math.floor(basePower * petBonuses.attackBonusPercent);
+    if (petBonuses.defenseBonus) {
+        hero.defense = (hero.defense || 0) + petBonuses.defenseBonus;
+    }
+    
+    hero.heroPower = basePower + artifactBonus + setBonus + skillBonus + petBonus;
     
     return hero.heroPower;
 };
@@ -316,4 +354,4 @@ window.getHeroCombatBonus = function(hero, bonusType) {
     return bonus;
 };
 
-console.log("✅ rpg_system.js зареден (финална версия – всички грешки са оправени)");
+console.log("✅ rpg_system.js зареден (финална версия – добавени бонуси от домашни любимци)");
