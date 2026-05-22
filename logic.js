@@ -1,7 +1,7 @@
 /**
 ==========================================================================
 ПРОЕКТ: ВЕЛИКА БЪЛГАРИЯ
-ФАЙЛ: logic.js (КОРИГИРАН – АКТИВЕН ГЕРОЙ В ЛЮБИМИ + ПРОЦЕДУРНИ РЕГИОНИ)
+ФАЙЛ: logic.js (С ПОДДРЪЖКА ЗА СОЛО РЕЖИМ)
 ==========================================================================
 */
 
@@ -72,6 +72,39 @@ window.startFreshGameLogic = function() {
         console.warn("generateProceduralRegions не е дефинирана – пропускам генерирането.");
     }
 
+    // ========== НОВО: ИЗБОР НА РЕЖИМ НА ИГРА ==========
+    let modeChoice = confirm("Изберете режим на игра:\n• OK – СОЛО РЕЖИМ (RPG приключение с един герой и спътници)\n• Cancel – КЛАСИЧЕСКИ РЕЖИМ (стратегия с множество герои)");
+    window.gameMode = modeChoice ? 'solo' : 'classic';
+
+    if (window.gameMode === 'solo') {
+        console.log("🌍 Стартиране в СОЛО РЕЖИМ");
+
+        // Премахваме всички други isJoined герои (освен currentHero)
+        for (let key in window.worldData.clans) {
+            if (key !== window.currentHero.clan) {
+                window.worldData.clans[key].isJoined = false;
+            }
+        }
+
+        // Настройки за соло режима
+        window.currentRegion = "Плиска";
+        window.companions = [];
+        window.activeQuests = [];
+        window.completedQuests = [];
+
+        // (По желание) добавяме стартов куест, ако функцията съществува
+        if (typeof window.addQuest === 'function') {
+            window.addQuest("Първи стъпки", "Завладейте региона Плиска (той вече е ваш) или посетете съседен регион.", "100 злато + 50 XP", 1, function() { return true; });
+        }
+
+        if (window.showAdvisorMsg) {
+            window.showAdvisorMsg("🌍 Добре дошли в соло режима! Изследвайте света, намирайте спътници и изпълнявайте куестове.");
+        }
+    } else {
+        console.log("🏰 Стартиране в КЛАСИЧЕСКИ РЕЖИМ");
+    }
+    // ================================================
+
     if (window.updateCharacterUI) window.updateCharacterUI(window.currentHero);
     if (window.renderTop6LeadersUI) window.renderTop6LeadersUI();
     if (typeof window.renderSingleBar === 'function') window.renderSingleBar();
@@ -105,7 +138,12 @@ window.saveGreatBulgariaGame = function() {
             unlockedLeaders: allHeroes,
             gameTime: window.gameTime || { seasonIndex: 0, year: 480, era: "пр.н.е." },
             favoriteHeroes: localStorage.getItem('favoriteHeroesFinal'),
-            autoState: localStorage.getItem('heroAutoState')
+            autoState: localStorage.getItem('heroAutoState'),
+            gameMode: window.gameMode,        // запазваме режима
+            currentRegion: window.currentRegion,
+            companions: window.companions,
+            activeQuests: window.activeQuests,
+            completedQuests: window.completedQuests
         };
         localStorage.setItem('GreatBulgaria_SaveGame', JSON.stringify(saveData));
         console.log("💾 Прогресът беше запазен успешно!");
@@ -122,6 +160,11 @@ window.loadGreatBulgariaGame = function() {
         window.currentHero = parsed.currentHero;
         window.unlockedLeaders = parsed.unlockedLeaders || [];
         window.gameTime = parsed.gameTime || { seasonIndex: 0, year: 480, era: "пр.н.е." };
+        window.gameMode = parsed.gameMode || 'classic';   // зареждаме режима
+        window.currentRegion = parsed.currentRegion || "Плиска";
+        window.companions = parsed.companions || [];
+        window.activeQuests = parsed.activeQuests || [];
+        window.completedQuests = parsed.completedQuests || [];
         
         if (window.worldData && window.worldData.clans) {
             for (let key in window.worldData.clans) {
