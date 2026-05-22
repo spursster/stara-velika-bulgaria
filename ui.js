@@ -753,3 +753,38 @@ if (document.readyState === 'loading') {
 } else {
     initHeroBar();
 }
+// ==================== БУТОН ЗА ОТКРИВАНЕ НА НОВИ ЗЕМИ ====================
+function addDiscoverButton() {
+    const topBarControls = document.querySelector('.top-bar-controls');
+    if (!topBarControls || document.getElementById('discover-lands-btn')) return;
+    const discoverBtn = document.createElement('button');
+    discoverBtn.id = 'discover-lands-btn';
+    discoverBtn.className = 'glass-btn';
+    discoverBtn.innerHTML = '🌍 Открий нови земи';
+    discoverBtn.title = 'Генерира нови процедурни региони';
+    discoverBtn.style.cssText = 'background: #2c5a2a; border-color: #88ff88; color: #fff;';
+    discoverBtn.onclick = function() {
+        if (typeof window.generateProceduralRegions === 'function') {
+            let count = 5 + Math.floor(Math.random() * 6);
+            let generated = window.generateProceduralRegions(count, true);
+            if (window.showAdvisorMsg) {
+                window.showAdvisorMsg(`🌍 Открихте ${generated} нови непознати земи! Разгледайте ги на картата.`);
+            } else {
+                alert(`Открихте ${generated} нови региона!`);
+            }
+            if (document.getElementById('regions-map-overlay')) {
+                if (typeof window.openRegionsMap === 'function') window.openRegionsMap();
+            }
+        } else {
+            alert("Системата за генериране на региони не е заредена.");
+        }
+    };
+    topBarControls.appendChild(discoverBtn);
+}
+
+// Стартиране на бутона
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', addDiscoverButton);
+} else {
+    addDiscoverButton();
+}
