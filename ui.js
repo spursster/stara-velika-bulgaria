@@ -1,7 +1,7 @@
 /** ========================================================================== 
 ПРОЕКТ: ВЕЛИКА БЪЛГАРИЯ
 ФАЙЛ: ui.js (УНИВЕРСАЛЕН ГЛОБАЛЕН ПРОФИЛ, ЛЕНТА НА ЕЛИТА)
-ВЕРСИЯ: 3.4 - ДОБАВЕНА ЕКИПИРОВКА НА АРТЕФАКТИ
+ВЕРСИЯ: 3.5 - ПОДДРЪЖКА ЗА СОЛО РЕЖИМ
 ========================================================================== */ 
 
 window.eventHistory = []; 
@@ -67,7 +67,7 @@ function getAllHeroesFromDatabase() {
                     power = 190; cost = 1500; className = "Легенда";
                 } else if (heroName.includes("Атила") || heroName.includes("Филип") || heroName.includes("Самуил") || heroName.includes("Птолемей")) {
                     power = 165; cost = 1200; className = "Герой";
-                } else if (heroName.includes("Аспарух") || heroName.includes("Тервел") || heroName.includes("Крум")) {
+                } else if (heroName.includes("Аспарух") || heroName.includes("Тервель") || heroName.includes("Крум")) {
                     power = 140; cost = 1000; className = "Войн";
                 }
                 heroesList.push({ name: heroName, clan: clanName, power: power, cost: cost, className: className });
@@ -78,6 +78,11 @@ function getAllHeroesFromDatabase() {
 }
 
 window.hireNewHero = function() {
+    // Блокиране в соло режим
+    if (window.gameMode === 'solo') {
+        alert("В соло режим не можете да наемате допълнителни герои. Можете да намирате спътници в регионите (до 4).");
+        return;
+    }
     if (!window.currentHero) { alert("Няма активен герой!"); return; }
     let allHeroes = getAllHeroesFromDatabase();
     if (allHeroes.length === 0) { alert("Няма налични герои за наемане!"); return; }
@@ -149,7 +154,7 @@ window.hireNewHero = function() {
         if (typeof window.renderBarracksLayout === 'function') window.renderBarracksLayout();
     }
 };
-// ==================== ДАННИ ЗА ГЕРОИТЕ ====================
+// ==================== ДАННИ ЗА ГЕРОИТЕ (С ПОДДРЪЖКА ЗА СОЛО РЕЖИМ) ====================
 function getAllHeroes() {
     let heroes = [];
     if (window.worldData && window.worldData.clans) {
@@ -170,7 +175,8 @@ function getAllHeroes() {
                     skills: clan.skills || {},
                     pet: clan.pet || null,
                     skillPoints: clan.skillPoints || 0,
-                    equipment: clan.equipment || Array(12).fill(null)
+                    equipment: clan.equipment || Array(12).fill(null),
+                    isCompanion: clan.isCompanion === true   // за соло режим
                 });
             }
         }
@@ -190,8 +196,14 @@ function getAllHeroes() {
             skills: window.currentHero.skills || {},
             pet: window.currentHero.pet || null,
             skillPoints: window.currentHero.skillPoints || 0,
-            equipment: window.currentHero.equipment || Array(12).fill(null)
+            equipment: window.currentHero.equipment || Array(12).fill(null),
+            isCompanion: window.currentHero.isCompanion === true
         });
+    }
+    // Филтриране за соло режим: показваме само главния герой и спътниците
+    if (window.gameMode === 'solo') {
+        let mainId = window.currentHero ? (window.currentHero.clan || "hero") : null;
+        heroes = heroes.filter(h => h.id === mainId || h.isCompanion === true);
     }
     heroes.sort((a,b) => b.level - a.level);
     return heroes;
@@ -393,7 +405,7 @@ function showHeroProfile(hero) {
         };
     }
 }
-// ==================== ОРИГИНАЛНА ЛЕНТА НА ЕЛИТА (КОРИГИРАНА XP И СОРТИРАНЕ) ====================
+// ==================== ОРИГИНАЛНА ЛЕНТА НА ЕЛИТА (ПОДДРЪЖКА ЗА СОЛО РЕЖИМ) ====================
 window.renderTop6LeadersUI = function() { 
     const eliteBar = document.getElementById('top-elite-bar'); 
     if (!eliteBar) return; 
@@ -405,6 +417,12 @@ window.renderTop6LeadersUI = function() {
         } else { return; } 
     } 
     let leaders = Object.entries(window.worldData.clans).map(([clanKey, data]) => { return { clanKey: clanKey, ...data }; }); 
+    
+    // Филтриране за соло режим
+    if (window.gameMode === 'solo') {
+        let mainClan = window.currentHero ? window.currentHero.clan : null;
+        leaders = leaders.filter(l => l.clanKey === mainClan || l.isCompanion === true);
+    }
     
     leaders.sort((a, b) => {
         if ((b.level || 1) !== (a.level || 1)) return (b.level || 1) - (a.level || 1);
@@ -613,7 +631,7 @@ function createHeroCard(hero, isMobile) {
 }
 
 function renderSingleBar() {
-    let heroes = getAllHeroes();
+    let heroes = getAllHeroes();  // вече филтрира според режима
     if (heroes.length === 0) return;
     let isMobile = window.innerWidth <= 768;
     if (currentContainer) currentContainer.remove();
@@ -710,7 +728,8 @@ setTimeout(function addNavButtonsAutomatically() {
                         id: key, name: clan.leaderName || clan.name || key, level: clan.level || 1,
                         className: clan.currentClass || "Воевода", xp: clan.xp || 0,
                         storedXP: clan.storedXP || 0, isAuto: clan.isAuto !== undefined ? clan.isAuto : true,
-                        power: clan.heroPower || 100, gold: clan.gold || 1500, army: clan.armySize || 300
+                        power: clan.heroPower || 100, gold: clan.gold || 1500, army: clan.armySize || 300,
+                        isCompanion: clan.isCompanion === true
                     });
                 }
             }
@@ -722,8 +741,14 @@ setTimeout(function addNavButtonsAutomatically() {
                 xp: window.currentHero.xp || 0, storedXP: window.currentHero.storedXP || 0,
                 isAuto: window.currentHero.isAuto !== undefined ? window.currentHero.isAuto : true,
                 power: window.currentHero.heroPower || 100, gold: window.currentHero.gold || 1500,
-                army: window.currentHero.armySize || 500
+                army: window.currentHero.armySize || 500,
+                isCompanion: window.currentHero.isCompanion === true
             });
+        }
+        // Филтриране за соло режим
+        if (window.gameMode === 'solo') {
+            let mainId = window.currentHero ? (window.currentHero.clan || "hero") : null;
+            allHeroes = allHeroes.filter(h => h.id === mainId || h.isCompanion === true);
         }
         allHeroes.sort((a,b) => b.level - a.level);
         const isMobile = window.innerWidth <= 768;
