@@ -580,7 +580,7 @@
                 addLog(`━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`);
                 addLog(`🏆 ПОБЕДА! ${monster.name} е победен! 🏆`);
                 
-                // НАГРАДИ ПРИ ПОБЕДА
+                      // НАГРАДИ ПРИ ПОБЕДА
                 let totalXP = 50 + Math.floor(Math.random() * 100);
                 let totalGold = 100 + Math.floor(Math.random() * 200);
                 
@@ -600,6 +600,57 @@
                     
                     addLog(`   🎁 ${hero.name} получава +${heroXP} XP и +${heroGold} злато!`);
                 });
+                
+                // 1. ШАНС ЗА АРТЕФАКТ (20% шанс)
+                if (Math.random() < 0.2 && window.historicalArtifacts) {
+                    const artifactKeys = Object.keys(window.historicalArtifacts);
+                    const randomKey = artifactKeys[Math.floor(Math.random() * artifactKeys.length)];
+                    const newArtifact = { ...window.historicalArtifacts[randomKey] };
+                    
+                    // Даваме артефакта на случайния жив герой
+                    const randomHero = livingHeroes[Math.floor(Math.random() * livingHeroes.length)];
+                    if (randomHero && randomHero.clanObj) {
+                        if (!randomHero.clanObj.inventory) randomHero.clanObj.inventory = [];
+                        randomHero.clanObj.inventory.push(newArtifact);
+                        addLog(`   🏺 ${randomHero.name} намери артефакт: ${newArtifact.name}!`);
+                        
+                        if (window.addWorldEvent) {
+                            window.addWorldEvent(`🏺 НАМЕРЕН АРТЕФАКТ`, `${randomHero.name} намери ${newArtifact.name} след битката!`, "🏺");
+                        }
+                    }
+                }
+                
+                // 2. ШАНС ЗА ПЛЕННИК (15% шанс, само ако има фентъзи раси)
+                if (Math.random() < 0.15 && window.fantasyRaces && window.fantasyRaces.length > 0) {
+                    const randomRace = window.fantasyRaces[Math.floor(Math.random() * window.fantasyRaces.length)];
+                    const prisoner = {
+                        id: Date.now() + "_" + Math.random(),
+                        name: randomRace.name,
+                        raceId: randomRace.id,
+                        icon: randomRace.icon,
+                        desc: randomRace.desc,
+                        bonus: randomRace.bonus,
+                        capturedFrom: monster.name
+                    };
+                    
+                    if (!window.prisoners) window.prisoners = [];
+                    window.prisoners.push(prisoner);
+                    addLog(`   👸 Взехте пленник: ${prisoner.name}! Може да се ожените в дипломацията.`);
+                    
+                    if (window.addWorldEvent) {
+                        window.addWorldEvent(`👸 ПЛЕННИК`, `След битката с ${monster.name}, взехте ${prisoner.name} като пленник!`, "👸");
+                    }
+                }
+                
+                // 3. БОНУС ЗА ПОРТАЛНИ СВЕТОВЕ (ако има)
+                if (regionInput && regionInput.isPortalWorld) {
+                    const extraBonus = 50 + Math.floor(Math.random() * 100);
+                    const randomHero = livingHeroes[Math.floor(Math.random() * livingHeroes.length)];
+                    if (randomHero) {
+                        randomHero.clanObj.gold += extraBonus;
+                        addLog(`   🌌 ПОРТАЛЕН БОНУС: ${randomHero.name} получава +${extraBonus} злато от мистичния свят!`);
+                    }
+                }
                 
                 if (window.addWorldEvent) {
                     window.addWorldEvent(`🏆 ПОБЕДА В БИТКА`, `${battleHeroes.map(h => h.name).join(', ')} победиха ${monster.name}!`, "🏆");
