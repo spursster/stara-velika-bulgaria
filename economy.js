@@ -1,9 +1,8 @@
 /**
 МОДУЛ: ИКОНОМИКА И АВТОНОМНО РАЗВИТИЕ - Велика България
-ВЕРСИЯ: 5.0 - КОРИГИРАНА ВЕРСИЯ С ПРАВИЛНО ПРЕИЗЧИСЛЯВАНЕ
+ВЕРСИЯ: 5.1 - ПЪЛНА КОРЕКЦИЯ
 */
 
-// Помощна функция за синхронизиране на златото
 function syncHeroGold(hero) {
     if (!hero) return;
     if (window.worldData && window.worldData.clans && hero.clan && window.worldData.clans[hero.clan]) {
@@ -15,7 +14,6 @@ function syncHeroGold(hero) {
     }
 }
 
-// Помощна функция за осигуряване на armyDetails
 function ensureArmyDetails(hero) {
     if (window.ensureCompleteArmyDetails) {
         return window.ensureCompleteArmyDetails(hero);
@@ -24,7 +22,6 @@ function ensureArmyDetails(hero) {
     return hero.armyDetails;
 }
 
-// Функция за преизчисляване на доходите (извиква се след завоевания)
 window.recalculateIncome = function(hero) {
     if (!hero) hero = window.currentHero;
     if (!hero) return 0;
@@ -35,18 +32,13 @@ window.recalculateIncome = function(hero) {
     let inventoryBonuses = window.getInventoryBonuses ? window.getInventoryBonuses(hero) : { goldBonus: 0 };
     let advancedBonuses = window.getAdvancedSkillBonuses ? window.getAdvancedSkillBonuses(hero) : {};
     
-    // 1. Базов доход
     let baseIncome = 200;
     if ((skills.goldRush || 0) > 0) baseIncome += (skills.goldRush * 25);
     if ((skills.bazaars || 0) > 0) baseIncome += (skills.bazaars * 15);
     
-    // 2. Бонус от артефакти
     let artifactBonusPercent = (inventoryBonuses.goldBonus || 0);
-    
-    // 3. Бонус от умения
     let skillBonusPercent = (advancedBonuses.taxBonus || 0) + (advancedBonuses.goldDropBonus || 0);
     
-    // 4. Доходи от региони
     let regionIncome = 0;
     if (window.playerRegions && window.worldData && window.worldData.regions) {
         const ownedRegionsFlat = window.playerRegions.flat();
@@ -59,7 +51,6 @@ window.recalculateIncome = function(hero) {
         });
     }
     
-    // 5. Бонуси към регионите
     if ((skills.economy || 0) > 0) {
         regionIncome = Math.floor(regionIncome * (1 + (skills.economy * 0.10)));
     }
@@ -67,20 +58,16 @@ window.recalculateIncome = function(hero) {
         regionIncome = Math.floor(regionIncome * (1 + advancedBonuses.conqueredIncomeBonus));
     }
     
-    // 6. Общ доход
     let totalIncome = baseIncome + regionIncome;
     let percentBonus = 1 + (artifactBonusPercent / 100) + skillBonusPercent;
     totalIncome = Math.floor(totalIncome * percentBonus);
     
-    // 7. Разходи за поддръжка
     let armySize = hero.armySize || 0;
     let baseMaintenanceCost = Math.floor(armySize * 0.25);
     let logisticsDiscount = Math.min(0.50, (skills.logistics || 0) * 0.05);
     let armyMaintenance = Math.floor(baseMaintenanceCost * (1 - logisticsDiscount));
     
-    // 8. Чиста печалба
     let finalProfit = totalIncome - armyMaintenance;
-    
     return finalProfit;
 };
 
@@ -88,26 +75,20 @@ window.calculateEconomy = function() {
     if (!window.currentHero) return;
     const hero = window.currentHero;
 
-    if (window.initializeHeroRPGData) {
-        window.initializeHeroRPGData(hero);
-    }
-    
+    if (window.initializeHeroRPGData) window.initializeHeroRPGData(hero);
     ensureArmyDetails(hero);
 
     let finalProfit = window.recalculateIncome(hero);
     
-    // Прилагане на печалбата
     hero.gold = (hero.gold || 0) + finalProfit;
     if (hero.gold < 0) hero.gold = 0;
-    
-    // Синхронизация
     syncHeroGold(hero);
     
     if (window.worldData && window.worldData.clans && hero.clan && window.worldData.clans[hero.clan]) {
         window.worldData.clans[hero.clan].gold = hero.gold;
     }
 
-    // ==================== 2. АВТОНОМНА ИКОНОМИКА ЗА НЕ-ЛЮБИМИТЕ ГЕРОИ ====================
+    // Автономна икономика за не-любими герои
     let favoriteNames = new Set();
     if (window.worldData && window.worldData.clans) {
         for (let key in window.worldData.clans) {
@@ -128,24 +109,40 @@ window.calculateEconomy = function() {
             
             ensureArmyDetails(clan);
             
-            // Автономен доход
             let autonomousIncome = 80 + Math.floor(Math.random() * 50);
             clan.gold = (clan.gold || 0) + autonomousIncome;
             
-            // Автономно купуване на войски
+            // Подобрено автономно купуване
             if ((clan.gold || 0) >= 150 && (clan.armySize || 0) < 800) {
                 let cost = 100;
                 let troopsBought = Math.floor(Math.random() * 30) + 15;
                 clan.gold -= cost;
                 
-                // Разпределяме войниците пропорционално
-                if (window.ALL_TROOP_IDS) {
-                    let basicTypes = ["infantry", "archers", "cavalry", "elite"];
-                    let type = basicTypes[Math.floor(Math.random() * basicTypes.length)];
-                    clan.armyDetails[type] = (clan.armyDetails[type] || 0) + troopsBought;
-                } else {
-                    clan.armyDetails.infantry = (clan.armyDetails.infantry || 0) + troopsBought;
+                let troopTypes = window.ALL_TROOP_IDS || ["infantry", "archers", "cavalry", "elite"];
+                let weights = {
+                    "infantry": 40, "archers": 30, "cavalry": 20, "elite": 5,
+                    "vampire": 2, "werewolf": 2, "highelf": 3, "troll": 2,
+                    "dragon_young": 1, "wizard": 3, "lich": 1, "fairy_healer": 3,
+                    "griffin": 2, "elf_archer": 3, "necromancer": 2
+                };
+                
+                let totalWeight = 0;
+                for (let type of troopTypes) totalWeight += weights[type] || 5;
+                
+                let random = Math.random() * totalWeight;
+                let accumulated = 0;
+                let selectedType = "infantry";
+                
+                for (let type of troopTypes) {
+                    accumulated += weights[type] || 5;
+                    if (random <= accumulated) {
+                        selectedType = type;
+                        break;
+                    }
                 }
+                
+                if (!clan.armyDetails[selectedType]) clan.armyDetails[selectedType] = 0;
+                clan.armyDetails[selectedType] += troopsBought;
                 
                 let total = 0;
                 for (let t in clan.armyDetails) total += clan.armyDetails[t] || 0;
@@ -153,11 +150,15 @@ window.calculateEconomy = function() {
                 clan.currentArmy = total;
                 
                 if (window.showAdvisorMsg && Math.random() < 0.1) {
-                    window.showAdvisorMsg(`📢 ${clan.leaderName || clan.name} нае ${troopsBought} войници!`);
+                    let troopName = selectedType;
+                    if (window.ALL_TROOP_TYPES) {
+                        let found = window.ALL_TROOP_TYPES.find(t => t.id === selectedType);
+                        if (found) troopName = found.name;
+                    }
+                    window.showAdvisorMsg(`📢 ${clan.leaderName || clan.name} нае ${troopsBought} × ${troopName}!`);
                 }
             }
             
-            // Автономно трупане на опит
             if (window.gainHeroXP) {
                 window.gainHeroXP(clan, 12);
             } else {
@@ -174,14 +175,12 @@ window.calculateEconomy = function() {
                 }
             }
             
-            // Синхронизация с armyMarket
             if (window.armyMarket && typeof window.armyMarket.sync === 'function') {
                 window.armyMarket.sync(clan);
             }
         }
     }
 
-    // ==================== 3. ЛЕТОПИС ====================
     if (window.showAdvisorMsg) {
         let seasonName = "Текущ сезон";
         if (window.gameTime) {
@@ -196,22 +195,17 @@ window.calculateEconomy = function() {
         }
     }
 
-    // Опресняване на интерфейсите
     if (window.updateCharacterUI) window.updateCharacterUI(hero);
     if (window.renderTop6LeadersUI) window.renderTop6LeadersUI();
     if (typeof window.renderSingleBar === 'function') window.renderSingleBar();
     
-    // Синхронизация на основния герой с armyMarket
     if (window.armyMarket && typeof window.armyMarket.sync === 'function') {
         window.armyMarket.sync(hero);
     }
 
-    // Обновяване на портала
     if (window.advanceExpeditionsTurn) {
         window.advanceExpeditionsTurn();
     }
 };
 
-// Експорт на helper функциите
 window.syncHeroGold = syncHeroGold;
-window.recalculateIncome = window.recalculateIncome;
