@@ -1,7 +1,22 @@
 /**
 МОДУЛ: ИКОНОМИКА И АВТОНОМНО РАЗВИТИЕ - Велика България
-ВЕРСИЯ: 5.1 - ПЪЛНА КОРЕКЦИЯ
+ВЕРСИЯ: 5.2 - СЪВМЕСТИМОСТ И СТАБИЛНОСТ
 */
+
+// Помощна функция за изглаждане на масив (замества Array.flat)
+function flattenArray(arr) {
+    if (!arr) return [];
+    if (!Array.isArray(arr)) return [arr];
+    let result = [];
+    for (let i = 0; i < arr.length; i++) {
+        if (Array.isArray(arr[i])) {
+            for (let j = 0; j < arr[i].length; j++) result.push(arr[i][j]);
+        } else {
+            result.push(arr[i]);
+        }
+    }
+    return result;
+}
 
 function syncHeroGold(hero) {
     if (!hero) return;
@@ -41,7 +56,8 @@ window.recalculateIncome = function(hero) {
     
     let regionIncome = 0;
     if (window.playerRegions && window.worldData && window.worldData.regions) {
-        const ownedRegionsFlat = window.playerRegions.flat();
+        // Съвместимост без Array.flat()
+        const ownedRegionsFlat = flattenArray(window.playerRegions);
         ownedRegionsFlat.forEach(regionName => {
             const regData = window.worldData.regions[regionName];
             if (regData) {
@@ -109,11 +125,13 @@ window.calculateEconomy = function() {
             
             ensureArmyDetails(clan);
             
+            // Уверяваме се, че златото е число
+            clan.gold = clan.gold || 0;
             let autonomousIncome = 80 + Math.floor(Math.random() * 50);
-            clan.gold = (clan.gold || 0) + autonomousIncome;
+            clan.gold += autonomousIncome;
             
             // Подобрено автономно купуване
-            if ((clan.gold || 0) >= 150 && (clan.armySize || 0) < 800) {
+            if (clan.gold >= 150 && (clan.armySize || 0) < 800) {
                 let cost = 100;
                 let troopsBought = Math.floor(Math.random() * 30) + 15;
                 clan.gold -= cost;
