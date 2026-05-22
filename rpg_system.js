@@ -156,10 +156,12 @@ window.autoAssignSkillPoint = function(hero) {
         console.warn("advancedSkills не е зареден – няма нови умения.");
         return;
     }
+    if (!hero.learnedSkills) hero.learnedSkills = {};
     
     const allSkills = [];
     for (let treeKey in window.advancedSkills) {
         const tree = window.advancedSkills[treeKey];
+        if (!tree || !tree.skills) continue;
         for (let skillKey in tree.skills) {
             const skill = tree.skills[skillKey];
             const currentLevel = hero.learnedSkills[skillKey] || 0;
@@ -171,7 +173,6 @@ window.autoAssignSkillPoint = function(hero) {
     
     if (allSkills.length === 0) return;
     
-    // Опитваме се да научим умение (максимум 10 опита за предотвратяване на безкраен цикъл)
     let attempts = 0;
     let learned = false;
     
@@ -201,7 +202,6 @@ window.autoAssignSkillPoint = function(hero) {
         attempts++;
     }
 };
-
 // ==================== НОВА КЛАСОВА ЕВОЛЮЦИЯ ====================
 window.checkArcheAgeClass = function(hero) {
     if (!hero) return;
