@@ -1,8 +1,8 @@
 /**
 ==========================================================================
 ПРОЕКТ: ВЕЛИКА БЪЛГАРИЯ
-ФАЙЛ: barracks.js (ГРАНДИОЗНА ВЕРСИЯ 3.1)
-ВЕРСИЯ: 3.1 - ЗАПАЗВАНЕ НА ЛЮБИМИТЕ, СИНХРОНИЗАЦИЯ С ARMY MARKET
+ФАЙЛ: barracks.js (КОРИГИРАН – АКТИВНИЯТ ГЕРОЙ ВИНАГИ В ЕЛИТНИЯ ОТРЯД)
+ВЕРСИЯ: 3.3
 ==========================================================================
 */
 
@@ -119,6 +119,21 @@ window.renderBarracksLayout = function() {
 
     let allHeroes = getAllUnlockedHeroes();
     let favoriteLeaders = allHeroes.filter(h => h.isFavoriteInBarracks === true);
+    
+    // *** ФИКС: Активният герой да е първи в списъка с любими ***
+    if (window.currentHero) {
+        const activeName = window.currentHero.name;
+        const activeIndex = favoriteLeaders.findIndex(h => h.name === activeName);
+        if (activeIndex > 0) {
+            const active = favoriteLeaders[activeIndex];
+            favoriteLeaders.splice(activeIndex, 1);
+            favoriteLeaders.unshift(active);
+        }
+    }
+    
+    // Винаги започваме от първа страница, за да не се крие активният герой
+    window.barracksState.currentPage = 0;
+    
     const maxPerPage = window.barracksState.perPage;
     let totalPages = Math.ceil(favoriteLeaders.length / maxPerPage);
     let currentPage = Math.min(window.barracksState.currentPage, totalPages - 1);
