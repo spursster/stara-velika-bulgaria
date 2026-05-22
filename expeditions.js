@@ -1,6 +1,6 @@
 /**
 МОДУЛ: МИСТИЧНИ ПОРТАЛИ И ЕКСПЕДИЦИИ – ВЕЛИКА БЪЛГАРИЯ
-СТАТУС: ОБНОВЕН – МОДАЛЕН ПРОЗОРЕЦ С РАБОТЕЩО ЗАТВАРЯНЕ
+СТАТУС: КОРИГИРАН – РАБОТИ С НОВАТА БОЙНА СИСТЕМА
 */
 
 window.unknownWorldsDatabase = [
@@ -113,6 +113,8 @@ function attemptAutonomousPortalEntry() {
     }
     if (!window.currentPortalState.explorationProgress[portalWorld.name]) window.currentPortalState.explorationProgress[portalWorld.name] = 0;
     if (isVictory) window.currentPortalState.explorationProgress[portalWorld.name] = Math.min(100, window.currentPortalState.explorationProgress[portalWorld.name] + 5);
+    // Синхронизиране на армията след битка
+    if (window.ensureCompleteArmyDetails) window.ensureCompleteArmyDetails(randomHero);
     if (typeof window.renderSingleBar === 'function') window.renderSingleBar();
     if (window.renderTop6LeadersUI) window.renderTop6LeadersUI();
 }
@@ -189,36 +191,58 @@ window.enterMysticPortal = function() {
         isPortalWorld: true
     };
     if (window.showAdvisorMsg) window.showAdvisorMsg(`🌌 Преминаване през пространството! Петицата навлиза в "${state.currentWorld.name}"!`);
+    
+    // Затваряме портала преди битка
     state.isOpen = false;
     window.updatePortalContainerUI();
+    
+    // Запомняме текущия свят за награди след битка
+    const currentWorldName = state.currentWorld.name;
+    const currentPetName = state.currentWorld.petName;
+    
     if (window.startBattle) {
         window.startBattle(portalTargetRegion);
-        let originalEndGroupBattle = window.endGroupBattle;
+        
+        // След битката (чрез callback) ще проверим дали има победа и ще дадем pet
+        const originalEndGroupBattle = window.endGroupBattle;
         window.endGroupBattle = function(isVictory, reason) {
             if (originalEndGroupBattle) originalEndGroupBattle(isVictory, reason);
             if (isVictory) {
-                let currentWorldName = state.currentWorld.name;
+                // Увеличаваме проучването
                 state.explorationProgress[currentWorldName] = Math.min(100, (state.explorationProgress[currentWorldName] || 0) + 10);
-                let diceRoll = Math.floor(Math.random() * 100) + 1;
-                if (diceRoll === 77 && window.currentBattleState && window.currentBattleState.group) {
-                    let luckyHero = window.currentBattleState.group.find(h => h.currentArmy > 0);
-                    if (luckyHero) {
-                        luckyHero.pet = state.currentWorld.petName;
-                        luckyHero.petBonusDescription = state.currentWorld.petBonus;
-                        if (window.worldData && window.worldData.clans && window.worldData.clans[luckyHero.clan]) {
-                            window.worldData.clans[luckyHero.clan].pet = state.currentWorld.petName;
+                // Шанс за опитомяване на pet (легендарен късмет 1% вместо 1/100 за тест - 1% е добре)
+                const diceRoll = Math.floor(Math.random() * 100) + 1;
+                if (diceRoll === 77) {
+                    // Търсим жив герой от битката (ако има достъп до списъка)
+                    // В battle.js нямаме глобален списък, затова използваме window._lastBattleHeroes, ако е дефиниран
+                    let luckyHero = null;
+                    if (window._lastBattleHeroes && window._lastBattleHeroes.length) {
+                        const alive = window._lastBattleHeroes.filter(h => h.hp > 0);
+                        if (alive.length) luckyHero = alive[Math.floor(Math.random() * alive.length)];
+                    }
+                    if (luckyHero && luckyHero.clanObj) {
+                        luckyHero.clanObj.pet = currentPetName;
+                        if (window.worldData && window.worldData.clans && luckyHero.clanObj.clan) {
+                            window.worldData.clans[luckyHero.clanObj.clan].pet = currentPetName;
                         }
-                        if (window.showAdvisorMsg) window.showAdvisorMsg(`🎉 ЛЕГЕНДАРЕН КЪСМЕТ! ${luckyHero.name} опитоми "${state.currentWorld.petName}"!`);
+                        if (window.showAdvisorMsg) window.showAdvisorMsg(`🎉 ЛЕГЕНДАРЕН КЪСМЕТ! ${luckyHero.name} опитоми "${currentPetName}"!`);
+                    } else {
+                        // Ако нямаме информация за героите, пробваме с активния герой
+                        if (window.currentHero) {
+                            window.currentHero.pet = currentPetName;
+                            if (window.showAdvisorMsg) window.showAdvisorMsg(`🎉 ЛЕГЕНДАРЕН КЪСМЕТ! ${window.currentHero.name} опитоми "${currentPetName}"!`);
+                        }
                     }
                 }
             }
+            // Възстановяваме старата функция
             window.endGroupBattle = originalEndGroupBattle;
             window.updatePortalContainerUI();
         };
     }
 };
 
-// ========== МОДАЛЕН ПРОЗОРЕЦ ЗА ЕКСПЕДИЦИИ (С РАБОТЕЩО ЗАТВАРЯНЕ) ==========
+// ========== МОДАЛЕН ПРОЗОРЕЦ ЗА ЕКСПЕДИЦИИ ==========
 window.openExpeditionsMenu = function() {
     if (document.getElementById('expeditions-modal')) return;
     const state = window.currentPortalState;
@@ -236,7 +260,7 @@ window.openExpeditionsMenu = function() {
     modal.style.cssText = `position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); backdrop-filter: blur(8px); z-index: 200000; display: flex; align-items: center; justify-content: center; font-family: 'Cinzel', serif;`;
     modal.innerHTML = `
         <div style="background: #0a0a1a; border: 2px solid #d4af37; border-radius: 24px; padding: 25px; max-width: 400px; width: 90%; text-align: center; position: relative;">
-            <button class="close-modal-x" style="position: absolute; top: 10px; left: 10px; background: rgba(255,80,80,0.2); border: none; color: #ff8888; font-size: 20px; width: 32px; height: 32px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center;">✕</button>
+            <button class="close-modal-x" style="position: absolute; top: 10px; left: 10px; background: rgba(255,80,80,0.2); border: none; color: #ff8888; font-size: 20px; width: 32px; height: 32px; border-radius: 50%; cursor: pointer;">✕</button>
             <h2 style="color: #ffd700;">🌌 Мистични Експедиции</h2>
             <div style="margin: 15px 0; text-align: left;">
                 <div>🪐 Свят: <span style="color: #ffd700;">${world.name}</span></div>
