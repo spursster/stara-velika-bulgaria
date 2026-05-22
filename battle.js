@@ -1,8 +1,8 @@
 /**
 ==========================================================================
 ПРОЕКТ: ВЕЛИКА БЪЛГАРИЯ
-ФАЙЛ: battle.js (КОРИГИРАН – АРМИЯТА НАМАЛЯВА СЛЕД БИТКА)
-ВЕРСИЯ: 4.0
+ФАЙЛ: battle.js (КОРИГИРАН – ПОРТАЛНА СЪВМЕСТИМОСТ)
+ВЕРСИЯ: 4.1
 ==========================================================================
 */
 
@@ -317,24 +317,21 @@
             enemyHp = enemyPower;
         }
 
-           // 2. Събиране на герои с преизчисляване на силата
+        // 2. Събиране на герои с преизчисляване на силата
         let heroes = [];
         if (window.worldData && window.worldData.clans) {
             for (let key in window.worldData.clans) {
                 let clan = window.worldData.clans[key];
                 if (clan.isJoined === true) {
-                    // Първо синхронизираме armyDetails
                     if (window.ensureCompleteArmyDetails) {
                         window.ensureCompleteArmyDetails(clan);
                     }
                     
-                    // Преизчисляване на heroPower от артефакти и умения
                     let calculatedPower = clan.heroPower || 100;
                     if (window.recalculateHeroPower) {
                         calculatedPower = window.recalculateHeroPower(clan);
                     }
                     
-                    // Бонус от клас
                     let classBonus = 1.0;
                     if (clan.classBonuses && clan.currentClass) {
                         const classData = window.hybridClasses?.find(c => c.name === clan.currentClass);
@@ -347,7 +344,6 @@
                     }
                     
                     let armySize = clan.armySize || clan.currentArmy || 300;
-                    // Силата зависи от армията (по-голяма армия = по-голяма сила)
                     let finalPower = Math.floor(calculatedPower * classBonus * (armySize / 300));
                     finalPower = Math.max(50, finalPower);
                     
@@ -387,6 +383,9 @@
             if (window.showAdvisorMsg) window.showAdvisorMsg("Нямате отключени герои за битка!");
             return;
         }
+
+        // Запазваме героите за порталната система
+        window._lastBattleHeroes = battleHeroes;
 
         const monster = {
             name: regionName,
@@ -534,11 +533,10 @@
             }
         }
 
-        // НОВА ФУНКЦИЯ: Намаляване на армията на героя след загуба на HP
         function applyArmyLossFromDamage(hero, damagePercent) {
             if (!hero.clanObj) return;
             
-            let armyLossPercent = damagePercent * 0.5; // 50% от загубата на HP се отразява на армията
+            let armyLossPercent = damagePercent * 0.5;
             let currentArmy = hero.clanObj.armySize || hero.armySize || 300;
             let newArmy = Math.max(10, Math.floor(currentArmy * (1 - armyLossPercent)));
             
@@ -546,7 +544,6 @@
             hero.clanObj.currentArmy = newArmy;
             hero.armySize = newArmy;
             
-            // Синхронизиране на armyDetails
             if (window.ensureCompleteArmyDetails) {
                 window.ensureCompleteArmyDetails(hero.clanObj);
             }
@@ -580,11 +577,9 @@
                 addLog(`━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`);
                 addLog(`🏆 ПОБЕДА! ${monster.name} е победен! 🏆`);
                 
-                      // НАГРАДИ ПРИ ПОБЕДА
                 let totalXP = 50 + Math.floor(Math.random() * 100);
                 let totalGold = 100 + Math.floor(Math.random() * 200);
                 
-                // Разпределяне на наградите между живите герои
                 const livingHeroes = currentHeroes.filter(h => h.hp > 0);
                 livingHeroes.forEach(hero => {
                     let heroXP = Math.floor(totalXP / livingHeroes.length);
@@ -597,30 +592,24 @@
                     }
                     
                     hero.clanObj.gold = (hero.clanObj.gold || 0) + heroGold;
-                    
                     addLog(`   🎁 ${hero.name} получава +${heroXP} XP и +${heroGold} злато!`);
                 });
                 
-                // 1. ШАНС ЗА АРТЕФАКТ (20% шанс)
                 if (Math.random() < 0.2 && window.historicalArtifacts) {
                     const artifactKeys = Object.keys(window.historicalArtifacts);
                     const randomKey = artifactKeys[Math.floor(Math.random() * artifactKeys.length)];
                     const newArtifact = { ...window.historicalArtifacts[randomKey] };
-                    
-                    // Даваме артефакта на случайния жив герой
                     const randomHero = livingHeroes[Math.floor(Math.random() * livingHeroes.length)];
                     if (randomHero && randomHero.clanObj) {
                         if (!randomHero.clanObj.inventory) randomHero.clanObj.inventory = [];
                         randomHero.clanObj.inventory.push(newArtifact);
                         addLog(`   🏺 ${randomHero.name} намери артефакт: ${newArtifact.name}!`);
-                        
                         if (window.addWorldEvent) {
                             window.addWorldEvent(`🏺 НАМЕРЕН АРТЕФАКТ`, `${randomHero.name} намери ${newArtifact.name} след битката!`, "🏺");
                         }
                     }
                 }
                 
-                // 2. ШАНС ЗА ПЛЕННИК (15% шанс, само ако има фентъзи раси)
                 if (Math.random() < 0.15 && window.fantasyRaces && window.fantasyRaces.length > 0) {
                     const randomRace = window.fantasyRaces[Math.floor(Math.random() * window.fantasyRaces.length)];
                     const prisoner = {
@@ -632,17 +621,14 @@
                         bonus: randomRace.bonus,
                         capturedFrom: monster.name
                     };
-                    
                     if (!window.prisoners) window.prisoners = [];
                     window.prisoners.push(prisoner);
                     addLog(`   👸 Взехте пленник: ${prisoner.name}! Може да се ожените в дипломацията.`);
-                    
                     if (window.addWorldEvent) {
                         window.addWorldEvent(`👸 ПЛЕННИК`, `След битката с ${monster.name}, взехте ${prisoner.name} като пленник!`, "👸");
                     }
                 }
                 
-                // 3. БОНУС ЗА ПОРТАЛНИ СВЕТОВЕ (ако има)
                 if (regionInput && regionInput.isPortalWorld) {
                     const extraBonus = 50 + Math.floor(Math.random() * 100);
                     const randomHero = livingHeroes[Math.floor(Math.random() * livingHeroes.length)];
@@ -664,6 +650,11 @@
                 if (typeof window.renderTop6LeadersUI === 'function') window.renderTop6LeadersUI();
                 if (typeof window.hidePortalIndicator === 'function') window.hidePortalIndicator();
 
+                // Извикваме endGroupBattle за порталната система
+                if (typeof window.endGroupBattle === 'function') {
+                    window.endGroupBattle(true, 'victory');
+                }
+
                 return true;
             }
             updateUI();
@@ -681,8 +672,6 @@
             
             let damagePercent = damage / target.maxHp;
             target.hp = Math.max(0, target.hp - damage);
-            
-            // НОВО: Намаляване на армията на героя
             applyArmyLossFromDamage(target, damagePercent);
             
             addLog(`━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`);
@@ -693,7 +682,6 @@
             
             if (target.hp <= 0) {
                 addLog(`   💀 ${target.name} е нокаутиран! 💀`, true);
-                // Героят е нокаутиран - допълнителни загуби на армия
                 applyArmyLossFromDamage(target, 0.5);
             }
             
@@ -706,6 +694,12 @@
                 battleActive = false;
                 const attackBtn = document.getElementById('battle-attack');
                 if (attackBtn) attackBtn.disabled = true;
+
+                // Извикваме endGroupBattle за порталната система
+                if (typeof window.endGroupBattle === 'function') {
+                    window.endGroupBattle(false, 'defeat');
+                }
+
                 return false;
             }
             return true;
@@ -728,7 +722,6 @@
             if (!battleActive) { addLog(`Битката вече е приключила.`); return; }
             addLog(`🏃 Отстъпление! Героите се изтеглят...`);
             
-            // Наказание за отстъпление - загуба на 20% от армията
             currentHeroes.forEach(hero => {
                 if (hero.hp > 0) {
                     applyArmyLossFromDamage(hero, 0.2);
@@ -738,6 +731,12 @@
             battleActive = false;
             const attackBtn = document.getElementById('battle-attack');
             if (attackBtn) attackBtn.disabled = true;
+
+            // Отстъплението се счита за загуба
+            if (typeof window.endGroupBattle === 'function') {
+                window.endGroupBattle(false, 'retreat');
+            }
+
             setTimeout(() => battleScreen.remove(), 1500);
         }
 
@@ -770,5 +769,5 @@
         console.log("✅ Битката е готова!");
     };
 
-    console.log("✅ battle.js зареден (коригирана версия – армията намалява)");
+    console.log("✅ battle.js зареден (портално-съвместима версия)");
 })();
