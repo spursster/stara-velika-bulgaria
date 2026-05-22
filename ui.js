@@ -1,7 +1,7 @@
 /** ========================================================================== 
 ПРОЕКТ: ВЕЛИКА БЪЛГАРИЯ
 ФАЙЛ: ui.js (УНИВЕРСАЛЕН ГЛОБАЛЕН ПРОФИЛ, ЛЕНТА НА ЕЛИТА)
-ВЕРСИЯ: 3.2 - КОРИГИРАНО СОРТИРАНЕ ЗА РЪЧНИ ГЕРОИ
+ВЕРСИЯ: 3.3 - ФИКС: АКТИВНИЯТ ГЕРОЙ НЕ СЕ СМЕНЯ ПРИ ОБНОВЯВАНЕ НА UI
 ========================================================================== */ 
 
 window.eventHistory = []; 
@@ -341,31 +341,68 @@ window.renderTop6LeadersUI = function() {
 
 window.renderTop6HeroesUI = window.renderTop6LeadersUI; 
 
-// ==================== ОСНОВНО ОБНОВЯВАНЕ НА ЛЕВИЯ ПАНЕЛ ====================
-window.updateCharacterUI = function(hero) { 
-    if (!hero) return; 
-    window.currentHero = hero; 
-    if (window.initializeHeroRPGData) window.initializeHeroRPGData(hero); 
-    const goldDisplay = document.getElementById('val-gold'); if (goldDisplay) goldDisplay.innerText = hero.gold || 0; 
-    const armyDisplay = document.getElementById('val-army'); if (armyDisplay) armyDisplay.innerText = hero.armySize || 0; 
-    const powerDisplay = document.getElementById('val-hero-power'); if (powerDisplay) powerDisplay.innerText = hero.heroPower || 100; 
-    const profileBox = document.getElementById('active-character-profile'); 
-    if (profileBox) { 
-        let petStatus = "Няма"; 
-        if (hero.pet && window.rpgDatabase && window.rpgDatabase.petsDatabase[hero.pet]) { const p = window.rpgDatabase.petsDatabase[hero.pet]; petStatus = p.icon + " " + p.name; } 
-        profileBox.innerHTML = '<div style="text-align:center;"><div style="font-weight:bold;font-size:1.2rem;">' + (hero.name || "Неизвестен") + '</div><div>Род ' + (hero.clan || "Свободен") + ' | Клас: ' + (hero.currentClass || "Багатур") + '</div><div>Ниво: ' + (hero.level || 1) + '</div><div>Възраст: ' + (hero.age || 50) + ' г.</div><div>Бойна Сила: ⚔️ ' + (hero.heroPower || 150) + '</div><div>Свободни точки: ' + (hero.skillPoints || 0) + '</div><div>Любимец: ' + petStatus + '</div></div>'; 
-    } 
-    if (profileBox && !document.getElementById('open-rpg-modal-btn')) { 
-        const rpgBtn = document.createElement('button'); 
-        rpgBtn.id = "open-rpg-modal-btn"; 
-        rpgBtn.className = "menu-btn"; 
-        rpgBtn.style.cssText = "width:100%; margin-top:10px; padding:8px; font-size:11px; font-family:'Cinzel';"; 
-        rpgBtn.innerText = " Управление на Героя"; 
-        rpgBtn.onclick = function() { if (window.openHeroRPGModal) window.openHeroRPGModal(window.currentHero.clan); }; 
-        profileBox.appendChild(rpgBtn); 
-    } 
-    window.renderTop6LeadersUI(); 
-}; 
+// ==================== ОСНОВНО ОБНОВЯВАНЕ НА ЛЕВИЯ ПАНЕЛ (КОРИГИРАНО) ====================
+window.updateCharacterUI = function(hero) {
+    if (!hero) return;
+
+    // Активният герой се определя по name и clan (не по референция)
+    const isActive = window.currentHero &&
+        (window.currentHero.name === hero.name && window.currentHero.clan === hero.clan);
+
+    if (isActive) {
+        // Актуализираме активния герой
+        window.currentHero = hero;
+    } else if (!window.currentHero) {
+        // Няма активен – задаваме този
+        window.currentHero = hero;
+    } else {
+        // Този герой не е активният – не променяме currentHero и не обновяваме главния UI
+        return;
+    }
+
+    if (window.initializeHeroRPGData) window.initializeHeroRPGData(hero);
+
+    const goldDisplay = document.getElementById('val-gold');
+    if (goldDisplay) goldDisplay.innerText = hero.gold || 0;
+
+    const armyDisplay = document.getElementById('val-army');
+    if (armyDisplay) armyDisplay.innerText = hero.armySize || 0;
+
+    const powerDisplay = document.getElementById('val-hero-power');
+    if (powerDisplay) powerDisplay.innerText = hero.heroPower || 100;
+
+    const profileBox = document.getElementById('active-character-profile');
+    if (profileBox) {
+        let petStatus = "Няма";
+        if (hero.pet && window.rpgDatabase && window.rpgDatabase.petsDatabase && window.rpgDatabase.petsDatabase[hero.pet]) {
+            const p = window.rpgDatabase.petsDatabase[hero.pet];
+            petStatus = p.icon + " " + p.name;
+        }
+        profileBox.innerHTML = '<div style="text-align:center;">' +
+            '<div style="font-weight:bold;font-size:1.2rem;">' + (hero.name || "Неизвестен") + '</div>' +
+            '<div>Род ' + (hero.clan || "Свободен") + ' | Клас: ' + (hero.currentClass || "Багатур") + '</div>' +
+            '<div>Ниво: ' + (hero.level || 1) + '</div>' +
+            '<div>Възраст: ' + (hero.age || 50) + ' г.</div>' +
+            '<div>Бойна Сила: ⚔️ ' + (hero.heroPower || 150) + '</div>' +
+            '<div>Свободни точки: ' + (hero.skillPoints || 0) + '</div>' +
+            '<div>Любимец: ' + petStatus + '</div>' +
+            '</div>';
+    }
+
+    if (profileBox && !document.getElementById('open-rpg-modal-btn')) {
+        const rpgBtn = document.createElement('button');
+        rpgBtn.id = "open-rpg-modal-btn";
+        rpgBtn.className = "menu-btn";
+        rpgBtn.style.cssText = "width:100%; margin-top:10px; padding:8px; font-size:11px; font-family:'Cinzel';";
+        rpgBtn.innerText = " Управление на Героя";
+        rpgBtn.onclick = function() {
+            if (window.openHeroRPGModal) window.openHeroRPGModal(window.currentHero.clan);
+        };
+        profileBox.appendChild(rpgBtn);
+    }
+
+    window.renderTop6LeadersUI();
+};
 
 // ==================== ЖУРНАЛ НА СЪВЕТНИКА ====================
 window.showAdvisorMsg = function(msg) { 
