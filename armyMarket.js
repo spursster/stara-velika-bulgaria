@@ -1,4 +1,4 @@
-// ======================== АРМИЯ ПАЗАР (ОПРОСТЕН) ========================
+// ======================== АРМИЯ ПАЗАР (КОРИГИРАН ВИЗУАЛНО) ========================
 (function() {
     // --- Проверка на зависимости ---
     if (!window.worldData || !window.worldData.clans) {
@@ -80,7 +80,7 @@
         if (hero) ensureArmyDetails(hero);
         return hero;
     }
-        function syncWithGame(hero) {
+    function syncWithGame(hero) {
         if (!hero) hero = getSelectedHero();
         if (!hero) return;
         ensureArmyDetails(hero);
@@ -191,7 +191,7 @@
         if (window.showAdvisorMsg) window.showAdvisorMsg(`💰 Продадохте ${quantity} × ${troop.name} за ${refund} злато.`);
         return true;
     }
-        // --- UI функции ---
+    // --- UI функции ---
     function troopCard(troop) {
         let hero = getSelectedHero();
         let currentCount = hero ? (hero.armyDetails[troop.id] || 0) : 0;
@@ -242,7 +242,116 @@
                     <button id="resetArmyBtn" class="footer-btn danger">⚠️ Демобилизация</button>
                 </div>
             </div>
-        </div>`;
+        </div>
+        <style>
+            .market-modal { 
+                position: fixed; 
+                top: 0; 
+                left: 0; 
+                width: 100%; 
+                height: 100%; 
+                background: rgba(0,0,0,0.85); 
+                backdrop-filter: blur(10px); 
+                z-index: 10000; 
+                display: flex; 
+                align-items: flex-start; 
+                justify-content: center; 
+                padding-top: 20px;
+                box-sizing: border-box;
+                overflow-y: auto;
+            }
+            .glass-panel { 
+                background: rgba(20,20,40,0.96); 
+                border-radius: 32px; 
+                width: 95%; 
+                max-width: 1400px; 
+                max-height: 90vh; 
+                overflow-y: auto; 
+                padding: 20px; 
+                border: 1px solid rgba(255,215,0,0.5); 
+                box-shadow: 0 20px 40px rgba(0,0,0,0.5); 
+            }
+            .market-header { 
+                display: flex; 
+                flex-wrap: wrap; 
+                justify-content: space-between; 
+                align-items: center; 
+                border-bottom: 1px solid #d4af37; 
+                padding-bottom: 12px; 
+                margin-bottom: 20px; 
+            }
+            .market-header h2 { 
+                color: #ffd700; 
+                margin: 0; 
+            }
+            .player-resources { 
+                display: flex; 
+                gap: 15px; 
+                flex-wrap: wrap; 
+            }
+            .resource-box { 
+                background: rgba(0,0,0,0.6); 
+                padding: 5px 12px; 
+                border-radius: 40px; 
+                font-weight: bold; 
+            }
+            .resource-box.gold { color: #ffd966; }
+            .resource-box.power { color: #88ffaa; }
+            .close-market { 
+                font-size: 32px; 
+                cursor: pointer; 
+                color: #ffd700; 
+            }
+            .close-market:hover { color: #ff6666; }
+            .market-tabs { 
+                display: flex; 
+                gap: 10px; 
+                margin-bottom: 20px; 
+                flex-wrap: wrap; 
+            }
+            .tab-btn { 
+                background: #2c2c3a; 
+                border: none; 
+                padding: 8px 20px; 
+                border-radius: 40px; 
+                color: #ffd966; 
+                cursor: pointer; 
+            }
+            .tab-btn.active { 
+                background: #daa520; 
+                color: black; 
+            }
+            .troop-shop { 
+                display: grid; 
+                grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); 
+                gap: 20px; 
+                max-height: 55vh; 
+                overflow-y: auto; 
+            }
+            .troop-card { 
+                background: rgba(0,0,0,0.65); 
+                border-radius: 24px; 
+                padding: 15px; 
+                border: 1px solid rgba(255,215,0,0.3); 
+            }
+            .troop-icon { font-size: 48px; text-align: center; }
+            .troop-info h3 { color: #ffd966; margin: 0 0 8px 0; }
+            .stats { display: flex; gap: 15px; font-size: 0.8rem; color: #aaa; }
+            .price { font-weight: bold; color: #ffaa44; }
+            .special { font-size: 0.7rem; color: #d4af37; background: rgba(0,0,0,0.4); display: inline-block; padding: 2px 8px; border-radius: 20px; }
+            .troop-controls { display: flex; justify-content: space-between; margin-top: 12px; gap: 8px; flex-wrap: wrap; }
+            .buy-btn, .sell-btn { background: linear-gradient(135deg,#b8860b,#daa520); border: none; padding: 6px 14px; border-radius: 40px; color: white; cursor: pointer; }
+            .sell-btn { background: linear-gradient(135deg,#8b3a3a,#b55a5a); }
+            .owned-count { font-size: 0.8rem; background: #222; padding: 4px 10px; border-radius: 30px; }
+            .market-footer { display: flex; justify-content: center; gap: 15px; margin-top: 20px; padding-top: 15px; border-top: 1px solid rgba(255,215,0,0.3); }
+            .footer-btn { background: #2c2c3a; border: 1px solid #daa520; padding: 8px 20px; border-radius: 40px; color: #ffd966; cursor: pointer; }
+            .footer-btn.gold { background: #daa520; color: black; }
+            .footer-btn.danger { background: #5a2a2a; border-color: #ff6666; color: #ffaaaa; }
+            @media (max-width:768px) { 
+                .glass-panel { padding: 12px; } 
+                .troop-shop { grid-template-columns: 1fr; } 
+            }
+        </style>`;
     }
 
     function updateMarketUI() {
