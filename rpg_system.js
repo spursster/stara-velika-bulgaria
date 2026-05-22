@@ -1,5 +1,5 @@
 // =========================================================================
-// ВЕЛИКА БЪЛГАРИЯ - rpg_system.js (НОВА ВЕРСИЯ – САМО НОВИ КЛАСОВЕ И УМЕНИЯ)
+// ВЕЛИКА БЪЛГАРИЯ - rpg_system.js (КОРИГИРАН – ПРАВИЛНО STOREDXP)
 // =========================================================================
 
 window.rpgDatabase = window.rpgDatabase || {};
@@ -24,7 +24,7 @@ window.initializeHeroRPGData = function(hero) {
     hero.xp = hero.xp || 0;
     hero.storedXP = hero.storedXP || 0;
     hero.skillPoints = hero.skillPoints || 0;
-    hero.skills = hero.skills || {};         // запазваме за обратна съвместимост (но не се използва)
+    hero.skills = hero.skills || {};
     hero.currentClass = hero.currentClass || "Багатур";
     hero.heroPower = hero.heroPower || 150;
     hero.isAuto = hero.isAuto !== undefined ? hero.isAuto : true;
@@ -34,20 +34,55 @@ window.initializeHeroRPGData = function(hero) {
     if (!hero.equipment) hero.equipment = Array(12).fill(null);
     if (!hero.inventory) hero.inventory = [];
     if (hero.pet === undefined) hero.pet = null;
-    // Инициализация на новите умения (ако липсва)
     if (hero.learnedSkills === undefined) hero.learnedSkills = {};
     hero.isRPGInitialized = true;
 };
 
-// ==================== Опит и нива ====================
+// ==================== ФУНКЦИЯ ЗА КОНСУМИРАНЕ НА STOREDXP ====================
+window.consumeStoredXPForHero = function(hero) {
+    if (!hero) return false;
+    if (!hero.isAuto && hero.storedXP > 0) {
+        let leveledUp = false;
+        let requiredXP = window.rpgDatabase.getXPRequiredForLevel(hero.level);
+        
+        while (hero.storedXP >= requiredXP && hero.level < 100) {
+            hero.storedXP -= requiredXP;
+            hero.level++;
+            hero.skillPoints++;
+            hero.heroPower += 25;
+            leveledUp = true;
+            requiredXP = window.rpgDatabase.getXPRequiredForLevel(hero.level);
+            
+            if (window.showAdvisorMsg) {
+                window.showAdvisorMsg(`🆙 ${hero.name} достигна Ниво ${hero.level} (от натрупан опит)! +1 Точка за умения`);
+            }
+        }
+        
+        if (leveledUp) {
+            if (window.checkArcheAgeClass) window.checkArcheAgeClass(hero);
+            if (!hero.isAuto && hero.skillPoints > 0 && window.autoAssignSkillPoint) {
+                window.autoAssignSkillPoint(hero);
+            }
+            if (window.updateCharacterUI) window.updateCharacterUI(hero);
+            if (window.renderTop6LeadersUI) window.renderTop6LeadersUI();
+        }
+        
+        return leveledUp;
+    }
+    return false;
+};
+
+// ==================== ОПИТ И НИВА ====================
 window.gainHeroXP = function(hero, amount) {
     if (!hero) return;
     window.initializeHeroRPGData(hero);
     
     if (hero.isAuto) {
+        // Автоматичен режим - XP отива директно в xp и се използва веднага
         hero.xp += amount;
         var requiredXP = window.rpgDatabase.getXPRequiredForLevel(hero.level);
         var leveledUp = false;
+        
         while (hero.xp >= requiredXP && hero.level < 100) {
             hero.xp -= requiredXP;
             hero.level++;
@@ -55,32 +90,39 @@ window.gainHeroXP = function(hero, amount) {
             hero.heroPower += 25;
             leveledUp = true;
             requiredXP = window.rpgDatabase.getXPRequiredForLevel(hero.level);
+            
             if (window.showAdvisorMsg) {
                 window.showAdvisorMsg("🆙 " + hero.name + " достигна Ниво " + hero.level + "! (+1 Точка за умения)");
             }
         }
+        
         if (leveledUp) {
-            window.checkArcheAgeClass(hero);
-            if (hero.isAuto && hero.skillPoints > 0) {
+            if (window.checkArcheAgeClass) window.checkArcheAgeClass(hero);
+            if (hero.isAuto && hero.skillPoints > 0 && window.autoAssignSkillPoint) {
                 window.autoAssignSkillPoint(hero);
             }
         }
     } else {
+        // Ръчен режим - XP отива в storedXP
         hero.storedXP += amount;
         if (window.showAdvisorMsg) {
             window.showAdvisorMsg("📚 " + hero.name + " натрупа " + amount + " ръчен опит! (Общо: " + hero.storedXP + ")");
         }
+        // Опитваме се да консумираме storedXP за качване на ниво
+        window.consumeStoredXPForHero(hero);
     }
     
     if (window.worldData && window.worldData.clans && hero.clan) window.worldData.clans[hero.clan] = hero;
     if (window.renderTop6LeadersUI) window.renderTop6LeadersUI();
     if (window.updateCharacterUI) window.updateCharacterUI(hero);
-    if (window.openHeroRPGModal && document.getElementById('hero-rpg-modal') && document.getElementById('hero-rpg-modal').style.display === 'block') {
+    
+    if (window.openHeroRPGModal && document.getElementById('hero-rpg-modal') && 
+        document.getElementById('hero-rpg-modal').style.display === 'block') {
         window.openHeroRPGModal(hero.clan);
     }
 };
 
-// ==================== Автоматичен / Ръчен режим ====================
+// ==================== АВТОМАТИЧЕН / РЪЧЕН РЕЖИМ ====================
 window.toggleHeroAutoMode = function(clanKey) {
     var hero = null;
     if (window.worldData && window.worldData.clans && window.worldData.clans[clanKey]) hero = window.worldData.clans[clanKey];
@@ -114,7 +156,7 @@ window.autoAssignSkillPoint = function(hero) {
         console.warn("advancedSkills не е зареден – няма нови умения.");
         return;
     }
-    // Събираме всички умения, които не са на максимално ниво
+    
     const allSkills = [];
     for (let treeKey in window.advancedSkills) {
         const tree = window.advancedSkills[treeKey];
@@ -126,51 +168,62 @@ window.autoAssignSkillPoint = function(hero) {
             }
         }
     }
+    
     if (allSkills.length === 0) return;
-    const random = allSkills[Math.floor(Math.random() * allSkills.length)];
-    // Проверяваме изискванията (ниво, точки в дървото)
-    let pointsInTree = 0;
-    for (let sk in hero.learnedSkills) {
-        if (window.advancedSkills[random.treeKey] && window.advancedSkills[random.treeKey].skills[sk]) {
-            pointsInTree += hero.learnedSkills[sk];
+    
+    // Опитваме се да научим умение (максимум 10 опита за предотвратяване на безкраен цикъл)
+    let attempts = 0;
+    let learned = false;
+    
+    while (!learned && attempts < 10 && hero.skillPoints > 0 && allSkills.length > 0) {
+        const random = allSkills[Math.floor(Math.random() * allSkills.length)];
+        
+        let pointsInTree = 0;
+        for (let sk in hero.learnedSkills) {
+            if (window.advancedSkills[random.treeKey] && window.advancedSkills[random.treeKey].skills[sk]) {
+                pointsInTree += hero.learnedSkills[sk];
+            }
         }
-    }
-    if (hero.level >= random.skill.reqLevel && pointsInTree >= random.skill.reqPointsInTree) {
-        hero.learnedSkills[random.skillKey] = (hero.learnedSkills[random.skillKey] || 0) + 1;
-        hero.skillPoints--;
-        // Прилагане на бонусите (опростено – може да се разшири)
-        const effect = random.skill.effect(hero.learnedSkills[random.skillKey]);
-        if (effect.attackBonus) hero.heroPower += effect.attackBonus;
-        if (effect.defenseBonus) hero.defense = (hero.defense || 0) + effect.defenseBonus;
-        if (window.showAdvisorMsg) {
-            window.showAdvisorMsg(`🤖 Автоматично: ${hero.name} научи "${random.skill.name}" (Ниво ${hero.learnedSkills[random.skillKey]})!`);
+        
+        if (hero.level >= random.skill.reqLevel && pointsInTree >= random.skill.reqPointsInTree) {
+            hero.learnedSkills[random.skillKey] = (hero.learnedSkills[random.skillKey] || 0) + 1;
+            hero.skillPoints--;
+            learned = true;
+            
+            const effect = random.skill.effect(hero.learnedSkills[random.skillKey]);
+            if (effect.attackBonus) hero.heroPower += effect.attackBonus;
+            if (effect.defenseBonus) hero.defense = (hero.defense || 0) + effect.defenseBonus;
+            
+            if (window.showAdvisorMsg) {
+                window.showAdvisorMsg(`🤖 Автоматично: ${hero.name} научи "${random.skill.name}" (Ниво ${hero.learnedSkills[random.skillKey]})!`);
+            }
         }
-    } else {
-        // Ако няма достъпни умения (напр. всички са заключени), опитайте с друг
-        if (allSkills.length > 1) window.autoAssignSkillPoint(hero);
+        attempts++;
     }
 };
 
-// ==================== НОВА КЛАСОВА ЕВОЛЮЦИЯ (САМО ХИБРИДНИ КЛАСОВЕ) ====================
+// ==================== НОВА КЛАСОВА ЕВОЛЮЦИЯ ====================
 window.checkArcheAgeClass = function(hero) {
     if (!hero) return;
     if (!window.hybridClasses || !Array.isArray(window.hybridClasses)) {
         console.warn("hybridClasses не е зареден – няма нови класове.");
         return;
     }
+    
     let skillLevels = {};
-    // Трябва да използваме старите `hero.skills` за определяне на класа,
-    // защото новите умения не влияят на класовата еволюция (все пак класовете зависят от 3-те основни дървета)
     for (let key in hero.skills) {
         if (hero.skills[key] > 0) skillLevels[key] = hero.skills[key];
     }
+    
     const available = window.hybridClasses.filter(cls => {
         if (hero.level < cls.reqLevel) return false;
         return cls.reqSkills.every(skill => skillLevels[skill] >= 1);
     });
+    
     if (available.length === 0) return;
     available.sort((a, b) => b.reqLevel - a.reqLevel);
     const newClass = available[0];
+    
     if (hero.currentClass !== newClass.name) {
         const oldClass = hero.currentClass;
         hero.currentClass = newClass.name;
@@ -181,106 +234,12 @@ window.checkArcheAgeClass = function(hero) {
     }
 };
 
-// ==================== РЪЧЕН ИЗБОР НА УМЕНИЕ (за старите умения – вече не се използва) ====================
-// Запазваме празни функции, за да не се счупи нищо, ако някой ги извиква.
-window.manualSkillChoiceOnLevelUp = function(clanKey) {
-    if (window.showAdvisorMsg) window.showAdvisorMsg("⭐ Новото дърво на уменията е достъпно от RPG модала (⭐ УМЕНИЯ (НОВИ) ⭐).");
-};
-window.applyManualSkill = function(clanKey, skillKey) {
-    if (window.showAdvisorMsg) window.showAdvisorMsg("⭐ Моля, използвайте новия интерфейс за умения (⭐ УМЕНИЯ (НОВИ) ⭐).");
-};
-window.buySkillManual = function(clanKey, skillKey) {
-    if (window.showAdvisorMsg) window.showAdvisorMsg("⭐ Новите умения се научават от специалния прозорец. Отворете го от RPG модала.");
-};
-
-// ==================== RPG МОДАЛ (без старите умения) ====================
-window.openHeroRPGModal = function(clanKey) {
-    var modalEl = document.getElementById('hero-rpg-modal');
-    if (!modalEl) return;
-    var hero = null;
-    if (window.worldData && window.worldData.clans && window.worldData.clans[clanKey]) hero = window.worldData.clans[clanKey];
-    else if (window.currentHero && (window.currentHero.clan === clanKey || window.currentHero.name === clanKey)) hero = window.currentHero;
-    if (!hero) hero = window.currentHero;
-    if (!hero) return;
-    window.initializeHeroRPGData(hero);
-    var titleEl = document.getElementById('rpg-modal-title');
-    var subtitleEl = document.getElementById('rpg-modal-subtitle');
-    var pointsEl = document.getElementById('rpg-modal-points');
-    if (titleEl) titleEl.innerText = "Водач " + (hero.name || "Пълководец");
-    if (subtitleEl) subtitleEl.innerText = "Клан " + (hero.clan || clanKey) + " | Клас: " + (hero.currentClass || "Багатур") + " (Ниво " + (hero.level || 1) + ")";
-    if (pointsEl) pointsEl.innerText = hero.skillPoints || 0;
-    
-    // Показваме инвентар и екипировка
-    var equipGrid = document.getElementById('rpg-equipment-grid');
-    if (equipGrid) {
-        equipGrid.innerHTML = "";
-        var slotLabels = ["Шлем", "Нагръдник", "Оръжие", "Щит", "Ръкавици", "Ботуши", "Амулет", "Пръстен 1", "Пръстен 2"];
-        for (var i = 0; i < 9; i++) {
-            var item = hero.equipment[i];
-            var box = document.createElement('div');
-            box.className = "rpg-equip-box";
-            box.style.cssText = "width:75px; height:75px; background:rgba(0,0,0,0.5); border:1px solid #d4af37; border-radius:4px; display:flex; flex-direction:column; align-items:center; justify-content:center; cursor:pointer; font-size:11px; color:#fff;";
-            box.onclick = (function(idx) { return function() { alert("Оръжейна стая: Преместете предмет от съкровищницата в слот за " + slotLabels[idx] + "."); }; })(i);
-            box.innerHTML = item ? ("<div>" + item.icon + "</div><span style=\"font-size:8px;\">" + (item.name.substring(0,6) || "..") + "</span>") : ("<span style=\"opacity:0.25; font-size:20px;\">🛡️</span><span style=\"font-size:9px; color:#aaa;\">" + slotLabels[i] + "</span>");
-            equipGrid.appendChild(box);
-        }
-    }
-    var petSlot = document.getElementById('rpg-pet-slot');
-    if (petSlot) {
-        if (hero.pet && window.rpgDatabase.petsDatabase[hero.pet]) {
-            var activePet = window.rpgDatabase.petsDatabase[hero.pet];
-            petSlot.innerHTML = "<div style=\"font-size:32px;\">" + activePet.icon + "</div><span style=\"font-size:8px; color:#ffd700; font-weight:bold;\">" + activePet.name + "</span>";
-            petSlot.title = activePet.desc;
-            petSlot.onclick = (function(h) { return function() { if (confirm("Искате ли да освободите домашния любимец " + activePet.name + "?")) { h.pet = null; window.openHeroRPGModal(clanKey); } }; })(hero);
-        } else {
-            petSlot.innerHTML = "<span style=\"font-size:24px; opacity:0.3;\">🐾</span><span style=\"font-size:8px; color:#666;\">ПРАЗЕН</span>";
-            petSlot.onclick = function() {
-                var petKeys = Object.keys(window.rpgDatabase.petsDatabase);
-                var optionsStr = "Изберете нов домашен любимец:\n";
-                for (var idx = 0; idx < petKeys.length; idx++) {
-                    var p = window.rpgDatabase.petsDatabase[petKeys[idx]];
-                    optionsStr += (idx + 1) + ". " + p.icon + " " + p.name + "\n";
-                }
-                var choice = prompt(optionsStr);
-                if (choice && choice > 0 && choice <= petKeys.length) {
-                    hero.pet = petKeys[choice - 1];
-                    window.openHeroRPGModal(clanKey);
-                }
-            };
-        }
-    }
-    // Секцията за старите умения вече не се показва – вместо това бутон към новите умения
-    var skillsContainer = document.getElementById('rpg-modal-skills-container');
-    if (skillsContainer) {
-        skillsContainer.innerHTML = `
-            <div style="text-align:center; padding:20px;">
-                <p style="color:#ffd700;">⭐ Новата система за умения е достъпна!</p>
-                <p>Вашите точки за умения: <strong>${hero.skillPoints}</strong></p>
-                <p>Отворете дърветата на уменията чрез бутона по-долу.</p>
-            </div>
-        `;
-    }
-    // Добавяме бутон за новите умения (ако не съществува)
-    if (!modalEl.querySelector('.skills-ui-btn')) {
-        const skillsBtn = document.createElement('button');
-        skillsBtn.className = 'skills-ui-btn';
-        skillsBtn.innerHTML = '⭐ УМЕНИЯ (НОВИ) ⭐';
-        skillsBtn.style.cssText = 'margin-top:15px; width:100%; background:#daa520; border:none; border-radius:30px; padding:8px; color:#000; font-weight:bold; cursor:pointer; font-family:"Cinzel",serif;';
-        skillsBtn.onclick = () => {
-            modalEl.style.display = 'none';
-            if (typeof window.openSkillsUI === 'function') window.openSkillsUI();
-            else alert("Интерфейсът за умения не е зареден (skills-ui.js).");
-        };
-        modalEl.querySelector('.modal-content > div:last-child')?.appendChild(skillsBtn);
-    }
-    modalEl.style.display = "block";
-};
-
-// ==================== ПОМОЩНИ ФУНКЦИИ (без промяна) ====================
+// ==================== ПОМОЩНИ ФУНКЦИИ ====================
 window.calculateArtifactSetBonuses = function(hero) {
     if (!hero || !hero.inventory) return {};
     var setsCollected = {};
     var totalSetBonus = { heroPower: 0, goldBonus: 0, defense: 0, armyBonus: 0, diplomacyBonus: 0, mysticismBonus: 0 };
+    
     for (var i = 0; i < hero.inventory.length; i++) {
         var item = hero.inventory[i];
         if (item && item.set && window.historicalArtifacts && window.historicalArtifacts[item.id]) {
@@ -289,6 +248,7 @@ window.calculateArtifactSetBonuses = function(hero) {
             if (setsCollected[artifact.set].indexOf(artifact.id) === -1) setsCollected[artifact.set].push(artifact.id);
         }
     }
+    
     for (var setKey in setsCollected) {
         if (window.artifactSetBonuses && window.artifactSetBonuses[setKey]) {
             var setInfo = window.artifactSetBonuses[setKey];
@@ -309,24 +269,23 @@ window.recalculateHeroPower = function(hero) {
     var artifactBonus = 0;
     var setBonus = 0;
     var skillBonus = 0;
+    
     if (hero.inventory) {
         for (var i = 0; i < hero.inventory.length; i++) {
             var item = hero.inventory[i];
             if (item && item.bonus && item.bonus.heroPower) artifactBonus += item.bonus.heroPower;
         }
     }
-    // Бонус от новите умения (само attackBonus засега)
+    
     if (hero.learnedSkills) {
         const bonuses = window.getAdvancedSkillBonuses ? window.getAdvancedSkillBonuses(hero) : {};
         if (bonuses.attackBonus) skillBonus += bonuses.attackBonus;
-        // Може да се добавят и други бонуси
     }
+    
     var setBonuses = window.calculateArtifactSetBonuses(hero);
     setBonus = setBonuses.heroPower || 0;
     hero.heroPower = basePower + artifactBonus + setBonus + skillBonus;
-    if (window.showAdvisorMsg && (artifactBonus > 0 || setBonus > 0 || skillBonus > 0)) {
-        console.log("📊 Сила на " + hero.name + ": базова " + basePower + " + артефакти " + artifactBonus + " + сет " + setBonus + " + умения " + skillBonus + " = " + hero.heroPower);
-    }
+    
     return hero.heroPower;
 };
 
@@ -338,10 +297,9 @@ window.getSkillLevel = function(hero, skillKey) {
 window.getHeroCombatBonus = function(hero, bonusType) {
     if (!hero || !hero.learnedSkills) return 0;
     var bonus = 0;
-    // Тук може да се сканират всички научени нови умения и да се сумират бонуси
+    
     for (let sk in hero.learnedSkills) {
         const level = hero.learnedSkills[sk];
-        // Намираме умението в дърветата
         for (let treeKey in window.advancedSkills) {
             const skill = window.advancedSkills[treeKey].skills[sk];
             if (skill) {
@@ -349,10 +307,11 @@ window.getHeroCombatBonus = function(hero, bonusType) {
                 if (bonusType === 'attack' && effect.attackBonus) bonus += effect.attackBonus;
                 if (bonusType === 'defense' && effect.defenseBonus) bonus += effect.defenseBonus;
                 if (bonusType === 'critical' && effect.critChance) bonus += effect.critChance;
-                // ... други бонуси
                 break;
             }
         }
     }
     return bonus;
 };
+
+console.log("✅ rpg_system.js зареден (коригиран – storedXP консумация)");
