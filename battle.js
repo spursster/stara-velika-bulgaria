@@ -317,20 +317,45 @@
             enemyHp = enemyPower;
         }
 
-        // 2. Събиране на герои
+           // 2. Събиране на герои с преизчисляване на силата
         let heroes = [];
         if (window.worldData && window.worldData.clans) {
             for (let key in window.worldData.clans) {
                 let clan = window.worldData.clans[key];
                 if (clan.isJoined === true) {
-                    let heroPower = clan.heroPower || clan.power || 100;
+                    // Първо синхронизираме armyDetails
+                    if (window.ensureCompleteArmyDetails) {
+                        window.ensureCompleteArmyDetails(clan);
+                    }
+                    
+                    // Преизчисляване на heroPower от артефакти и умения
+                    let calculatedPower = clan.heroPower || 100;
+                    if (window.recalculateHeroPower) {
+                        calculatedPower = window.recalculateHeroPower(clan);
+                    }
+                    
+                    // Бонус от клас
+                    let classBonus = 1.0;
+                    if (clan.classBonuses && clan.currentClass) {
+                        const classData = window.hybridClasses?.find(c => c.name === clan.currentClass);
+                        if (classData?.bonuses?.heroPower) {
+                            calculatedPower += classData.bonuses.heroPower;
+                        }
+                        if (classData?.bonuses?.armyBonus) {
+                            classBonus += classData.bonuses.armyBonus;
+                        }
+                    }
+                    
                     let armySize = clan.armySize || clan.currentArmy || 300;
-                    let finalPower = Math.floor(heroPower * (armySize / 300));
+                    // Силата зависи от армията (по-голяма армия = по-голяма сила)
+                    let finalPower = Math.floor(calculatedPower * classBonus * (armySize / 300));
+                    finalPower = Math.max(50, finalPower);
+                    
                     heroes.push({
                         id: key,
                         name: clan.leaderName || clan.name || key,
                         className: clan.currentClass || "Воевода",
-                        power: Math.max(50, finalPower),
+                        power: finalPower,
                         hp: 100,
                         maxHp: 100,
                         icon: "⚔️",
