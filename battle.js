@@ -1,8 +1,8 @@
 /**
 ==========================================================================
 ПРОЕКТ: ВЕЛИКА БЪЛГАРИЯ
-ФАЙЛ: battle.js (КОРИГИРАН – ПОРТАЛНА СЪВМЕСТИМОСТ)
-ВЕРСИЯ: 4.1
+ФАЙЛ: battle.js (КОРИГИРАН – ПОРТАЛНА СЪВМЕСТИМОСТ + RESET ARMY)
+ВЕРСИЯ: 4.2
 ==========================================================================
 */
 
@@ -386,6 +386,7 @@
 
         // Запазваме героите за порталната система
         window._lastBattleHeroes = battleHeroes;
+        window.currentBattleState = { group: battleHeroes, monster: null };
 
         const monster = {
             name: regionName,
@@ -394,6 +395,7 @@
             maxHp: enemyHp,
             icon: "👹"
         };
+        if (window.currentBattleState) window.currentBattleState.monster = monster;
 
         const oldScreen = document.getElementById('ultimate-battle-screen');
         if (oldScreen) oldScreen.remove();
@@ -654,6 +656,9 @@
                 if (typeof window.endGroupBattle === 'function') {
                     window.endGroupBattle(true, 'victory');
                 }
+                // Почистваме глобалните променливи след битката
+                window.currentBattleState = null;
+                window._lastBattleHeroes = null;
 
                 return true;
             }
@@ -699,6 +704,9 @@
                 if (typeof window.endGroupBattle === 'function') {
                     window.endGroupBattle(false, 'defeat');
                 }
+                // Почистваме глобалните променливи
+                window.currentBattleState = null;
+                window._lastBattleHeroes = null;
 
                 return false;
             }
@@ -736,12 +744,16 @@
             if (typeof window.endGroupBattle === 'function') {
                 window.endGroupBattle(false, 'retreat');
             }
+            // Почистваме глобалните променливи
+            window.currentBattleState = null;
+            window._lastBattleHeroes = null;
 
             setTimeout(() => battleScreen.remove(), 1500);
         }
 
         function resetBattle() {
-            currentHeroes = battleHeroes.map(h => ({ ...h, hp: h.maxHp }));
+            // Възстановяваме първоначалните стойности на hp И armySize
+            currentHeroes = battleHeroes.map(h => ({ ...h, hp: h.maxHp, armySize: h.armySize }));
             currentMonster = { ...monster };
             battleActive = true;
             currentRound = 1;
@@ -769,5 +781,5 @@
         console.log("✅ Битката е готова!");
     };
 
-    console.log("✅ battle.js зареден (портално-съвместима версия)");
+    console.log("✅ battle.js зареден (портално-съвместима версия + reset army)");
 })();
