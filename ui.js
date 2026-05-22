@@ -753,38 +753,75 @@ if (document.readyState === 'loading') {
 } else {
     initHeroBar();
 }
-// ==================== БУТОН ЗА ОТКРИВАНЕ НА НОВИ ЗЕМИ ====================
-function addDiscoverButton() {
-    const topBarControls = document.querySelector('.top-bar-controls');
-    if (!topBarControls || document.getElementById('discover-lands-btn')) return;
-    const discoverBtn = document.createElement('button');
-    discoverBtn.id = 'discover-lands-btn';
-    discoverBtn.className = 'glass-btn';
-    discoverBtn.innerHTML = '🌍 Открий нови земи';
-    discoverBtn.title = 'Генерира нови процедурни региони';
-    discoverBtn.style.cssText = 'background: #2c5a2a; border-color: #88ff88; color: #fff;';
-    discoverBtn.onclick = function() {
-        if (typeof window.generateProceduralRegions === 'function') {
-            let count = 5 + Math.floor(Math.random() * 6);
-            let generated = window.generateProceduralRegions(count, true);
-            if (window.showAdvisorMsg) {
-                window.showAdvisorMsg(`🌍 Открихте ${generated} нови непознати земи! Разгледайте ги на картата.`);
-            } else {
-                alert(`Открихте ${generated} нови региона!`);
+// ==================== АДАПТИВНИ БУТОНИ (ЦЯЛ ЕКРАН И ОТКРИЙ) ====================
+function setupResponsiveButtons() {
+    // Бутон за цял екран (намираме го по onclick)
+    let fullscreenBtn = document.querySelector('button[onclick*="toggleGameFullScreen"]');
+    if (!fullscreenBtn) {
+        const btns = document.querySelectorAll('.glass-btn');
+        for (let b of btns) {
+            if (b.innerText.includes('⬚') || b.innerHTML.includes('⬚')) {
+                fullscreenBtn = b;
+                break;
             }
-            if (document.getElementById('regions-map-overlay')) {
-                if (typeof window.openRegionsMap === 'function') window.openRegionsMap();
-            }
-        } else {
-            alert("Системата за генериране на региони не е заредена.");
         }
-    };
-    topBarControls.appendChild(discoverBtn);
+    }
+    
+    // Бутон за нови земи
+    let discoverBtn = document.getElementById('discover-lands-btn');
+    if (!discoverBtn && document.querySelector('.top-bar-controls')) {
+        discoverBtn = document.createElement('button');
+        discoverBtn.id = 'discover-lands-btn';
+        discoverBtn.className = 'glass-btn';
+        discoverBtn.title = 'Открий нови земи';
+        discoverBtn.onclick = function() {
+            if (typeof window.generateProceduralRegions === 'function') {
+                let count = 5 + Math.floor(Math.random() * 6);
+                let generated = window.generateProceduralRegions(count, true);
+                if (window.showAdvisorMsg) {
+                    window.showAdvisorMsg(`🌍 Открихте ${generated} нови непознати земи!`);
+                } else {
+                    alert(`Открихте ${generated} нови региона!`);
+                }
+                if (document.getElementById('regions-map-overlay') && typeof window.openRegionsMap === 'function') {
+                    window.openRegionsMap();
+                }
+            } else {
+                alert("Системата за генериране на региони не е заредена.");
+            }
+        };
+        document.querySelector('.top-bar-controls').appendChild(discoverBtn);
+    }
+    
+    function updateButtons() {
+        const isMobile = window.innerWidth <= 768;
+        if (fullscreenBtn) {
+            if (isMobile) {
+                fullscreenBtn.innerHTML = '⬚';
+                fullscreenBtn.style.cssText = 'font-size:1.2rem; padding:0; width:36px; height:36px; display:flex; align-items:center; justify-content:center;';
+            } else {
+                fullscreenBtn.innerHTML = '⬚ Цял екран';
+                fullscreenBtn.style.cssText = '';
+            }
+        }
+        if (discoverBtn) {
+            if (isMobile) {
+                discoverBtn.innerHTML = '🌍';
+                discoverBtn.style.cssText = 'font-size:1.2rem; padding:0; width:36px; height:36px; display:flex; align-items:center; justify-content:center;';
+            } else {
+                discoverBtn.innerHTML = '🌍 Открий';
+                discoverBtn.style.cssText = '';
+            }
+        }
+    }
+    
+    updateButtons();
+    window.addEventListener('resize', updateButtons);
 }
 
-// Стартиране на бутона
+// Извикваме функцията след зареждане на DOM
 if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', addDiscoverButton);
+    document.addEventListener('DOMContentLoaded', setupResponsiveButtons);
 } else {
-    addDiscoverButton();
+    setupResponsiveButtons();
 }
