@@ -106,21 +106,57 @@ window.hireNewHero = function() {
         pet: null, age: 30, learnedSkills: {}
     };
     if (window.initializeHeroRPGData) window.initializeHeroRPGData(newHero);
-    window.currentHero.gold -= randomHero.cost;
+    
+    // Запомняме стария активен герой
+    const oldHero = window.currentHero;
+    // Намаляваме златото на стария герой (той плаща)
+    oldHero.gold -= randomHero.cost;
+    
+    // Добавяме новия герой в света
     if (!window.worldData) window.worldData = {};
     if (!window.worldData.clans) window.worldData.clans = {};
     window.worldData.clans[newId] = newHero;
     if (!window.unlockedLeaders) window.unlockedLeaders = [];
     window.unlockedLeaders.push(newHero);
+    
+    // *** ГАРАНТИРАМЕ, ЧЕ АКТИВНИЯТ ГЕРОЙ ОСТАВА В WORLD DATA ***
+    // Ако функцията ensureActiveHeroInBarracks съществува (в barracks.js), я извикваме
+    if (typeof ensureActiveHeroInBarracks === 'function') {
+        ensureActiveHeroInBarracks();
+    } else {
+        // Иначе правим ръчно
+        oldHero.isJoined = true;
+        oldHero.isFavoriteInBarracks = true;
+        if (!window.worldData.clans[oldHero.clan]) {
+            window.worldData.clans[oldHero.clan] = oldHero;
+        } else {
+            window.worldData.clans[oldHero.clan].isJoined = true;
+            window.worldData.clans[oldHero.clan].isFavoriteInBarracks = true;
+        }
+        let favs = [];
+        for (let k in window.worldData.clans) {
+            const c = window.worldData.clans[k];
+            if (c.isJoined && c.isFavoriteInBarracks) favs.push(c.name);
+        }
+        if (!favs.includes(oldHero.name)) favs.push(oldHero.name);
+        localStorage.setItem('barracksFavorites', JSON.stringify(favs));
+    }
+    
+    // Актуализираме UI за стария герой (активния)
     let goldSpan = document.getElementById('val-gold');
-    if (goldSpan) goldSpan.innerText = window.currentHero.gold;
-    if (window.updateCharacterUI) window.updateCharacterUI(window.currentHero);
+    if (goldSpan) goldSpan.innerText = oldHero.gold;
+    if (window.updateCharacterUI) window.updateCharacterUI(oldHero);
     if (window.renderTop6LeadersUI) window.renderTop6LeadersUI();
     if (typeof window.renderSingleBar === 'function') window.renderSingleBar();
-    alert(`✅ Нает: ${newHero.name} от род ${newHero.clan}\n💰 Останало злато: ${window.currentHero.gold}\n⚔️ Бойна сила: ${newHero.power}`);
+    
+    alert(`✅ Нает: ${newHero.name} от род ${newHero.clan}\n💰 Останало злато: ${oldHero.gold}\n⚔️ Бойна сила: ${newHero.power}`);
     if (newHero.isAuto && typeof window.startAutoTimer === 'function') window.startAutoTimer(newId);
+    
+    // Презареждаме казармите ако са отворени
+    if (document.getElementById('barracks-screen') && document.getElementById('barracks-screen').style.display === 'flex') {
+        if (typeof window.renderBarracksLayout === 'function') window.renderBarracksLayout();
+    }
 };
-
 // ==================== ДАННИ ЗА ГЕРОИТЕ ====================
 function getAllHeroes() {
     let heroes = [];
