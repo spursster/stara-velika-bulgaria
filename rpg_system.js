@@ -112,7 +112,7 @@ window.gainHeroXP = function(hero, amount) {
         window.consumeStoredXPForHero(hero);
     }
     
-    if (window.worldData && window.worldData.clans && hero.clan) window.worldData.clans[hero.clan] = hero;
+   // if (window.worldData && window.worldData.clans && hero.clan) window.worldData.clans[hero.clan] = hero;
     if (window.renderTop6LeadersUI) window.renderTop6LeadersUI();
     if (window.updateCharacterUI) window.updateCharacterUI(hero);
     
