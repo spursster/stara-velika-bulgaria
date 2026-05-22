@@ -272,6 +272,44 @@ window.worldData = {
         "Мадейра": { name: "Мадейра", terrain: "Планинска", resource: "Вино", nativeClans: ["Османци Дуло"], difficulty: 32, defenseLevel: 2, infrastructureLevel: 2, armySize: 480 }
     }
 };
+// ==================== ПРОЦЕДУРНО ГЕНЕРИРАНИ РЕГИОНИ ====================
+window.generateProceduralRegions = function(count, preserveExisting = true) {
+    if (!window.worldData.regions) window.worldData.regions = {};
+    const prefixes = ["Нова", "Дива", "Забравена", "Прокълната", "Златна", "Сребърна", "Огнена", "Ледена", "Сенчеста", "Безкрайна", "Свещена", "Тъмна", "Светла", "Дива", "Кристална"];
+    const suffixes = ["земя", "долина", "пустош", "гора", "планина", "пустиня", "блато", "остров", "пещера", "равнина", "степ", "хълм"];
+    const resources = ["Жито", "Дървен материал", "Желязо", "Злато", "Сребро", "Камък", "Риба", "Сол", "Коне", "Билки", "Кожа", "Вълна", "Кехлибар", "Вино", "Зехтин", "Мед", "Ориз", "Коприна"];
+    const terrains = ["Равнина", "Хълмиста", "Планинска", "Крайбрежна", "Речен", "Пустинна", "Гора", "Блато", "Степ", "Вулканична", "Магическа"];
+    let generated = 0;
+    for (let i = 0; i < count; i++) {
+        let uniqueName = "";
+        do {
+            let name = prefixes[Math.floor(Math.random() * prefixes.length)] + " " + suffixes[Math.floor(Math.random() * suffixes.length)];
+            if (Math.random() > 0.7) name = suffixes[Math.floor(Math.random() * suffixes.length)] + " на " + prefixes[Math.floor(Math.random() * prefixes.length)];
+            uniqueName = name;
+            if (uniqueName.length < 3) uniqueName = "Нова земя";
+        } while (preserveExisting && window.worldData.regions[uniqueName]);
+        let resource = resources[Math.floor(Math.random() * resources.length)];
+        let terrain = terrains[Math.floor(Math.random() * terrains.length)];
+        let armySize = 50 + Math.floor(Math.random() * 400);
+        let defenseLevel = 1 + Math.floor(Math.random() * 6);
+        let infrastructureLevel = 1 + Math.floor(Math.random() * 4);
+        let difficulty = 10 + Math.floor(Math.random() * 80);
+        let region = {
+            name: uniqueName,
+            terrain: terrain,
+            resource: resource,
+            nativeClans: ["Независим"],
+            armySize: armySize,
+            defenseLevel: defenseLevel,
+            infrastructureLevel: infrastructureLevel,
+            difficulty: difficulty
+        };
+        window.worldData.regions[uniqueName] = region;
+        generated++;
+    }
+    console.log(`✅ Генерирани ${generated} процедурни региона. Общо региони: ${Object.keys(window.worldData.regions).length}`);
+    return generated;
+};
 
 // ✅ КЛЮЧОВО: Инициализация на регионите на играча
 window.playerRegions = window.playerRegions || ["Плиска"];
