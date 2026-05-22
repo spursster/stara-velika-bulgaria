@@ -1,7 +1,8 @@
 /**
 ==========================================================================
 ПРОЕКТ: ВЕЛИКА БЪЛГАРИЯ
-ФАЙЛ: battle.js (КОРИГИРАН – ЖИВОТЪТ НАМАЛЯВА)
+ФАЙЛ: battle.js (КОРИГИРАН – АРМИЯТА НАМАЛЯВА СЛЕД БИТКА)
+ВЕРСИЯ: 4.0
 ==========================================================================
 */
 
@@ -451,7 +452,6 @@
         let currentRound = 1;
 
         function updateUI() {
-            // Обновяване на героите
             currentHeroes.forEach(hero => {
                 const fillEl = document.getElementById(`hp-${hero.id}`);
                 const textEl = document.getElementById(`hp-text-${hero.id}`);
@@ -461,7 +461,7 @@
                 }
                 if (textEl) textEl.innerHTML = `❤️ ${Math.max(0, hero.hp)}/${hero.maxHp}`;
             });
-            // Обновяване на чудовището
+            
             const monsterFill = document.getElementById('monster-hp-fill');
             const monsterText = document.getElementById('monster-hp-text');
             if (monsterFill) {
@@ -509,6 +509,26 @@
             }
         }
 
+        // НОВА ФУНКЦИЯ: Намаляване на армията на героя след загуба на HP
+        function applyArmyLossFromDamage(hero, damagePercent) {
+            if (!hero.clanObj) return;
+            
+            let armyLossPercent = damagePercent * 0.5; // 50% от загубата на HP се отразява на армията
+            let currentArmy = hero.clanObj.armySize || hero.armySize || 300;
+            let newArmy = Math.max(10, Math.floor(currentArmy * (1 - armyLossPercent)));
+            
+            hero.clanObj.armySize = newArmy;
+            hero.clanObj.currentArmy = newArmy;
+            hero.armySize = newArmy;
+            
+            // Синхронизиране на armyDetails
+            if (window.ensureCompleteArmyDetails) {
+                window.ensureCompleteArmyDetails(hero.clanObj);
+            }
+            
+            addLog(`   📉 ${hero.name} загуби ${Math.floor(armyLossPercent * 100)}% от армията си! Остава: ${newArmy} войници.`);
+        }
+
         function heroesAttack() {
             if (!battleActive) return false;
             let totalDamage = 0;
@@ -520,7 +540,6 @@
 
             aliveHeroes.forEach(hero => {
                 if (currentMonster.hp <= 0) return;
-                // Изчисляване на щетите (гарантирано >0)
                 let baseDamage = Math.max(1, Math.floor(hero.power * (0.5 + Math.random() * 0.7)));
                 const isCrit = Math.random() < 0.15;
                 const finalDamage = isCrit ? Math.floor(baseDamage * 1.8) : baseDamage;
@@ -535,12 +554,32 @@
             if (currentMonster.hp <= 0) {
                 addLog(`━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`);
                 addLog(`🏆 ПОБЕДА! ${monster.name} е победен! 🏆`);
-
-                // Награди (XP, артефакти, злато, пленници) – същите като в оригиналния файл
-                // (тук ги оставям, за да не става кодът прекалено дълъг, но те са същите)
-                // За да спестя място, ще сложа съкратена версия, но вие можете да копирате оригиналната.
-                // Във вашия файл тези награди са добре написани. Ще ги запазя.
-                // (Тук ще добавя само извикване на updateUI и деактивиране на бутона)
+                
+                // НАГРАДИ ПРИ ПОБЕДА
+                let totalXP = 50 + Math.floor(Math.random() * 100);
+                let totalGold = 100 + Math.floor(Math.random() * 200);
+                
+                // Разпределяне на наградите между живите герои
+                const livingHeroes = currentHeroes.filter(h => h.hp > 0);
+                livingHeroes.forEach(hero => {
+                    let heroXP = Math.floor(totalXP / livingHeroes.length);
+                    let heroGold = Math.floor(totalGold / livingHeroes.length);
+                    
+                    if (window.gainHeroXP) {
+                        window.gainHeroXP(hero.clanObj, heroXP);
+                    } else {
+                        hero.clanObj.xp = (hero.clanObj.xp || 0) + heroXP;
+                    }
+                    
+                    hero.clanObj.gold = (hero.clanObj.gold || 0) + heroGold;
+                    
+                    addLog(`   🎁 ${hero.name} получава +${heroXP} XP и +${heroGold} злато!`);
+                });
+                
+                if (window.addWorldEvent) {
+                    window.addWorldEvent(`🏆 ПОБЕДА В БИТКА`, `${battleHeroes.map(h => h.name).join(', ')} победиха ${monster.name}!`, "🏆");
+                }
+                
                 battleActive = false;
                 const attackBtn = document.getElementById('battle-attack');
                 if (attackBtn) attackBtn.disabled = true;
@@ -559,17 +598,31 @@
             if (!battleActive) return false;
             const aliveHeroes = currentHeroes.filter(h => h.hp > 0);
             if (aliveHeroes.length === 0) return false;
+            
             const target = aliveHeroes[Math.floor(Math.random() * aliveHeroes.length)];
             let damage = Math.floor(currentMonster.power * (0.35 + Math.random() * 0.55));
-            damage = Math.max(1, damage); // минимум 1 щета
+            damage = Math.max(1, damage);
+            
+            let damagePercent = damage / target.maxHp;
             target.hp = Math.max(0, target.hp - damage);
+            
+            // НОВО: Намаляване на армията на героя
+            applyArmyLossFromDamage(target, damagePercent);
+            
             addLog(`━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`);
             addLog(`👹 ЧУДОВИЩЕТО АТАКУВА ${target.name.toUpperCase()}!`);
-            addLog(`   💔 Нанася ${damage} щети`);
+            addLog(`   💔 Нанася ${damage} щети (${Math.floor(damagePercent * 100)}% от живота)`);
             animateMonster();
             screenShake();
-            if (target.hp <= 0) addLog(`   💀 ${target.name} е нокаутиран! 💀`, true);
+            
+            if (target.hp <= 0) {
+                addLog(`   💀 ${target.name} е нокаутиран! 💀`, true);
+                // Героят е нокаутиран - допълнителни загуби на армия
+                applyArmyLossFromDamage(target, 0.5);
+            }
+            
             updateUI();
+            
             const stillAlive = currentHeroes.some(h => h.hp > 0);
             if (!stillAlive) {
                 addLog(`━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`);
@@ -598,6 +651,14 @@
         function retreat() {
             if (!battleActive) { addLog(`Битката вече е приключила.`); return; }
             addLog(`🏃 Отстъпление! Героите се изтеглят...`);
+            
+            // Наказание за отстъпление - загуба на 20% от армията
+            currentHeroes.forEach(hero => {
+                if (hero.hp > 0) {
+                    applyArmyLossFromDamage(hero, 0.2);
+                }
+            });
+            
             battleActive = false;
             const attackBtn = document.getElementById('battle-attack');
             if (attackBtn) attackBtn.disabled = true;
@@ -605,7 +666,7 @@
         }
 
         function resetBattle() {
-            currentHeroes = battleHeroes.map(h => ({ ...h }));
+            currentHeroes = battleHeroes.map(h => ({ ...h, hp: h.maxHp }));
             currentMonster = { ...monster };
             battleActive = true;
             currentRound = 1;
@@ -627,10 +688,11 @@
         addLog(`⚔️ БИТКАТА ЗАПОЧВА! ⚔️`);
         addLog(`🏰 ${battleHeroes.length} войни срещу ${monster.name}!`);
         addLog(`📌 Натисни "АТАКА" за рунд!`);
+        addLog(`⚠️ ВНИМАНИЕ: Загубата на живот намалява армията ви!`);
         updateUI();
 
         console.log("✅ Битката е готова!");
     };
 
-    console.log("✅ battle.js зареден (коригирана версия – HP намалява)");
+    console.log("✅ battle.js зареден (коригирана версия – армията намалява)");
 })();
