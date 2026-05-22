@@ -1,11 +1,29 @@
 /** ========================================================================== 
 ПРОЕКТ: ВЕЛИКА БЪЛГАРИЯ
 ФАЙЛ: ui.js (УНИВЕРСАЛЕН ГЛОБАЛЕН ПРОФИЛ, ЛЕНТА НА ЕЛИТА)
-ВЕРСИЯ: 3.5 - ПОДДРЪЖКА ЗА СОЛО РЕЖИМ
+ВЕРСИЯ: 3.6 - ИКОНКИ ЗА КЛАС + 5 ГЕРОЯ В ЛЕНТАТА
 ========================================================================== */ 
 
 window.eventHistory = []; 
 if (!window.autoLevelState) { window.autoLevelState = {}; }
+
+// ==================== ИКОНКА ЗА КЛАС ====================
+function getClassIcon(className) {
+    if (!className) return "⚔️";
+    const lower = className.toLowerCase();
+    if (lower.includes("маг") || lower.includes("колобър") || lower.includes("мистик") || lower.includes("wizard") || lower.includes("mage")) return "🧙";
+    if (lower.includes("стрелец") || lower.includes("арчер") || lower.includes("archer") || lower.includes("ranger")) return "🏹";
+    if (lower.includes("върховен") || lower.includes("боил") || lower.includes("king") || lower.includes("lord")) return "👑";
+    if (lower.includes("нощен") || lower.includes("острие") || lower.includes("сенчест") || lower.includes("shadow") || lower.includes("assassin")) return "🗡️";
+    if (lower.includes("иконом") || lower.includes("търговец") || lower.includes("merchant") || lower.includes("trader")) return "💰";
+    if (lower.includes("кръвожаден") || lower.includes("blood")) return "🩸";
+    if (lower.includes("пазител") || lower.includes("guardian") || lower.includes("paladin")) return "🛡️";
+    if (lower.includes("берсерк") || lower.includes("berserker")) return "😠";
+    if (lower.includes("воевод") || lower.includes("voivode")) return "⚔️";
+    if (lower.includes("легенда") || lower.includes("legend")) return "⭐";
+    if (lower.includes("герой") || lower.includes("hero")) return "🏅";
+    return "⚔️";
+}
 
 // ==================== ПРЕВКЛЮЧВАНЕ НА ЦЯЛ ЕКРАН ====================
 window.toggleGameFullScreen = function() { 
@@ -304,7 +322,7 @@ function showHeroProfile(hero) {
             <div style="text-align:center;">
                 <div style="font-size:48px;">⚔️</div>
                 <div style="font-size:22px; font-weight:bold; color:#ffdd99;">${hero.name}</div>
-                <div style="color:#ccaa77;">${hero.currentClass} · Ниво ${hero.level}</div>
+                <div style="color:#ccaa77;">${getClassIcon(hero.currentClass)} ${hero.currentClass} · Ниво ${hero.level}</div>
                 <div style="background:#2a1a0a; height:8px; border-radius:4px; margin:10px 0;"><div style="background:#d4a373; height:100%; width:${xpPercent}%; border-radius:4px;"></div></div>
                 <div style="font-size:11px; color:#ffaa66;">⚡ ${Math.floor(currentXP)}/${needXP} XP</div>
                 <div style="margin-top:15px; display:flex; justify-content:space-between; gap:10px;">
@@ -405,7 +423,7 @@ function showHeroProfile(hero) {
         };
     }
 }
-// ==================== ОРИГИНАЛНА ЛЕНТА НА ЕЛИТА (ПОДДРЪЖКА ЗА СОЛО РЕЖИМ) ====================
+// ==================== ЛЕНТА НА ЕЛИТА (5 ГЕРОЯ) ====================
 window.renderTop6LeadersUI = function() { 
     const eliteBar = document.getElementById('top-elite-bar'); 
     if (!eliteBar) return; 
@@ -431,10 +449,11 @@ window.renderTop6LeadersUI = function() {
         return xpB - xpA;
     });
     
-    const top6 = leaders.slice(0, 6); 
+    // Променено от 6 на 5
+    const top5 = leaders.slice(0, 5); 
     eliteBar.innerHTML = ""; 
     eliteBar.style.cssText = "display: flex; gap: 10px; overflow-x: auto; padding: 10px; background: rgba(0,0,0,0.4);"; 
-    top6.forEach(leader => { 
+    top5.forEach(leader => { 
         if (window.initializeHeroRPGData) window.initializeHeroRPGData(leader); 
         const card = document.createElement('div'); 
         card.className = "elite-hero-card"; 
@@ -496,7 +515,7 @@ window.updateCharacterUI = function(hero) {
         }
         profileBox.innerHTML = '<div style="text-align:center;">' +
             '<div style="font-weight:bold;font-size:1.2rem;">' + (hero.name || "Неизвестен") + '</div>' +
-            '<div>Род ' + (hero.clan || "Свободен") + ' | Клас: ' + (hero.currentClass || "Багатур") + '</div>' +
+            '<div>Род ' + (hero.clan || "Свободен") + ' | ' + getClassIcon(hero.currentClass) + ' Клас: ' + (hero.currentClass || "Багатур") + '</div>' +
             '<div>Ниво: ' + (hero.level || 1) + '</div>' +
             '<div>Възраст: ' + (hero.age || 50) + ' г.</div>' +
             '<div>Бойна Сила: ⚔️ ' + (hero.heroPower || 150) + '</div>' +
@@ -608,7 +627,7 @@ function createHeroCard(hero, isMobile) {
             <div style="font-size:22px;">⚔️</div>
             <div style="flex:1;">
                 <div style="font-weight:bold; color:#ffdd99; font-size:13px;">${hero.name}</div>
-                <div style="font-size:10px; color:#ccaa77;">Ниво ${hero.level} · ${hero.className}</div>
+                <div style="font-size:10px; color:#ccaa77;">${getClassIcon(hero.className)} Ниво ${hero.level} · ${hero.className}</div>
                 <div style="background:#2a1a0a; height:4px; border-radius:2px; margin:4px 0;">
                     <div style="background:#d4a373; height:100%; width:${xpPercent}%; border-radius:2px;"></div>
                 </div>
