@@ -1,7 +1,7 @@
 /**
 ==========================================================================
 ПРОЕКТ: ВЕЛИКА БЪЛГАРИЯ
-ФАЙЛ: rivalry.js (ВЕРСИЯ 3.0 – ДЕЙСТВИЯТА В ЛЕТОПИСА)
+ФАЙЛ: rivalry.js (ВЕРСИЯ 3.1 – С ЕКСПОРТНАТ API)
 ==========================================================================
 */
 (function() {
@@ -251,6 +251,17 @@
         if (typeof window.renderSingleBar === 'function') window.renderSingleBar();
         window.pendingAttack = null;
     }
+
+    // ==================== ЕКСПОРТ НА API ====================
+    window.rivalrySystem = {
+        getEnemyHeroes: getEnemyHeroes,
+        getPlayerHeroes: getPlayerHeroes,
+        checkRandomAttack: window.checkRandomAttack,
+        startRevengeBattle: window.startRevengeBattle,
+        performTheft: performTheft,
+        addAttackToChronicle: addAttackToChronicle,
+        RIVALRY_CONFIG: RIVALRY_CONFIG
+    };
 
     console.log("✅ Системата за съперничество е инициализирана (действията се записват в летописа).");
 })();
