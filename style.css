@@ -602,3 +602,60 @@ html, body {
         grid-template-columns: 1fr; 
     } 
 }
+
+/* ========== АДАПТИВНА ГОРНА ЛЕНТА ЗА МАЛКИ ЕКРАНИ ========== */
+@media (max-width: 768px) {
+    #top-bar {
+        flex-direction: column !important;
+        gap: 8px !important;
+        padding: 8px !important;
+    }
+    .top-bar-stats {
+        display: flex !important;
+        flex-wrap: nowrap !important;
+        justify-content: space-between !important;
+        gap: 4px !important;
+        width: 100% !important;
+        overflow-x: auto !important;
+    }
+    .stat-box, .active-hero-name {
+        flex-shrink: 0 !important;
+        font-size: 0.7rem !important;
+        padding: 2px 6px !important;
+        white-space: nowrap !important;
+    }
+    .top-bar-controls {
+        display: flex !important;
+        flex-wrap: wrap !important;
+        justify-content: space-evenly !important;
+        gap: 8px !important;
+        width: 100% !important;
+    }
+    .top-bar-controls .glass-btn {
+        flex: 1 1 0 !important;
+        min-width: 60px !important;
+        text-align: center !important;
+        font-size: 0.8rem !important;
+        padding: 6px 0 !important;
+    }
+}
+@media (max-width: 480px) {
+    .stat-box, .active-hero-name {
+        font-size: 0.65rem !important;
+        padding: 2px 4px !important;
+    }
+    .top-bar-controls .glass-btn {
+        font-size: 0.7rem !important;
+        min-width: 50px !important;
+    }
+}
+/* Премахване на фона на лентата с герои (single-hero-bar) */
+#single-hero-bar,
+#single-hero-bar > div,
+#single-hero-bar .hero-card {
+    background: transparent !important;
+    background-color: transparent !important;
+    border: none !important;
+    backdrop-filter: none !important;
+    box-shadow: none !important;
+}
