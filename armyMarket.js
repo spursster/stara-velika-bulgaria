@@ -1,4 +1,4 @@
-// ======================== АРМИЯ ПАЗАР (КОРИГИРАН ВИЗУАЛНО) ========================
+// ======================== АРМИЯ ПАЗАР (КОРИГИРАН – АКТИВЕН ГЕРОЙ) ========================
 (function() {
     // --- Проверка на зависимости ---
     if (!window.worldData || !window.worldData.clans) {
@@ -60,26 +60,27 @@
         return heroes;
     }
 
+    // *** КОРИГИРАНА ФУНКЦИЯ – ВИНАГИ ВРЪЩА АКТИВНИЯ ГЕРОЙ, АКО Е НАЛИЧЕН ***
     function getSelectedHero() {
-        if (!selectedHeroId) {
-            if (window.currentHero && window.currentHero.clan) selectedHeroId = window.currentHero.clan;
-            else {
-                const heroes = getAllHeroes();
-                if (heroes.length) selectedHeroId = heroes[0].id;
-            }
-        }
         let hero = null;
-        if (window.worldData && window.worldData.clans && window.worldData.clans[selectedHeroId]) {
-            hero = window.worldData.clans[selectedHeroId];
-        } else if (window.currentHero && window.currentHero.clan === selectedHeroId) {
+        // 1. Опит с активния герой
+        if (window.currentHero && window.currentHero.isJoined === true) {
             hero = window.currentHero;
-        } else {
+            // Синхронизираме selectedHeroId за селекта
+            selectedHeroId = hero.clan;
+        }
+        // 2. Ако няма активен, взимаме първия от списъка
+        if (!hero) {
             const heroes = getAllHeroes();
-            if (heroes.length) hero = heroes[0].clan;
+            if (heroes.length) {
+                hero = heroes[0].clan;
+                selectedHeroId = hero.clan;
+            }
         }
         if (hero) ensureArmyDetails(hero);
         return hero;
     }
+
     function syncWithGame(hero) {
         if (!hero) hero = getSelectedHero();
         if (!hero) return;
@@ -383,7 +384,10 @@
             alert("❌ Няма наети герои! Първо наемете герой.");
             return; 
         }
-        if (!selectedHeroId || !heroes.find(h => h.id === selectedHeroId)) {
+        // Актуализираме избрания герой да е активният
+        if (window.currentHero && window.currentHero.isJoined) {
+            selectedHeroId = window.currentHero.clan;
+        } else if (!selectedHeroId || !heroes.find(h => h.id === selectedHeroId)) {
             selectedHeroId = heroes[0].id;
         }
         let hero = getSelectedHero();
@@ -465,6 +469,8 @@
         let heroSelect = document.getElementById('heroSelect');
         if (heroSelect) {
             heroSelect.addEventListener('change', (e) => setSelectedHero(e.target.value));
+            // Синхронизираме селекта с активния герой
+            if (selectedHeroId) heroSelect.value = selectedHeroId;
         }
         
         document.addEventListener('keydown', function escHandler(e) {
@@ -490,5 +496,5 @@
     let initialHero = getSelectedHero();
     if (initialHero) initHero(initialHero);
     
-    console.log("✅ armyMarket.js зареден (опростена версия, използва troopsData.js)");
+    console.log("✅ armyMarket.js зареден (коригиран – активен герой)");
 })();
