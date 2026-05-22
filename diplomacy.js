@@ -1,9 +1,25 @@
 /**
 МОДУЛ: ДИПЛОМАЦИЯ И БРАК (МОДАЛНА ВЕРСИЯ – С БУТОН "✕" ГОРЕ ВЛЯВО)
+КОРИГИРАН: ПЪЛНИ ARMY DETAILS ЗА СЪПРУГАТА + СЪВМЕСТИМОСТ
 */
 
 window.clanRelations = window.clanRelations || {};
 if (!window.prisoners) window.prisoners = [];
+
+// Помощна функция за изглаждане на масив (замества Array.flat)
+function flattenArray(arr) {
+    if (!arr) return [];
+    if (!Array.isArray(arr)) return [arr];
+    let result = [];
+    for (let i = 0; i < arr.length; i++) {
+        if (Array.isArray(arr[i])) {
+            for (let j = 0; j < arr[i].length; j++) result.push(arr[i][j]);
+        } else {
+            result.push(arr[i]);
+        }
+    }
+    return result;
+}
 
 window.initDiplomacy = function() {
     const allClans = [
@@ -59,6 +75,12 @@ window.marryPrisoner = function(index) {
         armyDetails: { infantry: 80, archers: 40, cavalry: 20, elite: 10 }
     };
     if (window.initializeHeroRPGData) window.initializeHeroRPGData(wifeHero);
+    
+    // НОВО: Гарантираме, че armyDetails съдържа всички 32 типа войници
+    if (window.ensureCompleteArmyDetails) {
+        window.ensureCompleteArmyDetails(wifeHero);
+    }
+    
     if (!window.worldData) window.worldData = {};
     if (!window.worldData.clans) window.worldData.clans = {};
     window.worldData.clans[newHeroId] = wifeHero;
@@ -141,7 +163,6 @@ window.openMarriageMenu = function() {
     `;
     modal.innerHTML = `
         <div style="background: #0a0a1a; border: 2px solid #d4af37; border-radius: 24px; max-width: 500px; width: 90%; max-height: 90%; overflow-y: auto; padding: 20px; position: relative;">
-            <!-- БУТОН ЗА ЗАТВАРЯНЕ ГОРЕ ВЛЯВО -->
             <button id="close-marriage-x" style="position: absolute; top: 10px; left: 10px; background: rgba(255,80,80,0.2); border: none; color: #ff8888; font-size: 20px; width: 32px; height: 32px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center;">✕</button>
             <h2 style="color:#ffd700; text-align:center; margin-top:0;">💍 Династични Бракове</h2>
             ${prisonersHtml}
@@ -153,13 +174,11 @@ window.openMarriageMenu = function() {
     `;
     document.body.appendChild(modal);
     
-    // Функция за затваряне на модала
     const closeModal = () => modal.remove();
     modal.querySelector('#close-marriage-x')?.addEventListener('click', closeModal);
     modal.querySelector('#close-marriage-modal')?.addEventListener('click', closeModal);
     modal.addEventListener('click', (e) => { if (e.target === modal) closeModal(); });
     
-    // Бутони за пленници (затварят модала преди действие)
     modal.querySelectorAll('.marry-prisoner-modal-btn').forEach(btn => {
         btn.onclick = () => {
             const idx = parseInt(btn.getAttribute('data-index'));
@@ -168,7 +187,6 @@ window.openMarriageMenu = function() {
         };
     });
     
-    // Бутони за кланове
     modal.querySelectorAll('.propose-marriage-modal-btn').forEach(btn => {
         btn.onclick = () => {
             const clan = btn.getAttribute('data-clan');
@@ -200,10 +218,14 @@ window.proposeMarriage = function(clan, cost, successChance) {
         const region = dowryMap[clan] || "Мизия";
         window.currentSpouse = { name: `Княгиня от рода ${clan}`, clan: clan };
         if (!window.playerRegions) window.playerRegions = [];
+        // Съвместимост без Array.flat()
+        let flatRegions = flattenArray(window.playerRegions);
         if (window.playerRegions.length === 0 || typeof window.playerRegions[0] === 'string') {
-            window.playerRegions = [window.playerRegions.flat()];
+            window.playerRegions = [window.playerRegions];
+            flatRegions = flattenArray(window.playerRegions);
         }
-        if (!window.playerRegions.flat().includes(region)) {
+        if (!flatRegions.includes(region)) {
+            if (!window.playerRegions[0]) window.playerRegions[0] = [];
             window.playerRegions[0].push(region);
             if (window.worldData?.regions?.[region]) window.worldData.regions[region].armySize = 0;
         }
