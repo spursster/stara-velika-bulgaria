@@ -1,7 +1,7 @@
 /** ========================================================================== 
 ПРОЕКТ: ВЕЛИКА БЪЛГАРИЯ
 ФАЙЛ: ui.js (УНИВЕРСАЛЕН ГЛОБАЛЕН ПРОФИЛ, ЛЕНТА НА ЕЛИТА)
-ВЕРСИЯ: 3.1 - КОРИГИРАН XP ИНДИКАТОР ЗА РЪЧНИ ГЕРОИ
+ВЕРСИЯ: 3.2 - КОРИГИРАНО СОРТИРАНЕ ЗА РЪЧНИ ГЕРОИ
 ========================================================================== */ 
 
 window.eventHistory = []; 
@@ -290,7 +290,7 @@ function showHeroProfile(hero) {
         };
     }
 }
-// ==================== ОРИГИНАЛНА ЛЕНТА НА ЕЛИТА (КОРИГИРАНА XP) ====================
+// ==================== ОРИГИНАЛНА ЛЕНТА НА ЕЛИТА (КОРИГИРАНА XP И СОРТИРАНЕ) ====================
 window.renderTop6LeadersUI = function() { 
     const eliteBar = document.getElementById('top-elite-bar'); 
     if (!eliteBar) return; 
@@ -302,7 +302,15 @@ window.renderTop6LeadersUI = function() {
         } else { return; } 
     } 
     let leaders = Object.entries(window.worldData.clans).map(([clanKey, data]) => { return { clanKey: clanKey, ...data }; }); 
-    leaders.sort((a, b) => { if ((b.level || 1) !== (a.level || 1)) { return (b.level || 1) - (a.level || 1); } return (b.xp || 0) - (a.xp || 0); }); 
+    
+    // КОРИГИРАНО СОРТИРАНЕ – използваме правилния XP (xp за auto, storedXP за manual)
+    leaders.sort((a, b) => {
+        if ((b.level || 1) !== (a.level || 1)) return (b.level || 1) - (a.level || 1);
+        let xpA = a.isAuto ? (a.xp || 0) : (a.storedXP || 0);
+        let xpB = b.isAuto ? (b.xp || 0) : (b.storedXP || 0);
+        return xpB - xpA;
+    });
+    
     const top6 = leaders.slice(0, 6); 
     eliteBar.innerHTML = ""; 
     eliteBar.style.cssText = "display: flex; gap: 10px; overflow-x: auto; padding: 10px; background: rgba(0,0,0,0.4);"; 
@@ -313,7 +321,6 @@ window.renderTop6LeadersUI = function() {
         card.style.cssText = "background: rgba(0,0,0,0.6); border-radius: 12px; padding: 6px 12px; min-width: 100px; text-align: center; cursor: pointer; border: 1px solid #c9a87b; flex-shrink: 0;";
         card.onclick = (e) => { if (e.target.classList.contains('auto-btn')) return; if (window.openHeroRPGModal) window.openHeroRPGModal(leader.clanKey); }; 
         
-        // КОРИГИРАН XP - за auto режим xp, за manual storedXP
         let currentXP = leader.isAuto ? (leader.xp || 0) : (leader.storedXP || 0);
         let reqXP = 150; 
         if (window.rpgDatabase && window.rpgDatabase.getXPRequiredForLevel) { 
@@ -421,7 +428,6 @@ let currentContainer = null;
 function createHeroCard(hero, isMobile) {
     let card = document.createElement('div');
     let needXP = 100 + (hero.level - 1) * 50;
-    // КОРИГИРАН XP - за auto режим xp, за manual storedXP
     let currentXP = hero.isAuto ? (hero.xp || 0) : (hero.storedXP || 0);
     let xpPercent = Math.min(100, Math.floor((currentXP / needXP) * 100));
     let fav = isFavorite(hero.id);
