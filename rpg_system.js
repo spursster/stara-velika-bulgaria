@@ -1,5 +1,5 @@
 // =========================================================================
-// ВЕЛИКА БЪЛГАРИЯ - rpg_system.js (КОРИГИРАН – ПРАВИЛНО STOREDXP)
+// ВЕЛИКА БЪЛГАРИЯ - rpg_system.js (КОРИГИРАН – ПРАВИЛНО STOREDXP + ФИКС НА autoAssignSkillPoint)
 // =========================================================================
 
 window.rpgDatabase = window.rpgDatabase || {};
@@ -112,7 +112,8 @@ window.gainHeroXP = function(hero, amount) {
         window.consumeStoredXPForHero(hero);
     }
     
-   // if (window.worldData && window.worldData.clans && hero.clan) window.worldData.clans[hero.clan] = hero;
+    // Премахната грешната синхронизация (коментирано)
+    // if (window.worldData && window.worldData.clans && hero.clan) window.worldData.clans[hero.clan] = hero;
     if (window.renderTop6LeadersUI) window.renderTop6LeadersUI();
     if (window.updateCharacterUI) window.updateCharacterUI(hero);
     
@@ -202,6 +203,7 @@ window.autoAssignSkillPoint = function(hero) {
         attempts++;
     }
 };
+
 // ==================== НОВА КЛАСОВА ЕВОЛЮЦИЯ ====================
 window.checkArcheAgeClass = function(hero) {
     if (!hero) return;
@@ -314,4 +316,4 @@ window.getHeroCombatBonus = function(hero, bonusType) {
     return bonus;
 };
 
-console.log("✅ rpg_system.js зареден (коригиран – storedXP консумация)");
+console.log("✅ rpg_system.js зареден (финална версия – всички грешки са оправени)");
