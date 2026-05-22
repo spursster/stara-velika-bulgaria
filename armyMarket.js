@@ -1,4 +1,4 @@
-// ======================== АРМИЯ ПАЗАР (КОРИГИРАН – АКТИВЕН ГЕРОЙ) ========================
+// ======================== АРМИЯ ПАЗАР (КОРИГИРАН - РАБОТЕЩИ БУТОНИ ЗА ВСИЧКИ ГЕРОИ) ========================
 (function() {
     // --- Проверка на зависимости ---
     if (!window.worldData || !window.worldData.clans) {
@@ -11,11 +11,8 @@
         return;
     }
 
-    // Използваме глобалната база данни
     const allTroops = window.ALL_TROOP_TYPES;
     const allTroopIds = window.ALL_TROOP_IDS;
-    
-    // Разделяме за UI
     const basicTroopIds = ["infantry", "archers", "cavalry", "elite"];
     const fantasyTroopIds = allTroopIds.filter(id => !basicTroopIds.includes(id));
     const basicTroops = allTroops.filter(t => basicTroopIds.includes(t.id));
@@ -23,7 +20,6 @@
 
     let selectedHeroId = null;
 
-    // --- Помощни функции ---
     function ensureArmyDetails(hero) {
         return window.ensureCompleteArmyDetails(hero);
     }
@@ -60,22 +56,18 @@
         return heroes;
     }
 
-    // *** КОРИГИРАНА ФУНКЦИЯ – ВИНАГИ ВРЪЩА АКТИВНИЯ ГЕРОЙ, АКО Е НАЛИЧЕН ***
     function getSelectedHero() {
         let hero = null;
-        // 1. Опит с активния герой
-        if (window.currentHero && window.currentHero.isJoined === true) {
+        if (selectedHeroId && window.worldData.clans[selectedHeroId]) {
+            hero = window.worldData.clans[selectedHeroId];
+        }
+        if (!hero && window.currentHero) {
             hero = window.currentHero;
-            // Синхронизираме selectedHeroId за селекта
             selectedHeroId = hero.clan;
         }
-        // 2. Ако няма активен, взимаме първия от списъка
         if (!hero) {
             const heroes = getAllHeroes();
-            if (heroes.length) {
-                hero = heroes[0].clan;
-                selectedHeroId = hero.clan;
-            }
+            if (heroes.length) hero = heroes[0].clan;
         }
         if (hero) ensureArmyDetails(hero);
         return hero;
@@ -192,7 +184,7 @@
         if (window.showAdvisorMsg) window.showAdvisorMsg(`💰 Продадохте ${quantity} × ${troop.name} за ${refund} злато.`);
         return true;
     }
-    // --- UI функции ---
+
     function troopCard(troop) {
         let hero = getSelectedHero();
         let currentCount = hero ? (hero.armyDetails[troop.id] || 0) : 0;
@@ -246,95 +238,30 @@
         </div>
         <style>
             .market-modal { 
-                position: fixed; 
-                top: 0; 
-                left: 0; 
-                width: 100%; 
-                height: 100%; 
-                background: rgba(0,0,0,0.85); 
-                backdrop-filter: blur(10px); 
-                z-index: 10000; 
-                display: flex; 
-                align-items: flex-start; 
-                justify-content: center; 
-                padding-top: 20px;
-                box-sizing: border-box;
-                overflow-y: auto;
+                position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
+                background: rgba(0,0,0,0.85); backdrop-filter: blur(10px); z-index: 10000; 
+                display: flex; align-items: flex-start; justify-content: center; 
+                padding-top: 20px; box-sizing: border-box; overflow-y: auto;
             }
             .glass-panel { 
-                background: rgba(20,20,40,0.96); 
-                border-radius: 32px; 
-                width: 95%; 
-                max-width: 1400px; 
-                max-height: 90vh; 
-                overflow-y: auto; 
-                padding: 20px; 
-                border: 1px solid rgba(255,215,0,0.5); 
-                box-shadow: 0 20px 40px rgba(0,0,0,0.5); 
+                background: rgba(20,20,40,0.96); border-radius: 32px; width: 95%; max-width: 1400px; 
+                max-height: 90vh; overflow-y: auto; padding: 20px; 
+                border: 1px solid rgba(255,215,0,0.5); box-shadow: 0 20px 40px rgba(0,0,0,0.5);
             }
-            .market-header { 
-                display: flex; 
-                flex-wrap: wrap; 
-                justify-content: space-between; 
-                align-items: center; 
-                border-bottom: 1px solid #d4af37; 
-                padding-bottom: 12px; 
-                margin-bottom: 20px; 
-            }
-            .market-header h2 { 
-                color: #ffd700; 
-                margin: 0; 
-            }
-            .player-resources { 
-                display: flex; 
-                gap: 15px; 
-                flex-wrap: wrap; 
-            }
-            .resource-box { 
-                background: rgba(0,0,0,0.6); 
-                padding: 5px 12px; 
-                border-radius: 40px; 
-                font-weight: bold; 
-            }
+            .market-header { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; 
+                border-bottom: 1px solid #d4af37; padding-bottom: 12px; margin-bottom: 20px; }
+            .market-header h2 { color: #ffd700; margin: 0; }
+            .player-resources { display: flex; gap: 15px; flex-wrap: wrap; }
+            .resource-box { background: rgba(0,0,0,0.6); padding: 5px 12px; border-radius: 40px; font-weight: bold; }
             .resource-box.gold { color: #ffd966; }
             .resource-box.power { color: #88ffaa; }
-            .close-market { 
-                font-size: 32px; 
-                cursor: pointer; 
-                color: #ffd700; 
-            }
+            .close-market { font-size: 32px; cursor: pointer; color: #ffd700; }
             .close-market:hover { color: #ff6666; }
-            .market-tabs { 
-                display: flex; 
-                gap: 10px; 
-                margin-bottom: 20px; 
-                flex-wrap: wrap; 
-            }
-            .tab-btn { 
-                background: #2c2c3a; 
-                border: none; 
-                padding: 8px 20px; 
-                border-radius: 40px; 
-                color: #ffd966; 
-                cursor: pointer; 
-            }
-            .tab-btn.active { 
-                background: #daa520; 
-                color: black; 
-            }
-            .troop-shop { 
-                display: grid; 
-                grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); 
-                gap: 20px; 
-                max-height: 55vh; 
-                overflow-y: auto; 
-            }
-            .troop-card { 
-                background: rgba(0,0,0,0.65); 
-                border-radius: 24px; 
-                padding: 15px; 
-                border: 1px solid rgba(255,215,0,0.3); 
-            }
+            .market-tabs { display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; }
+            .tab-btn { background: #2c2c3a; border: none; padding: 8px 20px; border-radius: 40px; color: #ffd966; cursor: pointer; }
+            .tab-btn.active { background: #daa520; color: black; }
+            .troop-shop { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px; max-height: 55vh; overflow-y: auto; }
+            .troop-card { background: rgba(0,0,0,0.65); border-radius: 24px; padding: 15px; border: 1px solid rgba(255,215,0,0.3); }
             .troop-icon { font-size: 48px; text-align: center; }
             .troop-info h3 { color: #ffd966; margin: 0 0 8px 0; }
             .stats { display: flex; gap: 15px; font-size: 0.8rem; color: #aaa; }
@@ -348,10 +275,7 @@
             .footer-btn { background: #2c2c3a; border: 1px solid #daa520; padding: 8px 20px; border-radius: 40px; color: #ffd966; cursor: pointer; }
             .footer-btn.gold { background: #daa520; color: black; }
             .footer-btn.danger { background: #5a2a2a; border-color: #ff6666; color: #ffaaaa; }
-            @media (max-width:768px) { 
-                .glass-panel { padding: 12px; } 
-                .troop-shop { grid-template-columns: 1fr; } 
-            }
+            @media (max-width:768px) { .glass-panel { padding: 12px; } .troop-shop { grid-template-columns: 1fr; } }
         </style>`;
     }
 
@@ -384,20 +308,19 @@
             alert("❌ Няма наети герои! Първо наемете герой.");
             return; 
         }
-        // Актуализираме избрания герой да е активният
-        if (window.currentHero && window.currentHero.isJoined) {
-            selectedHeroId = window.currentHero.clan;
-        } else if (!selectedHeroId || !heroes.find(h => h.id === selectedHeroId)) {
-            selectedHeroId = heroes[0].id;
-        }
         let hero = getSelectedHero();
-        if (hero) initHero(hero);
+        if (hero) {
+            selectedHeroId = hero.clan;
+            initHero(hero);
+        }
         if (!document.getElementById('armyMarketModal')) {
             document.body.insertAdjacentHTML('beforeend', createMarketHTML());
             attachMarketEvents();
         }
         let modal = document.getElementById('armyMarketModal');
         if (modal) modal.style.display = 'flex';
+        let heroSelect = document.getElementById('heroSelect');
+        if (heroSelect && hero) heroSelect.value = hero.clan;
         updateMarketUI();
     }
 
@@ -468,9 +391,8 @@
         
         let heroSelect = document.getElementById('heroSelect');
         if (heroSelect) {
-            heroSelect.addEventListener('change', (e) => setSelectedHero(e.target.value));
-            // Синхронизираме селекта с активния герой
             if (selectedHeroId) heroSelect.value = selectedHeroId;
+            heroSelect.addEventListener('change', (e) => setSelectedHero(e.target.value));
         }
         
         document.addEventListener('keydown', function escHandler(e) {
@@ -481,7 +403,6 @@
         });
     }
 
-    // Експорт на API
     window.armyMarket = {
         show: showMarket,
         hide: hideMarket,
@@ -492,9 +413,8 @@
         getHero: getSelectedHero
     };
 
-    // Инициализация
     let initialHero = getSelectedHero();
     if (initialHero) initHero(initialHero);
     
-    console.log("✅ armyMarket.js зареден (коригиран – активен герой)");
+    console.log("✅ armyMarket.js зареден (коригиран - работят бутоните за всички герои)");
 })();
