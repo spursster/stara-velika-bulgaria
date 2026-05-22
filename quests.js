@@ -1,165 +1,167 @@
-/**
- * МОДУЛ: СЛУЧАЙНИ КУЕСТОВЕ (QUESTS) – ВЕЛИКА БЪЛГАРИЯ
- * ВЕРСИЯ: 1.0 – ГЕНЕРИРАНЕ, ПРОГРЕС, НАГРАДИ
- */
-
+// ==================== СЛУЧАЙНИ КУЕСТОВЕ – КОРИГИРАНА ВЕРСИЯ ====================
 (function() {
-    // ==================== ТИПОВЕ КУЕСТОВЕ ====================
-    const QUEST_TYPES = {
-        BATTLE: "battle",           // Победи определен враг в региона
-        EXPLORE: "explore",         // Посети съседен регион
-        ARTIFACT: "artifact",       // Намери артефакт (чрез битка или инспекция)
-        COMPANION: "companion",     // Намери/наеме спътник
-        RESOURCE: "resource",       // Събери ресурс (злато/войски)
-        REGION_CONTROL: "control",  // Завладей региона
-        DELIVERY: "delivery"        // Достави ресурс до друг регион
-    };
+    if (typeof window.QUEST_TYPES === 'undefined') {
+        window.QUEST_TYPES = {
+            BATTLE: "battle",
+            EXPLORE: "explore",
+            ARTIFACT: "artifact",
+            COMPANION: "companion",
+            RESOURCE: "resource",
+            REGION_CONTROL: "control",
+            DELIVERY: "delivery"
+        };
+    }
 
-    // Базови шаблони за куестове, от които ще генерираме конкретни
     const QUEST_TEMPLATES = {
-        [QUEST_TYPES.BATTLE]: {
+        battle: {
             name: "Очисти {region} от {enemy}",
             desc: "В {region} се появиха опасни {enemy}. Трябва да ги унищожиш.",
-            check: (quest, hero, region) => {
-                if (quest.progress < quest.target && window.worldData && window.worldData.regions[quest.region] && window.worldData.regions[quest.region].armySize <= 0) {
+            generateTarget: (region) => ({ target: 1, enemy: "враждебна банда" }),
+            check: (quest, hero, regionTrigger, eventType) => {
+                if (eventType === "battle" && regionTrigger === quest.region && quest.progress < quest.target) {
                     quest.progress = quest.target;
                     return true;
                 }
                 return false;
-            },
-            generateTarget: (region) => ({ target: 1, enemy: "враждебна банда" })
+            }
         },
-        [QUEST_TYPES.EXPLORE]: {
+        explore: {
             name: "Пътешественик",
             desc: "Посети {count} съседни региона около {region}.",
-            check: (quest, hero, region) => {
-                // Ще следим броя нови региони, посетени след приемането на куеста
-                return quest.progress >= quest.target;
-            },
             generateTarget: (region) => {
                 let neighbors = window.regionConnections ? (window.regionConnections[region] || []) : [];
                 let count = Math.min(neighbors.length, 2 + Math.floor(Math.random() * 3));
-                return { target: count, visited: 0, region: region };
+                return { target: count, visitedRegions: [], region: region };
+            },
+            check: (quest, hero, regionTrigger, eventType) => {
+                if (eventType === "travel" && quest.extraData.region === hero.currentRegion && !quest.extraData.visitedRegions.includes(regionTrigger)) {
+                    quest.extraData.visitedRegions.push(regionTrigger);
+                    quest.progress = quest.extraData.visitedRegions.length;
+                    return true;
+                }
+                return false;
             }
         },
-        [QUEST_TYPES.ARTIFACT]: {
+        artifact: {
             name: "Древно съкровище в {region}",
             desc: "Намери артефакт в {region} (от битка или инспекция).",
-            check: (quest, hero, region) => {
-                // Куестът се маркира като завършен, когато герой получи артефакт в този регион
-                return quest.progress >= quest.target;
-            },
-            generateTarget: (region) => ({ target: 1, region: region })
+            generateTarget: (region) => ({ target: 1, region: region }),
+            check: (quest, hero, regionTrigger, eventType) => {
+                if (eventType === "artifact" && regionTrigger === quest.region && quest.progress < quest.target) {
+                    quest.progress = quest.target;
+                    return true;
+                }
+                return false;
+            }
         },
-        [QUEST_TYPES.COMPANION]: {
+        companion: {
             name: "Нов спътник в {region}",
-            desc: "Намери спътник в {region} (от таверната/инспекцията).",
-            check: (quest, hero, region) => {
-                return quest.progress >= quest.target;
-            },
-            generateTarget: (region) => ({ target: 1, region: region })
+            desc: "Намери спътник в {region} (от инспекция).",
+            generateTarget: (region) => ({ target: 1, region: region }),
+            check: (quest, hero, regionTrigger, eventType) => {
+                if (eventType === "companion" && regionTrigger === quest.region && quest.progress < quest.target) {
+                    quest.progress = quest.target;
+                    return true;
+                }
+                return false;
+            }
         },
-        [QUEST_TYPES.RESOURCE]: {
+        resource: {
             name: "Събиране на ресурси в {region}",
-            desc: "Събери {amount} злато или {army} войници в {region} (чрез битки/събития).",
-            check: (quest, hero, region) => {
-                // Проверява се ръчно при промяна на злато/армия
-                return quest.progress >= quest.target;
-            },
+            desc: "Събери {amount} злато в {region} (чрез битки/събития).",
             generateTarget: (region) => {
                 let amount = 200 + Math.floor(Math.random() * 500);
                 return { target: amount, resource: "gold", region: region };
+            },
+            check: (quest, hero, regionTrigger, eventType) => {
+                // Тази проверка се прави ръчно при промяна на златото, за опростяване винаги връща false (ще се завършва по друг начин)
+                return false;
             }
         },
-        [QUEST_TYPES.REGION_CONTROL]: {
+        control: {
             name: "Завоювай {region}",
             desc: "Завладей региона {region} (направи го свой).",
-            check: (quest, hero, region) => {
-                let owned = (window.playerRegions && window.playerRegions.flat().includes(quest.region));
-                if (owned && quest.progress < quest.target) {
+            generateTarget: (region) => ({ target: 1, region: region }),
+            check: (quest, hero, regionTrigger, eventType) => {
+                if (eventType === "control" && regionTrigger === quest.region && quest.progress < quest.target) {
                     quest.progress = quest.target;
                     return true;
                 }
                 return false;
-            },
-            generateTarget: (region) => ({ target: 1, region: region })
+            }
         },
-        [QUEST_TYPES.DELIVERY]: {
+        delivery: {
             name: "Достави стока до {targetRegion}",
             desc: "Достави {amount} злато от {region} до {targetRegion} (просто пътувай).",
-            check: (quest, hero, region) => {
-                if (window.currentRegion === quest.targetRegion && quest.progress < quest.target) {
-                    quest.progress = quest.target;
-                    return true;
-                }
-                return false;
-            },
             generateTarget: (region) => {
                 let possible = Object.keys(window.worldData.regions || {});
                 let targetRegion = possible.find(r => r !== region && Math.random() > 0.7);
                 if (!targetRegion) targetRegion = "Плиска";
                 return { target: 1, region: region, targetRegion: targetRegion, amount: 100 + Math.floor(Math.random() * 200) };
+            },
+            check: (quest, hero, regionTrigger, eventType) => {
+                if (eventType === "travel" && regionTrigger === quest.extraData.targetRegion && quest.progress < quest.target) {
+                    quest.progress = quest.target;
+                    return true;
+                }
+                return false;
             }
         }
     };
 
-    // ==================== ГЕНЕРИРАНЕ НА КУЕСТ ====================
     window.generateRandomQuest = function(regionName) {
         if (!window.worldData || !window.worldData.regions[regionName]) return null;
-        const types = Object.values(QUEST_TYPES);
+        const types = Object.values(window.QUEST_TYPES);
         const randomType = types[Math.floor(Math.random() * types.length)];
         const template = QUEST_TEMPLATES[randomType];
         if (!template) return null;
 
-        const targetData = template.generateTarget(regionName);
+        const extraData = template.generateTarget(regionName);
         let quest = {
             id: Date.now() + "_" + Math.random().toString(36).substr(2, 6),
             type: randomType,
             region: regionName,
             title: template.name.replace(/{([^}]+)}/g, (match, p1) => {
                 if (p1 === "region") return regionName;
-                if (p1 === "enemy") return targetData.enemy || "враг";
-                if (p1 === "count") return targetData.target;
-                if (p1 === "amount") return targetData.amount;
-                if (p1 === "targetRegion") return targetData.targetRegion;
+                if (p1 === "enemy") return extraData.enemy || "враг";
+                if (p1 === "count") return extraData.target;
+                if (p1 === "amount") return extraData.amount;
+                if (p1 === "targetRegion") return extraData.targetRegion;
                 return match;
             }),
             description: template.desc.replace(/{([^}]+)}/g, (match, p1) => {
                 if (p1 === "region") return regionName;
-                if (p1 === "enemy") return targetData.enemy || "враг";
-                if (p1 === "count") return targetData.target;
-                if (p1 === "amount") return targetData.amount;
-                if (p1 === "targetRegion") return targetData.targetRegion;
+                if (p1 === "enemy") return extraData.enemy || "враг";
+                if (p1 === "count") return extraData.target;
+                if (p1 === "amount") return extraData.amount;
+                if (p1 === "targetRegion") return extraData.targetRegion;
                 return match;
             }),
-            target: targetData.target,
+            target: extraData.target,
             progress: 0,
             reward: {
                 gold: 100 + Math.floor(Math.random() * 300),
                 xp: 50 + Math.floor(Math.random() * 150),
-                artifact: Math.random() < 0.2 ? true : false,
-                companion: Math.random() < 0.1 ? true : false
+                artifact: Math.random() < 0.2,
+                companion: Math.random() < 0.1
             },
-            extraData: targetData,
+            extraData: extraData,
             checkFn: template.check
         };
         return quest;
     };
 
-    // ==================== ЗАПОЧВАНЕ НА КУЕСТ ====================
     window.addQuest = function(quest) {
         if (!window.activeQuests) window.activeQuests = [];
         if (window.activeQuests.some(q => q.id === quest.id)) return false;
         window.activeQuests.push(quest);
         if (window.showAdvisorMsg) {
-            window.showAdvisorMsg(`📜 НОВ КУЕСТ: ${quest.title} – ${quest.description}`);
+            window.showAdvisorMsg(`📜 НОВ КУЕСТ: ${quest.title}`);
         }
-        // Ако има UI за куестове, можем да го опресним
         if (typeof window.refreshQuestsUI === 'function') window.refreshQuestsUI();
         return true;
     };
 
-    // ==================== ЗАВЪРШВАНЕ НА КУЕСТ ====================
     window.completeQuest = function(quest, hero) {
         if (!quest || quest.progress < quest.target) return false;
         const idx = window.activeQuests.findIndex(q => q.id === quest.id);
@@ -168,7 +170,6 @@
         if (!window.completedQuests) window.completedQuests = [];
         window.completedQuests.push(quest);
 
-        // Даване на награди
         if (quest.reward.gold && hero) {
             hero.gold = (hero.gold || 0) + quest.reward.gold;
             if (window.showAdvisorMsg) window.showAdvisorMsg(`💰 Получихте ${quest.reward.gold} злато за куеста!`);
@@ -179,7 +180,6 @@
             if (window.showAdvisorMsg) window.showAdvisorMsg(`📚 Получихте ${quest.reward.xp} опит!`);
         }
         if (quest.reward.artifact && hero) {
-            // Даваме случаен артефакт от historicalArtifacts
             if (window.historicalArtifacts) {
                 let artifactKeys = Object.keys(window.historicalArtifacts);
                 let randomKey = artifactKeys[Math.floor(Math.random() * artifactKeys.length)];
@@ -190,33 +190,26 @@
             }
         }
         if (quest.reward.companion && hero && window.gameMode === 'solo' && window.companions.length < 4) {
-            // Опитваме се да добавим спътник (ако нямаме 4)
             if (typeof window.recruitCompanion === 'function') {
                 window.recruitCompanion(quest.region);
-            } else {
-                console.warn("Функцията recruitCompanion не е намерена.");
             }
         }
-
-        if (window.showAdvisorMsg) {
-            window.showAdvisorMsg(`✅ КУЕСТ ЗАВЪРШЕН: ${quest.title}`);
-        }
+        if (window.showAdvisorMsg) window.showAdvisorMsg(`✅ КУЕСТ ЗАВЪРШЕН: ${quest.title}`);
         if (typeof window.refreshQuestsUI === 'function') window.refreshQuestsUI();
         return true;
     };
 
-    // ==================== ПРОВЕРКА ЗА НАПРЕДЪК ====================
     window.checkAllQuestsProgress = function(hero, regionTrigger, eventType) {
         if (!window.activeQuests || !hero) return;
         let anyChanged = false;
         for (let i = 0; i < window.activeQuests.length; i++) {
             const q = window.activeQuests[i];
+            if (typeof q.checkFn !== 'function') continue;
             if (q.checkFn(q, hero, regionTrigger, eventType)) {
-                // Ако progress стане >= target, маркираме като завършен
                 if (q.progress >= q.target) {
                     window.completeQuest(q, hero);
                     anyChanged = true;
-                    i--; // защото масивът се промени
+                    i--;
                 } else {
                     anyChanged = true;
                 }
@@ -225,101 +218,16 @@
         if (anyChanged && typeof window.refreshQuestsUI === 'function') window.refreshQuestsUI();
     };
 
-    // ==================== УВЕДОМЛЕНИЯ ЗА СЪБИТИЯ (ПРОГРЕС) ====================
-    // Закачаме се на събития, които могат да напреднат куестовете
-    function hookGameEvents() {
-        // След битка – проверяваме за куестове от тип BATTLE, ARTIFACT, RESOURCE
+    // Хук за събития
+    if (window.endGroupBattle) {
         const originalEndBattle = window.endGroupBattle;
-        if (originalEndBattle) {
-            window.endGroupBattle = function(isVictory, reason, ...args) {
-                if (originalEndBattle) originalEndBattle(isVictory, reason, ...args);
-                if (isVictory && window.currentHero && window.currentRegion) {
-                    window.checkAllQuestsProgress(window.currentHero, window.currentRegion, "battle");
-                }
-            };
-        }
-
-        // При пътуване до нов регион – проверяваме за EXPLORE, DELIVERY
-        if (typeof window.travelToRegion === 'function') {
-            const originalTravel = window.travelToRegion;
-            window.travelToRegion = function(regionName, ...args) {
-                let oldRegion = window.currentRegion;
-                let result = originalTravel ? originalTravel(regionName, ...args) : null;
-                if (oldRegion !== regionName && window.currentHero) {
-                    // Може да се увеличи прогреса на куестове за explore
-                    for (let q of (window.activeQuests || [])) {
-                        if (q.type === QUEST_TYPES.EXPLORE && q.extraData.region === oldRegion) {
-                            let visited = q.extraData.visited || 0;
-                            if (!q.extraData.visitedRegions) q.extraData.visitedRegions = [];
-                            if (!q.extraData.visitedRegions.includes(regionName)) {
-                                q.extraData.visitedRegions.push(regionName);
-                                q.progress = q.extraData.visitedRegions.length;
-                                q.extraData.visited = q.progress;
-                            }
-                        }
-                        if (q.type === QUEST_TYPES.DELIVERY && q.extraData.targetRegion === regionName) {
-                            q.progress = q.target;
-                        }
-                    }
-                    window.checkAllQuestsProgress(window.currentHero, regionName, "travel");
-                }
-                return result;
-            };
-        }
-
-        // При намиране на артефакт (може да се закачи на addWorldEvent или друг механизъм)
-        const originalAddWorldEvent = window.addWorldEvent;
-        if (originalAddWorldEvent) {
-            window.addWorldEvent = function(title, desc, icon, year) {
-                originalAddWorldEvent(title, desc, icon, year);
-                if (desc && desc.includes("артефакт") && window.currentHero) {
-                    window.checkAllQuestsProgress(window.currentHero, window.currentRegion, "artifact");
-                }
-            };
-        }
-
-        // При наемане на спътник (patched в soloMode.js)
-        if (typeof window.recruitCompanion === 'function') {
-            const originalRecruit = window.recruitCompanion;
-            window.recruitCompanion = function(regionName, ...args) {
-                let result = originalRecruit ? originalRecruit(regionName, ...args) : null;
-                if (window.currentHero) {
-                    window.checkAllQuestsProgress(window.currentHero, regionName, "companion");
-                }
-                return result;
-            };
-        }
-
-        // При завладяване на регион (win battle with region conquest)
-        const originalStartBattle = window.startBattle;
-        if (originalStartBattle) {
-            window.startBattle = function(regionInput) {
-                // Запомняме дали преди битката регионът е бил наш
-                let regionName = typeof regionInput === 'string' ? regionInput : (regionInput.name || regionInput.id);
-                let wasOwned = window.playerRegions && window.playerRegions.flat().includes(regionName);
-                let result = originalStartBattle(regionInput);
-                // След битка, ако сега е наш и преди не беше, значи сме завладели
-                let isOwnedNow = window.playerRegions && window.playerRegions.flat().includes(regionName);
-                if (!wasOwned && isOwnedNow && window.currentHero) {
-                    window.checkAllQuestsProgress(window.currentHero, regionName, "control");
-                }
-                return result;
-            };
-        }
+        window.endGroupBattle = function(isVictory, reason, ...args) {
+            if (originalEndBattle) originalEndBattle(isVictory, reason, ...args);
+            if (isVictory && window.currentHero && window.currentRegion) {
+                window.checkAllQuestsProgress(window.currentHero, window.currentRegion, "battle");
+            }
+        };
     }
 
-    // ==================== ИНИЦИАЛИЗАЦИЯ ====================
-    function initQuests() {
-        if (!window.activeQuests) window.activeQuests = [];
-        if (!window.completedQuests) window.completedQuests = [];
-        hookGameEvents();
-        console.log("✅ Системата за куестове е активна.");
-    }
-
-    // Стартираме, когато играта е готова
-    if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', initQuests);
-    } else {
-        initQuests();
-    }
+    console.log("✅ Коригираната система за куестове е активна.");
 })();
