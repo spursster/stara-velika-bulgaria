@@ -1,7 +1,7 @@
 /**
 ==========================================================================
 ПРОЕКТ: ВЕЛИКА БЪЛГАРИЯ
-ФАЙЛ: logic.js (НАДГРАДЕН – ПРЕМАХВА ДУБЛИКАТИ ПРИ ЗАРЕЖДАНЕ)
+ФАЙЛ: logic.js (КОРИГИРАН – АКТИВЕН ГЕРОЙ В ЛЮБИМИ)
 ==========================================================================
 */
 
@@ -50,14 +50,20 @@ window.startFreshGameLogic = function() {
         skillPoints: 0,
         equipment: Array(12).fill(null),
         skills: { tactics: 0, endurance: 0, economy: 0, mysticism: 0, leadership: 0 },
-        inventory: Array(12).fill(null)
+        inventory: Array(12).fill(null),
+        isFavoriteInBarracks: true  // *** Активният герой да е любим по подразбиране ***
     };
 
     window.unlockedLeaders = [window.currentHero];
 
-    if (window.worldData && window.worldData.clans) {
-        window.worldData.clans[selectedClan] = window.currentHero;
-    }
+    // *** ФИКС: Гарантираме, че worldData.clans съществува и съдържа активния герой ***
+    if (!window.worldData) window.worldData = {};
+    if (!window.worldData.clans) window.worldData.clans = {};
+    window.worldData.clans[selectedClan] = window.currentHero;
+
+    // *** Запазваме любимите в localStorage веднага ***
+    const favorites = [selectedName];
+    localStorage.setItem('barracksFavorites', JSON.stringify(favorites));
 
     window.gameTime = { seasonIndex: 0, year: 480, era: "пр.н.е." };
 
@@ -128,7 +134,7 @@ window.loadGreatBulgariaGame = function() {
                 }
             });
 
-            // ========== НОВО: ПРЕМАХВАНЕ НА ДУБЛИКАТИ В ЗАРЕДЕНИТЕ ДАННИ ==========
+            // Премахване на дубликати
             const uniqueClans = new Map();
             for (let key in window.worldData.clans) {
                 let clan = window.worldData.clans[key];
@@ -220,6 +226,7 @@ window.handleStartChoice = function(action) {
         localStorage.removeItem('GreatBulgaria_SaveGame');
         localStorage.removeItem('favoriteHeroesFinal');
         localStorage.removeItem('heroAutoState');
+        localStorage.removeItem('barracksFavorites'); // *** Изчистваме и любимите от казармите ***
         window.startFreshGameLogic();
     }
 };
@@ -228,11 +235,13 @@ window.clearGreatBulgariaSaveWithoutReload = function() {
     localStorage.removeItem('GreatBulgaria_SaveGame');
     localStorage.removeItem('favoriteHeroesFinal');
     localStorage.removeItem('heroAutoState');
+    localStorage.removeItem('barracksFavorites');
 };
 
 window.clearGreatBulgariaSave = function() {
     localStorage.removeItem('GreatBulgaria_SaveGame');
     localStorage.removeItem('favoriteHeroesFinal');
     localStorage.removeItem('heroAutoState');
+    localStorage.removeItem('barracksFavorites');
     location.reload();
 };
