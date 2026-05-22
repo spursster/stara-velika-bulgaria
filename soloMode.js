@@ -1,6 +1,5 @@
 // ==================== СОЛО РЕЖИМ – RPG ОТКРИТ СВЯТ ====================
 (function() {
-    // Изчакваме играта да се инициализира
     if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', initSoloMode);
     } else {
@@ -8,47 +7,31 @@
     }
 
     function initSoloMode() {
-        // Ако не сме в соло режим, не правим нищо
         if (window.gameMode !== 'solo') return;
 
         console.log("🌍 Инициализация на соло режим (RPG отворен свят)");
 
-        // 1. Начален регион (ако няма зададен)
         if (!window.currentRegion) window.currentRegion = "Плиска";
-
-        // 2. Масив за спътници (до 4)
         if (!window.companions) window.companions = [];
-
-        // 3. Куестове
         if (!window.activeQuests) window.activeQuests = [];
         if (!window.completedQuests) window.completedQuests = [];
 
-        // 4. Построяване на връзките между регионите (съседство)
         buildRegionConnections();
-
-        // 5. Добавяне на бутон за куестове в интерфейса
         addQuestsButton();
-
-        // 6. Патч на функцията за инспекция на регион – добавяме "Пътуване" и "Намери спътник"
         patchRegionInspection();
-
-        // 7. Патч на hireNewHero – блокиране на наемане на герои в соло режим
         patchHireHero();
-
-        // 8. Патч на getHeroes списъците – да връщат само главния герой и спътниците
         patchHeroLists();
+        setupTravelFunction();
+        setupBattleHook();
 
-        console.log("✅ Соло режимът е активен. Използвайте картата, за да пътувате между регионите.");
+        console.log("✅ Соло режимът е активен. Използвайте картата, за да пътувате.");
     }
 
     // ==================== ВРЪЗКИ МЕЖДУ РЕГИОНИТЕ ====================
     function buildRegionConnections() {
-        // Ако вече има, не презаписваме
         if (window.regionConnections) return;
-
         window.regionConnections = {};
 
-        // За предварително дефинираните региони създаваме връзки въз основа на реална география (приблизително)
         const predefinedConnections = {
             "Плиска": ["Преслав", "Варна", "Силистра", "Шумен"],
             "Преслав": ["Плиска", "Шумен", "Търновград", "Варна"],
@@ -103,18 +86,15 @@
             "Киев": ["Чернигов", "Переяслав", "Минск"],
             "Москва": ["Владимир", "Твер", "Рязан"],
             "Новгород": ["Твер", "Псков", "Санкт Петербург"],
-            "Пекин": ["Нанкин", "Сиан", "Хангжу"],
-            // ... може да добавите още
+            "Пекин": ["Нанкин", "Сиан", "Хангжу"]
         };
 
-        // Копираме предварителните връзки
         for (let reg in predefinedConnections) {
             if (window.worldData.regions[reg]) {
                 window.regionConnections[reg] = predefinedConnections[reg].filter(name => window.worldData.regions[name]);
             }
         }
 
-        // За процедурно генерираните региони създаваме случайни връзки (макс 4 съседа)
         for (let regName in window.worldData.regions) {
             if (!window.regionConnections[regName]) {
                 let neighbors = [];
@@ -129,29 +109,62 @@
                 window.regionConnections[regName] = neighbors;
             }
         }
-
         console.log("🗺️ Регионалните връзки са генерирани.");
     }
 
-    // ==================== НАВИГАЦИЯ – ПЪТУВАНЕ ====================
+    // ==================== ГЛОБАЛНО ПЪТУВАНЕ ====================
+    function travelToRegion(regionName) {
+        if (!window.regionConnections[window.currentRegion] || !window.regionConnections[window.currentRegion].includes(regionName)) {
+            if (window.showAdvisorMsg) window.showAdvisorMsg(`❌ Няма пряк път от ${window.currentRegion} до ${regionName}.`);
+            return false;
+        }
+        let oldRegion = window.currentRegion;
+        window.currentRegion = regionName;
+        if (window.showAdvisorMsg) window.showAdvisorMsg(`🚶 Пристигнахте в ${regionName}.`);
+
+        // Проверка за куестове след пътуване (explore, delivery)
+        if (window.checkAllQuestsProgress) {
+            window.checkAllQuestsProgress(window.currentHero, regionName, "travel");
+        }
+
+        // Генериране на нов случаен куест (30% шанс)
+        if (window.generateRandomQuest && Math.random() < 0.3) {
+            let newQuest = window.generateRandomQuest(regionName);
+            if (newQuest && window.addQuest) window.addQuest(newQuest);
+        }
+
+        if (window.openRegionsMap) window.openRegionsMap(); // опреснява картата
+        return true;
+    }
+
+    function setupTravelFunction() {
+        window.travelToRegion = travelToRegion;
+    }
+
+    // ==================== ХУК ЗА БИТКИ ====================
+    function setupBattleHook() {
+        if (typeof window.endGroupBattle !== 'function') return;
+        const originalEndBattle = window.endGroupBattle;
+        window.endGroupBattle = function(isVictory, reason, ...args) {
+            if (originalEndBattle) originalEndBattle(isVictory, reason, ...args);
+            if (isVictory && window.currentHero && window.currentRegion && window.checkAllQuestsProgress) {
+                window.checkAllQuestsProgress(window.currentHero, window.currentRegion, "battle");
+            }
+        };
+    }
+
+    // ==================== НАВИГАЦИЯ – ПЪТУВАНЕ В ИНСПЕКЦИЯТА ====================
     function patchRegionInspection() {
-        // Запазваме оригиналната функция, ако съществува
         const originalInspect = window.inspectRegion;
         if (!originalInspect) return;
 
         window.inspectRegion = function(regionName) {
-            // Извикваме оригиналната инспекция
             originalInspect(regionName);
-
-            // След като се покаже модалът, добавяме бутони за пътуване и намиране на спътник
             setTimeout(() => {
                 const modal = document.getElementById('region-inspect-overlay');
                 if (!modal) return;
-
                 const actionDiv = modal.querySelector('#action-div') || modal.querySelector('.modal-content div:last-child');
                 if (!actionDiv) return;
-
-                // Проверка дали вече има бутон за пътуване
                 if (document.getElementById('solo-travel-btn')) return;
 
                 const isConnected = window.regionConnections[window.currentRegion] && window.regionConnections[window.currentRegion].includes(regionName);
@@ -160,20 +173,17 @@
                 if (!isCurrent) {
                     const travelBtn = document.createElement('button');
                     travelBtn.id = 'solo-travel-btn';
-                    travelBtn.innerText = isConnected ? `🚶 Пътувай до ${regionName}` : `🚫 Няма пряк път до ${regionName} (търсете път през съседни региони)`;
+                    travelBtn.innerText = isConnected ? `🚶 Пътувай до ${regionName}` : `🚫 Няма пряк път до ${regionName}`;
                     travelBtn.style.cssText = `background:${isConnected ? '#2c5a2a' : '#5a2a2a'}; border:none; border-bottom:2px solid #1e3a1e; padding:8px 20px; border-radius:40px; color:white; cursor:${isConnected ? 'pointer' : 'not-allowed'}; font-weight:bold; width:100%; margin-bottom:10px;`;
                     if (isConnected) {
                         travelBtn.onclick = () => {
-                            window.currentRegion = regionName;
                             modal.remove();
-                            if (window.showAdvisorMsg) window.showAdvisorMsg(`🚶 Пристигнахте в ${regionName}.`);
-                            if (window.openRegionsMap) window.openRegionsMap(); // обновява картата
+                            travelToRegion(regionName);
                         };
                     }
                     actionDiv.appendChild(travelBtn);
                 }
 
-                // Бутон за намиране на спътник (само ако имаме по-малко от 4)
                 if (window.companions.length < 4) {
                     const recruitBtn = document.createElement('button');
                     recruitBtn.innerText = `👥 Търси спътник в ${regionName}`;
@@ -195,7 +205,6 @@
             return;
         }
 
-        // Пул от възможни спътници (имена, класове, сила)
         const companionPool = [
             { name: "Аспарух", class: "Воевода", power: 110, icon: "⚔️" },
             { name: "Тервел", class: "Паладин", power: 120, icon: "🛡️" },
@@ -212,31 +221,14 @@
         if (available.length === 0) available = companionPool;
         let randomComp = available[Math.floor(Math.random() * available.length)];
 
-        // Създаваме нов герой-спътник
         const compId = "companion_" + Date.now() + "_" + Math.floor(Math.random() * 10000);
         const companion = {
-            id: compId,
-            name: randomComp.name,
-            leaderName: randomComp.name,
-            clan: "Спътник",
-            isJoined: true,
-            isCompanion: true,
-            isAuto: true,
-            level: 1,
-            xp: 0,
-            storedXP: 0,
-            heroPower: randomComp.power,
-            power: randomComp.power,
-            gold: 0,
-            armySize: 150,
-            currentArmy: 150,
-            currentClass: randomComp.class,
-            className: randomComp.class,
+            id: compId, name: randomComp.name, leaderName: randomComp.name, clan: "Спътник",
+            isJoined: true, isCompanion: true, isAuto: true, level: 1, xp: 0, storedXP: 0,
+            heroPower: randomComp.power, power: randomComp.power, gold: 0,
+            armySize: 150, currentArmy: 150, currentClass: randomComp.class, className: randomComp.class,
             skills: { tactics: 0, endurance: 0, economy: 0, mysticism: 0, leadership: 0 },
-            skillPoints: 0,
-            equipment: Array(12).fill(null),
-            inventory: [],
-            pet: null,
+            skillPoints: 0, equipment: Array(12).fill(null), inventory: [], pet: null,
             armyDetails: { infantry: 80, archers: 30, cavalry: 25, elite: 15 }
         };
         if (window.initializeHeroRPGData) window.initializeHeroRPGData(companion);
@@ -250,26 +242,29 @@
         if (window.showAdvisorMsg) window.showAdvisorMsg(`👥 НОВ СПЪТНИК: ${randomComp.name} (${randomComp.class}) се присъедини към вас!`);
         if (window.renderTop6LeadersUI) window.renderTop6LeadersUI();
         if (typeof window.renderSingleBar === 'function') window.renderSingleBar();
+
+        // Проверка за куестове, свързани със спътници
+        if (window.checkAllQuestsProgress) {
+            window.checkAllQuestsProgress(window.currentHero, regionName, "companion");
+        }
     }
 
-    // ==================== БЛОКИРАНЕ НА НАЕМАНЕ НА ГЕРОИ ====================
+    // ==================== БЛОКИРАНЕ НА НАЕМАНЕ ====================
     function patchHireHero() {
         if (typeof window.hireNewHero !== 'function') return;
         const originalHire = window.hireNewHero;
         window.hireNewHero = function() {
-            alert("В соло режим не можете да наемате допълнителни герои. Можете да намирате спътници в различните региони (до 4).");
+            alert("В соло режим не можете да наемате допълнителни герои. Можете да намирате спътници в регионите (до 4).");
         };
     }
 
     // ==================== ПАТЧ НА СПИСЪЦИТЕ С ГЕРОИ ====================
     function patchHeroLists() {
-        // Патч на getAllHeroes (ui.js)
         if (typeof window.getAllHeroes === 'function') {
             const originalGetAll = window.getAllHeroes;
             window.getAllHeroes = function() {
                 let heroes = originalGetAll();
                 if (window.gameMode === 'solo') {
-                    // Връщаме само главния герой + спътниците
                     let main = heroes.find(h => h.id === window.currentHero.clan);
                     let comps = heroes.filter(h => h.isCompanion === true);
                     return main ? [main, ...comps] : comps;
@@ -278,7 +273,6 @@
             };
         }
 
-        // Патч на renderTop6LeadersUI (ui.js) – да показва главния герой и спътниците
         if (typeof window.renderTop6LeadersUI === 'function') {
             const originalRender = window.renderTop6LeadersUI;
             window.renderTop6LeadersUI = function() {
@@ -287,8 +281,6 @@
                     if (!eliteBar) return;
                     let heroes = window.getAllHeroes ? window.getAllHeroes() : [];
                     heroes = heroes.filter(h => h.isCompanion || h.id === window.currentHero.clan);
-                    // Рендерираме само тях (до 6)
-                    // ... (може да ползваме оригиналния render, но с филтрирани герои)
                     eliteBar.innerHTML = "";
                     heroes.slice(0, 6).forEach(hero => {
                         const card = document.createElement('div');
@@ -314,14 +306,13 @@
         }
     }
 
-    // ==================== КУЕСТОВЕ ====================
+    // ==================== UI ЗА КУЕСТОВЕ ====================
     function addQuestsButton() {
-        // Добавяме бутон в горната лента или в долното меню
         let container = document.querySelector('.top-bar-controls');
         if (!container) container = document.getElementById('bottom-controls');
         if (!container) return;
-
         if (document.getElementById('solo-quests-btn')) return;
+
         const questBtn = document.createElement('button');
         questBtn.id = 'solo-quests-btn';
         questBtn.className = 'glass-btn';
@@ -331,7 +322,6 @@
     }
 
     function showQuestsUI() {
-        // Опростен прозорец с куестове
         const modal = document.createElement('div');
         modal.id = 'solo-quests-modal';
         modal.style.cssText = `position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.85); backdrop-filter:blur(8px); z-index:200000; display:flex; justify-content:center; align-items:center;`;
@@ -340,10 +330,23 @@
             html += `<p style="color:#aaa;">Няма активни куестове. Открийте нови, докато изследвате света!</p>`;
         } else {
             window.activeQuests.forEach((q, idx) => {
+                let rewardText = "";
+                if (q.reward) {
+                    let parts = [];
+                    if (q.reward.gold) parts.push(`${q.reward.gold} злато`);
+                    if (q.reward.xp) parts.push(`${q.reward.xp} XP`);
+                    if (q.reward.artifact) parts.push(`Артефакт`);
+                    if (q.reward.companion) parts.push(`Спътник`);
+                    rewardText = parts.join(", ");
+                } else if (typeof q.reward === 'string') {
+                    rewardText = q.reward;
+                } else {
+                    rewardText = "Награда";
+                }
                 html += `<div style="background:#0d0a07; border-radius:16px; padding:12px; margin-bottom:10px;">
                             <div><strong style="color:#ffd700;">${q.title}</strong></div>
-                            <div style="font-size:12px;">${q.desc}</div>
-                            <div style="font-size:10px; color:#88ff88;">Награда: ${q.reward}</div>
+                            <div style="font-size:12px;">${q.description || q.desc}</div>
+                            <div style="font-size:10px; color:#88ff88;">Награда: ${rewardText}</div>
                             <progress value="${q.progress}" max="${q.target}" style="width:100%; margin-top:6px;"></progress>
                          </div>`;
             });
@@ -355,25 +358,10 @@
         modal.onclick = (e) => { if(e.target === modal) modal.remove(); };
     }
 
-    // Примерни куестове (може да се добавят динамично)
-    window.addQuest = function(title, desc, reward, target, checkFunction) {
-        window.activeQuests.push({
-            id: Date.now(),
-            title, desc, reward, target, progress: 0,
-            check: checkFunction
-        });
+    window.refreshQuestsUI = function() {
+        const modal = document.getElementById('solo-quests-modal');
+        if (modal && modal.style.display !== 'none') {
+            showQuestsUI();
+        }
     };
-
-    // След всяка битка или събитие проверяваме куестовете
-    if (typeof window.afterBattle === 'function') {
-        const originalAfterBattle = window.afterBattle;
-        window.afterBattle = function(...args) {
-            originalAfterBattle(...args);
-            checkQuestsProgress();
-        };
-    } else {
-        window.checkQuestsProgress = function() {
-            // Може да се извиква ръчно
-        };
-    }
 })();
