@@ -1,7 +1,7 @@
 /** ========================================================================== 
 ПРОЕКТ: ВЕЛИКА БЪЛГАРИЯ
 ФАЙЛ: ui.js (УНИВЕРСАЛЕН ГЛОБАЛЕН ПРОФИЛ, ЛЕНТА НА ЕЛИТА)
-ВЕРСИЯ: 3.3 - ФИКС: АКТИВНИЯТ ГЕРОЙ НЕ СЕ СМЕНЯ ПРИ ОБНОВЯВАНЕ НА UI
+ВЕРСИЯ: 3.4 - ДОБАВЕНА ЕКИПИРОВКА НА АРТЕФАКТИ
 ========================================================================== */ 
 
 window.eventHistory = []; 
@@ -107,24 +107,18 @@ window.hireNewHero = function() {
     };
     if (window.initializeHeroRPGData) window.initializeHeroRPGData(newHero);
     
-    // Запомняме стария активен герой
     const oldHero = window.currentHero;
-    // Намаляваме златото на стария герой (той плаща)
     oldHero.gold -= randomHero.cost;
     
-    // Добавяме новия герой в света
     if (!window.worldData) window.worldData = {};
     if (!window.worldData.clans) window.worldData.clans = {};
     window.worldData.clans[newId] = newHero;
     if (!window.unlockedLeaders) window.unlockedLeaders = [];
     window.unlockedLeaders.push(newHero);
     
-    // *** ГАРАНТИРАМЕ, ЧЕ АКТИВНИЯТ ГЕРОЙ ОСТАВА В WORLD DATA ***
-    // Ако функцията ensureActiveHeroInBarracks съществува (в barracks.js), я извикваме
     if (typeof ensureActiveHeroInBarracks === 'function') {
         ensureActiveHeroInBarracks();
     } else {
-        // Иначе правим ръчно
         oldHero.isJoined = true;
         oldHero.isFavoriteInBarracks = true;
         if (!window.worldData.clans[oldHero.clan]) {
@@ -142,7 +136,6 @@ window.hireNewHero = function() {
         localStorage.setItem('barracksFavorites', JSON.stringify(favs));
     }
     
-    // Актуализираме UI за стария герой (активния)
     let goldSpan = document.getElementById('val-gold');
     if (goldSpan) goldSpan.innerText = oldHero.gold;
     if (window.updateCharacterUI) window.updateCharacterUI(oldHero);
@@ -152,7 +145,6 @@ window.hireNewHero = function() {
     alert(`✅ Нает: ${newHero.name} от род ${newHero.clan}\n💰 Останало злато: ${oldHero.gold}\n⚔️ Бойна сила: ${newHero.power}`);
     if (newHero.isAuto && typeof window.startAutoTimer === 'function') window.startAutoTimer(newId);
     
-    // Презареждаме казармите ако са отворени
     if (document.getElementById('barracks-screen') && document.getElementById('barracks-screen').style.display === 'flex') {
         if (typeof window.renderBarracksLayout === 'function') window.renderBarracksLayout();
     }
@@ -204,7 +196,27 @@ function getAllHeroes() {
     heroes.sort((a,b) => b.level - a.level);
     return heroes;
 }
-// ==================== ПРОФИЛ С 12 СЛОТА + АРТЕФАКТИ (БЕЗ СТАРИ УМЕНИЯ) ====================
+// ==================== ПОМОЩНА ФУНКЦИЯ ЗА ЕКИПИРОВКА ====================
+function equipArtifact(hero, artifact, slotIndex) {
+    if (!hero.equipment) hero.equipment = Array(12).fill(null);
+    let oldArtifact = hero.equipment[slotIndex];
+    // Връщаме стария артефакт в инвентара (ако има)
+    if (oldArtifact) {
+        if (!hero.inventory) hero.inventory = [];
+        hero.inventory.push(oldArtifact);
+    }
+    hero.equipment[slotIndex] = artifact;
+    // Премахваме артефакта от инвентара
+    let idx = hero.inventory.indexOf(artifact);
+    if (idx !== -1) hero.inventory.splice(idx, 1);
+    // Преизчисляваме силата
+    if (window.recalculateHeroPower) window.recalculateHeroPower(hero);
+    if (window.updateCharacterUI) window.updateCharacterUI(hero);
+    // Запазваме данните
+    if (window.armyMarket && window.armyMarket.sync) window.armyMarket.sync(hero);
+    else if (window.saveHeroData) window.saveHeroData(hero);
+}
+// ==================== ПРОФИЛ С 12 СЛОТА + АРТЕФАКТИ (С ЕКИПИРОВКА) ====================
 function showHeroProfile(hero) {
     let needXP = 100 + (hero.level - 1) * 50;
     let currentXP = hero.isAuto ? (hero.xp || 0) : (hero.storedXP || 0);
@@ -212,32 +224,44 @@ function showHeroProfile(hero) {
     let autoOn = isAuto(hero.id);
     let slotNames = ["⚔️ ОРЪЖИЕ", "🛡️ ЩИТ", "🪖 ШЛЕМ", "🦺 НАГРЪДНИК", "🧤 РЪКАВИЦИ", "👖 КРАЧОЛИ", "👢 БОТУШИ", "💍 ПРЪСТЕН", "💍 ПРЪСТЕН 2", "📿 АМУЛЕТ", "🧣 НАМЕТАЛО", "🔱 РЕЛИКВИЯ"];
     
-    let inventoryHtml = '<div style="background:#0d0a07; border-radius:12px; padding:12px; margin-top:10px;"><h4 style="color:#ffdd99; margin:0 0 10px 0;">🎒 ИНВЕНТАР</h4><div style="display:grid; grid-template-columns:repeat(3,1fr); gap:8px;">';
-    for (let i = 0; i < 12; i++) {
-        let item = hero.equipment && hero.equipment[i] ? hero.equipment[i] : null;
-        let slotName = slotNames[i];
-        if (item) {
-            inventoryHtml += `<div style="background:#2c1a0c; border-radius:8px; padding:8px; text-align:center; border:1px solid #c9a87b;"><div style="font-size:20px;">${item.icon || '🔮'}</div><div style="font-size:8px; color:#ffdd99;">${item.name || 'Артефакт'}</div><div style="font-size:7px; color:#aa8866;">${slotName}</div></div>`;
-        } else {
-            inventoryHtml += `<div style="background:#1a1a2e; border-radius:8px; padding:8px; text-align:center; border:1px dashed #555;"><div style="font-size:16px; opacity:0.4;">❓</div><div style="font-size:7px; color:#555;">${slotName}</div></div>`;
+    // ХЕЛПЪР ЗА РЕНДИРАНЕ НА ЕКИПИРОВЪЧНИТЕ СЛОТОВЕ (кликваеми)
+    function renderEquipmentSlots() {
+        let html = '<div style="background:#0d0a07; border-radius:12px; padding:12px; margin-top:10px;"><h4 style="color:#ffdd99; margin:0 0 10px 0;">🎒 ЕКИПИРОВКА</h4><div style="display:grid; grid-template-columns:repeat(3,1fr); gap:8px;">';
+        for (let i = 0; i < 12; i++) {
+            let item = hero.equipment && hero.equipment[i] ? hero.equipment[i] : null;
+            let slotName = slotNames[i];
+            html += `<div class="equip-slot" data-slot="${i}" style="background:#2c1a0c; border-radius:8px; padding:8px; text-align:center; border:1px solid #c9a87b; cursor:pointer;" title="Кликни за смяна на артефакт">
+                        <div style="font-size:20px;">${item ? (item.icon || '🔮') : '⬜'}</div>
+                        <div style="font-size:8px; color:#ffdd99;">${item ? (item.name.length>10?item.name.substring(0,8)+'..':item.name) : slotName}</div>
+                        ${item ? `<div style="font-size:7px; color:#88ff88;">+${item.bonus?.heroPower || item.bonus?.goldBonus || 0}</div>` : ''}
+                    </div>`;
         }
+        html += '</div></div>';
+        return html;
     }
-    inventoryHtml += '</div></div>';
     
-    let artifactsHtml = '<div style="background:#0d0a07; border-radius:12px; padding:12px; margin-top:10px;"><h4 style="color:#ffdd99; margin:0 0 10px 0;">🏺 СЪБРАНИ АРТЕФАКТИ</h4><div style="display:flex; flex-wrap:wrap; gap:8px;">';
-    if (hero.inventory && hero.inventory.length > 0) {
-        hero.inventory.forEach(artifact => {
-            if (artifact && artifact.id) {
-                artifactsHtml += `<div style="background:#2c1a0c; border-radius:8px; padding:6px; text-align:center; min-width:60px; border:1px solid #c9a87b;" title="${artifact.name} (${artifact.era || 'Исторически'})">
-                    <div style="font-size:20px;">${artifact.icon || '🏺'}</div>
-                    <div style="font-size:7px; color:#ffdd99;">${artifact.name.length > 10 ? artifact.name.substring(0,8)+'..' : artifact.name}</div>
-                </div>`;
-            }
-        });
-    } else {
-        artifactsHtml += '<div style="color:#aa8866; padding:8px;">Няма събрани артефакти</div>';
+    // ХЕЛПЪР ЗА РЕНДИРАНЕ НА АРТЕФАКТИТЕ (кликваеми)
+    function renderArtifacts() {
+        let html = '<div style="background:#0d0a07; border-radius:12px; padding:12px; margin-top:10px;"><h4 style="color:#ffdd99; margin:0 0 10px 0;">🏺 СЪБРАНИ АРТЕФАКТИ</h4><div style="display:flex; flex-wrap:wrap; gap:8px;">';
+        if (hero.inventory && hero.inventory.length > 0) {
+            hero.inventory.forEach((artifact, idx) => {
+                if (artifact && artifact.id) {
+                    let bonusText = artifact.bonus ? Object.entries(artifact.bonus).map(([k,v]) => `${k}+${v}`).join(', ') : 'няма';
+                    html += `<div class="artifact-item" data-artifact-idx="${idx}" style="background:#2c1a0c; border-radius:8px; padding:6px; text-align:center; min-width:60px; border:1px solid #c9a87b; cursor:pointer;" title="${artifact.name} (${artifact.era || 'Исторически'}) - Бонус: ${bonusText}">
+                                <div style="font-size:20px;">${artifact.icon || '🏺'}</div>
+                                <div style="font-size:7px; color:#ffdd99;">${artifact.name.length > 10 ? artifact.name.substring(0,8)+'..' : artifact.name}</div>
+                            </div>`;
+                }
+            });
+        } else {
+            html += '<div style="color:#aa8866; padding:8px;">Няма събрани артефакти</div>';
+        }
+        html += '</div></div>';
+        return html;
     }
-    artifactsHtml += '</div></div>';
+    
+    let inventoryHtml = renderEquipmentSlots();
+    let artifactsHtml = renderArtifacts();
     
     let petHtml = '<div style="background:#0d0a07; border-radius:12px; padding:12px; margin-top:10px;"><h4 style="color:#ffdd99; margin:0 0 10px 0;">🐾 ДОМАШЕН ЛЮБИМЕЦ</h4>';
     if (hero.pet && window.rpgDatabase?.petsDatabase?.[hero.pet]) {
@@ -286,6 +310,49 @@ function showHeroProfile(hero) {
         </div>
     `;
     document.body.appendChild(modal);
+    
+    // === ЕКИПИРОВЪЧНИ СЛОТОВЕ (при клик -> избор на артефакт от инвентара) ===
+    modal.querySelectorAll('.equip-slot').forEach(slotDiv => {
+        slotDiv.addEventListener('click', (e) => {
+            e.stopPropagation();
+            let slotIndex = parseInt(slotDiv.getAttribute('data-slot'));
+            if (isNaN(slotIndex)) return;
+            // Събираме наличните артефакти в инвентара
+            let artifacts = hero.inventory.filter(a => a && a.id);
+            if (artifacts.length === 0) {
+                alert("Нямате артефакти в инвентара за екипиране!");
+                return;
+            }
+            let options = artifacts.map((a, idx) => `${idx}: ${a.name} (бонуси: ${Object.entries(a.bonus || {}).map(([k,v])=>`${k}+${v}`).join(', ')})`).join('\n');
+            let choice = prompt(`Избери артефакт за слот ${slotNames[slotIndex]}:\n${options}\n\nВъведи номера (0-${artifacts.length-1}) или 'cancel' за отказ:`);
+            if (choice === null || isNaN(parseInt(choice))) return;
+            let idx = parseInt(choice);
+            if (idx < 0 || idx >= artifacts.length) { alert("Невалиден номер"); return; }
+            let artifact = artifacts[idx];
+            equipArtifact(hero, artifact, slotIndex);
+            modal.remove();
+            showHeroProfile(hero); // refresh
+        });
+    });
+    
+    // === АРТЕФАКТИ В ИНВЕНТАРА (при клик -> избор на слот за екипиране) ===
+    modal.querySelectorAll('.artifact-item').forEach(artDiv => {
+        artDiv.addEventListener('click', (e) => {
+            e.stopPropagation();
+            let artifactIdx = parseInt(artDiv.getAttribute('data-artifact-idx'));
+            if (isNaN(artifactIdx)) return;
+            let artifact = hero.inventory[artifactIdx];
+            if (!artifact) return;
+            let slotOptions = slotNames.map((name, i) => `${i}: ${name} ${hero.equipment[i] ? '(заето с ' + hero.equipment[i].name + ')' : '(празно)'}`).join('\n');
+            let choice = prompt(`Къде да екипираме "${artifact.name}"?\n${slotOptions}\n\nВъведи номера на слота (0-11) или 'cancel' за отказ:`);
+            if (choice === null || isNaN(parseInt(choice))) return;
+            let slot = parseInt(choice);
+            if (slot < 0 || slot > 11) { alert("Невалиден слот"); return; }
+            equipArtifact(hero, artifact, slot);
+            modal.remove();
+            showHeroProfile(hero); // refresh
+        });
+    });
     
     modal.querySelector('#close-profile-modal').onclick = () => modal.remove();
     
@@ -339,7 +406,6 @@ window.renderTop6LeadersUI = function() {
     } 
     let leaders = Object.entries(window.worldData.clans).map(([clanKey, data]) => { return { clanKey: clanKey, ...data }; }); 
     
-    // КОРИГИРАНО СОРТИРАНЕ – използваме правилния XP (xp за auto, storedXP за manual)
     leaders.sort((a, b) => {
         if ((b.level || 1) !== (a.level || 1)) return (b.level || 1) - (a.level || 1);
         let xpA = a.isAuto ? (a.xp || 0) : (a.storedXP || 0);
@@ -381,18 +447,14 @@ window.renderTop6HeroesUI = window.renderTop6LeadersUI;
 window.updateCharacterUI = function(hero) {
     if (!hero) return;
 
-    // Активният герой се определя по name и clan (не по референция)
     const isActive = window.currentHero &&
         (window.currentHero.name === hero.name && window.currentHero.clan === hero.clan);
 
     if (isActive) {
-        // Актуализираме активния герой
         window.currentHero = hero;
     } else if (!window.currentHero) {
-        // Няма активен – задаваме този
         window.currentHero = hero;
     } else {
-        // Този герой не е активният – не променяме currentHero и не обновяваме главния UI
         return;
     }
 
