@@ -1,8 +1,8 @@
 /**
 ==========================================================================
 ПРОЕКТ: ВЕЛИКА БЪЛГАРИЯ
-ФАЙЛ: battle.js (КОРИГИРАН – ПОРТАЛНА СЪВМЕСТИМОСТ + RESET ARMY)
-ВЕРСИЯ: 4.2
+ФАЙЛ: battle.js (КОРИГИРАН – ЗАВЛАДЯВАНЕ НА РЕГИОНИ + СИЛА НА ВРАГА)
+ВЕРСИЯ: 5.0
 ==========================================================================
 */
 
@@ -307,7 +307,10 @@
             regionName = regionInput;
             if (window.worldData && window.worldData.regions && window.worldData.regions[regionInput]) {
                 const reg = window.worldData.regions[regionInput];
-                enemyPower = reg.armySize || reg.difficulty * 12 || 200;
+                // Коригирано изчисление на силата на врага
+                let basePower = reg.armySize || 100;
+                let defenseBonus = (reg.defenseLevel || 1) * 10;
+                enemyPower = Math.max(50, basePower + defenseBonus);
                 enemyHp = enemyPower;
                 regionName = reg.name || regionInput;
             }
@@ -597,6 +600,28 @@
                     addLog(`   🎁 ${hero.name} получава +${heroXP} XP и +${heroGold} злато!`);
                 });
                 
+                // ========== НОВО: ЗАВЛАДЯВАНЕ НА РЕГИОН ==========
+                if (typeof regionName === 'string' && regionName !== "Портал") {
+                    // Уверяваме се, че playerRegions съществува
+                    if (!window.playerRegions) window.playerRegions = [];
+                    // Проверяваме дали регионът вече не е завладян
+                    let ownedRegions = window.playerRegions.flat();
+                    if (!ownedRegions.includes(regionName)) {
+                        window.playerRegions.push([regionName]);
+                        addLog(`   🏰 ${regionName} е добавен към вашите владения!`);
+                        if (window.addWorldEvent) {
+                            window.addWorldEvent(`🏰 ЗАВЛАДЯВАНЕ`, `Вие завладяхте ${regionName}!`, "🏰");
+                        }
+                        // Нулираме армията на региона
+                        if (window.worldData && window.worldData.regions && window.worldData.regions[regionName]) {
+                            window.worldData.regions[regionName].armySize = 0;
+                        }
+                    } else {
+                        addLog(`   ℹ️ ${regionName} вече е ваш.`);
+                    }
+                }
+                
+                // Шанс за артефакт
                 if (Math.random() < 0.2 && window.historicalArtifacts) {
                     const artifactKeys = Object.keys(window.historicalArtifacts);
                     const randomKey = artifactKeys[Math.floor(Math.random() * artifactKeys.length)];
@@ -612,6 +637,7 @@
                     }
                 }
                 
+                // Шанс за пленник
                 if (Math.random() < 0.15 && window.fantasyRaces && window.fantasyRaces.length > 0) {
                     const randomRace = window.fantasyRaces[Math.floor(Math.random() * window.fantasyRaces.length)];
                     const prisoner = {
@@ -631,6 +657,7 @@
                     }
                 }
                 
+                // Бонус за портален свят
                 if (regionInput && regionInput.isPortalWorld) {
                     const extraBonus = 50 + Math.floor(Math.random() * 100);
                     const randomHero = livingHeroes[Math.floor(Math.random() * livingHeroes.length)];
@@ -752,7 +779,6 @@
         }
 
         function resetBattle() {
-            // Възстановяваме първоначалните стойности на hp И armySize
             currentHeroes = battleHeroes.map(h => ({ ...h, hp: h.maxHp, armySize: h.armySize }));
             currentMonster = { ...monster };
             battleActive = true;
@@ -781,5 +807,5 @@
         console.log("✅ Битката е готова!");
     };
 
-    console.log("✅ battle.js зареден (портално-съвместима версия + reset army)");
+    console.log("✅ battle.js зареден (коригиран – завладяване на региони + сила на врага)");
 })();
