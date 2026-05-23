@@ -1041,3 +1041,126 @@ if (document.readyState === 'loading') {
     
     console.log("✅ Функцията е активна. Натиснете '🏆 Елит', за да видите 10-те елитни героя.");
 })();
+
+// ==================== ГЕНЕРИРАНЕ НА ПОРТРЕТ С Pollinations.ai ====================
+(async function initPortraitGenerator() {
+    // Изчакваме играта да се инициализира
+    if (!window.currentHero) {
+        setTimeout(initPortraitGenerator, 500);
+        return;
+    }
+    
+    // Функция за генериране на портрет
+    window.generatePortraitPollinations = async function(hero, onSuccess) {
+        if (!hero) return;
+        const prompt = `fantasy rpg character portrait of ${hero.name} the ${hero.currentClass || hero.className || "warrior"}, digital painting, D&D style, face front, detailed, cinematic lighting, high quality`;
+        const url = `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}?width=256&height=256&seed=${Math.floor(Math.random()*10000)}`;
+        
+        // Тестваме дали изображението се зарежда (опционално)
+        const img = new Image();
+        img.onload = () => {
+            hero.portrait = url;
+            if (onSuccess) onSuccess(url);
+            // Запазваме портрета в localStorage (по име на герой)
+            try {
+                const portraits = JSON.parse(localStorage.getItem('heroPortraits') || '{}');
+                portraits[hero.name] = url;
+                localStorage.setItem('heroPortraits', JSON.stringify(portraits));
+            } catch(e) {}
+            if (window.showAdvisorMsg) window.showAdvisorMsg(`🎨 Портретът на ${hero.name} е генериран!`);
+            // Обновяваме UI
+            if (typeof window.renderSingleBar === 'function') window.renderSingleBar();
+            if (typeof window.renderTop6LeadersUI === 'function') window.renderTop6LeadersUI();
+            if (window.currentHero === hero && typeof window.updateCharacterUI === 'function') {
+                window.updateCharacterUI(hero);
+            }
+        };
+        img.onerror = () => {
+            console.warn(`Неуспешно генериране на портрет за ${hero.name}`);
+            if (window.showAdvisorMsg) window.showAdvisorMsg(`❌ Неуспешно генериране на портрет за ${hero.name}. Опитайте отново.`);
+        };
+        img.src = url;
+    };
+    
+    // Функция за зареждане на запазени портрети
+    window.loadHeroPortraits = function() {
+        try {
+            const portraits = JSON.parse(localStorage.getItem('heroPortraits') || '{}');
+            for (let name in portraits) {
+                // Намираме героя по име в worldData.clans
+                if (window.worldData && window.worldData.clans) {
+                    for (let key in window.worldData.clans) {
+                        const hero = window.worldData.clans[key];
+                        if (hero.name === name) {
+                            hero.portrait = portraits[name];
+                            break;
+                        }
+                    }
+                }
+                // Ако е текущият герой
+                if (window.currentHero && window.currentHero.name === name) {
+                    window.currentHero.portrait = portraits[name];
+                }
+            }
+            if (typeof window.renderSingleBar === 'function') window.renderSingleBar();
+            if (typeof window.renderTop6LeadersUI === 'function') window.renderTop6LeadersUI();
+            if (window.currentHero && typeof window.updateCharacterUI === 'function') window.updateCharacterUI(window.currentHero);
+        } catch(e) {}
+    };
+    
+    // Добавяме бутон за генериране на портрет в профила на героя
+    // Патчваме showHeroProfile, за да добавим бутон
+    const originalShowHeroProfile = window.showHeroProfile;
+    if (originalShowHeroProfile) {
+        window.showHeroProfile = function(hero) {
+            originalShowHeroProfile(hero);
+            // След като модалът се покаже, добавяме бутон "Генерирай портрет"
+            setTimeout(() => {
+                const modal = document.getElementById('ultimate-profile-modal');
+                if (!modal) return;
+                // Проверяваме дали бутонът вече съществува
+                if (modal.querySelector('.generate-portrait-btn')) return;
+                const btn = document.createElement('button');
+                btn.className = 'generate-portrait-btn';
+                btn.innerText = '🎨 Генерирай портрет';
+                btn.style.cssText = 'background:#2c1a0c; border:none; border-radius:20px; color:#ffdd99; padding:6px 12px; margin-top:8px; width:100%; cursor:pointer;';
+                btn.onclick = async () => {
+                    btn.innerText = '⏳ Генериране...';
+                    btn.disabled = true;
+                    await window.generatePortraitPollinations(hero, (url) => {
+                        // Обновяваме иконката в модала, ако има
+                        const iconDiv = modal.querySelector('.equip-slot:first-child div:first-child');
+                        if (iconDiv) {
+                            iconDiv.innerHTML = `<img src="${url}" style="width:40px; height:40px; border-radius:50%; object-fit:cover;">`;
+                        }
+                        // Може да обновим и основния профил
+                        if (window.currentHero === hero && typeof window.updateCharacterUI === 'function') {
+                            window.updateCharacterUI(hero);
+                        }
+                        btn.innerText = '✅ Портретът е готов';
+                        setTimeout(() => btn.remove(), 1500);
+                    });
+                };
+                // Намираме място за бутона (например след autoBtnHtml)
+                const autoBtn = modal.querySelector('#auto-mode-btn');
+                if (autoBtn) {
+                    autoBtn.insertAdjacentElement('afterend', btn);
+                } else {
+                    const closeBtn = modal.querySelector('#close-profile-modal');
+                    if (closeBtn) closeBtn.insertAdjacentElement('beforebegin', btn);
+                }
+            }, 100);
+        };
+    }
+    
+    // Зареждаме запазените портрети при старт
+    window.loadHeroPortraits();
+    
+    // Наблюдаваме за нови герои (спътници), за да им заредим портрети
+    const observer = new MutationObserver(() => window.loadHeroPortraits());
+    if (window.worldData && window.worldData.clans) {
+        observer.observe(document.body, { childList: true, subtree: true });
+    }
+    
+    console.log("✅ Pollinations.ai портрет генераторът е активен. Отворете профила на герой и натиснете 'Генерирай портрет'.");
+})();
