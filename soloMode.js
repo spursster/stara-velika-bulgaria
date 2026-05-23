@@ -588,4 +588,6 @@
             return false;
         };
     }
+     // Експортиране на функцията initSoloMode
+window.initSoloMode = initSoloMode;
 })();
