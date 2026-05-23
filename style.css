@@ -889,3 +889,7 @@ html, body {
         font-size: 0.9rem !important;
     }
 }
+/* Скриваме старата лента с елитни герои (вече имаме бутон "🏆 Елит") */
+#top-elite-bar {
+    display: none !important;
+}
