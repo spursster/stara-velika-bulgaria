@@ -879,3 +879,165 @@ if (document.readyState === 'loading') {
 } else {
     setupResponsiveButtons();
 }
+
+(function addEliteHeroesButtonFinal() {
+    console.log("🏆 Добавяне на бутон за елитни герои (финална версия)...");
+    
+    // Списък с 10 елитни героя (можете да добавите още или да ги заредите от gameData)
+    const eliteHeroes = [
+        { name: "Кубрат Велики", class: "Владетел", power: 190, level: 12, icon: "👑" },
+        { name: "Аспарух", class: "Воевода", power: 170, level: 10, icon: "⚔️" },
+        { name: "Тервел", class: "Паладин", power: 175, level: 11, icon: "🛡️" },
+        { name: "Крум Страшни", class: "Берсерк", power: 185, level: 13, icon: "🗡️" },
+        { name: "Симеон Велики", class: "Маг", power: 180, level: 12, icon: "🔮" },
+        { name: "Борис Покръстител", class: "Свещеник", power: 160, level: 9, icon: "✝️" },
+        { name: "Иван Асен", class: "Владетел", power: 165, level: 10, icon: "👑" },
+        { name: "Калоян", class: "Ромеобоец", power: 185, level: 14, icon: "🐉" },
+        { name: "Александър Македонски", class: "Завоевател", power: 200, level: 15, icon: "🏆" },
+        { name: "Владислав Варненчик", class: "Кръстоносец", power: 175, level: 11, icon: "⚔️" }
+    ];
+    
+    // Функция за намиране на герой в worldData.clans по име
+    function findHeroInGame(heroName) {
+        if (!window.worldData || !window.worldData.clans) return null;
+        for (let key in window.worldData.clans) {
+            const clan = window.worldData.clans[key];
+            if (clan.name === heroName || clan.leaderName === heroName) {
+                return clan;
+            }
+        }
+        return null;
+    }
+    
+    // Функция за отваряне на модал с елитните герои
+    function showEliteHeroesModal() {
+        const oldModal = document.getElementById('eliteHeroesModal');
+        if (oldModal) oldModal.remove();
+        
+        const modal = document.createElement('div');
+        modal.id = 'eliteHeroesModal';
+        modal.style.cssText = `
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.85);
+            backdrop-filter: blur(8px);
+            z-index: 200000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Cinzel', serif;
+        `;
+        
+        modal.innerHTML = `
+            <div style="background: #0a0a0a; border: 2px solid #d4af37; border-radius: 8px; max-width: 500px; width: 90%; max-height: 85vh; overflow-y: auto; padding: 20px; box-sizing: border-box; position: relative;">
+                <button id="closeEliteModalX" style="position: absolute; top: 10px; left: 10px; background: rgba(255,80,80,0.2); border: none; color: #ff8888; font-size: 18px; width: 32px; height: 32px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center;">✕</button>
+                <h3 style="margin-top: 0; color: #ffd700; text-transform: uppercase; border-bottom: 1px solid #222; padding-bottom: 12px; text-align: center;">🏆 ЕЛИТНИ ГЕРОИ</h3>
+                <p style="font-size: 12px; color: #aaa; text-align: center; margin-bottom: 15px;">Най-могъщите герои (2 реда по 5)</p>
+                <div id="eliteHeroesGridFinal" style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px;"></div>
+                <button id="closeEliteModalFooter" class="menu-btn" style="width: 100%; margin-top: 15px;">ЗАТВОРИ</button>
+            </div>
+        `;
+        
+        document.body.appendChild(modal);
+        
+        const grid = modal.querySelector('#eliteHeroesGridFinal');
+        
+        eliteHeroes.forEach(hero => {
+            const heroInGame = findHeroInGame(hero.name);
+            const isInGame = heroInGame !== null;
+            
+            const card = document.createElement('div');
+            card.style.cssText = `
+                background: rgba(20,20,30,0.6);
+                border: 1px solid rgba(212,175,55,0.3);
+                border-radius: 8px;
+                padding: 8px;
+                text-align: center;
+                cursor: ${isInGame ? 'pointer' : 'default'};
+                transition: all 0.2s;
+                opacity: ${isInGame ? 1 : 0.7};
+            `;
+            
+            if (isInGame) {
+                card.onmouseenter = () => {
+                    card.style.transform = 'translateY(-2px)';
+                    card.style.borderColor = '#ffd700';
+                    card.style.boxShadow = '0 0 8px rgba(212,175,55,0.3)';
+                };
+                card.onmouseleave = () => {
+                    card.style.transform = 'translateY(0)';
+                    card.style.borderColor = 'rgba(212,175,55,0.3)';
+                    card.style.boxShadow = 'none';
+                };
+                card.onclick = () => {
+                    modal.remove();
+                    if (typeof window.showHeroProfile === 'function') {
+                        window.showHeroProfile(heroInGame);
+                    } else {
+                        alert(`Профилът на ${hero.name} не може да бъде отворен`);
+                    }
+                };
+            } else {
+                card.style.opacity = '0.6';
+                card.onclick = () => {
+                    alert(`${hero.name} – ще се появи в играта след като бъде нает.`);
+                };
+            }
+            
+            card.innerHTML = `
+                <div style="font-size: 28px;">${hero.icon}</div>
+                <div style="font-size: 11px; font-weight: bold; color: #ffd700;">${hero.name}</div>
+                <div style="font-size: 9px; color: #aaa;">${hero.class}</div>
+                <div style="font-size: 9px; color: #ffaa66;">⚔️ ${hero.power}</div>
+                <div style="font-size: 8px; color: #88ff88;">Ниво ${hero.level}</div>
+                ${!isInGame ? '<div style="font-size: 7px; color: #ff8888; margin-top: 3px;">(не е нает)</div>' : ''}
+            `;
+            grid.appendChild(card);
+        });
+        
+        // Адаптивност за малки екрани
+        const style = document.createElement('style');
+        style.textContent = `
+            @media (max-width: 700px) {
+                #eliteHeroesGridFinal {
+                    grid-template-columns: repeat(3, 1fr) !important;
+                    gap: 8px !important;
+                }
+            }
+            @media (max-width: 480px) {
+                #eliteHeroesGridFinal {
+                    grid-template-columns: repeat(2, 1fr) !important;
+                }
+            }
+        `;
+        modal.appendChild(style);
+        
+        const closeX = modal.querySelector('#closeEliteModalX');
+        const closeFooter = modal.querySelector('#closeEliteModalFooter');
+        const closeModal = () => modal.remove();
+        closeX.onclick = closeModal;
+        closeFooter.onclick = closeModal;
+        modal.onclick = (e) => { if (e.target === modal) closeModal(); };
+    }
+    
+    // Добавяме бутон в горната лента (ако не съществува)
+    const container = document.querySelector('.top-bar-controls');
+    if (container && !document.getElementById('eliteHeroesBtn')) {
+        const btn = document.createElement('button');
+        btn.id = 'eliteHeroesBtn';
+        btn.className = 'glass-btn';
+        btn.innerHTML = '🏆 Елит';
+        btn.style.fontSize = '0.8rem';
+        btn.style.padding = '4px 10px';
+        btn.onclick = showEliteHeroesModal;
+        container.appendChild(btn);
+        console.log("✅ Бутон '🏆 Елит' е добавен в горната лента");
+    } else {
+        console.log("Бутонът вече съществува");
+    }
+    
+    console.log("✅ Функцията е активна. Натиснете '🏆 Елит', за да видите 10-те елитни героя.");
+})();
