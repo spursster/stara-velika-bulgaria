@@ -784,3 +784,16 @@ html, body {
         border-color: #ffd700 !important;
     }
 }
+
+@media (min-width: 1024px) {
+    .top-bar-controls {
+        flex: 1 !important;                    /* Кара контейнера да се разтегли */
+        justify-content: space-evenly !important; /* Разпределя бутоните равномерно */
+    }
+    .glass-btn {
+        width: auto !important;                /* Маха фиксираната ширина */
+        min-width: auto !important;
+        padding: 6px 16px !important;
+        border-radius: 40px !important;
+    }
+}
