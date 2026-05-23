@@ -334,7 +334,7 @@
 
 <div id="bottom-controls">
     <button class="icon-btn" onclick="window.openRegionsMap()" title="Карта">🗺️</button>
-    <button class="icon-btn" onclick="window.openBarracksUI?.()" title="Казарми">🏹</button>
+      <button class="icon-btn" onclick="if(typeof window.openBarracksUI === 'function') window.openBarracksUI(); else alert('Казармите не са достъпни в момента')" title="Казарми">🏹</button>
     <button class="icon-btn" onclick="window.startBattle('Мизия')" title="Битка">⚔️</button>
     <button class="next-turn-btn" onclick="window.processTurn()">► Ход</button>
     <button class="icon-btn" onclick="window.openEventsMenu?.()" title="Събития">📜</button>
