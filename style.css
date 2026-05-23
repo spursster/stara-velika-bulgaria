@@ -676,3 +676,66 @@ html, body {
     backdrop-filter: none !important;
     box-shadow: none !important;
 }
+
+/* ==================== ПЛАВНО МЕНЮ ЗА НОВА ИГРА ==================== */
+.new-game-menu-container {
+    position: relative;
+    display: inline-block;
+}
+
+.new-game-dropdown {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    background: rgba(15, 15, 20, 0.98);
+    backdrop-filter: blur(12px);
+    border: 1px solid rgba(212, 175, 55, 0.5);
+    border-radius: 12px;
+    padding: 8px 0;
+    min-width: 220px;
+    z-index: 1000;
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(-10px);
+    transition: all 0.25s ease;
+    box-shadow: 0 8px 20px rgba(0,0,0,0.4);
+}
+
+.new-game-dropdown.show {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+}
+
+.new-game-option {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 16px;
+    color: #ffdd99;
+    cursor: pointer;
+    transition: background 0.2s;
+    font-size: 0.85rem;
+    border-bottom: 1px solid rgba(255,215,0,0.1);
+}
+
+.new-game-option:last-child {
+    border-bottom: none;
+}
+
+.new-game-option:hover {
+    background: rgba(212, 175, 55, 0.2);
+    color: #ffd700;
+}
+
+.new-game-option-icon {
+    font-size: 1.2rem;
+    min-width: 28px;
+    text-align: center;
+}
+
+.new-game-divider {
+    height: 1px;
+    background: rgba(212, 175, 55, 0.3);
+    margin: 6px 0;
+}
