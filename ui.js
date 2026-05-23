@@ -438,7 +438,7 @@ function showHeroProfile(hero) {
         };
     }
 }
-// ==================== ЛЕНТА НА ЕЛИТА (5 ГЕРОЯ) ====================
+// ==================== ЛЕНТА НА ЕЛИТА (5 ГЕРОЯ) С ЦВЕТНИ КАНТОВЕ ====================
 window.renderTop6LeadersUI = function() { 
     const eliteBar = document.getElementById('top-elite-bar'); 
     if (!eliteBar) return; 
@@ -473,6 +473,10 @@ window.renderTop6LeadersUI = function() {
         const card = document.createElement('div'); 
         card.className = "elite-hero-card"; 
         card.style.cssText = "background: rgba(0,0,0,0.6); border-radius: 12px; padding: 6px 12px; min-width: 100px; text-align: center; cursor: pointer; border: 1px solid #c9a87b; flex-shrink: 0;";
+        
+        // ⭐⭐⭐ ДОБАВЯМЕ АТРИБУТ data-class ЗА ЦВЕТНИТЕ КАНТОВЕ ⭐⭐⭐
+        card.setAttribute('data-class', leader.currentClass || '');
+        
         card.onclick = (e) => { if (e.target.classList.contains('auto-btn')) return; if (window.openHeroRPGModal) window.openHeroRPGModal(leader.clanKey); }; 
         
         let currentXP = leader.isAuto ? (leader.xp || 0) : (leader.storedXP || 0);
@@ -496,6 +500,8 @@ window.renderTop6LeadersUI = function() {
         eliteBar.appendChild(card); 
     }); 
 }; 
+
+window.renderTop6HeroesUI = window.renderTop6LeadersUI;
 
 window.renderTop6HeroesUI = window.renderTop6LeadersUI;
 // ==================== ОСНОВНО ОБНОВЯВАНЕ НА ЛЕВИЯ ПАНЕЛ ====================
