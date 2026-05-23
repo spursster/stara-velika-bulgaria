@@ -797,3 +797,41 @@ html, body {
         border-radius: 40px !important;
     }
 }
+/* ==================== КОРЕКЦИЯ САМО ЗА ДЕСКТОП (ГОЛЯМ ЕКРАН) ==================== */
+@media (min-width: 1024px) {
+    /* Намаляваме текста на статистиките и името на героя */
+    .stat-box, .active-hero-name {
+        font-size: 0.7rem !important;
+        padding: 2px 10px !important;
+    }
+    
+    /* Намаляваме бутоните */
+    .glass-btn {
+        font-size: 0.7rem !important;
+        padding: 4px 12px !important;
+        min-width: auto !important;
+        width: auto !important;
+    }
+    
+    /* Контейнерът с бутоните - да не се разтяга прекалено */
+    .top-bar-controls {
+        gap: 6px !important;
+    }
+    
+    /* Статистиките - да не заемат твърде много място */
+    .top-bar-stats {
+        gap: 6px !important;
+    }
+}
+
+/* За по-големи десктопи (над 1400px) – може леко да увеличим, ако искате */
+@media (min-width: 1400px) {
+    .stat-box, .active-hero-name {
+        font-size: 0.75rem !important;
+        padding: 3px 12px !important;
+    }
+    .glass-btn {
+        font-size: 0.75rem !important;
+        padding: 4px 14px !important;
+    }
+}
