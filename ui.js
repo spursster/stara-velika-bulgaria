@@ -2,6 +2,29 @@
 ПРОЕКТ: ВЕЛИКА БЪЛГАРИЯ
 ФАЙЛ: ui.js (ВЕРСИЯ 3.7 – АДАПТИВЕН ХОРИЗОНТАЛЕН ПАНЕЛ + ИКОНКИ)
 ========================================================================== */ 
+// ==================== ОБНОВЯВАНЕ НА ВРЕМЕТО ====================
+window.updateTimeUI = function() {
+    if (!window.gameTime) return;
+    
+    const timeDisplay = document.getElementById('current-time-info');
+    if (!timeDisplay) {
+        // Ако няма елемент, опитваме да го намерим по друг начин
+        const fallback = document.querySelector('.stat-box:last-child');
+        if (fallback) {
+            window.timeElement = fallback;
+        } else {
+            console.warn("⚠️ Елемент за време не е намерен");
+            return;
+        }
+    }
+    
+    const targetEl = timeDisplay || window.timeElement;
+    if (!targetEl) return;
+    
+    const seasons = ["🌱 Пролет", "☀️ Лято", "🍂 Есен", "❄️ Зима"];
+    const currentSeason = seasons[window.gameTime.seasonIndex] || "Сезон";
+    targetEl.innerHTML = `⏳ ${currentSeason} ${window.gameTime.year} г. ${window.gameTime.era}`;
+};
 
 window.eventHistory = []; 
 if (!window.autoLevelState) { window.autoLevelState = {}; }
@@ -503,7 +526,6 @@ window.renderTop6LeadersUI = function() {
 
 window.renderTop6HeroesUI = window.renderTop6LeadersUI;
 
-window.renderTop6HeroesUI = window.renderTop6LeadersUI;
 // ==================== ОСНОВНО ОБНОВЯВАНЕ НА ЛЕВИЯ ПАНЕЛ ====================
 window.updateCharacterUI = function(hero) {
     if (!hero) return;
