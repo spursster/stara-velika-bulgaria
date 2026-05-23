@@ -1,21 +1,17 @@
 /**
  ==========================================================================
  ПРОЕКТ: ВЕЛИКА БЪЛГАРИЯ
- ФАЙЛ: logic.js (С ПОДДРЪЖКА ЗА НОВО МЕНЮ)
- ВЕРСИЯ: 2.2 - БЕЗ ИСКАЩИ ПРОЗОРЦИ
+ ФАЙЛ: logic.js (С ПОДДРЪЖКА ЗА ПОРТРЕТИ НА ГЕРОИ)
+ ВЕРСИЯ: 2.3 - ПОРТРЕТИ ОТ POLLINATIONS.AI
  ==========================================================================
  */
 
-// ==================== 1. СТАРТИРАНЕ ПРИ ЗАРЕЖДАНЕ ====================
 document.addEventListener('DOMContentLoaded', function() {
     console.log("🏛️ Инициализация на системата за запис на Велика България...");
     setTimeout(function() {
         const hasSave = localStorage.getItem('GreatBulgaria_SaveGame');
         if (hasSave) {
-            // Директно зареждане без въпроси
-            if (typeof window.loadGreatBulgariaGame === 'function') {
-                window.loadGreatBulgariaGame();
-            }
+            window.loadGreatBulgariaGame();
         } else {
             window.startFreshGameLogic();
         }
@@ -24,9 +20,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
 window.initNewGame = function() {};
 
-// ==================== 2. НОВА ИГРА ====================
 window.startFreshGameLogic = function() {
-    // ----- 2.1 Избор на случаен герой и клан -----
     let selectedName = "Кубрат";
     let selectedClan = "Дуло";
 
@@ -41,7 +35,6 @@ window.startFreshGameLogic = function() {
         }
     }
 
-    // ----- 2.2 Създаване на главния герой -----
     window.currentHero = {
         name: selectedName, 
         clan: selectedClan,
@@ -64,7 +57,6 @@ window.startFreshGameLogic = function() {
 
     window.unlockedLeaders = [window.currentHero];
 
-    // ----- 2.3 Записване в световните данни -----
     if (!window.worldData) window.worldData = {};
     if (!window.worldData.clans) window.worldData.clans = {};
     window.worldData.clans[selectedClan] = window.currentHero;
@@ -72,17 +64,14 @@ window.startFreshGameLogic = function() {
     const favorites = [selectedName];
     localStorage.setItem('barracksFavorites', JSON.stringify(favorites));
 
-    // ----- 2.4 Начално време -----
     window.gameTime = { seasonIndex: 0, year: 480, era: "пр.н.е." };
 
-    // ----- 2.5 Генериране на процедурни региони -----
     if (typeof window.generateProceduralRegions === 'function') {
         window.generateProceduralRegions(30, true);
     } else {
         console.warn("generateProceduralRegions не е дефинирана – пропускам генерирането.");
     }
 
-    // ==================== 3. ИЗБОР НА РЕЖИМ (от менюто) ====================
     if (!window.gameMode) {
         window.gameMode = 'classic';
     }
@@ -118,7 +107,6 @@ window.startFreshGameLogic = function() {
         console.log("🏰 Стартиране в КЛАСИЧЕСКИ РЕЖИМ");
     }
 
-    // ==================== 4. ОБНОВЯВАНЕ НА ИНТЕРФЕЙСА ====================
     if (window.updateCharacterUI) window.updateCharacterUI(window.currentHero);
     if (window.renderTop6LeadersUI) window.renderTop6LeadersUI();
     if (typeof window.renderSingleBar === 'function') window.renderSingleBar();
@@ -142,14 +130,12 @@ window.saveGreatBulgariaGame = function() {
             for (let key in window.worldData.clans) {
                 let clan = window.worldData.clans[key];
                 if (clan.isJoined === true) {
-                    // Копираме, за да включим portrait, ако съществува
                     let heroCopy = { ...clan };
                     if (clan.portrait) heroCopy.portrait = clan.portrait;
                     allHeroes.push(heroCopy);
                 }
             }
         }
-        // Добавяме и companions (ако са в отделен масив)
         let companionsCopy = [];
         if (window.companions && window.companions.length) {
             companionsCopy = window.companions.map(c => ({ ...c, portrait: c.portrait }));
@@ -167,13 +153,12 @@ window.saveGreatBulgariaGame = function() {
             completedQuests: window.completedQuests
         };
         localStorage.setItem('GreatBulgaria_SaveGame', JSON.stringify(saveData));
-        console.log("💾 Прогресът беше запазен успешно (включително портрети).");
+        console.log("💾 Прогресът беше запазен (включително портрети).");
     } catch (e) {
         console.error(e);
     }
 };
 
-// ==================== 6. ЗАРЕЖДАНЕ НА ЗАПАЗЕНА ИГРА ====================
 window.loadGreatBulgariaGame = function() {
     const saved = localStorage.getItem('GreatBulgaria_SaveGame');
     if (!saved) return false;
@@ -217,6 +202,29 @@ window.loadGreatBulgariaGame = function() {
             }
         }
         
+        // Възстановяване на портретите от запазените данни
+        if (parsed.unlockedLeaders) {
+            parsed.unlockedLeaders.forEach(savedHero => {
+                if (savedHero.portrait) {
+                    for (let key in window.worldData.clans) {
+                        let clan = window.worldData.clans[key];
+                        if (clan.name === savedHero.name || clan.leaderName === savedHero.name) {
+                            clan.portrait = savedHero.portrait;
+                            break;
+                        }
+                    }
+                }
+            });
+        }
+        if (parsed.companions) {
+            parsed.companions.forEach(savedComp => {
+                if (savedComp.portrait) {
+                    let comp = window.companions.find(c => c.name === savedComp.name);
+                    if (comp) comp.portrait = savedComp.portrait;
+                }
+            });
+        }
+        
         if (parsed.favoriteHeroes) localStorage.setItem('favoriteHeroesFinal', parsed.favoriteHeroes);
         if (parsed.autoState) localStorage.setItem('heroAutoState', parsed.autoState);
         
@@ -241,7 +249,6 @@ window.loadGreatBulgariaGame = function() {
     }
 };
 
-// ==================== 7. НАЕМАНЕ НА ГЕРОЙ ====================
 window.buyHeroFromTavern = function() {
     if (typeof window.hireNewHero === 'function') {
         window.hireNewHero();
@@ -252,17 +259,14 @@ window.buyHeroFromTavern = function() {
 };
 window.buyNewHero = window.buyHeroFromTavern;
 
-// ==================== 8. СТАРТОВ МОДАЛЕН ПРОЗОРЕЦ (ЗАПАЗЕН, НО НЕ СЕ ИЗПОЛЗВА) ====================
 window.showStartChoiceModal = function() {
-    // Функцията е запазена, но не се извиква никъде
-};
-
-// ==================== 9. ИЗБОР ОТ СТАРТОВИЯ ПРОЗОРЕЦ ====================
-window.handleStartChoice = function(action) {
     // Запазена за съвместимост, но не се използва
 };
 
-// ==================== 10. ИЗЧИСТВАНЕ НА ЗАПАЗЕНИТЕ ДАННИ ====================
+window.handleStartChoice = function(action) {
+    // Запазена за съвместимост
+};
+
 window.clearGreatBulgariaSaveWithoutReload = function() {
     localStorage.removeItem('GreatBulgaria_SaveGame');
     localStorage.removeItem('favoriteHeroesFinal');
