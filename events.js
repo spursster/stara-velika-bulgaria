@@ -280,3 +280,9 @@ window.showEventModal = function(title, text, options) {
         });
     }
 };
+
+// Експортиране на функцията за събития
+window.openEventsMenu = window.openEventsMenu || function() {
+    if (typeof window.openEventsMenu === 'function') window.openEventsMenu();
+    else console.warn("Събитията не са готови");
+};
