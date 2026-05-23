@@ -354,4 +354,45 @@ window.getHeroCombatBonus = function(hero, bonusType) {
     return bonus;
 };
 
+// ==================== ЕКСПОРТ НА ФУНКЦИЯТА ЗА RPG МОДАЛ ====================
+window.openHeroRPGModal = function(clanKey) {
+    // Намираме героя
+    let hero = null;
+    if (clanKey && window.worldData?.clans?.[clanKey]) {
+        hero = window.worldData.clans[clanKey];
+    } else if (window.currentHero) {
+        hero = window.currentHero;
+    }
+    
+    if (!hero) {
+        console.warn("Няма избран герой за RPG модала");
+        return;
+    }
+    
+    // Ако съществува специален RPG модал, го отваряме
+    if (typeof window.openHeroRPGModalOriginal === 'function') {
+        window.openHeroRPGModalOriginal(clanKey);
+        return;
+    }
+    
+    // Иначе показваме стандартния профил
+    if (typeof window.showHeroProfile === 'function') {
+        window.showHeroProfile(hero);
+    } else {
+        alert("RPG системата не е напълно заредена, но можете да управлявате героя от профила");
+    }
+};
+
+// Ако има оригинална функция, запазваме я
+if (typeof window.openHeroRPGModal !== 'function') {
+    window.openHeroRPGModal = function(clanKey) {
+        const hero = clanKey ? window.worldData?.clans?.[clanKey] : window.currentHero;
+        if (hero && typeof window.showHeroProfile === 'function') {
+            window.showHeroProfile(hero);
+        } else {
+            console.warn("Не може да се отвори профилът на героя");
+        }
+    };
+}
+
 console.log("✅ rpg_system.js зареден (финална версия – добавени бонуси от домашни любимци)");
