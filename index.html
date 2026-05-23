@@ -467,17 +467,15 @@
         }
     }
     
-    const autoLoadOnStart = true;
-    if (autoLoadOnStart) {
-        const hasSave = localStorage.getItem('GreatBulgaria_SaveGame') !== null;
-        if (hasSave) {
-            setTimeout(() => {
-                if (confirm("Имате запазена игра. Желаете ли да продължите?")) {
-                    continueSavedGame();
-                }
-            }, 300);
-        }
+const autoLoadOnStart = true;
+if (autoLoadOnStart) {
+    const hasSave = localStorage.getItem('GreatBulgaria_SaveGame') !== null;
+    if (hasSave) {
+        setTimeout(() => {
+            continueSavedGame();  // директно зареждане, без въпрос
+        }, 300);
     }
+}
 })();
 </script>
 
