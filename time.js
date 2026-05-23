@@ -3,13 +3,20 @@
  * СТАТУС: НАПЪЛНО КОРИГИРАН + АВТОНОМНИ ДЕЙСТВИЯ
  * КОРЕКЦИЯ: Добавени автономно завладяване и автономни портали
  */
-
-window.seasons = ["🌱 Пролет", "☀️ Лято", "🍂 Есен", "❄️ Зима"];
-
-// Глобална функция за превъртане на ход от бутона в интерфейса
-window.processTurn = function() {
-    console.log("⏳ Превъртане на ход...");
+window.updateTimeUI = function() {
+    if (!window.gameTime) return;
     
+    // Търсим span-а с id="current-time-info" (който е вътре в .stat-box)
+    const timeDisplay = document.getElementById('current-time-info');
+    if (!timeDisplay) {
+        console.warn("⚠️ Елемент #current-time-info не е намерен");
+        return;
+    }
+
+    const seasons = ["🌱 Пролет", "☀️ Лято", "🍂 Есен", "❄️ Зима"];
+    const currentSeason = seasons[window.gameTime.seasonIndex] || "Сезон";
+    timeDisplay.innerHTML = `${currentSeason} ${window.gameTime.year} г. ${window.gameTime.era}`;
+};
     // Инициализираме gameTime, ако липсва в обекта window
     if (!window.gameTime) {
         window.gameTime = { seasonIndex: 0, year: 632, era: "от н.е." };
