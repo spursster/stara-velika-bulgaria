@@ -297,3 +297,9 @@ setTimeout(() => {
     createPortalIndicator();
     window.updatePortalContainerUI();
 }, 1000);
+
+// Експортиране на функцията за експедиции
+window.openExpeditionsMenu = window.openExpeditionsMenu || function() {
+    if (typeof window.openExpeditionsMenu === 'function') window.openExpeditionsMenu();
+    else console.warn("Експедициите не са готови");
+};
