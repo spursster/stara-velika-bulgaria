@@ -4,6 +4,22 @@
 (function() {
     // ==================== ГЛОБАЛНИ НАСТРОЙКИ ====================
     window.soloSettings = window.soloSettings || {
+        // Гарантираме, че getClassIcon съществува (ако не, дефинираме проста версия)
+if (typeof window.getClassIcon !== 'function') {
+    window.getClassIcon = function(className) {
+        if (!className) return "⚪";
+        const c = className.toLowerCase();
+        if (c.includes('маг') || c.includes('wizard')) return "🧙";
+        if (c.includes('стрелец') || c.includes('archer')) return "🏹";
+        if (c.includes('владетел')) return "👑";
+        if (c.includes('владетелка')) return "👸";
+        if (c.includes('жрица')) return "🕊️";
+        if (c.includes('магьосница')) return "🧙‍♀️";
+        if (c.includes('паладин')) return "🛡️";
+        if (c.includes('берсерк')) return "🗡️";
+        return "⚔️";
+    };
+}
         showNeighborsOnMap: true,      // Показва съседни региони със зелен кант
         questChance: 0.3,              // 30% шанс за нов куест при пътуване
         enableAnimations: true,        // Анимации при пътуване
@@ -555,5 +571,9 @@
     } else {
         initSoloMode();
     }
-    window.showSoloSettingsUI = showSoloSettingsUI;
+
+// Експортиране на функции, които трябва да са глобални
+window.showSoloSettingsUI = showSoloSettingsUI;
+window.updateRegionIndicator = updateRegionIndicator;
+window.travelToRegion = window.travelToRegion; // ако вече е дефинирана
 })();
