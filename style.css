@@ -739,3 +739,35 @@ html, body {
     background: rgba(212, 175, 55, 0.3);
     margin: 6px 0;
 }
+
+/* Равномерно разпределение на цялата горна лента */
+#top-bar {
+    display: flex !important;
+    justify-content: space-evenly !important;
+    flex-wrap: wrap !important;
+    gap: 10px !important;
+}
+
+/* Контейнерът със статистиките – да не бута нищо */
+.top-bar-stats {
+    display: flex !important;
+    flex-wrap: wrap !important;
+    justify-content: center !important;
+    gap: 8px !important;
+    flex: 0 1 auto !important;
+}
+
+/* Контейнерът с бутоните – да не е само в дясно */
+.top-bar-controls {
+    display: flex !important;
+    flex-wrap: wrap !important;
+    justify-content: center !important;
+    gap: 8px !important;
+    flex: 0 1 auto !important;
+    margin-left: 0 !important;
+}
+
+/* Премахваме евентуално margin-left: auto от бутоните */
+.glass-btn {
+    margin-left: 0 !important;
+}
