@@ -518,7 +518,7 @@
                         let needXP = 100 + (hero.level - 1) * 50;
                         let currentXP = hero.isAuto ? (hero.xp || 0) : (hero.storedXP || 0);
                         let xpPercent = Math.min(100, Math.floor((currentXP / needXP) * 100));
-                        const classIcon = getClassIcon ? getClassIcon(hero.className) : "⚔️";
+                        const classIcon = (typeof getClassIcon === 'function') ? getClassIcon(hero.className) : "⚔️";
                         
                         card.innerHTML = `
                             <div style="font-weight:bold;color:#ffdd99;">${classIcon} ${hero.name}</div>
@@ -555,4 +555,5 @@
     } else {
         initSoloMode();
     }
+    window.showSoloSettingsUI = showSoloSettingsUI;
 })();
