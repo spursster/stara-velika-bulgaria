@@ -2,7 +2,7 @@
  ==========================================================================
  ПРОЕКТ: ВЕЛИКА БЪЛГАРИЯ
  ФАЙЛ: logic.js (С ПОДДРЪЖКА ЗА НОВО МЕНЮ)
- ВЕРСИЯ: 2.1 - С ПЛАВНО МЕНЮ ЗА НОВА ИГРА
+ ВЕРСИЯ: 2.2 - БЕЗ ИСКАЩИ ПРОЗОРЦИ
  ==========================================================================
  */
 
@@ -12,9 +12,12 @@ document.addEventListener('DOMContentLoaded', function() {
     setTimeout(function() {
         const hasSave = localStorage.getItem('GreatBulgaria_SaveGame');
         if (hasSave) {
-            window.showStartChoiceModal();  // Стар модал за съвместимост (може да се премахне)
+            // Директно зареждане без въпроси
+            if (typeof window.loadGreatBulgariaGame === 'function') {
+                window.loadGreatBulgariaGame();
+            }
         } else {
-            window.startFreshGameLogic();   // Стартира нова игра
+            window.startFreshGameLogic();
         }
     }, 150);
 });
@@ -79,29 +82,25 @@ window.startFreshGameLogic = function() {
         console.warn("generateProceduralRegions не е дефинирана – пропускам генерирането.");
     }
 
-    // ==================== 3. ИЗБОР НА РЕЖИМ (вече от менюто) ====================
-    // Режимът идва от window.gameMode (зададен от новото меню)
+    // ==================== 3. ИЗБОР НА РЕЖИМ (от менюто) ====================
     if (!window.gameMode) {
-        window.gameMode = 'classic'; // подразбиране
+        window.gameMode = 'classic';
     }
 
     if (window.gameMode === 'solo') {
         console.log("🌍 Стартиране в СОЛО РЕЖИМ");
 
-        // Премахваме всички други герои (освен главния)
         for (let key in window.worldData.clans) {
             if (key !== window.currentHero.clan) {
                 window.worldData.clans[key].isJoined = false;
             }
         }
 
-        // Настройки за соло режима
         window.currentRegion = "Плиска";
         window.companions = [];
         window.activeQuests = [];
         window.completedQuests = [];
 
-        // Стартов куест
         if (typeof window.addQuest === 'function') {
             window.addQuest("Първи стъпки", "Завладейте региона Плиска (той вече е ваш) или посетете съседен регион.", "100 злато + 50 XP", 1, function() { return true; });
         }
@@ -110,11 +109,10 @@ window.startFreshGameLogic = function() {
             window.showAdvisorMsg("🌍 Добре дошли в соло режима! Изследвайте света, намирайте спътници и изпълнявайте куестове.");
         }
         
-        // Активиране на соло режима
         if (typeof window.initSoloMode === 'function') {
             window.initSoloMode();
         } else {
-            console.warn("initSoloMode не е дефинирана – соло режимът няма да се активира автоматично");
+            console.warn("initSoloMode не е дефинирана");
         }
     } else {
         console.log("🏰 Стартиране в КЛАСИЧЕСКИ РЕЖИМ");
@@ -247,57 +245,14 @@ window.buyHeroFromTavern = function() {
 };
 window.buyNewHero = window.buyHeroFromTavern;
 
-// ==================== 8. СТАРТОВ МОДАЛЕН ПРОЗОРЕЦ ====================
+// ==================== 8. СТАРТОВ МОДАЛЕН ПРОЗОРЕЦ (ЗАПАЗЕН, НО НЕ СЕ ИЗПОЛЗВА) ====================
 window.showStartChoiceModal = function() {
-    let choiceModal = document.getElementById('start-choice-modal');
-    if (!choiceModal) {
-        choiceModal = document.createElement('div');
-        choiceModal.id = 'start-choice-modal';
-        document.body.appendChild(choiceModal);
-    }
-    choiceModal.style.position = 'fixed';
-    choiceModal.style.top = '0';
-    choiceModal.style.left = '0';
-    choiceModal.style.width = '100vw';
-    choiceModal.style.height = '100vh';
-    choiceModal.style.backgroundColor = 'rgba(5, 5, 5, 0.98)';
-    choiceModal.style.zIndex = '100000';
-    choiceModal.style.display = 'flex';
-    choiceModal.style.justifyContent = 'center';
-    choiceModal.style.alignItems = 'center';
-    choiceModal.style.fontFamily = "'Cinzel', serif";
-
-    choiceModal.innerHTML = `
-        <div style="background: #111; border: 3px solid #d4af37; border-radius: 12px; padding: 40px; text-align: center; max-width: 450px; box-shadow: 0 0 50px rgba(212,175,55,0.2);">
-            <h2 style="color: #ffd700; margin-top: 0; letter-spacing: 2px; font-size: 22px;">ВЕЛИКА БЪЛГАРИЯ</h2>
-            <p style="color: #aaa; font-size: 14px; margin-bottom: 30px; line-height: 1.6;">Открит е съществуващ прогрес на Вашето царство в паметта на браузъра. Как желаете да постъпите?</p>
-            <div style="display: flex; flex-direction: column; gap: 15px;">
-                <button style="background: linear-gradient(180deg, #ffd700 0%, #b8860b 100%); color: #000; font-weight: bold; border: 1px solid #fff; padding: 14px; border-radius: 6px; cursor: pointer; font-size: 14px; letter-spacing: 1px; font-family: 'Cinzel', serif;" 
-                       onclick="window.handleStartChoice('load')">
-                   🏰 ПРОДЪЛЖИ ЦАРСТВОТО
-                </button>
-                <button style="background: #222; color: #ff3366; font-weight: bold; border: 1px solid #ff3366; padding: 12px; border-radius: 6px; cursor: pointer; font-size: 13px; letter-spacing: 1px; font-family: 'Cinzel', serif;" 
-                       onclick="window.handleStartChoice('fresh')">
-                   ⚔️ ЗАПОЧНИ НАЧИСТО
-                </button>
-            </div>
-        </div>
-    `;
+    // Функцията е запазена, но не се извиква никъде
 };
 
 // ==================== 9. ИЗБОР ОТ СТАРТОВИЯ ПРОЗОРЕЦ ====================
 window.handleStartChoice = function(action) {
-    const choiceModal = document.getElementById('start-choice-modal');
-    if (choiceModal) choiceModal.remove();
-    if (action === 'load') {
-        window.loadGreatBulgariaGame();
-    } else {
-        localStorage.removeItem('GreatBulgaria_SaveGame');
-        localStorage.removeItem('favoriteHeroesFinal');
-        localStorage.removeItem('heroAutoState');
-        localStorage.removeItem('barracksFavorites');
-        window.startFreshGameLogic();
-    }
+    // Запазена за съвместимост, но не се използва
 };
 
 // ==================== 10. ИЗЧИСТВАНЕ НА ЗАПАЗЕНИТЕ ДАННИ ====================
