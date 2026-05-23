@@ -633,6 +633,47 @@
     document.getElementById('clearChronicleBtn')?.addEventListener('click', () => {
         if(confirm("Изчисти летописа?")) { window.worldEvents = []; window.displayEvents(); }
     });
+        // ==================== ФИКС НА ВРЕМЕТО ====================
+    // Създаваме функция за обновяване на часовника
+    window.updateTimeUI = function() {
+        const timeSpan = document.getElementById('current-time-info');
+        if (!timeSpan || !window.gameTime) return;
+        const seasons = ["🌱 Пролет", "☀️ Лято", "🍂 Есен", "❄️ Зима"];
+        const currentSeason = seasons[window.gameTime.seasonIndex] || "Сезон";
+        timeSpan.innerHTML = `${currentSeason} ${window.gameTime.year} г. ${window.gameTime.era}`;
+    };
+    
+    // Обновяваме веднъж при старт
+    window.updateTimeUI();
+    
+    // Пренасочваме processTurn да обновява времето
+    const originalTurn = window.processTurn;
+    window.processTurn = function() {
+        if (originalTurn) originalTurn();
+        
+        // Уверяваме се, че gameTime съществува
+        if (!window.gameTime) {
+            window.gameTime = { seasonIndex: 0, year: 480, era: "пр.н.е." };
+        }
+        
+        // Увеличаваме сезона
+        window.gameTime.seasonIndex++;
+        if (window.gameTime.seasonIndex > 3) {
+            window.gameTime.seasonIndex = 0;
+            if (window.gameTime.era === "пр.н.е." && window.gameTime.year > 0) {
+                window.gameTime.year--;
+                if (window.gameTime.year === 0) {
+                    window.gameTime.year = 1;
+                    window.gameTime.era = "от н.е.";
+                }
+            } else {
+                window.gameTime.year++;
+            }
+        }
+        
+        // Обновяваме UI
+        window.updateTimeUI();
+    };
     console.log("✅ Играта е напълно готова!");
 })();
 </script>
