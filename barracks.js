@@ -562,5 +562,12 @@ window.closeBarracksUI = function() {
     document.head.appendChild(style);
 })();
 
+// Експортиране на функцията за отваряне на казарми
+window.openBarracksUI = window.openBarracksUI || function() {
+    if (typeof window.barracks?.show === 'function') window.barracks.show();
+    else if (typeof window.openBarracksUI === 'function') window.openBarracksUI();
+    else console.warn("Казармите не са готови");
+};
+
 // Зареждане на любимите при стартиране
 loadFavoriteHeroes();
