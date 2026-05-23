@@ -35,8 +35,12 @@ function getClassIcon(className) {
     if (lower.includes("герой") || lower.includes("hero")) return "🏅";
     return "⚔️";
 }
+// Експортиране за другите модули (soloMode.js)
+window.getClassIcon = getClassIcon;
+
 // ==================== ПРЕВКЛЮЧВАНЕ НА ЦЯЛ ЕКРАН ====================
 window.toggleGameFullScreen = function() { 
+    // ... останалият код остава същият ...
     if (!document.fullscreenElement && !document.mozFullScreenElement && !document.webkitFullscreenElement && !document.msFullscreenElement) { 
         const docEl = document.documentElement; 
         if (docEl.requestFullscreen) { docEl.requestFullscreen(); } 
