@@ -2,30 +2,34 @@
 // Всички корекции: пътуване, инспекция, куестове, спътници, карта, индикатор, женски спътници
 
 (function() {
-    // ==================== ГЛОБАЛНИ НАСТРОЙКИ ====================
+     // ==================== ГЛОБАЛНИ НАСТРОЙКИ ====================
     window.soloSettings = window.soloSettings || {
-        // Гарантираме, че getClassIcon съществува (ако не, дефинираме проста версия)
-if (typeof window.getClassIcon !== 'function') {
-    window.getClassIcon = function(className) {
-        if (!className) return "⚪";
-        const c = className.toLowerCase();
-        if (c.includes('маг') || c.includes('wizard')) return "🧙";
-        if (c.includes('стрелец') || c.includes('archer')) return "🏹";
-        if (c.includes('владетел')) return "👑";
-        if (c.includes('владетелка')) return "👸";
-        if (c.includes('жрица')) return "🕊️";
-        if (c.includes('магьосница')) return "🧙‍♀️";
-        if (c.includes('паладин')) return "🛡️";
-        if (c.includes('берсерк')) return "🗡️";
-        return "⚔️";
-    };
-}
         showNeighborsOnMap: true,      // Показва съседни региони със зелен кант
         questChance: 0.3,              // 30% шанс за нов куест при пътуване
         enableAnimations: true,        // Анимации при пътуване
         enableSounds: false,           // Звукови ефекти (само конзолен лог засега)
         showRegionIndicator: true      // Показва банер с текущия регион
     };
+
+    // Гарантираме, че getClassIcon съществува глобално
+    if (typeof window.getClassIcon !== 'function') {
+        window.getClassIcon = function(className) {
+            if (!className) return "⚔️";
+            const c = className.toLowerCase();
+            if (c.includes('маг') || c.includes('wizard')) return "🧙";
+            if (c.includes('магьосница')) return "🧙‍♀️";
+            if (c.includes('стрелец') || c.includes('archer')) return "🏹";
+            if (c.includes('владетел')) return "👑";
+            if (c.includes('владетелка')) return "👸";
+            if (c.includes('жрица')) return "🕊️";
+            if (c.includes('паладин')) return "🛡️";
+            if (c.includes('паладинка')) return "🛡️";
+            if (c.includes('берсерк')) return "🗡️";
+            if (c.includes('воевод')) return "⚔️";
+            if (c.includes('воителка')) return "⚔️";
+            return "⚔️";
+        };
+    }
 
     let isTraveling = false;            // За предотвратяване на multiple пътувания
     if (!window.visitedRegions) window.visitedRegions = new Set();   // Брой посетени региони
@@ -534,7 +538,8 @@ if (typeof window.getClassIcon !== 'function') {
                         let needXP = 100 + (hero.level - 1) * 50;
                         let currentXP = hero.isAuto ? (hero.xp || 0) : (hero.storedXP || 0);
                         let xpPercent = Math.min(100, Math.floor((currentXP / needXP) * 100));
-                        const classIcon = (typeof getClassIcon === 'function') ? getClassIcon(hero.className) : "⚔️";
+                        // Използваме window.getClassIcon (гарантирано съществува)
+                        const classIcon = window.getClassIcon(hero.className);
                         
                         card.innerHTML = `
                             <div style="font-weight:bold;color:#ffdd99;">${classIcon} ${hero.name}</div>
@@ -565,15 +570,22 @@ if (typeof window.getClassIcon !== 'function') {
             }
         };
     }
-        // ==================== СТАРТИРАНЕ ====================
+     // ==================== СТАРТИРАНЕ И ЕКСПОРТ ====================
     if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', initSoloMode);
     } else {
         initSoloMode();
     }
 
-// Експортиране на функции, които трябва да са глобални
-window.showSoloSettingsUI = showSoloSettingsUI;
-window.updateRegionIndicator = updateRegionIndicator;
-window.travelToRegion = window.travelToRegion; // ако вече е дефинирана
+    // Експортиране на функции, които трябва да са глобални
+    window.showSoloSettingsUI = showSoloSettingsUI;
+    window.updateRegionIndicator = updateRegionIndicator;
+    
+    // Ако travelToRegion вече е дефинирана, гарантираме, че е глобална
+    if (typeof window.travelToRegion !== 'function') {
+        window.travelToRegion = function(regionName) {
+            console.warn("travelToRegion не е готова все още");
+            return false;
+        };
+    }
 })();
