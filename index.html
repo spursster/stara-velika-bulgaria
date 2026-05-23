@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Велика България – Работеща игра</title>
     <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Montserrat:wght@300;400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
     <style>
         * {
             box-sizing: border-box;
@@ -18,7 +19,7 @@
             background-attachment: fixed;
             font-family: 'Montserrat', sans-serif;
             color: #e0e0e0;
-            padding-bottom: 100px; /* за да не се закрива лентата от долните бутони */
+            padding-bottom: 100px;
         }
         #top-bar {
             display: flex;
@@ -194,6 +195,61 @@
             overflow: auto;
             padding: 20px;
         }
+        /* Плавно меню за нова игра */
+        .new-game-menu-container {
+            position: relative;
+            display: inline-block;
+        }
+        .new-game-dropdown {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            background: rgba(15, 15, 20, 0.98);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(212, 175, 55, 0.5);
+            border-radius: 12px;
+            padding: 8px 0;
+            min-width: 220px;
+            z-index: 1000;
+            opacity: 0;
+            visibility: hidden;
+            transform: translateY(-10px);
+            transition: all 0.25s ease;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.4);
+        }
+        .new-game-dropdown.show {
+            opacity: 1;
+            visibility: visible;
+            transform: translateY(0);
+        }
+        .new-game-option {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 10px 16px;
+            color: #ffdd99;
+            cursor: pointer;
+            transition: background 0.2s;
+            font-size: 0.85rem;
+            border-bottom: 1px solid rgba(255,215,0,0.1);
+        }
+        .new-game-option:last-child {
+            border-bottom: none;
+        }
+        .new-game-option:hover {
+            background: rgba(212, 175, 55, 0.2);
+            color: #ffd700;
+        }
+        .new-game-option-icon {
+            font-size: 1.2rem;
+            min-width: 28px;
+            text-align: center;
+        }
+        .new-game-divider {
+            height: 1px;
+            background: rgba(212, 175, 55, 0.3);
+            margin: 6px 0;
+        }
         @media (max-width: 800px) {
             #game-container {
                 grid-template-columns: 1fr;
@@ -204,6 +260,10 @@
             #sidebar-right { order: 3; }
             .stat-box { font-size: 0.7rem; padding: 2px 8px; }
             .active-hero-name { font-size: 0.7rem; padding: 2px 8px; }
+            .new-game-dropdown {
+                left: -80px;
+                min-width: 200px;
+            }
         }
     </style>
 </head>
@@ -217,6 +277,25 @@
         <div class="stat-box">⏳ <span id="current-time-info">пролет, 480 г. пр.н.е.</span></div>
     </div>
     <div class="top-bar-controls">
+        <!-- НОВО МЕНЮ ЗА НОВА ИГРА / ПРОДЪЛЖИ -->
+        <div class="new-game-menu-container">
+            <button class="glass-btn" id="newGameBtn">🎮 Нова игра / Продължи</button>
+            <div class="new-game-dropdown" id="newGameDropdown">
+                <div class="new-game-option" data-mode="classic">
+                    <span class="new-game-option-icon">🏰</span>
+                    <span>Класически режим (много герои)</span>
+                </div>
+                <div class="new-game-option" data-mode="solo">
+                    <span class="new-game-option-icon">⚔️</span>
+                    <span>Соло режим (RPG приключение)</span>
+                </div>
+                <div class="new-game-divider"></div>
+                <div class="new-game-option" id="continueGameOption">
+                    <span class="new-game-option-icon">📜</span>
+                    <span>Продължи текущата игра</span>
+                </div>
+            </div>
+        </div>
         <button class="glass-btn" onclick="window.hireNewHero?.()">👑 Наеми</button>
         <button class="glass-btn" onclick="window.toggleGameFullScreen?.()">⬚</button>
         <button class="glass-btn" onclick="window.armyMarket?.show?.()">⚔️ Армия</button>
@@ -253,7 +332,7 @@
     </aside>
 </main>
 
-<!-- ЛЕНТА С НЕЛЮБИМИТЕ ГЕРОИ – ПРЕМЕСТЕНА НАЙ-ОТДОЛУ (НАД ДОЛНИТЕ БУТОНИ) -->
+<!-- ЛЕНТА С НЕЛЮБИМИТЕ ГЕРОИ -->
 <div id="top-elite-bar" style="display: flex; gap: 8px; overflow-x: auto; padding: 6px 12px; background: rgba(0,0,0,0.4); border-top: 1px solid #d4af37; margin-top: 0; margin-bottom: 0;"></div>
 
 <div id="bottom-controls">
@@ -282,8 +361,126 @@
 <script src="rivalry.js"></script>
 <script src="armyMarket.js"></script>
 <script src="logic.js"></script>
-<script src="quests.js"></script>      <!-- ТРЯБВА ДА Е ПРЕД soloMode.js -->
+<script src="quests.js"></script>
 <script src="soloMode.js"></script>
+
+<!-- ==================== СКРИПТ ЗА ПЛАВНОТО МЕНЮ И НОВА ИГРА ==================== -->
+<script>
+(function initNewGameMenu() {
+    const container = document.querySelector('.new-game-menu-container');
+    const btn = document.getElementById('newGameBtn');
+    const dropdown = document.getElementById('newGameDropdown');
+    const continueOption = document.getElementById('continueGameOption');
+    
+    if (!btn || !dropdown) return;
+    
+    function checkForSavedGame() {
+        const hasSave = localStorage.getItem('GreatBulgaria_SaveGame') !== null;
+        if (continueOption) {
+            continueOption.style.display = hasSave ? 'flex' : 'flex';
+        }
+        return hasSave;
+    }
+    
+    btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        dropdown.classList.toggle('show');
+        checkForSavedGame();
+    });
+    
+    document.addEventListener('click', (e) => {
+        if (!container.contains(e.target)) {
+            dropdown.classList.remove('show');
+        }
+    });
+    
+    document.querySelectorAll('.new-game-option[data-mode]').forEach(opt => {
+        opt.addEventListener('click', () => {
+            const mode = opt.getAttribute('data-mode');
+            dropdown.classList.remove('show');
+            startNewGame(mode);
+        });
+    });
+    
+    if (continueOption) {
+        continueOption.addEventListener('click', () => {
+            dropdown.classList.remove('show');
+            continueSavedGame();
+        });
+    }
+    
+    function startNewGame(mode) {
+        if (confirm("Сигурни ли сте? Всички не запазени прогреси ще бъдат загубени!")) {
+            localStorage.removeItem('GreatBulgaria_SaveGame');
+            localStorage.removeItem('favoriteHeroesFinal');
+            localStorage.removeItem('heroAutoState');
+            localStorage.removeItem('barracksFavorites');
+            
+            window.gameMode = mode;
+            
+            if (typeof window.startFreshGameLogic === 'function') {
+                const originalStart = window.startFreshGameLogic;
+                window.startFreshGameLogic = function() {
+                    window.startFreshGameLogic = originalStart;
+                    originalStart();
+                };
+                window.startFreshGameLogic();
+            } else {
+                location.reload();
+            }
+        }
+    }
+    
+    function continueSavedGame() {
+        const hasSave = localStorage.getItem('GreatBulgaria_SaveGame') !== null;
+        if (!hasSave) {
+            alert("Няма запазена игра. Започнете нова игра първо.");
+            return;
+        }
+        
+        if (typeof window.loadGreatBulgariaGame === 'function') {
+            const success = window.loadGreatBulgariaGame();
+            if (success) {
+                console.log("✅ Играта е заредена успешно");
+                if (window.gameMode === 'solo' && typeof window.initSoloMode === 'function') {
+                    setTimeout(() => window.initSoloMode(), 100);
+                }
+                if (typeof window.updateCharacterUI === 'function') {
+                    window.updateCharacterUI(window.currentHero);
+                }
+                if (typeof window.renderTop6LeadersUI === 'function') {
+                    window.renderTop6LeadersUI();
+                }
+                if (typeof window.renderSingleBar === 'function') {
+                    window.renderSingleBar();
+                }
+                if (window.showAdvisorMsg) {
+                    window.showAdvisorMsg("👑 Запазената игра е заредена. Продължавайте приключението!");
+                } else {
+                    alert("Запазената игра е заредена!");
+                }
+            } else {
+                alert("Грешка при зареждане на запазената игра.");
+            }
+        } else {
+            alert("Системата за зареждане не е налична.");
+        }
+    }
+    
+    const autoLoadOnStart = true;
+    if (autoLoadOnStart) {
+        const hasSave = localStorage.getItem('GreatBulgaria_SaveGame') !== null;
+        if (hasSave) {
+            setTimeout(() => {
+                if (confirm("Имате запазена игра. Желаете ли да продължите?")) {
+                    continueSavedGame();
+                }
+            }, 300);
+        }
+    }
+})();
+</script>
+
 <!-- ФИНАЛЕН СКРИПТ -->
 <script>
 (function() {
@@ -328,9 +525,7 @@
 
     // Резервна карта
     if (typeof window.openRegionsMap !== 'function') {
-        window.openRegionsMap = function() {
-            // ... (твоята резервна карта, която вече работи)
-        };
+        window.openRegionsMap = function() {};
     }
 
     // Резервна битка
