@@ -335,7 +335,7 @@
 
 <div id="bottom-controls">
     <button class="icon-btn" onclick="window.openRegionsMap()" title="Карта">🗺️</button>
-      <button class="icon-btn" onclick="if(typeof window.openBarracksUI === 'function') window.openBarracksUI(); else alert('Казармите не са достъпни в момента')" title="Казарми">🏹</button>
+    <button class="icon-btn" onclick="if(typeof window.openBarracksUI === 'function') window.openBarracksUI(); else alert('Казармите не са достъпни в момента')" title="Казарми">🏹</button>
     <button class="icon-btn" onclick="window.startBattle('Мизия')" title="Битка">⚔️</button>
     <button class="next-turn-btn" onclick="window.processTurn()">► Ход</button>
     <button class="icon-btn" onclick="window.openEventsMenu?.()" title="Събития">📜</button>
@@ -580,9 +580,41 @@
         if (window.initializeHeroRPGData) window.initializeHeroRPGData(window.currentHero);
     }
 
-    const oldProcess = window.processTurn;
+    // ==================== ФИКС НА ВРЕМЕТО ====================
+    window.updateTimeUI = function() {
+        const timeSpan = document.getElementById('current-time-info');
+        if (!timeSpan || !window.gameTime) return;
+        const seasons = ["🌱 Пролет", "☀️ Лято", "🍂 Есен", "❄️ Зима"];
+        const currentSeason = seasons[window.gameTime.seasonIndex] || "Сезон";
+        timeSpan.innerHTML = `${currentSeason} ${window.gameTime.year} г. ${window.gameTime.era}`;
+    };
+    
+    window.updateTimeUI();
+    
+    const originalProcessTurn = window.processTurn;
     window.processTurn = function() {
-        if (oldProcess) oldProcess();
+        if (originalProcessTurn) originalProcessTurn();
+        
+        if (!window.gameTime) {
+            window.gameTime = { seasonIndex: 0, year: 480, era: "пр.н.е." };
+        }
+        
+        window.gameTime.seasonIndex++;
+        if (window.gameTime.seasonIndex > 3) {
+            window.gameTime.seasonIndex = 0;
+            if (window.gameTime.era === "пр.н.е." && window.gameTime.year > 0) {
+                window.gameTime.year--;
+                if (window.gameTime.year === 0) {
+                    window.gameTime.year = 1;
+                    window.gameTime.era = "от н.е.";
+                }
+            } else {
+                window.gameTime.year++;
+            }
+        }
+        
+        window.updateTimeUI();
+        
         if (typeof window.calculateEconomy === 'function') window.calculateEconomy();
         if (typeof window.processClanDiplomacyAutomation === 'function') window.processClanDiplomacyAutomation();
         if (typeof window.advanceExpeditionsTurn === 'function') window.advanceExpeditionsTurn();
@@ -634,47 +666,7 @@
     document.getElementById('clearChronicleBtn')?.addEventListener('click', () => {
         if(confirm("Изчисти летописа?")) { window.worldEvents = []; window.displayEvents(); }
     });
-        // ==================== ФИКС НА ВРЕМЕТО ====================
-    // Създаваме функция за обновяване на часовника
-    window.updateTimeUI = function() {
-        const timeSpan = document.getElementById('current-time-info');
-        if (!timeSpan || !window.gameTime) return;
-        const seasons = ["🌱 Пролет", "☀️ Лято", "🍂 Есен", "❄️ Зима"];
-        const currentSeason = seasons[window.gameTime.seasonIndex] || "Сезон";
-        timeSpan.innerHTML = `${currentSeason} ${window.gameTime.year} г. ${window.gameTime.era}`;
-    };
     
-    // Обновяваме веднъж при старт
-    window.updateTimeUI();
-    
-    // Пренасочваме processTurn да обновява времето
-    const originalTurn = window.processTurn;
-    window.processTurn = function() {
-        if (originalTurn) originalTurn();
-        
-        // Уверяваме се, че gameTime съществува
-        if (!window.gameTime) {
-            window.gameTime = { seasonIndex: 0, year: 480, era: "пр.н.е." };
-        }
-        
-        // Увеличаваме сезона
-        window.gameTime.seasonIndex++;
-        if (window.gameTime.seasonIndex > 3) {
-            window.gameTime.seasonIndex = 0;
-            if (window.gameTime.era === "пр.н.е." && window.gameTime.year > 0) {
-                window.gameTime.year--;
-                if (window.gameTime.year === 0) {
-                    window.gameTime.year = 1;
-                    window.gameTime.era = "от н.е.";
-                }
-            } else {
-                window.gameTime.year++;
-            }
-        }
-        
-        // Обновяваме UI
-        window.updateTimeUI();
-    };
     console.log("✅ Играта е напълно готова!");
 })();
 </script>
