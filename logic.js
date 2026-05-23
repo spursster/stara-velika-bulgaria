@@ -134,7 +134,6 @@ window.startFreshGameLogic = function() {
     window.saveGreatBulgariaGame();
 };
 
-// ==================== 5. ЗАПАЗВАНЕ НА ИГРАТА ====================
 window.saveGreatBulgariaGame = function() {
     if (!window.currentHero) return;
     try {
@@ -143,9 +142,17 @@ window.saveGreatBulgariaGame = function() {
             for (let key in window.worldData.clans) {
                 let clan = window.worldData.clans[key];
                 if (clan.isJoined === true) {
-                    allHeroes.push(clan);
+                    // Копираме, за да включим portrait, ако съществува
+                    let heroCopy = { ...clan };
+                    if (clan.portrait) heroCopy.portrait = clan.portrait;
+                    allHeroes.push(heroCopy);
                 }
             }
+        }
+        // Добавяме и companions (ако са в отделен масив)
+        let companionsCopy = [];
+        if (window.companions && window.companions.length) {
+            companionsCopy = window.companions.map(c => ({ ...c, portrait: c.portrait }));
         }
         const saveData = {
             currentHero: window.currentHero,
@@ -155,12 +162,12 @@ window.saveGreatBulgariaGame = function() {
             autoState: localStorage.getItem('heroAutoState'),
             gameMode: window.gameMode,
             currentRegion: window.currentRegion,
-            companions: window.companions,
+            companions: companionsCopy,
             activeQuests: window.activeQuests,
             completedQuests: window.completedQuests
         };
         localStorage.setItem('GreatBulgaria_SaveGame', JSON.stringify(saveData));
-        console.log("💾 Прогресът беше запазен успешно!");
+        console.log("💾 Прогресът беше запазен успешно (включително портрети).");
     } catch (e) {
         console.error(e);
     }
