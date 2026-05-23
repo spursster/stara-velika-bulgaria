@@ -195,7 +195,6 @@
             overflow: auto;
             padding: 20px;
         }
-        /* Плавно меню за нова игра */
         .new-game-menu-container {
             position: relative;
             display: inline-block;
@@ -277,7 +276,6 @@
         <div class="stat-box">⏳ <span id="current-time-info">пролет, 480 г. пр.н.е.</span></div>
     </div>
     <div class="top-bar-controls">
-        <!-- НОВО МЕНЮ ЗА НОВА ИГРА / ПРОДЪЛЖИ -->
         <div class="new-game-menu-container">
             <button class="glass-btn" id="newGameBtn">🎮 Нова игра / Продължи</button>
             <div class="new-game-dropdown" id="newGameDropdown">
@@ -332,7 +330,6 @@
     </aside>
 </main>
 
-<!-- ЛЕНТА С НЕЛЮБИМИТЕ ГЕРОИ -->
 <div id="top-elite-bar" style="display: flex; gap: 8px; overflow-x: auto; padding: 6px 12px; background: rgba(0,0,0,0.4); border-top: 1px solid #d4af37; margin-top: 0; margin-bottom: 0;"></div>
 
 <div id="bottom-controls">
@@ -364,7 +361,6 @@
 <script src="quests.js"></script>
 <script src="soloMode.js"></script>
 
-<!-- ==================== СКРИПТ ЗА ПЛАВНОТО МЕНЮ И НОВА ИГРА ==================== -->
 <script>
 (function initNewGameMenu() {
     const container = document.querySelector('.new-game-menu-container');
@@ -410,24 +406,22 @@
     }
     
     function startNewGame(mode) {
-        if (confirm("Сигурни ли сте? Всички не запазени прогреси ще бъдат загубени!")) {
-            localStorage.removeItem('GreatBulgaria_SaveGame');
-            localStorage.removeItem('favoriteHeroesFinal');
-            localStorage.removeItem('heroAutoState');
-            localStorage.removeItem('barracksFavorites');
-            
-            window.gameMode = mode;
-            
-            if (typeof window.startFreshGameLogic === 'function') {
-                const originalStart = window.startFreshGameLogic;
-                window.startFreshGameLogic = function() {
-                    window.startFreshGameLogic = originalStart;
-                    originalStart();
-                };
-                window.startFreshGameLogic();
-            } else {
-                location.reload();
-            }
+        localStorage.removeItem('GreatBulgaria_SaveGame');
+        localStorage.removeItem('favoriteHeroesFinal');
+        localStorage.removeItem('heroAutoState');
+        localStorage.removeItem('barracksFavorites');
+        
+        window.gameMode = mode;
+        
+        if (typeof window.startFreshGameLogic === 'function') {
+            const originalStart = window.startFreshGameLogic;
+            window.startFreshGameLogic = function() {
+                window.startFreshGameLogic = originalStart;
+                originalStart();
+            };
+            window.startFreshGameLogic();
+        } else {
+            location.reload();
         }
     }
     
@@ -467,22 +461,20 @@
         }
     }
     
-const autoLoadOnStart = true;
-if (autoLoadOnStart) {
-    const hasSave = localStorage.getItem('GreatBulgaria_SaveGame') !== null;
-    if (hasSave) {
-        setTimeout(() => {
-            continueSavedGame();  // директно зареждане, без въпрос
-        }, 300);
+    const autoLoadOnStart = true;
+    if (autoLoadOnStart) {
+        const hasSave = localStorage.getItem('GreatBulgaria_SaveGame') !== null;
+        if (hasSave) {
+            setTimeout(() => {
+                continueSavedGame();
+            }, 300);
+        }
     }
-}
 })();
 </script>
 
-<!-- ФИНАЛЕН СКРИПТ -->
 <script>
 (function() {
-    // Филтър за дублиращи се врагове
     if (window.rivalrySystem && typeof window.rivalrySystem.getEnemyHeroes === 'function') {
         const originalGetEnemy = window.rivalrySystem.getEnemyHeroes;
         window.rivalrySystem.getEnemyHeroes = function() {
@@ -501,7 +493,6 @@ if (autoLoadOnStart) {
         console.log("✅ Филтър за дублиращи се врагове активиран.");
     }
 
-    // Показване на името на активния герой в горната лента
     function updateHeroNameInTopBar() {
         let hero = window.currentHero;
         if (!hero) return;
@@ -521,12 +512,10 @@ if (autoLoadOnStart) {
     setInterval(updateHeroNameInTopBar, 1000);
     updateHeroNameInTopBar();
 
-    // Резервна карта
     if (typeof window.openRegionsMap !== 'function') {
         window.openRegionsMap = function() {};
     }
 
-    // Резервна битка
     if (typeof window.startBattle !== 'function') {
         window.startBattle = function(region) {
             console.log(`Битка в ${region} (симулация)`);
@@ -539,7 +528,6 @@ if (autoLoadOnStart) {
         };
     }
 
-    // Летопис
     if (!window.worldEvents) window.worldEvents = [];
     window.addWorldEvent = function(title, desc, icon, year) {
         window.worldEvents.unshift({ id: Date.now(), title, description: desc, icon: icon || '📜', time: year || window.currentYear || "480 г. пр.н.е." });
@@ -569,7 +557,6 @@ if (autoLoadOnStart) {
         cont.innerHTML = html;
     };
 
-    // Инициализация на герой
     if (!window.currentHero) {
         window.currentHero = {
             name: "Кубрат",
@@ -592,7 +579,6 @@ if (autoLoadOnStart) {
         if (window.initializeHeroRPGData) window.initializeHeroRPGData(window.currentHero);
     }
 
-    // Основен ход на играта
     const oldProcess = window.processTurn;
     window.processTurn = function() {
         if (oldProcess) oldProcess();
@@ -606,7 +592,6 @@ if (autoLoadOnStart) {
         if (typeof window.renderSingleBar === 'function') window.renderSingleBar();
     };
 
-    // Съкровищница
     if (typeof window.toggleTreasury !== 'function') {
         window.toggleTreasury = function() {
             const hero = window.currentHero;
@@ -636,14 +621,12 @@ if (autoLoadOnStart) {
         };
     }
 
-    // Начални събития
     if (window.worldEvents.length === 0) {
         window.addWorldEvent("🏛️ Основаване на Тракийското царство", "Тракийските племена се обединяват", "🏰", "480 г. пр.н.е.");
         window.addWorldEvent("⚔️ Подготовка за война", "Персийската империя набира войски", "⚔️", "480 г. пр.н.е.");
     }
     window.displayEvents();
 
-    // Обновяване на интерфейса
     if (window.updateCharacterUI) window.updateCharacterUI(window.currentHero);
     if (window.renderTop6LeadersUI) window.renderTop6LeadersUI();
     if (window.initHeroBar) window.initHeroBar();
