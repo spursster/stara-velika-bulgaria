@@ -695,19 +695,28 @@
                 });
                 
                 if (typeof regionName === 'string' && regionName !== "Портал") {
-                    if (!window.playerRegions) window.playerRegions = [];
-                    let ownedRegions = window.playerRegions.flat();
-                    if (!ownedRegions.includes(regionName)) {
-                        window.playerRegions.push(regionName);
-                        addLog(`   🏰 ${regionName} е добавен към вашите владения!`);
-                        if (window.addWorldEvent) window.addWorldEvent(`🏰 ЗАВЛАДЯВАНЕ`, `Вие завладяхте ${regionName}!`, "🏰");
-                        if (window.worldData && window.worldData.regions && window.worldData.regions[regionName]) {
-                            window.worldData.regions[regionName].armySize = 0;
-                        }
-                    } else {
-                        addLog(`   ℹ️ ${regionName} вече е ваш.`);
-                    }
-                }
+    if (!window.playerRegions) window.playerRegions = [];
+    // Нормализираме playerRegions за всеки случай (плоък масив)
+    let normalized = [];
+    for (let item of window.playerRegions) {
+        if (Array.isArray(item)) {
+            for (let sub of item) normalized.push(sub);
+        } else if (typeof item === 'string') {
+            normalized.push(item);
+        }
+    }
+    window.playerRegions = normalized;
+    if (!window.playerRegions.includes(regionName)) {
+        window.playerRegions.push(regionName);
+        addLog(`   🏰 ${regionName} е добавен към вашите владения!`);
+        if (window.addWorldEvent) window.addWorldEvent(`🏰 ЗАВЛАДЯВАНЕ`, `Вие завладяхте ${regionName}!`, "🏰");
+        if (window.worldData && window.worldData.regions && window.worldData.regions[regionName]) {
+            window.worldData.regions[regionName].armySize = 0;
+        }
+    } else {
+        addLog(`   ℹ️ ${regionName} вече е ваш.`);
+    }
+}
                 
                 if (Math.random() < 0.2 && window.historicalArtifacts) {
                     const artifactKeys = Object.keys(window.historicalArtifacts);
