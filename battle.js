@@ -698,7 +698,7 @@
                     if (!window.playerRegions) window.playerRegions = [];
                     let ownedRegions = window.playerRegions.flat();
                     if (!ownedRegions.includes(regionName)) {
-                        window.playerRegions.push([regionName]);
+                        window.playerRegions.push(regionName);
                         addLog(`   🏰 ${regionName} е добавен към вашите владения!`);
                         if (window.addWorldEvent) window.addWorldEvent(`🏰 ЗАВЛАДЯВАНЕ`, `Вие завладяхте ${regionName}!`, "🏰");
                         if (window.worldData && window.worldData.regions && window.worldData.regions[regionName]) {
