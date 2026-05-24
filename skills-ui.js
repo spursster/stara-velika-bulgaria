@@ -1,22 +1,15 @@
 /**
- * =========================================================================
- * ВЕЛИКА БЪЛГАРИЯ – ИНТЕРФЕЙС ЗА НОВИТЕ УМЕНИЯ (skills.js)
- * ВЕРСИЯ: 1.0 – ДЪРВЕТА, ТАБОВЕ, НАУЧАВАНЕ
- * =========================================================================
- */
-
+=========================================================================
+ВЕЛИКА БЪЛГАРИЯ – ИНТЕРФЕЙС ЗА НОВИТЕ УМЕНИЯ (skills.js)
+ВЕРСИЯ: 1.1 – КОРИГИРАН (ОПРАВЕНИ СИНТАКСИЧНИ ГРЕШКИ ОТ КОПИРАНЕ)
+=========================================================================
+*/
 // Функция за отваряне на модал с уменията
 window.openSkillsUI = function() {
     if (document.getElementById('skills-ui-modal')) return;
     const hero = window.currentHero;
-    if (!hero) {
-        alert("Няма активен герой!");
-        return;
-    }
-    if (!window.advancedSkills) {
-        alert("Системата за умения не е заредена (skills.js липсва).");
-        return;
-    }
+    if (!hero) { alert("Няма активен герой!"); return; }
+    if (!window.advancedSkills) { alert("Системата за умения не е заредена (skills.js липсва)."); return; }
     if (!hero.learnedSkills) hero.learnedSkills = {};
 
     // Изчисляваме колко точки са вложени във всяко дърво
@@ -56,9 +49,7 @@ window.openSkillsUI = function() {
         return `
             <div class="skill-tree-panel" style="margin-bottom:20px;">
                 <h3 style="color:#ffd700; border-bottom:1px solid #d4af37; padding-bottom:5px;">${tree.icon} ${tree.name} <span style="font-size:12px; color:#aaa;">(Точки в дървото: ${pointsInTree})</span></h3>
-                <div style="max-height:400px; overflow-y:auto; padding-right:10px;">
-                    ${skillsHtml}
-                </div>
+                <div style="max-height:400px; overflow-y:auto; padding-right:10px;">${skillsHtml}</div>
             </div>
         `;
     }
@@ -78,20 +69,10 @@ window.openSkillsUI = function() {
     const modal = document.createElement('div');
     modal.id = 'skills-ui-modal';
     modal.style.cssText = `
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background: rgba(0,0,0,0.85);
-        backdrop-filter: blur(8px);
-        z-index: 200000;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-family: 'Cinzel', serif;
-        padding: 20px;
-        box-sizing: border-box;
+        position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+        background: rgba(0,0,0,0.85); backdrop-filter: blur(8px);
+        z-index: 200000; display: flex; align-items: center; justify-content: center;
+        font-family: 'Cinzel', serif; padding: 20px; box-sizing: border-box;
     `;
     modal.innerHTML = `
         <div style="background:#0a0a1a; border:2px solid #d4af37; border-radius:24px; max-width:800px; width:100%; max-height:90%; overflow-y:auto; padding:20px; position:relative;">
@@ -119,15 +100,9 @@ window.openSkillsUI = function() {
     tabBtns.forEach(btn => {
         btn.addEventListener('click', () => {
             const tree = btn.getAttribute('data-tree');
-            tabBtns.forEach(b => {
-                b.style.background = '#2c2c3a';
-                b.style.color = '#ffd700';
-            });
-            btn.style.background = '#daa520';
-            btn.style.color = '#000';
-            panels.forEach(p => {
-                p.style.display = p.getAttribute('data-tree') === tree ? 'block' : 'none';
-            });
+            tabBtns.forEach(b => { b.style.background = '#2c2c3a'; b.style.color = '#ffd700'; });
+            btn.style.background = '#daa520'; btn.style.color = '#000';
+            panels.forEach(p => { p.style.display = p.getAttribute('data-tree') === tree ? 'block' : 'none'; });
         });
     });
 
@@ -142,10 +117,8 @@ window.openSkillsUI = function() {
         if (typeof window.learnAdvancedSkill === 'function') {
             const success = window.learnAdvancedSkill(hero, treeKey, skillKey);
             if (success) {
-                // Обновяваме UI
                 const pointsSpan = document.getElementById('skills-available-points');
                 if (pointsSpan) pointsSpan.innerText = hero.skillPoints;
-                // Презареждаме модала, за да покажем новите нива
                 closeModal();
                 window.openSkillsUI();
             }
@@ -155,18 +128,11 @@ window.openSkillsUI = function() {
     });
 };
 
-// Добавяме бутон към RPG модала (в раздела "Умения & Артефакти" или отделен бутон)
-// Тъй като `openHeroRPGModal` е във `rpg_system.js`, можем да променим съдържанието му,
-// но за да не пипаме rpg_system.js, просто ще добавим бутон в долната част на модала,
-// след като се отвори (чрез setTimeout или чрез "observer"). 
-// По-чисто: променяме `openHeroRPGModal` локално (презаписваме) във `skills-ui.js`.
-// За целта проверяваме дали функцията съществува и я разширяваме.
-
+// Добавяме бутон към RPG модала
 if (typeof window.openHeroRPGModal === 'function') {
     const originalOpenModal = window.openHeroRPGModal;
     window.openHeroRPGModal = function(clanKey) {
         originalOpenModal(clanKey);
-        // След като модалът се покаже, добавяме бутон за умения (ако не съществува)
         setTimeout(() => {
             const modal = document.getElementById('hero-rpg-modal');
             if (modal && !modal.querySelector('.skills-ui-btn')) {
@@ -174,11 +140,7 @@ if (typeof window.openHeroRPGModal === 'function') {
                 skillsBtn.className = 'skills-ui-btn';
                 skillsBtn.innerHTML = '⭐ УМЕНИЯ (НОВИ) ⭐';
                 skillsBtn.style.cssText = 'margin-top:15px; width:100%; background:#daa520; border:none; border-radius:30px; padding:8px; color:#000; font-weight:bold; cursor:pointer; font-family:"Cinzel",serif;';
-                skillsBtn.onclick = () => {
-                    // Затваряме текущия модал и отваряме skills-ui
-                    modal.style.display = 'none';
-                    window.openSkillsUI();
-                };
+                skillsBtn.onclick = () => { modal.style.display = 'none'; window.openSkillsUI(); };
                 const container = modal.querySelector('.modal-content > div:last-child') || modal;
                 container.appendChild(skillsBtn);
             }
@@ -187,5 +149,4 @@ if (typeof window.openHeroRPGModal === 'function') {
 } else {
     console.warn("openHeroRPGModal не е дефинирана – не мога да добавя бутон за умения в RPG модала.");
 }
-
 console.log("✅ skills-ui.js зареден – интерфейсът за новите умения е готов.");
