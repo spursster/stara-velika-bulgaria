@@ -58,6 +58,8 @@ window.getClassIcon = getClassIcon;
 // ==================== ГЕНЕРИРАНЕ НА ПОРТРЕТ С POLLINATIONS.AI ====================
 window.generateHeroPortrait = async function(hero) {
     if (!hero) return;
+    // Ако вече има портрет, не го променяме
+     if (hero.portrait) return hero.portrait;
     const prompt = `fantasy rpg character portrait of ${hero.name} the ${hero.currentClass || hero.className || "warrior"}, digital painting, D&D style, face front, detailed, cinematic lighting, high quality, 512x512`;
     const url = `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}?width=256&height=256&seed=${Math.floor(Math.random()*10000)}`;
     
