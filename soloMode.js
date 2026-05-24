@@ -367,6 +367,9 @@
         // ==================== СПЪТНИЦИ (С ЖЕНСКИ ВАРИАНТИ) ====================
     function defineRecruitCompanion() {
         window.recruitCompanion = function(regionName) {
+             if (window.generateHeroPortrait) {
+            window.generateHeroPortrait(companion).catch(e => console.warn(e));
+        }
             if (window.companions.length >= 4) {
                 let msg = "❌ Вече имате максимален брой спътници (4).";
                 if (window.showAdvisorMsg) window.showAdvisorMsg(msg);
