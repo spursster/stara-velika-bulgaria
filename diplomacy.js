@@ -93,6 +93,7 @@ window.marryPrisoner = function(index) {
     if (window.openRegionsMap) window.openRegionsMap();
 };
 
+// ==================== КОРИГИРАНА ФУНКЦИЯ PROPOSEMARRIAGE (БЕЗ ВЛОЖЕНИ МАСИВИ) ====================
 window.proposeMarriage = function(clan, cost, successChance) {
     const hero = window.currentHero;
     if (!hero) return;
@@ -114,25 +115,32 @@ window.proposeMarriage = function(clan, cost, successChance) {
         };
         const region = dowryMap[clan] || "Мизия";
         window.currentSpouse = { name: `Княгиня от рода ${clan}`, clan: clan };
-             // ========== КОРЕКЦИЯ: Нормализиране на playerRegions преди добавяне ==========
+        
+        // --- НОРМАЛИЗИРАНЕ НА playerRegions ПРЕДИ ДОБАВЯНЕ ---
         if (!window.playerRegions) window.playerRegions = [];
-        // 1. Превръщаме в плосък масив
-        let flatRegions = [];
+        // Превръщаме в плосък масив (ако има вложени елементи)
+        let normalized = [];
         for (let item of window.playerRegions) {
             if (Array.isArray(item)) {
-                for (let sub of item) flatRegions.push(sub);
+                for (let sub of item) {
+                    if (typeof sub === 'string') normalized.push(sub);
+                }
             } else if (typeof item === 'string') {
-                flatRegions.push(item);
+                normalized.push(item);
             }
         }
-        window.playerRegions = flatRegions;
+        window.playerRegions = normalized;
         
-        // 2. Добавяме региона, ако го няма
+        // Добавяме региона като низ, ако го няма
         if (!window.playerRegions.includes(region)) {
             window.playerRegions.push(region);
             if (window.worldData?.regions?.[region]) window.worldData.regions[region].armySize = 0;
+            if (window.showAdvisorMsg) window.showAdvisorMsg(`🏰 Регионът "${region}" е добавен към вашите владения.`);
+        } else {
+            if (window.showAdvisorMsg) window.showAdvisorMsg(`ℹ️ Регионът "${region}" вече е ваш.`);
         }
-        // ====================================================================
+        // -------------------------------------------------
+        
         if (window.showAdvisorMsg) window.showAdvisorMsg(`👑 ДИНАСТИЧЕН ТРИУМФ: Сключихте брак с род ${clan}! Получихте регион "${region}".`);
         alert(`✅ Успех! Получавате регион "${region}" като зестра!`);
     } else {
