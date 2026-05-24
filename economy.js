@@ -89,6 +89,46 @@ window.recalculateIncome = function(hero) {
 
 window.calculateEconomy = function() {
     if (!window.currentHero) return;
+
+        // ========== ПРЕДПАЗНА ЛОГИКА ЗА playerRegions ==========
+    // 1. Гарантираме, че playerRegions е масив
+    if (!window.playerRegions || !Array.isArray(window.playerRegions)) {
+        window.playerRegions = [];
+    }
+    
+    // 2. Нормализиране – превръщаме всякакви вложени масиви в плоски низове
+    let normalized = [];
+    for (let item of window.playerRegions) {
+        if (Array.isArray(item)) {
+            for (let sub of item) {
+                if (typeof sub === 'string') normalized.push(sub);
+            }
+        } else if (typeof item === 'string') {
+            normalized.push(item);
+        }
+    }
+    window.playerRegions = normalized;
+    
+    // 3. Ако все още няма региони (или са изтрити), добавяме началния регион
+    if (window.playerRegions.length === 0) {
+        // Опитваме се да вземем региона от currentRegion (соло режим) или по подразбиране
+        let defaultRegion = window.currentRegion || "Плиска";
+        if (window.worldData && window.worldData.regions && window.worldData.regions[defaultRegion]) {
+            window.playerRegions.push(defaultRegion);
+            if (window.showAdvisorMsg) {
+                window.showAdvisorMsg(`🏠 Възстановен е началният регион: ${defaultRegion}`);
+            }
+        }
+    }
+    
+    // 4. Допълнителна проверка – ако текущият регион (за соло) не е в списъка, добавяме го
+    if (window.currentRegion && !window.playerRegions.includes(window.currentRegion)) {
+        window.playerRegions.push(window.currentRegion);
+        if (window.showAdvisorMsg) {
+            window.showAdvisorMsg(`🏠 Добавен е текущият регион: ${window.currentRegion}`);
+        }
+    }
+    // ====================================================
     const hero = window.currentHero;
 
     if (window.initializeHeroRPGData) window.initializeHeroRPGData(hero);
