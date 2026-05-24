@@ -368,6 +368,7 @@ window.ensureHeroesHavePortraits = async function() {
                 if (typeof window.generateHeroPortrait === 'function') {
                     await window.generateHeroPortrait(hero);
                     window.saveGreatBulgariaGame();
+                 await new Promise(r => setTimeout(r, 500)); // половин секунда пауза между портретите
                 }
             } catch(e) {
                 console.error(`Грешка при портрет за ${hero.name}`, e);
