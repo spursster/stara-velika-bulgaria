@@ -1,6 +1,6 @@
 /**
 МОДУЛ: ИКОНОМИКА И АВТОНОМНО РАЗВИТИЕ - Велика България
-ВЕРСИЯ: 5.2 - СЪВМЕСТИМОСТ И СТАБИЛНОСТ
+ВЕРСИЯ: 5.3 - ФИНАЛНА С ПРЕДПАЗНА ЛОГИКА ЗА РЕГИОНИТЕ
 */
 
 // Помощна функция за изглаждане на масив (замества Array.flat)
@@ -56,7 +56,6 @@ window.recalculateIncome = function(hero) {
     
     let regionIncome = 0;
     if (window.playerRegions && window.worldData && window.worldData.regions) {
-        // Съвместимост без Array.flat()
         const ownedRegionsFlat = flattenArray(window.playerRegions);
         ownedRegionsFlat.forEach(regionName => {
             const regData = window.worldData.regions[regionName];
@@ -90,7 +89,7 @@ window.recalculateIncome = function(hero) {
 window.calculateEconomy = function() {
     if (!window.currentHero) return;
 
-        // ========== ПРЕДПАЗНА ЛОГИКА ЗА playerRegions ==========
+    // ========== ПРЕДПАЗНА ЛОГИКА ЗА playerRegions ==========
     // 1. Гарантираме, че playerRegions е масив
     if (!window.playerRegions || !Array.isArray(window.playerRegions)) {
         window.playerRegions = [];
@@ -111,7 +110,6 @@ window.calculateEconomy = function() {
     
     // 3. Ако все още няма региони (или са изтрити), добавяме началния регион
     if (window.playerRegions.length === 0) {
-        // Опитваме се да вземем региона от currentRegion (соло режим) или по подразбиране
         let defaultRegion = window.currentRegion || "Плиска";
         if (window.worldData && window.worldData.regions && window.worldData.regions[defaultRegion]) {
             window.playerRegions.push(defaultRegion);
@@ -129,6 +127,7 @@ window.calculateEconomy = function() {
         }
     }
     // ====================================================
+    
     const hero = window.currentHero;
 
     if (window.initializeHeroRPGData) window.initializeHeroRPGData(hero);
@@ -165,7 +164,6 @@ window.calculateEconomy = function() {
             
             ensureArmyDetails(clan);
             
-            // Уверяваме се, че златото е число
             clan.gold = clan.gold || 0;
             let autonomousIncome = 80 + Math.floor(Math.random() * 50);
             clan.gold += autonomousIncome;
