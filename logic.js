@@ -109,6 +109,11 @@ window.startFreshGameLogic = function() {
         isJoined: true
     };
 
+     // Автоматично генериране на портрет за активния герой (асинхронно)
+    if (typeof window.generateHeroPortrait === 'function') {
+        window.generateHeroPortrait(window.currentHero).catch(e => console.warn(e));
+    }
+
     // ----- 4. ДОБАВЯНЕ В WORLD DATA -----
     window.worldData.clans[selectedClan] = window.currentHero;
     window.unlockedLeaders = [window.currentHero];
@@ -306,11 +311,44 @@ window.loadGreatBulgariaGame = function() {
         if (window.gameMode === 'solo' && typeof window.initSoloMode === 'function') {
             window.initSoloMode();
         }
+        if (typeof window.ensureHeroesHavePortraits === 'function') {
+            window.ensureHeroesHavePortraits();
+        }
         
         return true;
     } catch (e) {
         localStorage.removeItem('GreatBulgaria_SaveGame');
         return false;
+    }
+};
+
+window.ensureHeroesHavePortraits = async function() {
+    let allHeroes = [];
+    if (window.worldData && window.worldData.clans) {
+        for (let key in window.worldData.clans) {
+            let hero = window.worldData.clans[key];
+            if (hero.isJoined === true) allHeroes.push(hero);
+        }
+    }
+    if (window.companions && window.companions.length) {
+        allHeroes.push(...window.companions);
+    }
+    if (window.currentHero && !allHeroes.includes(window.currentHero)) {
+        allHeroes.push(window.currentHero);
+    }
+    
+    for (let hero of allHeroes) {
+        if (!hero.portrait) {
+            console.log(`🎨 Генериране на портрет за ${hero.name}...`);
+            try {
+                if (typeof window.generateHeroPortrait === 'function') {
+                    await window.generateHeroPortrait(hero);
+                    window.saveGreatBulgariaGame();
+                }
+            } catch(e) {
+                console.error(`Грешка при портрет за ${hero.name}`, e);
+            }
+        }
     }
 };
 
