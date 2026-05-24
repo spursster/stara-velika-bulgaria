@@ -1,11 +1,8 @@
 /**
 МОДУЛ: МИСТИЧНИ ПОРТАЛИ И ЕКСПЕДИЦИИ – ВЕЛИКА БЪЛГАРИЯ
-СТАТУС: ФИНАЛНО КОРИГИРАН
+ВЕРСИЯ: КОРИГИРАНА – ПОПРАВЕНИ СИНТАКСИЧНИ ГРЕШКИ ОТ КОПИРАНЕ
 */
-
-// Дефиниране на липсващата функция addPortalLog, за да няма грешки
 window.addPortalLog = window.addPortalLog || function(heroName, worldName, isVictory) {
-    // Може да се добави реална имплементация, ако е необходимо
     console.log(`[PortalLog] ${heroName} ${isVictory ? 'победи' : 'загуби'} в ${worldName}`);
 };
 
@@ -24,10 +21,10 @@ window.unknownWorldsDatabase = [
 
 if (window.unknownWorldsDatabase.length < 50) {
     const prefixes = ["Космически ", "Кървав ", "Ефирен ", "Свещен ", "Тъмен ", "Древен ", "Забравен ", "Омагьосан ", "Имперски ", "Див "];
-    const suffixes = ["на Перун", "на Арес", "на Кронос", "на Зевс", "на Озирис", "на Ищар", "на Тор", "на Локи", "на Сатурн", "на Нептун"];
-    const monsters = ["Дракони", "Демони", "Върколаци", "Елфи-Сенки", "Големи", "Орки", "Горгони", "Валкирии", "Архангели", "Кентаври"];
-    const pets = ["Мини-Дракон", "Цербер", "Дух на Гората", "Златен Пегас", "Сребърна Лисица", "Огнен Скорпион", "Нефритен Пантер"];
-    const bonuses = ["+10% икономика", "-10% цена в казарми", "+15% Дипломация", "+5% защита на родове", "Пасивен доход на злато"];
+    const suffixes = ["на Перун ", "на Арес ", "на Кронос ", "на Зевс ", "на Озирис ", "на Ищар ", "на Тор ", "на Локи ", "на Сатурн ", "на Нептун "];
+    const monsters = ["Дракони ", "Демони ", "Върколаци ", "Елфи-Сенки ", "Големи ", "Орки ", "Горгони ", "Валкирии ", "Архангели ", "Кентаври "];
+    const pets = ["Мини-Дракон ", "Цербер ", "Дух на Гората ", "Златен Пегас ", "Сребърна Лисица ", "Огнен Скорпион ", "Нефритен Пантер "];
+    const bonuses = ["+10% икономика ", "-10% цена в казарми ", "+15% Дипломация ", "+5% защита на родове ", "Пасивен доход на злато "];
     for (let i = window.unknownWorldsDatabase.length; i < 50; i++) {
         window.unknownWorldsDatabase.push({
             name: `${prefixes[i % prefixes.length]} свят ${suffixes[i % suffixes.length]}`,
@@ -67,7 +64,6 @@ window.showPortalIndicator = function() {
     const ind = document.getElementById('portal-indicator');
     if (ind) ind.style.display = 'inline-block';
 };
-
 window.hidePortalIndicator = function() {
     const ind = document.getElementById('portal-indicator');
     if (ind) ind.style.display = 'none';
@@ -92,7 +88,6 @@ function autoBattleForHero(hero, portalWorld, enemyLevel) {
         const lossPercent = 0.2 + Math.random() * 0.3;
         hero.armySize = Math.max(10, Math.floor((hero.armySize || 200) * (1 - lossPercent)));
         hero.currentArmy = hero.armySize;
-        // Синхронизиране на армията след загуба
         if (window.ensureCompleteArmyDetails) window.ensureCompleteArmyDetails(hero);
         if (window.addPortalLog) window.addPortalLog(hero.leaderName || hero.name, portalWorld.name, false);
         return false;
@@ -121,7 +116,6 @@ function attemptAutonomousPortalEntry() {
     }
     if (!window.currentPortalState.explorationProgress[portalWorld.name]) window.currentPortalState.explorationProgress[portalWorld.name] = 0;
     if (isVictory) window.currentPortalState.explorationProgress[portalWorld.name] = Math.min(100, window.currentPortalState.explorationProgress[portalWorld.name] + 5);
-    // Синхронизиране на армията след битка
     if (window.ensureCompleteArmyDetails) window.ensureCompleteArmyDetails(randomHero);
     if (typeof window.renderSingleBar === 'function') window.renderSingleBar();
     if (window.renderTop6LeadersUI) window.renderTop6LeadersUI();
@@ -152,8 +146,8 @@ window.updatePortalContainerUI = function() {
     const world = state.currentWorld;
     const progress = state.explorationProgress[world.name] || 0;
     let statusText = state.isOpen ? `<b style="color: #00ffcc; text-shadow: 0 0 8px #00ffcc; animation: blink 1s infinite;">💥 ОТВОРЕН ЗА ИЗСЛЕДВАНЕ</b>` : `<span style="color: #666;">🛑 СТАБИЛИЗИРА СЕ (ЗАТВОРЕН)</span>`;
-    let cursorStyle = state.isOpen ? "cursor: pointer; border-color: #a020f0; box-shadow: 0 0 15px rgba(160,32,240,0.4);" : "cursor: not-allowed; border-color: #333;";
-    let bgAnim = state.isOpen ? "background: radial-gradient(circle, #1a0033 0%, #050505 100%);" : "background: #0d0d0d;";
+    let cursorStyle = state.isOpen ? "cursor: pointer; border-color: #a020f0; box-shadow: 0 0 15px rgba(160,32,240,0.4); " : "cursor: not-allowed; border-color: #333; ";
+    let bgAnim = state.isOpen ? "background: radial-gradient(circle, #1a0033 0%, #050505 100%); " : "background: #0d0d0d; ";
     if (!document.getElementById('portal-glow-style')) {
         const style = document.createElement('style');
         style.id = 'portal-glow-style';
@@ -164,25 +158,7 @@ window.updatePortalContainerUI = function() {
     if (state.isOpen) container.classList.add('portal-active-glow');
     else container.classList.remove('portal-active-glow');
     container.onclick = state.isOpen ? () => window.enterMysticPortal() : null;
-    container.innerHTML = `
-        <div style="text-align: center; border-bottom: 1px solid #333; padding-bottom: 5px; margin-bottom: 8px;">
-            <span style="font-size: 18px;">🌌</span> <b style="color: #ffd700; font-size: 13px;">МИСТИЧЕН ПОРТАЛ</b>
-        </div>
-        <div style="font-size: 12px; line-height: 1.6;">
-            <div> Свят: <span style="color: #fff; font-weight: bold;">"${world.name}"</span></div>
-            <div>📡 Статус: ${statusText}</div>
-            <div>🧬 Същества: <span style="color: #aaa;">${world.creatureType}</span></div>
-            <div> Опасност: <b style="color: #ff3366;">Ниво ${state.enemyLevel}</b></div>
-            <div style="margin-top: 6px;">
-                <div style="display: flex; justify-content: space-between; font-size: 10px; color: #888;">
-                    <span>Проучен:</span> <span>${progress}%</span>
-                </div>
-                <div style="width: 100%; background: #222; height: 5px; border-radius: 3px; overflow: hidden; border: 1px solid #444; margin-top: 2px;">
-                    <div style="width: ${progress}%; background: #8a2be2; height: 100%;"></div>
-                </div>
-            </div>
-        </div>
-    `;
+    container.innerHTML = `<div style="text-align: center; border-bottom: 1px solid #333; padding-bottom: 5px; margin-bottom: 8px;"> <span style="font-size: 18px;">🌌</span> <b style="color: #ffd700; font-size: 13px;">МИСТИЧЕН ПОРТАЛ</b> </div> <div style="font-size: 12px; line-height: 1.6;"> <div> Свят: <span style="color: #fff; font-weight: bold;">"${world.name}"</span></div> <div>📡 Статус: ${statusText}</div> <div>🧬 Същества: <span style="color: #aaa;">${world.creatureType}</span></div> <div> Опасност: <b style="color: #ff3366;">Ниво ${state.enemyLevel}</b></div> <div style="margin-top: 6px;"> <div style="display: flex; justify-content: space-between; font-size: 10px; color: #888;"> <span>Проучен:</span> <span>${progress}%</span> </div> <div style="width: 100%; background: #222; height: 5px; border-radius: 3px; overflow: hidden; border: 1px solid #444; margin-top: 2px;"> <div style="width: ${progress}%; background: #8a2be2; height: 100%;"></div> </div> </div> </div>`;
     createPortalIndicator();
     state.isOpen ? window.showPortalIndicator() : window.hidePortalIndicator();
 };
@@ -199,30 +175,22 @@ window.enterMysticPortal = function() {
         isPortalWorld: true
     };
     if (window.showAdvisorMsg) window.showAdvisorMsg(`🌌 Преминаване през пространството! Петицата навлиза в "${state.currentWorld.name}"!`);
-    
-    // Затваряме портала преди битка
     state.isOpen = false;
     window.updatePortalContainerUI();
-    
-    // Запомняме текущия свят за награди след битка
+
     const currentWorldName = state.currentWorld.name;
     const currentPetName = state.currentWorld.petName;
-    
+
     if (window.startBattle) {
         window.startBattle(portalTargetRegion);
         
-        // След битката (чрез callback) ще проверим дали има победа и ще дадем pet
-        const originalEndGroupBattle = window.endGroupBattle;
+        const originalEndGroupBattle = window.endGroupBattle || function(){};
         window.endGroupBattle = function(isVictory, reason) {
-            if (originalEndGroupBattle) originalEndGroupBattle(isVictory, reason);
+            originalEndGroupBattle(isVictory, reason);
             if (isVictory) {
-                // Увеличаваме проучването
                 state.explorationProgress[currentWorldName] = Math.min(100, (state.explorationProgress[currentWorldName] || 0) + 10);
-                // Шанс за опитомяване на pet (легендарен късмет 1% вместо 1/100 за тест - 1% е добре)
                 const diceRoll = Math.floor(Math.random() * 100) + 1;
                 if (diceRoll === 77) {
-                    // Търсим жив герой от битката (ако има достъп до списъка)
-                    // В battle.js нямаме глобален списък, затова използваме window._lastBattleHeroes, ако е дефиниран
                     let luckyHero = null;
                     if (window._lastBattleHeroes && window._lastBattleHeroes.length) {
                         const alive = window._lastBattleHeroes.filter(h => h.hp > 0);
@@ -234,23 +202,18 @@ window.enterMysticPortal = function() {
                             window.worldData.clans[luckyHero.clanObj.clan].pet = currentPetName;
                         }
                         if (window.showAdvisorMsg) window.showAdvisorMsg(`🎉 ЛЕГЕНДАРЕН КЪСМЕТ! ${luckyHero.name} опитоми "${currentPetName}"!`);
-                    } else {
-                        // Ако нямаме информация за героите, пробваме с активния герой
-                        if (window.currentHero) {
-                            window.currentHero.pet = currentPetName;
-                            if (window.showAdvisorMsg) window.showAdvisorMsg(`🎉 ЛЕГЕНДАРЕН КЪСМЕТ! ${window.currentHero.name} опитоми "${currentPetName}"!`);
-                        }
+                    } else if (window.currentHero) {
+                        window.currentHero.pet = currentPetName;
+                        if (window.showAdvisorMsg) window.showAdvisorMsg(`🎉 ЛЕГЕНДАРЕН КЪСМЕТ! ${window.currentHero.name} опитоми "${currentPetName}"!`);
                     }
                 }
             }
-            // Възстановяваме старата функция
             window.endGroupBattle = originalEndGroupBattle;
             window.updatePortalContainerUI();
         };
     }
 };
 
-// ========== МОДАЛЕН ПРОЗОРЕЦ ЗА ЕКСПЕДИЦИИ ==========
 window.openExpeditionsMenu = function() {
     if (document.getElementById('expeditions-modal')) return;
     const state = window.currentPortalState;
@@ -262,25 +225,10 @@ window.openExpeditionsMenu = function() {
     const isOpen = state.isOpen;
     const enemyLevel = state.enemyLevel;
     const progress = (state.explorationProgress && state.explorationProgress[world.name]) || 0;
-    
     const modal = document.createElement('div');
     modal.id = 'expeditions-modal';
     modal.style.cssText = `position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); backdrop-filter: blur(8px); z-index: 200000; display: flex; align-items: center; justify-content: center; font-family: 'Cinzel', serif;`;
-    modal.innerHTML = `
-        <div style="background: #0a0a1a; border: 2px solid #d4af37; border-radius: 24px; padding: 25px; max-width: 400px; width: 90%; text-align: center; position: relative;">
-            <button class="close-modal-x" style="position: absolute; top: 10px; left: 10px; background: rgba(255,80,80,0.2); border: none; color: #ff8888; font-size: 20px; width: 32px; height: 32px; border-radius: 50%; cursor: pointer;">✕</button>
-            <h2 style="color: #ffd700;">🌌 Мистични Експедиции</h2>
-            <div style="margin: 15px 0; text-align: left;">
-                <div>🪐 Свят: <span style="color: #ffd700;">${world.name}</span></div>
-                <div>📡 Статус: <span style="color: ${isOpen ? '#00ffcc' : '#ff6666'};">${isOpen ? 'ОТВОРЕН' : 'ЗАТВОРЕН'}</span></div>
-                <div>🔥 Опасност: Ниво ${enemyLevel}</div>
-                <div>🧬 Същества: ${world.creatureType}</div>
-                <div>📊 Проучване: ${progress}%</div>
-            </div>
-            ${isOpen ? `<button id="enter-portal-btn" style="background:#daa520; color:#000; border:none; padding:12px 20px; border-radius:40px; font-weight:bold; cursor:pointer; width:100%; margin-top:10px;">🌌 ВЛЕЗ В ПОРТАЛА</button>` : `<button style="background:#2c2c3a; border:1px solid #d4af37; color:#666; padding:12px 20px; border-radius:40px; width:100%; cursor:not-allowed;" disabled>🔒 Порталът е затворен</button>`}
-            <button class="close-modal-footer" style="background:#2c2c3a; border:1px solid #d4af37; color:#ffd700; padding:8px 16px; border-radius:30px; cursor:pointer; width:100%; margin-top:15px;">Затвори</button>
-        </div>
-    `;
+    modal.innerHTML = `<div style="background: #0a0a1a; border: 2px solid #d4af37; border-radius: 24px; padding: 25px; max-width: 400px; width: 90%; text-align: center; position: relative;"> <button class="close-modal-x" style="position: absolute; top: 10px; left: 10px; background: rgba(255,80,80,0.2); border: none; color: #ff8888; font-size: 20px; width: 32px; height: 32px; border-radius: 50%; cursor: pointer;">✕</button> <h2 style="color: #ffd700;">🌌 Мистични Експедиции</h2> <div style="margin: 15px 0; text-align: left;"> <div>🪐 Свят: <span style="color: #ffd700;">${world.name}</span></div> <div>📡 Статус: <span style="color: ${isOpen ? '#00ffcc' : '#ff6666'};">${isOpen ? 'ОТВОРЕН' : 'ЗАТВОРЕН'}</span></div> <div>🔥 Опасност: Ниво ${enemyLevel}</div> <div>🧬 Същества: ${world.creatureType}</div> <div>📊 Проучване: ${progress}%</div> </div> ${isOpen ? `<button id="enter-portal-btn" style="background:#daa520; color:#000; border:none; padding:12px 20px; border-radius:40px; font-weight:bold; cursor:pointer; width:100%; margin-top:10px;">🌌 ВЛЕЗ В ПОРТАЛА</button>` : `<button style="background:#2c2c3a; border:1px solid #d4af37; color:#666; padding:12px 20px; border-radius:40px; width:100%; cursor:not-allowed;" disabled>🔒 Порталът е затворен</button>`} <button class="close-modal-footer" style="background:#2c2c3a; border:1px solid #d4af37; color:#ffd700; padding:8px 16px; border-radius:30px; cursor:pointer; width:100%; margin-top:15px;">Затвори</button> </div>`;
     document.body.appendChild(modal);
     const closeModal = () => modal.remove();
     modal.querySelectorAll('.close-modal-x, .close-modal-footer').forEach(btn => btn.addEventListener('click', closeModal));
@@ -298,7 +246,6 @@ setTimeout(() => {
     window.updatePortalContainerUI();
 }, 1000);
 
-// Експортиране на функцията за експедиции
 window.openExpeditionsMenu = window.openExpeditionsMenu || function() {
     if (typeof window.openExpeditionsMenu === 'function') window.openExpeditionsMenu();
     else console.warn("Експедициите не са готови");
