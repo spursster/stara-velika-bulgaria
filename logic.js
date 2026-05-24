@@ -243,6 +243,30 @@ window.loadGreatBulgariaGame = function() {
         window.activeQuests = parsed.activeQuests || [];
         window.completedQuests = parsed.completedQuests || [];
         
+        // ========== НОРМАЛИЗИРАНЕ НА playerRegions ==========
+        let rawRegions = parsed.playerRegions || [];
+        if (Array.isArray(rawRegions)) {
+            let normalized = [];
+            for (let item of rawRegions) {
+                if (Array.isArray(item)) {
+                    // ако е масив, взимаме всички низове от него
+                    for (let sub of item) {
+                        if (typeof sub === 'string') normalized.push(sub);
+                    }
+                } else if (typeof item === 'string') {
+                    normalized.push(item);
+                }
+            }
+            window.playerRegions = normalized;
+        } else {
+            window.playerRegions = [];
+        }
+        // Ако няма запазени региони, но има текущ регион – добавяме го (по избор)
+        if (window.playerRegions.length === 0 && window.currentRegion) {
+            window.playerRegions.push(window.currentRegion);
+        }
+        // ====================================================
+        
         if (window.worldData && window.worldData.clans) {
             for (let key in window.worldData.clans) {
                 if (!window.worldData.clans[key].isJoined && key !== window.currentHero?.clan) {
