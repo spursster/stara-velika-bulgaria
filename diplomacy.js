@@ -114,17 +114,25 @@ window.proposeMarriage = function(clan, cost, successChance) {
         };
         const region = dowryMap[clan] || "Мизия";
         window.currentSpouse = { name: `Княгиня от рода ${clan}`, clan: clan };
+             // ========== КОРЕКЦИЯ: Нормализиране на playerRegions преди добавяне ==========
         if (!window.playerRegions) window.playerRegions = [];
-        let flatRegions = flattenArray(window.playerRegions);
-        if (window.playerRegions.length === 0 || typeof window.playerRegions[0] === 'string') {
-            window.playerRegions = [window.playerRegions];
-            flatRegions = flattenArray(window.playerRegions);
+        // 1. Превръщаме в плосък масив
+        let flatRegions = [];
+        for (let item of window.playerRegions) {
+            if (Array.isArray(item)) {
+                for (let sub of item) flatRegions.push(sub);
+            } else if (typeof item === 'string') {
+                flatRegions.push(item);
+            }
         }
-        if (!flatRegions.includes(region)) {
-            if (!window.playerRegions[0]) window.playerRegions[0] = [];
-            window.playerRegions[0].push(region);
+        window.playerRegions = flatRegions;
+        
+        // 2. Добавяме региона, ако го няма
+        if (!window.playerRegions.includes(region)) {
+            window.playerRegions.push(region);
             if (window.worldData?.regions?.[region]) window.worldData.regions[region].armySize = 0;
         }
+        // ====================================================================
         if (window.showAdvisorMsg) window.showAdvisorMsg(`👑 ДИНАСТИЧЕН ТРИУМФ: Сключихте брак с род ${clan}! Получихте регион "${region}".`);
         alert(`✅ Успех! Получавате регион "${region}" като зестра!`);
     } else {
