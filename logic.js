@@ -35,6 +35,22 @@ window.startFreshGameLogic = function() {
         }
     }
 
+    // ========== НАЧАЛО НА ПОПРАВКАТА ==========
+    // 1. Нулираме флаговете на всички кланове (и в worldData.clans, и във всички обекти)
+    if (window.worldData && window.worldData.clans) {
+        for (let key in window.worldData.clans) {
+            let clan = window.worldData.clans[key];
+            if (clan) {
+                clan.isJoined = false;
+                clan.isFavoriteInBarracks = false;
+            }
+        }
+    } else {
+        if (!window.worldData) window.worldData = {};
+        if (!window.worldData.clans) window.worldData.clans = {};
+    }
+
+    // 2. Създаваме активния герой
     window.currentHero = {
         name: selectedName, 
         clan: selectedClan,
@@ -52,17 +68,23 @@ window.startFreshGameLogic = function() {
         equipment: Array(12).fill(null),
         skills: { tactics: 0, endurance: 0, economy: 0, mysticism: 0, leadership: 0 },
         inventory: Array(12).fill(null),
-        isFavoriteInBarracks: true
+        isFavoriteInBarracks: true,   // само активният герой е любим
+        isJoined: true
     };
 
-    window.unlockedLeaders = [window.currentHero];
-
-    if (!window.worldData) window.worldData = {};
-    if (!window.worldData.clans) window.worldData.clans = {};
+    // 3. Добавяме активния герой в worldData.clans
     window.worldData.clans[selectedClan] = window.currentHero;
 
+    // 4. Запазваме списъка с любими само с името на активния герой
     const favorites = [selectedName];
     localStorage.setItem('barracksFavorites', JSON.stringify(favorites));
+
+    // 5. Задължително изтриваме и другите ключове, свързани с любими (за всеки случай)
+    localStorage.removeItem('favoriteHeroesFinal');
+    localStorage.removeItem('heroAutoState');
+
+    window.unlockedLeaders = [window.currentHero];
+    // ========== КРАЙ НА ПОПРАВКАТА ==========
 
     window.gameTime = { seasonIndex: 0, year: 480, era: "пр.н.е." };
 
