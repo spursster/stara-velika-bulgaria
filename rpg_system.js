@@ -1,16 +1,13 @@
 // =========================================================================
-// ВЕЛИКА БЪЛГАРИЯ - rpg_system.js (КОРИГИРАН – ДОБАВЕНИ БОНУСИ ОТ ДОМАШНИ ЛЮБИМЦИ)
+// ВЕЛИКА БЪЛГАРИЯ - rpg_system.js (КОРИГИРАН – СТАБИЛНО ИЗЧИСЛЕНИЕ)
 // =========================================================================
-
 window.rpgDatabase = window.rpgDatabase || {};
-
 window.rpgDatabase.getXPRequiredForLevel = function(level) {
     return (level || 1) * 150;
 };
-
 window.rpgDatabase.petsDatabase = {
     "falcon": { id: "falcon", name: "Родов Сокол", icon: "🦅", desc: "Тактическа бойна мощ: +15% обща сила при щурм." },
-    "wolf": { id: "wolf", name: "Вълк Единак", icon: "🐺", desc: "Удар на глутницата: +10% шанс за критичен Смазващ удар." },
+    "wolf": { id: "wolf", name: "Вълк Единак", icon: "🐺", desc: "Удар на глутницата: +10% шанс за критичен удар." },
     "stallion": { id: "stallion", name: "Степен Жребец", icon: "🐎", desc: "Конна тактика: Намалява щетите над войската с 15%." },
     "bear": { id: "bear", name: "Балканска Мечка", icon: "🐻", desc: "Родова мощ: Повишава издръжливостта на армията при защита с 20%." },
     "viper": { id: "viper", name: "Усойница", icon: "🐍", desc: "Отровено острие: Премахва 5% от вражеската защита на ход." }
@@ -44,7 +41,6 @@ window.consumeStoredXPForHero = function(hero) {
     if (!hero.isAuto && hero.storedXP > 0) {
         let leveledUp = false;
         let requiredXP = window.rpgDatabase.getXPRequiredForLevel(hero.level);
-        
         while (hero.storedXP >= requiredXP && hero.level < 100) {
             hero.storedXP -= requiredXP;
             hero.level++;
@@ -52,12 +48,10 @@ window.consumeStoredXPForHero = function(hero) {
             hero.heroPower += 25;
             leveledUp = true;
             requiredXP = window.rpgDatabase.getXPRequiredForLevel(hero.level);
-            
             if (window.showAdvisorMsg) {
                 window.showAdvisorMsg(`🆙 ${hero.name} достигна Ниво ${hero.level} (от натрупан опит)! +1 Точка за умения`);
             }
         }
-        
         if (leveledUp) {
             if (window.checkArcheAgeClass) window.checkArcheAgeClass(hero);
             if (!hero.isAuto && hero.skillPoints > 0 && window.autoAssignSkillPoint) {
@@ -66,7 +60,6 @@ window.consumeStoredXPForHero = function(hero) {
             if (window.updateCharacterUI) window.updateCharacterUI(hero);
             if (window.renderTop6LeadersUI) window.renderTop6LeadersUI();
         }
-        
         return leveledUp;
     }
     return false;
@@ -76,13 +69,10 @@ window.consumeStoredXPForHero = function(hero) {
 window.gainHeroXP = function(hero, amount) {
     if (!hero) return;
     window.initializeHeroRPGData(hero);
-    
     if (hero.isAuto) {
-        // Автоматичен режим - XP отива директно в xp и се използва веднага
         hero.xp += amount;
         var requiredXP = window.rpgDatabase.getXPRequiredForLevel(hero.level);
         var leveledUp = false;
-        
         while (hero.xp >= requiredXP && hero.level < 100) {
             hero.xp -= requiredXP;
             hero.level++;
@@ -90,12 +80,10 @@ window.gainHeroXP = function(hero, amount) {
             hero.heroPower += 25;
             leveledUp = true;
             requiredXP = window.rpgDatabase.getXPRequiredForLevel(hero.level);
-            
             if (window.showAdvisorMsg) {
-                window.showAdvisorMsg("🆙 " + hero.name + " достигна Ниво " + hero.level + "! (+1 Точка за умения)");
+                window.showAdvisorMsg("🆙  " + hero.name + " достигна Ниво  " + hero.level + "! (+1 Точка за умения)");
             }
         }
-        
         if (leveledUp) {
             if (window.checkArcheAgeClass) window.checkArcheAgeClass(hero);
             if (hero.isAuto && hero.skillPoints > 0 && window.autoAssignSkillPoint) {
@@ -103,22 +91,15 @@ window.gainHeroXP = function(hero, amount) {
             }
         }
     } else {
-        // Ръчен режим - XP отива в storedXP
         hero.storedXP += amount;
         if (window.showAdvisorMsg) {
-            window.showAdvisorMsg("📚 " + hero.name + " натрупа " + amount + " ръчен опит! (Общо: " + hero.storedXP + ")");
+            window.showAdvisorMsg("📚  " + hero.name + " натрупа  " + amount + " ръчен опит! (Общо:  " + hero.storedXP + ")");
         }
-        // Опитваме се да консумираме storedXP за качване на ниво
         window.consumeStoredXPForHero(hero);
     }
-    
-    // Премахната грешната синхронизация (коментирано)
-    // if (window.worldData && window.worldData.clans && hero.clan) window.worldData.clans[hero.clan] = hero;
     if (window.renderTop6LeadersUI) window.renderTop6LeadersUI();
     if (window.updateCharacterUI) window.updateCharacterUI(hero);
-    
-    if (window.openHeroRPGModal && document.getElementById('hero-rpg-modal') && 
-        document.getElementById('hero-rpg-modal').style.display === 'block') {
+    if (window.openHeroRPGModal && document.getElementById('hero-rpg-modal') && document.getElementById('hero-rpg-modal').style.display === 'block') {
         window.openHeroRPGModal(hero.clan);
     }
 };
@@ -132,19 +113,15 @@ window.toggleHeroAutoMode = function(clanKey) {
     if (!hero) return;
     window.initializeHeroRPGData(hero);
     hero.isAuto = !hero.isAuto;
-    
     if (!hero.isAuto && hero.xp > 0) {
         hero.storedXP += hero.xp;
         hero.xp = 0;
-        if (window.showAdvisorMsg) {
-            window.showAdvisorMsg("🔄 Режимът на " + hero.name + " е сменен на РЪЧЕН. " + hero.storedXP + " XP са прехвърлени в склад.");
-        }
+        if (window.showAdvisorMsg) window.showAdvisorMsg("🔄 Режимът на  " + hero.name + " е сменен на РЪЧЕН.  " + hero.storedXP + " XP са прехвърлени в склад.");
     } else if (hero.isAuto && hero.storedXP > 0) {
         var amount = hero.storedXP;
         hero.storedXP = 0;
         window.gainHeroXP(hero, amount);
     }
-    
     if (window.renderTop6LeadersUI) window.renderTop6LeadersUI();
     var modal = document.getElementById('hero-rpg-modal');
     if (modal && modal.style.display === 'block') window.openHeroRPGModal(clanKey);
@@ -158,7 +135,6 @@ window.autoAssignSkillPoint = function(hero) {
         return;
     }
     if (!hero.learnedSkills) hero.learnedSkills = {};
-    
     const allSkills = [];
     for (let treeKey in window.advancedSkills) {
         const tree = window.advancedSkills[treeKey];
@@ -171,34 +147,25 @@ window.autoAssignSkillPoint = function(hero) {
             }
         }
     }
-    
     if (allSkills.length === 0) return;
-    
     let attempts = 0;
     let learned = false;
-    
     while (!learned && attempts < 10 && hero.skillPoints > 0 && allSkills.length > 0) {
         const random = allSkills[Math.floor(Math.random() * allSkills.length)];
-        
         let pointsInTree = 0;
         for (let sk in hero.learnedSkills) {
             if (window.advancedSkills[random.treeKey] && window.advancedSkills[random.treeKey].skills[sk]) {
                 pointsInTree += hero.learnedSkills[sk];
             }
         }
-        
         if (hero.level >= random.skill.reqLevel && pointsInTree >= random.skill.reqPointsInTree) {
             hero.learnedSkills[random.skillKey] = (hero.learnedSkills[random.skillKey] || 0) + 1;
             hero.skillPoints--;
             learned = true;
-            
             const effect = random.skill.effect(hero.learnedSkills[random.skillKey]);
             if (effect.attackBonus) hero.heroPower += effect.attackBonus;
             if (effect.defenseBonus) hero.defense = (hero.defense || 0) + effect.defenseBonus;
-            
-            if (window.showAdvisorMsg) {
-                window.showAdvisorMsg(`🤖 Автоматично: ${hero.name} научи "${random.skill.name}" (Ниво ${hero.learnedSkills[random.skillKey]})!`);
-            }
+            if (window.showAdvisorMsg) window.showAdvisorMsg(`🤖 Автоматично: ${hero.name} научи "${random.skill.name}" (Ниво ${hero.learnedSkills[random.skillKey]})!`);
         }
         attempts++;
     }
@@ -211,28 +178,22 @@ window.checkArcheAgeClass = function(hero) {
         console.warn("hybridClasses не е зареден – няма нови класове.");
         return;
     }
-    
     let skillLevels = {};
     for (let key in hero.skills) {
         if (hero.skills[key] > 0) skillLevels[key] = hero.skills[key];
     }
-    
     const available = window.hybridClasses.filter(cls => {
         if (hero.level < cls.reqLevel) return false;
         return cls.reqSkills.every(skill => skillLevels[skill] >= 1);
     });
-    
     if (available.length === 0) return;
     available.sort((a, b) => b.reqLevel - a.reqLevel);
     const newClass = available[0];
-    
     if (hero.currentClass !== newClass.name) {
         const oldClass = hero.currentClass;
         hero.currentClass = newClass.name;
         if (window.applyClassBonuses) window.applyClassBonuses(hero, newClass.name);
-        if (window.showAdvisorMsg) {
-            window.showAdvisorMsg(`👑 ЕВОЛЮЦИЯ: ${hero.name} се издигна от "${oldClass}" до "${hero.currentClass}" (${newClass.reqSkills.join(' + ')})!`);
-        }
+        if (window.showAdvisorMsg) window.showAdvisorMsg(`👑 ЕВОЛЮЦИЯ: ${hero.name} се издигна от "${oldClass}" до "${hero.currentClass}" (${newClass.reqSkills.join(' + ')})!`);
     }
 };
 
@@ -241,7 +202,6 @@ window.calculateArtifactSetBonuses = function(hero) {
     if (!hero || !hero.inventory) return {};
     var setsCollected = {};
     var totalSetBonus = { heroPower: 0, goldBonus: 0, defense: 0, armyBonus: 0, diplomacyBonus: 0, mysticismBonus: 0 };
-    
     for (var i = 0; i < hero.inventory.length; i++) {
         var item = hero.inventory[i];
         if (item && item.set && window.historicalArtifacts && window.historicalArtifacts[item.id]) {
@@ -250,7 +210,6 @@ window.calculateArtifactSetBonuses = function(hero) {
             if (setsCollected[artifact.set].indexOf(artifact.id) === -1) setsCollected[artifact.set].push(artifact.id);
         }
     }
-    
     for (var setKey in setsCollected) {
         if (window.artifactSetBonuses && window.artifactSetBonuses[setKey]) {
             var setInfo = window.artifactSetBonuses[setKey];
@@ -265,67 +224,60 @@ window.calculateArtifactSetBonuses = function(hero) {
     return totalSetBonus;
 };
 
-// Нова помощна функция за получаване на бонуси от домашен любимец
+// ✅ КОРигирана: премахва интервали, прави сравнението сигурно
 function getPetBonuses(hero) {
     if (!hero || !hero.pet) return {};
     let petId = hero.pet;
-    // Първо търсим в божествените питомци (divinePets)
     if (window.divinePets && window.divinePets[petId]) {
         return window.divinePets[petId].bonus || {};
     }
-    // След това в обикновените (rpgDatabase.petsDatabase)
     if (window.rpgDatabase && window.rpgDatabase.petsDatabase && window.rpgDatabase.petsDatabase[petId]) {
         let pet = window.rpgDatabase.petsDatabase[petId];
-        // Обикновените питомци нямат дефиниран 'bonus' обект, затова преобразуваме описанието в бонуси
-        // За опростяване ще добавим предварително дефинирани бонуси за тях
-        // Но за да не усложняваме, ще използваме следните правила:
-        // Сокол: +15% сила (attackBonus)
-        // Вълк: +10% критичен шанс
-        // Жребец: -15% получени щети (damageReduction)
-        // Мечка: +20% защита (defenseBonus)
-        // Усойница: -5% вражеска защита (игнорираме за момента)
-        if (pet.name === "Родов Сокол") return { attackBonusPercent: 0.15 };
-        if (pet.name === "Вълк Единак") return { critChanceBonus: 0.10 };
-        if (pet.name === "Степен Жребец") return { damageReduction: 0.15 };
-        if (pet.name === "Балканска Мечка") return { defenseBonus: 20 };
-        // За Усойница: не добавяме нищо засега (може да се добави armorPenetration)
+        let petName = (pet.name || "").trim().toLowerCase();
+        if (petName === "родов сокол") return { attackBonusPercent: 0.15 };
+        if (petName === "вълк единак") return { critChanceBonus: 0.10 };
+        if (petName === "степен жребец") return { damageReduction: 0.15 };
+        if (petName === "балканска мечка") return { defenseBonus: 20 };
     }
     return {};
 }
 
+// ✅ КОРигирана: нулира defense преди изчисление, запазва baseHeroPower, предотвратява експоненциално натрупване
 window.recalculateHeroPower = function(hero) {
-    if (!hero) return;
-    var basePower = hero.baseHeroPower || hero.heroPower || 100;
-    var artifactBonus = 0;
-    var setBonus = 0;
-    var skillBonus = 0;
-    var petBonus = 0;
-    
-    if (hero.inventory) {
-        for (var i = 0; i < hero.inventory.length; i++) {
-            var item = hero.inventory[i];
+    if (!hero) return 0;
+    window.initializeHeroRPGData(hero);
+
+    // Запази базовата мощ веднъж при първо извикване
+    if (!hero.baseHeroPower) hero.baseHeroPower = (hero.heroPower || 100);
+
+    let base = hero.baseHeroPower;
+    let artifactBonus = 0, setBonus = 0, skillBonus = 0, petBonus = 0;
+
+    // Нулиране на динамични полета преди всяко изчисление
+    hero.defense = 0;
+
+    // Артефакти
+    if (hero.inventory && Array.isArray(hero.inventory)) {
+        hero.inventory.forEach(item => {
             if (item && item.bonus && item.bonus.heroPower) artifactBonus += item.bonus.heroPower;
-        }
+        });
     }
-    
-    if (hero.learnedSkills) {
-        const bonuses = window.getAdvancedSkillBonuses ? window.getAdvancedSkillBonuses(hero) : {};
-        if (bonuses.attackBonus) skillBonus += bonuses.attackBonus;
-    }
-    
-    var setBonuses = window.calculateArtifactSetBonuses(hero);
+    // Сет бонуси
+    let setBonuses = window.calculateArtifactSetBonuses ? window.calculateArtifactSetBonuses(hero) : {};
     setBonus = setBonuses.heroPower || 0;
-    
-    // Добавяне на бонус от домашен любимец
-    const petBonuses = getPetBonuses(hero);
-    if (petBonuses.heroPower) petBonus += petBonuses.heroPower;
-    if (petBonuses.attackBonusPercent) petBonus += Math.floor(basePower * petBonuses.attackBonusPercent);
-    if (petBonuses.defenseBonus) {
-        hero.defense = (hero.defense || 0) + petBonuses.defenseBonus;
+    // Умения
+    if (hero.learnedSkills && window.getAdvancedSkillBonuses) {
+        const b = window.getAdvancedSkillBonuses(hero);
+        if (b.attackBonus) skillBonus += b.attackBonus;
     }
-    
-    hero.heroPower = basePower + artifactBonus + setBonus + skillBonus + petBonus;
-    
+    // Питомци
+    const petB = getPetBonuses(hero);
+    if (petB.heroPower) petBonus += petB.heroPower;
+    if (petB.attackBonusPercent) petBonus += Math.floor(base * petB.attackBonusPercent);
+    if (petB.defenseBonus) hero.defense += petB.defenseBonus;
+
+    // Записваме чистата мощ
+    hero.heroPower = Math.max(10, base + artifactBonus + setBonus + skillBonus + petBonus);
     return hero.heroPower;
 };
 
@@ -337,7 +289,6 @@ window.getSkillLevel = function(hero, skillKey) {
 window.getHeroCombatBonus = function(hero, bonusType) {
     if (!hero || !hero.learnedSkills) return 0;
     var bonus = 0;
-    
     for (let sk in hero.learnedSkills) {
         const level = hero.learnedSkills[sk];
         for (let treeKey in window.advancedSkills) {
@@ -354,45 +305,17 @@ window.getHeroCombatBonus = function(hero, bonusType) {
     return bonus;
 };
 
-// ==================== ЕКСПОРТ НА ФУНКЦИЯТА ЗА RPG МОДАЛ ====================
+// ==================== RPG МОДАЛ ====================
 window.openHeroRPGModal = function(clanKey) {
-    // Намираме героя
     let hero = null;
-    if (clanKey && window.worldData?.clans?.[clanKey]) {
-        hero = window.worldData.clans[clanKey];
-    } else if (window.currentHero) {
-        hero = window.currentHero;
-    }
-    
+    if (clanKey && window.worldData?.clans?.[clanKey]) hero = window.worldData.clans[clanKey];
+    else if (window.currentHero) hero = window.currentHero;
     if (!hero) {
         console.warn("Няма избран герой за RPG модала");
         return;
     }
-    
-    // Ако съществува специален RPG модал, го отваряме
-    if (typeof window.openHeroRPGModalOriginal === 'function') {
-        window.openHeroRPGModalOriginal(clanKey);
-        return;
-    }
-    
-    // Иначе показваме стандартния профил
-    if (typeof window.showHeroProfile === 'function') {
-        window.showHeroProfile(hero);
-    } else {
-        alert("RPG системата не е напълно заредена, но можете да управлявате героя от профила");
-    }
+    if (typeof window.showHeroProfile === 'function') window.showHeroProfile(hero);
+    else alert("RPG системата не е напълно заредена, но можете да управлявате героя от профила");
 };
 
-// Ако има оригинална функция, запазваме я
-if (typeof window.openHeroRPGModal !== 'function') {
-    window.openHeroRPGModal = function(clanKey) {
-        const hero = clanKey ? window.worldData?.clans?.[clanKey] : window.currentHero;
-        if (hero && typeof window.showHeroProfile === 'function') {
-            window.showHeroProfile(hero);
-        } else {
-            console.warn("Не може да се отвори профилът на героя");
-        }
-    };
-}
-
-console.log("✅ rpg_system.js зареден (финална версия – добавени бонуси от домашни любимци)");
+console.log("✅ rpg_system.js зареден (финална версия – стабилно изчисление, фиксирани питомци)");
