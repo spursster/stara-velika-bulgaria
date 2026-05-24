@@ -197,6 +197,12 @@ window.hireClanHero = function(heroName, clanName, cost, heroPower) {
         window.worldData.clans[newId] = newHero;
         if (!window.unlockedLeaders) window.unlockedLeaders = [];
         window.unlockedLeaders.push(newHero);
+        
+        // ⭐ АВТОМАТИЧЕН ПОРТРЕТ ЗА НОВИЯ ГЕРОЙ (асинхронно, без да блокира)
+        if (typeof window.generateHeroPortrait === 'function') {
+            window.generateHeroPortrait(newHero).catch(e => console.warn("Грешка при портрет:", e));
+        }
+        
         if (window.armyMarket && typeof window.armyMarket.sync === 'function') window.armyMarket.sync(newHero);
         if (window.updateCharacterUI) window.updateCharacterUI(window.currentHero);
         if (window.renderTop6LeadersUI) window.renderTop6LeadersUI();
