@@ -56,28 +56,44 @@ function getClassIcon(className) {
 window.getClassIcon = getClassIcon;
 
 // ==================== ГЕНЕРИРАНЕ НА ПОРТРЕТ С POLLINATIONS.AI ====================
-window.generateHeroPortrait = async function(hero) {
+window.generateHeroPortrait = async function(hero, retries = 2) {
     if (!hero) return;
-    // Ако вече има портрет, не го променяме
-     if (hero.portrait) return hero.portrait;
+    if (hero.portrait) return hero.portrait;
+    
     const prompt = `fantasy rpg character portrait of ${hero.name} the ${hero.currentClass || hero.className || "warrior"}, digital painting, D&D style, face front, detailed, cinematic lighting, high quality, 512x512`;
     const url = `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}?width=256&height=256&seed=${Math.floor(Math.random()*10000)}`;
     
-    return new Promise((resolve, reject) => {
-        const img = new Image();
-        img.onload = () => {
-            hero.portrait = url;
-            if (typeof window.saveGreatBulgariaGame === 'function') window.saveGreatBulgariaGame();
-            if (typeof window.renderSingleBar === 'function') window.renderSingleBar();
-            if (typeof window.renderTop6LeadersUI === 'function') window.renderTop6LeadersUI();
-            if (window.currentHero === hero && typeof window.updateCharacterUI === 'function') {
-                window.updateCharacterUI(hero);
-            }
-            resolve(url);
-        };
-        img.onerror = () => reject(new Error(`Грешка при зареждане на портрет за ${hero.name}`));
-        img.src = url;
-    });
+    const attempt = async (remaining) => {
+        return new Promise((resolve, reject) => {
+            const img = new Image();
+            img.onload = () => {
+                hero.portrait = url;
+                if (typeof window.saveGreatBulgariaGame === 'function') window.saveGreatBulgariaGame();
+                if (typeof window.renderSingleBar === 'function') window.renderSingleBar();
+                if (typeof window.renderTop6LeadersUI === 'function') window.renderTop6LeadersUI();
+                if (window.currentHero === hero && typeof window.updateCharacterUI === 'function') {
+                    window.updateCharacterUI(hero);
+                }
+                resolve(url);
+            };
+            img.onerror = () => {
+                if (remaining > 0) {
+                    console.log(`⚠️ Портрет за ${hero.name} не успя, опитвам отново след 1.5 сек... (остават ${remaining} опита)`);
+                    setTimeout(() => attempt(remaining - 1).then(resolve).catch(reject), 1500);
+                } else {
+                    reject(new Error(`Грешка при зареждане на портрет за ${hero.name} след няколко опита`));
+                }
+            };
+            img.src = url;
+        });
+    };
+    
+    try {
+        return await attempt(retries);
+    } catch(e) {
+        console.warn(`❌ ${e.message}`);
+        return null;
+    }
 };
 
 // ==================== ПРЕВКЛЮЧВАНЕ НА ЦЯЛ ЕКРАН ====================
