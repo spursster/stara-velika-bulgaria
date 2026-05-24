@@ -1,4 +1,4 @@
-// ======================== АРМИЯ ПАЗАР (ФИНАЛНА ВЕРСИЯ – РАБОТЕЩИ БУТОНИ ЗА ВСИЧКИ ГЕРОИ) ========================
+// ======================== АРМИЯ ПАЗАР (С +1, +10, +100) ========================
 (function() {
     // --- Проверка на зависимости ---
     if (!window.worldData || !window.worldData.clans) {
@@ -140,6 +140,7 @@
         syncWithGame(hero);
     }
 
+    // Основна функция за покупка (поддържа quantity)
     function buyTroop(typeId, quantity = 1, heroParam = null) {
         let hero = heroParam || getSelectedHero();
         if (!hero) { 
@@ -185,6 +186,7 @@
         return true;
     }
 
+    // --- Карта на войската с +1, +10, +100 бутони ---
     function troopCard(troop) {
         let hero = getSelectedHero();
         let currentCount = hero ? (hero.armyDetails[troop.id] || 0) : 0;
@@ -199,8 +201,12 @@
                 ${troop.special ? `<div class="special">✨ ${troop.special}</div>` : ''}
             </div>
             <div class="troop-controls">
-                <button class="buy-btn" data-type="${troop.id}">Купи +1</button>
-                <button class="sell-btn" data-type="${troop.id}">Продай -1</button>
+                <div style="display: flex; gap: 6px; flex-wrap: wrap; align-items: center;">
+                    <button class="buy-btn" data-type="${troop.id}" data-qty="1">+1</button>
+                    <button class="buy-btn" data-type="${troop.id}" data-qty="10">+10</button>
+                    <button class="buy-btn" data-type="${troop.id}" data-qty="100">+100</button>
+                    <button class="sell-btn" data-type="${troop.id}" data-qty="1">-1</button>
+                </div>
                 <div class="owned-count">Имаш: <span id="count-${troop.id}">${currentCount}</span></div>
             </div>
         </div>`;
@@ -267,8 +273,8 @@
             .stats { display: flex; gap: 15px; font-size: 0.8rem; color: #aaa; }
             .price { font-weight: bold; color: #ffaa44; }
             .special { font-size: 0.7rem; color: #d4af37; background: rgba(0,0,0,0.4); display: inline-block; padding: 2px 8px; border-radius: 20px; }
-            .troop-controls { display: flex; justify-content: space-between; margin-top: 12px; gap: 8px; flex-wrap: wrap; }
-            .buy-btn, .sell-btn { background: linear-gradient(135deg,#b8860b,#daa520); border: none; padding: 6px 14px; border-radius: 40px; color: white; cursor: pointer; }
+            .troop-controls { display: flex; justify-content: space-between; margin-top: 12px; gap: 8px; flex-wrap: wrap; align-items: center; }
+            .buy-btn, .sell-btn { background: linear-gradient(135deg,#b8860b,#daa520); border: none; padding: 6px 14px; border-radius: 40px; color: white; cursor: pointer; font-weight: bold; }
             .sell-btn { background: linear-gradient(135deg,#8b3a3a,#b55a5a); }
             .owned-count { font-size: 0.8rem; background: #222; padding: 4px 10px; border-radius: 30px; }
             .market-footer { display: flex; justify-content: center; gap: 15px; margin-top: 20px; padding-top: 15px; border-top: 1px solid rgba(255,215,0,0.3); }
@@ -300,6 +306,20 @@
         let hero = getSelectedHero();
         if (hero) initHero(hero);
         updateMarketUI();
+        // Презареждаме UI, за да се обновят броячите за новия герой
+        let modal = document.getElementById('armyMarketModal');
+        if (modal && modal.style.display === 'flex') {
+            // Бързо пресъздаване на съдържанието, за да се синхронизират бутоните
+            let newHtml = createMarketHTML();
+            let oldContent = modal.querySelector('.market-content');
+            if (oldContent) {
+                let newContent = document.createElement('div');
+                newContent.innerHTML = newHtml;
+                let freshContent = newContent.firstElementChild;
+                oldContent.parentNode.replaceChild(freshContent, oldContent);
+                attachMarketEvents(); // преназначаваме слушателите
+            }
+        }
     }
 
     function showMarket() {
@@ -337,16 +357,16 @@
         document.getElementById('closeMarketBtn')?.addEventListener('click', hideMarket);
         modal.addEventListener('click', (e) => { if (e.target === modal) hideMarket(); });
         
-        // *** ПРЕЗАПИСВАНЕ НА БУТОНИТЕ ЗА ПОКУПКА, ЗА ДА РАБОТЯТ ЗА ИЗБРАНИЯ ГЕРОЙ ОТ СЕЛЕКТА ***
         const heroSelect = document.getElementById('heroSelect');
         
+        // --- Обработка на всички бутони за покупка (+1, +10, +100) ---
         modal.querySelectorAll('.buy-btn').forEach(btn => {
-            // Премахваме старите слушатели, като заместваме бутона с негово копие
             const newBtn = btn.cloneNode(true);
             btn.parentNode.replaceChild(newBtn, btn);
             newBtn.addEventListener('click', (e) => {
                 e.stopPropagation();
                 const troopId = newBtn.getAttribute('data-type');
+                const qty = parseInt(newBtn.getAttribute('data-qty') || '1');
                 if (!troopId) return;
                 let hero = null;
                 if (heroSelect && heroSelect.value && window.worldData.clans[heroSelect.value]) {
@@ -358,39 +378,25 @@
                     if (window.showAdvisorMsg) window.showAdvisorMsg("❌ Няма избран герой!");
                     return;
                 }
-                const troop = allTroops.find(t => t.id === troopId);
-                if (!troop) return;
-                const totalCost = troop.basePrice;
-                if (hero.gold >= totalCost) {
-                    hero.gold -= totalCost;
-                    hero.armyDetails[troopId] = (hero.armyDetails[troopId] || 0) + 1;
-                    // Обновяване на UI
-                    const goldSpan = document.getElementById('playerGoldAmount');
-                    if (goldSpan) goldSpan.innerText = hero.gold;
-                    const countSpan = document.getElementById(`count-${troopId}`);
-                    if (countSpan) countSpan.innerText = hero.armyDetails[troopId];
-                    // Синхронизация с играта
-                    syncWithGame(hero);
-                    saveHeroData(hero);
-                    if (window.updateCharacterUI) window.updateCharacterUI(hero);
-                    if (window.renderTop6LeadersUI) window.renderTop6LeadersUI();
-                    if (typeof window.renderSingleBar === 'function') window.renderSingleBar();
-                    if (window.addWorldEvent) window.addWorldEvent(`🛒 Покупка на армия`, `${hero.name} купи ${troop.name} за ${totalCost} злато.`, "💰");
-                    console.log(`✅ Купено: ${troop.name} за ${totalCost} злато. Оставащо злато: ${hero.gold}`);
-                } else {
-                    if (window.showAdvisorMsg) window.showAdvisorMsg(`❌ ${hero.name} няма достатъчно злато! (Нужни: ${totalCost})`);
-                    else alert(`❌ ${hero.name} няма достатъчно злато!`);
-                }
+                buyTroop(troopId, qty, hero);
+                updateMarketUI();   // обновява златото и броячите
+                // Актуализира и броячите в целия модал (ако някой друг е променен)
+                modal.querySelectorAll('.owned-count span').forEach(span => {
+                    let troopIdFromSpan = span.id.replace('count-', '');
+                    let newCount = hero.armyDetails[troopIdFromSpan] || 0;
+                    span.innerText = newCount;
+                });
             });
         });
         
-        // Същото за бутоните за продажба (аналогично)
+        // --- Обработка на бутоните за продажба (-1) ---
         modal.querySelectorAll('.sell-btn').forEach(btn => {
             const newBtn = btn.cloneNode(true);
             btn.parentNode.replaceChild(newBtn, btn);
             newBtn.addEventListener('click', (e) => {
                 e.stopPropagation();
                 const troopId = newBtn.getAttribute('data-type');
+                const qty = parseInt(newBtn.getAttribute('data-qty') || '1');
                 if (!troopId) return;
                 let hero = null;
                 if (heroSelect && heroSelect.value && window.worldData.clans[heroSelect.value]) {
@@ -398,31 +404,14 @@
                 } else {
                     hero = window.currentHero;
                 }
-                if (!hero) {
-                    if (window.showAdvisorMsg) window.showAdvisorMsg("❌ Няма избран герой!");
-                    return;
-                }
-                const troop = allTroops.find(t => t.id === troopId);
-                if (!troop) return;
-                const current = hero.armyDetails[troopId] || 0;
-                if (current < 1) {
-                    if (window.showAdvisorMsg) window.showAdvisorMsg("❌ Нямаш толкова войници за продажба!");
-                    return;
-                }
-                const refund = Math.floor(troop.basePrice * 0.6);
-                hero.gold += refund;
-                hero.armyDetails[troopId] = current - 1;
-                // Обновяване на UI
-                const goldSpan = document.getElementById('playerGoldAmount');
-                if (goldSpan) goldSpan.innerText = hero.gold;
-                const countSpan = document.getElementById(`count-${troopId}`);
-                if (countSpan) countSpan.innerText = hero.armyDetails[troopId];
-                syncWithGame(hero);
-                saveHeroData(hero);
-                if (window.updateCharacterUI) window.updateCharacterUI(hero);
-                if (window.renderTop6LeadersUI) window.renderTop6LeadersUI();
-                if (typeof window.renderSingleBar === 'function') window.renderSingleBar();
-                if (window.showAdvisorMsg) window.showAdvisorMsg(`💰 Продадохте ${troop.name} за ${refund} злато.`);
+                if (!hero) return;
+                sellTroop(troopId, qty, hero);
+                updateMarketUI();
+                modal.querySelectorAll('.owned-count span').forEach(span => {
+                    let troopIdFromSpan = span.id.replace('count-', '');
+                    let newCount = hero.armyDetails[troopIdFromSpan] || 0;
+                    span.innerText = newCount;
+                });
             });
         });
         
@@ -490,5 +479,5 @@
     let initialHero = getSelectedHero();
     if (initialHero) initHero(initialHero);
     
-    console.log("✅ armyMarket.js зареден (финална версия – работят бутоните за всички герои)");
+    console.log("✅ armyMarket.js зареден (с +1, +10, +100 бутони за покупка)");
 })();
