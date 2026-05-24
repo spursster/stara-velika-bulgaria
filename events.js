@@ -1,11 +1,8 @@
 /**
-==========================================================================
 ПРОЕКТ: ВЕЛИКА БЪЛГАРИЯ
-ФАЙЛ: events.js (ПЪЛЕН – 140+ СЪБИТИЯ, МОДАЛЕН ИНТЕРФЕЙС, ЛЕТОПИС)
-ВЕРСИЯ: 4.0 – ГОТОВ ЗА УПОТРЕБА
-==========================================================================
+ФАЙЛ: events.js (КОРИГИРАН – 140+ СЪБИТИЯ, МОДАЛЕН ИНТЕРФЕЙС, ЛЕТОПИС)
+ВЕРСИЯ: 4.1 – ГОТОВ ЗА УПОТРЕБА (ОПРАВЕНИ СИНТАКСИС И БЕЗОПАСНИ ПРОВЕРКИ)
 */
-
 window.eventTemplates = {
     positive: [
         { t: "Благоденствие в {region}", desc: "Местните родове в {region} откриха нови пасища. Хазната на рода расте.", effect: { gold: 150, power: 5 } },
@@ -141,35 +138,20 @@ window.openEventsMenu = function() {
     if (document.getElementById('events-menu-modal')) return;
     const modal = document.createElement('div');
     modal.id = 'events-menu-modal';
-    modal.style.cssText = `
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background: rgba(0,0,0,0.85);
-        backdrop-filter: blur(8px);
-        z-index: 200000;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-family: 'Cinzel', serif;
-    `;
+    modal.style.cssText = `position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); backdrop-filter: blur(8px); z-index: 200000; display: flex; align-items: center; justify-content: center; font-family: 'Cinzel', serif;`;
     modal.innerHTML = `
-        <div style="background: #1a1a2e; border: 2px solid #d4af37; border-radius: 24px; padding: 25px; max-width: 400px; width: 90%; text-align: center;">
-            <h2 style="color: #ffd700;">📜 Свещен Летопис</h2>
-            <p style="color: #ccc;">Предизвикайте съдбата си – всяко събитие променя хода на историята.</p>
-            <button id="trigger-event-btn" style="background: #daa520; color: #000; border: none; padding: 12px 20px; border-radius: 40px; font-weight: bold; cursor: pointer; width: 100%; margin: 15px 0;">
-                📜 ИЗВЕСТИНУВАЙ СЪБИТИЕ
-            </button>
-            <button id="close-events-modal" style="background: #2c2c3a; border: 1px solid #d4af37; color: #ffd700; padding: 8px 16px; border-radius: 30px; cursor: pointer; width: 100%;">
-                Затвори
-            </button>
-        </div>
-    `;
+        <div style="background: #1a1a2e; border: 2px solid #d4af37; border-radius: 24px; padding: 25px; max-width: 400px; width: 90%; text-align: center;"> 
+            <h2 style="color: #ffd700;">📜 Свещен Летопис</h2> 
+            <p style="color: #ccc;">Предизвикайте съдбата си – всяко събитие променя хода на историята.</p> 
+            <button id="trigger-event-btn" style="background: #daa520; color: #000; border: none; padding: 12px 20px; border-radius: 40px; font-weight: bold; cursor: pointer; width: 100%; margin: 15px 0;"> 📜 ИЗВЕСТИНУВАЙ СЪБИТИЕ </button> 
+            <button id="close-events-modal" style="background: #2c2c3a; border: 1px solid #d4af37; color: #ffd700; padding: 8px 16px; border-radius: 30px; cursor: pointer; width: 100%;"> Затвори </button> 
+        </div>`;
     document.body.appendChild(modal);
-    document.getElementById('trigger-event-btn').onclick = () => { modal.remove(); window.triggerRandomEvent(); };
-    document.getElementById('close-events-modal').onclick = () => modal.remove();
+
+    const triggerBtn = modal.querySelector('#trigger-event-btn');
+    if (triggerBtn) triggerBtn.onclick = () => { modal.remove(); window.triggerRandomEvent(); };
+    const closeBtn = modal.querySelector('#close-events-modal');
+    if (closeBtn) closeBtn.onclick = () => modal.remove();
     modal.addEventListener('click', (e) => { if (e.target === modal) modal.remove(); });
 };
 
@@ -180,20 +162,23 @@ window.triggerRandomEvent = function() {
     const hero = window.currentHero;
     if (!hero) return;
     if (window.initializeHeroRPGData) window.initializeHeroRPGData(hero);
-    
     let skills = hero.skills || {};
     let isPositive = Math.random() > 0.4;
     let pool = isPositive ? window.eventTemplates.positive : window.eventTemplates.negative;
     let template = pool[Math.floor(Math.random() * pool.length)];
 
+    // Безопасно вземане на регион
     let randomRegion = "Мизия";
-    if (window.playerRegions && window.playerRegions.flat().length > 0) {
-        const flatRegs = window.playerRegions.flat();
-        randomRegion = flatRegs[Math.floor(Math.random() * flatRegs.length)];
+    if (window.playerRegions) {
+        const flat = Array.isArray(window.playerRegions) ? (window.playerRegions.flat ? window.playerRegions.flat() : window.playerRegions) : [];
+        const validRegions = flat.filter(r => typeof r === 'string' && r.length > 0);
+        if (validRegions.length > 0) {
+            randomRegion = validRegions[Math.floor(Math.random() * validRegions.length)];
+        }
     }
 
-    let eventTitle = template.t.replace("{region}", randomRegion).replace("{hero}", hero.name).replace("{clan}", hero.clan || "Дуло");
-    let eventText = template.desc.replace("{region}", randomRegion).replace("{hero}", hero.name).replace("{clan}", hero.clan || "Дуло");
+    let eventTitle = template.t.replace(/{region}/g, randomRegion).replace(/{hero}/g, hero.name).replace(/{clan}/g, hero.clan || "Дуло");
+    let eventText = template.desc.replace(/{region}/g, randomRegion).replace(/{hero}/g, hero.name).replace(/{clan}/g, hero.clan || "Дуло");
 
     let goldEffect = template.effect.gold || 0;
     let armyEffect = template.effect.army || 0;
@@ -229,9 +214,10 @@ window.triggerRandomEvent = function() {
     }
 
     // Добавяне в летописа
+    const yearStr = (window.gameTime ? `${window.gameTime.year} г. ${window.gameTime.era}` : "480 г. пр.н.е.");
     if (window.addWorldEvent) {
-        const effectText = `Злато: ${goldEffect>=0?"+":""}${goldEffect}, Армия: ${armyEffect>=0?"+":""}${armyEffect}, Сила: ${powerEffect>=0?"+":""}${powerEffect}`;
-        window.addWorldEvent(eventTitle, eventText + " " + effectText, isPositive ? "✨" : "⚠️", window.currentYear);
+        const effectText = `Злато: ${goldEffect >=0? "+ ": ""}${goldEffect}, Армия: ${armyEffect >=0? "+ ": ""}${armyEffect}, Сила: ${powerEffect >=0? "+ ": ""}${powerEffect}`;
+        window.addWorldEvent(eventTitle, eventText + "  " + effectText, isPositive ? "✨ " : "⚠️ ", yearStr);
     }
 
     // Показване на модал с резултата
@@ -242,11 +228,10 @@ window.triggerRandomEvent = function() {
             if (modal) modal.remove();
             if (window.updateCharacterUI) window.updateCharacterUI(hero);
             if (window.renderTop6LeadersUI) window.renderTop6LeadersUI();
-            // НЕ отваряме отново менюто – оставаме на картата
         }
     }]);
 
-    console.log(`📜 СЪБИТИЕ: ${eventTitle} | Ефекти: злато ${goldEffect}, армия ${armyEffect}, сила ${powerEffect}`);
+    console.log(`📜  СЪБИТИЕ: ${eventTitle} | Ефекти: злато ${goldEffect}, армия ${armyEffect}, сила ${powerEffect}`);
 };
 
 // =========================================================================
@@ -258,14 +243,12 @@ window.showEventModal = function(title, text, options) {
     modal = document.createElement('div');
     modal.id = 'event-overlay-modal';
     modal.style.cssText = `position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.85); display: flex; align-items: center; justify-content: center; z-index: 10000;`;
-
     modal.innerHTML = `
         <div style="background: #0a0a0a; border: 2px solid #d4af37; padding: 25px; color: white; text-align: center; border-radius: 8px; box-shadow: 0 0 30px rgba(0,0,0,0.95); max-width: 450px; width: 90%; box-sizing: border-box;">
             <h3 style="color: #ffd700; font-family: 'Cinzel', serif; margin: 0 0 15px 0; text-transform: uppercase; font-size: 1.1em; letter-spacing: 1px;">${title}</h3>
             <p style="font-size: 13px; line-height: 1.6; margin: 0 0 25px 0; color: #ccc;">${text}</p>
             <div id="event-options-container"></div>
-        </div>
-    `;
+        </div>`;
     document.body.appendChild(modal);
 
     const container = document.getElementById('event-options-container');
