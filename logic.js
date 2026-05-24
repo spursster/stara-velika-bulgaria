@@ -1,8 +1,7 @@
 /**
  ==========================================================================
  ПРОЕКТ: ВЕЛИКА БЪЛГАРИЯ
- ФАЙЛ: logic.js (С ПОДДРЪЖКА ЗА ПОРТРЕТИ НА ГЕРОИ)
- ВЕРСИЯ: 2.3 - ПОРТРЕТИ ОТ POLLINATIONS.AI
+ ФАЙЛ: logic.js (ВЕРСИЯ 3.0 - СЛУЧАЕН ГЕРОЙ, НУЛИРАНЕ НА ФЛАГОВЕ, РАВНОПОСТАВЕНИ ГЕРОИ)
  ==========================================================================
  */
 
@@ -18,47 +17,85 @@ document.addEventListener('DOMContentLoaded', function() {
     }, 150);
 });
 
-window.initNewGame = function() {};
+// ==================== ФУНКЦИЯ ЗА СЛУЧАЕН ГЕРОЙ ОТ DATABASE.JS ====================
+function getRandomHeroFromDatabase() {
+    // Вземаме всички владетели от всички династии (дефинирани в database.js)
+    if (!window.bulgarianDynasties) {
+        console.error("bulgarianDynasties не е зареден! Използвам резервен герой.");
+        return { name: "Кубрат", clan: "Дуло", power: 130, gold: 1500, armySize: 400 };
+    }
+    
+    let allRulers = [];
+    let rulerToDynasty = {};
+    
+    for (let dynastyName in window.bulgarianDynasties) {
+        let rulers = window.bulgarianDynasties[dynastyName].rulers;
+        if (rulers && rulers.length) {
+            for (let ruler of rulers) {
+                allRulers.push(ruler);
+                rulerToDynasty[ruler] = dynastyName;
+            }
+        }
+    }
+    
+    if (allRulers.length === 0) {
+        return { name: "Кубрат", clan: "Дуло", power: 130, gold: 1500, armySize: 400 };
+    }
+    
+    let randomName = allRulers[Math.floor(Math.random() * allRulers.length)];
+    let dynasty = rulerToDynasty[randomName];
+    
+    // Еднакви базови стойности за ВСИЧКИ герои (без "легендарни" бонуси)
+    let power = 130;
+    let gold = 1500;
+    let army = 400;
+    
+    return {
+        name: randomName,
+        clan: dynasty,
+        power: power,
+        gold: gold,
+        armySize: army,
+        currentArmy: army,
+        heroPower: power
+    };
+}
 
 window.startFreshGameLogic = function() {
-    let selectedName = "Кубрат";
-    let selectedClan = "Дуло";
+    // ----- 1. СЛУЧАЕН ГЕРОЙ -----
+    let heroData = getRandomHeroFromDatabase();
+    let selectedName = heroData.name;
+    let selectedClan = heroData.clan;
+    let startGold = heroData.gold;
+    let startArmy = heroData.armySize;
+    let startPower = heroData.heroPower;
 
-    if (window.clans) {
-        const clanKeys = Object.keys(window.clans);
-        if (clanKeys.length > 0) {
-            selectedClan = clanKeys[Math.floor(Math.random() * clanKeys.length)];
-            const heroesList = window.clans[selectedClan].heroes;
-            if (heroesList && heroesList.length > 0) {
-                selectedName = heroesList[Math.floor(Math.random() * heroesList.length)];
-            }
+    // ----- 2. НУЛИРАНЕ НА ВСИЧКИ ФЛАГОВЕ В WORLD DATA -----
+    if (!window.worldData) window.worldData = {};
+    if (!window.worldData.clans) window.worldData.clans = {};
+    
+    // Обхождаме всички съществуващи кланове (от world_data.js) и ги нулираме
+    for (let key in window.worldData.clans) {
+        let clan = window.worldData.clans[key];
+        if (clan) {
+            clan.isJoined = false;
+            clan.isFavoriteInBarracks = false;
         }
     }
+    
+    // Ако има други обекти (напр. от предишна игра) – изтриваме всички, за да започнем начисто
+    // Но запазваме структурата, защото worldData.clans идва от world_data.js
+    // Просто гарантираме, че няма остатъчни флагове.
 
-    // ========== НАЧАЛО НА ПОПРАВКАТА ==========
-    // 1. Нулираме флаговете на всички кланове (и в worldData.clans, и във всички обекти)
-    if (window.worldData && window.worldData.clans) {
-        for (let key in window.worldData.clans) {
-            let clan = window.worldData.clans[key];
-            if (clan) {
-                clan.isJoined = false;
-                clan.isFavoriteInBarracks = false;
-            }
-        }
-    } else {
-        if (!window.worldData) window.worldData = {};
-        if (!window.worldData.clans) window.worldData.clans = {};
-    }
-
-    // 2. Създаваме активния герой
+    // ----- 3. СЪЗДАВАНЕ НА АКТИВНИЯ ГЕРОЙ -----
     window.currentHero = {
-        name: selectedName, 
+        name: selectedName,
         clan: selectedClan,
-        gold: 1500,
-        armySize: 500,
-        currentArmy: 500,
-        heroPower: 150,
-        age: 50, 
+        gold: startGold,
+        armySize: startArmy,
+        currentArmy: startArmy,
+        heroPower: startPower,
+        age: 30 + Math.floor(Math.random() * 31),  // случайна възраст 30-60
         techLevel: 1,
         level: 1,
         xp: 0,
@@ -68,45 +105,44 @@ window.startFreshGameLogic = function() {
         equipment: Array(12).fill(null),
         skills: { tactics: 0, endurance: 0, economy: 0, mysticism: 0, leadership: 0 },
         inventory: Array(12).fill(null),
-        isFavoriteInBarracks: true,   // само активният герой е любим
+        isFavoriteInBarracks: true,   // само активният е любим
         isJoined: true
     };
 
-    // 3. Добавяме активния герой в worldData.clans
+    // ----- 4. ДОБАВЯНЕ В WORLD DATA -----
     window.worldData.clans[selectedClan] = window.currentHero;
+    window.unlockedLeaders = [window.currentHero];
 
-    // 4. Запазваме списъка с любими само с името на активния герой
+    // ----- 5. ИЗЧИСТВАНЕ НА LOCALSTORAGE -----
     const favorites = [selectedName];
     localStorage.setItem('barracksFavorites', JSON.stringify(favorites));
-
-    // 5. Задължително изтриваме и другите ключове, свързани с любими (за всеки случай)
     localStorage.removeItem('favoriteHeroesFinal');
     localStorage.removeItem('heroAutoState');
+    // (GreatBulgaria_SaveGame ще се запази след малко)
 
-    window.unlockedLeaders = [window.currentHero];
-    // ========== КРАЙ НА ПОПРАВКАТА ==========
-
+    // ----- 6. ВРЕМЕ -----
     window.gameTime = { seasonIndex: 0, year: 480, era: "пр.н.е." };
 
+    // ----- 7. ГЕНЕРИРАНЕ НА РЕГИОНИ (ако има функция) -----
     if (typeof window.generateProceduralRegions === 'function') {
         window.generateProceduralRegions(30, true);
     } else {
         console.warn("generateProceduralRegions не е дефинирана – пропускам генерирането.");
     }
 
+    // ----- 8. РЕЖИМ НА ИГРА -----
     if (!window.gameMode) {
         window.gameMode = 'classic';
     }
 
     if (window.gameMode === 'solo') {
-        console.log("🌍 Стартиране в СОЛО РЕЖИМ");
-
+        console.log("🌍 Стартиране в СОЛО РЕЖИМ със случаен герой:", selectedName);
+        // В соло режим деактивираме всички други кланове (освен активния)
         for (let key in window.worldData.clans) {
             if (key !== window.currentHero.clan) {
                 window.worldData.clans[key].isJoined = false;
             }
         }
-
         window.currentRegion = "Плиска";
         window.companions = [];
         window.activeQuests = [];
@@ -117,7 +153,7 @@ window.startFreshGameLogic = function() {
         }
 
         if (window.showAdvisorMsg) {
-            window.showAdvisorMsg("🌍 Добре дошли в соло режима! Изследвайте света, намирайте спътници и изпълнявайте куестове.");
+            window.showAdvisorMsg(`🌍 Добре дошли, ${selectedName} от рода ${selectedClan}! Изследвайте света, намирайте спътници и изпълнявайте куестове.`);
         }
         
         if (typeof window.initSoloMode === 'function') {
@@ -126,9 +162,13 @@ window.startFreshGameLogic = function() {
             console.warn("initSoloMode не е дефинирана");
         }
     } else {
-        console.log("🏰 Стартиране в КЛАСИЧЕСКИ РЕЖИМ");
+        console.log("🏰 Стартиране в КЛАСИЧЕСКИ РЕЖИМ със случаен герой:", selectedName);
+        if (window.showAdvisorMsg) {
+            window.showAdvisorMsg(`🏰 Вие сте ${selectedName} от могъщия род ${selectedClan}. Водихте народа си към нова ера!`);
+        }
     }
 
+    // ----- 9. ОБНОВЯВАНЕ НА UI -----
     if (window.updateCharacterUI) window.updateCharacterUI(window.currentHero);
     if (window.renderTop6LeadersUI) window.renderTop6LeadersUI();
     if (typeof window.renderSingleBar === 'function') window.renderSingleBar();
@@ -141,8 +181,11 @@ window.startFreshGameLogic = function() {
     
     if (window.updatePortalContainerUI) window.updatePortalContainerUI();
 
+    // ----- 10. ЗАПАЗВАНЕ НА ИГРАТА -----
     window.saveGreatBulgariaGame();
 };
+
+// ==================== ОСТАНАЛИТЕ ФУНКЦИИ (ЗАПАЗВАНЕ/ЗАРЕЖДАНЕ) ОСТАВЯМЕ БЕЗ ПРОМЯНА ====================
 
 window.saveGreatBulgariaGame = function() {
     if (!window.currentHero) return;
