@@ -34,7 +34,7 @@
                 return { target: count, visitedRegions: [], region: region };
             },
             check: (quest, hero, regionTrigger, eventType) => {
-                if (eventType === "travel" && quest.extraData.region === hero.currentRegion && !quest.extraData.visitedRegions.includes(regionTrigger)) {
+                if (eventType === "travel" && quest.extraData.region === regionTrigger && !quest.extraData.visitedRegions.includes(regionTrigger)) {
                     quest.extraData.visitedRegions.push(regionTrigger);
                     quest.progress = quest.extraData.visitedRegions.length;
                     return true;
@@ -71,10 +71,18 @@
             desc: "Събери {amount} злато в {region} (чрез битки/събития).",
             generateTarget: (region) => {
                 let amount = 200 + Math.floor(Math.random() * 500);
-                return { target: amount, resource: "gold", region: region };
+                return { target: amount, resource: "gold", region: region, initialGold: 0 };
             },
             check: (quest, hero, regionTrigger, eventType) => {
-                // Тази проверка се прави ръчно при промяна на златото, за опростяване винаги връща false (ще се завършва по друг начин)
+                // ✅ Поправка: Куестът вече следи реалното натрупване на злато
+                if (hero && hero.gold !== undefined) {
+                    if (quest.extraData.initialGold === 0) quest.extraData.initialGold = hero.gold;
+                    let gained = Math.max(0, hero.gold - quest.extraData.initialGold);
+                    if (gained >= quest.target - quest.progress) {
+                        quest.progress = quest.target;
+                        return true;
+                    }
+                }
                 return false;
             }
         },
@@ -218,11 +226,11 @@
         if (anyChanged && typeof window.refreshQuestsUI === 'function') window.refreshQuestsUI();
     };
 
-    // Хук за събития
-    if (window.endGroupBattle) {
+    // ✅ Хук за събития (поправен синтаксис и безопасен за други модули)
+    if (typeof window.endGroupBattle === 'function') {
         const originalEndBattle = window.endGroupBattle;
         window.endGroupBattle = function(isVictory, reason, ...args) {
-            if (originalEndBattle) originalEndBattle(isVictory, reason, ...args);
+            originalEndBattle(isVictory, reason, ...args);
             if (isVictory && window.currentHero && window.currentRegion) {
                 window.checkAllQuestsProgress(window.currentHero, window.currentRegion, "battle");
             }
