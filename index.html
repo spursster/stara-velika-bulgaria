@@ -599,7 +599,11 @@
     const originalProcessTurn = window.processTurn;
     window.processTurn = function() {
         if (originalProcessTurn) originalProcessTurn();
-        
+        if (Math.random() < 0.15) {
+    if (typeof window.triggerRandomDuelChallenge === 'function') {
+        window.triggerRandomDuelChallenge();
+    }
+}
         if (!window.gameTime) {
             window.gameTime = { seasonIndex: 0, year: 480, era: "пр.н.е." };
         }
