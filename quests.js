@@ -1,4 +1,4 @@
-// ==================== СЛУЧАЙНИ КУЕСТОВЕ – КОРИГИРАНА ВЕРСИЯ ====================
+// ==================== СЛУЧАЙНИ КУЕСТОВЕ – ЕПИЧЕСКА ВЕРСИЯ (ХАРМОНИЗИРАНА) ====================
 (function() {
     if (typeof window.QUEST_TYPES === 'undefined') {
         window.QUEST_TYPES = {
@@ -74,7 +74,6 @@
                 return { target: amount, resource: "gold", region: region, initialGold: 0 };
             },
             check: (quest, hero, regionTrigger, eventType) => {
-                // ✅ Поправка: Куестът вече следи реалното натрупване на злато
                 if (hero && hero.gold !== undefined) {
                     if (quest.extraData.initialGold === 0) quest.extraData.initialGold = hero.gold;
                     let gained = Math.max(0, hero.gold - quest.extraData.initialGold);
@@ -116,6 +115,17 @@
             }
         }
     };
+
+    // Функция за показване на съобщение (попап или летопис)
+    function showMessage(title, message, type = "info") {
+        if (window.showAdvisorPopup) {
+            window.showAdvisorPopup(title, message, type);
+        } else if (window.showAdvisorMsg) {
+            window.showAdvisorMsg(message);
+        } else {
+            console.log(`${title}: ${message}`);
+        }
+    }
 
     window.generateRandomQuest = function(regionName) {
         if (!window.worldData || !window.worldData.regions[regionName]) return null;
@@ -163,9 +173,7 @@
         if (!window.activeQuests) window.activeQuests = [];
         if (window.activeQuests.some(q => q.id === quest.id)) return false;
         window.activeQuests.push(quest);
-        if (window.showAdvisorMsg) {
-            window.showAdvisorMsg(`📜 НОВ КУЕСТ: ${quest.title}`);
-        }
+        showMessage("НОВ КУЕСТ", `📜 ${quest.title}`, "info");
         if (typeof window.refreshQuestsUI === 'function') window.refreshQuestsUI();
         return true;
     };
@@ -178,14 +186,15 @@
         if (!window.completedQuests) window.completedQuests = [];
         window.completedQuests.push(quest);
 
+        let rewardMsg = "";
         if (quest.reward.gold && hero) {
             hero.gold = (hero.gold || 0) + quest.reward.gold;
-            if (window.showAdvisorMsg) window.showAdvisorMsg(`💰 Получихте ${quest.reward.gold} злато за куеста!`);
+            rewardMsg += `<br>💰 +${quest.reward.gold} злато`;
         }
         if (quest.reward.xp && hero) {
             if (window.gainHeroXP) window.gainHeroXP(hero, quest.reward.xp);
             else hero.xp = (hero.xp || 0) + quest.reward.xp;
-            if (window.showAdvisorMsg) window.showAdvisorMsg(`📚 Получихте ${quest.reward.xp} опит!`);
+            rewardMsg += `<br>📚 +${quest.reward.xp} опит`;
         }
         if (quest.reward.artifact && hero) {
             if (window.historicalArtifacts) {
@@ -194,15 +203,17 @@
                 let artifact = { ...window.historicalArtifacts[randomKey] };
                 if (!hero.inventory) hero.inventory = [];
                 hero.inventory.push(artifact);
-                if (window.showAdvisorMsg) window.showAdvisorMsg(`🏺 Намерихте артефакт: ${artifact.name}!`);
+                rewardMsg += `<br>🏺 Намерихте артефакт: ${artifact.name}!`;
             }
         }
         if (quest.reward.companion && hero && window.gameMode === 'solo' && window.companions.length < 4) {
             if (typeof window.recruitCompanion === 'function') {
                 window.recruitCompanion(quest.region);
+                rewardMsg += `<br>👥 Нов спътник!`;
             }
         }
-        if (window.showAdvisorMsg) window.showAdvisorMsg(`✅ КУЕСТ ЗАВЪРШЕН: ${quest.title}`);
+
+        showMessage("КУЕСТ ЗАВЪРШЕН", `✅ ${quest.title}${rewardMsg}`, "success");
         if (typeof window.refreshQuestsUI === 'function') window.refreshQuestsUI();
         return true;
     };
@@ -226,7 +237,7 @@
         if (anyChanged && typeof window.refreshQuestsUI === 'function') window.refreshQuestsUI();
     };
 
-    // ✅ Хук за събития (поправен синтаксис и безопасен за други модули)
+    // Хук за събития (без да презаписва други модули)
     if (typeof window.endGroupBattle === 'function') {
         const originalEndBattle = window.endGroupBattle;
         window.endGroupBattle = function(isVictory, reason, ...args) {
@@ -237,5 +248,5 @@
         };
     }
 
-    console.log("✅ Коригираната система за куестове е активна.");
+    console.log("✅ Епическата система за куестове е активна (хармонизирана версия).");
 })();
