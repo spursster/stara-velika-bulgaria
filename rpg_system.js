@@ -68,8 +68,11 @@ window.consumeStoredXPForHero = function(hero) {
             hero.heroPower += 25;
             leveledUp = true;
             requiredXP = window.rpgDatabase.getXPRequiredForLevel(hero.level);
-            showRPGMessage("НИВО НАГОРЕ", `🆙 ${hero.name} достигна Ниво ${hero.level} (от натрупан опит)! +1 Точка за умения`, "success");
+           // showRPGMessage("НИВО НАГОРЕ", `🆙 ${hero.name} достигна Ниво ${hero.level} (от натрупан опит)! +1 Точка за умения`, "success");
         }
+        if (hero === window.currentHero || hero.isFavorite === true) {
+    showRPGMessage("НИВО НАГОРЕ", `🆙 ${hero.name} достигна Ниво ${hero.level} (от натрупан опит)! +1 Точка за умения`, "success");
+}
         if (leveledUp) {
             if (window.checkArcheAgeClass) window.checkArcheAgeClass(hero);
             if (!hero.isAuto && hero.skillPoints > 0 && window.autoAssignSkillPoint) {
