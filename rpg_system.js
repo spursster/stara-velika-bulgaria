@@ -1,19 +1,37 @@
 // =========================================================================
-// ВЕЛИКА БЪЛГАРИЯ - rpg_system.js (КОРИГИРАН – СТАБИЛНО ИЗЧИСЛЕНИЕ)
+// ВЕЛИКА БЪЛГАРИЯ - rpg_system.js (ВЕРСИЯ 6.0 – ЕПИЧЕСКА, С АВТО ЕКИПИРОВКА)
 // =========================================================================
+
 window.rpgDatabase = window.rpgDatabase || {};
+
+// Нова формула за XP (по-балансирана)
 window.rpgDatabase.getXPRequiredForLevel = function(level) {
-    return (level || 1) * 150;
+    return Math.floor(100 + (level - 1) * 50 + Math.pow(level - 1, 1.5) * 5);
 };
+
+// Разширена база с питомци (добавени нови)
 window.rpgDatabase.petsDatabase = {
     "falcon": { id: "falcon", name: "Родов Сокол", icon: "🦅", desc: "Тактическа бойна мощ: +15% обща сила при щурм." },
     "wolf": { id: "wolf", name: "Вълк Единак", icon: "🐺", desc: "Удар на глутницата: +10% шанс за критичен удар." },
     "stallion": { id: "stallion", name: "Степен Жребец", icon: "🐎", desc: "Конна тактика: Намалява щетите над войската с 15%." },
     "bear": { id: "bear", name: "Балканска Мечка", icon: "🐻", desc: "Родова мощ: Повишава издръжливостта на армията при защита с 20%." },
-    "viper": { id: "viper", name: "Усойница", icon: "🐍", desc: "Отровено острие: Премахва 5% от вражеската защита на ход." }
+    "viper": { id: "viper", name: "Усойница", icon: "🐍", desc: "Отровено острие: Премахва 5% от вражеската защита на ход." },
+    // Нови питомци
+    "dragonling": { id: "dragonling", name: "Млад дракон", icon: "🐉", desc: "Огнено дихание: +20% щети при атака." },
+    "phoenix": { id: "phoenix", name: "Феникс", icon: "🔥", desc: "Възкресение: 30% шанс да се съживи след смърт." }
 };
 
-// ==================== ИНИЦИАЛИЗАЦИЯ ====================
+// Помощна функция за показване на съобщения
+function showRPGMessage(title, message, type = "info") {
+    if (window.showAdvisorPopup) {
+        window.showAdvisorPopup(title, message, type);
+    } else if (window.showAdvisorMsg) {
+        window.showAdvisorMsg(message);
+    } else {
+        console.log(`${title}: ${message}`);
+    }
+}
+// ==================== ИНИЦИАЛИЗАЦИЯ НА ГЕРОЙ (С НОВИ ПОЛЕТА) ====================
 window.initializeHeroRPGData = function(hero) {
     if (!hero) return;
     if (hero.isRPGInitialized) return;
@@ -32,9 +50,11 @@ window.initializeHeroRPGData = function(hero) {
     if (!hero.inventory) hero.inventory = [];
     if (hero.pet === undefined) hero.pet = null;
     if (hero.learnedSkills === undefined) hero.learnedSkills = {};
+    // Нови полета
+    if (hero.titles === undefined) hero.titles = [];       // списък с титли
+    if (hero.prestige === undefined) hero.prestige = 0;   // престиж (за редки награди)
     hero.isRPGInitialized = true;
 };
-
 // ==================== ФУНКЦИЯ ЗА КОНСУМИРАНЕ НА STOREDXP ====================
 window.consumeStoredXPForHero = function(hero) {
     if (!hero) return false;
@@ -48,31 +68,33 @@ window.consumeStoredXPForHero = function(hero) {
             hero.heroPower += 25;
             leveledUp = true;
             requiredXP = window.rpgDatabase.getXPRequiredForLevel(hero.level);
-            if (window.showAdvisorMsg) {
-                window.showAdvisorMsg(`🆙 ${hero.name} достигна Ниво ${hero.level} (от натрупан опит)! +1 Точка за умения`);
-            }
+            showRPGMessage("НИВО НАГОРЕ", `🆙 ${hero.name} достигна Ниво ${hero.level} (от натрупан опит)! +1 Точка за умения`, "success");
         }
         if (leveledUp) {
             if (window.checkArcheAgeClass) window.checkArcheAgeClass(hero);
             if (!hero.isAuto && hero.skillPoints > 0 && window.autoAssignSkillPoint) {
                 window.autoAssignSkillPoint(hero);
             }
+            // Автоматична екипировка (ако съществува функцията от items.js)
+            if (hero.isAuto && typeof window.autoEquipHero === 'function') {
+                window.autoEquipHero(hero);
+            }
             if (window.updateCharacterUI) window.updateCharacterUI(hero);
-            if (window.renderTop6LeadersUI) window.renderTop6LeadersUI();
+            if (window.renderTop6HeroesUI) window.renderTop6HeroesUI();
         }
         return leveledUp;
     }
     return false;
 };
 
-// ==================== ОПИТ И НИВА ====================
+// ==================== ОПИТ И НИВА (ОСНОВНА ФУНКЦИЯ) ====================
 window.gainHeroXP = function(hero, amount) {
     if (!hero) return;
     window.initializeHeroRPGData(hero);
     if (hero.isAuto) {
         hero.xp += amount;
-        var requiredXP = window.rpgDatabase.getXPRequiredForLevel(hero.level);
-        var leveledUp = false;
+        let requiredXP = window.rpgDatabase.getXPRequiredForLevel(hero.level);
+        let leveledUp = false;
         while (hero.xp >= requiredXP && hero.level < 100) {
             hero.xp -= requiredXP;
             hero.level++;
@@ -80,53 +102,55 @@ window.gainHeroXP = function(hero, amount) {
             hero.heroPower += 25;
             leveledUp = true;
             requiredXP = window.rpgDatabase.getXPRequiredForLevel(hero.level);
-            if (window.showAdvisorMsg) {
-                window.showAdvisorMsg("🆙  " + hero.name + " достигна Ниво  " + hero.level + "! (+1 Точка за умения)");
-            }
+            showRPGMessage("НИВО НАГОРЕ", `🆙 ${hero.name} достигна Ниво ${hero.level}! (+1 Точка за умения)`, "success");
         }
         if (leveledUp) {
             if (window.checkArcheAgeClass) window.checkArcheAgeClass(hero);
             if (hero.isAuto && hero.skillPoints > 0 && window.autoAssignSkillPoint) {
                 window.autoAssignSkillPoint(hero);
             }
+            // Автоматична екипировка след нивап
+            if (hero.isAuto && typeof window.autoEquipHero === 'function') {
+                window.autoEquipHero(hero);
+            }
         }
     } else {
         hero.storedXP += amount;
-        if (window.showAdvisorMsg) {
-            window.showAdvisorMsg("📚  " + hero.name + " натрупа  " + amount + " ръчен опит! (Общо:  " + hero.storedXP + ")");
-        }
+        showRPGMessage("РЪЧЕН ОПИТ", `📚 ${hero.name} натрупа ${amount} ръчен опит! (Общо: ${hero.storedXP})`, "info");
         window.consumeStoredXPForHero(hero);
     }
-    if (window.renderTop6LeadersUI) window.renderTop6LeadersUI();
+    if (window.renderTop6HeroesUI) window.renderTop6HeroesUI();
     if (window.updateCharacterUI) window.updateCharacterUI(hero);
     if (window.openHeroRPGModal && document.getElementById('hero-rpg-modal') && document.getElementById('hero-rpg-modal').style.display === 'block') {
         window.openHeroRPGModal(hero.clan);
     }
 };
-
 // ==================== АВТОМАТИЧЕН / РЪЧЕН РЕЖИМ ====================
-window.toggleHeroAutoMode = function(clanKey) {
-    var hero = null;
-    if (window.worldData && window.worldData.clans && window.worldData.clans[clanKey]) hero = window.worldData.clans[clanKey];
-    else if (window.unlockedLeaders) hero = window.unlockedLeaders.find(function(h) { return h.clan === clanKey || h.name === clanKey; });
-    else if (window.currentHero && window.currentHero.clan === clanKey) hero = window.currentHero;
+window.toggleHeroAutoMode = function(heroId) {
+    let hero = null;
+    if (window.worldData && window.worldData.clans && window.worldData.clans[heroId]) {
+        hero = window.worldData.clans[heroId];
+    } else if (window.unlockedHeroes) {
+        hero = window.unlockedHeroes.find(h => h.clan === heroId || h.name === heroId);
+    } else if (window.currentHero && window.currentHero.clan === heroId) {
+        hero = window.currentHero;
+    }
     if (!hero) return;
     window.initializeHeroRPGData(hero);
     hero.isAuto = !hero.isAuto;
     if (!hero.isAuto && hero.xp > 0) {
         hero.storedXP += hero.xp;
         hero.xp = 0;
-        if (window.showAdvisorMsg) window.showAdvisorMsg("🔄 Режимът на  " + hero.name + " е сменен на РЪЧЕН.  " + hero.storedXP + " XP са прехвърлени в склад.");
+        showRPGMessage("РЕЖИМ", `🔄 Режимът на ${hero.name} е сменен на РЪЧЕН. ${hero.storedXP} XP са прехвърлени в склад.`, "info");
     } else if (hero.isAuto && hero.storedXP > 0) {
-        var amount = hero.storedXP;
+        let amount = hero.storedXP;
         hero.storedXP = 0;
         window.gainHeroXP(hero, amount);
     }
-    if (window.renderTop6LeadersUI) window.renderTop6LeadersUI();
-    var modal = document.getElementById('hero-rpg-modal');
-    if (modal && modal.style.display === 'block') window.openHeroRPGModal(clanKey);
+    if (window.renderTop6HeroesUI) window.renderTop6HeroesUI();
+    let modal = document.getElementById('hero-rpg-modal');
+    if (modal && modal.style.display === 'block') window.openHeroRPGModal(heroId);
 };
-
 // ==================== НОВА СИСТЕМА ЗА АВТОМАТИЧНО УЧЕНЕ НА УМЕНИЯ ====================
 window.autoAssignSkillPoint = function(hero) {
     if (hero.skillPoints <= 0) return;
@@ -165,12 +189,11 @@ window.autoAssignSkillPoint = function(hero) {
             const effect = random.skill.effect(hero.learnedSkills[random.skillKey]);
             if (effect.attackBonus) hero.heroPower += effect.attackBonus;
             if (effect.defenseBonus) hero.defense = (hero.defense || 0) + effect.defenseBonus;
-            if (window.showAdvisorMsg) window.showAdvisorMsg(`🤖 Автоматично: ${hero.name} научи "${random.skill.name}" (Ниво ${hero.learnedSkills[random.skillKey]})!`);
+            showRPGMessage("АВТО-УМЕНИЕ", `🤖 ${hero.name} научи "${random.skill.name}" (Ниво ${hero.learnedSkills[random.skillKey]})!`, "info");
         }
         attempts++;
     }
 };
-
 // ==================== НОВА КЛАСОВА ЕВОЛЮЦИЯ ====================
 window.checkArcheAgeClass = function(hero) {
     if (!hero) return;
@@ -193,10 +216,9 @@ window.checkArcheAgeClass = function(hero) {
         const oldClass = hero.currentClass;
         hero.currentClass = newClass.name;
         if (window.applyClassBonuses) window.applyClassBonuses(hero, newClass.name);
-        if (window.showAdvisorMsg) window.showAdvisorMsg(`👑 ЕВОЛЮЦИЯ: ${hero.name} се издигна от "${oldClass}" до "${hero.currentClass}" (${newClass.reqSkills.join(' + ')})!`);
+        showRPGMessage("ЕВОЛЮЦИЯ", `👑 ${hero.name} се издигна от "${oldClass}" до "${hero.currentClass}" (${newClass.reqSkills.join(' + ')})!`, "success");
     }
 };
-
 // ==================== ПОМОЩНИ ФУНКЦИИ ====================
 window.calculateArtifactSetBonuses = function(hero) {
     if (!hero || !hero.inventory) return {};
@@ -224,7 +246,6 @@ window.calculateArtifactSetBonuses = function(hero) {
     return totalSetBonus;
 };
 
-// ✅ КОРигирана: премахва интервали, прави сравнението сигурно
 function getPetBonuses(hero) {
     if (!hero || !hero.pet) return {};
     let petId = hero.pet;
@@ -238,24 +259,20 @@ function getPetBonuses(hero) {
         if (petName === "вълк единак") return { critChanceBonus: 0.10 };
         if (petName === "степен жребец") return { damageReduction: 0.15 };
         if (petName === "балканска мечка") return { defenseBonus: 20 };
+        if (petName === "млад дракон") return { attackBonusPercent: 0.20, fireDamage: 15 };
+        if (petName === "феникс") return { reviveChance: 0.30, fireDamage: 20 };
     }
     return {};
 }
 
-// ✅ КОРигирана: нулира defense преди изчисление, запазва baseHeroPower, предотвратява експоненциално натрупване
+// Преизчисляване на мощ (с поддръжка на новите бонуси)
 window.recalculateHeroPower = function(hero) {
     if (!hero) return 0;
     window.initializeHeroRPGData(hero);
-
-    // Запази базовата мощ веднъж при първо извикване
     if (!hero.baseHeroPower) hero.baseHeroPower = (hero.heroPower || 100);
-
     let base = hero.baseHeroPower;
     let artifactBonus = 0, setBonus = 0, skillBonus = 0, petBonus = 0;
-
-    // Нулиране на динамични полета преди всяко изчисление
     hero.defense = 0;
-
     // Артефакти
     if (hero.inventory && Array.isArray(hero.inventory)) {
         hero.inventory.forEach(item => {
@@ -275,8 +292,6 @@ window.recalculateHeroPower = function(hero) {
     if (petB.heroPower) petBonus += petB.heroPower;
     if (petB.attackBonusPercent) petBonus += Math.floor(base * petB.attackBonusPercent);
     if (petB.defenseBonus) hero.defense += petB.defenseBonus;
-
-    // Записваме чистата мощ
     hero.heroPower = Math.max(10, base + artifactBonus + setBonus + skillBonus + petBonus);
     return hero.heroPower;
 };
@@ -304,18 +319,32 @@ window.getHeroCombatBonus = function(hero, bonusType) {
     }
     return bonus;
 };
-
 // ==================== RPG МОДАЛ ====================
-window.openHeroRPGModal = function(clanKey) {
+window.openHeroRPGModal = function(heroId) {
     let hero = null;
-    if (clanKey && window.worldData?.clans?.[clanKey]) hero = window.worldData.clans[clanKey];
+    if (heroId && window.worldData?.clans?.[heroId]) hero = window.worldData.clans[heroId];
     else if (window.currentHero) hero = window.currentHero;
     if (!hero) {
         console.warn("Няма избран герой за RPG модала");
         return;
     }
     if (typeof window.showHeroProfile === 'function') window.showHeroProfile(hero);
-    else alert("RPG системата не е напълно заредена, но можете да управлявате героя от профила");
+    else showRPGMessage("ГРЕШКА", "RPG системата не е напълно заредена, но можете да управлявате героя от профила", "error");
 };
 
-console.log("✅ rpg_system.js зареден (финална версия – стабилно изчисление, фиксирани питомци)");
+// Автоматично извикване на autoEquipHero при старт (за всички авто герои)
+setTimeout(() => {
+    if (window.worldData && window.worldData.clans && typeof window.autoEquipHero === 'function') {
+        for (let key in window.worldData.clans) {
+            let hero = window.worldData.clans[key];
+            if (hero.isJoined && hero.isAuto && hero.inventory && hero.inventory.length > 0) {
+                window.autoEquipHero(hero);
+            }
+        }
+        if (window.currentHero && window.currentHero.isAuto) {
+            window.autoEquipHero(window.currentHero);
+        }
+    }
+}, 1500);
+
+console.log("✅ rpg_system.js версия 6.0 зареден – с авто-екипировка, нова XP формула, подобрени питомци и пълна синхронизация.");
