@@ -1204,3 +1204,123 @@ function showAllHeroesModal() {
         });
     });
 }
+// ==================== ФОРСИРАНО ДОБАВЯНЕ НА ХАМБУРГЕР МЕНЮ ЗА ТЕЛЕФОНИ ====================
+(function forceHamburgerMenu() {
+    // Функция за създаване на хамбургер бутона
+    function createHamburgerButton() {
+        // Проверка дали вече съществува
+        if (document.querySelector('.menu-toggle')) {
+            console.log("Хамбургер бутонът вече съществува.");
+            return;
+        }
+        
+        const topBarControls = document.querySelector('.top-bar-controls');
+        if (!topBarControls) {
+            console.warn("top-bar-controls не е намерен, опитвам отново след 500ms...");
+            setTimeout(createHamburgerButton, 500);
+            return;
+        }
+        
+        // Създаваме бутона
+        const menuBtn = document.createElement('button');
+        menuBtn.className = 'glass-btn menu-toggle';
+        menuBtn.innerHTML = '☰';
+        menuBtn.setAttribute('aria-label', 'Меню');
+        // Стилове, които гарантират видимост
+        menuBtn.style.cssText = `
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            width: 40px !important;
+            height: 40px !important;
+            font-size: 1.6rem !important;
+            background: rgba(212, 175, 55, 0.4) !important;
+            border-radius: 50% !important;
+            margin: 0 5px !important;
+            color: #ffd700 !important;
+            border: 1px solid #d4af37 !important;
+            cursor: pointer !important;
+            z-index: 1000 !important;
+        `;
+        
+        // Поставяме най-отпред (след бутона за нова игра, ако има такъв)
+        const newGameContainer = document.querySelector('.new-game-menu-container');
+        if (newGameContainer) {
+            newGameContainer.insertAdjacentElement('afterend', menuBtn);
+        } else {
+            topBarControls.prepend(menuBtn);
+        }
+        
+        // Закачаме събитието
+        menuBtn.onclick = function(e) {
+            e.stopPropagation();
+            toggleMobileMenu();
+        };
+        
+        console.log("✅ Хамбургер бутонът е създаден успешно!");
+    }
+    
+    // Функция за отваряне/затваряне на менюто (ако липсва, я създаваме)
+    if (typeof window.toggleMobileMenu !== 'function') {
+        window.toggleMobileMenu = function() {
+            let menu = document.getElementById('mobile-menu-panel');
+            if (!menu) {
+                menu = document.createElement('div');
+                menu.id = 'mobile-menu-panel';
+                menu.style.cssText = `
+                    position: fixed;
+                    bottom: 0;
+                    left: 0;
+                    width: 100%;
+                    background: rgba(0, 0, 0, 0.95);
+                    backdrop-filter: blur(12px);
+                    border-top: 2px solid #d4af37;
+                    z-index: 200000;
+                    padding: 12px;
+                    display: flex;
+                    flex-wrap: wrap;
+                    justify-content: center;
+                    gap: 10px;
+                    border-radius: 20px 20px 0 0;
+                `;
+                const buttonsToClone = document.querySelectorAll('.top-bar-controls .glass-btn:not(.menu-toggle):not(.all-heroes-btn)');
+                buttonsToClone.forEach(btn => {
+                    if (btn.closest('.new-game-menu-container')) return;
+                    const clone = btn.cloneNode(true);
+                    if (btn.onclick) clone.onclick = btn.onclick;
+                    else if (btn.getAttribute('onclick')) clone.setAttribute('onclick', btn.getAttribute('onclick'));
+                    menu.appendChild(clone);
+                });
+                document.body.appendChild(menu);
+            } else {
+                menu.remove();
+            }
+        };
+    }
+    
+    // Стартираме при зареждане на страницата, ако ширината е ≤ 600px
+    function init() {
+        if (window.innerWidth <= 600) {
+            createHamburgerButton();
+        }
+    }
+    
+    // Изпълняваме веднага, ако DOM е готов
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', init);
+    } else {
+        init();
+    }
+    
+    // При промяна на размера на екрана
+    window.addEventListener('resize', function() {
+        if (window.innerWidth <= 600 && !document.querySelector('.menu-toggle')) {
+            createHamburgerButton();
+        } else if (window.innerWidth > 600 && document.querySelector('.menu-toggle')) {
+            const btn = document.querySelector('.menu-toggle');
+            if (btn) btn.remove();
+            const menu = document.getElementById('mobile-menu-panel');
+            if (menu) menu.remove();
+        }
+    });
+})();
