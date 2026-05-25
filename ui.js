@@ -1151,6 +1151,7 @@ function showAllHeroesModal() {
     let gridHtml = '<div class="modal-content all-heroes-grid" style="max-width: 95%; width: 95%; padding: 15px; overflow-y: auto; max-height: 85vh;">';
     gridHtml += '<h3 style="color:#ffd700; text-align:center;">🏰 Всички герои</h3>';
     gridHtml += '<div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 10px;">';
+    gridHtml += `<div class="hero-grid-card" data-id="${hero.id}" data-class="${hero.className}" style="...">`;
 
     heroes.forEach(hero => {
         const needXP = 100 + (hero.level - 1) * 50;
