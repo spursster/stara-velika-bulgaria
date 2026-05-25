@@ -103,54 +103,50 @@ function getAllHeroesFromWorld() {
 window.openTavernUI = function() {
     const mainArea = document.getElementById('game-main-area');
     if (!mainArea) return;
-    const existingHeroes = getAllHeroesFromWorld();
-    const hiredNames = existingHeroes.map(h => (h.name || '').trim());
-    if (window.currentHero && !hiredNames.includes((window.currentHero.name || '').trim())) {
-        hiredNames.push((window.currentHero.name || '').trim());
-    }
-
-    let htmlContent = `
-    <div id="tavern-screen" style="padding:20px; background: rgba(10,10,10,0.98); border: 2px solid #d4af37; color: white; font-family: 'Cinzel', serif; box-sizing: border-box;">
-        <button onclick="window.backToMainMenu ? window.backToMainMenu() : location.reload()" style="position: absolute; top: 10px; left: 10px; width: 36px; height: 36px; background: rgba(0,0,0,0.6); border: 1px solid #ff4444; color: #ff4444; border-radius: 50%; font-size: 18px; cursor: pointer;">✕</button>
-        <h2 style="margin-top:0; color:#ffd700; text-transform:uppercase; text-align:center; letter-spacing:1px;">🍻 Военен съвет и Наемане на Герои</h2>
-        <p style="font-size:11px; color:#aaa; text-align:center; margin-bottom:20px;">Отключвайте свободни герои от наличните кланове.</p>
-        <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 12px; max-height: 380px; overflow-y: auto; padding-right: 5px;">`;
-
-    let availableCount = 0;
-    for (let clanName in window.clansDatabase) {
-        const clanData = window.clansDatabase[clanName];
-        for (let heroName of clanData.heroes) {
-            const cleanHeroName = heroName.trim();
-            if (!hiredNames.includes(cleanHeroName)) {
-                availableCount++;
-                let cost = 800;
-                let heroPower = 130;
-                if (["Александър III Велики", "Симеон Велики", "Кубрат", "Влад III Дракула"].includes(cleanHeroName)) {
-                    cost = 1500; heroPower = 190;
-                } else if (["Атила", "Филип II", "Самуил", "Птолемей I Сотер"].includes(cleanHeroName)) {
-                    cost = 1200; heroPower = 165;
-                }
-                htmlContent += `
-                <div style="background: rgba(20,20,20,0.8); border: 1px solid #444; padding: 12px; border-radius: 6px; display: flex; flex-direction: column; justify-content: space-between;">
-                    <div>
-                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:5px;">
-                            <strong style="color:#ffd700; font-size:13px;">${cleanHeroName}</strong>
-                            <span style="font-size:9px; background:#d4af37; color:#000; padding:1px 5px; font-weight:bold; border-radius:3px;">${clanName}</span>
-                        </div>
-                        <div style="font-size:10px; color:#ccc; margin-bottom:10px;">
-                           ⚔️ Бойна мощ: <strong>${heroPower}</strong><br>
-                           🛡️ Лична гвардия: <strong>200 бойци</strong>
-                        </div>
-                    </div>
-                    <button onclick="window.hireClanHero('${cleanHeroName}', '${clanName}', ${cost}, ${heroPower})" style="width:100%; background:#d4af37; color:#000; border:none; padding:6px; font-weight:bold; cursor:pointer; text-transform:uppercase; border-radius:4px; font-size:10px;">
-                       Отключи за 💰 ${cost}
-                    </button>
-                </div>`;
-            }
+    
+    // Вземаме всички герои от worldData.clans, които НЕ СА НАЕТИ (isJoined === false)
+    let availableHeroes = [];
+    for (let key in window.worldData.clans) {
+        let hero = window.worldData.clans[key];
+        if (hero.isJoined === false) {
+            availableHeroes.push({ id: key, ...hero });
         }
     }
-    if (availableCount === 0) {
-        htmlContent += `<div style="grid-column: 1/-1; text-align:center; padding:30px; color:#666;">Всички достъпни герои от родовите кланове са успешно отключени!</div>`;
+    
+    if (availableHeroes.length === 0) {
+        mainArea.innerHTML = `<div style="padding:20px; text-align:center; color:#888;">Няма повече герои за наемане. Всички са вече във вашата дружина!</div>`;
+        return;
+    }
+    
+    let htmlContent = `
+    <div id="tavern-screen" style="padding:20px; background: rgba(10,10,10,0.98); border: 2px solid #d4af37; color: white; font-family: 'Cinzel', serif; box-sizing: border-box; position:relative;">
+        <button onclick="window.backToMainMenu ? window.backToMainMenu() : location.reload()" style="position: absolute; top: 10px; left: 10px; width: 36px; height: 36px; background: rgba(0,0,0,0.6); border: 1px solid #ff4444; color: #ff4444; border-radius: 50%; font-size: 18px; cursor: pointer;">✕</button>
+        <h2 style="margin-top:0; color:#ffd700; text-transform:uppercase; text-align:center; letter-spacing:1px;">🍻 Военен съвет и Наемане на Герои</h2>
+        <p style="font-size:11px; color:#aaa; text-align:center; margin-bottom:20px;">Изберете герой, който да се присъедини към вашия род.</p>
+        <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 12px; max-height: 380px; overflow-y: auto; padding-right: 5px;">`;
+    
+    for (let hero of availableHeroes) {
+        let cost = 800;
+        let heroPower = hero.heroPower || 130;
+        if (hero.currentClass === "Легенда") { cost = 1500; heroPower = 190; }
+        else if (hero.currentClass === "Герой") { cost = 1200; heroPower = 165; }
+        
+        htmlContent += `
+        <div style="background: rgba(20,20,20,0.8); border: 1px solid #444; padding: 12px; border-radius: 6px; display: flex; flex-direction: column; justify-content: space-between;">
+            <div>
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:5px;">
+                    <strong style="color:#ffd700; font-size:13px;">${hero.name}</strong>
+                    <span style="font-size:9px; background:#d4af37; color:#000; padding:1px 5px; font-weight:bold; border-radius:3px;">${hero.clan}</span>
+                </div>
+                <div style="font-size:10px; color:#ccc; margin-bottom:10px;">
+                   ⚔️ Бойна мощ: <strong>${heroPower}</strong><br>
+                   🛡️ Лична гвардия: <strong>${hero.armySize} бойци</strong>
+                </div>
+            </div>
+            <button onclick="window.hireExistingHero('${hero.id}', ${cost})" style="width:100%; background:#d4af37; color:#000; border:none; padding:6px; font-weight:bold; cursor:pointer; text-transform:uppercase; border-radius:4px; font-size:10px;">
+               Отключи за 💰 ${cost}
+            </button>
+        </div>`;
     }
     htmlContent += `</div><button class="menu-btn" onclick="window.backToMainMenu ? window.backToMainMenu() : location.reload();" style="width: 100%; margin-top: 15px;">Назад към Главното Меню</button></div>`;
     mainArea.innerHTML = htmlContent;
