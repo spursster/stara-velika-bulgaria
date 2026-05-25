@@ -268,6 +268,7 @@ function getAllHeroes() {
                     skillPoints: clan.skillPoints || 0,
                     equipment: clan.equipment || Array(12).fill(null),
                     isCompanion: clan.isCompanion === true,
+                    isFavoriteInBarracks: clan.isFavoriteInBarracks || false,
                     portrait: clan.portrait
                 });
             }
@@ -969,7 +970,15 @@ function setupMobileLayout() {
             };
             topBarControls.prepend(menuBtn);
         }
-        
+        // Добавяме бутон "Всички герои" до хамбургер менюто (само на телефон)
+if (!document.querySelector('.all-heroes-btn')) {
+    const allHeroesBtn = document.createElement('button');
+    allHeroesBtn.className = 'glass-btn all-heroes-btn';
+    allHeroesBtn.innerHTML = '👥';
+    allHeroesBtn.setAttribute('aria-label', 'Всички герои');
+    allHeroesBtn.onclick = () => showAllHeroesModal();
+    topBarControls.appendChild(allHeroesBtn);
+}
         // Преместваме съдържанието на страничните панели (само веднъж)
         moveSidebarContentToMain();
         
@@ -992,8 +1001,8 @@ function toggleMobileMenu() {
     if (!menu) {
         menu = document.createElement('div');
         menu.id = 'mobile-menu-panel';
-        // Копираме основните бутони (без тези, които вече са скрити)
-        const buttonsToClone = document.querySelectorAll('.top-bar-controls .glass-btn:not(.menu-toggle), .icon-btn, .next-turn-btn');
+        // Взимаме само бутоните от горната лента, които са скрити (без menu-toggle)
+        const buttonsToClone = document.querySelectorAll('.top-bar-controls .glass-btn:not(.menu-toggle)');
         buttonsToClone.forEach(btn => {
             const clone = btn.cloneNode(true);
             if (btn.onclick) clone.onclick = btn.onclick;
@@ -1056,4 +1065,90 @@ if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', () => setupMobileLayout());
 } else {
     setupMobileLayout();
+}function showAllHeroesModal() {
+    const heroes = getAllHeroes();
+    if (!heroes.length) return;
+
+    // Създаваме модала
+    let modal = document.getElementById('all-heroes-modal');
+    if (modal) modal.remove();
+    modal = document.createElement('div');
+    modal.id = 'all-heroes-modal';
+    modal.className = 'market-modal'; // използва съществуващ клас за фон
+    modal.style.cssText = 'z-index: 200001;';
+
+    let gridHtml = '<div class="modal-content all-heroes-grid" style="max-width: 95%; width: 95%; padding: 15px; overflow-y: auto; max-height: 85vh;">';
+    gridHtml += '<h3 style="color:#ffd700; text-align:center;">🏰 Всички герои</h3>';
+    gridHtml += '<div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 10px;">';
+
+    heroes.forEach(hero => {
+        const needXP = 100 + (hero.level - 1) * 50;
+        const currentXP = hero.isAuto ? (hero.xp || 0) : (hero.storedXP || 0);
+        const xpPercent = Math.min(100, Math.floor((currentXP / needXP) * 100));
+        const classIcon = getClassIcon(hero.className);
+        const isFavorite = hero.isFavoriteInBarracks || false;
+        const favoriteIcon = isFavorite ? '❤️' : '🤍';
+
+        gridHtml += `
+            <div class="hero-grid-card" data-id="${hero.id}" style="background: rgba(0,0,0,0.6); border: 1px solid #c9a87b; border-radius: 12px; padding: 8px; cursor: pointer; transition: 0.2s;">
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <div style="font-size: 24px;">${classIcon}</div>
+                    <button class="favorite-toggle" data-id="${hero.id}" style="background: none; border: none; font-size: 18px; cursor: pointer;">${favoriteIcon}</button>
+                </div>
+                <div style="font-weight: bold; color: #ffdd99; font-size: 12px;">${hero.name}</div>
+                <div style="font-size: 9px; color: #ccaa77;">${hero.className} · Ниво ${hero.level}</div>
+                <div style="background: #2a1a0a; height: 4px; border-radius: 2px; margin: 4px 0;">
+                    <div style="background: #44aa44; height: 100%; width: ${xpPercent}%; border-radius: 2px;"></div>
+                </div>
+                <div style="display: flex; justify-content: space-between; font-size: 8px; margin-top: 4px;">
+                    <span>💪 ${hero.power}</span>
+                    <span>💰 ${hero.gold}</span>
+                    <span>⚔️ ${hero.army}</span>
+                </div>
+                <div style="font-size: 7px; color: #aaa;">${hero.isAuto ? '🤖 Auto' : '👤 Manual'}</div>
+            </div>
+        `;
+    });
+
+    gridHtml += '</div><button class="close-modal-btn" style="margin-top: 15px; background: #2c1a0c; border: none; border-radius: 30px; padding: 8px; color: #ffdd99; cursor: pointer; width: 100%;">Затвори</button></div>';
+    modal.innerHTML = gridHtml;
+    document.body.appendChild(modal);
+
+    // Затваряне
+    modal.querySelector('.close-modal-btn').onclick = () => modal.remove();
+    modal.addEventListener('click', (e) => { if (e.target === modal) modal.remove(); });
+
+    // Обработка на любими
+    modal.querySelectorAll('.favorite-toggle').forEach(btn => {
+        btn.onclick = (e) => {
+            e.stopPropagation();
+            const heroId = btn.getAttribute('data-id');
+            const hero = heroes.find(h => h.id == heroId);
+            if (hero) {
+                if (typeof window.toggleLeaderFavoriteInBarracks === 'function') {
+                    window.toggleLeaderFavoriteInBarracks(hero.name);
+                } else {
+                    // fallback: директна промяна
+                    hero.isFavoriteInBarracks = !hero.isFavoriteInBarracks;
+                    if (window.saveFavoriteHeroes) window.saveFavoriteHeroes();
+                    if (window.renderTop6LeadersUI) window.renderTop6LeadersUI();
+                }
+                // Обновяваме иконата
+                btn.innerText = hero.isFavoriteInBarracks ? '❤️' : '🤍';
+            }
+        };
+    });
+
+    // Клик върху карта – отваря профил на героя
+    modal.querySelectorAll('.hero-grid-card').forEach(card => {
+        card.addEventListener('click', (e) => {
+            if (e.target.classList.contains('favorite-toggle')) return;
+            const heroId = card.getAttribute('data-id');
+            const hero = heroes.find(h => h.id == heroId);
+            if (hero && typeof window.showHeroProfile === 'function') {
+                modal.remove();
+                window.showHeroProfile(hero);
+            }
+        });
+    });
 }
