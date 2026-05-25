@@ -1,41 +1,69 @@
 /** ========================================================================== 
-ПРОЕКТ: ВЕЛИКА БЪЛГАРИЯ ФАЙЛ: world_data.js (СВЕТОВНИ ДАННИ И ГЕОПОЛИТИКА) 
+ПРОЕКТ: ВЕЛИКА БЪЛГАРИЯ
+ФАЙЛ: world_data.js (ХАРМОНИЗИРАНА ВЕРСИЯ + 20 НОВИ ИМПЕРИИ)
+ВЕРСИЯ: 6.0 – РАЗШИРЕНА ВСЕЛЕНА
 ========================================================================== */ 
 
 window.worldData = {
+    // ==================== ОРИГИНАЛНИ ФРАКЦИИ ====================
     factions: { 
         bulgarian_empire: { nameBG: "Велика България", rulerTitleBG: "Кан", capitalBG: "Фанагория" }, 
         rhomaioi_empire: { nameBG: "Ромейска Империя (Rhomaioi)", relation: -20, power: 500 }, 
         persian_empire: { nameBG: "Персийска Империя", relation: 0, power: 1000 },
         khazar_khanate: { nameBG: "Хазарски Каганат", relation: -10, power: 600 },
         frankish_empire: { nameBG: "Франкска Империя", relation: 5, power: 700 },
-        abbasid_caliphate: { nameBG: "Абасидски Халифат", relation: -15, power: 900 }
+        abbasid_caliphate: { nameBG: "Абасидски Халифат", relation: -15, power: 900 },
+        
+        // ==================== 20 НОВИ ИМПЕРИИ (ИСТОРИЧЕСКИ И ФЕНТЪЗИ) ====================
+        // ---- ИСТОРИЧЕСКИ ----
+        mongol_empire: { nameBG: "Монголска империя", rulerTitleBG: "Велик хан", capitalBG: "Каракорум", relation: -30, power: 1200 },
+        ottoman_empire: { nameBG: "Османска империя", rulerTitleBG: "Султан", capitalBG: "Истанбул", relation: -25, power: 1100 },
+        venetian_republic: { nameBG: "Венецианска република", rulerTitleBG: "Дож", capitalBG: "Венеция", relation: 10, power: 600 },
+        kievan_rus: { nameBG: "Киевска Рус", rulerTitleBG: "Княз", capitalBG: "Киев", relation: 5, power: 700 },
+        ayyubid_sultanate: { nameBG: "Аюбидски султанат", rulerTitleBG: "Султан", capitalBG: "Каиро", relation: -10, power: 850 },
+        holy_roman_empire: { nameBG: "Свещена Римска империя", rulerTitleBG: "Император", capitalBG: "Аахен", relation: 0, power: 950 },
+        british_kingdom: { nameBG: "Британско кралство", rulerTitleBG: "Крал", capitalBG: "Лондон", relation: 15, power: 800 },
+        viking_kingdoms: { nameBG: "Викингски кралства", rulerTitleBG: "Конунг", capitalBG: "Осло", relation: -5, power: 650 },
+        maurya_empire: { nameBG: "Империя Маурия", rulerTitleBG: "Чакравартин", capitalBG: "Паталипутра", relation: 10, power: 1100 },
+        han_dynasty: { nameBG: "Династия Хан", rulerTitleBG: "Император", capitalBG: "Чанъан", relation: 20, power: 1300 },
+        
+        // ---- ФЕНТЪЗИ ФРАКЦИИ ----
+        elven_kingdom: { nameBG: "Елфийско кралство", rulerTitleBG: "Крал на светлите елфи", capitalBG: "Сребърна гора", relation: 30, power: 750 },
+        dwarf_holds: { nameBG: "Джуджешки подземия", rulerTitleBG: "Върховен крал", capitalBG: "Каменна зала", relation: 25, power: 850 },
+        orc_horde: { nameBG: "Оркска орда", rulerTitleBG: "Вожд", capitalBG: "Мрачна крепост", relation: -60, power: 950 },
+        undead_legion: { nameBG: "Легион на мъртвите", rulerTitleBG: "Лич-крал", capitalBG: "Некрополис", relation: -80, power: 1100 },
+        dragon_lords: { nameBG: "Драконови лордове", rulerTitleBG: "Дракон-император", capitalBG: "Пламтящ връх", relation: -40, power: 1400 },
+        celestial_empire: { nameBG: "Небесна империя", rulerTitleBG: "Небесен император", capitalBG: "Златен град", relation: 50, power: 1000 },
+        shadow_realm: { nameBG: "Царство на сенките", rulerTitleBG: "Сянка-крал", capitalBG: "Тъмна бездна", relation: -50, power: 800 },
+        atlantean_dominion: { nameBG: "Атлантидско владение", rulerTitleBG: "Върховен жрец", capitalBG: "Посейдонис", relation: 20, power: 1200 },
+        demon_legions: { nameBG: "Демонични легиони", rulerTitleBG: "Властелин на бездната", capitalBG: "Абадон", relation: -90, power: 1600 },
+        fairy_court: { nameBG: "Двор на феите", rulerTitleBG: "Кралица на феите", capitalBG: "Светеща поляна", relation: 40, power: 550 }
     },
-    
+        // ==================== КЛАНОВЕ (ГЕРОИ) – ХАРМОНИЗИРАНИ ====================
     clans: { 
-        "Дуло": { name: "Болгарос", leader: "Болгарос", isJoined: true, regionsOwned: 1, gold: 1500, armySize: 500, clan: "Дуло" }, 
-        "Комитопули": { name: "Никола", leader: "Никола", isJoined: false, regionsOwned: 1, gold: 800, armySize: 300, clan: "Комитопули" }, 
-        "Асеневци": { name: "Асен I", leader: "Асен I", isJoined: false, regionsOwned: 1, gold: 850, armySize: 320, clan: "Асеневци" }, 
-        "Тертер": { name: "Георги I Тертер", leader: "Георги I Тертер", isJoined: false, regionsOwned: 1, gold: 700, armySize: 250, clan: "Тертер" }, 
-        "Даки": { name: "Залмоксис", leader: "Залмоксис", isJoined: false, regionsOwned: 1, gold: 650, armySize: 280, clan: "Даки" }, 
-        "Уния Траки": { name: "Реметалк", leader: "Реметалк", isJoined: false, regionsOwned: 1, gold: 900, armySize: 310, clan: "Уния Траки" }, 
-        "Шишмановци": { name: "Михаил Шишман", leader: "Михаил Шишман", isJoined: false, regionsOwned: 1, gold: 750, armySize: 260, clan: "Шишмановци" }, 
-        "Македони": { name: "Александър", leader: "Александър", isJoined: false, regionsOwned: 1, gold: 1200, armySize: 450, clan: "Македони" }, 
-        "Птоломеи": { name: "Сотер", leader: "Сотер", isJoined: false, regionsOwned: 1, gold: 1100, armySize: 350, clan: "Птоломеи" }, 
-        "Одриси": { name: "Терес", leader: "Терес", isJoined: false, regionsOwned: 1, gold: 800, armySize: 330, clan: "Одриси" }, 
-        "Бесараб": { name: "Иванко Бесараб", leader: "Иванко Бесараб", isJoined: false, regionsOwned: 1, gold: 700, armySize: 240, clan: "Бесараб" }, 
-        "Османци Дуло": { name: "Осман Гази", leader: "Осман Гази", isJoined: false, regionsOwned: 1, gold: 700, armySize: 240, clan: "Османци Дуло" }, 
-        "Скити": { name: "Атей", leader: "Атей", isJoined: false, regionsOwned: 1, gold: 600, armySize: 350, clan: "Скити" },
+        "Дуло": { name: "Болгарос", leaderName: "Болгарос", isJoined: true, regionsOwned: 1, gold: 1500, armySize: 500, clan: "Дуло" }, 
+        "Комитопули": { name: "Никола", leaderName: "Никола", isJoined: false, regionsOwned: 1, gold: 800, armySize: 300, clan: "Комитопули" }, 
+        "Асеневци": { name: "Асен I", leaderName: "Асен I", isJoined: false, regionsOwned: 1, gold: 850, armySize: 320, clan: "Асеневци" }, 
+        "Тертер": { name: "Георги I Тертер", leaderName: "Георги I Тертер", isJoined: false, regionsOwned: 1, gold: 700, armySize: 250, clan: "Тертер" }, 
+        "Даки": { name: "Залмоксис", leaderName: "Залмоксис", isJoined: false, regionsOwned: 1, gold: 650, armySize: 280, clan: "Даки" }, 
+        "Уния Траки": { name: "Реметалк", leaderName: "Реметалк", isJoined: false, regionsOwned: 1, gold: 900, armySize: 310, clan: "Уния Траки" }, 
+        "Шишмановци": { name: "Михаил Шишман", leaderName: "Михаил Шишман", isJoined: false, regionsOwned: 1, gold: 750, armySize: 260, clan: "Шишмановци" }, 
+        "Македони": { name: "Александър", leaderName: "Александър", isJoined: false, regionsOwned: 1, gold: 1200, armySize: 450, clan: "Македони" }, 
+        "Птоломеи": { name: "Сотер", leaderName: "Сотер", isJoined: false, regionsOwned: 1, gold: 1100, armySize: 350, clan: "Птоломеи" }, 
+        "Одриси": { name: "Терес", leaderName: "Терес", isJoined: false, regionsOwned: 1, gold: 800, armySize: 330, clan: "Одриси" }, 
+        "Бесараб": { name: "Иванко Бесараб", leaderName: "Иванко Бесараб", isJoined: false, regionsOwned: 1, gold: 700, armySize: 240, clan: "Бесараб" }, 
+        "Османци Дуло": { name: "Осман Гази", leaderName: "Осман Гази", isJoined: false, regionsOwned: 1, gold: 700, armySize: 240, clan: "Османци Дуло" }, 
+        "Скити": { name: "Атей", leaderName: "Атей", isJoined: false, regionsOwned: 1, gold: 600, armySize: 350, clan: "Скити" },
         // Нови кланове за фентъзи света
-        "Норсмени": { name: "Рагнар", leader: "Рагнар", isJoined: false, regionsOwned: 1, gold: 900, armySize: 500, clan: "Норсмени" },
-        "Елфи": { name: "Елронд", leader: "Елронд", isJoined: false, regionsOwned: 1, gold: 2000, armySize: 400, clan: "Елфи" },
-        "Джуджета": { name: "Торин", leader: "Торин", isJoined: false, regionsOwned: 1, gold: 2500, armySize: 600, clan: "Джуджета" },
-        "Орки": { name: "Готмог", leader: "Готмог", isJoined: false, regionsOwned: 1, gold: 500, armySize: 1500, clan: "Орки" },
-        "Атланти": { name: "Посейдон", leader: "Посейдон", isJoined: false, regionsOwned: 1, gold: 3000, armySize: 800, clan: "Атланти" }
+        "Норсмени": { name: "Рагнар", leaderName: "Рагнар", isJoined: false, regionsOwned: 1, gold: 900, armySize: 500, clan: "Норсмени" },
+        "Елфи": { name: "Елронд", leaderName: "Елронд", isJoined: false, regionsOwned: 1, gold: 2000, armySize: 400, clan: "Елфи" },
+        "Джуджета": { name: "Торин", leaderName: "Торин", isJoined: false, regionsOwned: 1, gold: 2500, armySize: 600, clan: "Джуджета" },
+        "Орки": { name: "Готмог", leaderName: "Готмог", isJoined: false, regionsOwned: 1, gold: 500, armySize: 1500, clan: "Орки" },
+        "Атланти": { name: "Посейдон", leaderName: "Посейдон", isJoined: false, regionsOwned: 1, gold: 3000, armySize: 800, clan: "Атланти" }
     },
-    
+        // ==================== РЕГИОНИ (235+ БРОЯ) ====================
     regions: {
-        // ==================== ОРИГИНАЛНИ 45 РЕГИОНА ====================
+        // ---- ОРИГИНАЛНИ 45 РЕГИОНА ----
         "Плиска": { name: "Плиска", terrain: "Равнина", resource: "Жито", nativeClans: ["Дуло"], difficulty: 10, defenseLevel: 2, infrastructureLevel: 2, armySize: 300 },
         "Преслав": { name: "Преслав", terrain: "Хълмиста", resource: "Камък", nativeClans: ["Дуло"], difficulty: 15, defenseLevel: 3, infrastructureLevel: 3, armySize: 450 },
         "Одрин": { name: "Одрин", terrain: "Речен", resource: "Риба", nativeClans: ["Комитопули"], difficulty: 25, defenseLevel: 4, infrastructureLevel: 3, armySize: 600 },
@@ -81,8 +109,7 @@ window.worldData = {
         "Стара Загора": { name: "Стара Загора", terrain: "Равнина", resource: "Жито", nativeClans: ["Уния Траки"], difficulty: 16, defenseLevel: 2, infrastructureLevel: 2, armySize: 290 },
         "Хасково": { name: "Хасково", terrain: "Хълмиста", resource: "Желязо", nativeClans: ["Комитопули"], difficulty: 18, defenseLevel: 2, infrastructureLevel: 2, armySize: 300 },
         "Кърджали": { name: "Кърджали", terrain: "Планинска", resource: "Мрамор", nativeClans: ["Комитопули"], difficulty: 20, defenseLevel: 3, infrastructureLevel: 2, armySize: 320 },
-
-        // ==================== НОВИ 190 РЕГИОНА (общо 235) ====================
+     // ==================== НОВИ 190 РЕГИОНА (общо 235) ====================
         // ---- БАЛКАНИТЕ (още 20) ----
         "Белград": { name: "Белград", terrain: "Речен", resource: "Желязо", nativeClans: ["Комитопули"], difficulty: 30, defenseLevel: 4, infrastructureLevel: 3, armySize: 600 },
         "Скопие": { name: "Скопие", terrain: "Планинска", resource: "Сребро", nativeClans: ["Комитопули"], difficulty: 22, defenseLevel: 3, infrastructureLevel: 3, armySize: 450 },
@@ -311,7 +338,7 @@ window.generateProceduralRegions = function(count, preserveExisting = true) {
     return generated;
 };
 
-// ✅ КЛЮЧОВО: Инициализация на регионите на играча
+// Инициализация на регионите на играча
 window.playerRegions = window.playerRegions || ["Плиска"];
 
 // ==================== ФЕНТЪЗИ РАСИ ЗА БРАК ====================
@@ -337,3 +364,4 @@ window.fantasyRaces = [
     { id: "ghost", name: "Дух", icon: "👻", bonus: { mysticismBonus: 0.25, defense: 10 }, desc: "Духовете са неуязвими на физически атаки" },
     { id: "golem", name: "Голем", icon: "🗿", bonus: { defense: 30, heroPower: 10 }, desc: "Големите са живи бронирани машини" }
 ];
+
