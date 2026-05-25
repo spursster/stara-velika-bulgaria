@@ -600,6 +600,9 @@
     window.processTurn = function() {
         if (originalProcessTurn) originalProcessTurn();
         if (Math.random() < 0.15) {
+            if (Math.random() < 0.02) { // 2% шанс на ход
+    window.createLegendaryHero();
+}
     if (typeof window.triggerRandomDuelChallenge === 'function') {
         window.triggerRandomDuelChallenge();
     }
