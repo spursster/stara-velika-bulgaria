@@ -1,7 +1,7 @@
 /**
 ==========================================================================
 ПРОЕКТ: ВЕЛИКА БЪЛГАРИЯ
-ФАЙЛ: items.js (ПЪЛЕН – АРТЕФАКТИ, СЕТОВЕ, ЕКИПИРОВКА, ПИТОМЦИ, БЕЗ ГРЕШКИ)
+ФАЙЛ: items.js (ВЕРСИЯ 6.0 – АВТОМАТИЧНА ЕКИПИРОВКА ЗА AUTO РЕЖИМ)
 ==========================================================================
 */
 
@@ -21,7 +21,7 @@ window.artifactsDatabase = {
     "osmanci_saber": { id: "osmanci_saber", name: "Сабята на Османци Дуло", icon: "⚔️", bonus: { heroPower: 40 }, clan: "Османци Дуло" }
 };
 
-// ==================== ИЗЧИСЛЯВАНЕ НА БОНУСИ ОТ ИНВЕНТАРА ====================
+// ==================== ИЗЧИСЛЯВАНЕ НА БОНУСИ ОТ ИНВЕНТАРА (КОРИГИРАНО) ====================
 window.getInventoryBonuses = function(hero) {
     let totalBonus = { heroPower: 0, goldBonus: 0 };
     if (!hero || !hero.inventory || !Array.isArray(hero.inventory)) return totalBonus;
@@ -38,12 +38,80 @@ window.getInventoryBonuses = function(hero) {
     });
     return totalBonus;
 };
+// ==================== АВТОМАТИЧНА ЕКИПИРОВКА ЗА ГЕРОИ В AUTO РЕЖИМ ====================
+// Оценява артефакт по приоритет: heroPower > goldBonus > други
+function getArtifactScore(artifact, hero) {
+    if (!artifact || !artifact.bonus) return 0;
+    let score = 0;
+    if (artifact.bonus.heroPower) score += artifact.bonus.heroPower * 10;
+    if (artifact.bonus.goldBonus) score += artifact.bonus.goldBonus * 2;
+    if (artifact.bonus.defense) score += artifact.bonus.defense * 5;
+    if (artifact.bonus.armyBonus) score += artifact.bonus.armyBonus * 20;
+    if (artifact.bonus.mysticismBonus) score += artifact.bonus.mysticismBonus * 15;
+    if (artifact.bonus.diplomacyBonus) score += artifact.bonus.diplomacyBonus * 10;
+    // Бонус за клан синхрон
+    if (artifact.clan && hero.clan === artifact.clan) score += 30;
+    return score;
+}
 
-// ==================== СЪКРОВИЩНИЦА (КОРИГИРАНА – БЕЗ ГРЕШКА С NULL, С БУТОН ЗА ЗАТВАРЯНЕ) ====================
+// Взема най-добрите артефакти от инвентара (според резултат)
+function getBestArtifacts(hero, limit = 12) {
+    if (!hero.inventory || hero.inventory.length === 0) return [];
+    let scored = hero.inventory
+        .filter(item => item && item.id)
+        .map(item => ({ item, score: getArtifactScore(item, hero) }))
+        .sort((a, b) => b.score - a.score);
+    return scored.slice(0, limit).map(s => s.item);
+}
+
+// Автоматично екипиране (замества текущата екипировка с най-добрите артефакти)
+window.autoEquipHero = function(hero) {
+    if (!hero) return false;
+    if (!hero.isAuto) return false;  // само за автоматични герои
+    if (!hero.inventory || hero.inventory.length === 0) return false;
+    
+    const best = getBestArtifacts(hero, 12);
+    if (best.length === 0) return false;
+    
+    // Запазваме старите артефакти, които не са в най-добрия списък
+    let equippedChanged = false;
+    for (let i = 0; i < Math.min(12, best.length); i++) {
+        if (hero.equipment[i] !== best[i]) {
+            hero.equipment[i] = best[i];
+            equippedChanged = true;
+        }
+    }
+    // Изчистваме останалите слотове (ако има по-малко от 12)
+    for (let i = best.length; i < 12; i++) {
+        if (hero.equipment[i] !== null) {
+            hero.equipment[i] = null;
+            equippedChanged = true;
+        }
+    }
+    
+    if (equippedChanged && window.recalculateHeroPower) {
+        window.recalculateHeroPower(hero);
+        if (window.updateCharacterUI) window.updateCharacterUI(hero);
+        if (window.renderTop6HeroesUI) window.renderTop6HeroesUI();
+    }
+    return equippedChanged;
+};
+
+// Извиква се при добавяне на нов артефакт или при нивап
+window.attemptAutoEquip = function(hero) {
+    if (hero && hero.isAuto) {
+        window.autoEquipHero(hero);
+    }
+};
+// ==================== СЪКРОВИЩНИЦА (КОРИГИРАНА – ДОБАВЕН AUTO EQUip ПРИ ЗАТВАРЯНЕ) ====================
 window.toggleTreasury = function() {
     let treasuryOverlay = document.getElementById('treasury-overlay');
     if (treasuryOverlay) {
         treasuryOverlay.remove();
+        // След затваряне на съкровищницата, ако героят е в авто режим, пробваме да екипираме автоматично
+        if (window.currentHero && window.currentHero.isAuto) {
+            window.autoEquipHero(window.currentHero);
+        }
         return;
     }
     const hero = window.currentHero;
@@ -97,7 +165,12 @@ window.toggleTreasury = function() {
         </div>
     `;
     document.body.appendChild(treasuryOverlay);
-    const close = () => treasuryOverlay.remove();
+    const close = () => {
+        treasuryOverlay.remove();
+        if (window.currentHero && window.currentHero.isAuto) {
+            window.autoEquipHero(window.currentHero);
+        }
+    };
     treasuryOverlay.querySelector('#close-treasury-x')?.addEventListener('click', close);
     treasuryOverlay.querySelector('#close-treasury-footer')?.addEventListener('click', close);
     treasuryOverlay.addEventListener('click', (e) => { if (e.target === treasuryOverlay) close(); });
@@ -305,7 +378,11 @@ window.grantDivinePet = function(hero, petId) {
             desc: window.divinePets[petId].desc
         };
     }
-    if (window.showAdvisorMsg) window.showAdvisorMsg(`🐉 БОЖЕСТВЕН ПИТОМЕЦ: ${hero.name} получи ${window.divinePets[petId].name}!`);
+    if (window.showAdvisorPopup) {
+        window.showAdvisorPopup("БОЖЕСТВЕН ПИТОМЕЦ", `🐉 ${hero.name} получи ${window.divinePets[petId].name}!`, "success");
+    } else if (window.showAdvisorMsg) {
+        window.showAdvisorMsg(`🐉 БОЖЕСТВЕН ПИТОМЕЦ: ${hero.name} получи ${window.divinePets[petId].name}!`);
+    }
     return true;
 };
 
@@ -322,4 +399,59 @@ if (typeof window.recalculateHeroPower === 'function') {
     };
 }
 
-console.log("✅ items.js зареден – всички артефакти, сетове, питомци и коригирана съкровищница.");
+// ==================== ХУК ЗА АВТОМАТИЧНА ЕКИПИРОВКА ПРИ НИВАП ====================
+// Ако rpg_system.js вече дефинира gainHeroXP, добавяме извикване след повишаване на нивото.
+// За целта създаваме безопасен hook, който не презаписва съществуващата функция, а я разширява.
+if (typeof window.gainHeroXP === 'function') {
+    const originalGainXP = window.gainHeroXP;
+    window.gainHeroXP = function(hero, amount) {
+        const oldLevel = hero.level || 1;
+        originalGainXP(hero, amount);
+        const newLevel = hero.level || 1;
+        if (newLevel > oldLevel && hero.isAuto) {
+            setTimeout(() => window.autoEquipHero(hero), 100);
+        }
+    };
+} else {
+    // Ако функцията не съществува, я дефинираме с вграден auto equip
+    window.gainHeroXP = function(hero, amount) {
+        if (!hero) return;
+        hero.xp = (hero.xp || 0) + amount;
+        const oldLevel = hero.level || 1;
+        let requiredXP = (hero.level || 1) * 150;
+        while (hero.xp >= requiredXP && hero.level < 100) {
+            hero.xp -= requiredXP;
+            hero.level++;
+            hero.skillPoints = (hero.skillPoints || 0) + 1;
+            hero.heroPower = (hero.heroPower || 100) + 25;
+            requiredXP = (hero.level) * 150;
+            if (window.showAdvisorPopup) {
+                window.showAdvisorPopup("НИВО НАГОРЕ", `🆙 ${hero.name} достигна Ниво ${hero.level}!`, "success");
+            } else if (window.showAdvisorMsg) {
+                window.showAdvisorMsg(`🆙 ${hero.name} достигна Ниво ${hero.level}!`);
+            }
+        }
+        if ((hero.level || 1) > oldLevel && hero.isAuto) {
+            setTimeout(() => window.autoEquipHero(hero), 100);
+        }
+        if (window.updateCharacterUI) window.updateCharacterUI(hero);
+        if (window.renderTop6HeroesUI) window.renderTop6HeroesUI();
+    };
+}
+
+// При инициализация, ако има герои в авто режим, правим еднократна автоматична екипировка
+setTimeout(() => {
+    if (window.worldData && window.worldData.clans) {
+        for (let key in window.worldData.clans) {
+            let hero = window.worldData.clans[key];
+            if (hero.isJoined && hero.isAuto && hero.inventory && hero.inventory.length > 0) {
+                window.autoEquipHero(hero);
+            }
+        }
+    }
+    if (window.currentHero && window.currentHero.isAuto) {
+        window.autoEquipHero(window.currentHero);
+    }
+}, 1000);
+
+console.log("✅ items.js версия 6.0 зареден – автоматична екипировка за авто режим, нови хукове и пълна синхронизация.");
