@@ -841,3 +841,28 @@ html, body {
         z-index: 300000 !important;
     }
 }
+
+/* Базов стил за рамката на героите */
+.elite-hero-card {
+    border-width: 2px;
+    border-style: solid;
+    transition: border-color 0.2s;
+}
+
+/* Цветове според класа (примери) */
+.elite-hero-card[data-class*="Воевода"] { border-color: #c9a87b; }      /* златисто */
+.elite-hero-card[data-class*="Маг"] { border-color: #7b68ee; }          /* виолетово */
+.elite-hero-card[data-class*="Берсерк"] { border-color: #ff6347; }      /* червено */
+.elite-hero-card[data-class*="Паладин"] { border-color: #87ceeb; }      /* светлосиньо */
+.elite-hero-card[data-class*="Некромант"] { border-color: #2e8b57; }    /* тъмнозелено */
+.elite-hero-card[data-class*="Легионер"] { border-color: #b8860b; }     /* тъмнозлатисто */
+.elite-hero-card[data-class*="Сянка"] { border-color: #4a4a4a; }        /* сиво */
+.elite-hero-card[data-class*="Магьосница"] { border-color: #dda0dd; }   /* светло лилаво */
+.elite-hero-card[data-class*="Владетел"] { border-color: #ffd700; }      /* златно */
+.elite-hero-card[data-class*="Владетелка"] { border-color: #ffb6c1; }    /* розово */
+
+/* За модала "Всички герои" */
+.hero-grid-card[data-class*="Воевода"] { border-color: #c9a87b; }
+.hero-grid-card[data-class*="Маг"] { border-color: #7b68ee; }
+.hero-grid-card[data-class*="Берсерк"] { border-color: #ff6347; }
+/* и т.н. – добавете желаните класове */
