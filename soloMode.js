@@ -1,4 +1,4 @@
-// ==================== СОЛО РЕЖИМ – ВЕРСИЯ 2.1 (ФИНАЛНА) ====================
+// ==================== СОЛО РЕЖИМ – ВЕРСИЯ 3.0 (ХАРМОНИЗИРАНА) ====================
 // Всички корекции: пътуване, инспекция, куестове, спътници, карта, индикатор, женски спътници
 (function() {
 // ==================== ГЛОБАЛНИ НАСТРОЙКИ ====================
@@ -35,7 +35,7 @@ if (!window.visitedRegions) window.visitedRegions = new Set();   // Брой п�
  // ==================== ОСНОВНА ИНИЦИАЛИЗАЦИЯ ====================
 function initSoloMode() {
     if (window.gameMode !== 'solo') return;
-    console.log("🌍 Инициализация на соло режим 2.1");
+    console.log("🌍 Инициализация на соло режим 3.0");
 
     if (!window.currentRegion) window.currentRegion = "Плиска";
     if (!window.companions) window.companions = [];
@@ -58,7 +58,7 @@ function initSoloMode() {
     defineShowQuestsUI();            // Дефинира UI за показване на куестове
     window.updateRegionIndicator = updateRegionIndicator;   // Експортира функцията
 
-    console.log("✅ Соло режим 2.1 е активен.");
+    console.log("✅ Соло режим 3.0 е активен.");
 }
 // ==================== ВРЪЗКИ МЕЖДУ РЕГИОНИТЕ (РАБОТИ И В КЛАСИЧЕСКИ РЕЖИМ) ====================
 window.buildRegionConnections = function() {
@@ -99,7 +99,6 @@ window.buildRegionConnections = function() {
         if (!window.regionConnections[regName]) {
             let neighbors = [];
             let maxNeighbors = 2 + Math.floor(Math.random() * 3);
-            // Избягваме безкраен цикъл
             let attempts = 0;
             while (neighbors.length < maxNeighbors && attempts < 50) {
                 let candidate = allRegions[Math.floor(Math.random() * allRegions.length)];
@@ -178,7 +177,7 @@ function addSoloSettingsButton() {
 function showSoloSettingsUI() {
     const modal = document.createElement('div');
     modal.id = 'solo-settings-modal';
-     modal.style.cssText = `position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.85); backdrop-filter:blur(8px); z-index:200001; display:flex; justify-content:center; align-items:center;`;
+    modal.style.cssText = `position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.85); backdrop-filter:blur(8px); z-index:200001; display:flex; justify-content:center; align-items:center;`;
     modal.innerHTML = `
          <div style="background:#1a1a2e; border:2px solid #d4af37; border-radius:24px; padding:20px; max-width:350px; width:90%;">
              <h3 style="color:#ffd700;">⚙️ Настройки</h3>
@@ -256,7 +255,7 @@ function patchRegionInspection() {
             } else if (window.currentRegion !== regionName && !isConnected) {
                 const msg = document.createElement('div');
                 msg.innerText = `🚫 Няма пряк път от ${window.currentRegion} до ${regionName}.`;
-                 msg.style.cssText = 'color:#ffaa66; font-size:12px; margin-bottom:8px;';
+                msg.style.cssText = 'color:#ffaa66; font-size:12px; margin-bottom:8px;';
                 actionDiv.appendChild(msg);
             }
 
@@ -264,8 +263,8 @@ function patchRegionInspection() {
             const attackBtn = document.createElement('button');
             attackBtn.id = 'solo-attack-btn';
             attackBtn.innerText = `⚔️ Атакувай ${regionName}`;
-             attackBtn.style.cssText = 'background:#7a2e1a; border:none; padding:8px 20px; border-radius:40px; color:#ffdd99; width:100%; margin-bottom:10px; cursor:pointer;';
-             attackBtn.onclick = () => { modal.remove(); if (window.startBattle) window.startBattle(regionName); };
+            attackBtn.style.cssText = 'background:#7a2e1a; border:none; padding:8px 20px; border-radius:40px; color:#ffdd99; width:100%; margin-bottom:10px; cursor:pointer;';
+            attackBtn.onclick = () => { modal.remove(); if (window.startBattle) window.startBattle(regionName); };
             actionDiv.appendChild(attackBtn);
 
             // Бутон за спътник (ако има място)
@@ -391,8 +390,13 @@ function defineRecruitCompanion() {
     window.recruitCompanion = function(regionName) {
         if (window.companions.length >= 4) {
             let msg = "❌ Вече имате максимален брой спътници (4).";
-            if (window.showAdvisorMsg) window.showAdvisorMsg(msg);
-            else alert(msg);
+            if (window.showAdvisorPopup) {
+                window.showAdvisorPopup("ВНИМАНИЕ", msg, "warning");
+            } else if (window.showAdvisorMsg) {
+                window.showAdvisorMsg(msg);
+            } else {
+                alert(msg);
+            }
             return;
         }
 
@@ -425,12 +429,11 @@ function defineRecruitCompanion() {
         if (available.length === 0) available = companionPool;
         let randomComp = available[Math.floor(Math.random() * available.length)];
 
-         const compId = "companion_" + Date.now() + "_" + Math.random().toString(36).substr(2, 6);
+        const compId = "companion_" + Date.now() + "_" + Math.random().toString(36).substr(2, 6);
         const companion = {
             id: compId,
             name: randomComp.name,
-            leaderName: randomComp.name,
-             clan: "Спътник",
+            clan: "Спътник",
             isJoined: true,
             isCompanion: true,
             isAuto: true,
@@ -443,7 +446,7 @@ function defineRecruitCompanion() {
             armySize: 150,
             currentArmy: 150,
             currentClass: randomComp.class,
-             className: randomComp.class,
+            className: randomComp.class,
             skills: { tactics: 0, endurance: 0, economy: 0, mysticism: 0, leadership: 0 },
             skillPoints: 0,
             equipment: Array(12).fill(null),
@@ -454,7 +457,6 @@ function defineRecruitCompanion() {
         if (window.initializeHeroRPGData) window.initializeHeroRPGData(companion);
         if (window.ensureCompleteArmyDetails) window.ensureCompleteArmyDetails(companion);
         
-        // ✅ ПОПРАВКА: Портретът се генерира СЛЕД като обектът е създаден
         if (window.generateHeroPortrait) window.generateHeroPortrait(companion).catch(e => console.warn(e));
 
         if (!window.worldData) window.worldData = {};
@@ -463,13 +465,18 @@ function defineRecruitCompanion() {
         window.companions.push(companion);
 
         let msg = `👥 НОВ СПЪТНИК: ${randomComp.name} (${randomComp.class}) се присъедини към вас!`;
-        if (window.showAdvisorMsg) window.showAdvisorMsg(msg);
-         else alert(msg);
+        if (window.showAdvisorPopup) {
+            window.showAdvisorPopup("НОВ СПЪТНИК", msg, "success");
+        } else if (window.showAdvisorMsg) {
+            window.showAdvisorMsg(msg);
+        } else {
+            alert(msg);
+        }
 
-        if (window.renderTop6LeadersUI) window.renderTop6LeadersUI();
+        if (window.renderTop6HeroesUI) window.renderTop6HeroesUI();
         if (typeof window.renderSingleBar === 'function') window.renderSingleBar();
 
-         if (window.checkAllQuestsProgress) {
+        if (window.checkAllQuestsProgress) {
             window.checkAllQuestsProgress(window.currentHero, regionName, "companion");
         }
     };
@@ -494,7 +501,7 @@ function defineShowQuestsUI() {
                     if (q.reward.xp) parts.push(`${q.reward.xp} XP`);
                     if (q.reward.artifact) parts.push(`Артефакт`);
                     if (q.reward.companion) parts.push(`Спътник`);
-                     reward = parts.join(", ");
+                    reward = parts.join(", ");
                 }
                 html += `<div style="background:#0d0a07; border-radius:16px; padding:12px; margin-bottom:10px;">
                              <div><strong style="color:#ffd700;">${q.title}</strong></div>
@@ -516,7 +523,12 @@ function patchHireHero() {
     if (typeof window.hireNewHero !== 'function') return;
     const original = window.hireNewHero;
     window.hireNewHero = function() {
-        alert("В соло режим не можете да наемате герои. Можете да намирате спътници в регионите (до 4).");
+        let msg = "В соло режим не можете да наемате герои. Можете да намирате спътници в регионите (до 4).";
+        if (window.showAdvisorPopup) {
+            window.showAdvisorPopup("СОЛО РЕЖИМ", msg, "warning");
+        } else {
+            alert(msg);
+        }
     };
 }
 
@@ -536,13 +548,13 @@ function patchHeroLists() {
         };
     }
     
-    // Презаписваме renderTop6LeadersUI, за да показва до 5 героя (главен + спътници) с иконки
-    if (typeof window.renderTop6LeadersUI === 'function') {
-        const originalRender = window.renderTop6LeadersUI;
-         window.renderTop6LeadersUI = function() {
+    // Презаписваме renderTop6HeroesUI, за да показва до 5 героя (главен + спътници) с иконки
+    if (typeof window.renderTop6HeroesUI === 'function') {
+        const originalRender = window.renderTop6HeroesUI;
+        window.renderTop6HeroesUI = function() {
             if (window.gameMode === 'solo') {
                 const eliteBar = document.getElementById('top-elite-bar');
-                 if (!eliteBar) return;
+                if (!eliteBar) return;
                 
                 let heroes = window.getAllHeroes ? window.getAllHeroes() : [];
                 heroes = heroes.filter(h => h.isCompanion || h.id === window.currentHero.clan);
@@ -563,7 +575,6 @@ function patchHeroLists() {
                     let needXP = 100 + (hero.level - 1) * 50;
                     let currentXP = hero.isAuto ? (hero.xp || 0) : (hero.storedXP || 0);
                     let xpPercent = Math.min(100, Math.floor((currentXP / needXP) * 100));
-                    // Използвам window.getClassIcon (гарантирано съществува)
                     const classIcon = window.getClassIcon(hero.className);
                     
                     card.innerHTML = `
@@ -579,7 +590,7 @@ function patchHeroLists() {
                 return;
             } else {
                 originalRender();
-             }
+            }
         };
     }
 }
