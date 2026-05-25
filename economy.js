@@ -167,7 +167,7 @@ function updateInflation() {
     window.economySettings.inflationRate = Math.min(0.05, Math.max(-0.02, window.economySettings.inflationRate));
     if (Math.abs(delta) > 0.005) {
         let percent = (window.economySettings.inflationRate * 100).toFixed(1);
-        showEconomyMessage("ИКОНОМИКА", `📈 Инфлацията се промени на ${percent}%.`, "info");
+        //showEconomyMessage("ИКОНОМИКА", `📈 Инфлацията се промени на ${percent}%.`, "info");
     }
 }
 
