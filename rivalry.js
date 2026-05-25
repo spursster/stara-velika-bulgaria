@@ -1,7 +1,7 @@
 /**
 ==========================================================================
 ПРОЕКТ: ВЕЛИКА БЪЛГАРИЯ
-ФАЙЛ: rivalry.js (ВЕРСИЯ 3.1 – С ЕКСПОРТНАТ API)
+ФАЙЛ: rivalry.js (ВЕРСИЯ 4.0 – ХАРМОНИЗИРАН, ВСИЧКИ СА ГЕРОИ)
 ==========================================================================
 */
 (function() {
@@ -25,17 +25,17 @@
         if (!window.worldData || !window.worldData.clans) return enemies;
         const seen = new Set();
         for (let key in window.worldData.clans) {
-            let clan = window.worldData.clans[key];
-            if (window.currentHero && clan.name !== window.currentHero.name && clan.isJoined !== true) {
-                let id = clan.leaderName || clan.name || key;
+            let hero = window.worldData.clans[key];
+            if (window.currentHero && hero.name !== window.currentHero.name && hero.isJoined !== true) {
+                let id = hero.name || hero.leaderName || key;
                 if (!seen.has(id)) {
                     seen.add(id);
                     enemies.push({
                         id: key,
-                        name: clan.leaderName || clan.name || key,
-                        clan: clan,
-                        power: clan.heroPower || 100,
-                        army: clan.armySize || 200
+                        name: hero.name || hero.leaderName || key,
+                        heroObj: hero,
+                        power: hero.heroPower || 100,
+                        army: hero.armySize || 200
                     });
                 }
             }
@@ -48,23 +48,23 @@
         if (!window.worldData || !window.worldData.clans) return heroes;
         const seen = new Set();
         for (let key in window.worldData.clans) {
-            let clan = window.worldData.clans[key];
-            if (clan.isJoined === true) {
-                let id = clan.leaderName || clan.name || key;
+            let hero = window.worldData.clans[key];
+            if (hero.isJoined === true) {
+                let id = hero.name || hero.leaderName || key;
                 if (seen.has(id)) continue;
-                if (excludeMain && window.currentHero && clan.name === window.currentHero.name) continue;
+                if (excludeMain && window.currentHero && hero.name === window.currentHero.name) continue;
                 seen.add(id);
                 heroes.push({
                     id: key,
-                    name: clan.leaderName || clan.name || key,
-                    clan: clan,
-                    power: clan.heroPower || 100,
-                    army: clan.armySize || 200,
-                    xp: clan.xp || 0,
-                    skills: clan.skills || {},
-                    pet: clan.pet || null,
-                    inventory: clan.inventory || [],
-                    spouse: clan.spouse || null
+                    name: hero.name || hero.leaderName || key,
+                    heroObj: hero,
+                    power: hero.heroPower || 100,
+                    army: hero.armySize || 200,
+                    xp: hero.xp || 0,
+                    skills: hero.skills || {},
+                    pet: hero.pet || null,
+                    inventory: hero.inventory || [],
+                    spouse: hero.spouse || null
                 });
             }
         }
@@ -149,7 +149,7 @@
             case "skill": stolenText = `умение "${stolenInfo.item}" (Ниво ${stolenInfo.level})`; break;
             case "xp": stolenText = `${stolenInfo.amount} опит`; break;
         }
-        const year = window.currentYear || "480 г. пр.н.е.";
+        const year = (window.gameTime && window.gameTime.year) ? `${window.gameTime.year} г. ${window.gameTime.era}` : "480 г. пр.н.е.";
         const message = `${aggressor.name} нападна ${victim.name} и открадна ${stolenText}!`;
         if (typeof window.addWorldEvent === 'function') {
             window.addWorldEvent(`⚔️ НАПАДЕНИЕ от ${aggressor.name}`, message, "⚔️", year);
@@ -180,7 +180,7 @@
         if (enemies.length === 0 || playerHeroes.length < RIVALRY_CONFIG.minHeroesForAttack) return;
         const aggressor = enemies[Math.floor(Math.random() * enemies.length)];
         const victim = playerHeroes[Math.floor(Math.random() * playerHeroes.length)];
-        const stolenInfo = performTheft(victim.clan, aggressor.clan);
+        const stolenInfo = performTheft(victim.heroObj, aggressor.heroObj);
         if (!stolenInfo) return;
         lastAttackTurn = turnCounter;
         addAttackToChronicle(aggressor, victim, stolenInfo);
@@ -191,8 +191,9 @@
 
     window.startRevengeBattle = function(aggressor, victim, stolenInfo) {
         console.log(`⚔️ ЗАПОЧВА БИТКА ЗА ОТМЪЩЕНИЕ: ${victim.name} срещу ${aggressor.name}`);
+        const year = (window.gameTime && window.gameTime.year) ? `${window.gameTime.year} г. ${window.gameTime.era}` : "480 г. пр.н.е.";
         if (window.addWorldEvent) {
-            window.addWorldEvent(`⚔️ ОТМЪЩЕНИЕ`, `${victim.name} започва битка срещу ${aggressor.name}!`, "⚔️", window.currentYear);
+            window.addWorldEvent(`⚔️ ОТМЪЩЕНИЕ`, `${victim.name} започва битка срещу ${aggressor.name}!`, "⚔️", year);
         }
         const playerHeroes = getPlayerHeroes(false);
         if (playerHeroes.length === 0) { 
@@ -235,7 +236,7 @@
         const enemyPower = aggressor.power;
         const playerChance = playerPower / (playerPower + enemyPower);
         const isVictory = Math.random() < playerChance;
-        const year = window.currentYear || "480 г. пр.н.е.";
+        const year = (window.gameTime && window.gameTime.year) ? `${window.gameTime.year} г. ${window.gameTime.era}` : "480 г. пр.н.е.";
         if (isVictory) {
             if (window.addWorldEvent) {
                 window.addWorldEvent(`🏆 ПОБЕДА В ОТМЪЩЕНИЕ`, `${playerHero.name} победи ${aggressor.name} и си върна откраднатото!`, "🏆", year);
