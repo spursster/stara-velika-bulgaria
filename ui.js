@@ -1,6 +1,6 @@
 /** ========================================================================== 
 ПРОЕКТ: ВЕЛИКА БЪЛГАРИЯ
-ФАЙЛ: ui.js (ВЕРСИЯ 4.0 – ПОЛНА МОБИЛНА АДАПТАЦИЯ)
+ФАЙЛ: ui.js (ВЕРСИЯ 5.0 – ПЪЛНА ХАРМОНИЗАЦИЯ – ВСИЧКИ СА ГЕРОИ)
 ========================================================================== */ 
 
 // ==================== ОБНОВЯВАНЕ НА ВРЕМЕТО ====================
@@ -70,7 +70,7 @@ window.generateHeroPortrait = async function(hero, retries = 2) {
                 hero.portrait = url;
                 if (typeof window.saveGreatBulgariaGame === 'function') window.saveGreatBulgariaGame();
                 if (typeof window.renderSingleBar === 'function') window.renderSingleBar();
-                if (typeof window.renderTop6LeadersUI === 'function') window.renderTop6LeadersUI();
+                if (typeof window.renderTop6HeroesUI === 'function') window.renderTop6HeroesUI();
                 if (window.currentHero === hero && typeof window.updateCharacterUI === 'function') {
                     window.updateCharacterUI(hero);
                 }
@@ -186,7 +186,7 @@ window.hireNewHero = function() {
     if (window.worldData && window.worldData.clans) {
         for (let key in window.worldData.clans) {
             let clan = window.worldData.clans[key];
-            if (clan.isJoined === true) hiredNames.add(clan.leaderName || clan.name || key);
+            if (clan.isJoined === true) hiredNames.add(clan.name || clan.leaderName || key);
         }
     }
     if (window.currentHero) hiredNames.add(window.currentHero.name);
@@ -202,9 +202,19 @@ window.hireNewHero = function() {
     }
     let newId = "hero_" + Date.now() + "_" + Math.floor(Math.random() * 10000);
     let newHero = {
-        name: randomHero.name, leaderName: randomHero.name, clan: randomHero.clan, isJoined: true,
-        level: 1, xp: 0, heroPower: randomHero.power, power: randomHero.power, gold: 1500,
-        armySize: 200, currentArmy: 200, currentClass: randomHero.className, className: randomHero.className,
+        name: randomHero.name,
+        clan: randomHero.clan,
+        isJoined: true,
+        isFavorite: false,
+        level: 1,
+        xp: 0,
+        heroPower: randomHero.power,
+        power: randomHero.power,
+        gold: 1500,
+        armySize: 200,
+        currentArmy: 200,
+        currentClass: randomHero.className,
+        className: randomHero.className,
         skills: { tactics:0, endurance:0, economy:0, mysticism:0, leadership:0 },
         skillPoints:0, storedXP:0, isAuto: true, equipment: Array(12).fill(null), inventory: Array(12).fill(null),
         pet: null, age: 30, learnedSkills: {}
@@ -217,24 +227,24 @@ window.hireNewHero = function() {
     if (!window.worldData) window.worldData = {};
     if (!window.worldData.clans) window.worldData.clans = {};
     window.worldData.clans[newId] = newHero;
-    if (!window.unlockedLeaders) window.unlockedLeaders = [];
-    window.unlockedLeaders.push(newHero);
+    if (!window.unlockedHeroes) window.unlockedHeroes = [];
+    window.unlockedHeroes.push(newHero);
     
     if (typeof ensureActiveHeroInBarracks === 'function') {
         ensureActiveHeroInBarracks();
     } else {
         oldHero.isJoined = true;
-        oldHero.isFavoriteInBarracks = true;
+        oldHero.isFavorite = true;
         if (!window.worldData.clans[oldHero.clan]) {
             window.worldData.clans[oldHero.clan] = oldHero;
         } else {
             window.worldData.clans[oldHero.clan].isJoined = true;
-            window.worldData.clans[oldHero.clan].isFavoriteInBarracks = true;
+            window.worldData.clans[oldHero.clan].isFavorite = true;
         }
         let favs = [];
         for (let k in window.worldData.clans) {
             const c = window.worldData.clans[k];
-            if (c.isJoined && c.isFavoriteInBarracks) favs.push(c.name);
+            if (c.isJoined && c.isFavorite) favs.push(c.name);
         }
         if (!favs.includes(oldHero.name)) favs.push(oldHero.name);
         localStorage.setItem('barracksFavorites', JSON.stringify(favs));
@@ -243,10 +253,9 @@ window.hireNewHero = function() {
     let goldSpan = document.getElementById('val-gold');
     if (goldSpan) goldSpan.innerText = oldHero.gold;
     if (window.updateCharacterUI) window.updateCharacterUI(oldHero);
-    if (window.renderTop6LeadersUI) window.renderTop6LeadersUI();
+    if (window.renderTop6HeroesUI) window.renderTop6HeroesUI();
     if (typeof window.renderSingleBar === 'function') window.renderSingleBar();
     
-    // УСПЕШНО НАЕМАНЕ – ПОПАП
     window.showAdvisorPopup(
         "УСПЕШНО НАЕМАНЕ",
         `✨ ${newHero.name} от род ${newHero.clan} се закле във вярност!<br><br>💰 Останало злато: ${oldHero.gold}<br>⚔️ Бойна сила: ${newHero.power}`,
@@ -259,31 +268,32 @@ window.hireNewHero = function() {
         if (typeof window.renderBarracksLayout === 'function') window.renderBarracksLayout();
     }
 };
+
 // ==================== ДАННИ ЗА ГЕРОИТЕ ====================
 function getAllHeroes() {
     let heroes = [];
     if (window.worldData && window.worldData.clans) {
         for (let key in window.worldData.clans) {
-            let clan = window.worldData.clans[key];
-            if (clan.isJoined === true) {
+            let heroData = window.worldData.clans[key];
+            if (heroData.isJoined === true) {
                 heroes.push({
                     id: key,
-                    name: clan.leaderName || clan.name || key,
-                    level: clan.level || 1,
-                    className: clan.currentClass || "Воевода",
-                    xp: clan.xp || 0,
-                    storedXP: clan.storedXP || 0,
-                    isAuto: clan.isAuto !== undefined ? clan.isAuto : true,
-                    power: clan.heroPower || 100,
-                    gold: clan.gold || 1500,
-                    army: clan.armySize || 300,
-                    skills: clan.skills || {},
-                    pet: clan.pet || null,
-                    skillPoints: clan.skillPoints || 0,
-                    equipment: clan.equipment || Array(12).fill(null),
-                    isCompanion: clan.isCompanion === true,
-                    isFavoriteInBarracks: clan.isFavoriteInBarracks || false,
-                    portrait: clan.portrait
+                    name: heroData.name || heroData.leaderName || key,
+                    level: heroData.level || 1,
+                    className: heroData.currentClass || "Воевода",
+                    xp: heroData.xp || 0,
+                    storedXP: heroData.storedXP || 0,
+                    isAuto: heroData.isAuto !== undefined ? heroData.isAuto : true,
+                    power: heroData.heroPower || 100,
+                    gold: heroData.gold || 1500,
+                    army: heroData.armySize || 300,
+                    skills: heroData.skills || {},
+                    pet: heroData.pet || null,
+                    skillPoints: heroData.skillPoints || 0,
+                    equipment: heroData.equipment || Array(12).fill(null),
+                    isCompanion: heroData.isCompanion === true,
+                    isFavorite: heroData.isFavorite || heroData.isFavoriteInBarracks || false,
+                    portrait: heroData.portrait
                 });
             }
         }
@@ -305,7 +315,7 @@ function getAllHeroes() {
             skillPoints: window.currentHero.skillPoints || 0,
             equipment: window.currentHero.equipment || Array(12).fill(null),
             isCompanion: window.currentHero.isCompanion === true,
-            isFavoriteInBarracks: window.currentHero.isFavoriteInBarracks || false,
+            isFavorite: window.currentHero.isFavorite || false,
             portrait: window.currentHero.portrait
         });
     }
@@ -316,6 +326,7 @@ function getAllHeroes() {
     heroes.sort((a,b) => b.level - a.level);
     return heroes;
 }
+
 // ==================== ЕКИПИРОВКА ====================
 function equipArtifact(hero, artifact, slotIndex) {
     if (!hero.equipment) hero.equipment = Array(12).fill(null);
@@ -436,14 +447,14 @@ function showHeroProfile(hero) {
             if (isNaN(slotIndex)) return;
             let artifacts = hero.inventory.filter(a => a && a.id);
             if (artifacts.length === 0) {
-                alert("Нямате артефакти в инвентара за екипиране!");
+                window.showAdvisorPopup("ВНИМАНИЕ", "Нямате артефакти в инвентара за екипиране!", "warning");
                 return;
             }
             let options = artifacts.map((a, idx) => `${idx}: ${a.name} (бонуси: ${Object.entries(a.bonus || {}).map(([k,v])=>`${k}+${v}`).join(', ')})`).join('\n');
             let choice = prompt(`Избери артефакт за слот ${slotNames[slotIndex]}:\n${options}\n\nВъведи номера (0-${artifacts.length-1}) или 'cancel' за отказ:`);
             if (choice === null || isNaN(parseInt(choice))) return;
             let idx = parseInt(choice);
-            if (idx < 0 || idx >= artifacts.length) { alert("Невалиден номер"); return; }
+            if (idx < 0 || idx >= artifacts.length) { window.showAdvisorPopup("ГРЕШКА", "Невалиден номер", "error"); return; }
             let artifact = artifacts[idx];
             equipArtifact(hero, artifact, slotIndex);
             modal.remove();
@@ -463,7 +474,7 @@ function showHeroProfile(hero) {
             let choice = prompt(`Къде да екипираме "${artifact.name}"?\n${slotOptions}\n\nВъведи номера на слота (0-11) или 'cancel' за отказ:`);
             if (choice === null || isNaN(parseInt(choice))) return;
             let slot = parseInt(choice);
-            if (slot < 0 || slot > 11) { alert("Невалиден слот"); return; }
+            if (slot < 0 || slot > 11) { window.showAdvisorPopup("ГРЕШКА", "Невалиден слот", "error"); return; }
             equipArtifact(hero, artifact, slot);
             modal.remove();
             showHeroProfile(hero);
@@ -529,13 +540,13 @@ function showHeroProfile(hero) {
         openSkillsBtn.onclick = () => {
             modal.remove();
             if (typeof window.openSkillsUI === 'function') window.openSkillsUI();
-            else alert("Интерфейсът за умения не е зареден (skills-ui.js).");
+            else window.showAdvisorPopup("ГРЕШКА", "Интерфейсът за умения не е зареден (skills-ui.js).", "error");
         };
     }
 }
 
 // ==================== ЛЕНТА НА ЕЛИТА (6-те героя) ====================
-window.renderTop6LeadersUI = function() { 
+window.renderTop6HeroesUI = function() { 
     const eliteBar = document.getElementById('top-elite-bar'); 
     if (!eliteBar) return; 
     if (!window.worldData || !window.worldData.clans) { 
@@ -545,52 +556,52 @@ window.renderTop6LeadersUI = function() {
             window.worldData.clans[window.currentHero.clan] = window.currentHero; 
         } else { return; } 
     } 
-    let leaders = Object.entries(window.worldData.clans).map(([clanKey, data]) => { return { clanKey: clanKey, ...data }; }); 
+    let heroes = Object.entries(window.worldData.clans).map(([clanKey, data]) => { return { clanKey: clanKey, ...data }; }); 
     
     if (window.gameMode === 'solo') {
         let mainClan = window.currentHero ? window.currentHero.clan : null;
-        leaders = leaders.filter(l => l.clanKey === mainClan || l.isCompanion === true);
+        heroes = heroes.filter(h => h.clanKey === mainClan || h.isCompanion === true);
     }
     
-    leaders.sort((a, b) => {
+    heroes.sort((a, b) => {
         if ((b.level || 1) !== (a.level || 1)) return (b.level || 1) - (a.level || 1);
         let xpA = a.isAuto ? (a.xp || 0) : (a.storedXP || 0);
         let xpB = b.isAuto ? (b.xp || 0) : (b.storedXP || 0);
         return xpB - xpA;
     });
     
-    const top5 = leaders.slice(0, 5); 
+    const top5 = heroes.slice(0, 5); 
     eliteBar.innerHTML = ""; 
     eliteBar.style.cssText = "display: flex; gap: 10px; overflow-x: auto; padding: 10px; background: rgba(0,0,0,0.4);"; 
-    top5.forEach(leader => { 
-        if (window.initializeHeroRPGData) window.initializeHeroRPGData(leader); 
+    top5.forEach(hero => { 
+        if (window.initializeHeroRPGData) window.initializeHeroRPGData(hero); 
         const card = document.createElement('div'); 
         card.className = "elite-hero-card"; 
         card.style.cssText = "background: rgba(0,0,0,0.6); border-radius: 12px; padding: 6px 12px; min-width: 100px; text-align: center; cursor: pointer; border: 1px solid #c9a87b; flex-shrink: 0;";
-        card.setAttribute('data-class', leader.currentClass || '');
-        card.onclick = (e) => { if (e.target.classList.contains('auto-btn')) return; if (window.openHeroRPGModal) window.openHeroRPGModal(leader.clanKey); }; 
+        card.setAttribute('data-class', hero.currentClass || '');
+        card.onclick = (e) => { if (e.target.classList.contains('auto-btn')) return; if (window.openHeroRPGModal) window.openHeroRPGModal(hero.clanKey); }; 
         
-        let currentXP = leader.isAuto ? (leader.xp || 0) : (leader.storedXP || 0);
+        let currentXP = hero.isAuto ? (hero.xp || 0) : (hero.storedXP || 0);
         let reqXP = 150; 
         if (window.rpgDatabase && window.rpgDatabase.getXPRequiredForLevel) { 
-            reqXP = window.rpgDatabase.getXPRequiredForLevel(leader.level || 1); 
+            reqXP = window.rpgDatabase.getXPRequiredForLevel(hero.level || 1); 
         } 
         if (reqXP <= 0) reqXP = 1; 
         let xpPercent = Math.min(100, Math.floor((currentXP / reqXP) * 100)); 
         let petIcon = ""; 
-        if (leader.pet && window.rpgDatabase && window.rpgDatabase.petsDatabase && window.rpgDatabase.petsDatabase[leader.pet]) { 
-            petIcon = window.rpgDatabase.petsDatabase[leader.pet].icon; 
+        if (hero.pet && window.rpgDatabase && window.rpgDatabase.petsDatabase && window.rpgDatabase.petsDatabase[hero.pet]) { 
+            petIcon = window.rpgDatabase.petsDatabase[hero.pet].icon; 
         } 
-        const autoClass = leader.isAuto ? "auto-btn active" : "auto-btn"; 
-        const autoText = leader.isAuto ? "Auto" : "Manual"; 
-        const classIcon = getClassIcon(leader.currentClass);
+        const autoClass = hero.isAuto ? "auto-btn active" : "auto-btn"; 
+        const autoText = hero.isAuto ? "Auto" : "Manual"; 
+        const classIcon = getClassIcon(hero.currentClass);
         
-        card.innerHTML = petIcon + '<div style="font-weight:bold;color:#ffdd99;">' + classIcon + ' ' + (leader.name || leader.hero || "Воевода") + '</div><div style="font-size:10px;color:#ccaa77;">Ниво ' + (leader.level || 1) + ' | ' + (leader.currentClass || "Багатур") + '</div><div style="background:#2a1a0a;height:3px;border-radius:2px;margin:4px 0;"><div style="background:#44aa44;height:100%;width:' + xpPercent + '%;border-radius:2px;"></div></div><button class="' + autoClass + '" style="background:#2c1a0c;border:none;font-size:9px;padding:2px 6px;border-radius:20px;color:#ffdd99;margin-top:4px;cursor:pointer;">' + autoText + '</button>'; 
+        card.innerHTML = petIcon + '<div style="font-weight:bold;color:#ffdd99;">' + classIcon + ' ' + (hero.name || hero.hero || "Воевода") + '</div><div style="font-size:10px;color:#ccaa77;">Ниво ' + (hero.level || 1) + ' | ' + (hero.currentClass || "Багатур") + '</div><div style="background:#2a1a0a;height:3px;border-radius:2px;margin:4px 0;"><div style="background:#44aa44;height:100%;width:' + xpPercent + '%;border-radius:2px;"></div></div><button class="' + autoClass + '" style="background:#2c1a0c;border:none;font-size:9px;padding:2px 6px;border-radius:20px;color:#ffdd99;margin-top:4px;cursor:pointer;">' + autoText + '</button>'; 
         eliteBar.appendChild(card); 
     }); 
 }; 
 
-window.renderTop6HeroesUI = window.renderTop6LeadersUI;
+window.renderTop6LeadersUI = window.renderTop6HeroesUI; // съвместимост
 
 // ==================== ОСНОВНО ОБНОВЯВАНЕ НА ЛЕВИЯ ПАНЕЛ ====================
 window.updateCharacterUI = function(hero) {
@@ -627,7 +638,7 @@ window.updateCharacterUI = function(hero) {
         }
         profileBox.innerHTML = '<div style="text-align:center;">' +
             '<div style="font-weight:bold;font-size:1.2rem;">' + (hero.name || "Неизвестен") + '</div>' +
-            '<div>Род ' + (hero.clan || "Свободен") + ' | ' + getClassIcon(hero.currentClass) + ' Клас: ' + (hero.currentClass || "Багатур") + '</div>' +
+            '<div>Клан ' + (hero.clan || "Свободен") + ' | ' + getClassIcon(hero.currentClass) + ' Клас: ' + (hero.currentClass || "Багатур") + '</div>' +
             '<div>Ниво: ' + (hero.level || 1) + '</div>' +
             '<div>Възраст: ' + (hero.age || 50) + ' г.</div>' +
             '<div>Бойна Сила: ⚔️ ' + (hero.heroPower || 150) + '</div>' +
@@ -670,8 +681,9 @@ window.updateCharacterUI = function(hero) {
         profileBox.appendChild(rpgBtn);
     }
 
-    window.renderTop6LeadersUI();
+    window.renderTop6HeroesUI();
 };
+
 // ==================== ЖУРНАЛ НА СЪВЕТНИКА ====================
 window.showAdvisorMsg = function(msg) { 
     const journal = document.getElementById('advisor-journal'); 
@@ -681,16 +693,19 @@ window.showAdvisorMsg = function(msg) {
     journal.innerHTML = window.eventHistory.map(function(line) { return '<p style="margin:4px 0; border-left:2px solid #ffaa44; padding-left:8px;">📜 ' + line + '</p>'; }).reverse().join(''); 
 }; 
 
-// ==================== ИНСПЕКЦИЯ НА КЛАН ====================
-window.inspectLeaderProfile = function(clanKey) { 
-    if (!window.worldData || !window.worldData.clans || !window.worldData.clans[clanKey]) { alert("Грешка: Неуспешно извличане на данни за избрания род."); return; } 
-    const leader = window.worldData.clans[clanKey]; 
-    const oldProfile = document.getElementById('dynamic-leader-profile'); if (oldProfile) oldProfile.remove(); 
+// ==================== ИНСПЕКЦИЯ НА ГЕРОЙ (БИВШ ИНСПЕКЦИЯ НА КЛАН) ====================
+window.inspectHeroProfile = function(clanKey) { 
+    if (!window.worldData || !window.worldData.clans || !window.worldData.clans[clanKey]) { 
+        window.showAdvisorPopup("ГРЕШКА", "Неуспешно извличане на данни за избрания герой.", "error");
+        return; 
+    } 
+    const hero = window.worldData.clans[clanKey]; 
+    const oldProfile = document.getElementById('dynamic-hero-profile'); if (oldProfile) oldProfile.remove(); 
     let skillsHTML = "<h4>Придобити Способности (нови):</h4><ul>"; 
     let hasSkills = false; 
-    if (leader.learnedSkills) { 
-        for (let skillKey in leader.learnedSkills) { 
-            let level = leader.learnedSkills[skillKey];
+    if (hero.learnedSkills) { 
+        for (let skillKey in hero.learnedSkills) { 
+            let level = hero.learnedSkills[skillKey];
             if (level > 0) {
                 let skillName = skillKey;
                 for (let treeKey in window.advancedSkills) {
@@ -709,9 +724,9 @@ window.inspectLeaderProfile = function(clanKey) {
     
     let inventoryHTML = "<h4>Налична Екипировка:</h4><div>"; 
     let hasEquipment = false; 
-    if (leader.equipment) { 
-        for (let i = 0; i < leader.equipment.length; i++) { 
-            let item = leader.equipment[i];
+    if (hero.equipment) { 
+        for (let i = 0; i < hero.equipment.length; i++) { 
+            let item = hero.equipment[i];
             if (item) { inventoryHTML += item.icon + " "; hasEquipment = true; } 
         } 
     } 
@@ -719,12 +734,13 @@ window.inspectLeaderProfile = function(clanKey) {
     inventoryHTML += "</div>"; 
     
     const overlay = document.createElement('div'); 
-    overlay.id = "dynamic-leader-profile"; 
+    overlay.id = "dynamic-hero-profile"; 
     overlay.style.cssText = "position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.75); backdrop-filter: blur(8px); display: flex; align-items: center; justify-content: center; z-index: 5000; padding: 10px; box-sizing: border-box;"; 
-    overlay.innerHTML = '<div style="background: rgba(0,0,0,0.9); border-radius: 32px; padding: 20px; max-width: 400px; width: 100%; text-align: center; border: 1px solid #c9a87b;"><h3 style="color:#ffdd99;">' + (leader.name || leader.hero) + '</h3><p>⚔️ ' + (leader.heroPower || 100) + ' Сила</p><p>Род: ' + clanKey + '</p><p>Ниво: ' + (leader.level || 1) + '</p><p>Лично злато: ' + (leader.gold || 0) + '</p><p>Войска: ⚔️ ' + (leader.armySize || 0) + '</p><p>Клас: ' + (leader.currentClass || "Багатур") + '</p>' + skillsHTML + inventoryHTML + '<button id="close-profile-btn" style="background:#333; border:none; padding:8px 20px; border-radius:40px; color:#ffdd99; cursor:pointer;margin-top:15px;">🔒 ЗАТВОРИ</button></div>'; 
+    overlay.innerHTML = '<div style="background: rgba(0,0,0,0.9); border-radius: 32px; padding: 20px; max-width: 400px; width: 100%; text-align: center; border: 1px solid #c9a87b;"><h3 style="color:#ffdd99;">' + (hero.name || hero.hero) + '</h3><p>⚔️ ' + (hero.heroPower || 100) + ' Сила</p><p>Клан: ' + clanKey + '</p><p>Ниво: ' + (hero.level || 1) + '</p><p>Лично злато: ' + (hero.gold || 0) + '</p><p>Войска: ⚔️ ' + (hero.armySize || 0) + '</p><p>Клас: ' + (hero.currentClass || "Багатур") + '</p>' + skillsHTML + inventoryHTML + '<button id="close-profile-btn" style="background:#333; border:none; padding:8px 20px; border-radius:40px; color:#ffdd99; cursor:pointer;margin-top:15px;">🔒 ЗАТВОРИ</button></div>'; 
     document.body.appendChild(overlay); 
     document.getElementById('close-profile-btn').onclick = function() { overlay.remove(); }; 
 };
+window.inspectLeaderProfile = window.inspectHeroProfile;
 
 // ==================== АДАПТИВНА ХОРИЗОНТАЛНА ЛЕНТА С ГЕРОИ ====================
 let currentContainer = null;
@@ -918,13 +934,13 @@ function setupResponsiveButtons() {
                 if (window.showAdvisorMsg) {
                     window.showAdvisorMsg(`🌍 Открихте ${generated} нови непознати земи!`);
                 } else {
-                    alert(`Открихте ${generated} нови региона!`);
+                    window.showAdvisorPopup("ОТКРИТИЕ", `Открихте ${generated} нови региона!`, "info");
                 }
                 if (document.getElementById('regions-map-overlay') && typeof window.openRegionsMap === 'function') {
                     window.openRegionsMap();
                 }
             } else {
-                alert("Системата за генериране на региони не е заредена.");
+                window.showAdvisorPopup("ГРЕШКА", "Системата за генериране на региони не е заредена.", "error");
             }
         };
         document.querySelector('.top-bar-controls').appendChild(discoverBtn);
@@ -1151,18 +1167,17 @@ function showAllHeroesModal() {
     let gridHtml = '<div class="modal-content all-heroes-grid" style="max-width: 95%; width: 95%; padding: 15px; overflow-y: auto; max-height: 85vh;">';
     gridHtml += '<h3 style="color:#ffd700; text-align:center;">🏰 Всички герои</h3>';
     gridHtml += '<div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 10px;">';
-    gridHtml += `<div class="hero-grid-card" data-id="${hero.id}" data-class="${hero.className}" style="...">`;
 
     heroes.forEach(hero => {
         const needXP = 100 + (hero.level - 1) * 50;
         const currentXP = hero.isAuto ? (hero.xp || 0) : (hero.storedXP || 0);
         const xpPercent = Math.min(100, Math.floor((currentXP / needXP) * 100));
         const classIcon = getClassIcon(hero.className);
-        const isFavorite = hero.isFavoriteInBarracks || false;
-        const favoriteIcon = isFavorite ? '❤️' : '🤍';
+        const isFavoriteHero = hero.isFavorite || false;
+        const favoriteIcon = isFavoriteHero ? '❤️' : '🤍';
 
         gridHtml += `
-            <div class="hero-grid-card" data-id="${hero.id}" style="background: rgba(0,0,0,0.6); border: 1px solid #c9a87b; border-radius: 12px; padding: 8px; cursor: pointer; transition: 0.2s;">
+            <div class="hero-grid-card" data-id="${hero.id}" data-class="${hero.className}" style="background: rgba(0,0,0,0.6); border: 1px solid #c9a87b; border-radius: 12px; padding: 8px; cursor: pointer; transition: 0.2s;">
                 <div style="display: flex; justify-content: space-between; align-items: center;">
                     <div style="font-size: 24px;">${classIcon}</div>
                     <button class="favorite-toggle" data-id="${hero.id}" style="background: none; border: none; font-size: 18px; cursor: pointer;">${favoriteIcon}</button>
@@ -1195,14 +1210,14 @@ function showAllHeroesModal() {
             const heroId = btn.getAttribute('data-id');
             const hero = heroes.find(h => h.id == heroId);
             if (hero) {
-                if (typeof window.toggleLeaderFavoriteInBarracks === 'function') {
-                    window.toggleLeaderFavoriteInBarracks(hero.name);
+                if (typeof window.toggleHeroFavoriteInBarracks === 'function') {
+                    window.toggleHeroFavoriteInBarracks(hero.name);
                 } else {
-                    hero.isFavoriteInBarracks = !hero.isFavoriteInBarracks;
+                    hero.isFavorite = !hero.isFavorite;
                     if (window.saveFavoriteHeroes) window.saveFavoriteHeroes();
-                    if (window.renderTop6LeadersUI) window.renderTop6LeadersUI();
+                    if (window.renderTop6HeroesUI) window.renderTop6HeroesUI();
                 }
-                btn.innerText = hero.isFavoriteInBarracks ? '❤️' : '🤍';
+                btn.innerText = hero.isFavorite ? '❤️' : '🤍';
             }
         };
     });
@@ -1219,29 +1234,24 @@ function showAllHeroesModal() {
         });
     });
 }
+
 // ==================== ФОРСИРАНО ДОБАВЯНЕ НА ХАМБУРГЕР МЕНЮ ЗА ТЕЛЕФОНИ ====================
 (function forceHamburgerMenu() {
-    // Функция за създаване на хамбургер бутона
     function createHamburgerButton() {
-        // Проверка дали вече съществува
         if (document.querySelector('.menu-toggle')) {
-            console.log("Хамбургер бутонът вече съществува.");
             return;
         }
         
         const topBarControls = document.querySelector('.top-bar-controls');
         if (!topBarControls) {
-            console.warn("top-bar-controls не е намерен, опитвам отново след 500ms...");
             setTimeout(createHamburgerButton, 500);
             return;
         }
         
-        // Създаваме бутона
         const menuBtn = document.createElement('button');
         menuBtn.className = 'glass-btn menu-toggle';
         menuBtn.innerHTML = '☰';
         menuBtn.setAttribute('aria-label', 'Меню');
-        // Стилове, които гарантират видимост
         menuBtn.style.cssText = `
             display: flex !important;
             align-items: center !important;
@@ -1258,7 +1268,6 @@ function showAllHeroesModal() {
             z-index: 1000 !important;
         `;
         
-        // Поставяме най-отпред (след бутона за нова игра, ако има такъв)
         const newGameContainer = document.querySelector('.new-game-menu-container');
         if (newGameContainer) {
             newGameContainer.insertAdjacentElement('afterend', menuBtn);
@@ -1266,16 +1275,12 @@ function showAllHeroesModal() {
             topBarControls.prepend(menuBtn);
         }
         
-        // Закачаме събитието
         menuBtn.onclick = function(e) {
             e.stopPropagation();
             toggleMobileMenu();
         };
-        
-        console.log("✅ Хамбургер бутонът е създаден успешно!");
     }
     
-    // Функция за отваряне/затваряне на менюто (ако липсва, я създаваме)
     if (typeof window.toggleMobileMenu !== 'function') {
         window.toggleMobileMenu = function() {
             let menu = document.getElementById('mobile-menu-panel');
@@ -1313,21 +1318,18 @@ function showAllHeroesModal() {
         };
     }
     
-    // Стартираме при зареждане на страницата, ако ширината е ≤ 600px
     function init() {
         if (window.innerWidth <= 600) {
             createHamburgerButton();
         }
     }
     
-    // Изпълняваме веднага, ако DOM е готов
     if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', init);
     } else {
         init();
     }
     
-    // При промяна на размера на екрана
     window.addEventListener('resize', function() {
         if (window.innerWidth <= 600 && !document.querySelector('.menu-toggle')) {
             createHamburgerButton();
