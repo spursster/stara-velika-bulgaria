@@ -102,28 +102,26 @@ window.gainHeroXP = function(hero, amount) {
             hero.heroPower += 25;
             leveledUp = true;
             requiredXP = window.rpgDatabase.getXPRequiredForLevel(hero.level);
-            showRPGMessage("НИВО НАГОРЕ", `🆙 ${hero.name} достигна Ниво ${hero.level}! (+1 Точка за умения)`, "success");
         }
         if (leveledUp) {
+            // Само при нивап – запис в летописа
+            if (window.addWorldEvent) {
+                window.addWorldEvent("🆙 НИВО НАГОРЕ", `${hero.name} достигна Ниво ${hero.level}! (+1 точка умения)`, "🆙");
+            }
             if (window.checkArcheAgeClass) window.checkArcheAgeClass(hero);
             if (hero.isAuto && hero.skillPoints > 0 && window.autoAssignSkillPoint) {
                 window.autoAssignSkillPoint(hero);
             }
-            // Автоматична екипировка след нивап
             if (hero.isAuto && typeof window.autoEquipHero === 'function') {
                 window.autoEquipHero(hero);
             }
         }
     } else {
         hero.storedXP += amount;
-        showRPGMessage("РЪЧЕН ОПИТ", `📚 ${hero.name} натрупа ${amount} ръчен опит! (Общо: ${hero.storedXP})`, "info");
         window.consumeStoredXPForHero(hero);
     }
     if (window.renderTop6HeroesUI) window.renderTop6HeroesUI();
     if (window.updateCharacterUI) window.updateCharacterUI(hero);
-    if (window.openHeroRPGModal && document.getElementById('hero-rpg-modal') && document.getElementById('hero-rpg-modal').style.display === 'block') {
-        window.openHeroRPGModal(hero.clan);
-    }
 };
 // ==================== АВТОМАТИЧЕН / РЪЧЕН РЕЖИМ ====================
 window.toggleHeroAutoMode = function(heroId) {
