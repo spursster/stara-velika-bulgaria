@@ -98,8 +98,7 @@ function attemptAutonomousPortalEntry() {
     if (!window.worldData || !window.worldData.clans) return;
     if (!window.currentPortalState || !window.currentPortalState.isOpen) return;
     let favoriteIds = new Set();
-    if (window.favoriteHeroes && typeof window.favoriteHeroes.forEach === 'function') {
-        window.favoriteHeroes.forEach(id => favoriteIds.add(id));
+    if (clan.isFavorite === true) continue;
     }
     if (Math.random() > 0.25) return;
     let autonomousHeroes = [];
