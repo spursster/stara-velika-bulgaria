@@ -114,6 +114,7 @@ window.toggleGameFullScreen = function() {
 
 // ==================== ЛЮБИМИ (FAVORITES) ====================
 let favoriteHeroes = new Set();
+window.favoriteHeroes = favoriteHeroes;
 try {
     let saved = localStorage.getItem('favoriteHeroesFinal');
     if (saved) JSON.parse(saved).forEach(id => favoriteHeroes.add(id));
