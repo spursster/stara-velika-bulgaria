@@ -252,3 +252,92 @@ window.startBattleAgainstHero = function(enemyHero) {
     };
     window.startBattle(battleTarget);
 };
+
+// ==================== СЪЗДАВАНЕ НА ЛЕГЕНДАРЕН ГЕРОЙ ====================
+window.createLegendaryHero = function(baseName = null, customClan = null) {
+    // Избор на име от легендарни владетели (ако не е подадено)
+    const legendaryNames = ["Атила", "Кубрат", "Симеон Велики", "Александър III Велики", "Спартак", "Децебал", "Калоян", "Самуил", "Владимир Велики", "Ричард Лъвското сърце"];
+    const name = baseName || legendaryNames[Math.floor(Math.random() * legendaryNames.length)];
+    const clan = customClan || "Легендарен";
+    
+    // Избор на хибриден клас (от classes.js)
+    let className = "Воевода";
+    if (window.hybridClasses && window.hybridClasses.length) {
+        const highLevelClasses = window.hybridClasses.filter(c => c.reqLevel >= 5);
+        if (highLevelClasses.length) {
+            className = highLevelClasses[Math.floor(Math.random() * highLevelClasses.length)].name;
+        }
+    }
+    
+    // По-висока мощ (200-300) и злато (3000-5000)
+    const power = 200 + Math.floor(Math.random() * 150);
+    const gold = 3000 + Math.floor(Math.random() * 3000);
+    const armySize = 400 + Math.floor(Math.random() * 300);
+    
+    const newHero = {
+        name: name,
+        leaderName: name,
+        clan: clan,
+        isJoined: true,
+        isFavoriteInBarracks: false,   // НЕ е любим – за да може да предизвиква
+        level: 5 + Math.floor(Math.random() * 4), // Ниво 5-8
+        xp: 0,
+        heroPower: power,
+        power: power,
+        gold: gold,
+        armySize: armySize,
+        currentArmy: armySize,
+        currentClass: className,
+        className: className,
+        age: 30 + Math.floor(Math.random() * 20),
+        isAuto: true,
+        skillPoints: 3 + Math.floor(Math.random() * 4),
+        skills: { tactics: 2, endurance: 2, economy: 2, mysticism: 2, leadership: 2 },
+        equipment: Array(12).fill(null),
+        inventory: [],
+        pet: null,
+        learnedSkills: {},
+        armyDetails: {
+            infantry: Math.floor(armySize * 0.4),
+            archers: Math.floor(armySize * 0.2),
+            cavalry: Math.floor(armySize * 0.2),
+            elite: Math.floor(armySize * 0.1),
+            dragon_young: Math.floor(armySize * 0.05),
+            wizard: Math.floor(armySize * 0.05)
+        }
+    };
+    
+    // Инициализация на RPG данни
+    if (window.initializeHeroRPGData) window.initializeHeroRPGData(newHero);
+    if (window.ensureCompleteArmyDetails) window.ensureCompleteArmyDetails(newHero);
+    
+    // Добавяне в света
+    if (!window.worldData) window.worldData = {};
+    if (!window.worldData.clans) window.worldData.clans = {};
+    const newId = "legendary_" + Date.now() + "_" + Math.floor(Math.random() * 10000);
+    window.worldData.clans[newId] = newHero;
+    if (!window.unlockedLeaders) window.unlockedLeaders = [];
+    window.unlockedLeaders.push(newHero);
+    
+    // Генериране на портрет (асинхронно)
+    if (typeof window.generateHeroPortrait === 'function') {
+        window.generateHeroPortrait(newHero).catch(e => console.warn(e));
+    }
+    
+    // Синхронизация с армията и UI
+    if (window.armyMarket && typeof window.armyMarket.sync === 'function') window.armyMarket.sync(newHero);
+    if (window.renderTop6LeadersUI) window.renderTop6LeadersUI();
+    if (typeof window.renderSingleBar === 'function') window.renderSingleBar();
+    
+    // Съобщение в летописа
+    if (window.addWorldEvent) {
+        window.addWorldEvent("🏆 ЛЕГЕНДАРЕН ГЕРОЙ", `${name} (${className}) се появи на сцената!`, "🏆");
+    }
+    if (window.showAdvisorPopup) {
+        window.showAdvisorPopup("ЛЕГЕНДАРЕН ГЕРОЙ", `⭐ Великият ${name} от ${clan} се присъедини към играта! ⭐`, "success");
+    } else if (window.showAdvisorMsg) {
+        window.showAdvisorMsg(`🏆 Легендарен герой ${name} се появи!`);
+    }
+    
+    return newHero;
+};
