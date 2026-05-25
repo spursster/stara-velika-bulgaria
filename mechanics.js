@@ -146,7 +146,7 @@ window.autonomousRegionConquest = function() {
     let potentialConquerors = [];
     for (let key in window.worldData.clans) {
         let hero = window.worldData.clans[key];
-        if (hero.isJoined === true && !favoriteIds.has(key) && (hero.armySize || 0) > 150) {
+        if (hero.isJoined === true && clan.isFavorite !== true && (hero.armySize || 0) > 150) {
             potentialConquerors.push(hero);
         }
     }
