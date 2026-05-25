@@ -60,48 +60,71 @@ function initSoloMode() {
 
     console.log("✅ Соло режим 2.1 е активен.");
 }
-    // ==================== ВРЪЗКИ МЕЖДУ РЕГИОНИТЕ ====================
-function buildRegionConnections() {
-    if (window.regionConnections) return;
+// ==================== ВРЪЗКИ МЕЖДУ РЕГИОНИТЕ (РАБОТИ И В КЛАСИЧЕСКИ РЕЖИМ) ====================
+window.buildRegionConnections = function() {
+    if (window.regionConnections) return; // вече съществуват
+    
     window.regionConnections = {};
     
-    // Предварително дефинирани връзки за основните региони
+    // Ако няма региони, няма какво да се свързва
+    if (!window.worldData || !window.worldData.regions) {
+        console.warn("buildRegionConnections: няма заредени региони.");
+        return;
+    }
+    
+    // Предварително дефинирани връзки за основните региони (ако съществуват)
     const predefined = {
-         "Плиска": ["Преслав", "Варна", "Силистра", "Шумен"],
-         "Преслав": ["Плиска", "Шумен", "Търновград", "Варна"],
-         "Варна": ["Плиска", "Преслав", "Добруджа", "Бургас"],
-         "Бургас": ["Варна", "Стара Загора", "Пловдив"],
-         "Шумен": ["Плиска", "Преслав", "Разград"],
-         "Разград": ["Шумен", "Русе", "Силистра"],
-         "Силистра": ["Плиска", "Разград", "Добруджа"],
-         "Добруджа": ["Силистра", "Варна", "Бесарабия"],
-         "София": ["Скопие", "Ниш", "Пловдив"],
-         "Пловдив": ["София", "Стара Загора", "Сяр"]
+        "Плиска": ["Преслав", "Варна", "Силистра", "Шумен"],
+        "Преслав": ["Плиска", "Шумен", "Търновград", "Варна"],
+        "Варна": ["Плиска", "Преслав", "Добруджа", "Бургас"],
+        "Бургас": ["Варна", "Стара Загора", "Пловдив"],
+        "Шумен": ["Плиска", "Преслав", "Разград"],
+        "Разград": ["Шумен", "Русе", "Силистра"],
+        "Силистра": ["Плиска", "Разград", "Добруджа"],
+        "Добруджа": ["Силистра", "Варна", "Бесарабия"],
+        "София": ["Скопие", "Ниш", "Пловдив"],
+        "Пловдив": ["София", "Стара Загора", "Сяр"]
     };
     
     // Копираме предварителните връзки само за съществуващи региони
     for (let reg in predefined) {
-        if (window.worldData.regions && window.worldData.regions[reg]) {
+        if (window.worldData.regions[reg]) {
             window.regionConnections[reg] = predefined[reg];
         }
     }
     
     // За останалите региони (процедурно генерирани) създаваме случайни съседи
-    for (let regName in window.worldData.regions) {
+    const allRegions = Object.keys(window.worldData.regions);
+    for (let regName of allRegions) {
         if (!window.regionConnections[regName]) {
             let neighbors = [];
-            let allRegions = Object.keys(window.worldData.regions);
             let maxNeighbors = 2 + Math.floor(Math.random() * 3);
-            for (let i = 0; i < maxNeighbors && neighbors.length < maxNeighbors; i++) {
+            // Избягваме безкраен цикъл
+            let attempts = 0;
+            while (neighbors.length < maxNeighbors && attempts < 50) {
                 let candidate = allRegions[Math.floor(Math.random() * allRegions.length)];
                 if (candidate !== regName && !neighbors.includes(candidate)) {
                     neighbors.push(candidate);
                 }
+                attempts++;
             }
             window.regionConnections[regName] = neighbors;
-         }
+        }
     }
-    console.log("🗺️ Регионални връзки готови.");
+    
+    console.log("✅ buildRegionConnections: " + Object.keys(window.regionConnections).length + " региона със свързаност.");
+};
+
+// Извикваме функцията веднага, за да имаме връзки във всички режими
+if (window.worldData && window.worldData.regions) {
+    window.buildRegionConnections();
+} else {
+    // Ако регионите още не са заредени, изчакваме малко
+    document.addEventListener('DOMContentLoaded', function() {
+        if (window.worldData && window.worldData.regions) {
+            window.buildRegionConnections();
+        }
+    });
 }
     // ==================== ИНДИКАТОР ЗА ТЕКУЩ РЕГИОН ====================
 function addRegionIndicator() {
