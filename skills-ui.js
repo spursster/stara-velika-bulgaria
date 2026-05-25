@@ -1,15 +1,33 @@
 /**
 =========================================================================
 ВЕЛИКА БЪЛГАРИЯ – ИНТЕРФЕЙС ЗА НОВИТЕ УМЕНИЯ (skills.js)
-ВЕРСИЯ: 1.1 – КОРИГИРАН (ОПРАВЕНИ СИНТАКСИЧНИ ГРЕШКИ ОТ КОПИРАНЕ)
+ВЕРСИЯ: 2.0 – РАЗШИРЕН, С АВТО-РАЗПРЕДЕЛЕНИЕ, ТЪРСЕНЕ И ПОДОБРЕНА ВИЗУАЛИЗАЦИЯ
 =========================================================================
 */
+
+// Помощна функция за показване на съобщения
+function showSkillsMessage(title, message, type = "info") {
+    if (window.showAdvisorPopup) {
+        window.showAdvisorPopup(title, message, type);
+    } else if (window.showAdvisorMsg) {
+        window.showAdvisorMsg(message);
+    } else {
+        alert(message);
+    }
+}
+
 // Функция за отваряне на модал с уменията
 window.openSkillsUI = function() {
     if (document.getElementById('skills-ui-modal')) return;
     const hero = window.currentHero;
-    if (!hero) { alert("Няма активен герой!"); return; }
-    if (!window.advancedSkills) { alert("Системата за умения не е заредена (skills.js липсва)."); return; }
+    if (!hero) {
+        showSkillsMessage("ГРЕШКА", "Няма активен герой!", "error");
+        return;
+    }
+    if (!window.advancedSkills) {
+        showSkillsMessage("ГРЕШКА", "Системата за умения не е заредена (skills.js липсва).", "error");
+        return;
+    }
     if (!hero.learnedSkills) hero.learnedSkills = {};
 
     // Изчисляваме колко точки са вложени във всяко дърво
@@ -23,17 +41,22 @@ window.openSkillsUI = function() {
         return total;
     }
 
-    // Генерира HTML за едно дърво
-    function renderTree(treeKey, tree) {
+    // Генерира HTML за едно дърво (с филтър)
+    function renderTree(treeKey, tree, filterText = "") {
         let pointsInTree = getTreePoints(treeKey);
         let skillsHtml = '';
         for (let skillKey in tree.skills) {
             const skill = tree.skills[skillKey];
             const currentLevel = hero.learnedSkills[skillKey] || 0;
             const isMax = currentLevel >= skill.maxLevel;
+            // Филтриране по текст
+            if (filterText && !skill.name.toLowerCase().includes(filterText) && !skill.desc.toLowerCase().includes(filterText)) {
+                continue;
+            }
             const canLearn = (!isMax && hero.skillPoints > 0 && hero.level >= skill.reqLevel && pointsInTree >= skill.reqPointsInTree);
+            const reqMet = (hero.level >= skill.reqLevel && pointsInTree >= skill.reqPointsInTree);
             skillsHtml += `
-                <div class="skill-card" style="background:rgba(20,20,30,0.6); border:1px solid #d4af37; border-radius:12px; padding:10px; margin-bottom:8px;">
+                <div class="skill-card" style="background:rgba(20,20,30,0.6); border:1px solid #d4af37; border-radius:12px; padding:10px; margin-bottom:8px; ${!reqMet ? 'opacity:0.7;' : ''}">
                     <div style="display:flex; align-items:center; gap:8px;">
                         <div style="font-size:24px;">${skill.icon || '⭐'}</div>
                         <div style="flex:1;">
@@ -41,10 +64,16 @@ window.openSkillsUI = function() {
                             <div style="font-size:11px; color:#ccc;">${skill.desc}</div>
                             <div style="font-size:10px; color:#88ff88;">Изисква: Ниво ${skill.reqLevel}, ${skill.reqPointsInTree} т. в дървото</div>
                         </div>
-                        ${!isMax ? `<button class="learn-skill-btn" data-tree="${treeKey}" data-skill="${skillKey}" style="background:#daa520; border:none; border-radius:20px; padding:4px 12px; color:#000; cursor:${canLearn ? 'pointer' : 'not-allowed'}; opacity:${canLearn ? 1 : 0.5};">📖 Научи (1 т.)</button>` : `<span style="color:#00ffcc;">✓ MAX</span>`}
+                        ${!isMax ? 
+                            `<button class="learn-skill-btn" data-tree="${treeKey}" data-skill="${skillKey}" style="background:#daa520; border:none; border-radius:20px; padding:4px 12px; color:#000; cursor:${canLearn ? 'pointer' : 'not-allowed'}; opacity:${canLearn ? 1 : 0.5};">📖 Научи (1 т.)</button>` : 
+                            `<span style="color:#00ffcc;">✓ MAX</span>`
+                        }
                     </div>
                 </div>
             `;
+        }
+        if (skillsHtml === "") {
+            skillsHtml = '<div style="text-align:center; color:#888; padding:20px;">Няма умения, отговарящи на филтъра.</div>';
         }
         return `
             <div class="skill-tree-panel" style="margin-bottom:20px;">
@@ -55,16 +84,20 @@ window.openSkillsUI = function() {
     }
 
     // Генерира табове и съдържание
-    let tabsHtml = '<div style="display:flex; gap:10px; border-bottom:1px solid #d4af37; margin-bottom:15px; flex-wrap:wrap;">';
+    let tabsHtml = '<div style="display:flex; gap:10px; border-bottom:1px solid #d4af37; margin-bottom:15px; flex-wrap:wrap; align-items:center;">';
     let panelsHtml = '';
     let first = true;
     for (let treeKey in window.advancedSkills) {
         const tree = window.advancedSkills[treeKey];
         tabsHtml += `<button class="skill-tab-btn" data-tree="${treeKey}" style="background:${first ? '#daa520' : '#2c2c3a'}; border:none; border-radius:20px; padding:6px 15px; color:${first ? '#000' : '#ffd700'}; cursor:pointer; margin-bottom:5px;">${tree.icon} ${tree.name}</button>`;
-        panelsHtml += `<div class="skill-tab-panel" data-tree="${treeKey}" style="display:${first ? 'block' : 'none'};">${renderTree(treeKey, tree)}</div>`;
+        panelsHtml += `<div class="skill-tab-panel" data-tree="${treeKey}" style="display:${first ? 'block' : 'none'};">${renderTree(treeKey, tree, "")}</div>`;
         first = false;
     }
-    tabsHtml += '</div>';
+    tabsHtml += `
+        <div style="flex:1; text-align:right;">
+            <input type="text" id="skills-search-input" placeholder="🔍 Търси умение..." style="background:#2c2c3a; border:1px solid #d4af37; border-radius:20px; padding:4px 12px; color:#ffd700; font-size:12px;">
+        </div>
+    </div>`;
 
     const modal = document.createElement('div');
     modal.id = 'skills-ui-modal';
@@ -78,7 +111,16 @@ window.openSkillsUI = function() {
         <div style="background:#0a0a1a; border:2px solid #d4af37; border-radius:24px; max-width:800px; width:100%; max-height:90%; overflow-y:auto; padding:20px; position:relative;">
             <button id="close-skills-ui" style="position:absolute; top:10px; left:10px; background:rgba(255,80,80,0.2); border:none; color:#ff8888; font-size:20px; width:32px; height:32px; border-radius:50%; cursor:pointer;">✕</button>
             <h2 style="color:#ffd700; text-align:center;">⭐ ДЪРВЕТА НА УМЕНИЯТА ⭐</h2>
-            <p style="text-align:center; color:#aaa;">Свободни точки: <span id="skills-available-points" style="color:#ffd700; font-weight:bold;">${hero.skillPoints}</span></p>
+            <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; margin-bottom:10px;">
+                <div style="background:rgba(0,0,0,0.5); padding:4px 12px; border-radius:20px;">
+                    <span style="color:#aaa;">Ниво ${hero.level}</span> | 
+                    <span style="color:#aaa;">Клас: ${hero.currentClass || "Багатур"}</span>
+                </div>
+                <div style="background:rgba(0,0,0,0.5); padding:4px 12px; border-radius:20px;">
+                    <span style="color:#ffd700;">Свободни точки: <strong id="skills-available-points">${hero.skillPoints}</strong></span>
+                </div>
+                <button id="auto-assign-all-btn" style="background:#2c5a2a; border:1px solid #44ff44; border-radius:30px; padding:4px 12px; color:#fff; cursor:pointer;">🤖 Автоматично всички точки</button>
+            </div>
             <div id="skills-tabs-container">${tabsHtml}</div>
             <div id="skills-panels-container">${panelsHtml}</div>
             <div style="text-align:center; margin-top:20px;">
@@ -97,42 +139,127 @@ window.openSkillsUI = function() {
     // Табове
     const tabBtns = modal.querySelectorAll('.skill-tab-btn');
     const panels = modal.querySelectorAll('.skill-tab-panel');
+    let currentTree = tabBtns[0]?.getAttribute('data-tree') || null;
+    
+    function switchTab(treeKey) {
+        tabBtns.forEach(btn => {
+            if (btn.getAttribute('data-tree') === treeKey) {
+                btn.style.background = '#daa520';
+                btn.style.color = '#000';
+            } else {
+                btn.style.background = '#2c2c3a';
+                btn.style.color = '#ffd700';
+            }
+        });
+        panels.forEach(panel => {
+            panel.style.display = panel.getAttribute('data-tree') === treeKey ? 'block' : 'none';
+        });
+        currentTree = treeKey;
+        // Обновяваме съдържанието с текущия филтър
+        const filterInput = document.getElementById('skills-search-input');
+        if (filterInput) {
+            const filterText = filterInput.value.toLowerCase();
+            for (let treeKeyInner in window.advancedSkills) {
+                const panelDiv = document.querySelector(`.skill-tab-panel[data-tree="${treeKeyInner}"]`);
+                if (panelDiv && treeKeyInner === treeKey) {
+                    panelDiv.innerHTML = renderTree(treeKeyInner, window.advancedSkills[treeKeyInner], filterText);
+                } else if (panelDiv && treeKeyInner !== treeKey) {
+                    // Не обновяваме неактивните, за да не загубим скрол позиция
+                }
+            }
+            attachLearnButtons(modal);
+        }
+    }
+    
     tabBtns.forEach(btn => {
         btn.addEventListener('click', () => {
             const tree = btn.getAttribute('data-tree');
-            tabBtns.forEach(b => { b.style.background = '#2c2c3a'; b.style.color = '#ffd700'; });
-            btn.style.background = '#daa520'; btn.style.color = '#000';
-            panels.forEach(p => { p.style.display = p.getAttribute('data-tree') === tree ? 'block' : 'none'; });
+            switchTab(tree);
         });
     });
-
-    // Бутони за научаване на умения (делегиране)
-    modal.addEventListener('click', (e) => {
-        const btn = e.target.closest('.learn-skill-btn');
-        if (!btn) return;
-        const treeKey = btn.getAttribute('data-tree');
-        const skillKey = btn.getAttribute('data-skill');
-        if (!treeKey || !skillKey) return;
-        // Извикваме функцията за научаване от skills.js
-        if (typeof window.learnAdvancedSkill === 'function') {
-            const success = window.learnAdvancedSkill(hero, treeKey, skillKey);
-            if (success) {
+    
+    // Филтър за търсене
+    const searchInput = modal.querySelector('#skills-search-input');
+    if (searchInput) {
+        searchInput.addEventListener('input', (e) => {
+            const filterText = e.target.value.toLowerCase();
+            // Обновяваме само активния панел
+            const activePanel = Array.from(panels).find(p => p.style.display === 'block');
+            if (activePanel) {
+                const treeKey = activePanel.getAttribute('data-tree');
+                activePanel.innerHTML = renderTree(treeKey, window.advancedSkills[treeKey], filterText);
+                attachLearnButtons(modal);
+            }
+        });
+    }
+    
+    // Функция за закачане на бутоните за научаване
+    function attachLearnButtons(modalElement) {
+        modalElement.querySelectorAll('.learn-skill-btn').forEach(btn => {
+            // Премахваме старите слушатели, за да избегнем дублиране
+            const newBtn = btn.cloneNode(true);
+            btn.parentNode.replaceChild(newBtn, btn);
+            newBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const treeKey = newBtn.getAttribute('data-tree');
+                const skillKey = newBtn.getAttribute('data-skill');
+                if (!treeKey || !skillKey) return;
+                if (typeof window.learnAdvancedSkill === 'function') {
+                    const success = window.learnAdvancedSkill(hero, treeKey, skillKey);
+                    if (success) {
+                        const pointsSpan = document.getElementById('skills-available-points');
+                        if (pointsSpan) pointsSpan.innerText = hero.skillPoints;
+                        closeModal();
+                        window.openSkillsUI(); // презареждаме модала с обновени данни
+                    }
+                } else {
+                    showSkillsMessage("ГРЕШКА", "Системата за умения не е заредена правилно.", "error");
+                }
+            });
+        });
+    }
+    
+    // Автоматично разпределяне на всички точки
+    const autoBtn = modal.querySelector('#auto-assign-all-btn');
+    if (autoBtn) {
+        autoBtn.addEventListener('click', () => {
+            if (hero.skillPoints <= 0) {
+                showSkillsMessage("ИНФО", "Нямате свободни точки за разпределяне.", "info");
+                return;
+            }
+            if (typeof window.autoAssignSkillPoint !== 'function') {
+                showSkillsMessage("ГРЕШКА", "Функцията за автоматично разпределение липсва.", "error");
+                return;
+            }
+            let pointsUsed = 0;
+            while (hero.skillPoints > 0) {
+                const oldPoints = hero.skillPoints;
+                window.autoAssignSkillPoint(hero);
+                if (hero.skillPoints === oldPoints) break; // Защита от безкраен цикъл
+                pointsUsed++;
+            }
+            if (pointsUsed > 0) {
                 const pointsSpan = document.getElementById('skills-available-points');
                 if (pointsSpan) pointsSpan.innerText = hero.skillPoints;
+                showSkillsMessage("АВТО-РАЗПРЕДЕЛЕНИЕ", `🤖 Разпределени ${pointsUsed} точки за умения.`, "success");
                 closeModal();
                 window.openSkillsUI();
+                if (window.updateCharacterUI) window.updateCharacterUI(hero);
+                if (window.renderTop6HeroesUI) window.renderTop6HeroesUI();
+            } else {
+                showSkillsMessage("ВНИМАНИЕ", "Няма достъпни умения за научаване (изпълнени ли са всички изисквания?)", "warning");
             }
-        } else {
-            alert("Системата за умения не е заредена правилно.");
-        }
-    });
+        });
+    }
+    
+    attachLearnButtons(modal);
 };
 
-// Добавяме бутон към RPG модала
+// Добавяме бутон към RPG модала (синхронизиран с новите имена)
 if (typeof window.openHeroRPGModal === 'function') {
     const originalOpenModal = window.openHeroRPGModal;
-    window.openHeroRPGModal = function(clanKey) {
-        originalOpenModal(clanKey);
+    window.openHeroRPGModal = function(heroId) {
+        originalOpenModal(heroId);
         setTimeout(() => {
             const modal = document.getElementById('hero-rpg-modal');
             if (modal && !modal.querySelector('.skills-ui-btn')) {
@@ -149,4 +276,5 @@ if (typeof window.openHeroRPGModal === 'function') {
 } else {
     console.warn("openHeroRPGModal не е дефинирана – не мога да добавя бутон за умения в RPG модала.");
 }
-console.log("✅ skills-ui.js зареден – интерфейсът за новите умения е готов.");
+
+console.log("✅ skills-ui.js версия 2.0 зареден – с търсене, автоматично разпределение, подобрен интерфейс и пълна синхронизация.");
