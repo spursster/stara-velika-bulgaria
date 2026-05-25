@@ -1,6 +1,6 @@
 /** ========================================================================== 
 ПРОЕКТ: ВЕЛИКА БЪЛГАРИЯ
-ФАЙЛ: ui.js (ВЕРСИЯ 3.8 – ПОРТРЕТИ НА ГЕРОИ + АДАПТИВЕН ПАНЕЛ)
+ФАЙЛ: ui.js (ВЕРСИЯ 4.0 – ПОЛНА МОБИЛНА АДАПТАЦИЯ)
 ========================================================================== */ 
 
 // ==================== ОБНОВЯВАНЕ НА ВРЕМЕТО ====================
@@ -291,6 +291,7 @@ function getAllHeroes() {
             skillPoints: window.currentHero.skillPoints || 0,
             equipment: window.currentHero.equipment || Array(12).fill(null),
             isCompanion: window.currentHero.isCompanion === true,
+            isFavoriteInBarracks: window.currentHero.isFavoriteInBarracks || false,
             portrait: window.currentHero.portrait
         });
     }
@@ -519,7 +520,7 @@ function showHeroProfile(hero) {
     }
 }
 
-// ==================== ЛЕНТА НА ЕЛИТА (5 ГЕРОЯ) С ЦВЕТНИ КАНТОВЕ ====================
+// ==================== ЛЕНТА НА ЕЛИТА (6-те героя) ====================
 window.renderTop6LeadersUI = function() { 
     const eliteBar = document.getElementById('top-elite-bar'); 
     if (!eliteBar) return; 
@@ -891,7 +892,7 @@ function setupResponsiveButtons() {
     }
     
     let discoverBtn = document.getElementById('discover-lands-btn');
-    if (!discoverBtn && document.querySelector('.top-bar-controls')) {
+    if (!discoverBtn && document.querySelector('.top-bar-controls') && window.innerWidth > 600) {
         discoverBtn = document.createElement('button');
         discoverBtn.id = 'discover-lands-btn';
         discoverBtn.className = 'glass-btn';
@@ -954,12 +955,34 @@ function setupMobileLayout() {
     const isMobile = window.innerWidth <= 600;
     
     if (isMobile && !isMobileLayoutActive) {
-        // Активираме мобилен режим само веднъж
         isMobileLayoutActive = true;
         
-        // Добавяме бутон за хамбургер меню, ако липсва
         const topBarControls = document.querySelector('.top-bar-controls');
-        if (topBarControls && !document.querySelector('.menu-toggle')) {
+        if (!topBarControls) return;
+        
+        // 1. Преместваме контейнера на "Нова игра" в началото на лентата (до хамбургера)
+        const newGameContainer = document.querySelector('.new-game-menu-container');
+        if (newGameContainer && topBarControls.firstChild !== newGameContainer) {
+            topBarControls.insertBefore(newGameContainer, topBarControls.firstChild);
+        }
+        
+        // 2. Променяме бутона "Нова игра" на иконка (само за мобилни)
+        if (newGameContainer) {
+            const newGameBtn = newGameContainer.querySelector('.glass-btn');
+            if (newGameBtn) {
+                newGameBtn.innerHTML = '🎮';
+                newGameBtn.style.fontSize = '1.2rem';
+                newGameBtn.style.padding = '0';
+                newGameBtn.style.width = '36px';
+                newGameBtn.style.height = '36px';
+                newGameBtn.style.display = 'flex';
+                newGameBtn.style.alignItems = 'center';
+                newGameBtn.style.justifyContent = 'center';
+            }
+        }
+        
+        // 3. Добавяме хамбургер бутон, ако липсва
+        if (!document.querySelector('.menu-toggle')) {
             const menuBtn = document.createElement('button');
             menuBtn.className = 'glass-btn menu-toggle';
             menuBtn.innerHTML = '☰';
@@ -968,26 +991,51 @@ function setupMobileLayout() {
                 e.stopPropagation();
                 toggleMobileMenu();
             };
-            topBarControls.prepend(menuBtn);
+            if (newGameContainer) {
+                newGameContainer.insertAdjacentElement('afterend', menuBtn);
+            } else {
+                topBarControls.prepend(menuBtn);
+            }
         }
-        // Добавяме бутон "Всички герои" до хамбургер менюто (само на телефон)
-if (!document.querySelector('.all-heroes-btn')) {
-    const allHeroesBtn = document.createElement('button');
-    allHeroesBtn.className = 'glass-btn all-heroes-btn';
-    allHeroesBtn.innerHTML = '👥';
-    allHeroesBtn.setAttribute('aria-label', 'Всички герои');
-    allHeroesBtn.onclick = () => showAllHeroesModal();
-    topBarControls.appendChild(allHeroesBtn);
-}
-        // Преместваме съдържанието на страничните панели (само веднъж)
+        
+        // 4. Добавяме бутон "Всички герои" (👥)
+        if (!document.querySelector('.all-heroes-btn')) {
+            const allHeroesBtn = document.createElement('button');
+            allHeroesBtn.className = 'glass-btn all-heroes-btn';
+            allHeroesBtn.innerHTML = '👥';
+            allHeroesBtn.setAttribute('aria-label', 'Всички герои');
+            allHeroesBtn.onclick = () => showAllHeroesModal();
+            topBarControls.appendChild(allHeroesBtn);
+        }
+        
+        // 5. Премахваме бутона "Открий" (discover-lands-btn) – той вече е в хамбургер менюто
+        const discoverBtn = document.getElementById('discover-lands-btn');
+        if (discoverBtn) discoverBtn.remove();
+        
         moveSidebarContentToMain();
         
     } else if (!isMobile && isMobileLayoutActive) {
-        // Възстановяваме десктоп изгледа
         isMobileLayoutActive = false;
+        
+        const newGameContainer = document.querySelector('.new-game-menu-container');
+        if (newGameContainer) {
+            const newGameBtn = newGameContainer.querySelector('.glass-btn');
+            if (newGameBtn) {
+                newGameBtn.innerHTML = '🎮 Нова игра / Продължи';
+                newGameBtn.style.cssText = '';
+            }
+        }
         
         const menuBtn = document.querySelector('.menu-toggle');
         if (menuBtn) menuBtn.remove();
+        
+        const allHeroesBtn = document.querySelector('.all-heroes-btn');
+        if (allHeroesBtn) allHeroesBtn.remove();
+        
+        // Възстановяваме бутона "Открий" (ако е бил създаден преди)
+        if (typeof setupResponsiveButtons === 'function') {
+            setupResponsiveButtons();
+        }
         
         restoreSidebarContent();
         
@@ -1001,9 +1049,9 @@ function toggleMobileMenu() {
     if (!menu) {
         menu = document.createElement('div');
         menu.id = 'mobile-menu-panel';
-        // Взимаме само бутоните от горната лента, които са скрити (без menu-toggle)
-        const buttonsToClone = document.querySelectorAll('.top-bar-controls .glass-btn:not(.menu-toggle)');
+        const buttonsToClone = document.querySelectorAll('.top-bar-controls .glass-btn:not(.menu-toggle):not(.all-heroes-btn)');
         buttonsToClone.forEach(btn => {
+            if (btn.closest('.new-game-menu-container')) return;
             const clone = btn.cloneNode(true);
             if (btn.onclick) clone.onclick = btn.onclick;
             else if (btn.getAttribute('onclick')) clone.setAttribute('onclick', btn.getAttribute('onclick'));
@@ -1021,7 +1069,6 @@ function moveSidebarContentToMain() {
     const rightSidebar = document.getElementById('sidebar-right');
     if (!mainArea || !leftSidebar || !rightSidebar) return;
     
-    // Преместваме активния герой (ляв панел) – само ако още не е преместен
     if (!document.getElementById('mobile-profile-section') && leftSidebar.innerHTML.trim() !== '') {
         const profileClone = leftSidebar.cloneNode(true);
         profileClone.id = 'mobile-profile-section';
@@ -1029,7 +1076,6 @@ function moveSidebarContentToMain() {
         mainArea.prepend(profileClone);
     }
     
-    // Преместваме портала (десен панел) – само ако още не е преместен
     if (!document.getElementById('mobile-portal-section') && rightSidebar.innerHTML.trim() !== '') {
         const portalClone = rightSidebar.cloneNode(true);
         portalClone.id = 'mobile-portal-section';
@@ -1037,7 +1083,6 @@ function moveSidebarContentToMain() {
         mainArea.appendChild(portalClone);
     }
     
-    // Скриваме оригиналните панели, но не ги премахваме
     leftSidebar.style.display = 'none';
     rightSidebar.style.display = 'none';
 }
@@ -1054,7 +1099,6 @@ function restoreSidebarContent() {
     if (mobilePortal) mobilePortal.remove();
 }
 
-// Слушатели за resize и initial load – с debounce за по-добра производителност
 let resizeTimer;
 window.addEventListener('resize', () => {
     clearTimeout(resizeTimer);
@@ -1065,16 +1109,17 @@ if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', () => setupMobileLayout());
 } else {
     setupMobileLayout();
-}function showAllHeroesModal() {
+}
+
+function showAllHeroesModal() {
     const heroes = getAllHeroes();
     if (!heroes.length) return;
 
-    // Създаваме модала
     let modal = document.getElementById('all-heroes-modal');
     if (modal) modal.remove();
     modal = document.createElement('div');
     modal.id = 'all-heroes-modal';
-    modal.className = 'market-modal'; // използва съществуващ клас за фон
+    modal.className = 'market-modal';
     modal.style.cssText = 'z-index: 200001;';
 
     let gridHtml = '<div class="modal-content all-heroes-grid" style="max-width: 95%; width: 95%; padding: 15px; overflow-y: auto; max-height: 85vh;">';
@@ -1114,11 +1159,9 @@ if (document.readyState === 'loading') {
     modal.innerHTML = gridHtml;
     document.body.appendChild(modal);
 
-    // Затваряне
     modal.querySelector('.close-modal-btn').onclick = () => modal.remove();
     modal.addEventListener('click', (e) => { if (e.target === modal) modal.remove(); });
 
-    // Обработка на любими
     modal.querySelectorAll('.favorite-toggle').forEach(btn => {
         btn.onclick = (e) => {
             e.stopPropagation();
@@ -1128,18 +1171,15 @@ if (document.readyState === 'loading') {
                 if (typeof window.toggleLeaderFavoriteInBarracks === 'function') {
                     window.toggleLeaderFavoriteInBarracks(hero.name);
                 } else {
-                    // fallback: директна промяна
                     hero.isFavoriteInBarracks = !hero.isFavoriteInBarracks;
                     if (window.saveFavoriteHeroes) window.saveFavoriteHeroes();
                     if (window.renderTop6LeadersUI) window.renderTop6LeadersUI();
                 }
-                // Обновяваме иконата
                 btn.innerText = hero.isFavoriteInBarracks ? '❤️' : '🤍';
             }
         };
     });
 
-    // Клик върху карта – отваря профил на героя
     modal.querySelectorAll('.hero-grid-card').forEach(card => {
         card.addEventListener('click', (e) => {
             if (e.target.classList.contains('favorite-toggle')) return;
