@@ -158,6 +158,7 @@ window.openTavernUI = function() {
 
 window.hireClanHero = function(heroName, clanName, cost, heroPower) {
     if (!window.currentHero) return;
+    
     if (window.currentHero.gold >= cost) {
         window.currentHero.gold -= cost;
         const newHero = {
@@ -175,7 +176,7 @@ window.hireClanHero = function(heroName, clanName, cost, heroPower) {
             currentClass: "Воевода",
             className: "Воевода",
             age: 30,
-            isAuto: true,        // ⭐ Автоматично трупане на XP
+            isAuto: true,
             skillPoints: 0,
             skills: { tactics: 0, endurance: 0, economy: 0, mysticism: 0, leadership: 0 },
             equipment: Array(12).fill(null),
@@ -198,7 +199,6 @@ window.hireClanHero = function(heroName, clanName, cost, heroPower) {
         if (!window.unlockedLeaders) window.unlockedLeaders = [];
         window.unlockedLeaders.push(newHero);
         
-        // ⭐ АВТОМАТИЧЕН ПОРТРЕТ ЗА НОВИЯ ГЕРОЙ (асинхронно, без да блокира)
         if (typeof window.generateHeroPortrait === 'function') {
             window.generateHeroPortrait(newHero).catch(e => console.warn("Грешка при портрет:", e));
         }
@@ -208,23 +208,24 @@ window.hireClanHero = function(heroName, clanName, cost, heroPower) {
         if (window.renderTop6LeadersUI) window.renderTop6LeadersUI();
         if (typeof window.renderSingleBar === 'function') window.renderSingleBar();
         window.openTavernUI();
-       // Вместо showAdvisorMsg за успех
-if (window.showAdvisorPopup) {
-    window.showAdvisorPopup(
-        "УСПЕШНО НАЕМАНЕ",
-        `✨ ${heroName} от клан ${clanName} се присъедини към вашия род!<br><br>💰 Останало злато: ${window.currentHero.gold}<br>⚔️ Бойна сила: ${heroPower}`,
-        "success"
-    );
-} else if (window.showAdvisorMsg) {
-    window.showAdvisorMsg(`👑 ОТКЛЮЧВАНЕ: Героят ${heroName} от Клан ${clanName} се присъедини!`);
-}
-
-// Вместо showAdvisorMsg за грешка
-if (window.showAdvisorPopup) {
-    window.showAdvisorPopup("ГРЕШКА", "Нямате достатъчно злато, за да наемете този герой!", "error");
-} else if (window.showAdvisorMsg) {
-    window.showAdvisorMsg("❌ НЕДОСТИГ: Нямате достатъчно злато!");
-}
+        
+        // Успешно наемане – показваме стилен попап
+        if (window.showAdvisorPopup) {
+            window.showAdvisorPopup(
+                "УСПЕШНО НАЕМАНЕ",
+                `✨ ${heroName} от клан ${clanName} се присъедини към вашия род!<br><br>💰 Останало злато: ${window.currentHero.gold}<br>⚔️ Бойна сила: ${heroPower}`,
+                "success"
+            );
+        } else if (window.showAdvisorMsg) {
+            window.showAdvisorMsg(`👑 ОТКЛЮЧВАНЕ: Героят ${heroName} от Клан ${clanName} се присъедини!`);
+        }
+    } else {
+        // Недостатъчно злато – показваме грешка
+        if (window.showAdvisorPopup) {
+            window.showAdvisorPopup("ГРЕШКА", "Нямате достатъчно злато, за да наемете този герой!", "error");
+        } else if (window.showAdvisorMsg) {
+            window.showAdvisorMsg("❌ НЕДОСТИГ: Нямате достатъчно злато!");
+        }
     }
 };
 
