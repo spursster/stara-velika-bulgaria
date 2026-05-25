@@ -1085,35 +1085,8 @@ function moveSidebarContentToMain() {
     
     leftSidebar.style.display = 'none';
     rightSidebar.style.display = 'none';
-}
-
-function moveSidebarContentToMain() {
-    const mainArea = document.getElementById('game-main-area');
-    const leftSidebar = document.getElementById('sidebar-left');
-    const rightSidebar = document.getElementById('sidebar-right');
-    if (!mainArea || !leftSidebar || !rightSidebar) return;
     
-    // Преместваме активния герой (ляв панел) – само ако още не е преместен
-    if (!document.getElementById('mobile-profile-section') && leftSidebar.innerHTML.trim() !== '') {
-        const profileClone = leftSidebar.cloneNode(true);
-        profileClone.id = 'mobile-profile-section';
-        profileClone.classList.add('mobile-section');
-        mainArea.prepend(profileClone);
-    }
-    
-    // Преместваме портала (десен панел) – само ако още не е преместен
-    if (!document.getElementById('mobile-portal-section') && rightSidebar.innerHTML.trim() !== '') {
-        const portalClone = rightSidebar.cloneNode(true);
-        portalClone.id = 'mobile-portal-section';
-        portalClone.classList.add('mobile-section');
-        mainArea.appendChild(portalClone);
-    }
-    
-    // Скриваме оригиналните панели, но не ги премахваме
-    leftSidebar.style.display = 'none';
-    rightSidebar.style.display = 'none';
-
-    // ========== ПОПРАВКА ЗА БУТОНА "УПРАВЛЕНИЕ НА ГЕРОЯ" ==========
+    // След като сме добавили mobile-profile-section, презакачаме клик събитието на бутона "Управление на Героя"
     const mobileProfile = document.getElementById('mobile-profile-section');
     if (mobileProfile) {
         const rpgBtn = mobileProfile.querySelector('#open-rpg-modal-btn');
@@ -1124,5 +1097,110 @@ function moveSidebarContentToMain() {
             rpgBtn.setAttribute('data-mobile-fixed', 'true');
         }
     }
-    // ==============================================================
+}
+
+function restoreSidebarContent() {
+    const leftSidebar = document.getElementById('sidebar-left');
+    const rightSidebar = document.getElementById('sidebar-right');
+    if (leftSidebar) leftSidebar.style.display = '';
+    if (rightSidebar) rightSidebar.style.display = '';
+    
+    const mobileProfile = document.getElementById('mobile-profile-section');
+    const mobilePortal = document.getElementById('mobile-portal-section');
+    if (mobileProfile) mobileProfile.remove();
+    if (mobilePortal) mobilePortal.remove();
+}
+
+let resizeTimer;
+window.addEventListener('resize', () => {
+    clearTimeout(resizeTimer);
+    resizeTimer = setTimeout(() => setupMobileLayout(), 150);
+});
+
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', () => setupMobileLayout());
+} else {
+    setupMobileLayout();
+}
+
+function showAllHeroesModal() {
+    const heroes = getAllHeroes();
+    if (!heroes.length) return;
+
+    let modal = document.getElementById('all-heroes-modal');
+    if (modal) modal.remove();
+    modal = document.createElement('div');
+    modal.id = 'all-heroes-modal';
+    modal.className = 'market-modal';
+    modal.style.cssText = 'z-index: 200001;';
+
+    let gridHtml = '<div class="modal-content all-heroes-grid" style="max-width: 95%; width: 95%; padding: 15px; overflow-y: auto; max-height: 85vh;">';
+    gridHtml += '<h3 style="color:#ffd700; text-align:center;">🏰 Всички герои</h3>';
+    gridHtml += '<div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 10px;">';
+
+    heroes.forEach(hero => {
+        const needXP = 100 + (hero.level - 1) * 50;
+        const currentXP = hero.isAuto ? (hero.xp || 0) : (hero.storedXP || 0);
+        const xpPercent = Math.min(100, Math.floor((currentXP / needXP) * 100));
+        const classIcon = getClassIcon(hero.className);
+        const isFavorite = hero.isFavoriteInBarracks || false;
+        const favoriteIcon = isFavorite ? '❤️' : '🤍';
+
+        gridHtml += `
+            <div class="hero-grid-card" data-id="${hero.id}" style="background: rgba(0,0,0,0.6); border: 1px solid #c9a87b; border-radius: 12px; padding: 8px; cursor: pointer; transition: 0.2s;">
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <div style="font-size: 24px;">${classIcon}</div>
+                    <button class="favorite-toggle" data-id="${hero.id}" style="background: none; border: none; font-size: 18px; cursor: pointer;">${favoriteIcon}</button>
+                </div>
+                <div style="font-weight: bold; color: #ffdd99; font-size: 12px;">${hero.name}</div>
+                <div style="font-size: 9px; color: #ccaa77;">${hero.className} · Ниво ${hero.level}</div>
+                <div style="background: #2a1a0a; height: 4px; border-radius: 2px; margin: 4px 0;">
+                    <div style="background: #44aa44; height: 100%; width: ${xpPercent}%; border-radius: 2px;"></div>
+                </div>
+                <div style="display: flex; justify-content: space-between; font-size: 8px; margin-top: 4px;">
+                    <span>💪 ${hero.power}</span>
+                    <span>💰 ${hero.gold}</span>
+                    <span>⚔️ ${hero.army}</span>
+                </div>
+                <div style="font-size: 7px; color: #aaa;">${hero.isAuto ? '🤖 Auto' : '👤 Manual'}</div>
+            </div>
+        `;
+    });
+
+    gridHtml += '</div><button class="close-modal-btn" style="margin-top: 15px; background: #2c1a0c; border: none; border-radius: 30px; padding: 8px; color: #ffdd99; cursor: pointer; width: 100%;">Затвори</button></div>';
+    modal.innerHTML = gridHtml;
+    document.body.appendChild(modal);
+
+    modal.querySelector('.close-modal-btn').onclick = () => modal.remove();
+    modal.addEventListener('click', (e) => { if (e.target === modal) modal.remove(); });
+
+    modal.querySelectorAll('.favorite-toggle').forEach(btn => {
+        btn.onclick = (e) => {
+            e.stopPropagation();
+            const heroId = btn.getAttribute('data-id');
+            const hero = heroes.find(h => h.id == heroId);
+            if (hero) {
+                if (typeof window.toggleLeaderFavoriteInBarracks === 'function') {
+                    window.toggleLeaderFavoriteInBarracks(hero.name);
+                } else {
+                    hero.isFavoriteInBarracks = !hero.isFavoriteInBarracks;
+                    if (window.saveFavoriteHeroes) window.saveFavoriteHeroes();
+                    if (window.renderTop6LeadersUI) window.renderTop6LeadersUI();
+                }
+                btn.innerText = hero.isFavoriteInBarracks ? '❤️' : '🤍';
+            }
+        };
+    });
+
+    modal.querySelectorAll('.hero-grid-card').forEach(card => {
+        card.addEventListener('click', (e) => {
+            if (e.target.classList.contains('favorite-toggle')) return;
+            const heroId = card.getAttribute('data-id');
+            const hero = heroes.find(h => h.id == heroId);
+            if (hero && typeof window.showHeroProfile === 'function') {
+                modal.remove();
+                window.showHeroProfile(hero);
+            }
+        });
+    });
 }
