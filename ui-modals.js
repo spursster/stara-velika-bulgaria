@@ -237,3 +237,18 @@ window.triggerRandomDuelChallenge = function() {
         window.showDuelChallenge(challenger);
     }
 };
+
+window.startBattleAgainstHero = function(enemyHero) {
+    if (!enemyHero) return;
+    let enemyPower = enemyHero.heroPower || 100;
+    let enemyArmy = enemyHero.armySize || 200;
+    // Комбинираме мощ и армия
+    let finalPower = Math.floor(enemyPower * (enemyArmy / 200));
+    const battleTarget = {
+        name: enemyHero.leaderName || enemyHero.name,
+        armySize: finalPower,
+        heroObj: enemyHero,
+        isHero: true
+    };
+    window.startBattle(battleTarget);
+};
