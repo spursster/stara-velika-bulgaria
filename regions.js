@@ -1,9 +1,20 @@
-// ==================== regions.js – НОВА ИНТЕРАКТИВНА КАРТА С РЕГИОНИ ====================
+// ==================== regions.js – НОВА ИНТЕРАКТИВНА КАРТА С РЕГИОНИ (ХАРМОНИЗИРАНА) ====================
+
+// Помощна функция за показване на съобщения (попап или летопис)
+function showRegionMessage(title, message, type = "info") {
+    if (window.showAdvisorPopup) {
+        window.showAdvisorPopup(title, message, type);
+    } else if (window.showAdvisorMsg) {
+        window.showAdvisorMsg(message);
+    } else {
+        alert(message);
+    }
+}
+
 window.openRegionsMap = function() {
     const oldModal = document.getElementById('regions-map-overlay');
     if (oldModal) oldModal.remove();
 
-    // Вземаме регионите от worldData или създаваме примерни
     let regions = [];
     if (window.worldData && window.worldData.regions) {
         regions = Object.values(window.worldData.regions);
@@ -15,24 +26,20 @@ window.openRegionsMap = function() {
         ];
     }
 
-    // Определяме кои региони са завладени от играча
     const ownedRegions = (window.playerRegions && window.playerRegions.flat) ? window.playerRegions.flat() : [];
 
-    // Функция за получаване на името на владетеля (кой контролира региона)
     function getRegionOwner(region) {
         if (ownedRegions.includes(region.name)) return "Вие";
         if (region.nativeClans && region.nativeClans.length > 0) {
             let ownerClan = region.nativeClans[0];
-            // Ако кланът е в worldData.clans и има лидер, покажи лидера
             if (window.worldData && window.worldData.clans && window.worldData.clans[ownerClan]) {
-                return window.worldData.clans[ownerClan].leaderName || ownerClan;
+                return window.worldData.clans[ownerClan].name || window.worldData.clans[ownerClan].leaderName || ownerClan;
             }
             return ownerClan;
         }
         return "Независим";
     }
 
-    // Функция за получаване на цвят на картата (за визуален контраст)
     function getRegionColor(region) {
         if (ownedRegions.includes(region.name)) return "#2c5a2a";
         if (region.difficulty > 70) return "#5a1a1a";
@@ -82,11 +89,10 @@ window.openRegionsMap = function() {
 
     modal.innerHTML = `
         <div style="background: rgba(10,10,20,0.95); border: 2px solid #d4af37; border-radius: 28px; max-width: 95%; max-height: 90%; width: 100%; display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 20px 40px rgba(0,0,0,0.6);">
-            <!-- Заглавие с бутон за затваряне най-отгоре вляво -->
             <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #d4af37; padding: 12px 20px; background: rgba(0,0,0,0.3); flex-shrink: 0;">
                 <button id="closeMapBtnTopLeft" style="background: rgba(255,80,80,0.2); border: 1px solid #ff8888; color: #ff8888; font-size: 20px; width: 36px; height: 36px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: 0.2s;" onmouseover="this.style.background='rgba(255,80,80,0.4)';" onmouseout="this.style.background='rgba(255,80,80,0.2)';">✕</button>
                 <h2 style="color: #ffd700; margin: 0; font-size: 1.4rem; text-align: center; flex: 1;">🗺️ ИНТЕРАКТИВНА КАРТА</h2>
-                <div style="width: 36px;"></div> <!-- баланс -->
+                <div style="width: 36px;"></div>
             </div>
             <div style="padding: 20px; overflow-y: auto; text-align: center; display: flex; flex-wrap: wrap; justify-content: center; gap: 10px;">
                 ${regionsHtml}
@@ -99,42 +105,36 @@ window.openRegionsMap = function() {
 
     document.body.appendChild(modal);
 
-    // Функция за затваряне
     const closeMap = () => modal.remove();
 
-    // Добавяне на слушатели за затваряне
     const closeBtnTop = document.getElementById('closeMapBtnTopLeft');
     const closeBtnBottom = document.getElementById('closeMapBtnBottom');
     if (closeBtnTop) closeBtnTop.addEventListener('click', closeMap);
     if (closeBtnBottom) closeBtnBottom.addEventListener('click', closeMap);
     modal.addEventListener('click', (e) => { if (e.target === modal) closeMap(); });
 
-    // Добавяне на функционалност към регионите – при клик стартира битка или инспекция
     document.querySelectorAll('.region-card').forEach(card => {
         card.addEventListener('click', (e) => {
             e.stopPropagation();
             const regionName = card.getAttribute('data-region');
             const isOwned = ownedRegions.includes(regionName);
             if (isOwned) {
-                // Ако регионът е наш, отваряме инспекция (може да се извика inspectRegion)
                 if (typeof window.inspectRegion === 'function') {
                     window.inspectRegion(regionName);
                 } else {
-                    alert(`Регион ${regionName} е ваш. Можете да го инспектирате от картата.`);
+                    showRegionMessage("ИНСПЕКЦИЯ", `Регион ${regionName} е ваш. Можете да го инспектирате от картата.`, "info");
                 }
             } else {
-                // Стартира битка за завладяване
-                closeMap(); // затваряме картата преди битка
+                closeMap();
                 if (typeof window.startBattle === 'function') {
                     window.startBattle(regionName);
                 } else {
-                    alert(`Битка за ${regionName} (системата за битка не е готова)`);
+                    showRegionMessage("ГРЕШКА", `Битка за ${regionName} (системата за битка не е готова)`, "error");
                 }
             }
         });
     });
 
-    // Добавяне на адаптивни стилове за мобилни устройства (ако не съществуват)
     if (!document.getElementById('regions-map-responsive-style')) {
         const style = document.createElement('style');
         style.id = 'regions-map-responsive-style';
@@ -158,7 +158,7 @@ window.openRegionsMap = function() {
 // ==================== Функция за инспекция на регион (подобрена) ====================
 window.inspectRegion = function(regionName) {
     if (!window.worldData || !window.worldData.regions[regionName]) {
-        alert("Регионът не съществува!");
+        showRegionMessage("ГРЕШКА", "Регионът не съществува!", "error");
         return;
     }
     const reg = window.worldData.regions[regionName];
@@ -219,12 +219,12 @@ window.inspectRegion = function(regionName) {
                 hero.gold -= upgradeCost;
                 reg.infrastructureLevel = (reg.infrastructureLevel || 1) + 1;
                 reg.defenseLevel = (reg.defenseLevel || 1) + 1;
-                if (window.showAdvisorMsg) window.showAdvisorMsg(`🏗️ Инфраструктурата на ${regionName} е модернизирана!`);
+                showRegionMessage("МОДЕРНИЗАЦИЯ", `🏗️ Инфраструктурата на ${regionName} е модернизирана!`, "success");
                 if (window.updateCharacterUI) window.updateCharacterUI(hero);
                 overlay.remove();
-                window.openRegionsMap(); // опреснява картата
+                window.openRegionsMap();
             } else {
-                if (window.showAdvisorMsg) window.showAdvisorMsg("❌ Нямате достатъчно злато!");
+                showRegionMessage("ГРЕШКА", "Нямате достатъчно злато!", "error");
             }
         };
         actionDiv.appendChild(upgradeBtn);
@@ -237,7 +237,7 @@ window.inspectRegion = function(regionName) {
                 overlay.remove();
                 window.startBattle(regionName);
             } else {
-                alert("Бойната система не е заредена!");
+                showRegionMessage("ГРЕШКА", "Бойната система не е заредена!", "error");
             }
         };
         actionDiv.appendChild(attackBtn);
@@ -248,13 +248,13 @@ window.inspectRegion = function(regionName) {
     const closeHandler = () => overlay.remove();
     if (closeX) closeX.addEventListener('click', closeHandler);
     if (closeFooter) closeFooter.addEventListener('click', closeHandler);
-    overlay.addEventListener('click', (e) => { if (e.target === overlay) overlay.remove(); });
+    overlay.addEventListener('click', (e) => { if (e.target === overlay) closeHandler(); });
 };
 
-// ==================== Помощна функция за обновяване на картата (ако е отворена) ====================
+// ==================== Помощна функция за обновяване на картата ====================
 window.refreshRegionsMap = function() {
     const modal = document.getElementById('regions-map-overlay');
     if (modal) {
-        window.openRegionsMap(); // презарежда картата
+        window.openRegionsMap();
     }
 };
