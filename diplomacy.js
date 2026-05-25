@@ -1,5 +1,5 @@
 /**
-МОДУЛ: ДИПЛОМАЦИЯ И БРАК (ГРАНДИОЗНА ВЕРСИЯ + СТАРА ЛОГИКА)
+МОДУЛ: ДИПЛОМАЦИЯ И БРАК (ГРАНДИОЗНА ВЕРСИЯ + ХАРМОНИЗИРАНА)
 */
 
 window.clanRelations = window.clanRelations || {};
@@ -17,6 +17,17 @@ function flattenArray(arr) {
         }
     }
     return result;
+}
+
+// Помощна функция за показване на съобщения (попап или alert)
+function showDiplomacyMessage(title, message, type = "info") {
+    if (window.showAdvisorPopup) {
+        window.showAdvisorPopup(title, message, type);
+    } else if (window.showAdvisorMsg) {
+        window.showAdvisorMsg(message);
+    } else {
+        alert(message);
+    }
 }
 
 window.initDiplomacy = function() {
@@ -54,22 +65,43 @@ window.processClanDiplomacyAutomation = function() {
             }
         }
     }
-    if (window.renderTop6LeadersUI) window.renderTop6LeadersUI();
+    if (window.renderTop6HeroesUI) window.renderTop6HeroesUI();
 };
 
 window.marryPrisoner = function(index) {
-    if (!window.prisoners || !window.prisoners[index]) return alert("Грешка: Пленницата не е намерена!");
+    if (!window.prisoners || !window.prisoners[index]) {
+        showDiplomacyMessage("ГРЕШКА", "Пленницата не е намерена!", "error");
+        return;
+    }
     const prisoner = window.prisoners[index];
-    if (!window.currentHero) return alert("Няма активен герой!");
+    if (!window.currentHero) {
+        showDiplomacyMessage("ГРЕШКА", "Няма активен герой!", "error");
+        return;
+    }
     
     const newHeroId = "wife_" + Date.now() + "_" + Math.floor(Math.random() * 10000);
     const wifeHero = {
-        id: newHeroId, name: prisoner.name, leaderName: prisoner.name, clan: "Съпруга",
-        isJoined: true, level: 1, xp: 0, heroPower: 60 + (prisoner.bonus?.heroPower || 0),
-        power: 60 + (prisoner.bonus?.heroPower || 0), gold: 800, armySize: 150, currentArmy: 150,
-        currentClass: prisoner.name, className: prisoner.name, skills: {}, skillPoints: 0,
-        equipment: Array(12).fill(null), inventory: Array(12).fill(null), pet: null, age: 25,
-        race: prisoner.raceId, raceBonus: prisoner.bonus,
+        id: newHeroId,
+        name: prisoner.name,
+        clan: "Съпруга",
+        isJoined: true,
+        level: 1,
+        xp: 0,
+        heroPower: 60 + (prisoner.bonus?.heroPower || 0),
+        power: 60 + (prisoner.bonus?.heroPower || 0),
+        gold: 800,
+        armySize: 150,
+        currentArmy: 150,
+        currentClass: prisoner.name,
+        className: prisoner.name,
+        skills: {},
+        skillPoints: 0,
+        equipment: Array(12).fill(null),
+        inventory: Array(12).fill(null),
+        pet: null,
+        age: 25,
+        race: prisoner.raceId,
+        raceBonus: prisoner.bonus,
         armyDetails: { infantry: 80, archers: 40, cavalry: 20, elite: 10 }
     };
     if (window.initializeHeroRPGData) window.initializeHeroRPGData(wifeHero);
@@ -78,27 +110,25 @@ window.marryPrisoner = function(index) {
     if (!window.worldData) window.worldData = {};
     if (!window.worldData.clans) window.worldData.clans = {};
     window.worldData.clans[newHeroId] = wifeHero;
-    if (!window.unlockedLeaders) window.unlockedLeaders = [];
-    window.unlockedLeaders.push(wifeHero);
+    if (!window.unlockedHeroes) window.unlockedHeroes = [];
+    window.unlockedHeroes.push(wifeHero);
     if (window.armyMarket && typeof window.armyMarket.sync === 'function') window.armyMarket.sync(wifeHero);
     window.prisoners.splice(index, 1);
     
     if (window.updateCharacterUI) window.updateCharacterUI(window.currentHero);
     if (typeof window.renderSingleBar === 'function') window.renderSingleBar();
-    if (typeof window.renderTop6LeadersUI === 'function') window.renderTop6LeadersUI();
+    if (typeof window.renderTop6HeroesUI === 'function') window.renderTop6HeroesUI();
     
     const bonusText = Object.entries(prisoner.bonus || {}).map(([k,v]) => `${k}+${v}`).join(', ');
-    if (window.showAdvisorMsg) window.showAdvisorMsg(`💍 БРАК! ${prisoner.name} се присъедини към вашия род! Бонуси: ${bonusText}`);
-    alert(`💍 Оженихте се за ${prisoner.name}!\n🎉 Тя се присъедини към вашите герои!\n✨ Бонуси: ${bonusText}`);
+    showDiplomacyMessage("💍 БРАК", `${prisoner.name} се присъедини към вашия род! Бонуси: ${bonusText}`, "success");
     if (window.openRegionsMap) window.openRegionsMap();
 };
 
-// ==================== КОРИГИРАНА ФУНКЦИЯ PROPOSEMARRIAGE (БЕЗ ВЛОЖЕНИ МАСИВИ) ====================
 window.proposeMarriage = function(clan, cost, successChance) {
     const hero = window.currentHero;
     if (!hero) return;
     if ((hero.gold || 0) < cost) {
-        alert("❌ Нямате достатъчно злато!");
+        showDiplomacyMessage("ГРЕШКА", "Нямате достатъчно злато!", "error");
         return;
     }
     hero.gold -= cost;
@@ -116,9 +146,8 @@ window.proposeMarriage = function(clan, cost, successChance) {
         const region = dowryMap[clan] || "Мизия";
         window.currentSpouse = { name: `Княгиня от рода ${clan}`, clan: clan };
         
-        // --- НОРМАЛИЗИРАНЕ НА playerRegions ПРЕДИ ДОБАВЯНЕ ---
+        // Нормализиране на playerRegions
         if (!window.playerRegions) window.playerRegions = [];
-        // Превръщаме в плосък масив (ако има вложени елементи)
         let normalized = [];
         for (let item of window.playerRegions) {
             if (Array.isArray(item)) {
@@ -131,22 +160,18 @@ window.proposeMarriage = function(clan, cost, successChance) {
         }
         window.playerRegions = normalized;
         
-        // Добавяме региона като низ, ако го няма
         if (!window.playerRegions.includes(region)) {
             window.playerRegions.push(region);
             if (window.worldData?.regions?.[region]) window.worldData.regions[region].armySize = 0;
-            if (window.showAdvisorMsg) window.showAdvisorMsg(`🏰 Регионът "${region}" е добавен към вашите владения.`);
+            showDiplomacyMessage("🏰 РЕГИОН", `Регионът "${region}" е добавен към вашите владения.`, "success");
         } else {
-            if (window.showAdvisorMsg) window.showAdvisorMsg(`ℹ️ Регионът "${region}" вече е ваш.`);
+            showDiplomacyMessage("ℹ️ ИНФО", `Регионът "${region}" вече е ваш.`, "info");
         }
-        // -------------------------------------------------
         
-        if (window.showAdvisorMsg) window.showAdvisorMsg(`👑 ДИНАСТИЧЕН ТРИУМФ: Сключихте брак с род ${clan}! Получихте регион "${region}".`);
-        alert(`✅ Успех! Получавате регион "${region}" като зестра!`);
+        showDiplomacyMessage("👑 ДИНАСТИЧЕН ТРИУМФ", `Сключихте брак с род ${clan}! Получихте регион "${region}".`, "success");
     } else {
         window.clanRelations[clan] = Math.max(10, currentRel - 10);
-        if (window.showAdvisorMsg) window.showAdvisorMsg(`💔 Предложението за брак с род ${clan} беше отхвърлено.`);
-        alert("❌ Предложението беше отхвърлено!");
+        showDiplomacyMessage("💔 ОТХВЪРЛЯНЕ", `Предложението за брак с род ${clan} беше отхвърлено.`, "error");
     }
     if (window.updateCharacterUI) window.updateCharacterUI(hero);
     if (window.armyMarket && typeof window.armyMarket.sync === 'function') window.armyMarket.sync(hero);
@@ -154,18 +179,14 @@ window.proposeMarriage = function(clan, cost, successChance) {
 };
 
 // ==================== НОВ ГРАНДИОЗЕН БРАЧЕН ПРОЗОРЕЦ ====================
-// Заменяме старата функция openMarriageMenu
 window.openMarriageMenu = function() {
-    // Ако модалът вече съществува, просто го показваме
     let modal = document.getElementById('wm-marriage-modal');
     if (modal) {
         modal.classList.add('active');
-        // Обновяваме съдържанието на стария раздел
         loadOldMarriageContent();
         return;
     }
 
-    // Добавяме стиловете динамично (ако ги няма)
     if (!document.getElementById('wm-marriage-styles')) {
         const style = document.createElement('style');
         style.id = 'wm-marriage-styles';
@@ -209,7 +230,6 @@ window.openMarriageMenu = function() {
         document.head.appendChild(style);
     }
 
-    // Създаване на HTML структурата
     modal = document.createElement('div');
     modal.id = 'wm-marriage-modal';
     modal.className = 'wm-modal';
@@ -271,7 +291,7 @@ window.openMarriageMenu = function() {
                 if (clan.isJoined === true) {
                     heroes.push({
                         id: clan.clan || key,
-                        name: clan.leaderName || clan.name || key,
+                        name: clan.name || clan.leaderName || key,
                         level: clan.level || 1,
                         power: clan.power || (clan.heroPower || 50),
                         gold: clan.gold || 0,
@@ -442,7 +462,7 @@ window.openMarriageMenu = function() {
                 if (resources.hasPotion && success) targetHero.inventory.weddingPotion = false;
             }
             if (window.updateCharacterUI) window.updateCharacterUI(targetHero);
-            if (window.renderTop6LeadersUI) window.renderTop6LeadersUI();
+            if (window.renderTop6HeroesUI) window.renderTop6HeroesUI();
             if (typeof window.renderSingleBar === 'function') window.renderSingleBar();
             if (window.addWorldEvent) window.addWorldEvent("💍 Брак (нов)", `${hero1.name} и ${hero2.name} сключиха брак!`, "💒");
         }
@@ -507,7 +527,6 @@ window.openMarriageMenu = function() {
 
         oldContentDiv.innerHTML = prisonersHtml + clansHtml;
 
-        // Закачаме събития
         document.querySelectorAll('.wm-marry-prisoner').forEach(btn => {
             btn.onclick = () => {
                 let idx = parseInt(btn.getAttribute('data-index'));
@@ -515,7 +534,7 @@ window.openMarriageMenu = function() {
                     window.marryPrisoner(idx);
                     modal.classList.remove('active');
                 } else {
-                    alert("Функцията marryPrisoner липсва!");
+                    showDiplomacyMessage("ГРЕШКА", "Функцията marryPrisoner липсва!", "error");
                 }
             };
         });
@@ -526,26 +545,25 @@ window.openMarriageMenu = function() {
                     window.proposeMarriage(clan, finalMarriageCost, baseSuccessChance);
                     modal.classList.remove('active');
                 } else {
-                    alert("Функцията proposeMarriage липсва!");
+                    showDiplomacyMessage("ГРЕШКА", "Функцията proposeMarriage липсва!", "error");
                 }
             };
         });
     }
 
     // Свързване на DOM елементите
-    hero1Select = modal.querySelector('#wm-hero1');
-    hero2Select = modal.querySelector('#wm-hero2');
-    affinityFill = modal.querySelector('#wm-affinity-fill');
-    affinityPercentSpan = modal.querySelector('#wm-affinity-percent');
-    goldCostSpan = modal.querySelector('#wm-gold-cost');
-    powerCostSpan = modal.querySelector('#wm-power-cost');
-    ringStatusSpan = modal.querySelector('#wm-ring-status');
-    potionStatusSpan = modal.querySelector('#wm-potion-status');
-    performBtn = modal.querySelector('#wm-perform');
-    resultDiv = modal.querySelector('#wm-result');
-    oldContentDiv = modal.querySelector('#wm-old-content');
+    let hero1Select = modal.querySelector('#wm-hero1');
+    let hero2Select = modal.querySelector('#wm-hero2');
+    let affinityFill = modal.querySelector('#wm-affinity-fill');
+    let affinityPercentSpan = modal.querySelector('#wm-affinity-percent');
+    let goldCostSpan = modal.querySelector('#wm-gold-cost');
+    let powerCostSpan = modal.querySelector('#wm-power-cost');
+    let ringStatusSpan = modal.querySelector('#wm-ring-status');
+    let potionStatusSpan = modal.querySelector('#wm-potion-status');
+    let performBtn = modal.querySelector('#wm-perform');
+    let resultDiv = modal.querySelector('#wm-result');
+    let oldContentDiv = modal.querySelector('#wm-old-content');
 
-    // Попълване на селектите
     let heroesList = getAllHeroes();
     hero1Select.innerHTML = '<option value="">-- избери герой --</option>';
     hero2Select.innerHTML = '<option value="">-- избери герой --</option>';
@@ -558,7 +576,6 @@ window.openMarriageMenu = function() {
         hero2Select.appendChild(opt2);
     });
 
-    // Събития за новия брак
     hero1Select.addEventListener('change', updateNewMarriageUI);
     hero2Select.addEventListener('change', updateNewMarriageUI);
     performBtn.addEventListener('click', performNewWedding);
@@ -598,7 +615,6 @@ window.openMarriageMenu = function() {
         updateNewMarriageUI();
     });
 
-    // Табове
     let tabs = modal.querySelectorAll('.wm-tab');
     let newTab = modal.querySelector('#wm-new-tab');
     let oldTab = modal.querySelector('#wm-old-tab');
@@ -618,18 +634,15 @@ window.openMarriageMenu = function() {
         });
     });
 
-    // Затваряне
     let closeBtn = modal.querySelector('.wm-close');
     closeBtn.addEventListener('click', () => modal.classList.remove('active'));
     modal.addEventListener('click', (e) => { if (e.target === modal) modal.classList.remove('active'); });
 
-    // Инициализация
     updateNewMarriageUI();
     loadOldMarriageContent();
 
     modal.classList.add('active');
 };
 
-// Ако искаме да запазим и старата функция под друго име (по желание)
-window.openMarriageMenu_Old = null; // не закачаме нищо, защото новата я замества
-console.log("✅ diplomacy.js заменен с грандиозен брачен прозорец (старата логика е във втория раздел)");
+window.openMarriageMenu_Old = null;
+console.log("✅ diplomacy.js хармонизиран – всички съобщения са със стилен попап, използвани са новите имена на функции.");
