@@ -170,12 +170,18 @@ function getAllHeroesFromDatabase() {
 
 window.hireNewHero = function() {
     if (window.gameMode === 'solo') {
-        alert("В соло режим не можете да наемате герои. Можете да намирате спътници в регионите (до 4).");
+        window.showAdvisorPopup("СОЛО РЕЖИМ", "В соло режим не можете да наемате герои. Можете да намирате спътници в регионите (до 4).", "warning");
         return;
     }
-    if (!window.currentHero) { alert("Няма активен герой!"); return; }
+    if (!window.currentHero) { 
+        window.showAdvisorPopup("ГРЕШКА", "Няма активен герой!", "error");
+        return; 
+    }
     let allHeroes = getAllHeroesFromDatabase();
-    if (allHeroes.length === 0) { alert("Няма налични герои за наемане!"); return; }
+    if (allHeroes.length === 0) { 
+        window.showAdvisorPopup("ГРЕШКА", "Няма налични герои за наемане!", "error");
+        return; 
+    }
     let hiredNames = new Set();
     if (window.worldData && window.worldData.clans) {
         for (let key in window.worldData.clans) {
@@ -185,10 +191,13 @@ window.hireNewHero = function() {
     }
     if (window.currentHero) hiredNames.add(window.currentHero.name);
     let available = allHeroes.filter(h => !hiredNames.has(h.name));
-    if (available.length === 0) { alert("Всички герои вече са наети!"); return; }
+    if (available.length === 0) { 
+        window.showAdvisorPopup("ВНИМАНИЕ", "Всички герои вече са наети!", "warning");
+        return; 
+    }
     let randomHero = available[Math.floor(Math.random() * available.length)];
     if (window.currentHero.gold < randomHero.cost) {
-        alert(`❌ Недостатъчно злато! Нужни: ${randomHero.cost}`);
+        window.showAdvisorPopup("ГРЕШКА", `Недостатъчно злато! Нужни: ${randomHero.cost}`, "error");
         return;
     }
     let newId = "hero_" + Date.now() + "_" + Math.floor(Math.random() * 10000);
@@ -237,14 +246,19 @@ window.hireNewHero = function() {
     if (window.renderTop6LeadersUI) window.renderTop6LeadersUI();
     if (typeof window.renderSingleBar === 'function') window.renderSingleBar();
     
-    alert(`✅ Нает: ${newHero.name} от род ${newHero.clan}\n💰 Останало злато: ${oldHero.gold}\n⚔️ Бойна сила: ${newHero.power}`);
+    // УСПЕШНО НАЕМАНЕ – ПОПАП
+    window.showAdvisorPopup(
+        "УСПЕШНО НАЕМАНЕ",
+        `✨ ${newHero.name} от род ${newHero.clan} се закле във вярност!<br><br>💰 Останало злато: ${oldHero.gold}<br>⚔️ Бойна сила: ${newHero.power}`,
+        "success"
+    );
+    
     if (newHero.isAuto && typeof window.startAutoTimer === 'function') window.startAutoTimer(newId);
     
     if (document.getElementById('barracks-screen') && document.getElementById('barracks-screen').style.display === 'flex') {
         if (typeof window.renderBarracksLayout === 'function') window.renderBarracksLayout();
     }
 };
-
 // ==================== ДАННИ ЗА ГЕРОИТЕ ====================
 function getAllHeroes() {
     let heroes = [];
