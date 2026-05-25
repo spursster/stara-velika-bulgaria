@@ -679,5 +679,21 @@
     console.log("✅ Играта е напълно готова!");
 })();
 </script>
+    <script>
+(function() {
+    // Запазваме оригиналния processTurn, ако съществува
+    const originalProcessTurn = window.processTurn;
+    window.processTurn = function() {
+        // Извикваме оригиналната функция (ако има такава)
+        if (originalProcessTurn) originalProcessTurn();
+        
+        // Добавяме дуелно предизвикателство с 15% шанс
+        if (Math.random() < 0.15 && typeof window.triggerRandomDuelChallenge === 'function') {
+            window.triggerRandomDuelChallenge();
+        }
+    };
+    console.log("✅ Двубоите са активирани – ще се появяват случайно на ход.");
+})();
+</script>
 </body>
 </html>
