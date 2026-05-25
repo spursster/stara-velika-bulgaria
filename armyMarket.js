@@ -54,22 +54,25 @@
         return heroes;
     }
 
-    function getSelectedHero() {
-        let hero = null;
-        if (selectedHeroId && window.worldData.clans[selectedHeroId]) {
-            hero = window.worldData.clans[selectedHeroId];
-        }
-        if (!hero && window.currentHero) {
-            hero = window.currentHero;
-            selectedHeroId = hero.clan;
-        }
-        if (!hero) {
-            const heroes = getAllHeroes();
-            if (heroes.length) hero = heroes[0].clan;
-        }
-        if (hero) ensureArmyDetails(hero);
-        return hero;
+  function getSelectedHero() {
+    let hero = null;
+    if (selectedHeroId && window.worldData.clans[selectedHeroId]) {
+        hero = window.worldData.clans[selectedHeroId];
     }
+    if (!hero && window.currentHero) {
+        hero = window.currentHero;
+        selectedHeroId = hero.clan;
+    }
+    if (!hero) {
+        const heroes = getAllHeroes();
+        if (heroes.length && heroes[0].id && window.worldData.clans[heroes[0].id]) {
+            hero = window.worldData.clans[heroes[0].id];
+            selectedHeroId = heroes[0].id;
+        }
+    }
+    if (hero) ensureArmyDetails(hero);
+    return hero;
+}
 
     function syncWithGame(hero) {
         if (!hero) hero = getSelectedHero();
