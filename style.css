@@ -794,7 +794,7 @@ html, body {
         font-size: 0.75rem;
     }
 
-    /* 10. Хамбургер меню панел (добавя се динамично от JS) */
+       /* 10. Хамбургер меню панел (добавя се динамично от JS) */
     #mobile-menu-panel {
         position: fixed;
         bottom: 0;
@@ -825,4 +825,9 @@ html, body {
     #mobile-menu-panel button:active {
         transform: scale(0.96);
     }
-}
+
+    /* 11. Показваме бутона за нова игра */
+    .new-game-menu-container .glass-btn {
+        display: flex !important;
+    }
+} /* <-- Това затваря @media (max-width: 600px) */
