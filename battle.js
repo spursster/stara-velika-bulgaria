@@ -1,13 +1,13 @@
 /**
 ==========================================================================
 ПРОЕКТ: ВЕЛИКА БЪЛГАРИЯ
-ФАЙЛ: battle.js (ФИНАЛЕН – СПЕЦИАЛНИ УМЕНИЯ НА ВОЙНИЦИТЕ + ДОМАШНИ ЛЮБИМЦИ)
-ВЕРСИЯ: 5.2
+ФАЙЛ: battle.js (ФИНАЛНА ПОДОБРЕНА ВЕРСИЯ – С ПОДДРЪЖКА НА ADVANCED SKILLS)
+ВЕРСИЯ: 6.0
 ==========================================================================
 */
 
 (function() {
-    // ==================== СТИЛОВЕ ====================
+    // ==================== СТИЛОВЕ (същите като преди) ====================
     if (!document.getElementById('battle-styles-v2')) {
         const style = document.createElement('style');
         style.id = 'battle-styles-v2';
@@ -294,7 +294,7 @@
         document.head.appendChild(style);
     }
 
-    // ==================== ПОМОЩНА ФУНКЦИЯ ЗА ЕФЕКТИТЕ НА ВОЙНИЦИТЕ ====================
+    // ==================== ПОМОЩНИ ФУНКЦИИ ====================
     function getTroopSpecialEffects(hero) {
         if (!hero || !hero.armyDetails || !window.ALL_TROOP_TYPES) return {};
         let effects = {
@@ -332,10 +332,10 @@
         return effects;
     }
 
-    // ==================== ПОМОЩНА ФУНКЦИЯ ЗА ЕФЕКТИТЕ НА ДОМАШЕН ЛЮБИМЕЦ ====================
+    // КОРИГИРАНА: правилно вземане на любимеца от hero.pet
     function getPetEffects(hero) {
-        if (!hero || !hero.clanObj || !hero.clanObj.pet) return {};
-        let petId = hero.clanObj.pet;
+        if (!hero || !hero.pet) return {};
+        let petId = hero.pet;
         let effects = {
             reviveChance: 0,
             extraTurnChance: 0,
@@ -363,12 +363,31 @@
             }
         } else if (window.rpgDatabase && window.rpgDatabase.petsDatabase && window.rpgDatabase.petsDatabase[petId]) {
             let pet = window.rpgDatabase.petsDatabase[petId];
-            if (pet.name === "Родов Сокол") effects.damageBonus = 0.15;
-            if (pet.name === "Вълк Единак") effects.critChanceBonus = 0.10;
-            if (pet.name === "Степен Жребец") effects.damageReduction = 0.15;
-            if (pet.name === "Балканска Мечка") { /* defense bonus handled in recalculateHeroPower */ }
+            let petName = (pet.name || "").toLowerCase();
+            if (petName === "родов сокол") effects.damageBonus = 0.15;
+            else if (petName === "вълк единак") effects.critChanceBonus = 0.10;
+            else if (petName === "степен жребец") effects.damageReduction = 0.15;
+            else if (petName === "балканска мечка") { /* defense handled in recalculateHeroPower */ }
         }
         return effects;
+    }
+
+    // НОВА ФУНКЦИЯ: взема бонуси от напредналите умения (skills.js)
+    function getAdvancedSkillCombatBonuses(hero) {
+        if (!hero || typeof window.getAdvancedSkillBonuses !== 'function') return {};
+        const bonuses = window.getAdvancedSkillBonuses(hero);
+        // Филтрираме само бонусите, които влияят на битката
+        return {
+            critChance: bonuses.critChance || 0,
+            firstStrikeBonus: bonuses.firstStrikeBonus || 0,
+            damageBonus: bonuses.damageBonus || 0,
+            extraAttackChance: bonuses.extraAttackChance || 0,
+            executeBonus: bonuses.executeBonus || 0,
+            aoeDamage: bonuses.aoeDamage || 0,
+            lowHpBonus: bonuses.lowHpBonus || 0,
+            attackBonus: bonuses.attackBonus || 0,
+            spellPower: bonuses.spellPower || 0
+        };
     }
 
     // ==================== ОСНОВНА ФУНКЦИЯ ====================
@@ -621,47 +640,77 @@
             addLog(`━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`);
             addLog(`🏹 РУНД ${currentRound} - ГЕРОИТЕ АТАКУВАТ!`);
 
-            let isNight = true;
-            if (window.gameTime) isNight = (window.gameTime.seasonIndex === 3);
+            let isNight = (window.gameTime && window.gameTime.seasonIndex === 3);
 
             aliveHeroes.forEach(hero => {
                 if (currentMonster.hp <= 0) return;
                 let baseDamage = Math.max(1, Math.floor(hero.power * (0.5 + Math.random() * 0.7)));
-                let effects = hero.troopEffects || {};
+                
+                // Бонуси от войски
+                let troopEffects = hero.troopEffects || {};
+                // Бонуси от любимец
+                let petEffects = getPetEffects(hero.clanObj);
+                // Бонуси от напреднали умения
+                let skillBonuses = getAdvancedSkillCombatBonuses(hero.clanObj);
+                
                 let damageMultiplier = 1.0;
-                let critChance = 0.15;
+                let critChance = 0.15; // базов шанс
                 let isFirstStrike = (currentRound === 1);
                 
-                if (effects.firstStrikeBonus && isFirstStrike) {
-                    damageMultiplier += effects.firstStrikeBonus;
-                    addLog(`   ⚡ ${hero.name} използва Пикиране (първи удар)!`);
+                // Добавяне на бонуси
+                if (troopEffects.firstStrikeBonus && isFirstStrike) {
+                    damageMultiplier += troopEffects.firstStrikeBonus;
+                    addLog(`   ⚡ ${hero.name} използва Пикиране от войски (първи удар)!`);
                 }
-                if (effects.nightFuryBonus && isNight) {
-                    damageMultiplier += effects.nightFuryBonus;
-                    addLog(`   🌙 ${hero.name} активира Нощна ярост!`);
+                if (skillBonuses.firstStrikeBonus && isFirstStrike) {
+                    damageMultiplier += skillBonuses.firstStrikeBonus;
+                    addLog(`   ⚡ ${hero.name} използва Първи удар от умения!`);
                 }
-                if (effects.critChanceBonus) critChance += effects.critChanceBonus;
-                
-                // Пет ефекти
-                let petEffects = getPetEffects(hero);
+                if (troopEffects.nightFuryBonus && isNight) {
+                    damageMultiplier += troopEffects.nightFuryBonus;
+                    addLog(`   🌙 ${hero.name} активира Нощна ярост от войски!`);
+                }
                 if (petEffects.damageBonus) {
                     damageMultiplier += petEffects.damageBonus;
-                    addLog(`   🐾 ${hero.name} получава бонус щети от любимеца си!`);
+                    addLog(`   🐾 ${hero.name} получава бонус щети от любимеца!`);
                 }
+                if (skillBonuses.damageBonus) {
+                    damageMultiplier += skillBonuses.damageBonus;
+                    addLog(`   ✨ ${hero.name} получава бонус щети от умения!`);
+                }
+                if (skillBonuses.attackBonus) {
+                    baseDamage += skillBonuses.attackBonus;
+                    addLog(`   📈 ${hero.name} получава +${skillBonuses.attackBonus} атака от умения!`);
+                }
+                // Критичен шанс
+                if (troopEffects.critChanceBonus) critChance += troopEffects.critChanceBonus;
                 if (petEffects.critChanceBonus) critChance += petEffects.critChanceBonus;
+                if (skillBonuses.critChance) critChance += skillBonuses.critChance;
+                
+                // Огнени щети от любимец
                 if (petEffects.fireDamage) {
                     let fireBonus = petEffects.fireDamage;
                     addLog(`   🔥 ${hero.name} добавя ${fireBonus} огнени щети от любимеца!`);
                     baseDamage += fireBonus;
                 }
                 
+                // Бонус от ниско здраве (берсерк)
+                if (skillBonuses.lowHpBonus && hero.hp < hero.maxHp * 0.3) {
+                    let lowBonus = 1 + (hero.maxHp - hero.hp) / hero.maxHp * skillBonuses.lowHpBonus;
+                    damageMultiplier += lowBonus - 1;
+                    addLog(`   😡 ${hero.name} активира Берсерк (ниско здраве)!`);
+                }
+                
                 let finalDamage = Math.floor(baseDamage * damageMultiplier);
                 let isCrit = Math.random() < critChance;
-                if (isCrit) finalDamage = Math.floor(finalDamage * 1.8);
+                if (isCrit) {
+                    let critMultiplier = 1.8;
+                    if (skillBonuses.critDamage) critMultiplier += skillBonuses.critDamage;
+                    finalDamage = Math.floor(finalDamage * critMultiplier);
+                }
                 
-                // Life steal от войници и от pet
-                let totalLifeSteal = effects.lifeSteal;
-                if (petEffects.lifeSteal) totalLifeSteal += petEffects.lifeSteal;
+                // Life steal от войски и любимец
+                let totalLifeSteal = troopEffects.lifeSteal + petEffects.lifeSteal;
                 if (totalLifeSteal > 0) {
                     let healAmount = Math.floor(finalDamage * totalLifeSteal);
                     if (healAmount > 0) {
@@ -695,28 +744,27 @@
                 });
                 
                 if (typeof regionName === 'string' && regionName !== "Портал") {
-    if (!window.playerRegions) window.playerRegions = [];
-    // Нормализираме playerRegions за всеки случай (плоък масив)
-    let normalized = [];
-    for (let item of window.playerRegions) {
-        if (Array.isArray(item)) {
-            for (let sub of item) normalized.push(sub);
-        } else if (typeof item === 'string') {
-            normalized.push(item);
-        }
-    }
-    window.playerRegions = normalized;
-    if (!window.playerRegions.includes(regionName)) {
-        window.playerRegions.push(regionName);
-        addLog(`   🏰 ${regionName} е добавен към вашите владения!`);
-        if (window.addWorldEvent) window.addWorldEvent(`🏰 ЗАВЛАДЯВАНЕ`, `Вие завладяхте ${regionName}!`, "🏰");
-        if (window.worldData && window.worldData.regions && window.worldData.regions[regionName]) {
-            window.worldData.regions[regionName].armySize = 0;
-        }
-    } else {
-        addLog(`   ℹ️ ${regionName} вече е ваш.`);
-    }
-}
+                    if (!window.playerRegions) window.playerRegions = [];
+                    let normalized = [];
+                    for (let item of window.playerRegions) {
+                        if (Array.isArray(item)) {
+                            for (let sub of item) normalized.push(sub);
+                        } else if (typeof item === 'string') {
+                            normalized.push(item);
+                        }
+                    }
+                    window.playerRegions = normalized;
+                    if (!window.playerRegions.includes(regionName)) {
+                        window.playerRegions.push(regionName);
+                        addLog(`   🏰 ${regionName} е добавен към вашите владения!`);
+                        if (window.addWorldEvent) window.addWorldEvent(`🏰 ЗАВЛАДЯВАНЕ`, `Вие завладяхте ${regionName}!`, "🏰");
+                        if (window.worldData && window.worldData.regions && window.worldData.regions[regionName]) {
+                            window.worldData.regions[regionName].armySize = 0;
+                        }
+                    } else {
+                        addLog(`   ℹ️ ${regionName} вече е ваш.`);
+                    }
+                }
                 
                 if (Math.random() < 0.2 && window.historicalArtifacts) {
                     const artifactKeys = Object.keys(window.historicalArtifacts);
@@ -783,25 +831,26 @@
             let damage = Math.floor(currentMonster.power * (0.35 + Math.random() * 0.55));
             damage = Math.max(1, damage);
             
-            let effects = target.troopEffects || {};
-            if (effects.damageReduction) {
-                let reduced = Math.floor(damage * (1 - effects.damageReduction));
-                addLog(`   🛡️ ${target.name} намалява щетите с ${Math.floor(effects.damageReduction*100)}% (Каменна кожа)!`);
+            let troopEffects = target.troopEffects || {};
+            let petEffects = getPetEffects(target.clanObj);
+            let skillBonuses = getAdvancedSkillCombatBonuses(target.clanObj);
+            
+            // Намаляване на щетите
+            let damageReduction = 0;
+            if (troopEffects.damageReduction) damageReduction += troopEffects.damageReduction;
+            if (petEffects.damageReduction) damageReduction += petEffects.damageReduction;
+            if (skillBonuses.damageReduction) damageReduction += skillBonuses.damageReduction;
+            if (damageReduction > 0) {
+                let reduced = Math.floor(damage * (1 - Math.min(0.9, damageReduction)));
+                addLog(`   🛡️ ${target.name} намалява щетите с ${Math.floor(damageReduction*100)}% (Каменна кожа/умения)!`);
                 damage = reduced;
             }
             
-            // Проверка за invincibleOnce
-            if (effects.hasInvincibleOnce && !invincibleUsed[target.id]) {
+            // Непробиваемост (invincibleOnce)
+            if (troopEffects.hasInvincibleOnce && !invincibleUsed[target.id]) {
                 invincibleUsed[target.id] = true;
                 damage = 0;
                 addLog(`   ✨ ${target.name} става непробиваем този рунд (Каменен трол)!`);
-            }
-            
-            // Пет ефект за намаляване на щетите
-            let petEffects = getPetEffects(target);
-            if (petEffects.damageReduction) {
-                damage = Math.floor(damage * (1 - petEffects.damageReduction));
-                addLog(`   🛡️ ${target.name} намалява щетите с ${Math.floor(petEffects.damageReduction*100)}% от любимеца!`);
             }
             
             let damagePercent = damage / target.maxHp;
@@ -815,11 +864,11 @@
             screenShake();
             
             if (target.hp <= 0) {
-                // Опит за възкресение от pet
-                let petEffects = getPetEffects(target);
-                if (petEffects.reviveChance && Math.random() < petEffects.reviveChance) {
+                // Опит за възкресение от pet или умения
+                let reviveChance = petEffects.reviveChance || skillBonuses.reviveChance || 0;
+                if (reviveChance > 0 && Math.random() < reviveChance) {
                     target.hp = Math.floor(target.maxHp * 0.3);
-                    addLog(`   🔥 ${target.name} се възкресява от любимеца си! (${target.hp} HP)`);
+                    addLog(`   🔥 ${target.name} се възкресява от любимец/умения! (${target.hp} HP)`);
                 } else {
                     addLog(`   💀 ${target.name} е нокаутиран! 💀`, true);
                     applyArmyLossFromDamage(target, 0.5);
@@ -897,7 +946,7 @@
         addLog(`📌 Натисни "АТАКА" за рунд!`);
         addLog(`⚠️ ВНИМАНИЕ: Загубата на живот намалява армията ви!`);
         updateUI();
-        console.log("✅ Битката е готова (с поддръжка на специални умения и домашни любимци)!");
+        console.log("✅ Битката е готова (с поддръжка на специални умения, домашни любимци и advanced skills)!");
     };
-    console.log("✅ battle.js зареден (финална версия с поддръжка на домашни любимци)");
+    console.log("✅ battle.js зареден (подобрена версия с advanced skills)");
 })();
