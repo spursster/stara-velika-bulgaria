@@ -22,7 +22,6 @@ window.showAdvisorPopup = function(title, message, type = "info") {
         animation: fadeIn 0.2s ease;
     `;
 
-    // Икона според типа
     let icon = "📜";
     if (type === "success") icon = "✅";
     else if (type === "error") icon = "❌";
@@ -115,7 +114,6 @@ window.showDuelChallenge = function(attackerHero) {
         animation: fadeIn 0.2s ease;
     `;
 
-    // Име и клас на противника
     const attackerName = attackerHero.leaderName || attackerHero.name || "Непознат";
     const attackerClass = attackerHero.currentClass || "Войн";
     const attackerPower = attackerHero.heroPower || 100;
@@ -123,7 +121,7 @@ window.showDuelChallenge = function(attackerHero) {
 
     const portraitHtml = portraitUrl ? 
         `<img src="${portraitUrl}" style="width: 80px; height: 80px; border-radius: 50%; border: 2px solid #d4af37; margin: 0 auto 10px auto; object-fit: cover;">` :
-        `<div style="font-size: 48px; margin-bottom: 10px;">${window.getClassIcon ? window.getClassIcon(attackerClass) : '⚔️'}</div>`;
+        `<div style="font-size: 48px; margin-bottom: 10px;">${(window.getClassIcon ? window.getClassIcon(attackerClass) : '⚔️')}</div>`;
 
     modal.innerHTML = `
         <div style="
@@ -180,21 +178,18 @@ window.showDuelChallenge = function(attackerHero) {
 
     document.body.appendChild(modal);
 
-    // Обработка на бутоните
     const acceptBtn = modal.querySelector('#accept-duel');
     const fleeBtn = modal.querySelector('#flee-duel');
 
     acceptBtn.onclick = () => {
         modal.remove();
-        // Стартираме битка срещу този герой
-        startBattleAgainstHero(attackerHero);
+        window.startBattleAgainstHero(attackerHero);
     };
 
     fleeBtn.onclick = () => {
         modal.remove();
-        // Може да добавите наказание – например загуба на малко злато или армия
-        if (window.showAdvisorMsg) window.showAdvisorMsg(`🏃‍♂️ Избягахте от двубоя с ${attackerName}!`);
-        // Евентуално намаляване на армията с 5% като "наказание за бягство"
+        const attackerNameShow = attackerHero.leaderName || attackerHero.name || "Непознат";
+        if (window.showAdvisorMsg) window.showAdvisorMsg(`🏃‍♂️ Избягахте от двубоя с ${attackerNameShow}!`);
         if (window.currentHero && window.currentHero.armySize) {
             let loss = Math.floor(window.currentHero.armySize * 0.05);
             window.currentHero.armySize = Math.max(10, window.currentHero.armySize - loss);
@@ -203,4 +198,42 @@ window.showDuelChallenge = function(attackerHero) {
             if (window.renderTop6LeadersUI) window.renderTop6LeadersUI();
         }
     };
+};
+
+// ==================== СТАРТИРАНЕ НА БИТКА СРЕЩУ ГЕРОЙ ====================
+window.startBattleAgainstHero = function(enemyHero) {
+    if (!enemyHero) return;
+    let enemyPower = enemyHero.heroPower || 100;
+    let enemyArmy = enemyHero.armySize || 200;
+    let finalPower = Math.floor(enemyPower * (enemyArmy / 200));
+    const battleTarget = {
+        name: enemyHero.leaderName || enemyHero.name,
+        armySize: finalPower,
+        heroObj: enemyHero,
+        isHero: true
+    };
+    if (typeof window.startBattle === 'function') {
+        window.startBattle(battleTarget);
+    } else {
+        console.error("Battle system not ready");
+        if (window.showAdvisorMsg) window.showAdvisorMsg("Бойната система не е готова!");
+    }
+};
+
+// ==================== ГЕНЕРИРАНЕ НА СЛУЧАЙНО ПРЕДИЗВИКАТЕЛСТВО ====================
+window.triggerRandomDuelChallenge = function() {
+    if (!window.worldData || !window.worldData.clans) return;
+    let potentialChallengers = [];
+    for (let key in window.worldData.clans) {
+        let clan = window.worldData.clans[key];
+        // Условия: герой е присъединен, НЕ е любим, НЕ е текущият активен герой
+        if (clan.isJoined === true && clan.isFavoriteInBarracks !== true && clan !== window.currentHero) {
+            potentialChallengers.push(clan);
+        }
+    }
+    if (potentialChallengers.length === 0) return;
+    const challenger = potentialChallengers[Math.floor(Math.random() * potentialChallengers.length)];
+    if (window.showDuelChallenge) {
+        window.showDuelChallenge(challenger);
+    }
 };
