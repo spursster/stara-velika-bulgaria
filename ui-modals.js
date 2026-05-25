@@ -225,10 +225,13 @@ window.triggerRandomDuelChallenge = function() {
     if (!window.worldData || !window.worldData.clans) return;
     let potentialChallengers = [];
     for (let key in window.worldData.clans) {
-        let clan = window.worldData.clans[key];
-        // Условия: герой е присъединен, НЕ е любим, НЕ е текущият активен герой
-        if (clan.isJoined === true && clan.isFavoriteInBarracks !== true && clan !== window.currentHero) {
-            potentialChallengers.push(clan);
+        let hero = window.worldData.clans[key];
+        // Условия: герой е нает, НЕ Е любим, НЕ Е текущият активен герой
+        if (hero.isJoined === true && hero.isFavorite !== true && hero !== window.currentHero) {
+            // Допълнителна проверка за име (за всеки случай)
+            if (hero.name !== window.currentHero.name) {
+                potentialChallengers.push(hero);
+            }
         }
     }
     if (potentialChallengers.length === 0) return;
