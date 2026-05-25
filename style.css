@@ -1,787 +1,644 @@
 /* ==========================================================================
-ФИГАТУРА НА ИГРАТА ВЕЛИКА БЪЛГАРИЯ - ФИНАЛЕН СТЪКЛЕН ДИЗАЙН
-Версия: Обединен и изчистен, без дублиране на код
-========================================================================== */
+   ВЕЛИКА БЪЛГАРИЯ – ФИНАЛЕН АДАПТИВЕН СТИЛ
+   Версия: 3.0 – Изчистен, модулен, без конфликти
+   ========================================================================== */
+
 /* -----------------------------------------------
-БАЗОВИ СТИЛОВЕ И ЕПИЧЕН ФОН
+   1. ГЛОБАЛНИ СТИЛОВЕ И ФОН
 ----------------------------------------------- */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
 html, body {
-margin: 0 !important;
-padding: 0 !important;
-height: 100vh !important;
-background: linear-gradient(rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.4)),
-url('https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEjJuReyp2P1EHVmb8i_LXu6AQhvvvByWOCKKl4sVeQTuIKnvmu0dZ64-jCPAw7hisWSrzei_lJeAS3tvQvYHuV5vKWGvc4ZRWsd5XZpgkX-KbUA0o9C2MMXiV1H0NGzVhJEj1iRxeT67HYEAe1VTmjmeI__JKiOCkz6hVVbo6O7gbqfsABylSvdnA-P7VAq/s3072/_d012d68d-c196-4d76-be3e-0a44b9f7ccfa.jpeg') !important;
-background-size: cover !important;
-background-position: center !important;
-background-attachment: fixed !important;
-font-family: 'Montserrat', sans-serif !important;
-color: #e0e0e0 !important;
-overflow-x: hidden !important;
+    height: 100%;
+    background: linear-gradient(rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.4)),
+                url('https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEjJuReyp2P1EHVmb8i_LXu6AQhvvvByWOCKKl4sVeQTuIKnvmu0dZ64-jCPAw7hisWSrzei_lJeAS3tvQvYHuV5vKWGvc4ZRWsd5XZpgkX-KbUA0o9C2MMXiV1H0NGzVhJEj1iRxeT67HYEAe1VTmjmeI__JKiOCkz6hVVbo6O7gbqfsABylSvdnA-P7VAq/s3072/_d012d68d-c196-4d76-be3e-0a44b9f7ccfa.jpeg');
+    background-size: cover;
+    background-position: center;
+    background-attachment: fixed;
+    font-family: 'Montserrat', sans-serif;
+    color: #e0e0e0;
+    overflow-x: hidden;
 }
-/* ГОРЕН ИНФОРМАЦИОНЕН ПАНЕЛ */
+
+/* -----------------------------------------------
+   2. ГОРЕН ИНФОРМАЦИОНЕН ПАНЕЛ
+----------------------------------------------- */
 #top-bar {
-display: flex !important;
-justify-content: space-around !important;
-align-items: center !important;
-background: rgba(15, 15, 15, 0.65) !important;
-backdrop-filter: blur(12px) !important;
--webkit-backdrop-filter: blur(12px) !important;
-border-bottom: 2px solid #d4af37 !important;
-padding: 10px 20px !important;
-position: sticky !important;
-top: 0 !important;
-z-index: 1000 !important;
-box-shadow: 0 4px 20px rgba(0, 0, 0, 0.6) !important;
-flex-wrap: wrap !important;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: rgba(15, 15, 15, 0.65);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border-bottom: 2px solid #d4af37;
+    padding: 10px 20px;
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.6);
+    flex-wrap: wrap;
+    gap: 10px;
 }
+
 .stat-box {
-font-family: 'Cinzel', serif !important;
-font-size: 1.1rem !important;
-font-weight: 700 !important;
-color: #ffd700 !important;
-text-shadow: 0 2px 4px rgba(0,0,0,0.8) !important;
-display: flex !important;
-align-items: center !important;
-gap: 8px !important;
-margin: 2px 5px !important;
+    font-family: 'Cinzel', serif;
+    font-size: 1rem;
+    font-weight: 700;
+    color: #ffd700;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.8);
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: rgba(0, 0, 0, 0.4);
+    padding: 4px 12px;
+    border-radius: 30px;
 }
-/* ЛЕНТА НА ЕЛИТА (6-те героя с най-висок опит) */
-#top-elite-bar {
-background: rgba(20, 20, 20, 0.4) !important;
-border: 1px solid rgba(214, 175, 55, 0.25) !important;
-border-radius: 10px !important;
-backdrop-filter: blur(8px) !important;
--webkit-backdrop-filter: blur(8px) !important;
-padding: 10px !important;
-box-shadow: 0 4px 15px rgba(0,0,0,0.5) !important;
-display: grid !important;
-grid-template-columns: repeat(6, 1fr) !important;
-gap: 10px !important;
-width: 100% !important;
-box-sizing: border-box !important;
+
+.active-hero-name {
+    background: rgba(0, 0, 0, 0.6);
+    border-radius: 30px;
+    padding: 4px 12px;
+    font-size: 0.85rem;
+    color: #ffd700;
+    font-weight: bold;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
 }
-.elite-hero-card {
-background: rgba(15, 15, 15, 0.75) !important;
-border: 1px solid rgba(214, 175, 55, 0.4) !important;
-border-radius: 6px !important;
-padding: 8px !important;
-text-align: center !important;
-cursor: pointer !important;
-transition: transform 0.2s, border-color 0.2s !important;
-display: flex !important;
-flex-direction: column !important;
-justify-content: space-between !important;
-gap: 5px !important;
-position: relative !important;
-min-width: 0 !important;
-}
-.elite-hero-card:hover {
-transform: translateY(-2px) !important;
-border-color: #ffd700 !important;
-background: rgba(25, 25, 25, 0.85) !important;
-}
-/* XP прогресив лента */
-.rpg-xp-container {
-width: 100% !important;
-height: 5px !important;
-background: #222 !important;
-border-radius: 3px !important;
-overflow: hidden !important;
-margin-top: 3px !important;
-border: 1px solid rgba(255,255,255,0.05) !important;
-}
-.rpg-xp-fill {
-height: 100% !important;
-background: linear-gradient(90deg, #00c6ff, #0072ff) !important;
-width: 0%;
-transition: width 0.4s ease !important;
-}
-/* Автоматичен режим (компактен бутон) */
-.auto-btn {
-background: #333 !important;
-border: 1px solid #555 !important;
-color: #bbb !important;
-font-size: 9px !important;
-font-weight: bold !important;
-padding: 2px 6px !important;
-border-radius: 4px !important;
-cursor: pointer !important;
-text-transform: uppercase !important;
-transition: all 0.2s ease !important;
-margin: 2px auto 0 auto !important;
-display: inline-block !important;
-white-space: nowrap !important;
-}
-.auto-btn.active {
-background: linear-gradient(135deg, #006400, #004d00) !important;
-border-color: #00ff00 !important;
-color: #fff !important;
-text-shadow: 0 0 5px #00ff00 !important;
-box-shadow: 0 0 8px rgba(0,255,0,0.3) !important;
-}
-/* ОСНОВЕН КОНТЕЙНЕР НА ИГРАТА */
-#game-container {
-display: grid !important;
-grid-template-columns: 280px 1fr 280px !important;
-gap: 20px !important;
-max-width: 1600px !important;
-margin: 0 auto !important;
-padding: 0 20px 100px 20px !important;
-box-sizing: border-box !important;
-min-height: calc(100vh - 180px) !important;
-}
-/* ЛЯВ И ДЕСЕН СТРАНИЧЕН ПАНЕЛ */
-#sidebar-left, #sidebar-right {
-display: flex !important;
-flex-direction: column !important;
-gap: 15px !important;
-}
-/* ОБЩИ КАРТИ (Водачи и герои) */
-.leader-card, .character-card, .top-leader-container {
-background: rgba(20, 20, 20, 0.6) !important;
-backdrop-filter: blur(10px) !important;
--webkit-backdrop-filter: blur(10px) !important;
-border: 1px solid #d4af37 !important;
-border-radius: 10px !important;
-margin: 15px auto !important;
-padding: 12px 15px !important;
-box-sizing: border-box !important;
-}
-/* ЦЕНТРАЛЕН ПАНЕЛ ЗА БИТКА */
-#game-main-area {
-background: rgba(10, 10, 10, 0.5) !important;
-backdrop-filter: blur(15px) !important;
--webkit-backdrop-filter: blur(15px) !important;
-border: 1px solid rgba(255, 215, 0, 0.15) !important;
-border-radius: 12px !important;
-padding: 20px !important;
-box-shadow: inset 0 0 30px rgba(0,0,0,0.8), 0 10px 30px rgba(0,0,0,0.5) !important;
-box-sizing: border-box !important;
-overflow-y: auto !important;
-}
-/* ЕПИЧНИ БУТОНИ */
-.menu-btn {
-background: linear-gradient(135deg, rgba(30, 30, 30, 0.9), rgba(15, 15, 15, 0.9)) !important;
-border: 1px solid rgba(214, 175, 55, 0.5) !important;
-color: #d4af37 !important;
-padding: 14px 20px !important;
-font-family: 'Cinzel', serif !important;
-font-size: 0.9rem !important;
-font-weight: 700 !important;
-letter-spacing: 1px !important;
-cursor: pointer !important;
-border-radius: 6px !important;
-text-transform: uppercase !important;
-transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1) !important;
-box-shadow: 0 4px 6px rgba(0,0,0,0.3) !important;
-}
-.menu-btn:hover {
-background: linear-gradient(135deg, #1f1f1f, #2d2510) !important;
-border-color: #ffd700 !important;
-color: #ffd700 !important;
-box-shadow: 0 0 15px rgba(214, 175, 55, 0.4) !important;
-transform: translateY(-2px) !important;
-}
-/* СПЕЦИАЛЕН БУТОН ЗА СЛЕДВАЩ СЕЗОН */
-.action-btn {
-background: linear-gradient(135deg, #8b0000, #4a0000) !important;
-border: 1px solid #ff4444 !important;
-color: #ffffff !important;
-text-align: center !important;
-animation: pulseGlow 3s infinite alternate !important;
-}
-.action-btn:hover {
-background: linear-gradient(135deg, #b30000, #660000) !important;
-border-color: #ffaa00 !important;
-color: #ffffff !important;
-box-shadow: 0 0 20px rgba(255, 68, 68, 0.6) !important;
-}
-/* СЛОТОВЕ ЗА ЕКИПИРОВКА (модал) */
-.rpg-equip-box {
-width: 80px !important;
-height: 80px !important;
-background: rgba(25, 25, 25, 0.8) !important;
-border: 1px solid rgba(214, 175, 55, 0.3) !important;
-border-radius: 6px !important;
-display: flex !important;
-flex-direction: column !important;
-align-items: center !important;
-justify-content: center !important;
-font-size: 24px !important;
-cursor: pointer !important;
-position: relative !important;
-transition: all 0.2s ease !important;
-}
-.rpg-equip-box:hover {
-border-color: #ffd700 !important;
-background: rgba(40, 35, 20, 0.9) !important;
-}
-.rpg-equip-label {
-position: absolute !important;
-bottom: 2px !important;
-font-size: 8px !important;
-color: #888 !important;
-text-transform: uppercase !important;
-}
-#rpg-pet-slot:hover {
-background: rgba(214, 175, 55, 0.1) !important;
-border-style: solid !important;
-}
-/* ДЪРВО НА УМЕНИЯТА */
-.skill-tree-container {
-display: grid !important;
-grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)) !important;
-gap: 15px !important;
-margin-top: 15px !important;
-}
-.skill-node {
-background: rgba(25, 25, 25, 0.8) !important;
-border: 1px solid rgba(214, 175, 55, 0.3) !important;
-border-radius: 6px !important;
-padding: 10px !important;
-cursor: pointer !important;
-transition: all 0.2s ease !important;
-}
-.skill-node:hover {
-border-color: #00ffcc !important;
-background: rgba(0, 255, 204, 0.05) !important;
-}
-.clan-badge-gold {
-color: #ffd700 !important;
-font-weight: bold !important;
-text-shadow: 0 0 5px rgba(255,215,0,0.5) !important;
-}
-/* СТЪКЛЕНИ БУТОНИ ЗА ГОРНАТА ЛЕНТА */
+
+/* -----------------------------------------------
+   3. СТЪКЛЕНИ БУТОНИ (ГОРНА ЛЕНТА И КОНТРОЛИ)
+----------------------------------------------- */
 .top-bar-controls {
-display: flex;
-flex-direction: row;
-justify-content: center;
-align-items: center;
-gap: 8px;
-flex-wrap: wrap;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 10px;
 }
+
 .glass-btn {
-background: rgba(255, 255, 255, 0.08);
-backdrop-filter: blur(8px);
--webkit-backdrop-filter: blur(8px);
-border: 1px solid rgba(255, 215, 0, 0.3);
-border-radius: 50%;
-color: #ffdd99;
-font-size: 1rem;
-width: 32px;
-height: 32px;
-min-width: 32px;
-padding: 0;
-cursor: pointer;
-display: flex;
-align-items: center;
-justify-content: center;
-transition: all 0.2s ease;
+    background: rgba(255, 255, 255, 0.08);
+    backdrop-filter: blur(8px);
+    border: 1px solid rgba(255, 215, 0, 0.3);
+    border-radius: 40px;
+    color: #ffdd99;
+    font-size: 0.85rem;
+    padding: 6px 16px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-family: 'Cinzel', serif;
+    white-space: nowrap;
 }
+
 .glass-btn:hover {
-background: rgba(255, 255, 255, 0.15);
-border-color: #ffd700;
-transform: scale(1.05);
+    background: rgba(255, 255, 255, 0.15);
+    border-color: #ffd700;
+    transform: scale(1.02);
 }
+
 .glass-btn:active {
-transform: scale(0.95);
+    transform: scale(0.98);
 }
-.glass-btn-gold {
-background: linear-gradient(135deg, rgba(212, 175, 55, 0.2), rgba(184, 134, 11, 0.1));
-border-color: #ffd700;
+
+/* Специален бутон за нова игра */
+.new-game-menu-container .glass-btn {
+    background: linear-gradient(135deg, rgba(212, 175, 55, 0.35), rgba(184, 134, 11, 0.2));
+    border-color: #ffd700;
 }
-.glass-btn-gold:hover {
-background: linear-gradient(135deg, rgba(212, 175, 55, 0.35), rgba(184, 134, 11, 0.2));
-}
-/* АНИМАЦИЯ */
-@keyframes pulseGlow {
-0% { box-shadow: 0 4px 6px rgba(0,0,0,0.3); }
-100% { box-shadow: 0 0 15px rgba(139, 0, 0, 0.6); }
-}
+
 /* -----------------------------------------------
-ВОЕНЕН ПАЗАР (МОДАЛ)
+   4. ОСНОВЕН КОНТЕЙНЕР (3-колонен layout)
 ----------------------------------------------- */
-.market-modal {
-position: fixed;
-top: 0;
-left: 0;
-width: 100%;
-height: 100%;
-background: rgba(0,0,0,0.85);
-backdrop-filter: blur(10px);
-z-index: 10000;
-display: flex;
-align-items: center;
-justify-content: center;
-}
-.glass-panel {
-background: rgba(20,20,40,0.96);
-border-radius: 32px;
-width: 95%;
-max-width: 1400px;
-max-height: 90vh;
-overflow-y: auto;
-padding: 20px;
-border: 1px solid rgba(255,215,0,0.5);
-}
-.market-header {
-display: flex;
-flex-wrap: wrap;
-justify-content: space-between;
-align-items: center;
-border-bottom: 1px solid #d4af37;
-padding-bottom: 12px;
-margin-bottom: 20px;
-}
-.market-header h2 {
-color: #ffd700;
-margin: 0;
-}
-.player-resources {
-display: flex;
-gap: 15px;
-flex-wrap: wrap;
-}
-.resource-box {
-background: rgba(0,0,0,0.6);
-padding: 5px 12px;
-border-radius: 40px;
-font-weight: bold;
-}
-.resource-box.gold {
-color: #ffd966;
-}
-.resource-box.power {
-color: #88ffaa;
-}
-.close-market {
-font-size: 32px;
-cursor: pointer;
-color: #ffd700;
-}
-.close-market:hover {
-color: #ff6666;
-}
-.market-tabs {
-display: flex;
-gap: 10px;
-margin-bottom: 20px;
-flex-wrap: wrap;
-}
-.tab-btn {
-background: #2c2c3a;
-border: none;
-padding: 8px 20px;
-border-radius: 40px;
-color: #ffd966;
-cursor: pointer;
-}
-.tab-btn.active {
-background: #daa520;
-color: black;
-}
-.troop-shop {
-display: grid;
-grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-gap: 20px;
-max-height: 55vh;
-overflow-y: auto;
-}
-.troop-card {
-background: rgba(0,0,0,0.65);
-border-radius: 24px;
-padding: 15px;
-border: 1px solid rgba(255,215,0,0.3);
-}
-.troop-icon {
-font-size: 48px;
-text-align: center;
-}
-.troop-info h3 {
-color: #ffd966;
-margin: 0 0 8px 0;
-}
-.stats {
-display: flex;
-gap: 15px;
-font-size: 0.8rem;
-color: #aaa;
-}
-.price {
-font-weight: bold;
-color: #ffaa44;
-}
-.special {
-font-size: 0.7rem;
-color: #d4af37;
-background: rgba(0,0,0,0.4);
-display: inline-block;
-padding: 2px 8px;
-border-radius: 20px;
-}
-.troop-controls {
-display: flex;
-justify-content: space-between;
-margin-top: 12px;
-gap: 8px;
-flex-wrap: wrap;
-}
-.buy-btn, .sell-btn {
-background: linear-gradient(135deg,#b8860b,#daa520);
-border: none;
-padding: 6px 14px;
-border-radius: 40px;
-color: white;
-cursor: pointer;
-}
-.sell-btn {
-background: linear-gradient(135deg,#8b3a3a,#b55a5a);
-}
-.owned-count {
-font-size: 0.8rem;
-background: #222;
-padding: 4px 10px;
-border-radius: 30px;
-}
-.market-footer {
-display: flex;
-justify-content: center;
-gap: 15px;
-margin-top: 20px;
-padding-top: 15px;
-border-top: 1px solid rgba(255,215,0,0.3);
-}
-.footer-btn {
-background: #2c2c3a;
-border: 1px solid #daa520;
-padding: 8px 20px;
-border-radius: 40px;
-color: #ffd966;
-cursor: pointer;
-}
-.footer-btn.gold {
-background: #daa520;
-color: black;
-}
-.footer-btn.danger {
-background: #5a2a2a;
-border-color: #ff6666;
-color: #ffaaaa;
-}
-/* -----------------------------------------------
-АДАПТИВЕН ДИЗАЙН – ОБЕДИНЕНИ МЕДИЙНИ ЗАЯВКИ
------------------------------------------------ */
-/* Таблети и по-малки екрани (до 1024px) */
-@media (max-width: 1024px) {
 #game-container {
-grid-template-columns: 1fr !important;
-padding-bottom: 90px !important;
-padding: 0 10px 90px 10px !important;
+    display: grid;
+    grid-template-columns: 280px 1fr 280px;
+    gap: 20px;
+    max-width: 1600px;
+    margin: 0 auto;
+    padding: 20px 20px 100px 20px;
+    min-height: calc(100vh - 180px);
 }
+
 #sidebar-left, #sidebar-right {
-order: 2 !important;
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
 }
+
 #game-main-area {
-order: 1 !important;
-min-height: 400px !important;
-padding: 15px !important;
+    background: rgba(10, 10, 10, 0.5);
+    backdrop-filter: blur(15px);
+    border: 1px solid rgba(255, 215, 0, 0.15);
+    border-radius: 12px;
+    padding: 20px;
+    box-shadow: inset 0 0 30px rgba(0, 0, 0, 0.8), 0 10px 30px rgba(0, 0, 0, 0.5);
+    overflow-y: auto;
 }
+
+/* -----------------------------------------------
+   5. ЛЕНТА НА ЕЛИТА (6-те героя)
+----------------------------------------------- */
 #top-elite-bar {
-grid-template-columns: repeat(3, 1fr) !important;
-gap: 8px !important;
-overflow-x: auto !important;
-overflow-y: hidden !important;
--webkit-overflow-scrolling: touch !important;
-scrollbar-width: thin !important;
-scrollbar-color: #d4af37 rgba(0,0,0,0.3) !important;
--ms-overflow-style: none !important;
+    background: rgba(20, 20, 20, 0.4);
+    border: 1px solid rgba(214, 175, 55, 0.25);
+    border-radius: 10px;
+    backdrop-filter: blur(8px);
+    padding: 10px;
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    gap: 10px;
+    width: 100%;
+    margin: 10px 0;
 }
-#top-elite-bar::-webkit-scrollbar {
-height: 4px !important;
-}
-#top-elite-bar::-webkit-scrollbar-track {
-background: rgba(0,0,0,0.3) !important;
-border-radius: 2px !important;
-}
-#top-elite-bar::-webkit-scrollbar-thumb {
-background: #d4af37 !important;
-border-radius: 2px !important;
-}
+
 .elite-hero-card {
-padding: 6px !important;
-min-width: 100px !important;
+    background: rgba(15, 15, 15, 0.75);
+    border: 1px solid rgba(214, 175, 55, 0.4);
+    border-radius: 8px;
+    padding: 8px;
+    text-align: center;
+    cursor: pointer;
+    transition: transform 0.2s, border-color 0.2s;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
 }
-.elite-hero-card div:first-child {
-font-size: 10px !important;
+
+.elite-hero-card:hover {
+    transform: translateY(-2px);
+    border-color: #ffd700;
+    background: rgba(25, 25, 25, 0.85);
 }
-.elite-hero-card div:nth-child(2) {
-font-size: 8px !important;
+
+/* XP лента в картите */
+.rpg-xp-container {
+    width: 100%;
+    height: 5px;
+    background: #222;
+    border-radius: 3px;
+    overflow: hidden;
+    margin: 4px 0;
 }
+
+.rpg-xp-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #00c6ff, #0072ff);
+    width: 0%;
+    transition: width 0.4s ease;
+}
+
 .auto-btn {
-font-size: 8px !important;
-padding: 2px 4px !important;
+    background: #333;
+    border: 1px solid #555;
+    color: #bbb;
+    font-size: 9px;
+    font-weight: bold;
+    padding: 2px 6px;
+    border-radius: 4px;
+    cursor: pointer;
+    text-transform: uppercase;
+    transition: all 0.2s;
+    margin-top: 4px;
 }
-#top-bar {
-padding: 8px 10px !important;
-flex-wrap: wrap !important;
+
+.auto-btn.active {
+    background: linear-gradient(135deg, #006400, #004d00);
+    border-color: #00ff00;
+    color: #fff;
+    text-shadow: 0 0 5px #00ff00;
+    box-shadow: 0 0 8px rgba(0, 255, 0, 0.3);
 }
-.stat-box {
-font-size: 0.9rem !important;
-margin: 2px 3px !important;
+
+/* -----------------------------------------------
+   6. ЛЕНТА С ВСИЧКИ ГЕРОИ (single-hero-bar)
+----------------------------------------------- */
+#single-hero-bar {
+    background: transparent;
+    margin-top: 15px;
+    position: relative;
 }
-.menu-btn, .action-btn {
-padding: 10px 15px !important;
-font-size: 0.8rem !important;
-margin: 5px 0 !important;
+
+#single-hero-bar > div {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
 }
+
+.hero-card {
+    background: rgba(20, 15, 10, 0.9);
+    border-radius: 12px;
+    padding: 8px 12px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    cursor: pointer;
+    border: 1px solid #c9a87b;
+    transition: all 0.2s;
 }
+
+.hero-card:hover {
+    background: rgba(40, 30, 20, 0.95);
+    transform: translateX(4px);
+}
+
+/* Навигационни бутони за лентата (← →) */
+#hero-nav-prev, #hero-nav-next {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 28px;
+    height: 28px;
+    background: rgba(30, 25, 20, 0.6);
+    backdrop-filter: blur(4px);
+    border: 1px solid rgba(201, 168, 123, 0.4);
+    border-radius: 50%;
+    color: rgba(255, 221, 153, 0.8);
+    font-size: 14px;
+    cursor: pointer;
+    z-index: 10;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+}
+
+#hero-nav-prev { left: -12px; }
+#hero-nav-next { right: -12px; }
+
+#hero-nav-prev:hover, #hero-nav-next:hover {
+    background: rgba(212, 175, 55, 0.3);
+    color: #ffd700;
+}
+
+/* -----------------------------------------------
+   7. БИТКА (МОДАЛЕН ПРОЗОРЕЦ)
+----------------------------------------------- */
+.ultimate-battle {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(135deg, #0a0a1a 0%, #1a1a2e 100%);
+    z-index: 100000;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-family: 'Cinzel', serif;
+    animation: battleFadeIn 0.3s ease;
+    padding: 15px;
+}
+
+.battle-container {
+    width: 100%;
+    max-width: 1200px;
+    background: rgba(0, 0, 0, 0.75);
+    backdrop-filter: blur(12px);
+    border-radius: 32px;
+    border: 2px solid #c9a87b;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    max-height: 95vh;
+    position: relative;
+}
+
+.close-battle-btn {
+    position: absolute;
+    top: 12px;
+    left: 12px;
+    width: 36px;
+    height: 36px;
+    background: rgba(0, 0, 0, 0.6);
+    border: 1px solid #ff4444;
+    color: #ff4444;
+    border-radius: 50%;
+    font-size: 18px;
+    cursor: pointer;
+    z-index: 101;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.close-battle-btn:hover {
+    background: rgba(255, 68, 68, 0.2);
+    transform: scale(1.05);
+}
+
+.battle-header {
+    background: linear-gradient(135deg, #1a1a2e, #0d0d1a);
+    padding: 12px 20px;
+    text-align: center;
+    border-bottom: 2px solid #c9a87b;
+}
+
+.heroes-grid {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 10px;
+    padding: 15px;
+}
+
+.hero-card {
+    background: linear-gradient(145deg, rgba(30, 25, 20, 0.9), rgba(20, 15, 10, 0.95));
+    border-radius: 14px;
+    padding: 8px;
+    text-align: center;
+    border: 1px solid rgba(201, 168, 123, 0.4);
+}
+
+.hp-bar-bg {
+    background: #2a1a0a;
+    height: 6px;
+    border-radius: 3px;
+    margin: 6px 0;
+    overflow: hidden;
+}
+
+.hp-bar-fill {
+    background: linear-gradient(90deg, #cc3333, #ff5555);
+    height: 100%;
+    width: 100%;
+    transition: width 0.3s;
+}
+
+.battle-log {
+    background: rgba(0, 0, 0, 0.5);
+    border-radius: 12px;
+    padding: 8px;
+    height: 100px;
+    overflow-y: auto;
+    font-size: 10px;
+    font-family: monospace;
+}
+
+@keyframes battleFadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+/* -----------------------------------------------
+   8. МОДАЛИ (КАЗАРМИ, ПАЗАР, ПРОФИЛ, СЪБИТИЯ)
+----------------------------------------------- */
+.market-modal,
+#barracks-screen,
+#regions-map-overlay,
+#hero-rpg-modal,
+#skills-ui-modal,
+#event-overlay-modal,
+#treasury-overlay,
+#wm-marriage-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.85);
+    backdrop-filter: blur(8px);
+    z-index: 200000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 15px;
+    box-sizing: border-box;
+}
+
+.modal-content, .glass-panel {
+    background: #0a0a1a;
+    border: 2px solid #d4af37;
+    border-radius: 24px;
+    max-width: 90%;
+    max-height: 90%;
+    overflow: auto;
+    padding: 20px;
+    color: white;
+}
+
+/* -----------------------------------------------
+   9. БУТОНИ
+----------------------------------------------- */
+.menu-btn, .action-btn, .battle-btn, .footer-btn {
+    background: linear-gradient(135deg, rgba(30, 30, 30, 0.9), rgba(15, 15, 15, 0.9));
+    border: 1px solid rgba(214, 175, 55, 0.5);
+    color: #d4af37;
+    padding: 10px 20px;
+    font-family: 'Cinzel', serif;
+    font-size: 0.9rem;
+    font-weight: bold;
+    cursor: pointer;
+    border-radius: 40px;
+    transition: all 0.2s;
+}
+
+.menu-btn:hover, .battle-btn:hover, .footer-btn:hover {
+    background: linear-gradient(135deg, #1f1f1f, #2d2510);
+    border-color: #ffd700;
+    color: #ffd700;
+    transform: translateY(-2px);
+}
+
+.action-btn {
+    background: linear-gradient(135deg, #8b0000, #4a0000);
+    border-color: #ff4444;
+    color: white;
+    animation: pulseGlow 3s infinite alternate;
+}
+
+@keyframes pulseGlow {
+    0% { box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3); }
+    100% { box-shadow: 0 0 15px rgba(139, 0, 0, 0.6); }
+}
+
+/* -----------------------------------------------
+   10. АДАПТИВНОСТ (RESPONSIVE)
+----------------------------------------------- */
+/* Таблети (до 1024px) */
+@media (max-width: 1024px) {
+    #game-container {
+        grid-template-columns: 1fr;
+        padding: 10px 10px 90px 10px;
+    }
+    #sidebar-left, #sidebar-right {
+        order: 2;
+    }
+    #game-main-area {
+        order: 1;
+    }
+    #top-elite-bar {
+        grid-template-columns: repeat(3, 1fr);
+        overflow-x: auto;
+    }
+    .elite-hero-card {
+        min-width: 110px;
+    }
+    .stat-box {
+        font-size: 0.85rem;
+        padding: 2px 8px;
+    }
+}
+
 /* Големи телефони (до 768px) */
 @media (max-width: 768px) {
-#top-bar {
-flex-direction: column !important;
-gap: 8px !important;
-padding: 8px !important;
+    #top-bar {
+        flex-direction: column;
+        gap: 8px;
+    }
+    .top-bar-stats {
+        display: flex;
+        overflow-x: auto;
+        width: 100%;
+        gap: 6px;
+        justify-content: space-between;
+    }
+    .stat-box, .active-hero-name {
+        font-size: 0.7rem;
+        white-space: nowrap;
+        flex-shrink: 0;
+    }
+    .top-bar-controls {
+        width: 100%;
+        justify-content: space-evenly;
+    }
+    .glass-btn {
+        font-size: 0.7rem;
+        padding: 4px 12px;
+    }
+    .heroes-grid {
+        grid-template-columns: repeat(3, 1fr);
+        gap: 6px;
+    }
+    .battle-btn {
+        padding: 6px 12px;
+        font-size: 0.7rem;
+        min-width: 80px;
+    }
 }
-.top-bar-stats {
-display: flex !important;
-flex-wrap: nowrap !important;
-justify-content: space-between !important;
-gap: 4px !important;
-width: 100% !important;
-overflow-x: auto !important;
-}
-.stat-box, .active-hero-name {
-flex-shrink: 0 !important;
-font-size: 0.7rem !important;
-padding: 2px 6px !important;
-white-space: nowrap !important;
-}
-.top-bar-controls {
-display: flex !important;
-flex-wrap: wrap !important;
-justify-content: space-evenly !important;
-gap: 8px !important;
-width: 100% !important;
-}
-.top-bar-controls .glass-btn {
-flex: 1 1 0 !important;
-min-width: 60px !important;
-text-align: center !important;
-font-size: 0.8rem !important;
-padding: 6px 0 !important;
-}
-/* Пазар – по-компактен изглед */
-.glass-panel {
-padding: 12px;
-}
-.troop-shop {
-grid-template-columns: 1fr;
-}
-}
+
 /* Малки телефони (до 480px) */
 @media (max-width: 480px) {
-#top-elite-bar {
-grid-template-columns: repeat(2, 1fr) !important;
+    #top-elite-bar {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    .heroes-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    .hero-card {
+        padding: 4px;
+    }
+    .hero-name {
+        font-size: 9px;
+    }
+    .battle-btn {
+        padding: 5px 8px;
+        font-size: 0.65rem;
+        min-width: 65px;
+    }
+    .glass-btn {
+        font-size: 0.65rem;
+        padding: 3px 8px;
+    }
 }
-.elite-hero-card {
-min-width: 120px !important;
-padding: 5px !important;
-}
-.stat-box, .active-hero-name {
-font-size: 0.65rem !important;
-padding: 2px 4px !important;
-}
-.top-bar-controls .glass-btn {
-font-size: 0.7rem !important;
-min-width: 50px !important;
-}
-.auto-btn {
-font-size: 8px !important;
-padding: 2px 4px !important;
-}
-}
-/* Специално: премахване на фона на лентата с един герой (single-hero-bar) */
-#single-hero-bar,
-#single-hero-bar > div,
-#single-hero-bar .hero-card {
-background: transparent !important;
-background-color: transparent !important;
-border: none !important;
-backdrop-filter: none !important;
-box-shadow: none !important;
-}
-/* ==================== ПЛАВНО МЕНЮ ЗА НОВА ИГРА ==================== */
-.new-game-menu-container {
-position: relative;
-display: inline-block;
-}
-.new-game-dropdown {
-position: absolute;
-top: 100%;
-left: 0;
-background: rgba(15, 15, 20, 0.98);
-backdrop-filter: blur(12px);
-border: 1px solid rgba(212, 175, 55, 0.5);
-border-radius: 12px;
-padding: 8px 0;
-min-width: 220px;
-z-index: 1000;
-opacity: 0;
-visibility: hidden;
-transform: translateY(-10px);
-transition: all 0.25s ease;
-box-shadow: 0 8px 20px rgba(0,0,0,0.4);
-}
-.new-game-dropdown.show {
-opacity: 1;
-visibility: visible;
-transform: translateY(0);
-}
-.new-game-option {
-display: flex;
-align-items: center;
-gap: 12px;
-padding: 10px 16px;
-color: #ffdd99;
-cursor: pointer;
-transition: background 0.2s;
-font-size: 0.85rem;
-border-bottom: 1px solid rgba(255,215,0,0.1);
-}
-.new-game-option:last-child {
-border-bottom: none;
-}
-.new-game-option:hover {
-background: rgba(212, 175, 55, 0.2);
-color: #ffd700;
-}
-.new-game-option-icon {
-font-size: 1.2rem;
-min-width: 28px;
-text-align: center;
-}
-.new-game-divider {
-height: 1px;
-background: rgba(212, 175, 55, 0.3);
-margin: 6px 0;
-}
-/* ==================== КОРЕКЦИЯ ЗА ДЕСКТОП (над 1024px) ==================== */
-@media (min-width: 1024px) {
-#top-bar {
-justify-content: space-evenly !important;
-gap: 15px !important;
-}
-.top-bar-stats {
-    display: flex !important;
-    flex-wrap: wrap !important;
-    justify-content: center !important;
-    gap: 12px !important;
-    flex: 0 1 auto !important;
-}
-.top-bar-controls {
-    display: flex !important;
-    flex-wrap: wrap !important;
-    justify-content: center !important;
-    gap: 12px !important;
-    flex: 0 1 auto !important;
-    margin-left: 0 !important;
-}
-.glass-btn {
-    margin-left: 0 !important;
-    margin-right: 0 !important;
-    width: auto !important;
-    min-width: auto !important;
-    padding: 6px 16px !important;
-    border-radius: 40px !important;
-    font-size: 0.85rem !important;
-}
-.new-game-menu-container .glass-btn {
-    background: linear-gradient(135deg, rgba(212, 175, 55, 0.35), rgba(184, 134, 11, 0.2)) !important;
-    border-color: #ffd700 !important;
-}
-}
-/* ==================== ДОПЪЛНИТЕЛНА НАСТРОЙКА ЗА ДЕСКТОП ==================== */
+
+/* Десктоп (над 1025px) – по-компактни бутони */
 @media (min-width: 1025px) {
-.stat-box, .active-hero-name {
-font-size: 0.7rem !important;
-padding: 2px 10px !important;
+    .stat-box {
+        font-size: 0.85rem;
+        padding: 3px 12px;
+    }
+    .glass-btn {
+        font-size: 0.75rem;
+        padding: 5px 14px;
+    }
+    .top-bar-controls {
+        gap: 8px;
+    }
 }
-.glass-btn {
-    font-size: 0.7rem !important;
-    padding: 4px 12px !important;
-    min-width: auto !important;
-    width: auto !important;
+
+/* -----------------------------------------------
+   11. ДОПЪЛНИТЕЛНИ КОМПОНЕНТИ (КУЕСТОВЕ, ЛЕТОПИС)
+----------------------------------------------- */
+.chronicle-event {
+    background: rgba(20, 20, 40, 0.6);
+    border-left: 3px solid #d4af37;
+    padding: 6px 10px;
+    margin-bottom: 6px;
+    border-radius: 8px;
+    display: flex;
+    gap: 10px;
+    font-size: 0.8rem;
 }
-.top-bar-controls {
-    gap: 6px !important;
+
+.load-more-btn {
+    background: rgba(212, 175, 55, 0.2);
+    border: 1px solid #d4af37;
+    border-radius: 30px;
+    color: #ffd700;
+    padding: 4px 12px;
+    cursor: pointer;
+    margin-top: 8px;
 }
-.top-bar-stats {
-    gap: 6px !important;
-}
-}
-/* За по-големи десктопи (над 1400px) */
-@media (min-width: 1400px) {
-.stat-box, .active-hero-name {
-font-size: 0.75rem !important;
-padding: 3px 12px !important;
-}
-.glass-btn {
-font-size: 0.75rem !important;
-padding: 4px 14px !important;
-}
-}
-/* ==================== ФИКС НА ПАДАЩОТО МЕНЮ (OVERLAY) ==================== */
+
+/* Падащо меню за нова игра */
 .new-game-menu-container {
-position: relative;
-display: inline-block;
-z-index: 10000 !important;
+    position: relative;
+    display: inline-block;
 }
+
 .new-game-dropdown {
-position: fixed !important;
-top: auto !important;
-left: auto !important;
-margin-top: 5px;
-background: rgba(15, 15, 20, 0.98) !important;
-backdrop-filter: blur(12px) !important;
-border: 1px solid rgba(212, 175, 55, 0.5) !important;
-border-radius: 12px !important;
-padding: 8px 0 !important;
-min-width: 220px !important;
-z-index: 10001 !important;
-opacity: 0;
-visibility: hidden;
-transform: translateY(-10px);
-transition: all 0.25s ease;
-box-shadow: 0 8px 20px rgba(0,0,0,0.4);
+    position: absolute;
+    top: 100%;
+    left: 0;
+    background: rgba(15, 15, 20, 0.98);
+    backdrop-filter: blur(12px);
+    border: 1px solid rgba(212, 175, 55, 0.5);
+    border-radius: 12px;
+    padding: 8px 0;
+    min-width: 220px;
+    z-index: 10000;
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(-10px);
+    transition: all 0.25s ease;
 }
+
 .new-game-dropdown.show {
-opacity: 1;
-visibility: visible;
-transform: translateY(0);
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
 }
-/* За мобилни устройства - менюто да е центрирано */
-@media (max-width: 768px) {
-.new-game-menu-container {
-position: static !important;
-}
-.new-game-dropdown {
-position: fixed !important;
-top: 50% !important;
-left: 50% !important;
-transform: translate(-50%, -50%) !important;
-width: 90% !important;
-max-width: 280px !important;
-margin: 0 !important;
-}
-.new-game-dropdown.show {
-transform: translate(-50%, -50%) !important;
-}
+
 .new-game-option {
-padding: 12px 16px !important;
-font-size: 0.9rem !important;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 16px;
+    color: #ffdd99;
+    cursor: pointer;
+    transition: background 0.2s;
 }
+
+.new-game-option:hover {
+    background: rgba(212, 175, 55, 0.2);
+    color: #ffd700;
 }
-/* Показваме лентата с елитни герои (поправено от display:none) */
-#top-elite-bar {
-display: grid !important;
+
+/* Специфична корекция за падащо меню на мобилни */
+@media (max-width: 768px) {
+    .new-game-dropdown {
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        width: 90%;
+        max-width: 280px;
+        margin: 0;
+    }
+    .new-game-dropdown.show {
+        transform: translate(-50%, -50%);
+    }
 }
