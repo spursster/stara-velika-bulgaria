@@ -342,6 +342,7 @@
     <button class="icon-btn" onclick="window.toggleTreasury()" title="Съкровищница">🎒</button>
 </div>
 
+<!-- Скриптове – редът е критичен! -->
 <script src="world_data.js"></script>
 <script src="troopsData.js"></script>
 <script src="classes.js"></script>
@@ -448,8 +449,8 @@
                 if (typeof window.updateCharacterUI === 'function') {
                     window.updateCharacterUI(window.currentHero);
                 }
-                if (typeof window.renderTop6LeadersUI === 'function') {
-                    window.renderTop6LeadersUI();
+                if (typeof window.renderTop6HeroesUI === 'function') {
+                    window.renderTop6HeroesUI();
                 }
                 if (typeof window.renderSingleBar === 'function') {
                     window.renderSingleBar();
@@ -536,7 +537,7 @@
 
     if (!window.worldEvents) window.worldEvents = [];
     window.addWorldEvent = function(title, desc, icon, year) {
-        window.worldEvents.unshift({ id: Date.now(), title, description: desc, icon: icon || '📜', time: year || window.currentYear || "480 г. пр.н.е." });
+        window.worldEvents.unshift({ id: Date.now(), title, description: desc, icon: icon || '📜', time: year || window.gameTime?.year ? `${window.gameTime.year} г. ${window.gameTime.era}` : "480 г. пр.н.е." });
         if (window.worldEvents.length > 100) window.worldEvents.pop();
         if (typeof window.displayEvents === 'function') window.displayEvents();
         else console.log("Летопис:", title, desc);
@@ -585,7 +586,7 @@
         if (window.initializeHeroRPGData) window.initializeHeroRPGData(window.currentHero);
     }
 
-    // ==================== ФИКС НА ВРЕМЕТО ====================
+    // ==================== ОСНОВНА ФУНКЦИЯ ЗА ХОД (ОБЕДИНЕНА) ====================
     window.updateTimeUI = function() {
         const timeSpan = document.getElementById('current-time-info');
         if (!timeSpan || !window.gameTime) return;
@@ -596,21 +597,12 @@
     
     window.updateTimeUI();
     
-    const originalProcessTurn = window.processTurn;
+    // Единствена дефиниция на processTurn
     window.processTurn = function() {
-        if (originalProcessTurn) originalProcessTurn();
-        if (Math.random() < 0.15) {
-            if (Math.random() < 0.02) { // 2% шанс на ход
-    window.createLegendaryHero();
-}
-    if (typeof window.triggerRandomDuelChallenge === 'function') {
-        window.triggerRandomDuelChallenge();
-    }
-}
+        // Актуализиране на времето (сезони и години)
         if (!window.gameTime) {
             window.gameTime = { seasonIndex: 0, year: 480, era: "пр.н.е." };
         }
-        
         window.gameTime.seasonIndex++;
         if (window.gameTime.seasonIndex > 3) {
             window.gameTime.seasonIndex = 0;
@@ -624,17 +616,43 @@
                 window.gameTime.year++;
             }
         }
-        
         window.updateTimeUI();
         
+        // Икономика
         if (typeof window.calculateEconomy === 'function') window.calculateEconomy();
+        
+        // Дипломация
         if (typeof window.processClanDiplomacyAutomation === 'function') window.processClanDiplomacyAutomation();
+        
+        // Експедиции
         if (typeof window.advanceExpeditionsTurn === 'function') window.advanceExpeditionsTurn();
+        
+        // Автономно завладяване на региони
+        if (typeof window.autonomousRegionConquest === 'function') window.autonomousRegionConquest();
+        
+        // Нападения от съперници
         if (typeof window.checkRandomAttack === 'function') window.checkRandomAttack();
+        
+        // Опит за активния герой
         if (window.currentHero && window.gainHeroXP) window.gainHeroXP(window.currentHero, 15);
+        
+        // ========== НОВИ ДОБАВКИ ==========
+        // 1. Легендарен герой (2% шанс)
+        if (Math.random() < 0.02 && typeof window.createLegendaryHero === 'function') {
+            window.createLegendaryHero();
+        }
+        // 2. Дуелно предизвикателство (15% шанс)
+        if (Math.random() < 0.15 && typeof window.triggerRandomDuelChallenge === 'function') {
+            window.triggerRandomDuelChallenge();
+        }
+        
+        // Актуализиране на UI
         if (window.updateCharacterUI) window.updateCharacterUI(window.currentHero);
-        if (window.renderTop6LeadersUI) window.renderTop6LeadersUI();
+        if (window.renderTop6HeroesUI) window.renderTop6HeroesUI();
         if (typeof window.renderSingleBar === 'function') window.renderSingleBar();
+        
+        // Запазване на играта
+        if (typeof window.saveGreatBulgariaGame === 'function') window.saveGreatBulgariaGame();
     };
 
     if (typeof window.toggleTreasury !== 'function') {
@@ -673,29 +691,13 @@
     window.displayEvents();
 
     if (window.updateCharacterUI) window.updateCharacterUI(window.currentHero);
-    if (window.renderTop6LeadersUI) window.renderTop6LeadersUI();
+    if (window.renderTop6HeroesUI) window.renderTop6HeroesUI();
     if (window.initHeroBar) window.initHeroBar();
     document.getElementById('clearChronicleBtn')?.addEventListener('click', () => {
         if(confirm("Изчисти летописа?")) { window.worldEvents = []; window.displayEvents(); }
     });
     
-    console.log("✅ Играта е напълно готова!");
-})();
-</script>
-    <script>
-(function() {
-    // Запазваме оригиналния processTurn, ако съществува
-    const originalProcessTurn = window.processTurn;
-    window.processTurn = function() {
-        // Извикваме оригиналната функция (ако има такава)
-        if (originalProcessTurn) originalProcessTurn();
-        
-        // Добавяме дуелно предизвикателство с 15% шанс
-        if (Math.random() < 0.15 && typeof window.triggerRandomDuelChallenge === 'function') {
-            window.triggerRandomDuelChallenge();
-        }
-    };
-    console.log("✅ Двубоите са активирани – ще се появяват случайно на ход.");
+    console.log("✅ Играта е напълно готова (с дуели и легендарни герои)!");
 })();
 </script>
 </body>
