@@ -1,6 +1,6 @@
 /**
  * МОДУЛ: ОСНОВНИ ИГРОВИ МЕХАНИКИ - Велика България
- * СТАТУС: НАПЪЛНО НАДГРАДЕН + АВТОНОМНО ЗАВЛАДЯВАНЕ + ЛОГОВЕ
+ * ВЕРСИЯ: 5.0 – ХАРМОНИЗИРАНА (ВСИЧКИ СА ГЕРОИ)
  */
 
 window.clanPerks = {
@@ -18,6 +18,17 @@ window.clanPerks = {
     "Османци Дуло": { power: 1.1, vassalTax: 1.25, desc: "+25% Приходи от васали" },
     "Скити": { power: 1.1, horseArchers: 1.25, desc: "+25% Щети на конните стрелци" }
 };
+
+// Помощна функция за показване на съобщения (попап или летопис)
+function showGameMessage(title, message, type = "info") {
+    if (window.showAdvisorPopup) {
+        window.showAdvisorPopup(title, message, type);
+    } else if (window.showAdvisorMsg) {
+        window.showAdvisorMsg(message);
+    } else {
+        console.log(`${title}: ${message}`);
+    }
+}
 
 window.initializeHeroRPGData = function(hero) {
     if (!hero) return;
@@ -39,7 +50,7 @@ window.initializeHeroRPGData = function(hero) {
     }
 };
 
-window.upgradeLeaderSkill = function(hero, skillKey) {
+window.upgradeHeroSkill = function(hero, skillKey) {
     if (!hero) return { success: false, msg: "Невалиден герой." };
     window.initializeHeroRPGData(hero);
     if ((hero.skillPoints || 0) <= 0) return { success: false, msg: "Нямате свободни точки!" };
@@ -54,19 +65,23 @@ window.upgradeLeaderSkill = function(hero, skillKey) {
     }
     if (window.rpgDatabase && window.rpgDatabase.checkArcheAgeClass) window.rpgDatabase.checkArcheAgeClass(hero);
     if (window.updateCharacterUI) window.updateCharacterUI(hero);
-    if (window.renderTop6LeadersUI) window.renderTop6LeadersUI();
+    if (window.renderTop6HeroesUI) window.renderTop6HeroesUI();
     return { success: true, msg: `Успешно подобрихте умението ${skillKey}!` };
 };
+// Старо име за съвместимост
+window.upgradeLeaderSkill = window.upgradeHeroSkill;
 
-window.evolveLeaderClass = function(hero, targetClass) {
+window.evolveHeroClass = function(hero, targetClass) {
     if (!hero || (hero.level || 1) < 5) return { success: false, msg: "Ниво 5 е необходимо!" };
     hero.currentClass = targetClass;
     hero.heroPower = (hero.heroPower || 100) + 50;
-    if (window.showAdvisorMsg) window.showAdvisorMsg(`👑 ЕВОЛЮЦИЯ: Героят ${hero.name} прие клас "${targetClass}"!`);
+    showGameMessage("ЕВОЛЮЦИЯ", `👑 Героят ${hero.name} прие клас "${targetClass}"!`, "success");
     if (window.updateCharacterUI) window.updateCharacterUI(hero);
-    if (window.renderTop6LeadersUI) window.renderTop6LeadersUI();
+    if (window.renderTop6HeroesUI) window.renderTop6HeroesUI();
     return { success: true, msg: `Класът е променен на ${targetClass}!` };
 };
+// Старо име за съвместимост
+window.evolveLeaderClass = window.evolveHeroClass;
 
 window.performResurrectionRitual = function(caster, deadHero) {
     if (!caster || !deadHero) return { success: false, msg: "Липсват данни." };
@@ -84,12 +99,12 @@ window.performResurrectionRitual = function(caster, deadHero) {
             window.worldData.clans[deadHero.clan].currentArmy = 50;
             window.worldData.clans[deadHero.clan].armySize = 50;
         }
-        if (window.showAdvisorMsg) window.showAdvisorMsg(`🔮 СЪДБА: Ритуалът успя! ${deadHero.name} се завърна!`);
+        showGameMessage("СЪДБА", `🔮 Ритуалът успя! ${deadHero.name} се завърна!`, "success");
         if (window.updateCharacterUI) window.updateCharacterUI(window.currentHero);
-        if (window.renderTop6LeadersUI) window.renderTop6LeadersUI();
+        if (window.renderTop6HeroesUI) window.renderTop6HeroesUI();
         return { success: true, msg: "Успешно възкресяване!" };
     } else {
-        if (window.showAdvisorMsg) window.showAdvisorMsg(`📉 ПРОВАЛ: Ритуалът не върна ${deadHero.name}.`);
+        showGameMessage("ПРОВАЛ", `📉 Ритуалът не върна ${deadHero.name}.`, "error");
         return { success: false, msg: "Ритуалът се провали." };
     }
 };
@@ -108,16 +123,15 @@ function autoConquestBattle(attacker, defenderPower, regionName) {
         if (window.gainHeroXP) window.gainHeroXP(attacker, xpGain);
         else attacker.xp = (attacker.xp || 0) + xpGain;
         
-        // *** ДОБАВЕН ЛОГ ЗА ЗАВЛАДЯВАНЕ ***
-        if (window.addConquestLog) window.addConquestLog(attacker.leaderName || attacker.name, regionName, xpGain);
+        if (window.addConquestLog) window.addConquestLog(attacker.name || attacker.leaderName, regionName, xpGain);
         
-        if (window.showAdvisorMsg && Math.random() < 0.2) {
-            window.showAdvisorMsg(`🏰 ${attacker.leaderName || attacker.name} завладя ${regionName}! +${xpGain} XP`);
+        if (Math.random() < 0.2) {
+            showGameMessage("ЗАВЛАДЯВАНЕ", `🏰 ${attacker.name || attacker.leaderName} завладя ${regionName}! +${xpGain} XP`, "success");
         }
         return true;
     }
-    if (window.showAdvisorMsg && Math.random() < 0.1) {
-        window.showAdvisorMsg(`💔 ${attacker.leaderName || attacker.name} не успя да завладeе ${regionName}.`);
+    if (Math.random() < 0.1) {
+        showGameMessage("ПРОВАЛ", `💔 ${attacker.name || attacker.leaderName} не успя да завладeе ${regionName}.`, "error");
     }
     return false;
 }
@@ -131,9 +145,9 @@ window.autonomousRegionConquest = function() {
     if (Math.random() > 0.15) return;
     let potentialConquerors = [];
     for (let key in window.worldData.clans) {
-        let clan = window.worldData.clans[key];
-        if (clan.isJoined === true && !favoriteIds.has(key) && (clan.armySize || 0) > 150) {
-            potentialConquerors.push(clan);
+        let hero = window.worldData.clans[key];
+        if (hero.isJoined === true && !favoriteIds.has(key) && (hero.armySize || 0) > 150) {
+            potentialConquerors.push(hero);
         }
     }
     if (potentialConquerors.length === 0) return;
@@ -159,12 +173,10 @@ window.autonomousRegionConquest = function() {
             if (!conqueror.inventory) conqueror.inventory = [];
             if (conqueror.inventory.length < 30) {
                 conqueror.inventory.push(newArtifact);
-                if (window.showAdvisorMsg) window.showAdvisorMsg(`🎁 ${conqueror.leaderName || conqueror.name} намери артефакт в ${targetRegion}: ${newArtifact.name}!`);
+                showGameMessage("АРТЕФАКТ", `🎁 ${conqueror.name || conqueror.leaderName} намери артефакт в ${targetRegion}: ${newArtifact.name}!`, "info");
             }
         }
     }
     if (typeof window.renderSingleBar === 'function') window.renderSingleBar();
-    if (window.renderTop6LeadersUI) window.renderTop6LeadersUI();
+    if (window.renderTop6HeroesUI) window.renderTop6HeroesUI();
 };
-
-if (typeof window.autonomousRegionConquest === 'function') {}
