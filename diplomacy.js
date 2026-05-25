@@ -180,6 +180,16 @@ window.proposeMarriage = function(clan, cost, successChance) {
 
 // ==================== НОВ ГРАНДИОЗЕН БРАЧЕН ПРОЗОРЕЦ ====================
 window.openMarriageMenu = function() {
+    function closeMarriageModal() {
+    const modal = document.getElementById('wm-marriage-modal');
+    if (modal) {
+        modal.classList.remove('active');
+        // По желание: изчакайте анимацията и след това премахнете модала от DOM
+        setTimeout(() => {
+            if (modal.parentNode) modal.remove();
+        }, 300);
+    }
+}
     let modal = document.getElementById('wm-marriage-modal');
     if (modal) {
         modal.classList.add('active');
@@ -635,8 +645,8 @@ window.openMarriageMenu = function() {
     });
 
     let closeBtn = modal.querySelector('.wm-close');
-    closeBtn.addEventListener('click', () => modal.classList.remove('active'));
-    modal.addEventListener('click', (e) => { if (e.target === modal) modal.classList.remove('active'); });
+   closeBtn.addEventListener('click', () => closeMarriageModal());
+   modal.addEventListener('click', (e) => { if (e.target === modal) closeMarriageModal(); });
 
     updateNewMarriageUI();
     loadOldMarriageContent();
