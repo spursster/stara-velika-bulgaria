@@ -139,7 +139,7 @@ window.recalculateIncome = function(hero) {
                 if (inv.turnsLeft <= 0) {
                     investmentIncome += inv.returnAmount;
                     window.investments.splice(i,1);
-                    showEconomyMessage("ИНВЕСТИЦИЯ", `💰 Вашата инвестиция от ${inv.amount} злато ви донесе ${inv.returnAmount} злато!`, "success");
+                    //showEconomyMessage("ИНВЕСТИЦИЯ", `💰 Вашата инвестиция от ${inv.amount} злато ви донесе ${inv.returnAmount} злато!`, "success");
                 }
             }
         }
@@ -252,7 +252,7 @@ window.investGold = function(hero, amount, turns = 5) {
         turnsLeft: turns,
         returnAmount: expectedReturn
     });
-    showEconomyMessage("ИНВЕСТИЦИЯ", `💰 Инвестирахте ${amount} злато за ${turns} хода. Очаквана печалба: ${expectedReturn}`, "info");
+    //showEconomyMessage("ИНВЕСТИЦИЯ", `💰 Инвестирахте ${amount} злато за ${turns} хода. Очаквана печалба: ${expectedReturn}`, "info");
     return true;
 };
 // ==================== ОСНОВНА ИКОНОМИЧЕСКА ФУНКЦИЯ ====================
