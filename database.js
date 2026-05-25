@@ -2,7 +2,8 @@
  * МОДУЛ: БАЗА ДАННИ - Велика България
  * СТАТУС: АБСОЛЮТЕН И НЕПРОМЕНЯЕМ ЗАКОН (13 Равноправни Династии)
  * Всички данни са взети на 100% от текстовия закон на проекта без исторически филтри!
- * Статистика на файловете в проекта: 16
+ * 
+ * ВЕРСИЯ: 5.0 – Всички герои се добавят в света при старт (isJoined: false), наемат се чрез кръчмата.
  */
 
 window.bulgarianDynasties = {
@@ -76,8 +77,7 @@ window.bulgarianDynasties = {
 
 window.mightyLeaders = [];
 
-// ==================== СЪВМЕСТИМОСТ С ОСТАНАЛИТЕ МОДУЛИ ====================
-// Преобразуваме оригиналната структура във формата, който очаква играта (clansDatabase)
+// ==================== СЪВМЕСТИМОСТ ====================
 if (!window.clansDatabase) {
     window.clansDatabase = {};
     for (let dynastyName in window.bulgarianDynasties) {
@@ -87,7 +87,76 @@ if (!window.clansDatabase) {
     }
 }
 
-// ==================== ФУНКЦИИ ЗА НАЕМАНЕ (КОРИГИРАНИ – AUTO РЕЖИМ) ====================
+// ==================== ИНИЦИАЛИЗАЦИЯ НА ВСИЧКИ ГЕРОИ В СВЕТА (isJoined: false) ====================
+window.initializeAllHeroesInWorld = function() {
+    if (!window.worldData) window.worldData = {};
+    if (!window.worldData.clans) window.worldData.clans = {};
+    
+    let addedCount = 0;
+    for (let dynastyName in window.bulgarianDynasties) {
+        const rulers = window.bulgarianDynasties[dynastyName].rulers;
+        for (let ruler of rulers) {
+            const heroId = `hero_${dynastyName}_${ruler.replace(/\s/g, '_')}`;
+            if (!window.worldData.clans[heroId]) {
+                // Определяне на сила и цена според името
+                let power = 100;
+                let gold = 1000;
+                let armySize = 200;
+                let className = "Воевода";
+                if (["Александър III Велики", "Симеон Велики", "Кубрат", "Влад III Дракула"].includes(ruler)) {
+                    power = 190; gold = 2000; armySize = 400; className = "Легенда";
+                } else if (["Атила", "Филип II", "Самуил", "Птолемей I Сотер"].includes(ruler)) {
+                    power = 165; gold = 1500; armySize = 300; className = "Герой";
+                } else if (["Аспарух", "Тервел", "Крум", "Калоян", "Борис I"].includes(ruler)) {
+                    power = 130; gold = 1200; armySize = 250; className = "Войн";
+                }
+                
+                const hero = {
+                    name: ruler,
+                    leaderName: ruler,
+                    clan: dynastyName,
+                    isJoined: false,
+                    isFavoriteInBarracks: false,
+                    level: 1,
+                    xp: 0,
+                    heroPower: power,
+                    power: power,
+                    gold: gold,
+                    armySize: armySize,
+                    currentArmy: armySize,
+                    currentClass: className,
+                    className: className,
+                    age: 30 + Math.floor(Math.random() * 30),
+                    isAuto: true,
+                    skillPoints: 0,
+                    skills: { tactics: 0, endurance: 0, economy: 0, mysticism: 0, leadership: 0 },
+                    equipment: Array(12).fill(null),
+                    inventory: [],
+                    pet: null,
+                    learnedSkills: {},
+                    armyDetails: {
+                        infantry: Math.floor(armySize * 0.5),
+                        archers: Math.floor(armySize * 0.25),
+                        cavalry: Math.floor(armySize * 0.15),
+                        elite: Math.floor(armySize * 0.1)
+                    }
+                };
+                if (window.initializeHeroRPGData) window.initializeHeroRPGData(hero);
+                if (window.ensureCompleteArmyDetails) window.ensureCompleteArmyDetails(hero);
+                window.worldData.clans[heroId] = hero;
+                addedCount++;
+            }
+        }
+    }
+    console.log(`✅ Инициализирани ${addedCount} герои от database.js в света. Общо: ${Object.keys(window.worldData.clans).length}`);
+};
+
+// Автоматично извикване, ако worldData съществува (за да не се налага ръчно)
+if (window.worldData) {
+    window.initializeAllHeroesInWorld();
+}
+
+// ==================== КРЪЧМА – ПОКАЗВА САМО НЕНАЕТИТЕ ГЕРОИ ====================
 function getAllHeroesFromWorld() {
     let heroes = [];
     if (window.worldData && window.worldData.clans) {
@@ -104,7 +173,7 @@ window.openTavernUI = function() {
     const mainArea = document.getElementById('game-main-area');
     if (!mainArea) return;
     
-    // Вземаме всички герои от worldData.clans, които НЕ СА НАЕТИ (isJoined === false)
+    // Вземаме всички герои от worldData.clans, които НЕ СА НАЕТИ
     let availableHeroes = [];
     for (let key in window.worldData.clans) {
         let hero = window.worldData.clans[key];
@@ -130,6 +199,7 @@ window.openTavernUI = function() {
         let heroPower = hero.heroPower || 130;
         if (hero.currentClass === "Легенда") { cost = 1500; heroPower = 190; }
         else if (hero.currentClass === "Герой") { cost = 1200; heroPower = 165; }
+        else if (hero.currentClass === "Войн") { cost = 1000; heroPower = 140; }
         
         htmlContent += `
         <div style="background: rgba(20,20,20,0.8); border: 1px solid #444; padding: 12px; border-radius: 6px; display: flex; flex-direction: column; justify-content: space-between;">
@@ -152,79 +222,58 @@ window.openTavernUI = function() {
     mainArea.innerHTML = htmlContent;
 };
 
-window.hireClanHero = function(heroName, clanName, cost, heroPower) {
-    if (!window.currentHero) return;
+// ==================== НАЕМАНЕ НА СЪЩЕСТВУВАЩ ГЕРОЙ (променя isJoined на true) ====================
+window.hireExistingHero = function(heroId, cost) {
+    if (!window.currentHero) {
+        if (window.showAdvisorPopup) window.showAdvisorPopup("ГРЕШКА", "Няма активен герой!", "error");
+        return;
+    }
+    const hero = window.worldData.clans[heroId];
+    if (!hero || hero.isJoined !== false) {
+        if (window.showAdvisorPopup) window.showAdvisorPopup("ГРЕШКА", "Този герой вече е нает или не съществува!", "error");
+        return;
+    }
     
     if (window.currentHero.gold >= cost) {
-        // Успешно наемане
         window.currentHero.gold -= cost;
-        const newHero = {
-            name: heroName,
-            leaderName: heroName,
-            clan: clanName,
-            isJoined: true,
-            level: 1,
-            xp: 0,
-            heroPower: heroPower,
-            power: heroPower,
-            gold: 1500,
-            armySize: 200,
-            currentArmy: 200,
-            currentClass: "Воевода",
-            className: "Воевода",
-            age: 30,
-            isAuto: true,
-            skillPoints: 0,
-            skills: { tactics: 0, endurance: 0, economy: 0, mysticism: 0, leadership: 0 },
-            equipment: Array(12).fill(null),
-            inventory: Array(12).fill(null),
-            pet: null,
-            armyDetails: {
-                infantry: 100, archers: 50, cavalry: 30, elite: 20,
-                vampire:0, werewolf:0, highelf:0, troll:0, dragon_young:0, wizard:0, lich:0, fairy_healer:0,
-                bear_ancient:0, harpy:0, mermaid:0, genie:0, vampire_queen:0, ice_dragon:0, ogre_mage:0,
-                dark_elf:0, alpha_werewolf:0, stone_troll:0, archmage:0, demon:0, ancient_vampire:0,
-                weird_witch:0, griffin:0, golden_dragon:0, elf_archer:0, swamp_troll:0, necromancer:0,
-                vampire_samurai:0, bronze_dragon:0, titan:0
-            }
-        };
-        if (window.initializeHeroRPGData) window.initializeHeroRPGData(newHero);
-        if (!window.worldData) window.worldData = {};
-        if (!window.worldData.clans) window.worldData.clans = {};
-        const newId = "hero_" + Date.now() + "_" + Math.floor(Math.random() * 1000);
-        window.worldData.clans[newId] = newHero;
-        if (!window.unlockedLeaders) window.unlockedLeaders = [];
-        window.unlockedLeaders.push(newHero);
+        hero.isJoined = true;
+        hero.isFavoriteInBarracks = false; // новонаетите не са любими по подразбиране
         
         if (typeof window.generateHeroPortrait === 'function') {
-            window.generateHeroPortrait(newHero).catch(e => console.warn("Грешка при портрет:", e));
+            window.generateHeroPortrait(hero).catch(e => console.warn(e));
         }
         
-        if (window.armyMarket && typeof window.armyMarket.sync === 'function') window.armyMarket.sync(newHero);
+        if (window.armyMarket && typeof window.armyMarket.sync === 'function') window.armyMarket.sync(hero);
         if (window.updateCharacterUI) window.updateCharacterUI(window.currentHero);
         if (window.renderTop6LeadersUI) window.renderTop6LeadersUI();
         if (typeof window.renderSingleBar === 'function') window.renderSingleBar();
-        window.openTavernUI();
+        window.openTavernUI(); // опресняваме кръчмата
         
-        // СТИЛЕН ПОПАП ЗА УСПЕХ
         if (window.showAdvisorPopup) {
-            window.showAdvisorPopup(
-                "УСПЕШНО НАЕМАНЕ",
-                `✨ ${heroName} от клан ${clanName} се присъедини към вашия род!<br><br>💰 Останало злато: ${window.currentHero.gold}<br>⚔️ Бойна сила: ${heroPower}`,
-                "success"
-            );
+            window.showAdvisorPopup("УСПЕШНО НАЕМАНЕ", `${hero.name} от род ${hero.clan} се присъедини! Останало злато: ${window.currentHero.gold}`, "success");
         } else if (window.showAdvisorMsg) {
-            window.showAdvisorMsg(`👑 ОТКЛЮЧВАНЕ: Героят ${heroName} от Клан ${clanName} се присъедини!`);
+            window.showAdvisorMsg(`👑 ОТКЛЮЧВАНЕ: Героят ${hero.name} от Клан ${hero.clan} се присъедини!`);
         }
-        
     } else {
-        // НЕДОСТАТЪЧНО ЗЛАТО – ПОПАП ЗА ГРЕШКА
         if (window.showAdvisorPopup) {
-            window.showAdvisorPopup("ГРЕШКА", "Нямате достатъчно злато, за да наемете този герой!", "error");
+            window.showAdvisorPopup("ГРЕШКА", `Недостатъчно злато! Нужни: ${cost}`, "error");
         } else if (window.showAdvisorMsg) {
             window.showAdvisorMsg("❌ НЕДОСТИГ: Нямате достатъчно злато!");
         }
     }
+};
+
+// ==================== СТАРИ ФУНКЦИИ (ЗА СЪВМЕСТИМОСТ) ====================
+window.hireClanHero = function(heroName, clanName, cost, heroPower) {
+    // За съвместимост с евентуални стари извиквания – търсим герой по име и клан
+    for (let key in window.worldData.clans) {
+        let h = window.worldData.clans[key];
+        if (h.name === heroName && h.clan === clanName && h.isJoined === false) {
+            window.hireExistingHero(key, cost);
+            return;
+        }
+    }
+    if (window.showAdvisorMsg) window.showAdvisorMsg("Героят не е намерен или вече е нает!");
 };
 
 window.buyHeroFromDatabase = window.hireClanHero;
