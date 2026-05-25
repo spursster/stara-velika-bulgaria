@@ -1,6 +1,6 @@
 /**
 МОДУЛ: МИСТИЧНИ ПОРТАЛИ И ЕКСПЕДИЦИИ – ВЕЛИКА БЪЛГАРИЯ
-ВЕРСИЯ: КОРИГИРАНА – ПОПРАВЕНИ СИНТАКСИЧНИ ГРЕШКИ ОТ КОПИРАНЕ
+ВЕРСИЯ: 5.0 – ХАРМОНИЗИРАНА С НОВАТА ТЕРМИНОЛОГИЯ
 */
 window.addPortalLog = window.addPortalLog || function(heroName, worldName, isVictory) {
     console.log(`[PortalLog] ${heroName} ${isVictory ? 'победи' : 'загуби'} в ${worldName}`);
@@ -82,14 +82,14 @@ function autoBattleForHero(hero, portalWorld, enemyLevel) {
         if (window.gainHeroXP) window.gainHeroXP(hero, xpGain);
         else hero.xp = (hero.xp || 0) + xpGain;
         hero.gold = (hero.gold || 0) + goldGain;
-        if (window.addPortalLog) window.addPortalLog(hero.leaderName || hero.name, portalWorld.name, true);
+        if (window.addPortalLog) window.addPortalLog(hero.name || hero.leaderName, portalWorld.name, true);
         return true;
     } else {
         const lossPercent = 0.2 + Math.random() * 0.3;
         hero.armySize = Math.max(10, Math.floor((hero.armySize || 200) * (1 - lossPercent)));
         hero.currentArmy = hero.armySize;
         if (window.ensureCompleteArmyDetails) window.ensureCompleteArmyDetails(hero);
-        if (window.addPortalLog) window.addPortalLog(hero.leaderName || hero.name, portalWorld.name, false);
+        if (window.addPortalLog) window.addPortalLog(hero.name || hero.leaderName, portalWorld.name, false);
         return false;
     }
 }
@@ -98,12 +98,16 @@ function attemptAutonomousPortalEntry() {
     if (!window.worldData || !window.worldData.clans) return;
     if (!window.currentPortalState || !window.currentPortalState.isOpen) return;
     let favoriteIds = new Set();
-    if (window.favoriteHeroes && typeof window.favoriteHeroes.forEach === 'function') window.favoriteHeroes.forEach(id => favoriteIds.add(id));
+    if (window.favoriteHeroes && typeof window.favoriteHeroes.forEach === 'function') {
+        window.favoriteHeroes.forEach(id => favoriteIds.add(id));
+    }
     if (Math.random() > 0.25) return;
     let autonomousHeroes = [];
     for (let key in window.worldData.clans) {
-        let clan = window.worldData.clans[key];
-        if (clan.isJoined === true && !favoriteIds.has(key)) autonomousHeroes.push(clan);
+        let hero = window.worldData.clans[key];
+        if (hero.isJoined === true && !favoriteIds.has(key)) {
+            autonomousHeroes.push(hero);
+        }
     }
     if (autonomousHeroes.length === 0) return;
     const randomHero = autonomousHeroes[Math.floor(Math.random() * autonomousHeroes.length)];
@@ -118,7 +122,7 @@ function attemptAutonomousPortalEntry() {
     if (isVictory) window.currentPortalState.explorationProgress[portalWorld.name] = Math.min(100, window.currentPortalState.explorationProgress[portalWorld.name] + 5);
     if (window.ensureCompleteArmyDetails) window.ensureCompleteArmyDetails(randomHero);
     if (typeof window.renderSingleBar === 'function') window.renderSingleBar();
-    if (window.renderTop6LeadersUI) window.renderTop6LeadersUI();
+    if (window.renderTop6HeroesUI) window.renderTop6HeroesUI();
 }
 
 window.advanceExpeditionsTurn = function() {
@@ -218,7 +222,11 @@ window.openExpeditionsMenu = function() {
     if (document.getElementById('expeditions-modal')) return;
     const state = window.currentPortalState;
     if (!state) {
-        alert("Порталната система не е готова.");
+        if (window.showAdvisorPopup) {
+            window.showAdvisorPopup("ГРЕШКА", "Порталната система не е готова.", "error");
+        } else {
+            alert("Порталната система не е готова.");
+        }
         return;
     }
     const world = state.currentWorld;
