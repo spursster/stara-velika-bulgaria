@@ -388,7 +388,7 @@ window.calculateEconomy = function() {
     }
     let classTitle = (hero.currentClass && hero.currentClass !== "Няма клас") ? ` (${hero.currentClass})` : "";
     if (finalProfit >= 0) {
-        showEconomyMessage("ИКОНОМИКА", `💰 ${seasonName}: ${hero.name}${classTitle} събра +${finalProfit} злато.`, "info");
+       // showEconomyMessage("ИКОНОМИКА", `💰 ${seasonName}: ${hero.name}${classTitle} събра +${finalProfit} злато.`, "info");
     } else {
         showEconomyMessage("ИКОНОМИКА", `📉 ${seasonName}: ${hero.name}${classTitle} загуби ${Math.abs(finalProfit)} злато.`, "warning");
     }
