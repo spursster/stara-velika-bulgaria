@@ -1,4 +1,4 @@
-// ======================== АРМИЯ ПАЗАР (С +1, +10, +100) – СТАБИЛНА ВЕРСИЯ ========================
+// ======================== АРМИЯ ПАЗАР (КОРИГИРАН – ПОКАЗВА ВСИЧКИ ГЕРОИ) ========================
 (function() {
     if (!window.worldData || !window.worldData.clans) {
         console.error("❌ worldData не е зареден!");
@@ -54,25 +54,25 @@
         return heroes;
     }
 
-  function getSelectedHero() {
-    let hero = null;
-    if (selectedHeroId && window.worldData.clans[selectedHeroId]) {
-        hero = window.worldData.clans[selectedHeroId];
-    }
-    if (!hero && window.currentHero) {
-        hero = window.currentHero;
-        selectedHeroId = hero.clan;
-    }
-    if (!hero) {
-        const heroes = getAllHeroes();
-        if (heroes.length && heroes[0].id && window.worldData.clans[heroes[0].id]) {
-            hero = window.worldData.clans[heroes[0].id];
-            selectedHeroId = heroes[0].id;
+    function getSelectedHero() {
+        let hero = null;
+        if (selectedHeroId && window.worldData.clans[selectedHeroId]) {
+            hero = window.worldData.clans[selectedHeroId];
         }
+        if (!hero && window.currentHero) {
+            hero = window.currentHero;
+            selectedHeroId = hero.clan;
+        }
+        if (!hero) {
+            const heroes = getAllHeroes();
+            if (heroes.length && heroes[0].id && window.worldData.clans[heroes[0].id]) {
+                hero = window.worldData.clans[heroes[0].id];
+                selectedHeroId = heroes[0].id;
+            }
+        }
+        if (hero) ensureArmyDetails(hero);
+        return hero;
     }
-    if (hero) ensureArmyDetails(hero);
-    return hero;
-}
 
     function syncWithGame(hero) {
         if (!hero) hero = getSelectedHero();
@@ -141,7 +141,6 @@
         syncWithGame(hero);
     }
 
-    // Основна функция за покупка
     function buyTroop(typeId, quantity = 1, heroParam = null) {
         let hero = heroParam || getSelectedHero();
         if (!hero) { 
@@ -165,7 +164,6 @@
         if (typeof window.renderSingleBar === 'function') window.renderSingleBar();
         if (window.addWorldEvent) window.addWorldEvent(`🛒 Покупка на армия`, `${hero.name} купи ${quantity} × ${troop.name} за ${totalCost} злато.`, "💰");
         
-        // Актуализиране на UI на модала (без да го разрушаваме)
         updateMarketUI();
         return true;
     }
@@ -191,7 +189,6 @@
         return true;
     }
 
-    // Генериране на HTML за една войска
     function troopCard(troop) {
         let hero = getSelectedHero();
         let currentCount = hero ? (hero.armyDetails[troop.id] || 0) : 0;
@@ -306,13 +303,11 @@
         if (powerSpan) powerSpan.innerText = totalPower;
     }
 
-    // Промяна на избрания герой (без да пресъздаваме модала)
     function setSelectedHero(heroId) {
         selectedHeroId = heroId;
         let hero = getSelectedHero();
         if (hero) initHero(hero);
-        updateMarketUI();   // обновяваме златото и броячите
-        // Актуализираме и падащото меню, за да показва правилния избор
+        updateMarketUI();
         let heroSelect = document.getElementById('heroSelect');
         if (heroSelect) heroSelect.value = heroId;
     }
@@ -354,9 +349,7 @@
         
         const heroSelect = document.getElementById('heroSelect');
         
-        // Бутони за покупка (+1, +10, +100)
         modal.querySelectorAll('.buy-btn').forEach(btn => {
-            // Премахваме стари слушатели, като заместваме с нов бутон (за да избегнем дублиране)
             const newBtn = btn.cloneNode(true);
             btn.parentNode.replaceChild(newBtn, btn);
             newBtn.addEventListener('click', (e) => {
@@ -375,7 +368,6 @@
             });
         });
         
-        // Бутони за продажба (-1)
         modal.querySelectorAll('.sell-btn').forEach(btn => {
             const newBtn = btn.cloneNode(true);
             btn.parentNode.replaceChild(newBtn, btn);
@@ -459,5 +451,5 @@
     let initialHero = getSelectedHero();
     if (initialHero) initHero(initialHero);
     
-    console.log("✅ armyMarket.js зареден (стабилна версия с +1,+10,+100, без презареждане на модала)");
+    console.log("✅ armyMarket.js зареден (коригиран – показва всички герои в падащото меню)");
 })();
