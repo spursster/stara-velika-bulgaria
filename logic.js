@@ -62,6 +62,66 @@ function getRandomHeroFromDatabase() {
 }
 
 window.startFreshGameLogic = function() {
+ // В startFreshGameLogic, след като сте създали window.worldData и window.worldData.clans (но преди да създадете currentHero)
+function initializeAllHeroesFromDatabase() {
+    if (!window.bulgarianDynasties) return;
+    const allHeroes = {};
+    for (let dynastyName in window.bulgarianDynasties) {
+        const rulers = window.bulgarianDynasties[dynastyName].rulers;
+        for (let ruler of rulers) {
+            const heroId = `hero_${dynastyName}_${ruler.replace(/\s/g, '_')}`;
+            // Проверяваме дали вече съществува (за да не дублираме)
+            if (!window.worldData.clans[heroId]) {
+                // Базови статистики – могат да се разнообразят според силата на владетеля
+                let power = 100;
+                let gold = 1000;
+                let armySize = 200;
+                let className = "Воевода";
+                if (["Александър III Велики", "Симеон Велики", "Кубрат", "Влад III Дракула"].includes(ruler)) {
+                    power = 180; gold = 2000; armySize = 400; className = "Легенда";
+                } else if (["Атила", "Филип II", "Самуил", "Птолемей I Сотер"].includes(ruler)) {
+                    power = 150; gold = 1500; armySize = 300; className = "Герой";
+                }
+                const hero = {
+                    name: ruler,
+                    leaderName: ruler,
+                    clan: dynastyName,
+                    isJoined: false,          // ⭐ Не е нает – чака в кръчмата
+                    isFavoriteInBarracks: false,
+                    level: 1,
+                    xp: 0,
+                    heroPower: power,
+                    power: power,
+                    gold: gold,
+                    armySize: armySize,
+                    currentArmy: armySize,
+                    currentClass: className,
+                    className: className,
+                    age: 30,
+                    isAuto: true,
+                    skillPoints: 0,
+                    skills: { tactics: 0, endurance: 0, economy: 0, mysticism: 0, leadership: 0 },
+                    equipment: Array(12).fill(null),
+                    inventory: [],
+                    pet: null,
+                    armyDetails: {
+                        infantry: Math.floor(armySize * 0.5),
+                        archers: Math.floor(armySize * 0.25),
+                        cavalry: Math.floor(armySize * 0.15),
+                        elite: Math.floor(armySize * 0.1)
+                    }
+                };
+                if (window.initializeHeroRPGData) window.initializeHeroRPGData(hero);
+                if (window.ensureCompleteArmyDetails) window.ensureCompleteArmyDetails(hero);
+                window.worldData.clans[heroId] = hero;
+            }
+        }
+    }
+    console.log(`✅ Инициализирани ${Object.keys(window.worldData.clans).length} герои от database.js`);
+}
+
+// Извикайте функцията в startFreshGameLogic, след като worldData.clans е готов (но преди да добавите currentHero)
+initializeAllHeroesFromDatabase();
     // ----- 1. СЛУЧАЕН ГЕРОЙ -----
     let heroData = getRandomHeroFromDatabase();
     let selectedName = heroData.name;
