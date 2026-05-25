@@ -945,3 +945,115 @@ if (document.readyState === 'loading') {
 } else {
     setupResponsiveButtons();
 }
+
+// ==================== МОБИЛНА АДАПТАЦИЯ – БЕЗ ДУБЛИРАНЕ НА ЛЕНТИ ====================
+let isMobileLayoutActive = false;
+
+function setupMobileLayout() {
+    const isMobile = window.innerWidth <= 600;
+    
+    if (isMobile && !isMobileLayoutActive) {
+        // Активираме мобилен режим само веднъж
+        isMobileLayoutActive = true;
+        
+        // Добавяме бутон за хамбургер меню, ако липсва
+        const topBarControls = document.querySelector('.top-bar-controls');
+        if (topBarControls && !document.querySelector('.menu-toggle')) {
+            const menuBtn = document.createElement('button');
+            menuBtn.className = 'glass-btn menu-toggle';
+            menuBtn.innerHTML = '☰';
+            menuBtn.setAttribute('aria-label', 'Меню');
+            menuBtn.onclick = (e) => {
+                e.stopPropagation();
+                toggleMobileMenu();
+            };
+            topBarControls.prepend(menuBtn);
+        }
+        
+        // Преместваме съдържанието на страничните панели (само веднъж)
+        moveSidebarContentToMain();
+        
+    } else if (!isMobile && isMobileLayoutActive) {
+        // Възстановяваме десктоп изгледа
+        isMobileLayoutActive = false;
+        
+        const menuBtn = document.querySelector('.menu-toggle');
+        if (menuBtn) menuBtn.remove();
+        
+        restoreSidebarContent();
+        
+        const mobileMenu = document.getElementById('mobile-menu-panel');
+        if (mobileMenu) mobileMenu.remove();
+    }
+}
+
+function toggleMobileMenu() {
+    let menu = document.getElementById('mobile-menu-panel');
+    if (!menu) {
+        menu = document.createElement('div');
+        menu.id = 'mobile-menu-panel';
+        // Копираме основните бутони (без тези, които вече са скрити)
+        const buttonsToClone = document.querySelectorAll('.top-bar-controls .glass-btn:not(.menu-toggle), .icon-btn, .next-turn-btn');
+        buttonsToClone.forEach(btn => {
+            const clone = btn.cloneNode(true);
+            if (btn.onclick) clone.onclick = btn.onclick;
+            else if (btn.getAttribute('onclick')) clone.setAttribute('onclick', btn.getAttribute('onclick'));
+            menu.appendChild(clone);
+        });
+        document.body.appendChild(menu);
+    } else {
+        menu.remove();
+    }
+}
+
+function moveSidebarContentToMain() {
+    const mainArea = document.getElementById('game-main-area');
+    const leftSidebar = document.getElementById('sidebar-left');
+    const rightSidebar = document.getElementById('sidebar-right');
+    if (!mainArea || !leftSidebar || !rightSidebar) return;
+    
+    // Преместваме активния герой (ляв панел) – само ако още не е преместен
+    if (!document.getElementById('mobile-profile-section') && leftSidebar.innerHTML.trim() !== '') {
+        const profileClone = leftSidebar.cloneNode(true);
+        profileClone.id = 'mobile-profile-section';
+        profileClone.classList.add('mobile-section');
+        mainArea.prepend(profileClone);
+    }
+    
+    // Преместваме портала (десен панел) – само ако още не е преместен
+    if (!document.getElementById('mobile-portal-section') && rightSidebar.innerHTML.trim() !== '') {
+        const portalClone = rightSidebar.cloneNode(true);
+        portalClone.id = 'mobile-portal-section';
+        portalClone.classList.add('mobile-section');
+        mainArea.appendChild(portalClone);
+    }
+    
+    // Скриваме оригиналните панели, но не ги премахваме
+    leftSidebar.style.display = 'none';
+    rightSidebar.style.display = 'none';
+}
+
+function restoreSidebarContent() {
+    const leftSidebar = document.getElementById('sidebar-left');
+    const rightSidebar = document.getElementById('sidebar-right');
+    if (leftSidebar) leftSidebar.style.display = '';
+    if (rightSidebar) rightSidebar.style.display = '';
+    
+    const mobileProfile = document.getElementById('mobile-profile-section');
+    const mobilePortal = document.getElementById('mobile-portal-section');
+    if (mobileProfile) mobileProfile.remove();
+    if (mobilePortal) mobilePortal.remove();
+}
+
+// Слушатели за resize и initial load – с debounce за по-добра производителност
+let resizeTimer;
+window.addEventListener('resize', () => {
+    clearTimeout(resizeTimer);
+    resizeTimer = setTimeout(() => setupMobileLayout(), 150);
+});
+
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', () => setupMobileLayout());
+} else {
+    setupMobileLayout();
+}
