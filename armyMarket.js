@@ -1,4 +1,4 @@
-// ======================== АРМИЯ ПАЗАР (КОРИГИРАН – ПОКАЗВА ВСИЧКИ ГЕРОИ) ========================
+// ======================== АРМИЯ ПАЗАР (ХАРМОНИЗИРАНА ВЕРСИЯ – ВСИЧКИ СА ГЕРОИ) ========================
 (function() {
     if (!window.worldData || !window.worldData.clans) {
         console.error("❌ worldData не е зареден!");
@@ -26,16 +26,16 @@
         let heroes = [];
         if (window.worldData && window.worldData.clans) {
             for (let key in window.worldData.clans) {
-                let clan = window.worldData.clans[key];
-                if (clan.isJoined === true) {
-                    ensureArmyDetails(clan);
+                let heroData = window.worldData.clans[key];
+                if (heroData.isJoined === true) {
+                    ensureArmyDetails(heroData);
                     heroes.push({
                         id: key,
-                        name: clan.leaderName || clan.name || key,
-                        clan: clan,
-                        gold: clan.gold || 0,
-                        armySize: clan.armySize || 0,
-                        armyDetails: clan.armyDetails
+                        name: heroData.name || heroData.leaderName || key,
+                        hero: heroData,
+                        gold: heroData.gold || 0,
+                        armySize: heroData.armySize || 0,
+                        armyDetails: heroData.armyDetails
                     });
                 }
             }
@@ -45,7 +45,7 @@
             heroes.push({
                 id: window.currentHero.clan || "hero",
                 name: window.currentHero.name || "Воевода",
-                clan: window.currentHero,
+                hero: window.currentHero,
                 gold: window.currentHero.gold || 0,
                 armySize: window.currentHero.armySize || 0,
                 armyDetails: window.currentHero.armyDetails
@@ -88,7 +88,7 @@
             let armySpan = document.getElementById('val-army');
             if (armySpan) armySpan.innerText = total;
         }
-        if (window.renderTop6LeadersUI) window.renderTop6LeadersUI();
+        if (window.renderTop6HeroesUI) window.renderTop6HeroesUI();
         if (window.updateCharacterUI) window.updateCharacterUI(window.currentHero);
         saveHeroData(hero);
     }
@@ -144,7 +144,11 @@
     function buyTroop(typeId, quantity = 1, heroParam = null) {
         let hero = heroParam || getSelectedHero();
         if (!hero) { 
-            if (window.showAdvisorMsg) window.showAdvisorMsg("❌ Няма избран герой!");
+            if (window.showAdvisorPopup) {
+                window.showAdvisorPopup("ГРЕШКА", "Няма избран герой!", "error");
+            } else if (window.showAdvisorMsg) {
+                window.showAdvisorMsg("❌ Няма избран герой!");
+            }
             return false; 
         }
         ensureArmyDetails(hero);
@@ -152,7 +156,12 @@
         if (!troop) return false;
         let totalCost = troop.basePrice * quantity;
         if (hero.gold < totalCost) { 
-            if (window.showAdvisorMsg) window.showAdvisorMsg(`❌ ${hero.name} няма достатъчно злато! (Нужни: ${totalCost})`);
+            let msg = `${hero.name} няма достатъчно злато! (Нужни: ${totalCost})`;
+            if (window.showAdvisorPopup) {
+                window.showAdvisorPopup("ГРЕШКА", msg, "error");
+            } else if (window.showAdvisorMsg) {
+                window.showAdvisorMsg(`❌ ${msg}`);
+            }
             return false; 
         }
         hero.gold -= totalCost;
@@ -160,7 +169,7 @@
         syncWithGame(hero);
         saveHeroData(hero);
         if (window.updateCharacterUI) window.updateCharacterUI(hero);
-        if (window.renderTop6LeadersUI) window.renderTop6LeadersUI();
+        if (window.renderTop6HeroesUI) window.renderTop6HeroesUI();
         if (typeof window.renderSingleBar === 'function') window.renderSingleBar();
         if (window.addWorldEvent) window.addWorldEvent(`🛒 Покупка на армия`, `${hero.name} купи ${quantity} × ${troop.name} за ${totalCost} злато.`, "💰");
         
@@ -176,7 +185,12 @@
         if (!troop) return false;
         let current = hero.armyDetails[typeId] || 0;
         if (current < quantity) { 
-            if (window.showAdvisorMsg) window.showAdvisorMsg("❌ Нямаш толкова войници за продажба!");
+            let msg = "Нямаш толкова войници за продажба!";
+            if (window.showAdvisorPopup) {
+                window.showAdvisorPopup("ГРЕШКА", msg, "error");
+            } else if (window.showAdvisorMsg) {
+                window.showAdvisorMsg(`❌ ${msg}`);
+            }
             return false; 
         }
         let refund = Math.floor(troop.basePrice * 0.6 * quantity);
@@ -184,7 +198,12 @@
         hero.armyDetails[typeId] = current - quantity;
         syncWithGame(hero);
         saveHeroData(hero);
-        if (window.showAdvisorMsg) window.showAdvisorMsg(`💰 Продадохте ${quantity} × ${troop.name} за ${refund} злато.`);
+        let msg = `Продадохте ${quantity} × ${troop.name} за ${refund} злато.`;
+        if (window.showAdvisorPopup) {
+            window.showAdvisorPopup("ПРОДАЖБА", msg, "info");
+        } else if (window.showAdvisorMsg) {
+            window.showAdvisorMsg(`💰 ${msg}`);
+        }
         updateMarketUI();
         return true;
     }
@@ -315,7 +334,12 @@
     function showMarket() {
         let heroes = getAllHeroes();
         if (heroes.length === 0) { 
-            alert("❌ Няма наети герои! Първо наемете герой.");
+            let msg = "Няма наети герои! Първо наемете герой.";
+            if (window.showAdvisorPopup) {
+                window.showAdvisorPopup("ГРЕШКА", msg, "error");
+            } else {
+                alert(msg);
+            }
             return; 
         }
         let hero = getSelectedHero();
@@ -397,7 +421,15 @@
         
         document.getElementById('resetArmyBtn')?.addEventListener('click', () => {
             let hero = getSelectedHero();
-            if (hero && confirm(`⚠️ Демобилизацията ще продаде цялата армия на ${hero.name} с 60% от стойността! Сигурни ли сте?`)) {
+            let msg = `⚠️ Демобилизацията ще продаде цялата армия на ${hero.name} с 60% от стойността! Сигурни ли сте?`;
+            let confirmMsg = false;
+            if (window.showAdvisorPopup) {
+                // За confirm нямаме попап с бутони, затова използваме стандартен confirm
+                confirmMsg = confirm(msg);
+            } else {
+                confirmMsg = confirm(msg);
+            }
+            if (hero && confirmMsg) {
                 let totalRefund = 0;
                 for (let t of allTroops) {
                     let cnt = hero.armyDetails[t.id] || 0;
@@ -410,7 +442,12 @@
                 syncWithGame(hero);
                 saveHeroData(hero);
                 updateMarketUI();
-                alert(`Цялата армия на ${hero.name} е демобилизирана. Получихте ${totalRefund} злато.`);
+                let resultMsg = `Цялата армия на ${hero.name} е демобилизирана. Получихте ${totalRefund} злато.`;
+                if (window.showAdvisorPopup) {
+                    window.showAdvisorPopup("ДЕМОБИЛИЗАЦИЯ", resultMsg, "info");
+                } else {
+                    alert(resultMsg);
+                }
             }
         });
         
@@ -451,5 +488,5 @@
     let initialHero = getSelectedHero();
     if (initialHero) initHero(initialHero);
     
-    console.log("✅ armyMarket.js зареден (коригиран – показва всички герои в падащото меню)");
+    console.log("✅ armyMarket.js зареден (хармонизирана версия – всички са герои)");
 })();
