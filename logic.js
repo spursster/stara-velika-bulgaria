@@ -135,6 +135,11 @@ window.startFreshGameLogic = function() {
         console.warn("generateProceduralRegions не е дефинирана – пропускам генерирането.");
     }
 
+ // след като регионите са готови (в startFreshGameLogic)
+if (typeof window.buildRegionConnections === 'function') {
+    window.buildRegionConnections();
+}
+
     // ----- 8. РЕЖИМ НА ИГРА -----
     if (!window.gameMode) {
         window.gameMode = 'classic';
