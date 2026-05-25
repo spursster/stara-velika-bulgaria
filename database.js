@@ -208,9 +208,23 @@ window.hireClanHero = function(heroName, clanName, cost, heroPower) {
         if (window.renderTop6LeadersUI) window.renderTop6LeadersUI();
         if (typeof window.renderSingleBar === 'function') window.renderSingleBar();
         window.openTavernUI();
-        if (window.showAdvisorMsg) window.showAdvisorMsg(`👑 ОТКЛЮЧВАНЕ: Героят ${heroName} от Клан ${clanName} се присъедини!`);
-    } else {
-        if (window.showAdvisorMsg) window.showAdvisorMsg("❌ НЕДОСТИГ: Нямате достатъчно злато!");
+       // Вместо showAdvisorMsg за успех
+if (window.showAdvisorPopup) {
+    window.showAdvisorPopup(
+        "УСПЕШНО НАЕМАНЕ",
+        `✨ ${heroName} от клан ${clanName} се присъедини към вашия род!<br><br>💰 Останало злато: ${window.currentHero.gold}<br>⚔️ Бойна сила: ${heroPower}`,
+        "success"
+    );
+} else if (window.showAdvisorMsg) {
+    window.showAdvisorMsg(`👑 ОТКЛЮЧВАНЕ: Героят ${heroName} от Клан ${clanName} се присъедини!`);
+}
+
+// Вместо showAdvisorMsg за грешка
+if (window.showAdvisorPopup) {
+    window.showAdvisorPopup("ГРЕШКА", "Нямате достатъчно злато, за да наемете този герой!", "error");
+} else if (window.showAdvisorMsg) {
+    window.showAdvisorMsg("❌ НЕДОСТИГ: Нямате достатъчно злато!");
+}
     }
 };
 
