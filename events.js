@@ -1,7 +1,6 @@
 /**
 ПРОЕКТ: ВЕЛИКА БЪЛГАРИЯ
-ФАЙЛ: events.js (КОРИГИРАН – 140+ СЪБИТИЯ, МОДАЛЕН ИНТЕРФЕЙС, ЛЕТОПИС)
-ВЕРСИЯ: 4.1 – ГОТОВ ЗА УПОТРЕБА (ОПРАВЕНИ СИНТАКСИС И БЕЗОПАСНИ ПРОВЕРКИ)
+ФАЙЛ: events.js (ВЕРСИЯ 5.0 – ХАРМОНИЗИРАН С НОВАТА ТЕРМИНОЛОГИЯ)
 */
 window.eventTemplates = {
     positive: [
@@ -227,7 +226,7 @@ window.triggerRandomEvent = function() {
             const modal = document.getElementById('event-overlay-modal');
             if (modal) modal.remove();
             if (window.updateCharacterUI) window.updateCharacterUI(hero);
-            if (window.renderTop6LeadersUI) window.renderTop6LeadersUI();
+            if (window.renderTop6HeroesUI) window.renderTop6HeroesUI();  // <-- ПРОМЕНЕНО
         }
     }]);
 
