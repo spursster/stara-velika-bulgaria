@@ -138,27 +138,29 @@ function autoConquestBattle(attacker, defenderPower, regionName) {
 
 window.autonomousRegionConquest = function() {
     if (!window.worldData || !window.worldData.clans || !window.worldData.regions) return;
-    let favoriteIds = new Set();
-    if (window.favoriteHeroes && typeof window.favoriteHeroes.forEach === 'function') {
-        window.favoriteHeroes.forEach(id => favoriteIds.add(id));
-    }
+    
     if (Math.random() > 0.15) return;
+    
     let potentialConquerors = [];
     for (let key in window.worldData.clans) {
         let hero = window.worldData.clans[key];
-        if (hero.isJoined === true && clan.isFavorite !== true && (hero.armySize || 0) > 150) {
+        // Условие: герой е нает, НЕ Е любим, има достатъчно армия
+        if (hero.isJoined === true && hero.isFavorite !== true && (hero.armySize || 0) > 150) {
             potentialConquerors.push(hero);
         }
     }
     if (potentialConquerors.length === 0) return;
+    
     const conqueror = potentialConquerors[Math.floor(Math.random() * potentialConquerors.length)];
     const regionKeys = Object.keys(window.worldData.regions);
     let availableRegions = regionKeys.filter(key => !(window.playerRegions && window.playerRegions.includes(key)));
     if (availableRegions.length === 0) return;
+    
     const targetRegion = availableRegions[Math.floor(Math.random() * availableRegions.length)];
     const regionData = window.worldData.regions[targetRegion];
     const defenderPower = (regionData.armySize || 200) * (regionData.defenseLevel || 1);
     const isVictory = autoConquestBattle(conqueror, defenderPower, targetRegion);
+    
     if (isVictory) {
         if (!window.playerRegions) window.playerRegions = [];
         if (!window.playerRegions.includes(targetRegion)) {
@@ -173,7 +175,10 @@ window.autonomousRegionConquest = function() {
             if (!conqueror.inventory) conqueror.inventory = [];
             if (conqueror.inventory.length < 30) {
                 conqueror.inventory.push(newArtifact);
-                showGameMessage("АРТЕФАКТ", `🎁 ${conqueror.name || conqueror.leaderName} намери артефакт в ${targetRegion}: ${newArtifact.name}!`, "info");
+                // Запис в летописа вместо попап
+                if (window.addWorldEvent) {
+                    window.addWorldEvent("🏺 АРТЕФАКТ", `${conqueror.name} намери ${newArtifact.name} в ${targetRegion}!`, "🏺");
+                }
             }
         }
     }
