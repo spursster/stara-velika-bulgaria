@@ -1,15 +1,13 @@
 /**
  * МОДУЛ: БАЗА ДАННИ - Велика България
- * СТАТУС: АБСОЛЮТЕН И НЕПРОМЕНЯЕМ ЗАКОН (13 Равноправни Династии)
- * Всички данни са взети на 100% от текстовия закон на проекта без исторически филтри!
- * 
- * ВЕРСИЯ: 5.0 – Всички герои се добавят в света при старт (isJoined: false), наемат се чрез кръчмата.
+ * ВСИЧКИ СА ГЕРОИ (HEROES) – НЯМА ВОДАЧИ, НЯМА ЙЕРАРХИЯ
+ * 13 РАВНОПРАВНИ КЛАНОВЕ
  */
 
-window.bulgarianDynasties = {
+window.bulgarianClans = {
     "Дуло": {
         founder: "Болгарос",
-        rulers: [
+        heroes: [
             "Атила", "Ирник", "Заберган", "Сандилх", "Аскал", "Албури", "Авитохол", 
             "Гостун", "Кубрат", "Батбаян", "Котраг", "Аспарух", "Тервел", "Севар", 
             "Крум", "Омуртаг", "Маламир", "Пресиян I", "Борис I", "Владимир Расате", 
@@ -20,23 +18,23 @@ window.bulgarianDynasties = {
     },
     "Комитопули": {
         founder: "Никола",
-        rulers: ["Давид", "Мойсей", "Роман", "Самуил", "Гаврил Радомир", "Иван Владислав", "Пресиян II"]
+        heroes: ["Давид", "Мойсей", "Роман", "Самуил", "Гаврил Радомир", "Иван Владислав", "Пресиян II"]
     },
     "Асеневци": {
         founder: "Асен I",
-        rulers: ["Иван Асен I", "Петър IV", "Калоян", "Борил", "Иван Асен II", "Калиман Асен I", "Михаил II Асен", "Калиман Асен II", "Мицо Асен", "Константин Тих Асен", "Ивайло", "Иван Асен III"]
+        heroes: ["Иван Асен I", "Петър IV", "Калоян", "Борил", "Иван Асен II", "Калиман Асен I", "Михаил II Асен", "Калиман Асен II", "Мицо Асен", "Константин Тих Асен", "Ивайло", "Иван Асен III"]
     },
     "Тертер": {
         founder: "Георги Тертер I",
-        rulers: ["Георги Тертер I", "Смилец", "Чака", "Теодор Светослав", "Георги Тертер II"]
+        heroes: ["Георги Тертер I", "Смилец", "Чака", "Теодор Светослав", "Георги Тертер II"]
     },
     "Даки": {
         founder: "Буребиста",
-        rulers: ["Буребиста", "Децебал", "Котисон", "Комосикус", "Скорпило", "Диурпанеус"]
+        heroes: ["Буребиста", "Децебал", "Котисон", "Комосикус", "Скорпило", "Диурпанеус"]
     },
     "Уния Траки": {
         founder: "Трак",
-        rulers: [
+        heroes: [
             "Терей", "Диомед", "Ликург", "Рез", "Балакрос", "Вологез", "Ситас", 
             "Дигилис", "Дидалс", "Никомед I", "Абруполис", "Раскупорис I", "Реметалк I", 
             "Халес", "Сирм"
@@ -44,125 +42,131 @@ window.bulgarianDynasties = {
     },
     "Шишмановци": {
         founder: "Шишман",
-        rulers: ["Михаил III Шишман", "Иван Александър", "Иван Шишман", "Иван Срацимир", "Белаур", "Фружин", "Иван Асен IV"]
+        heroes: ["Михаил III Шишман", "Иван Александър", "Иван Шишман", "Иван Срацимир", "Белаур", "Фружин", "Иван Асен IV"]
     },
     "Македони": {
         founder: "Филип II",
-        rulers: ["Каран", "Пердика I", "Александър I", "Пердика II", "Архелай I", "Аминта III", "Филип II", "Александър III Велики", "Филип III", "Александър IV"]
+        heroes: ["Каран", "Пердика I", "Александър I", "Пердика II", "Архелай I", "Аминта III", "Филип II", "Александър III Велики", "Филип III", "Александър IV"]
     },
     "Птоломеи": {
         founder: "Птолемей I Сотер",
-        rulers: ["Птолемей I Сотер", "Птолемей II Филаделф", "Птолемей III Евергет", "Птолемей IV Филопатор", "Птолемей V Епифан", "Клеопатра VII"]
+        heroes: ["Птолемей I Сотер", "Птолемей II Филаделф", "Птолемей III Евергет", "Птолемей IV Филопатор", "Птолемей V Епифан", "Клеопатра VII"]
     },
     "Одриси": {
         founder: "Терес I",
-        rulers: ["Терес I", "Спарадок", "Ситалк", "Садок", "Хебризелм", "Берисад", "Амадок I", "Котис I", "Керсеблепт", "Севт III"]
+        heroes: ["Терес I", "Спарадок", "Ситалк", "Садок", "Хебризелм", "Берисад", "Амадок I", "Котис I", "Керсеблепт", "Севт III"]
     },
     "Бесараб": {
         founder: "Басараб I Основател",
-        rulers: [
+        heroes: [
             "Мишеслав", "Сенеслав", "Литовой", "Бербат", "Раду Черния", "Тихомир", 
             "Владислав I", "Михаил I", "Раду III Красивия", "Басараб III Стария", "Раду IV Велики"
         ]
     },
     "Османци Дуло": {
         founder: "Осман I",
-        rulers: ["Осман I Гази", "Орхан", "Мурад I", "Баязид I", "Мехмед I", "Мурад II", "Мехмед II Завоевателя", "Селим I", "Сюлейман Великолепни"]
+        heroes: ["Осман I Гази", "Орхан", "Мурад I", "Баязид I", "Мехмед I", "Мурад II", "Мехмед II Завоевателя", "Селим I", "Сюлейман Великолепни"]
     },
     "Скити": {
         founder: "Ишпакай",
-        rulers: ["Пртатуа", "Мадий", "Савлий", "Иданфирс", "Ариант", "Ариапит", "Скил", "Атей", "Канит", "Тануза"]
+        heroes: ["Пртатуа", "Мадий", "Савлий", "Иданфирс", "Ариант", "Ариапит", "Скил", "Атей", "Канит", "Тануза"]
     }
 };
 
-window.mightyLeaders = [];
+// Глобален масив за могъщи герои (ако се използва някъде)
+window.mightyHeroes = [];
 
-// ==================== СЪВМЕСТИМОСТ ====================
+// За съвместимост със стари имена (ако някой друг модул очаква bulgarianDynasties)
+window.bulgarianDynasties = window.bulgarianClans;
+
+// Съвместимост с clansDatabase
 if (!window.clansDatabase) {
     window.clansDatabase = {};
-    for (let dynastyName in window.bulgarianDynasties) {
-        window.clansDatabase[dynastyName] = {
-            heroes: window.bulgarianDynasties[dynastyName].rulers
+    for (let clanName in window.bulgarianClans) {
+        window.clansDatabase[clanName] = {
+            heroes: window.bulgarianClans[clanName].heroes
         };
     }
 }
 
-// ==================== ИНИЦИАЛИЗАЦИЯ НА ВСИЧКИ ГЕРОИ В СВЕТА (isJoined: false) ====================
+// ==================== ИНИЦИАЛИЗАЦИЯ НА ВСИЧКИ ГЕРОИ В СВЕТА ====================
 window.initializeAllHeroesInWorld = function() {
     if (!window.worldData) window.worldData = {};
-    if (!window.worldData.clans) window.worldData.clans = {};
+    if (!window.worldData.heroes) window.worldData.heroes = {};   // променено от clans на heroes? Внимание: другаде се използва worldData.clans. За съвместимост запазваме и двете.
+    if (!window.worldData.clans) window.worldData.clans = {};     // запазваме clans за съвместимост
     
     let addedCount = 0;
-    for (let dynastyName in window.bulgarianDynasties) {
-        const rulers = window.bulgarianDynasties[dynastyName].rulers;
-        for (let ruler of rulers) {
-            const heroId = `hero_${dynastyName}_${ruler.replace(/\s/g, '_')}`;
-            if (!window.worldData.clans[heroId]) {
-                // Определяне на сила и цена според името
-                let power = 100;
-                let gold = 1000;
-                let armySize = 200;
-                let className = "Воевода";
-                if (["Александър III Велики", "Симеон Велики", "Кубрат", "Влад III Дракула"].includes(ruler)) {
-                    power = 190; gold = 2000; armySize = 400; className = "Легенда";
-                } else if (["Атила", "Филип II", "Самуил", "Птолемей I Сотер"].includes(ruler)) {
-                    power = 165; gold = 1500; armySize = 300; className = "Герой";
-                } else if (["Аспарух", "Тервел", "Крум", "Калоян", "Борис I"].includes(ruler)) {
-                    power = 130; gold = 1200; armySize = 250; className = "Войн";
+    for (let clanName in window.bulgarianClans) {
+        const heroesList = window.bulgarianClans[clanName].heroes;
+        for (let heroName of heroesList) {
+            // Проверка за съществуване
+            let exists = false;
+            for (let key in window.worldData.clans) {
+                let existing = window.worldData.clans[key];
+                if (existing.name === heroName && existing.clan === clanName) {
+                    exists = true;
+                    break;
                 }
-                
-                const hero = {
-                    name: ruler,
-                    leaderName: ruler,
-                    clan: dynastyName,
-                    isJoined: false,
-                    isFavoriteInBarracks: false,
-                    level: 1,
-                    xp: 0,
-                    heroPower: power,
-                    power: power,
-                    gold: gold,
-                    armySize: armySize,
-                    currentArmy: armySize,
-                    currentClass: className,
-                    className: className,
-                    age: 30 + Math.floor(Math.random() * 30),
-                    isAuto: true,
-                    skillPoints: 0,
-                    skills: { tactics: 0, endurance: 0, economy: 0, mysticism: 0, leadership: 0 },
-                    equipment: Array(12).fill(null),
-                    inventory: [],
-                    pet: null,
-                    learnedSkills: {},
-                    armyDetails: {
-                        infantry: Math.floor(armySize * 0.5),
-                        archers: Math.floor(armySize * 0.25),
-                        cavalry: Math.floor(armySize * 0.15),
-                        elite: Math.floor(armySize * 0.1)
-                    }
-                };
-                if (window.initializeHeroRPGData) window.initializeHeroRPGData(hero);
-                if (window.ensureCompleteArmyDetails) window.ensureCompleteArmyDetails(hero);
-                window.worldData.clans[heroId] = hero;
-                addedCount++;
             }
+            if (exists) continue;
+            
+            const heroId = `hero_${clanName}_${heroName.replace(/\s/g, '_')}`;
+            let power = 100, gold = 1000, armySize = 200, className = "Воевода";
+            if (["Александър III Велики", "Симеон Велики", "Кубрат", "Влад III Дракула"].includes(heroName)) {
+                power = 190; gold = 2000; armySize = 400; className = "Легенда";
+            } else if (["Атила", "Филип II", "Самуил", "Птолемей I Сотер"].includes(heroName)) {
+                power = 165; gold = 1500; armySize = 300; className = "Герой";
+            } else if (["Аспарух", "Тервел", "Крум", "Калоян", "Борис I"].includes(heroName)) {
+                power = 130; gold = 1200; armySize = 250; className = "Войн";
+            }
+            
+            const hero = {
+                name: heroName,
+                clan: clanName,
+                isJoined: false,
+                isFavorite: false,           // вместо isFavoriteInBarracks
+                level: 1,
+                xp: 0,
+                heroPower: power,
+                power: power,
+                gold: gold,
+                armySize: armySize,
+                currentArmy: armySize,
+                currentClass: className,
+                className: className,
+                age: 30 + Math.floor(Math.random() * 30),
+                isAuto: true,
+                skillPoints: 0,
+                skills: { tactics: 0, endurance: 0, economy: 0, mysticism: 0, leadership: 0 },
+                equipment: Array(12).fill(null),
+                inventory: [],
+                pet: null,
+                learnedSkills: {},
+                armyDetails: {
+                    infantry: Math.floor(armySize * 0.5),
+                    archers: Math.floor(armySize * 0.25),
+                    cavalry: Math.floor(armySize * 0.15),
+                    elite: Math.floor(armySize * 0.1)
+                }
+            };
+            if (window.initializeHeroRPGData) window.initializeHeroRPGData(hero);
+            if (window.ensureCompleteArmyDetails) window.ensureCompleteArmyDetails(hero);
+            window.worldData.clans[heroId] = hero;
+            // Дублираме и в heroes за по-новата структура (по желание)
+            if (window.worldData.heroes) window.worldData.heroes[heroId] = hero;
+            addedCount++;
         }
     }
-    console.log(`✅ Инициализирани ${addedCount} герои от database.js в света. Общо: ${Object.keys(window.worldData.clans).length}`);
+    console.log(`✅ Добавени ${addedCount} нови герои (без дублиране).`);
 };
-
-// Автоматично извикване, ако worldData съществува (за да не се налага ръчно)
-if (window.worldData) {
-    window.initializeAllHeroesInWorld();
-}
 
 // ==================== КРЪЧМА – ПОКАЗВА САМО НЕНАЕТИТЕ ГЕРОИ ====================
 function getAllHeroesFromWorld() {
     let heroes = [];
     if (window.worldData && window.worldData.clans) {
         for (let key in window.worldData.clans) {
-            let clan = window.worldData.clans[key];
-            if (clan.isJoined === true) heroes.push(clan);
+            let hero = window.worldData.clans[key];
+            if (hero.isJoined === true) heroes.push(hero);
         }
     }
     if (heroes.length === 0 && window.currentHero) heroes.push(window.currentHero);
@@ -173,7 +177,6 @@ window.openTavernUI = function() {
     const mainArea = document.getElementById('game-main-area');
     if (!mainArea) return;
     
-    // Вземаме всички герои от worldData.clans, които НЕ СА НАЕТИ
     let availableHeroes = [];
     for (let key in window.worldData.clans) {
         let hero = window.worldData.clans[key];
@@ -222,7 +225,7 @@ window.openTavernUI = function() {
     mainArea.innerHTML = htmlContent;
 };
 
-// ==================== НАЕМАНЕ НА СЪЩЕСТВУВАЩ ГЕРОЙ (променя isJoined на true) ====================
+// ==================== НАЕМАНЕ НА СЪЩЕСТВУВАЩ ГЕРОЙ ====================
 window.hireExistingHero = function(heroId, cost) {
     if (!window.currentHero) {
         if (window.showAdvisorPopup) window.showAdvisorPopup("ГРЕШКА", "Няма активен герой!", "error");
@@ -237,7 +240,7 @@ window.hireExistingHero = function(heroId, cost) {
     if (window.currentHero.gold >= cost) {
         window.currentHero.gold -= cost;
         hero.isJoined = true;
-        hero.isFavoriteInBarracks = false; // новонаетите не са любими по подразбиране
+        hero.isFavorite = false;  // новонаетите не са любими
         
         if (typeof window.generateHeroPortrait === 'function') {
             window.generateHeroPortrait(hero).catch(e => console.warn(e));
@@ -245,12 +248,12 @@ window.hireExistingHero = function(heroId, cost) {
         
         if (window.armyMarket && typeof window.armyMarket.sync === 'function') window.armyMarket.sync(hero);
         if (window.updateCharacterUI) window.updateCharacterUI(window.currentHero);
-        if (window.renderTop6LeadersUI) window.renderTop6LeadersUI();
+        if (window.renderTop6HeroesUI) window.renderTop6HeroesUI();
         if (typeof window.renderSingleBar === 'function') window.renderSingleBar();
-        window.openTavernUI(); // опресняваме кръчмата
+        window.openTavernUI();
         
         if (window.showAdvisorPopup) {
-            window.showAdvisorPopup("УСПЕШНО НАЕМАНЕ", `${hero.name} от род ${hero.clan} се присъедини! Останало злато: ${window.currentHero.gold}`, "success");
+            window.showAdvisorPopup("УСПЕШНО НАЕМАНЕ", `${hero.name} от клан ${hero.clan} се присъедини! Останало злато: ${window.currentHero.gold}`, "success");
         } else if (window.showAdvisorMsg) {
             window.showAdvisorMsg(`👑 ОТКЛЮЧВАНЕ: Героят ${hero.name} от Клан ${hero.clan} се присъедини!`);
         }
@@ -263,9 +266,8 @@ window.hireExistingHero = function(heroId, cost) {
     }
 };
 
-// ==================== СТАРИ ФУНКЦИИ (ЗА СЪВМЕСТИМОСТ) ====================
+// ==================== СТАРИ ФУНКЦИИ ЗА СЪВМЕСТИМОСТ ====================
 window.hireClanHero = function(heroName, clanName, cost, heroPower) {
-    // За съвместимост с евентуални стари извиквания – търсим герой по име и клан
     for (let key in window.worldData.clans) {
         let h = window.worldData.clans[key];
         if (h.name === heroName && h.clan === clanName && h.isJoined === false) {
