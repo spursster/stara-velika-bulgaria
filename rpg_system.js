@@ -50,9 +50,19 @@ window.initializeHeroRPGData = function(hero) {
     if (!hero.inventory) hero.inventory = [];
     if (hero.pet === undefined) hero.pet = null;
     if (hero.learnedSkills === undefined) hero.learnedSkills = {};
-    // Нови полета
-    if (hero.titles === undefined) hero.titles = [];       // списък с титли
-    if (hero.prestige === undefined) hero.prestige = 0;   // престиж (за редки награди)
+    if (hero.titles === undefined) hero.titles = [];
+    if (hero.prestige === undefined) hero.prestige = 0;
+    
+    // НОВО: Инициализация на HP
+    if (typeof hero.hp === 'undefined') {
+        let endurance = hero.skills?.endurance || 0;
+        let levelBonus = (hero.level - 1) * 20;
+        let enduranceBonus = endurance * 15;
+        hero.maxHp = 100 + levelBonus + enduranceBonus;
+        hero.hp = hero.maxHp;
+    }
+    if (typeof hero.isAlive === 'undefined') hero.isAlive = true;
+    
     hero.isRPGInitialized = true;
 };
 // ==================== ФУНКЦИЯ ЗА КОНСУМИРАНЕ НА STOREDXP ====================
@@ -107,7 +117,14 @@ window.gainHeroXP = function(hero, amount) {
             requiredXP = window.rpgDatabase.getXPRequiredForLevel(hero.level);
         }
         if (leveledUp) {
-            // Само при нивап – запис в летописа
+            // Преизчисляване на maxHp
+            let oldMaxHp = hero.maxHp;
+            let endurance = hero.skills?.endurance || 0;
+            let newMaxHp = 100 + (hero.level - 1) * 20 + endurance * 15;
+            hero.maxHp = newMaxHp;
+            hero.hp = hero.hp + (newMaxHp - oldMaxHp);
+            if (hero.hp > hero.maxHp) hero.hp = hero.maxHp;
+            
             if (window.addWorldEvent) {
                 window.addWorldEvent("🆙 НИВО НАГОРЕ", `${hero.name} достигна Ниво ${hero.level}! (+1 точка умения)`, "🆙");
             }
