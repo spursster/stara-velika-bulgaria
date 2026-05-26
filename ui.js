@@ -1,6 +1,6 @@
 /** ========================================================================== 
 ПРОЕКТ: ВЕЛИКА БЪЛГАРИЯ
-ФАЙЛ: ui.js (ВЕРСИЯ 6.0 – НОВА ЛЕНТА С ЛЮБИМИ ГЕРОИ, ЕЛИТЕН МОДАЛ)
+ФАЙЛ: ui.js (ВЕРСИЯ 7.0 – С HP ИНДИКАТОРИ, ЖИВОТ И СМЪРТ)
 ========================================================================== */ 
 
 // ==================== ОБНОВЯВАНЕ НА ВРЕМЕТО ====================
@@ -70,7 +70,6 @@ window.generateHeroPortrait = async function(hero, retries = 2) {
                 hero.portrait = url;
                 if (typeof window.saveGreatBulgariaGame === 'function') window.saveGreatBulgariaGame();
                 if (typeof window.renderSingleBar === 'function') window.renderSingleBar();
-                // Обновяваме лентата с любими (ако съществува)
                 if (typeof window.renderFavoriteHeroesBar === 'function') window.renderFavoriteHeroesBar();
                 if (window.currentHero === hero && typeof window.updateCharacterUI === 'function') {
                     window.updateCharacterUI(hero);
@@ -275,7 +274,7 @@ function getAllHeroes() {
     if (window.worldData && window.worldData.clans) {
         for (let key in window.worldData.clans) {
             let heroData = window.worldData.clans[key];
-            if (heroData.isJoined === true) {
+            if (heroData.isJoined === true && heroData.isAlive !== false) {
                 heroes.push({
                     id: key,
                     name: heroData.name || heroData.leaderName || key,
@@ -293,12 +292,14 @@ function getAllHeroes() {
                     equipment: heroData.equipment || Array(12).fill(null),
                     isCompanion: heroData.isCompanion === true,
                     isFavorite: heroData.isFavorite || heroData.isFavoriteInBarracks || false,
-                    portrait: heroData.portrait
+                    portrait: heroData.portrait,
+                    hp: heroData.hp || heroData.maxHp || 100,
+                    maxHp: heroData.maxHp || 100
                 });
             }
         }
     }
-    if (heroes.length === 0 && window.currentHero) {
+    if (heroes.length === 0 && window.currentHero && window.currentHero.isAlive !== false) {
         heroes.push({
             id: window.currentHero.clan || "hero",
             name: window.currentHero.name || "Воевода",
@@ -316,7 +317,9 @@ function getAllHeroes() {
             equipment: window.currentHero.equipment || Array(12).fill(null),
             isCompanion: window.currentHero.isCompanion === true,
             isFavorite: window.currentHero.isFavorite || false,
-            portrait: window.currentHero.portrait
+            portrait: window.currentHero.portrait,
+            hp: window.currentHero.hp || window.currentHero.maxHp || 100,
+            maxHp: window.currentHero.maxHp || 100
         });
     }
     if (window.gameMode === 'solo') {
@@ -342,6 +345,7 @@ function equipArtifact(hero, artifact, slotIndex) {
     if (window.updateCharacterUI) window.updateCharacterUI(hero);
     if (window.armyMarket && window.armyMarket.sync) window.armyMarket.sync(hero);
     else if (window.saveHeroData) window.saveHeroData(hero);
+    if (window.recalculateHeroMaxHp) window.recalculateHeroMaxHp(hero);
 }
 
 function showHeroProfile(hero) {
@@ -409,7 +413,23 @@ function showHeroProfile(hero) {
     let generatePortraitBtnHtml = `<button id="generate-portrait-btn" style="background:#2c1a0c; border:none; border-radius:20px; color:#ffdd99; padding:6px 12px; margin-top:8px; width:100%; cursor:pointer;">🎨 Генерирай портрет</button>`;
     let shareBtnHtml = `<button id="share-hero-btn" style="background:#2c1a0c; border:none; border-radius:20px; color:#ffdd99; padding:6px 12px; margin-top:8px; width:100%; cursor:pointer;">📤 Сподели визитка</button>`;
     
-    // --- ПОРТРЕТ (НОВ) ---
+    // HP лента
+    let hpPercent = (hero.hp / hero.maxHp) * 100;
+    let hpBarColor = hpPercent > 70 ? "#4caf50" : (hpPercent > 30 ? "#ff9800" : "#f44336");
+    let hpHtml = `
+        <div style="margin: 5px 0;">
+            <div style="display: flex; align-items: center; gap: 8px;">
+                <span>❤️</span>
+                <span>Здраве</span>
+                <div style="flex:1; background:#c4a67a; height:6px; border-radius:3px;">
+                    <div style="background:${hpBarColor}; width:${hpPercent}%; height:100%; border-radius:3px;"></div>
+                </div>
+                <span>${hero.hp}/${hero.maxHp}</span>
+            </div>
+        </div>
+    `;
+    
+    // Портрет
     let portraitHtml = '';
     if (hero.portrait) {
         portraitHtml = `<div style="text-align: center; margin: 0 auto 10px auto;">
@@ -432,6 +452,7 @@ function showHeroProfile(hero) {
                 <div style="color:#ccaa77;">${getClassIcon(hero.currentClass)} ${hero.currentClass} · Ниво ${hero.level}</div>
                 <div style="background:#2a1a0a; height:8px; border-radius:4px; margin:10px 0;"><div style="background:#d4a373; height:100%; width:${xpPercent}%; border-radius:4px;"></div></div>
                 <div style="font-size:11px; color:#ffaa66;">⚡ ${Math.floor(currentXP)}/${needXP} XP</div>
+                ${hpHtml}
                 <div style="margin-top:15px; display:flex; justify-content:space-between; gap:10px;">
                     <div style="background:#0d0a07; border-radius:12px; padding:8px; flex:1;"><div>💰 Злато</div><div style="color:#ffdd99;">${hero.gold}</div></div>
                     <div style="background:#0d0a07; border-radius:12px; padding:8px; flex:1;"><div>⚔️ Армия</div><div style="color:#ffdd99;">${hero.army}</div></div>
@@ -450,8 +471,7 @@ function showHeroProfile(hero) {
     `;
     document.body.appendChild(modal);
     
-    // --- ВСИЧКИ СЛУШАТЕЛИ (остават същите като преди) ---
-    // Клик върху екипировъчен слот
+    // --- ВСИЧКИ СЛУШАТЕЛИ ---
     modal.querySelectorAll('.equip-slot').forEach(slotDiv => {
         slotDiv.addEventListener('click', (e) => {
             e.stopPropagation();
@@ -474,7 +494,6 @@ function showHeroProfile(hero) {
         });
     });
     
-    // Клик върху артефакт в инвентара
     modal.querySelectorAll('.artifact-item').forEach(artDiv => {
         artDiv.addEventListener('click', (e) => {
             e.stopPropagation();
@@ -495,7 +514,6 @@ function showHeroProfile(hero) {
     
     modal.querySelector('#close-profile-modal').onclick = () => modal.remove();
     
-    // Бутон за авто режим
     let autoBtnElem = modal.querySelector('#auto-mode-btn');
     if (autoBtnElem) {
         autoBtnElem.onclick = () => {
@@ -511,7 +529,6 @@ function showHeroProfile(hero) {
         };
     }
     
-    // Бутон за генериране на портрет
     const genBtn = modal.querySelector('#generate-portrait-btn');
     if (genBtn) {
         genBtn.onclick = async () => {
@@ -519,7 +536,6 @@ function showHeroProfile(hero) {
             genBtn.disabled = true;
             try {
                 await window.generateHeroPortrait(hero);
-                // След генериране – актуализираме портрета в модала, без да го затваряме
                 const portraitContainer = modal.querySelector('div[style*="text-align:center"] > div:first-child');
                 if (portraitContainer && hero.portrait) {
                     portraitContainer.innerHTML = `<img src="${hero.portrait}" style="width: 100px; height: 100px; border-radius: 50%; border: 3px solid #ffd700; object-fit: cover; box-shadow: 0 0 15px rgba(0,0,0,0.5);">`;
@@ -533,7 +549,6 @@ function showHeroProfile(hero) {
         };
     }
     
-    // Бутон за осиновяване на любимец
     let adoptBtn = modal.querySelector('#adopt-pet-btn');
     if (adoptBtn) {
         adoptBtn.onclick = () => {
@@ -548,7 +563,6 @@ function showHeroProfile(hero) {
         };
     }
     
-    // Бутон за отваряне на дърветата с умения
     let openSkillsBtn = modal.querySelector('#open-new-skills-btn');
     if (openSkillsBtn) {
         openSkillsBtn.onclick = () => {
@@ -558,7 +572,6 @@ function showHeroProfile(hero) {
         };
     }
     
-    // Бутон за споделяне
     const shareBtn = modal.querySelector('#share-hero-btn');
     if (shareBtn) {
         shareBtn.onclick = async () => {
@@ -568,7 +581,7 @@ function showHeroProfile(hero) {
     }
 }
 
-// ==================== ЛЕНТА С ЛЮБИМИ ГЕРОИ (5 СЛОТА, XP ЛЕНТА, AUTO/РЪЧЕН ТОГЪЛ) ====================
+// ==================== ЛЕНТА С ЛЮБИМИ ГЕРОИ (5 СЛОТА, XP, HP, AUTO/РЪЧЕН) ====================
 window.renderFavoriteHeroesBar = function() {
     const container = document.getElementById('favorite-heroes-bar');
     if (!container) return;
@@ -577,12 +590,11 @@ window.renderFavoriteHeroesBar = function() {
     if (window.worldData && window.worldData.clans) {
         for (let key in window.worldData.clans) {
             let hero = window.worldData.clans[key];
-            if (hero.isJoined === true && hero.isFavorite === true) {
+            if (hero.isJoined === true && hero.isFavorite === true && hero.isAlive !== false) {
                 favoriteHeroesList.push(hero);
             }
         }
     }
-    // Сортиране (по ниво)
     favoriteHeroesList.sort((a,b) => (b.level || 1) - (a.level || 1));
     const top5 = favoriteHeroesList.slice(0, 5);
     
@@ -594,7 +606,6 @@ window.renderFavoriteHeroesBar = function() {
         slot.className = 'favorite-slot';
         
         if (hero) {
-            // Цвят на рамката според класа
             let borderColor = "#c9a87b";
             if (window.getClassBorderColor) {
                 borderColor = window.getClassBorderColor(hero.currentClass);
@@ -605,13 +616,11 @@ window.renderFavoriteHeroesBar = function() {
             slot.style.borderWidth = "2px";
             slot.style.borderStyle = "solid";
             
-            // Иконка/портрет
             const classIcon = getClassIcon(hero.currentClass);
             const portraitHtml = hero.portrait ? 
                 `<img src="${hero.portrait}" style="width: 36px; height: 36px; border-radius: 50%; object-fit: cover; margin-bottom: 4px;">` : 
                 `<div class="hero-icon" style="font-size: 28px;">${classIcon}</div>`;
             
-            // XP изчисления
             let currentXP = hero.isAuto ? (hero.xp || 0) : (hero.storedXP || 0);
             let reqXP = 150;
             if (window.rpgDatabase && window.rpgDatabase.getXPRequiredForLevel) {
@@ -621,16 +630,16 @@ window.renderFavoriteHeroesBar = function() {
             let xpPercent = Math.min(100, Math.floor((currentXP / reqXP) * 100));
             const fillGrad = hero.isAuto ? "linear-gradient(90deg, #00ffcc, #0072ff)" : "linear-gradient(90deg, #ffcc00, #ff6600)";
             
-            // Текущ режим
+            // HP лента
+            let hpPercent = (hero.hp / hero.maxHp) * 100;
+            let hpColor = hpPercent > 70 ? "#4caf50" : (hpPercent > 30 ? "#ff9800" : "#f44336");
+            
             const isAutoMode = hero.isAuto !== undefined ? hero.isAuto : true;
             const autoIcon = isAutoMode ? "🤖" : "👤";
             const autoTitle = isAutoMode ? "Автоматичен (Auto)" : "Ръчен (Manual) – може да учи умения";
             
-            // Бутон за превключване на режима
             const toggleAuto = () => {
-                if (window.setAuto) {
-                    window.setAuto(hero.id, !isAutoMode);
-                }
+                if (window.setAuto) window.setAuto(hero.id, !isAutoMode);
                 hero.isAuto = !isAutoMode;
                 if (!isAutoMode && hero.xp > 0) {
                     hero.storedXP = (hero.storedXP || 0) + hero.xp;
@@ -646,13 +655,11 @@ window.renderFavoriteHeroesBar = function() {
                 if (window.saveAuto) window.saveAuto();
             };
             
-            // Бутон за умения (само за ръчен режим)
             const skillsBtnHtml = !isAutoMode ? 
                 `<button class="skills-toggle" style="background: none; border: none; font-size: 12px; cursor: pointer; margin-left: 4px; color: #ffd700;" title="Отвори дърветата с умения">⭐</button>` : '';
             
             const skillsHandler = (e) => {
                 e.stopPropagation();
-                // Запазваме текущия герой като активен временно, за да отворим неговите умения
                 const originalHero = window.currentHero;
                 window.currentHero = hero;
                 if (typeof window.openSkillsUI === 'function') {
@@ -672,6 +679,9 @@ window.renderFavoriteHeroesBar = function() {
                     <div class="xp-bar-container" style="background: #2a1a0a; height: 4px; border-radius: 2px; margin: 4px 0; overflow: hidden;">
                         <div class="xp-bar-fill" style="background: ${fillGrad}; width: ${xpPercent}%; height: 100%;"></div>
                     </div>
+                    <div style="background: #2a1a0a; height: 3px; border-radius: 2px; margin: 2px 0; overflow: hidden;">
+                        <div style="background: ${hpColor}; width: ${hpPercent}%; height: 100%;"></div>
+                    </div>
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 2px;">
                         <div class="hero-power" style="font-size: 8px; color: #ffaa66;">💪 ${hero.heroPower || 100}</div>
                         <div style="display: flex; gap: 4px;">
@@ -682,7 +692,6 @@ window.renderFavoriteHeroesBar = function() {
                 </div>
             `;
             
-            // Клик върху целия слот – отваря профил (освен ако не е натиснат бутон)
             slot.onclick = (e) => {
                 if (e.target.classList.contains('favorite-heart-btn')) return;
                 if (e.target.classList.contains('auto-toggle')) return;
@@ -690,7 +699,6 @@ window.renderFavoriteHeroesBar = function() {
                 if (window.showHeroProfile) window.showHeroProfile(hero);
             };
             
-            // Сърце – премахва от любими
             const heartBtn = slot.querySelector('.favorite-heart-btn');
             if (heartBtn) {
                 heartBtn.onclick = (e) => {
@@ -703,7 +711,6 @@ window.renderFavoriteHeroesBar = function() {
                 };
             }
             
-            // Бутон за AUTO/Manual превключване
             const autoBtn = slot.querySelector('.auto-toggle');
             if (autoBtn) {
                 autoBtn.onclick = (e) => {
@@ -712,14 +719,12 @@ window.renderFavoriteHeroesBar = function() {
                 };
             }
             
-            // Бутон за умения (само при ръчен режим)
             const skillsBtn = slot.querySelector('.skills-toggle');
             if (skillsBtn) {
                 skillsBtn.onclick = skillsHandler;
             }
             
         } else {
-            // Празен слот – добавяне на любим
             slot.classList.add('empty');
             slot.innerHTML = '<div style="font-size: 24px;">➕</div><div style="font-size: 9px;">Добави</div>';
             slot.onclick = () => {
@@ -737,6 +742,7 @@ window.renderFavoriteHeroesBar = function() {
         container.appendChild(slot);
     }
 };
+
 // ==================== ОСНОВНО ОБНОВЯВАНЕ НА ЛЕВИЯ ПАНЕЛ ====================
 window.updateCharacterUI = function(hero) {
     if (!hero) return;
@@ -781,7 +787,6 @@ window.updateCharacterUI = function(hero) {
             '</div>';
     }
 
-    // Портрет в левия панел
     if (hero.portrait) {
         const profileBox = document.getElementById('active-character-profile');
         if (profileBox) {
@@ -815,31 +820,27 @@ window.updateCharacterUI = function(hero) {
         profileBox.appendChild(rpgBtn);
     }
 
-    // Обновяваме лентата с любими герои
     if (typeof window.renderFavoriteHeroesBar === 'function') {
         window.renderFavoriteHeroesBar();
     }
-    // Принудително обновяване на мобилния профил (ако съществува)
-const mobileProfile = document.getElementById('mobile-profile-section');
-if (mobileProfile) {
-    // Презареждаме съдържанието на мобилния профил от актуалния герой
-    const profileBox = mobileProfile.querySelector('#active-character-profile');
-    if (profileBox) {
-        // Копираме съдържанието от оригиналния профил (който току-що обновихме)
-        const originalProfile = document.getElementById('active-character-profile');
-        if (originalProfile) {
-            profileBox.innerHTML = originalProfile.innerHTML;
-            // Възстановяваме бутона "Управление на Героя", защото може да е загубил събитието
-            const rpgBtn = profileBox.querySelector('#open-rpg-modal-btn');
-            if (rpgBtn && !rpgBtn.hasAttribute('data-mobile-fixed')) {
-                rpgBtn.onclick = function() {
-                    if (window.openHeroRPGModal) window.openHeroRPGModal(window.currentHero.clan);
-                };
-                rpgBtn.setAttribute('data-mobile-fixed', 'true');
+    
+    const mobileProfile = document.getElementById('mobile-profile-section');
+    if (mobileProfile) {
+        const profileBox = mobileProfile.querySelector('#active-character-profile');
+        if (profileBox) {
+            const originalProfile = document.getElementById('active-character-profile');
+            if (originalProfile) {
+                profileBox.innerHTML = originalProfile.innerHTML;
+                const rpgBtn = profileBox.querySelector('#open-rpg-modal-btn');
+                if (rpgBtn && !rpgBtn.hasAttribute('data-mobile-fixed')) {
+                    rpgBtn.onclick = function() {
+                        if (window.openHeroRPGModal) window.openHeroRPGModal(window.currentHero.clan);
+                    };
+                    rpgBtn.setAttribute('data-mobile-fixed', 'true');
+                }
             }
         }
     }
-}
 };
 
 // ==================== ЖУРНАЛ НА СЪВЕТНИКА ====================
@@ -1068,7 +1069,6 @@ setTimeout(function addNavButtonsAutomatically() {
 
 // ==================== АДАПТИВНИ БУТОНИ (ЦЯЛ ЕКРАН, ОТКРИЙ, ЕЛИТ) ====================
 function setupResponsiveButtons() {
-    // 1. Бутон "Цял екран"
     let fullscreenBtn = document.querySelector('button[onclick*="toggleGameFullScreen"]');
     if (!fullscreenBtn) {
         const btns = document.querySelectorAll('.glass-btn');
@@ -1080,7 +1080,6 @@ function setupResponsiveButtons() {
         }
     }
     
-    // 2. Бутон "Открий нови земи" (само за десктоп, при ширина > 600)
     let discoverBtn = document.getElementById('discover-lands-btn');
     if (!discoverBtn && document.querySelector('.top-bar-controls') && window.innerWidth > 600) {
         discoverBtn = document.createElement('button');
@@ -1106,7 +1105,6 @@ function setupResponsiveButtons() {
         document.querySelector('.top-bar-controls').appendChild(discoverBtn);
     }
     
-    // 3. НОВ БУТОН: "Елитни герои" (отворя модала с най-висок опит/ниво)
     let eliteBtn = document.getElementById('elite-heroes-btn');
     if (!eliteBtn && document.querySelector('.top-bar-controls')) {
         eliteBtn = document.createElement('button');
@@ -1124,11 +1122,9 @@ function setupResponsiveButtons() {
         document.querySelector('.top-bar-controls').appendChild(eliteBtn);
     }
     
-    // Обновяване на външния вид на бутоните според ширината на екрана (мобилни/десктоп)
     function updateButtons() {
         const isMobile = window.innerWidth <= 768;
         
-        // Бутон за цял екран
         if (fullscreenBtn) {
             if (isMobile) {
                 fullscreenBtn.innerHTML = '⬚';
@@ -1139,7 +1135,6 @@ function setupResponsiveButtons() {
             }
         }
         
-        // Бутон "Открий"
         if (discoverBtn) {
             if (isMobile) {
                 discoverBtn.innerHTML = '🌍';
@@ -1150,7 +1145,6 @@ function setupResponsiveButtons() {
             }
         }
         
-        // Бутон "Елит"
         if (eliteBtn) {
             if (isMobile) {
                 eliteBtn.innerHTML = '🏆';
@@ -1183,13 +1177,11 @@ function setupMobileLayout() {
         const topBarControls = document.querySelector('.top-bar-controls');
         if (!topBarControls) return;
         
-        // 1. Преместваме контейнера на "Нова игра" в началото на лентата (до хамбургера)
         const newGameContainer = document.querySelector('.new-game-menu-container');
         if (newGameContainer && topBarControls.firstChild !== newGameContainer) {
             topBarControls.insertBefore(newGameContainer, topBarControls.firstChild);
         }
         
-        // 2. Променяме бутона "Нова игра" на иконка (само за мобилни)
         if (newGameContainer) {
             const newGameBtn = newGameContainer.querySelector('.glass-btn');
             if (newGameBtn) {
@@ -1204,7 +1196,6 @@ function setupMobileLayout() {
             }
         }
         
-        // 3. Добавяме хамбургер бутон, ако липсва
         if (!document.querySelector('.menu-toggle')) {
             const menuBtn = document.createElement('button');
             menuBtn.className = 'glass-btn menu-toggle';
@@ -1221,7 +1212,6 @@ function setupMobileLayout() {
             }
         }
         
-        // 4. Добавяме бутон "Всички герои" (👥)
         if (!document.querySelector('.all-heroes-btn')) {
             const allHeroesBtn = document.createElement('button');
             allHeroesBtn.className = 'glass-btn all-heroes-btn';
@@ -1231,7 +1221,6 @@ function setupMobileLayout() {
             topBarControls.appendChild(allHeroesBtn);
         }
         
-        // 5. Премахваме бутона "Открий" (discover-lands-btn) – той вече е в хамбургер менюто
         const discoverBtn = document.getElementById('discover-lands-btn');
         if (discoverBtn) discoverBtn.remove();
         
@@ -1255,7 +1244,6 @@ function setupMobileLayout() {
         const allHeroesBtn = document.querySelector('.all-heroes-btn');
         if (allHeroesBtn) allHeroesBtn.remove();
         
-        // Възстановяваме бутона "Открий" (ако е бил създаден преди)
         if (typeof setupResponsiveButtons === 'function') {
             setupResponsiveButtons();
         }
@@ -1309,7 +1297,6 @@ function moveSidebarContentToMain() {
     leftSidebar.style.display = 'none';
     rightSidebar.style.display = 'none';
     
-    // След като сме добавили mobile-profile-section, презакачаме клик събитието на бутона "Управление на Героя"
     const mobileProfile = document.getElementById('mobile-profile-section');
     if (mobileProfile) {
         const rpgBtn = mobileProfile.querySelector('#open-rpg-modal-btn');
