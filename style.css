@@ -866,3 +866,7 @@ html, body {
 .hero-grid-card[data-class*="Маг"] { border-color: #7b68ee; }
 .hero-grid-card[data-class*="Берсерк"] { border-color: #ff6347; }
 /* и т.н. – добавете желаните класове */
+
+#top-elite-bar {
+    display: none !important;
+}
