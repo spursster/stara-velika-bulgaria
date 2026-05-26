@@ -62,6 +62,14 @@ window.initializeHeroRPGData = function(hero) {
         hero.hp = hero.maxHp;
     }
     if (typeof hero.isAlive === 'undefined') hero.isAlive = true;
+
+    // В края на функцията, преди hero.isRPGInitialized = true
+if (typeof hero.hp === 'undefined') {
+    let endurance = hero.skills?.endurance || 0;
+    hero.maxHp = 100 + (hero.level - 1) * 20 + endurance * 15;
+    hero.hp = hero.maxHp;
+}
+if (typeof hero.isAlive === 'undefined') hero.isAlive = true;
     
     hero.isRPGInitialized = true;
 };
