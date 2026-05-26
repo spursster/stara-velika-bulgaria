@@ -309,12 +309,13 @@ window.showEliteHeroesModal = function() {
 window.shareHeroCard = async function(hero) {
     if (!hero) return;
 
-    // Ако няма портрет, опитаме да генерираме (но не чакаме дълго)
+    // Осигуряваме портрет
     if (!hero.portrait && typeof window.generateHeroPortrait === 'function') {
         window.generateHeroPortrait(hero).catch(e => console.warn(e));
         await new Promise(r => setTimeout(r, 1500));
     }
 
+    // Контейнер 9:16
     let shareContainer = document.getElementById('hero-share-container');
     if (!shareContainer) {
         shareContainer = document.createElement('div');
@@ -323,33 +324,76 @@ window.shareHeroCard = async function(hero) {
             position: fixed;
             top: -9999px;
             left: -9999px;
-            width: 500px;
-            background: #0a0a1a;
-            border: 2px solid #d4af37;
-            border-radius: 20px;
-            padding: 20px;
-            font-family: 'Cinzel', serif;
-            color: white;
-            box-shadow: 0 0 30px rgba(0,0,0,0.8);
+            width: 450px;
+            height: 800px;
+            background: #f4e4c1; /* пергамент */
+            background-image: radial-gradient(circle at 25% 40%, rgba(0,0,0,0.05) 2%, transparent 2.5%);
+            background-size: 30px 30px;
+            font-family: 'Cinzel', 'Times New Roman', serif;
+            color: #3b2a1f;
+            box-shadow: 0 0 30px rgba(0,0,0,0.6);
             z-index: -1;
+            overflow: hidden;
+            box-sizing: border-box;
+            border: 12px double #b87c4f;
+            border-radius: 20px;
+            position: relative;
         `;
         document.body.appendChild(shareContainer);
     }
 
+    // Данни
     const needXP = (hero.level || 1) * 150;
     const currentXP = hero.isAuto ? (hero.xp || 0) : (hero.storedXP || 0);
     const xpPercent = Math.min(100, Math.floor((currentXP / needXP) * 100));
     const skillCount = hero.learnedSkills ? Object.keys(hero.learnedSkills).length : 0;
-    const titles = (hero.titles && hero.titles.length) ? hero.titles.slice(0, 2).join(', ') : 'Няма';
     const petName = hero.pet ? (window.rpgDatabase?.petsDatabase?.[hero.pet]?.name || 'Неизвестен') : 'Няма';
+    const heroPower = hero.heroPower || 100;
+    const armySize = hero.armySize || 0;
+    const clanName = hero.clan || "Независим";
+    const era = window.gameTime ? `${window.gameTime.year} г. ${window.gameTime.era}` : "480 г. пр.н.е.";
 
-    // Обработка на портрета – опит за конвертиране в base64, за да се избегне CORS
+    // Избор на девиз според клана или класа
+    let motto = "С бог и с меч";
+    if (clanName === "Дуло") motto = "Бог е нашата крепост";
+    else if (clanName === "Асеневци") motto = "Възкръсваме от пепелта";
+    else if (clanName === "Македони") motto = "Никога не се предавай";
+    else if (hero.currentClass?.includes("Паладин")) motto = "За вяра и отечество";
+    else if (hero.currentClass?.includes("Берсерк")) motto = "Кръв и слава";
+
+    // Войски (приоритет фентъзи)
+    let allTroops = window.ALL_TROOP_TYPES || [];
+    let basicIds = ["infantry", "archers", "cavalry", "elite"];
+    let fantasyTroops = allTroops.filter(t => !basicIds.includes(t.id) && (hero.armyDetails[t.id] || 0) > 0);
+    let basicTroops = allTroops.filter(t => basicIds.includes(t.id) && (hero.armyDetails[t.id] || 0) > 0);
+    let displayTroops = fantasyTroops.length > 0 ? fantasyTroops : basicTroops;
+    displayTroops = displayTroops.slice(0, 8);
+
+    let troopsHtml = '';
+    if (displayTroops.length > 0) {
+        troopsHtml = `<div style="margin: 12px 0 8px; width: 100%;">
+            <div style="font-size: 13px; font-weight: bold; text-align: center; color: #8b5a2b; border-bottom: 1px solid #b87c4f; display: inline-block; padding: 0 12px;">ДРУЖИНА</div>
+            <div style="display: flex; flex-wrap: wrap; justify-content: center; gap: 12px; margin-top: 10px; background: rgba(139,69,19,0.1); border-radius: 24px; padding: 8px;">`;
+        for (let troop of displayTroops) {
+            let count = hero.armyDetails[troop.id] || 0;
+            troopsHtml += `
+                <div style="display: flex; flex-direction: column; align-items: center; min-width: 55px;">
+                    <div style="font-size: 28px;">${troop.icon || '⚔️'}</div>
+                    <div style="font-size: 10px; font-weight: bold; color: #5a3a1a;">${troop.name}</div>
+                    <div style="font-size: 9px; color: #7a5a3a;">×${count}</div>
+                </div>
+            `;
+        }
+        troopsHtml += `</div></div>`;
+    } else {
+        troopsHtml = `<div style="margin: 12px 0; font-size: 11px; color: #7a5a3a; text-align: center;">Армията чака твоята заповед</div>`;
+    }
+
+    // Обработка на портрета (base64)
     let portraitUrl = hero.portrait || '';
     let finalPortraitHtml = '';
-
     if (portraitUrl) {
         try {
-            // Опитваме да изтеглим портрета и да го превърнем в base64
             const response = await fetch(portraitUrl);
             const blob = await response.blob();
             const base64 = await new Promise((resolve) => {
@@ -357,40 +401,65 @@ window.shareHeroCard = async function(hero) {
                 reader.onloadend = () => resolve(reader.result);
                 reader.readAsDataURL(blob);
             });
-            finalPortraitHtml = `<img src="${base64}" style="width: 100px; height: 100px; border-radius: 50%; border: 2px solid #ffd700; margin: 10px auto; display: block; object-fit: cover;">`;
+            finalPortraitHtml = `<img src="${base64}" style="width: 85px; height: 85px; border-radius: 50%; border: 3px solid #b87c4f; object-fit: cover; box-shadow: 0 4px 12px rgba(0,0,0,0.3);">`;
         } catch(e) {
-            console.warn("Неуспешно конвертиране на портрет в base64, използвам резервна иконка", e);
-            finalPortraitHtml = `<div style="font-size: 60px; text-align: center;">${window.getClassIcon ? window.getClassIcon(hero.currentClass) : '⚔️'}</div>`;
+            finalPortraitHtml = `<div style="font-size: 48px;">${window.getClassIcon ? window.getClassIcon(hero.currentClass) : '⚔️'}</div>`;
         }
     } else {
-        finalPortraitHtml = `<div style="font-size: 60px; text-align: center;">${window.getClassIcon ? window.getClassIcon(hero.currentClass) : '⚔️'}</div>`;
+        finalPortraitHtml = `<div style="font-size: 48px;">${window.getClassIcon ? window.getClassIcon(hero.currentClass) : '⚔️'}</div>`;
     }
 
+    // Съдържание на визитката
     shareContainer.innerHTML = `
-        <div style="text-align: center;">
-            <div style="font-size: 22px; font-weight: bold; color: #ffd700;">⚔️ ВЕЛИКА БЪЛГАРИЯ ⚔️</div>
-            <div style="height: 2px; background: #d4af37; width: 80%; margin: 10px auto;"></div>
-            ${finalPortraitHtml}
-            <div style="font-size: 18px; font-weight: bold; margin-top: 10px;">${hero.name}</div>
-            <div>${window.getClassIcon ? window.getClassIcon(hero.currentClass) : ''} ${hero.currentClass || 'Багатур'}</div>
-            <div>⭐ Ниво ${hero.level || 1}</div>
-            <div>💪 Сила: ${hero.heroPower || 100}</div>
-            <div>⚔️ Армия: ${hero.armySize || 0}</div>
-            <div>🐾 Любимец: ${petName}</div>
-            <div>📚 Умения: ${skillCount} научени</div>
-            <div>🏆 Постижения: ${titles}</div>
-            <div class="xp-bar" style="background: #2a1a0a; height: 6px; border-radius: 3px; margin: 10px 0; width: 100%;">
-                <div style="background: #44aa44; height: 100%; width: ${xpPercent}%; border-radius: 3px;"></div>
+        <div style="height: 100%; display: flex; flex-direction: column; align-items: center; padding: 20px 16px; box-sizing: border-box; text-align: center; background: rgba(244,228,193,0.9);">
+            <!-- Декоративен горен ръб -->
+            <div style="width: 100%; display: flex; justify-content: center; gap: 8px; margin-bottom: 10px;">
+                <span style="font-size: 20px;">🏰</span>
+                <span style="font-size: 20px;">⚔️</span>
+                <span style="font-size: 20px;">🏺</span>
             </div>
-            <div style="font-size: 10px; color: #aaa; margin-top: 15px;">#ВеликаБългария #СтратегическаИгра #RPG</div>
+            
+            <!-- Портрет и име -->
+            ${finalPortraitHtml}
+            <div style="font-size: 20px; font-weight: bold; color: #4a2a0a; margin-top: 8px;">${hero.name}</div>
+            <div style="font-size: 12px; color: #8b5a2b; letter-spacing: 1px;">${clanName} · ${hero.currentClass || 'Багатур'}</div>
+            <div style="font-size: 11px; color: #7a5a3a;">Ниво ${hero.level || 1} · ⚔️ ${heroPower} сила</div>
+            
+            <!-- Епоха и девиз -->
+            <div style="background: #e2cfaa; border-radius: 30px; padding: 4px 12px; margin: 12px 0; font-size: 10px; color: #4a2a0a;">
+                📜 ${era} · «${motto}»
+            </div>
+            
+            <!-- Статистики (армия, любимец, умения) -->
+            <div style="display: flex; justify-content: space-between; width: 100%; gap: 10px; background: #e2cfaa; border-radius: 40px; padding: 6px 12px; margin-bottom: 8px;">
+                <div><span style="font-size: 16px;">⚔️</span><br>${armySize}</div>
+                <div><span style="font-size: 16px;">🐾</span><br>${petName}</div>
+                <div><span style="font-size: 16px;">📜</span><br>${skillCount} умения</div>
+            </div>
+            
+            <!-- XP лента -->
+            <div style="width: 100%; margin: 5px 0;">
+                <div style="background: #c4a67a; height: 6px; border-radius: 3px; overflow: hidden;">
+                    <div style="background: #d4af37; width: ${xpPercent}%; height: 100%; border-radius: 3px;"></div>
+                </div>
+                <div style="font-size: 9px; color: #7a5a3a; margin-top: 3px;">⭐ ${Math.floor(currentXP)}/${needXP} опит</div>
+            </div>
+            
+            <!-- Войски -->
+            ${troopsHtml}
+            
+            <!-- Долен текст с подпис -->
+            <div style="margin-top: auto; font-size: 9px; color: #7a5a3a; border-top: 1px solid #b87c4f; padding-top: 10px; width: 100%; display: flex; justify-content: space-between;">
+                <span>🏛️ Велика България</span>
+                <span>#Стратегия #RPG</span>
+            </div>
         </div>
     `;
 
-    // Малко изчакване за рендиране
     await new Promise(r => setTimeout(r, 200));
 
     if (typeof html2canvas === 'undefined') {
-        window.showAdvisorPopup("ГРЕШКА", "Библиотеката за генериране на изображения не е заредена (html2canvas).", "error");
+        window.showAdvisorPopup("ГРЕШКА", "html2canvas не е заредена.", "error");
         return;
     }
 
@@ -409,19 +478,19 @@ window.shareHeroCard = async function(hero) {
             const file = new File([blob], `${hero.name}_card.png`, { type: 'image/png' });
             await navigator.share({
                 title: `Моят герой в "Велика България"`,
-                text: `Вижте моя герой ${hero.name} (Ниво ${hero.level})!`,
+                text: `Вижте ${hero.name} (${hero.currentClass})!`,
                 files: [file]
             });
-            window.showAdvisorPopup("СПОДЕЛЯНЕ", "Картинката е изпратена към социалната мрежа.", "success");
+            window.showAdvisorPopup("УСПЕХ", "Визитката е споделена!", "success");
         } else {
             const link = document.createElement('a');
             link.download = `${hero.name}_card.png`;
             link.href = imageData;
             link.click();
-            window.showAdvisorPopup("СПОДЕЛЯНЕ", "Картинката е готова. Можете да я качите ръчно във TikTok, Instagram или друга платформа.", "success");
+            window.showAdvisorPopup("УСПЕХ", "Картинката е готова. Можете да я качите в TikTok/Instagram.", "success");
         }
     } catch (err) {
-        console.error("Грешка при генериране на картинка:", err);
-        window.showAdvisorPopup("ГРЕШКА", "Неуспешно генериране на визитката. Проверете конзолата за повече информация.", "error");
+        console.error(err);
+        window.showAdvisorPopup("ГРЕШКА", "Неуспешно генериране.", "error");
     }
 };
