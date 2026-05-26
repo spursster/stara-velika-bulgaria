@@ -41,7 +41,7 @@ window.worldData = {
     },
         // ==================== КЛАНОВЕ (ГЕРОИ) – ХАРМОНИЗИРАНИ ====================
     clans: { 
-        "Дуло": { name: "Болгарос", leaderName: "Болгарос", isJoined: true, regionsOwned: 1, gold: 1500, armySize: 500, clan: "Дуло" }, 
+        "Дуло": { name: "Болгарос", leaderName: "Болгарос", isJoined: false, regionsOwned: 1, gold: 1500, armySize: 500, clan: "Дуло" }, 
         "Комитопули": { name: "Никола", leaderName: "Никола", isJoined: false, regionsOwned: 1, gold: 800, armySize: 300, clan: "Комитопули" }, 
         "Асеневци": { name: "Асен I", leaderName: "Асен I", isJoined: false, regionsOwned: 1, gold: 850, armySize: 320, clan: "Асеневци" }, 
         "Тертер": { name: "Георги I Тертер", leaderName: "Георги I Тертер", isJoined: false, regionsOwned: 1, gold: 700, armySize: 250, clan: "Тертер" }, 
