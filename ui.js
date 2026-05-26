@@ -809,6 +809,27 @@ window.updateCharacterUI = function(hero) {
     if (typeof window.renderFavoriteHeroesBar === 'function') {
         window.renderFavoriteHeroesBar();
     }
+    // Принудително обновяване на мобилния профил (ако съществува)
+const mobileProfile = document.getElementById('mobile-profile-section');
+if (mobileProfile) {
+    // Презареждаме съдържанието на мобилния профил от актуалния герой
+    const profileBox = mobileProfile.querySelector('#active-character-profile');
+    if (profileBox) {
+        // Копираме съдържанието от оригиналния профил (който току-що обновихме)
+        const originalProfile = document.getElementById('active-character-profile');
+        if (originalProfile) {
+            profileBox.innerHTML = originalProfile.innerHTML;
+            // Възстановяваме бутона "Управление на Героя", защото може да е загубил събитието
+            const rpgBtn = profileBox.querySelector('#open-rpg-modal-btn');
+            if (rpgBtn && !rpgBtn.hasAttribute('data-mobile-fixed')) {
+                rpgBtn.onclick = function() {
+                    if (window.openHeroRPGModal) window.openHeroRPGModal(window.currentHero.clan);
+                };
+                rpgBtn.setAttribute('data-mobile-fixed', 'true');
+            }
+        }
+    }
+}
 };
 
 // ==================== ЖУРНАЛ НА СЪВЕТНИКА ====================
