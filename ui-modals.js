@@ -343,17 +343,34 @@ window.shareHeroCard = async function(hero) {
     const titles = (hero.titles && hero.titles.length) ? hero.titles.slice(0, 2).join(', ') : 'Няма';
     const petName = hero.pet ? (window.rpgDatabase?.petsDatabase?.[hero.pet]?.name || 'Неизвестен') : 'Няма';
 
-    // Използваме портрет, но добавяме crossorigin="anonymous"
+    // Обработка на портрета – опит за конвертиране в base64, за да се избегне CORS
     let portraitUrl = hero.portrait || '';
-    const portraitHtml = portraitUrl ? 
-        `<img src="${portraitUrl}" crossorigin="anonymous" style="width: 100px; height: 100px; border-radius: 50%; border: 2px solid #ffd700; margin: 10px auto; display: block; object-fit: cover;">` : 
-        `<div style="font-size: 60px; text-align: center;">${window.getClassIcon ? window.getClassIcon(hero.currentClass) : '⚔️'}</div>`;
+    let finalPortraitHtml = '';
+
+    if (portraitUrl) {
+        try {
+            // Опитваме да изтеглим портрета и да го превърнем в base64
+            const response = await fetch(portraitUrl);
+            const blob = await response.blob();
+            const base64 = await new Promise((resolve) => {
+                const reader = new FileReader();
+                reader.onloadend = () => resolve(reader.result);
+                reader.readAsDataURL(blob);
+            });
+            finalPortraitHtml = `<img src="${base64}" style="width: 100px; height: 100px; border-radius: 50%; border: 2px solid #ffd700; margin: 10px auto; display: block; object-fit: cover;">`;
+        } catch(e) {
+            console.warn("Неуспешно конвертиране на портрет в base64, използвам резервна иконка", e);
+            finalPortraitHtml = `<div style="font-size: 60px; text-align: center;">${window.getClassIcon ? window.getClassIcon(hero.currentClass) : '⚔️'}</div>`;
+        }
+    } else {
+        finalPortraitHtml = `<div style="font-size: 60px; text-align: center;">${window.getClassIcon ? window.getClassIcon(hero.currentClass) : '⚔️'}</div>`;
+    }
 
     shareContainer.innerHTML = `
         <div style="text-align: center;">
             <div style="font-size: 22px; font-weight: bold; color: #ffd700;">⚔️ ВЕЛИКА БЪЛГАРИЯ ⚔️</div>
             <div style="height: 2px; background: #d4af37; width: 80%; margin: 10px auto;"></div>
-            ${portraitHtml}
+            ${finalPortraitHtml}
             <div style="font-size: 18px; font-weight: bold; margin-top: 10px;">${hero.name}</div>
             <div>${window.getClassIcon ? window.getClassIcon(hero.currentClass) : ''} ${hero.currentClass || 'Багатур'}</div>
             <div>⭐ Ниво ${hero.level || 1}</div>
@@ -369,20 +386,11 @@ window.shareHeroCard = async function(hero) {
         </div>
     `;
 
-    // Изчакваме изображението да се зареди
-    if (portraitUrl) {
-        await new Promise((resolve) => {
-            const img = new Image();
-            img.crossOrigin = "Anonymous";
-            img.onload = () => resolve();
-            img.onerror = () => resolve(); // продължаваме дори при грешка
-            img.src = portraitUrl;
-        });
-        await new Promise(r => setTimeout(r, 200));
-    }
+    // Малко изчакване за рендиране
+    await new Promise(r => setTimeout(r, 200));
 
     if (typeof html2canvas === 'undefined') {
-        window.showAdvisorPopup("ГРЕШКА", "Библиотеката за генериране на изображения не е заредена.", "error");
+        window.showAdvisorPopup("ГРЕШКА", "Библиотеката за генериране на изображения не е заредена (html2canvas).", "error");
         return;
     }
 
@@ -391,7 +399,7 @@ window.shareHeroCard = async function(hero) {
             scale: 2,
             backgroundColor: null,
             logging: false,
-            useCORS: true,      // Разрешава чужди изображения с CORS
+            useCORS: true,
             allowTaint: false
         });
         const imageData = canvas.toDataURL('image/png');
@@ -410,10 +418,10 @@ window.shareHeroCard = async function(hero) {
             link.download = `${hero.name}_card.png`;
             link.href = imageData;
             link.click();
-            window.showAdvisorPopup("СПОДЕЛЯНЕ", "Картинката е готова. Можете да я качите ръчно.", "success");
+            window.showAdvisorPopup("СПОДЕЛЯНЕ", "Картинката е готова. Можете да я качите ръчно във TikTok, Instagram или друга платформа.", "success");
         }
     } catch (err) {
         console.error("Грешка при генериране на картинка:", err);
-        window.showAdvisorPopup("ГРЕШКА", "Неуспешно генериране на визитката. Проверете конзолата.", "error");
+        window.showAdvisorPopup("ГРЕШКА", "Неуспешно генериране на визитката. Проверете конзолата за повече информация.", "error");
     }
 };
