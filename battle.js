@@ -20,7 +20,7 @@
                 width: 100%;
                 height: 100%;
                 background: linear-gradient(135deg, #0a0a1a 0%, #1a1a2e 100%);
-                z-index: 100000;
+                z-index: 300000;
                 display: flex;
                 justify-content: center;
                 align-items: center;
