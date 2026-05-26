@@ -162,6 +162,7 @@ function initializeAllHeroesFromDatabase() {
 
 window.startFreshGameLogic = function() {
     console.log("🔄 startFreshGameLogic извикана (версия за мобилни устройства)");
+ if (window.initializeHeroRPGData) window.initializeHeroRPGData(window.currentHero);
 
     // 1. Подготовка на worldData и clans
     if (!window.worldData) window.worldData = {};
