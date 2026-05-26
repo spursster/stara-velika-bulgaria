@@ -414,25 +414,24 @@
     }
     
     function startNewGame(mode) {
-        localStorage.removeItem('GreatBulgaria_SaveGame');
-        localStorage.removeItem('favoriteHeroesFinal');
-        localStorage.removeItem('heroAutoState');
-        localStorage.removeItem('barracksFavorites');
-        
-        window.gameMode = mode;
-        
-        if (typeof window.startFreshGameLogic === 'function') {
-            const originalStart = window.startFreshGameLogic;
-            window.startFreshGameLogic = function() {
-                window.startFreshGameLogic = originalStart;
-                originalStart();
-            };
-            window.startFreshGameLogic();
-        } else {
-            location.reload();
-        }
-    }
+    localStorage.removeItem('GreatBulgaria_SaveGame');
+    localStorage.removeItem('favoriteHeroesFinal');
+    localStorage.removeItem('heroAutoState');
+    localStorage.removeItem('barracksFavorites');
     
+    window.gameMode = mode;
+    
+    if (typeof window.startFreshGameLogic === 'function') {
+        const originalStart = window.startFreshGameLogic;
+        window.startFreshGameLogic = function() {
+            window.startFreshGameLogic = originalStart;
+            originalStart();
+        };
+        window.startFreshGameLogic();
+    } else {
+        location.reload();
+    }
+}
     function continueSavedGame() {
         const hasSave = localStorage.getItem('GreatBulgaria_SaveGame') !== null;
         if (!hasSave) {
