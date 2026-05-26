@@ -326,7 +326,7 @@ window.shareHeroCard = async function(hero) {
             left: -9999px;
             width: 450px;
             height: 800px;
-            background: #f4e4c1; /* пергамент */
+            background: #f4e4c1;
             background-image: radial-gradient(circle at 25% 40%, rgba(0,0,0,0.05) 2%, transparent 2.5%);
             background-size: 30px 30px;
             font-family: 'Cinzel', 'Times New Roman', serif;
@@ -353,7 +353,7 @@ window.shareHeroCard = async function(hero) {
     const clanName = hero.clan || "Независим";
     const era = window.gameTime ? `${window.gameTime.year} г. ${window.gameTime.era}` : "480 г. пр.н.е.";
 
-    // Избор на девиз според клана или класа
+    // Девиз
     let motto = "С бог и с меч";
     if (clanName === "Дуло") motto = "Бог е нашата крепост";
     else if (clanName === "Асеневци") motto = "Възкръсваме от пепелта";
@@ -389,6 +389,33 @@ window.shareHeroCard = async function(hero) {
         troopsHtml = `<div style="margin: 12px 0; font-size: 11px; color: #7a5a3a; text-align: center;">Армията чака твоята заповед</div>`;
     }
 
+    // ================= АРТЕФАКТИ =================
+    let artifactsList = [];
+    if (hero.inventory && Array.isArray(hero.inventory)) {
+        artifactsList = hero.inventory.filter(a => a && a.name && a.icon);
+    }
+    // Показваме до 6 артефакта
+    artifactsList = artifactsList.slice(0, 6);
+
+    let artifactsHtml = '';
+    if (artifactsList.length > 0) {
+        artifactsHtml = `<div style="margin: 8px 0; width: 100%;">
+            <div style="font-size: 13px; font-weight: bold; text-align: center; color: #8b5a2b; border-bottom: 1px solid #b87c4f; display: inline-block; padding: 0 12px;">🏺 РЕЛИКВИИ</div>
+            <div style="display: flex; flex-wrap: wrap; justify-content: center; gap: 12px; margin-top: 10px; background: rgba(139,69,19,0.1); border-radius: 24px; padding: 8px;">`;
+        for (let art of artifactsList) {
+            let shortName = art.name.length > 14 ? art.name.substring(0, 12) + '..' : art.name;
+            artifactsHtml += `
+                <div style="display: flex; flex-direction: column; align-items: center; min-width: 60px;">
+                    <div style="font-size: 28px;">${art.icon || '🏺'}</div>
+                    <div style="font-size: 9px; color: #5a3a1a;">${shortName}</div>
+                </div>
+            `;
+        }
+        artifactsHtml += `</div></div>`;
+    } else {
+        artifactsHtml = `<div style="margin: 8px 0; font-size: 11px; color: #7a5a3a; text-align: center;">Няма събрани реликви</div>`;
+    }
+
     // Обработка на портрета (base64)
     let portraitUrl = hero.portrait || '';
     let finalPortraitHtml = '';
@@ -409,9 +436,9 @@ window.shareHeroCard = async function(hero) {
         finalPortraitHtml = `<div style="font-size: 48px;">${window.getClassIcon ? window.getClassIcon(hero.currentClass) : '⚔️'}</div>`;
     }
 
-    // Съдържание на визитката
+    // Съдържание на визитката (с артефакти)
     shareContainer.innerHTML = `
-        <div style="height: 100%; display: flex; flex-direction: column; align-items: center; padding: 20px 16px; box-sizing: border-box; text-align: center; background: rgba(244,228,193,0.9);">
+        <div style="height: 100%; display: flex; flex-direction: column; align-items: center; padding: 20px 16px; box-sizing: border-box; text-align: center; background: rgba(244,228,193,0.9); overflow-y: auto;">
             <!-- Декоративен горен ръб -->
             <div style="width: 100%; display: flex; justify-content: center; gap: 8px; margin-bottom: 10px;">
                 <span style="font-size: 20px;">🏰</span>
@@ -430,7 +457,7 @@ window.shareHeroCard = async function(hero) {
                 📜 ${era} · «${motto}»
             </div>
             
-            <!-- Статистики (армия, любимец, умения) -->
+            <!-- Статистики -->
             <div style="display: flex; justify-content: space-between; width: 100%; gap: 10px; background: #e2cfaa; border-radius: 40px; padding: 6px 12px; margin-bottom: 8px;">
                 <div><span style="font-size: 16px;">⚔️</span><br>${armySize}</div>
                 <div><span style="font-size: 16px;">🐾</span><br>${petName}</div>
@@ -448,7 +475,10 @@ window.shareHeroCard = async function(hero) {
             <!-- Войски -->
             ${troopsHtml}
             
-            <!-- Долен текст с подпис -->
+            <!-- Артефакти -->
+            ${artifactsHtml}
+            
+            <!-- Долен текст -->
             <div style="margin-top: auto; font-size: 9px; color: #7a5a3a; border-top: 1px solid #b87c4f; padding-top: 10px; width: 100%; display: flex; justify-content: space-between;">
                 <span>🏛️ Велика България</span>
                 <span>#Стратегия #RPG</span>
@@ -487,7 +517,7 @@ window.shareHeroCard = async function(hero) {
             link.download = `${hero.name}_card.png`;
             link.href = imageData;
             link.click();
-            window.showAdvisorPopup("УСПЕХ", "Картинката е готова. Можете да я качите в TikTok/Instagram.", "success");
+            window.showAdvisorPopup("УСПЕХ", "Картинката е готова за качване.", "success");
         }
     } catch (err) {
         console.error(err);
