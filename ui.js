@@ -545,11 +545,12 @@ function showHeroProfile(hero) {
     }
 }
 
-// ==================== ЛЕНТА С ЛЮБИМИ ГЕРОИ (5 СЛОТА) ====================
+// ==================== ЛЕНТА С ЛЮБИМИ ГЕРОИ (5 СЛОТА, ПЪЛНА ФУНКЦИОНАЛНОСТ) ====================
 window.renderFavoriteHeroesBar = function() {
     const container = document.getElementById('favorite-heroes-bar');
     if (!container) return;
     
+    // Вземаме всички любими герои (isFavorite === true)
     let favoriteHeroesList = [];
     if (window.worldData && window.worldData.clans) {
         for (let key in window.worldData.clans) {
@@ -559,32 +560,81 @@ window.renderFavoriteHeroesBar = function() {
             }
         }
     }
-    // Сортиране по ниво (най-високо отгоре) – не е задължително, но за подредба
+    // Сортиране (по ниво, за подредба)
     favoriteHeroesList.sort((a,b) => (b.level || 1) - (a.level || 1));
+    // Показваме първите 5 (ако има повече от 5, показваме само 5 – останалите не се виждат, но те са любими)
     const top5 = favoriteHeroesList.slice(0, 5);
     
     container.innerHTML = '';
+    
     for (let i = 0; i < 5; i++) {
         const hero = top5[i];
         const slot = document.createElement('div');
         slot.className = 'favorite-slot';
+        
         if (hero) {
+            // Цвят на рамката според класа
+            let borderColor = "#c9a87b"; // златисто по подразбиране
+            if (window.getClassBorderColor) {
+                borderColor = window.getClassBorderColor(hero.currentClass);
+            } else if (hero.classColor) {
+                borderColor = hero.classColor;
+            }
+            slot.style.borderColor = borderColor;
+            slot.style.borderWidth = "2px";
+            slot.style.borderStyle = "solid";
+            
+            // Иконка/портрет
             const classIcon = getClassIcon(hero.currentClass);
             const portraitHtml = hero.portrait ? 
-                `<img src="${hero.portrait}" style="width: 30px; height: 30px; border-radius: 50%; object-fit: cover; margin-bottom: 2px;">` : 
-                `<div class="hero-icon" style="font-size: 24px;">${classIcon}</div>`;
+                `<img src="${hero.portrait}" style="width: 36px; height: 36px; border-radius: 50%; object-fit: cover; margin-bottom: 4px;">` : 
+                `<div class="hero-icon" style="font-size: 28px;">${classIcon}</div>`;
+            
+            // Сърце (любим/нелюбим)
+            const heartIcon = '❤️';
+            
             slot.innerHTML = `
-                ${portraitHtml}
-                <div class="hero-name" title="${hero.name}">${hero.name.substring(0, 10)}</div>
-                <div class="hero-level">Ниво ${hero.level || 1}</div>
+                <div style="position: relative; width: 100%;">
+                    <button class="favorite-heart-btn" data-name="${hero.name}" style="position: absolute; top: 0; right: 0; background: none; border: none; font-size: 14px; cursor: pointer; color: #ff4466; z-index: 10;">❤️</button>
+                    ${portraitHtml}
+                    <div class="hero-name" title="${hero.name}">${hero.name.substring(0, 10)}</div>
+                    <div class="hero-level">Ниво ${hero.level || 1}</div>
+                    <div class="hero-power" style="font-size: 8px; color: #ffaa66;">💪 ${hero.heroPower || 100}</div>
+                </div>
             `;
-            slot.onclick = () => {
+            
+            // Клик върху целия слот – отваря профил на героя
+            slot.onclick = (e) => {
+                if (e.target.classList.contains('favorite-heart-btn')) return;
                 if (window.showHeroProfile) window.showHeroProfile(hero);
             };
+            
+            // Бутон за сърце – премахва от любими
+            const heartBtn = slot.querySelector('.favorite-heart-btn');
+            if (heartBtn) {
+                heartBtn.onclick = (e) => {
+                    e.stopPropagation();
+                    // Премахваме от любими
+                    hero.isFavorite = false;
+                    // Запазваме в localStorage (ако има функция)
+                    if (typeof window.saveFavoriteHeroes === 'function') window.saveFavoriteHeroes();
+                    if (typeof window.saveFavorites === 'function') window.saveFavorites();
+                    // Обновяваме лентата
+                    window.renderFavoriteHeroesBar();
+                    // Актуализираме и другите UI (например казарми)
+                    if (typeof window.renderBarracksLayout === 'function') window.renderBarracksLayout();
+                    if (typeof window.renderTop6HeroesUI === 'function') window.renderTop6HeroesUI(); // ако я има
+                };
+            }
         } else {
+            // Празен слот – добавяне на любим
             slot.classList.add('empty');
-            slot.innerHTML = '➕';
+            slot.innerHTML = '<div style="font-size: 24px;">➕</div><div style="font-size: 9px;">Добави</div>';
             slot.onclick = () => {
+                if (favoriteHeroesList.length >= 5) {
+                    window.showAdvisorPopup("ВНИМАНИЕ", "Можеш да имаш максимум 5 любими героя! Премахни любим от някой герой, за да добавиш нов.", "warning");
+                    return;
+                }
                 if (typeof window.showHeroSelectionModal === 'function') {
                     window.showHeroSelectionModal();
                 } else {
