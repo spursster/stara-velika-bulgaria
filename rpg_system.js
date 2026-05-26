@@ -35,6 +35,7 @@ function showRPGMessage(title, message, type = "info") {
 window.initializeHeroRPGData = function(hero) {
     if (!hero) return;
     if (hero.isRPGInitialized) return;
+    
     hero.level = hero.level || 1;
     hero.xp = hero.xp || 0;
     hero.storedXP = hero.storedXP || 0;
@@ -53,23 +54,14 @@ window.initializeHeroRPGData = function(hero) {
     if (hero.titles === undefined) hero.titles = [];
     if (hero.prestige === undefined) hero.prestige = 0;
     
-    // НОВО: Инициализация на HP
-    if (typeof hero.hp === 'undefined') {
+    // === ИНИЦИАЛИЗАЦИЯ НА HP ===
+    if (typeof hero.hp === 'undefined' || hero.hp === null || isNaN(hero.hp)) {
         let endurance = hero.skills?.endurance || 0;
         let levelBonus = (hero.level - 1) * 20;
-        let enduranceBonus = endurance * 15;
-        hero.maxHp = 100 + levelBonus + enduranceBonus;
+        hero.maxHp = 100 + levelBonus + endurance * 15;
         hero.hp = hero.maxHp;
     }
     if (typeof hero.isAlive === 'undefined') hero.isAlive = true;
-
-    // В края на функцията, преди hero.isRPGInitialized = true
-if (typeof hero.hp === 'undefined') {
-    let endurance = hero.skills?.endurance || 0;
-    hero.maxHp = 100 + (hero.level - 1) * 20 + endurance * 15;
-    hero.hp = hero.maxHp;
-}
-if (typeof hero.isAlive === 'undefined') hero.isAlive = true;
     
     hero.isRPGInitialized = true;
 };
