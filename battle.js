@@ -451,6 +451,9 @@ function applyBattleOutcome(originalHero, battleHero) {
         let enemyPower = 200;
         let enemyHp = 200;
 
+        if (reg && reg.buildings && reg.buildings.wall) {
+    defenseBonus += reg.buildings.wall * 2;
+}
         if (typeof regionInput === 'string') {
             regionName = regionInput;
             if (window.worldData && window.worldData.regions && window.worldData.regions[regionInput]) {
