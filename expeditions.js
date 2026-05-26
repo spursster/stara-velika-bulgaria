@@ -97,10 +97,19 @@ function autoBattleForHero(hero, portalWorld, enemyLevel) {
 function attemptAutonomousPortalEntry() {
     if (!window.worldData || !window.worldData.clans) return;
     if (!window.currentPortalState || !window.currentPortalState.isOpen) return;
+
+    // Събираме любимите герои, за да не ги използваме за авто-експедиции
     let favoriteIds = new Set();
-    if (clan.isFavorite === true) continue;
+    for (let key in window.worldData.clans) {
+        let hero = window.worldData.clans[key];
+        if (hero.isFavorite === true) {
+            favoriteIds.add(key);
+        }
     }
+
+    // Само 25% шанс за автономно влизане
     if (Math.random() > 0.25) return;
+
     let autonomousHeroes = [];
     for (let key in window.worldData.clans) {
         let hero = window.worldData.clans[key];
@@ -108,20 +117,30 @@ function attemptAutonomousPortalEntry() {
             autonomousHeroes.push(hero);
         }
     }
+
     if (autonomousHeroes.length === 0) return;
+
     const randomHero = autonomousHeroes[Math.floor(Math.random() * autonomousHeroes.length)];
     const portalWorld = window.currentPortalState.currentWorld;
     const enemyLevel = window.currentPortalState.enemyLevel;
     const isVictory = autoBattleForHero(randomHero, portalWorld, enemyLevel);
+
     if (isVictory && Math.random() < 0.1 && !randomHero.pet) {
         randomHero.pet = portalWorld.petName;
         if (window.showAdvisorMsg) window.showAdvisorMsg(`🎉 ${randomHero.name} опитоми ${portalWorld.petName}!`);
     }
-    if (!window.currentPortalState.explorationProgress[portalWorld.name]) window.currentPortalState.explorationProgress[portalWorld.name] = 0;
-    if (isVictory) window.currentPortalState.explorationProgress[portalWorld.name] = Math.min(100, window.currentPortalState.explorationProgress[portalWorld.name] + 5);
+
+    if (!window.currentPortalState.explorationProgress[portalWorld.name]) {
+        window.currentPortalState.explorationProgress[portalWorld.name] = 0;
+    }
+    if (isVictory) {
+        window.currentPortalState.explorationProgress[portalWorld.name] = Math.min(100, window.currentPortalState.explorationProgress[portalWorld.name] + 5);
+    }
+
     if (window.ensureCompleteArmyDetails) window.ensureCompleteArmyDetails(randomHero);
     if (typeof window.renderSingleBar === 'function') window.renderSingleBar();
     if (window.renderTop6HeroesUI) window.renderTop6HeroesUI();
+
 }
 
 window.advanceExpeditionsTurn = function() {
