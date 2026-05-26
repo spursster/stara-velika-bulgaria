@@ -369,7 +369,6 @@
 <script src="database.js"></script>
 <script src="regionBuilding.js"></script>
 <script src="ui.js"></script>
-<script src="mapGenerator.js"></script>
 
 <script>
 (function initNewGameMenu() {
@@ -718,7 +717,7 @@ if (window.worldData && window.worldData.clans) {
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 
 <script>
-// ==================== ИНТЕРАКТИВНА КАРТА (РАБОТЕЩА ВЕРСИЯ) ====================
+// ==================== ИНТЕРАКТИВНА КАРТА (ФИНАЛНА ВЕРСИЯ С ПОРТАЛИ) ====================
 (function() {
     // Повишаваме z-index на inspectRegion (ако се отваря)
     const originalInspect = window.inspectRegion;
@@ -732,7 +731,7 @@ if (window.worldData && window.worldData.clans) {
         };
     }
 
-    // Генериране на карта с фиксирани размери (700x500)
+    // Генериране на карта с фиксирани размери (700x500) + поддръжка на портали
     window.generateMapCanvas = function(containerId) {
         const container = document.getElementById(containerId);
         if (!container) return console.error(`Контейнер #${containerId} не съществува`);
@@ -787,9 +786,21 @@ if (window.worldData && window.worldData.clans) {
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
             ctx.fillText(shortName, x + tileWidth / 2, y + tileHeight / 2);
+
+            // Рисуване на иконка за активен портал (ако има)
+            const hasPortal = window.activePortals && window.activePortals.some(p => p.regionName === region.name);
+            if (hasPortal) {
+                ctx.font = "24px sans-serif";
+                ctx.fillStyle = "#00ffff";
+                ctx.shadowBlur = 8;
+                ctx.fillText("🌀", x + tileWidth - 20, y + 20);
+                ctx.shadowBlur = 0;
+            }
+
             regionRects.push({ region, x, y, w: tileWidth, h: tileHeight });
         }
 
+        // Клик върху картата – приоритет на портал, иначе инспекция
         canvas.addEventListener('click', (e) => {
             const rect = canvas.getBoundingClientRect();
             const scaleX = canvas.width / rect.width;
@@ -797,8 +808,16 @@ if (window.worldData && window.worldData.clans) {
             const mouseX = (e.clientX - rect.left) * scaleX;
             const mouseY = (e.clientY - rect.top) * scaleY;
             const hit = regionRects.find(r => mouseX >= r.x && mouseX <= r.x + r.w && mouseY >= r.y && mouseY <= r.y + r.h);
-            if (hit && window.inspectRegion) window.inspectRegion(hit.region.name);
-            else if (hit) alert(`Регион: ${hit.region.name}`);
+            if (hit) {
+                const hasPortal = window.activePortals && window.activePortals.some(p => p.regionName === hit.region.name);
+                if (hasPortal && typeof window.enterMysticPortal === 'function') {
+                    window.enterMysticPortal(hit.region.name);
+                } else if (window.inspectRegion) {
+                    window.inspectRegion(hit.region.name);
+                } else {
+                    alert(`Регион: ${hit.region.name}`);
+                }
+            }
         });
 
         canvas.addEventListener('mousemove', (e) => {
@@ -811,6 +830,14 @@ if (window.worldData && window.worldData.clans) {
             canvas.style.cursor = hit ? 'pointer' : 'default';
             canvas.title = hit ? `${hit.region.name} (Сила: ${hit.region.armySize})` : '';
         });
+    };
+
+    // Функция за опресняване на картата (ако е отворена)
+    window.refreshMap = function() {
+        const container = document.getElementById('map-container-modal');
+        if (container && window.generateMapCanvas) {
+            window.generateMapCanvas('map-container-modal');
+        }
     };
 
     // Отваряне на картата в модал
@@ -858,7 +885,8 @@ if (window.worldData && window.worldData.clans) {
     if (typeof window.openRegionsMap === 'function') {
         window.openRegionsMap = window.openInteractiveMap;
     }
-    console.log("✅ Интерактивна карта заредена (финална версия)");
+
+    console.log("✅ Интерактивна карта заредена – с поддръжка на портали и refreshMap");
 })();
 </script>
 </body>
