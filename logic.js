@@ -19,37 +19,91 @@ document.addEventListener('DOMContentLoaded', function() {
 
 // ==================== ФУНКЦИЯ ЗА СЛУЧАЕН ГЕРОЙ ОТ DATABASE.JS ====================
 function getRandomHeroFromDatabase() {
-    if (!window.bulgarianClans && !window.bulgarianDynasties) {
-        console.error("bulgarianClans не е зареден! Използвам резервен герой.");
-        return { name: "Кубрат", clan: "Дуло", power: 130, gold: 1500, armySize: 400 };
+    // 1. Уверяваме се, че всички герои са инициализирани
+    if (typeof initializeAllHeroesFromDatabase === 'function') {
+        initializeAllHeroesFromDatabase();
     }
-    // Използваме bulgarianClans (който е alias на bulgarianDynasties за съвместимост)
-    const clans = window.bulgarianClans || window.bulgarianDynasties;
-    let allHeroes = [];
-    let heroToClan = {};
-    for (let clanName in clans) {
-        let heroesList = clans[clanName].heroes || clans[clanName].rulers;
-        if (heroesList && heroesList.length) {
-            for (let hero of heroesList) {
-                allHeroes.push(hero);
-                heroToClan[hero] = clanName;
+
+    // 2. Ако няма worldData.clans, опитваме да заредим от bulgarianClans
+    if (!window.worldData || !window.worldData.clans || Object.keys(window.worldData.clans).length === 0) {
+        console.warn("⚠️ worldData.clans е празен, опитвам да инициализирам от bulgarianClans...");
+        if (window.bulgarianClans) {
+            for (let clanName in window.bulgarianClans) {
+                let heroesList = window.bulgarianClans[clanName].heroes;
+                if (heroesList) {
+                    for (let heroName of heroesList) {
+                        const heroId = `hero_${clanName}_${heroName.replace(/\s/g, '_')}`;
+                        if (!window.worldData.clans[heroId]) {
+                            let power = 100, gold = 1000, armySize = 200, className = "Воевода";
+                            if (["Александър III Велики", "Симеон Велики", "Кубрат", "Влад III Дракула"].includes(heroName)) {
+                                power = 180; gold = 2000; armySize = 400; className = "Легенда";
+                            } else if (["Атила", "Филип II", "Самуил", "Птолемей I Сотер"].includes(heroName)) {
+                                power = 150; gold = 1500; armySize = 300; className = "Герой";
+                            }
+                            window.worldData.clans[heroId] = {
+                                name: heroName, clan: clanName, isJoined: false, isFavorite: false,
+                                level: 1, xp: 0, heroPower: power, power: power, gold: gold,
+                                armySize: armySize, currentArmy: armySize, currentClass: className,
+                                className: className, age: 30, isAuto: true, skillPoints: 0,
+                                skills: { tactics: 0, endurance: 0, economy: 0, mysticism: 0, leadership: 0 },
+                                equipment: Array(12).fill(null), inventory: [], pet: null,
+                                armyDetails: {
+                                    infantry: Math.floor(armySize * 0.5),
+                                    archers: Math.floor(armySize * 0.25),
+                                    cavalry: Math.floor(armySize * 0.15),
+                                    elite: Math.floor(armySize * 0.1)
+                                }
+                            };
+                        }
+                    }
+                }
             }
         }
     }
-    if (allHeroes.length === 0) {
-        return { name: "Кубрат", clan: "Дуло", power: 130, gold: 1500, armySize: 400 };
+
+    // 3. Събираме всички герои от worldData.clans, които НЕ СА НАЕТИ
+    let availableHeroes = [];
+    for (let key in window.worldData.clans) {
+        let hero = window.worldData.clans[key];
+        if (hero && hero.isJoined !== true) {   // важен е само флагът isJoined
+            availableHeroes.push({
+                name: hero.name,
+                clan: hero.clan,
+                power: hero.heroPower,
+                gold: hero.gold,
+                armySize: hero.armySize
+            });
+        }
     }
-    let randomName = allHeroes[Math.floor(Math.random() * allHeroes.length)];
-    let clan = heroToClan[randomName];
-    return {
-        name: randomName,
-        clan: clan,
-        power: 130,
-        gold: 1500,
-        armySize: 400,
-        currentArmy: 400,
-        heroPower: 130
-    };
+
+    // 4. Ако няма свободни герои (всички са наети), взимаме всички герои (без значение isJoined)
+    if (availableHeroes.length === 0) {
+        console.warn("⚠️ Няма свободни герои, взимам всички герои (включително наети)");
+        for (let key in window.worldData.clans) {
+            let hero = window.worldData.clans[key];
+            if (hero) {
+                availableHeroes.push({
+                    name: hero.name,
+                    clan: hero.clan,
+                    power: hero.heroPower,
+                    gold: hero.gold,
+                    armySize: hero.armySize
+                });
+            }
+        }
+    }
+
+    // 5. Ако пак няма (напълно празно), връщаме резервен Кубрат
+    if (availableHeroes.length === 0) {
+        console.error("❌ Няма никакви герои! Връщам резервен Кубрат.");
+        return { name: "Кубрат", clan: "Дуло", power: 180, gold: 2000, armySize: 400 };
+    }
+
+    // 6. Избираме случаен
+    const randomIndex = Math.floor(Math.random() * availableHeroes.length);
+    const selected = availableHeroes[randomIndex];
+    console.log(`🎲 Избран случаен герой от ${availableHeroes.length} налични: ${selected.name} (${selected.clan})`);
+    return selected;
 }
 
 // ==================== ИНИЦИАЛИЗАЦИЯ НА ВСИЧКИ ГЕРОИ ОТ DATABASE.JS В СВЕТА ====================
