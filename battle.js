@@ -852,16 +852,27 @@ function applyBattleOutcome(originalHero, battleHero) {
                 
                 if (window.addWorldEvent) window.addWorldEvent(`🏆 ПОБЕДА В БИТКА`, `${battleHeroes.map(h => h.name).join(', ')} победиха ${monster.name}!`, "🏆");
                 
-                // ---------- ПРИЛАГАНЕ НА HP ПРОМЕНИТЕ СЛЕД ПОБЕДА ----------
-                if (window._lastBattleHeroes) {
-                    for (let i = 0; i < window._lastBattleHeroes.length; i++) {
-                        let battleHero = window._lastBattleHeroes[i];
-                        let originalHero = battleHero.clanObj;
-                        if (originalHero && battleHero.hp !== undefined) {
-                            applyBattleOutcome(originalHero, battleHero);
-                        }
-                    }
-                }
+              // ---------- ПРИЛАГАНЕ НА HP ПРОМЕНИТЕ СЛЕД ПОБЕДА ----------
+if (window._lastBattleHeroes) {
+    for (let i = 0; i < window._lastBattleHeroes.length; i++) {
+        let battleHero = window._lastBattleHeroes[i];
+        let originalHero = battleHero.clanObj;
+        if (originalHero && battleHero.hp !== undefined) {
+            applyBattleOutcome(originalHero, battleHero);
+        }
+    }
+}
+// НОВО: ОБНОВЯВАНЕ НА UI СЛЕД ПРОМЯНА НА HP
+if (window.currentHero && typeof window.updateCharacterUI === 'function') {
+    window.updateCharacterUI(window.currentHero);
+}
+if (typeof window.renderFavoriteHeroesBar === 'function') {
+    window.renderFavoriteHeroesBar();
+}
+if (typeof window.renderTop6HeroesUI === 'function') {
+    window.renderTop6HeroesUI();
+}
+// ------------------------------------------------------------
                 // ------------------------------------------------------------
                 
                 battleActive = false;
@@ -937,16 +948,26 @@ function applyBattleOutcome(originalHero, battleHero) {
                 addLog(`💀 ЗАГУБА! Всички герои са победени! 💀`, true);
                 
                 // ---------- ПРИЛАГАНЕ НА HP ПРОМЕНИТЕ СЛЕД ЗАГУБА ----------
-                if (window._lastBattleHeroes) {
-                    for (let i = 0; i < window._lastBattleHeroes.length; i++) {
-                        let battleHero = window._lastBattleHeroes[i];
-                        let originalHero = battleHero.clanObj;
-                        if (originalHero && battleHero.hp !== undefined) {
-                            applyBattleOutcome(originalHero, battleHero);
-                        }
-                    }
-                }
-                // ------------------------------------------------------------
+if (window._lastBattleHeroes) {
+    for (let i = 0; i < window._lastBattleHeroes.length; i++) {
+        let battleHero = window._lastBattleHeroes[i];
+        let originalHero = battleHero.clanObj;
+        if (originalHero && battleHero.hp !== undefined) {
+            applyBattleOutcome(originalHero, battleHero);
+        }
+    }
+}
+// ОБНОВЯВАНЕ НА UI
+if (window.currentHero && typeof window.updateCharacterUI === 'function') {
+    window.updateCharacterUI(window.currentHero);
+}
+if (typeof window.renderFavoriteHeroesBar === 'function') {
+    window.renderFavoriteHeroesBar();
+}
+if (typeof window.renderTop6HeroesUI === 'function') {
+    window.renderTop6HeroesUI();
+}
+// ------------------------------------------------------------
                 
                 battleActive = false;
                 const attackBtn = document.getElementById('battle-attack');
@@ -979,23 +1000,32 @@ function applyBattleOutcome(originalHero, battleHero) {
                 if (hero.hp > 0) applyArmyLossFromDamage(hero, 0.2);
             });
             
-            // ---------- ПРИЛАГАНЕ НА HP ПРОМЕНИТЕ ПРИ ОТСТЪПЛЕНИЕ ----------
-            if (window._lastBattleHeroes) {
-                for (let i = 0; i < window._lastBattleHeroes.length; i++) {
-                    let battleHero = window._lastBattleHeroes[i];
-                    let originalHero = battleHero.clanObj;
-                    if (originalHero && battleHero.hp !== undefined) {
-                        // При отстъпление героите не умират, но губят HP
-                        let damageTaken = battleHero.maxHp - battleHero.hp;
-                        if (damageTaken > 0) {
-                            originalHero.hp = Math.max(1, (originalHero.hp || originalHero.maxHp) - damageTaken);
-                        }
-                        if (originalHero.hp <= 0) originalHero.hp = 1;
-                        originalHero.hp = Math.min(originalHero.maxHp, originalHero.hp);
-                    }
-                }
+          // ---------- ПРИЛАГАНЕ НА HP ПРОМЕНИТЕ ПРИ ОТСТЪПЛЕНИЕ ----------
+if (window._lastBattleHeroes) {
+    for (let i = 0; i < window._lastBattleHeroes.length; i++) {
+        let battleHero = window._lastBattleHeroes[i];
+        let originalHero = battleHero.clanObj;
+        if (originalHero && battleHero.hp !== undefined) {
+            let damageTaken = battleHero.maxHp - battleHero.hp;
+            if (damageTaken > 0) {
+                originalHero.hp = Math.max(1, (originalHero.hp || originalHero.maxHp) - damageTaken);
             }
-            // ---------------------------------------------------------------
+            if (originalHero.hp <= 0) originalHero.hp = 1;
+            originalHero.hp = Math.min(originalHero.maxHp, originalHero.hp);
+        }
+    }
+}
+// ОБНОВЯВАНЕ НА UI
+if (window.currentHero && typeof window.updateCharacterUI === 'function') {
+    window.updateCharacterUI(window.currentHero);
+}
+if (typeof window.renderFavoriteHeroesBar === 'function') {
+    window.renderFavoriteHeroesBar();
+}
+if (typeof window.renderTop6HeroesUI === 'function') {
+    window.renderTop6HeroesUI();
+}
+// ---------------------------------------------------------------
             
             battleActive = false;
             const attackBtn = document.getElementById('battle-attack');
