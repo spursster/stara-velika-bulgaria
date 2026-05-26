@@ -344,3 +344,78 @@ window.createLegendaryHero = function(baseName = null, customClan = null) {
     
     return newHero;
 };
+
+// ==================== МОДАЛ С ЕЛИТНИ ГЕРОИ (НАЙ-ВИСОК ОПИТ/НИВО) ====================
+window.showEliteHeroesModal = function() {
+    let heroes = [];
+    if (window.worldData && window.worldData.clans) {
+        for (let key in window.worldData.clans) {
+            let hero = window.worldData.clans[key];
+            if (hero.isJoined === true) heroes.push(hero);
+        }
+    }
+    if (heroes.length === 0) {
+        if (window.showAdvisorPopup) {
+            window.showAdvisorPopup("ИНФО", "Няма наети герои.", "info");
+        }
+        return;
+    }
+    
+    // Сортиране: първо по ниво (нисходящо), после по опит (нисходящо)
+    heroes.sort((a,b) => {
+        if ((b.level || 1) !== (a.level || 1)) return (b.level || 1) - (a.level || 1);
+        let xpA = a.isAuto ? (a.xp || 0) : (a.storedXP || 0);
+        let xpB = b.isAuto ? (b.xp || 0) : (b.storedXP || 0);
+        return xpB - xpA;
+    });
+    
+    let modal = document.getElementById('elite-heroes-modal');
+    if (modal) modal.remove();
+    modal = document.createElement('div');
+    modal.id = 'elite-heroes-modal';
+    modal.className = 'market-modal';
+    modal.style.cssText = 'z-index: 200001;';
+    
+    let gridHtml = '<div class="modal-content" style="max-width: 95%; width: 95%; padding: 15px; overflow-y: auto; max-height: 85vh;">';
+    gridHtml += '<h3 style="color:#ffd700; text-align:center;">🏆 ЕЛИТНИ ГЕРОИ (по опит)</h3>';
+    gridHtml += '<div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 10px;">';
+    
+    heroes.forEach(hero => {
+        const needXP = 100 + (hero.level - 1) * 50;
+        const currentXP = hero.isAuto ? (hero.xp || 0) : (hero.storedXP || 0);
+        const xpPercent = Math.min(100, Math.floor((currentXP / needXP) * 100));
+        const classIcon = window.getClassIcon ? window.getClassIcon(hero.currentClass) : '⚔️';
+        gridHtml += `
+            <div class="elite-modal-card" data-id="${hero.clan || hero.name}" style="background: rgba(0,0,0,0.6); border: 1px solid #c9a87b; border-radius: 12px; padding: 8px; cursor: pointer; transition: 0.2s;">
+                <div style="font-size: 24px; text-align: center;">${classIcon}</div>
+                <div style="font-weight: bold; color: #ffdd99; font-size: 12px; text-align: center;">${hero.name}</div>
+                <div style="font-size: 9px; color: #ccaa77; text-align: center;">${hero.currentClass || "Багатур"} · Ниво ${hero.level}</div>
+                <div style="background: #2a1a0a; height: 4px; border-radius: 2px; margin: 4px 0;">
+                    <div style="background: #44aa44; height: 100%; width: ${xpPercent}%; border-radius: 2px;"></div>
+                </div>
+                <div style="display: flex; justify-content: space-between; font-size: 8px; margin-top: 4px;">
+                    <span>💪 ${hero.heroPower || 100}</span>
+                    <span>⚔️ ${hero.armySize || 0}</span>
+                </div>
+            </div>
+        `;
+    });
+    
+    gridHtml += '</div><button class="close-modal-btn" style="margin-top: 15px; background: #2c1a0c; border: none; border-radius: 30px; padding: 8px; color: #ffdd99; cursor: pointer; width: 100%;">Затвори</button></div>';
+    modal.innerHTML = gridHtml;
+    document.body.appendChild(modal);
+    
+    modal.querySelector('.close-modal-btn').onclick = () => modal.remove();
+    modal.addEventListener('click', (e) => { if (e.target === modal) modal.remove(); });
+    
+    modal.querySelectorAll('.elite-modal-card').forEach(card => {
+        card.addEventListener('click', () => {
+            const heroId = card.getAttribute('data-id');
+            const hero = heroes.find(h => (h.clan === heroId || h.name === heroId));
+            if (hero && window.showHeroProfile) {
+                modal.remove();
+                window.showHeroProfile(hero);
+            }
+        });
+    });
+};
