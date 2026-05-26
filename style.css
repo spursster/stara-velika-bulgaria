@@ -1,6 +1,6 @@
 /* ==========================================================================
    ВЕЛИКА БЪЛГАРИЯ – ФИНАЛЕН АДАПТИВЕН СТИЛ
-   Версия: 4.0 – Пълна поддръжка на десктоп, таблет и телефон
+   Версия: 5.0 – ПРЕХОД КЪМ НОВА ЛЕНТА С ЛЮБИМИ ГЕРОИ
    ========================================================================== */
 
 /* -----------------------------------------------
@@ -140,142 +140,88 @@ html, body {
 }
 
 /* -----------------------------------------------
-   5. ЛЕНТА НА ЕЛИТА (6-те героя)
+   5. СТАРА ЛЕНТА НА ЕЛИТА (СЕГА Е СКРИТА)
 ----------------------------------------------- */
 #top-elite-bar {
-    background: rgba(20, 20, 20, 0.4);
-    border: 1px solid rgba(214, 175, 55, 0.25);
-    border-radius: 10px;
-    backdrop-filter: blur(8px);
-    padding: 10px;
-    display: grid;
-    grid-template-columns: repeat(6, 1fr);
-    gap: 10px;
-    width: 100%;
-    margin: 10px 0;
+    display: none !important;
 }
 
-.elite-hero-card {
-    background: rgba(15, 15, 15, 0.75);
-    border: 1px solid rgba(214, 175, 55, 0.4);
-    border-radius: 8px;
-    padding: 8px;
+/* -----------------------------------------------
+   6. НОВА ЛЕНТА С ЛЮБИМИ ГЕРОИ (5 СЛОТА)
+----------------------------------------------- */
+.favorite-bar {
+    display: flex;
+    flex-wrap: nowrap;
+    justify-content: space-evenly;
+    gap: 8px;
+    background: rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(8px);
+    border-top: 1px solid #d4af37;
+    border-bottom: 1px solid #d4af37;
+    padding: 6px 10px;
+    margin: 0;
+    position: relative;
+    z-index: 500;
+}
+
+.favorite-slot {
+    flex: 1;
+    min-width: 0;
+    background: rgba(30, 25, 20, 0.7);
+    border: 1px solid rgba(212, 175, 55, 0.4);
+    border-radius: 12px;
+    padding: 6px 4px;
     text-align: center;
     cursor: pointer;
-    transition: transform 0.2s, border-color 0.2s;
+    transition: 0.2s;
     display: flex;
     flex-direction: column;
+    align-items: center;
     gap: 4px;
 }
 
-.elite-hero-card:hover {
-    transform: translateY(-2px);
+.favorite-slot:hover {
+    background: rgba(212, 175, 55, 0.2);
     border-color: #ffd700;
-    background: rgba(25, 25, 25, 0.85);
+    transform: translateY(-2px);
 }
 
-/* XP лента в картите */
-.rpg-xp-container {
-    width: 100%;
-    height: 5px;
-    background: #222;
-    border-radius: 3px;
-    overflow: hidden;
-    margin: 4px 0;
+.favorite-slot .hero-icon {
+    font-size: 24px;
 }
 
-.rpg-xp-fill {
-    height: 100%;
-    background: linear-gradient(90deg, #00c6ff, #0072ff);
-    width: 0%;
-    transition: width 0.4s ease;
-}
-
-.auto-btn {
-    background: #333;
-    border: 1px solid #555;
-    color: #bbb;
-    font-size: 9px;
+.favorite-slot .hero-name {
+    font-size: 10px;
     font-weight: bold;
-    padding: 2px 6px;
-    border-radius: 4px;
-    cursor: pointer;
-    text-transform: uppercase;
-    transition: all 0.2s;
-    margin-top: 4px;
+    color: #ffdd99;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 100%;
 }
 
-.auto-btn.active {
-    background: linear-gradient(135deg, #006400, #004d00);
-    border-color: #00ff00;
-    color: #fff;
-    text-shadow: 0 0 5px #00ff00;
-    box-shadow: 0 0 8px rgba(0, 255, 0, 0.3);
+.favorite-slot .hero-level {
+    font-size: 8px;
+    color: #ccaa77;
+}
+
+.favorite-slot.empty {
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px dashed #444;
+    justify-content: center;
+    font-size: 20px;
+    color: #666;
 }
 
 /* -----------------------------------------------
-   6. ЛЕНТА С ВСИЧКИ ГЕРОИ (single-hero-bar)
+   7. ЛЕНТА С ВСИЧКИ ГЕРОИ (single-hero-bar) – СКРИТА
 ----------------------------------------------- */
 #single-hero-bar {
-    background: transparent;
-    margin-top: 15px;
-    position: relative;
-}
-
-#single-hero-bar > div {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-}
-
-.hero-card {
-    background: rgba(20, 15, 10, 0.9);
-    border-radius: 12px;
-    padding: 8px 12px;
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    cursor: pointer;
-    border: 1px solid #c9a87b;
-    transition: all 0.2s;
-}
-
-.hero-card:hover {
-    background: rgba(40, 30, 20, 0.95);
-    transform: translateX(4px);
-}
-
-/* Навигационни бутони за лентата (← →) */
-#hero-nav-prev, #hero-nav-next {
-    position: absolute;
-    top: 50%;
-    transform: translateY(-50%);
-    width: 28px;
-    height: 28px;
-    background: rgba(30, 25, 20, 0.6);
-    backdrop-filter: blur(4px);
-    border: 1px solid rgba(201, 168, 123, 0.4);
-    border-radius: 50%;
-    color: rgba(255, 221, 153, 0.8);
-    font-size: 14px;
-    cursor: pointer;
-    z-index: 10;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: all 0.2s;
-}
-
-#hero-nav-prev { left: -12px; }
-#hero-nav-next { right: -12px; }
-
-#hero-nav-prev:hover, #hero-nav-next:hover {
-    background: rgba(212, 175, 55, 0.3);
-    color: #ffd700;
+    display: none !important;
 }
 
 /* -----------------------------------------------
-   7. БИТКА (МОДАЛЕН ПРОЗОРЕЦ)
+   8. БИТКА (МОДАЛЕН ПРОЗОРЕЦ)
 ----------------------------------------------- */
 .ultimate-battle {
     position: fixed;
@@ -383,7 +329,7 @@ html, body {
 }
 
 /* -----------------------------------------------
-   8. МОДАЛИ (КАЗАРМИ, ПАЗАР, ПРОФИЛ, СЪБИТИЯ)
+   9. МОДАЛИ (КАЗАРМИ, ПАЗАР, ПРОФИЛ, СЪБИТИЯ, ЕЛИТНИ ГЕРОИ)
 ----------------------------------------------- */
 .market-modal,
 #barracks-screen,
@@ -392,7 +338,8 @@ html, body {
 #skills-ui-modal,
 #event-overlay-modal,
 #treasury-overlay,
-#wm-marriage-modal {
+#wm-marriage-modal,
+#elite-heroes-modal {
     position: fixed;
     top: 0;
     left: 0;
@@ -419,8 +366,22 @@ html, body {
     color: white;
 }
 
+/* Стилове за картите в модала с елитни герои */
+.elite-modal-card {
+    background: rgba(0, 0, 0, 0.6);
+    border: 1px solid #c9a87b;
+    border-radius: 12px;
+    padding: 8px;
+    cursor: pointer;
+    transition: transform 0.2s, border-color 0.2s;
+}
+.elite-modal-card:hover {
+    transform: translateY(-3px);
+    border-color: #ffd700;
+}
+
 /* -----------------------------------------------
-   9. БУТОНИ
+   10. БУТОНИ
 ----------------------------------------------- */
 .menu-btn, .action-btn, .battle-btn, .footer-btn {
     background: linear-gradient(135deg, rgba(30, 30, 30, 0.9), rgba(15, 15, 15, 0.9));
@@ -455,7 +416,7 @@ html, body {
 }
 
 /* -----------------------------------------------
-   10. АДАПТИВНОСТ (RESPONSIVE) – ОСНОВНИ МЕДИЙНИ ЗАЯВКИ
+   11. АДАПТИВНОСТ (RESPONSIVE)
 ----------------------------------------------- */
 /* Таблети (до 1024px) */
 @media (max-width: 1024px) {
@@ -468,13 +429,6 @@ html, body {
     }
     #game-main-area {
         order: 1;
-    }
-    #top-elite-bar {
-        grid-template-columns: repeat(3, 1fr);
-        overflow-x: auto;
-    }
-    .elite-hero-card {
-        min-width: 110px;
     }
     .stat-box {
         font-size: 0.85rem;
@@ -519,11 +473,8 @@ html, body {
     }
 }
 
-/* Малки телефони (до 480px) – съществуващ стил */
+/* Малки телефони (до 480px) */
 @media (max-width: 480px) {
-    #top-elite-bar {
-        grid-template-columns: repeat(2, 1fr);
-    }
     .heroes-grid {
         grid-template-columns: repeat(2, 1fr);
     }
@@ -559,8 +510,197 @@ html, body {
     }
 }
 
+/* Специализирана мобилна оптимизация за телефони (≤600px) */
+@media (max-width: 600px) {
+    /* 1. Скриваме страничните панели – те се преместват в основната област от JS */
+    #sidebar-left, #sidebar-right {
+        display: none;
+    }
+
+    /* 2. Основният контейнер става блок (без grid) */
+    #game-container {
+        display: block;
+        padding: 8px;
+    }
+
+    /* 3. Горна лента – опростена, с място за хамбургер бутон */
+    #top-bar {
+        flex-direction: row;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        padding: 6px 8px;
+    }
+    .top-bar-stats {
+        order: 1;
+        width: auto;
+        gap: 4px;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+    .stat-box {
+        font-size: 0.6rem;
+        padding: 2px 6px;
+        white-space: nowrap;
+    }
+    .active-hero-name {
+        font-size: 0.55rem;
+        padding: 2px 6px;
+    }
+    .top-bar-controls {
+        order: 2;
+        width: 100%;
+        justify-content: space-evenly;
+        margin-top: 6px;
+    }
+    /* Скриваме повечето бутони от горната лента – те ще са в хамбургер менюто */
+    .top-bar-controls .glass-btn:not(.menu-toggle) {
+        display: none;
+    }
+    /* Бутонът за меню да е видим */
+    .menu-toggle {
+        display: flex;
+        order: 3;
+        background: rgba(212, 175, 55, 0.3);
+        border-radius: 50%;
+        width: 40px;
+        height: 40px;
+        justify-content: center;
+        align-items: center;
+        font-size: 1.4rem;
+    }
+
+    /* 4. Нова лента с любими герои – хоризонтално плъзгане */
+    .favorite-bar {
+        gap: 4px;
+        padding: 4px 6px;
+    }
+    .favorite-slot .hero-icon {
+        font-size: 20px;
+    }
+    .favorite-slot .hero-name {
+        font-size: 8px;
+    }
+
+    /* 5. Основна игрова област – без вътрешни падове */
+    #game-main-area {
+        padding: 10px;
+        margin-top: 10px;
+    }
+
+    /* 6. Мобилни секции (клонирани от страничните панели) */
+    .mobile-section {
+        background: rgba(0, 0, 0, 0.5);
+        border-radius: 12px;
+        padding: 12px;
+        margin-bottom: 15px;
+    }
+
+    /* 7. Битка – хоризонтално плъзгане за героите */
+    .heroes-grid {
+        display: flex;
+        overflow-x: auto;
+        gap: 8px;
+        padding: 5px;
+        -webkit-overflow-scrolling: touch;
+    }
+    .heroes-grid .hero-card {
+        flex: 0 0 90px;
+    }
+    .action-buttons {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 8px;
+    }
+    .battle-btn {
+        width: 100%;
+        justify-content: center;
+        padding: 8px 12px;
+    }
+    .monster-card {
+        max-width: 95%;
+        margin: 0 auto;
+    }
+
+    /* 8. Модали – пълна ширина, по-голям бутон за затваряне */
+    .modal-content,
+    .glass-panel,
+    .wm-container,
+    #barracks-screen > div,
+    #regions-map-overlay > div,
+    #hero-rpg-modal > div,
+    #skills-ui-modal > div,
+    #elite-heroes-modal > div {
+        width: 95% !important;
+        max-width: 95% !important;
+        padding: 12px !important;
+    }
+    .close-modal-x,
+    .close-battle-btn,
+    .wm-close {
+        width: 40px !important;
+        height: 40px !important;
+        font-size: 24px !important;
+        top: 5px !important;
+        right: 5px !important;
+    }
+
+    /* 9. Казарми и пазар – една колона */
+    .troop-shop {
+        grid-template-columns: 1fr !important;
+    }
+    .troop-card {
+        padding: 10px;
+    }
+    .buy-btn, .sell-btn {
+        padding: 6px 12px;
+        font-size: 0.75rem;
+    }
+
+    /* 10. Хамбургер меню панел (добавя се динамично от JS) */
+    #mobile-menu-panel {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        width: 100%;
+        background: rgba(0, 0, 0, 0.95);
+        backdrop-filter: blur(12px);
+        border-top: 2px solid #d4af37;
+        z-index: 20000;
+        padding: 12px;
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 10px;
+        border-radius: 20px 20px 0 0;
+    }
+    #mobile-menu-panel button {
+        background: rgba(30, 30, 30, 0.9);
+        border: 1px solid #d4af37;
+        border-radius: 40px;
+        padding: 8px 12px;
+        color: #ffdd99;
+        font-size: 0.8rem;
+        font-family: 'Cinzel', serif;
+        cursor: pointer;
+        min-width: 70px;
+    }
+    #mobile-menu-panel button:active {
+        transform: scale(0.96);
+    }
+
+    /* 11. Показваме бутона за нова игра */
+    .new-game-menu-container .glass-btn {
+        display: flex !important;
+    }
+
+    /* 12. Падащото меню на нова игра – най-отгоре */
+    .new-game-dropdown {
+        z-index: 300000 !important;
+    }
+}
+
 /* -----------------------------------------------
-   11. ДОПЪЛНИТЕЛНИ КОМПОНЕНТИ (КУЕСТОВЕ, ЛЕТОПИС)
+   12. ДОПЪЛНИТЕЛНИ КОМПОНЕНТИ (КУЕСТОВЕ, ЛЕТОПИС)
 ----------------------------------------------- */
 .chronicle-event {
     background: rgba(20, 20, 40, 0.6);
@@ -641,232 +781,4 @@ html, body {
     .new-game-dropdown.show {
         transform: translate(-50%, -50%);
     }
-}
-
-/* ============================================================
-   12. СПЕЦИАЛИЗИРАНА МОБИЛНА ОПТИМИЗАЦИЯ ЗА ТЕЛЕФОНИ (≤600px)
-   ============================================================ */
-@media (max-width: 600px) {
-    /* 1. Скриваме страничните панели – те се преместват в основната област от JS */
-    #sidebar-left, #sidebar-right {
-        display: none;
-    }
-
-    /* 2. Основният контейнер става блок (без grid) */
-    #game-container {
-        display: block;
-        padding: 8px;
-    }
-
-    /* 3. Горна лента – опростена, с място за хамбургер бутон */
-    #top-bar {
-        flex-direction: row;
-        justify-content: space-between;
-        flex-wrap: wrap;
-        padding: 6px 8px;
-    }
-    .top-bar-stats {
-        order: 1;
-        width: auto;
-        gap: 4px;
-        overflow-x: auto;
-        -webkit-overflow-scrolling: touch;
-    }
-    .stat-box {
-        font-size: 0.6rem;
-        padding: 2px 6px;
-        white-space: nowrap;
-    }
-    .active-hero-name {
-        font-size: 0.55rem;
-        padding: 2px 6px;
-    }
-    .top-bar-controls {
-        order: 2;
-        width: 100%;
-        justify-content: space-evenly;
-        margin-top: 6px;
-    }
-    /* Скриваме повечето бутони от горната лента – те ще са в хамбургер менюто */
-    .top-bar-controls .glass-btn:not(.menu-toggle) {
-        display: none;
-    }
-    /* Бутонът за меню да е видим */
-    .menu-toggle {
-        display: flex;
-        order: 3;
-        background: rgba(212, 175, 55, 0.3);
-        border-radius: 50%;
-        width: 40px;
-        height: 40px;
-        justify-content: center;
-        align-items: center;
-        font-size: 1.4rem;
-    }
-
-    /* 4. Лента с любими герои – хоризонтално плъзгане */
-    #top-elite-bar {
-        display: flex;
-        overflow-x: auto;
-        gap: 8px;
-        padding: 8px;
-        grid-template-columns: unset;
-        scroll-snap-type: x mandatory;
-        -webkit-overflow-scrolling: touch;
-    }
-    .elite-hero-card {
-        flex: 0 0 110px;
-        scroll-snap-align: start;
-        min-width: unset;
-    }
-
-    /* 5. Основна игрова област – без вътрешни падове */
-    #game-main-area {
-        padding: 10px;
-        margin-top: 10px;
-    }
-
-    /* 6. Мобилни секции (клонирани от страничните панели) */
-    .mobile-section {
-        background: rgba(0, 0, 0, 0.5);
-        border-radius: 12px;
-        padding: 12px;
-        margin-bottom: 15px;
-    }
-
-    /* 7. Битка – хоризонтално плъзгане за героите */
-    .heroes-grid {
-        display: flex;
-        overflow-x: auto;
-        gap: 8px;
-        padding: 5px;
-        -webkit-overflow-scrolling: touch;
-    }
-    .heroes-grid .hero-card {
-        flex: 0 0 90px;
-    }
-    .action-buttons {
-        flex-direction: column;
-        align-items: stretch;
-        gap: 8px;
-    }
-    .battle-btn {
-        width: 100%;
-        justify-content: center;
-        padding: 8px 12px;
-    }
-    .monster-card {
-        max-width: 95%;
-        margin: 0 auto;
-    }
-
-    /* 8. Модали – пълна ширина, по-голям бутон за затваряне */
-    .modal-content,
-    .glass-panel,
-    .wm-container,
-    #barracks-screen > div,
-    #regions-map-overlay > div,
-    #hero-rpg-modal > div,
-    #skills-ui-modal > div {
-        width: 95% !important;
-        max-width: 95% !important;
-        padding: 12px !important;
-    }
-    .close-modal-x,
-    .close-battle-btn,
-    .wm-close {
-        width: 40px !important;
-        height: 40px !important;
-        font-size: 24px !important;
-        top: 5px !important;
-        right: 5px !important;
-    }
-
-    /* 9. Казарми и пазар – една колона */
-    .troop-shop {
-        grid-template-columns: 1fr !important;
-    }
-    .troop-card {
-        padding: 10px;
-    }
-    .buy-btn, .sell-btn {
-        padding: 6px 12px;
-        font-size: 0.75rem;
-    }
-
-    /* 10. Хамбургер меню панел (добавя се динамично от JS) */
-    #mobile-menu-panel {
-        position: fixed;
-        bottom: 0;
-        left: 0;
-        width: 100%;
-        background: rgba(0, 0, 0, 0.95);
-        backdrop-filter: blur(12px);
-        border-top: 2px solid #d4af37;
-        z-index: 20000;
-        padding: 12px;
-        display: flex;
-        flex-wrap: wrap;
-        justify-content: center;
-        gap: 10px;
-        border-radius: 20px 20px 0 0;
-    }
-    #mobile-menu-panel button {
-        background: rgba(30, 30, 30, 0.9);
-        border: 1px solid #d4af37;
-        border-radius: 40px;
-        padding: 8px 12px;
-        color: #ffdd99;
-        font-size: 0.8rem;
-        font-family: 'Cinzel', serif;
-        cursor: pointer;
-        min-width: 70px;
-    }
-    #mobile-menu-panel button:active {
-        transform: scale(0.96);
-    }
-
-    /* 11. Показваме бутона за нова игра */
-    .new-game-menu-container .glass-btn {
-        display: flex !important;
-    }
-
-    /* 12. Скриваме дублираната лента с всички герои */
-    #single-hero-bar {
-        display: none !important;
-    }
-
-    /* 13. Падащото меню на нова игра – най-отгоре */
-    .new-game-dropdown {
-        z-index: 300000 !important;
-    }
-}
-
-/* Базов стил за рамката на героите */
-.elite-hero-card {
-    border-width: 2px;
-    border-style: solid;
-    transition: border-color 0.2s;
-}
-
-/* Цветове според класа (примери) */
-.elite-hero-card[data-class*="Воевода"] { border-color: #c9a87b; }      /* златисто */
-.elite-hero-card[data-class*="Маг"] { border-color: #7b68ee; }          /* виолетово */
-.elite-hero-card[data-class*="Берсерк"] { border-color: #ff6347; }      /* червено */
-.elite-hero-card[data-class*="Паладин"] { border-color: #87ceeb; }      /* светлосиньо */
-.elite-hero-card[data-class*="Некромант"] { border-color: #2e8b57; }    /* тъмнозелено */
-.elite-hero-card[data-class*="Легионер"] { border-color: #b8860b; }     /* тъмнозлатисто */
-.elite-hero-card[data-class*="Сянка"] { border-color: #4a4a4a; }        /* сиво */
-.elite-hero-card[data-class*="Магьосница"] { border-color: #dda0dd; }   /* светло лилаво */
-.elite-hero-card[data-class*="Владетел"] { border-color: #ffd700; }      /* златно */
-.elite-hero-card[data-class*="Владетелка"] { border-color: #ffb6c1; }    /* розово */
-
-/* За модала "Всички герои" */
-.hero-grid-card[data-class*="Воевода"] { border-color: #c9a87b; }
-.hero-grid-card[data-class*="Маг"] { border-color: #7b68ee; }
-.hero-grid-card[data-class*="Берсерк"] { border-color: #ff6347; }
-/* и т.н. – добавете желаните класове */
-
-#top-elite-bar {
-    display: none !important;
 }
