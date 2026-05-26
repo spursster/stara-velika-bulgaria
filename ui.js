@@ -446,6 +446,17 @@ function showHeroProfile(hero) {
     } else {
         portraitHtml = `<div style="font-size: 48px; text-align: center; margin-bottom: 5px;">⚔️</div>`;
     }
+
+        // ========== ГЕРОИЧЕСКИ ДНЕВНИК ==========
+    let logHtml = '<div style="background:#0d0a07; border-radius:12px; padding:12px; margin-top:10px;"><h4 style="color:#ffdd99; margin:0 0 8px 0;">📜 ГЕРОИЧЕСКИ ДНЕВНИК</h4><div style="max-height:140px; overflow-y:auto; font-size:10px;">';
+    if (hero.actionLog && hero.actionLog.length) {
+        hero.actionLog.forEach(log => {
+            logHtml += `<div style="border-bottom:1px solid #2a1a0a; padding:4px 0;"><span style="font-size:14px; margin-right:8px;">${log.icon}</span> ${log.message}</div>`;
+        });
+    } else {
+        logHtml += '<i style="color:#aa8866;">Все още няма записи</i>';
+    }
+    logHtml += '</div></div>';
     
     let oldModal = document.getElementById('ultimate-profile-modal');
     if (oldModal) oldModal.remove();
@@ -473,6 +484,7 @@ function showHeroProfile(hero) {
                 ${autoBtnHtml}
                 ${generatePortraitBtnHtml}
                 ${shareBtnHtml}
+                ${logHtml}
                 <button id="close-profile-modal" style="background:#2c1a0c; border:none; padding:8px 20px; border-radius:40px; color:#ffdd99; margin-top:15px; cursor:pointer; width:100%;">🔒 ЗАТВОРИ</button>
             </div>
         </div>
