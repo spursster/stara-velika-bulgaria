@@ -887,6 +887,7 @@
                     if (randomHero && randomHero.clanObj) {
                         if (!randomHero.clanObj.inventory) randomHero.clanObj.inventory = [];
                         randomHero.clanObj.inventory.push(newArtifact);
+                        if (window.addHeroLog) window.addHeroLog(randomHero.clanObj, "🏺", `Намери артефакт: ${newArtifact.name}`);
                         addLog(`   🏺 ${randomHero.name} намери артефакт: ${newArtifact.name}!`);
                         if (window.addWorldEvent) window.addWorldEvent(`🏺 НАМЕРЕН АРТЕФАКТ`, `${randomHero.name} намери ${newArtifact.name} след битката!`, "🏺");
                     }
