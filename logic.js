@@ -160,7 +160,6 @@ function initializeAllHeroesFromDatabase() {
     console.log(`✅ Инициализирани ${Object.keys(window.worldData.clans).length} герои от database.js`);
 }
 
-// ==================== НОВА ИГРА ====================
 window.startFreshGameLogic = function() {
     console.log("🔄 startFreshGameLogic извикана (версия за мобилни устройства)");
 
@@ -173,7 +172,6 @@ window.startFreshGameLogic = function() {
         initializeAllHeroesFromDatabase();
     } else {
         console.warn("initializeAllHeroesFromDatabase липсва, опитваме ръчно зареждане");
-        // Ако функцията липсва, използваме bulgarianClans директно
         if (window.bulgarianClans) {
             for (let clanName in window.bulgarianClans) {
                 let heroesList = window.bulgarianClans[clanName].heroes;
@@ -218,7 +216,6 @@ window.startFreshGameLogic = function() {
     let selectedClan = heroData.clan;
     console.log(`🎲 Избран случаен герой: ${selectedName} от род ${selectedClan}`);
 
-    // Търсим съществуващ герой със същото име и клан
     let existingHero = null;
     for (let key in window.worldData.clans) {
         let h = window.worldData.clans[key];
@@ -238,7 +235,6 @@ window.startFreshGameLogic = function() {
         existingHero.power = heroData.power;
         window.currentHero = existingHero;
     } else {
-        // Ако не съществува (рядко), създаваме нов
         window.currentHero = {
             name: selectedName,
             clan: selectedClan,
@@ -268,29 +264,24 @@ window.startFreshGameLogic = function() {
         window.worldData.clans[heroId] = window.currentHero;
     }
 
-    // 5. Генериране на портрет за активния герой (асинхронно, не блокира)
+    // 5. Генериране на портрет
     if (typeof window.generateHeroPortrait === 'function') {
         window.generateHeroPortrait(window.currentHero).catch(e => console.warn(e));
     }
 
-    // 6. ФИЛТЪР – премахваме всички останали наети герои освен activeHero
-    let heroesToRemove = [];
+    // 6. Филтър – премахваме всички останали наети герои
     for (let key in window.worldData.clans) {
         let hero = window.worldData.clans[key];
         if (hero !== window.currentHero && hero.isJoined === true) {
             hero.isJoined = false;
             hero.isFavorite = false;
-            heroesToRemove.push(hero.name);
         }
     }
-    if (heroesToRemove.length > 0) {
-        console.log(`❗ Премахнати допълнителни наети герои: ${heroesToRemove.join(', ')}`);
-    }
 
-    // 7. Инициализираме списъка с отключени герои (само активния)
+    // 7. Списък с отключени герои
     window.unlockedHeroes = [window.currentHero];
 
-    // 8. Изчистване на localStorage от стари любимци
+    // 8. Изчистване на localStorage
     localStorage.setItem('barracksFavorites', JSON.stringify([window.currentHero.name]));
     localStorage.removeItem('favoriteHeroesFinal');
     localStorage.removeItem('heroAutoState');
@@ -302,7 +293,7 @@ window.startFreshGameLogic = function() {
     if (typeof window.generateProceduralRegions === 'function') {
         window.generateProceduralRegions(30, true);
     } else {
-        console.warn("generateProceduralRegions не е дефинирана – пропускам генерирането.");
+        console.warn("generateProceduralRegions не е дефинирана");
     }
 
     // 11. Свързаност на регионите
@@ -310,17 +301,15 @@ window.startFreshGameLogic = function() {
         window.buildRegionConnections();
     }
 
-    // 12. Режим на игра
+    // 12. НАЧАЛЕН РЕГИОН – ГАРАНТИРАМЕ, ЧЕ Е САМО "Плиска"
+    window.playerRegions = ["Плиска"];
+    window.currentRegion = "Плиска";
+
+    // 13. Режим на игра
     if (!window.gameMode) window.gameMode = 'classic';
 
     if (window.gameMode === 'solo') {
         console.log("🌍 Стартиране в СОЛО РЕЖИМ със случаен герой:", window.currentHero.name);
-        for (let key in window.worldData.clans) {
-            if (key !== window.currentHero.clan) {
-                window.worldData.clans[key].isJoined = false;
-            }
-        }
-        window.currentRegion = "Плиска";
         window.companions = [];
         window.activeQuests = [];
         window.completedQuests = [];
@@ -328,28 +317,24 @@ window.startFreshGameLogic = function() {
             window.addQuest({ title: "Първи стъпки", description: "Завладейте региона Плиска или посетете съседен регион.", reward: { gold: 100, xp: 50 } });
         }
         if (window.showAdvisorMsg) {
-            window.showAdvisorMsg(`🌍 Добре дошли, ${window.currentHero.name} от рода ${window.currentHero.clan}! Изследвайте света, намирайте спътници и изпълнявайте куестове.`);
+            window.showAdvisorMsg(`🌍 Добре дошли, ${window.currentHero.name} от рода ${window.currentHero.clan}!`);
         }
         if (typeof window.initSoloMode === 'function') window.initSoloMode();
     } else {
         console.log("🏰 Стартиране в КЛАСИЧЕСКИ РЕЖИМ със случаен герой:", window.currentHero.name);
         if (window.showAdvisorMsg) {
-            window.showAdvisorMsg(`🏰 Вие сте ${window.currentHero.name} от могъщия род ${window.currentHero.clan}. Водихте народа си към нова ера!`);
+            window.showAdvisorMsg(`🏰 Вие сте ${window.currentHero.name} от могъщия род ${window.currentHero.clan}.`);
         }
     }
 
-    // 13. Обновяване на UI
+    // 14. Обновяване на UI
     if (window.updateCharacterUI) window.updateCharacterUI(window.currentHero);
     if (window.renderTop6HeroesUI) window.renderTop6HeroesUI();
     if (typeof window.renderSingleBar === 'function') window.renderSingleBar();
     if (window.updateTimeUI) window.updateTimeUI();
-    else {
-        const timeDisplay = document.getElementById('current-time-info');
-        if (timeDisplay) timeDisplay.innerHTML = "🌱 Пролет 480 г. пр.н.е.";
-    }
     if (window.updatePortalContainerUI) window.updatePortalContainerUI();
 
-    // 14. Запазване
+    // 15. Запазване
     if (typeof window.saveGreatBulgariaGame === 'function') {
         window.saveGreatBulgariaGame();
     }
