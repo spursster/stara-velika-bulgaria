@@ -56,6 +56,7 @@ window.initializeHeroRPGData = function(hero) {
     if (hero.learnedSkills === undefined) hero.learnedSkills = {};
     if (hero.titles === undefined) hero.titles = [];
     if (hero.prestige === undefined) hero.prestige = 0;
+    if (!hero.actionLog) hero.actionLog = [];
     
     // === ИНИЦИАЛИЗАЦИЯ НА HP (ФИКСАНА, без да се разчита на isRPGInitialized) ===
     // Проверяваме дали hp липсва или е NaN
