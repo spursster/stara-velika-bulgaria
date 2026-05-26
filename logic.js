@@ -251,6 +251,26 @@ window.startFreshGameLogic = function() {
 
     // 13. Запазване
     window.saveGreatBulgariaGame();
+
+ // -------------------- ГАРАНЦИЯ ЗА ЕДИНСТВЕН НАЕТ ГЕРОЙ --------------------
+let joinedHeroes = [];
+for (let key in window.worldData.clans) {
+    if (window.worldData.clans[key].isJoined === true) {
+        joinedHeroes.push(key);
+    }
+}
+// Ако има повече от един нает герой, оставяме само активния (window.currentHero)
+if (joinedHeroes.length > 1) {
+    console.warn(`❗ Намерени ${joinedHeroes.length} наети героя. Оставяме само ${window.currentHero.name}.`);
+    for (let key of joinedHeroes) {
+        if (window.worldData.clans[key] !== window.currentHero) {
+            window.worldData.clans[key].isJoined = false;
+            window.worldData.clans[key].isFavorite = false;
+        }
+    }
+    // Актуализираме списъка с отключени герои
+    window.unlockedHeroes = [window.currentHero];
+}
 };
 
 // ==================== ЗАПАЗВАНЕ И ЗАРЕЖДАНЕ ====================
