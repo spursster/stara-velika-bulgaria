@@ -782,3 +782,13 @@ html, body {
         transform: translate(-50%, -50%);
     }
 }
+/* Скриваме левия панел с активния герой на телефони */
+@media (max-width: 768px) {
+    #sidebar-left {
+        display: none !important;
+    }
+    /* Ако има и мобилно копие (mobile-profile-section) – също го скриваме */
+    #mobile-profile-section {
+        display: none !important;
+    }
+}
