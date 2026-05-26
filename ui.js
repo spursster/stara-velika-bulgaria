@@ -54,6 +54,14 @@ function getClassIcon(className) {
     return "⚔️";
 }
 window.getClassIcon = getClassIcon;
+window.addHeroLog = function(hero, icon, message) {
+    if (!hero) return;
+    if (!hero.actionLog) hero.actionLog = [];
+    hero.actionLog.unshift({ icon, message, time: Date.now() });
+    if (hero.actionLog.length > 15) hero.actionLog.pop(); // пазим последните 15
+    // Ако героят е активният, обновяваме профила (ако е отворен)
+    if (hero === window.currentHero && window.updateCharacterUI) window.updateCharacterUI(hero);
+};
 
 // ==================== ГЕНЕРИРАНЕ НА ПОРТРЕТ С POLLINATIONS.AI ====================
 window.generateHeroPortrait = async function(hero, retries = 2) {
