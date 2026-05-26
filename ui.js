@@ -908,8 +908,9 @@ setTimeout(function addNavButtonsAutomatically() {
     window.addEventListener('resize', () => updateHeroesList());
 }, 1000);
 
-// ==================== АДАПТИВНИ БУТОНИ (ЦЯЛ ЕКРАН И ОТКРИЙ) ====================
+// ==================== АДАПТИВНИ БУТОНИ (ЦЯЛ ЕКРАН, ОТКРИЙ, ЕЛИТ) ====================
 function setupResponsiveButtons() {
+    // 1. Бутон "Цял екран"
     let fullscreenBtn = document.querySelector('button[onclick*="toggleGameFullScreen"]');
     if (!fullscreenBtn) {
         const btns = document.querySelectorAll('.glass-btn');
@@ -921,6 +922,7 @@ function setupResponsiveButtons() {
         }
     }
     
+    // 2. Бутон "Открий нови земи" (само за десктоп, при ширина > 600)
     let discoverBtn = document.getElementById('discover-lands-btn');
     if (!discoverBtn && document.querySelector('.top-bar-controls') && window.innerWidth > 600) {
         discoverBtn = document.createElement('button');
@@ -946,8 +948,29 @@ function setupResponsiveButtons() {
         document.querySelector('.top-bar-controls').appendChild(discoverBtn);
     }
     
+    // 3. НОВ БУТОН: "Елитни герои" (отворя модала с най-висок опит/ниво)
+    let eliteBtn = document.getElementById('elite-heroes-btn');
+    if (!eliteBtn && document.querySelector('.top-bar-controls')) {
+        eliteBtn = document.createElement('button');
+        eliteBtn.id = 'elite-heroes-btn';
+        eliteBtn.className = 'glass-btn';
+        eliteBtn.innerHTML = '🏆 Елит';
+        eliteBtn.title = 'Елитни герои (най-висок опит)';
+        eliteBtn.onclick = function() {
+            if (typeof window.showEliteHeroesModal === 'function') {
+                window.showEliteHeroesModal();
+            } else {
+                window.showAdvisorPopup("ГРЕШКА", "Функцията showEliteHeroesModal не е дефинирана (проверете ui-modals.js).", "error");
+            }
+        };
+        document.querySelector('.top-bar-controls').appendChild(eliteBtn);
+    }
+    
+    // Обновяване на външния вид на бутоните според ширината на екрана (мобилни/десктоп)
     function updateButtons() {
         const isMobile = window.innerWidth <= 768;
+        
+        // Бутон за цял екран
         if (fullscreenBtn) {
             if (isMobile) {
                 fullscreenBtn.innerHTML = '⬚';
@@ -957,6 +980,8 @@ function setupResponsiveButtons() {
                 fullscreenBtn.style.cssText = '';
             }
         }
+        
+        // Бутон "Открий"
         if (discoverBtn) {
             if (isMobile) {
                 discoverBtn.innerHTML = '🌍';
@@ -966,18 +991,22 @@ function setupResponsiveButtons() {
                 discoverBtn.style.cssText = '';
             }
         }
+        
+        // Бутон "Елит" – на мобилни само икона 🏆, на десктоп текст + икона
+        if (eliteBtn) {
+            if (isMobile) {
+                eliteBtn.innerHTML = '🏆';
+                eliteBtn.style.cssText = 'font-size:1.2rem; padding:0; width:36px; height:36px; display:flex; align-items:center; justify-content:center;';
+            } else {
+                eliteBtn.innerHTML = '🏆 Елит';
+                eliteBtn.style.cssText = '';
+            }
+        }
     }
     
     updateButtons();
     window.addEventListener('resize', updateButtons);
 }
-
-if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', setupResponsiveButtons);
-} else {
-    setupResponsiveButtons();
-}
-
 // ==================== МОБИЛНА АДАПТАЦИЯ – БЕЗ ДУБЛИРАНЕ НА ЛЕНТИ ====================
 let isMobileLayoutActive = false;
 
