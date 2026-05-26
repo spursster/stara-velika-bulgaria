@@ -308,8 +308,13 @@ window.showEliteHeroesModal = function() {
 // ==================== ГЕНЕРИРАНЕ И СПОДЕЛЯНЕ НА ВИЗИТКА НА ГЕРОЯ (TikTok, Instagram и др.) ====================
 window.shareHeroCard = async function(hero) {
     if (!hero) return;
-    
-    // Създаваме скрит контейнер за визитката
+
+    // Ако няма портрет, опитаме да генерираме (но не чакаме дълго)
+    if (!hero.portrait && typeof window.generateHeroPortrait === 'function') {
+        window.generateHeroPortrait(hero).catch(e => console.warn(e));
+        await new Promise(r => setTimeout(r, 1500));
+    }
+
     let shareContainer = document.getElementById('hero-share-container');
     if (!shareContainer) {
         shareContainer = document.createElement('div');
@@ -330,21 +335,20 @@ window.shareHeroCard = async function(hero) {
         `;
         document.body.appendChild(shareContainer);
     }
-    
-    // Подготовка на данни за визитката
+
     const needXP = (hero.level || 1) * 150;
     const currentXP = hero.isAuto ? (hero.xp || 0) : (hero.storedXP || 0);
     const xpPercent = Math.min(100, Math.floor((currentXP / needXP) * 100));
     const skillCount = hero.learnedSkills ? Object.keys(hero.learnedSkills).length : 0;
     const titles = (hero.titles && hero.titles.length) ? hero.titles.slice(0, 2).join(', ') : 'Няма';
     const petName = hero.pet ? (window.rpgDatabase?.petsDatabase?.[hero.pet]?.name || 'Неизвестен') : 'Няма';
-    
-    // Портрет (ако има)
-    const portraitHtml = hero.portrait ? 
-        `<img src="${hero.portrait}" style="width: 100px; height: 100px; border-radius: 50%; border: 2px solid #ffd700; margin: 10px auto; display: block;">` : 
+
+    // Използваме портрет, но добавяме crossorigin="anonymous"
+    let portraitUrl = hero.portrait || '';
+    const portraitHtml = portraitUrl ? 
+        `<img src="${portraitUrl}" crossorigin="anonymous" style="width: 100px; height: 100px; border-radius: 50%; border: 2px solid #ffd700; margin: 10px auto; display: block; object-fit: cover;">` : 
         `<div style="font-size: 60px; text-align: center;">${window.getClassIcon ? window.getClassIcon(hero.currentClass) : '⚔️'}</div>`;
-    
-    // Попълваме HTML на визитката
+
     shareContainer.innerHTML = `
         <div style="text-align: center;">
             <div style="font-size: 22px; font-weight: bold; color: #ffd700;">⚔️ ВЕЛИКА БЪЛГАРИЯ ⚔️</div>
@@ -364,22 +368,34 @@ window.shareHeroCard = async function(hero) {
             <div style="font-size: 10px; color: #aaa; margin-top: 15px;">#ВеликаБългария #СтратегическаИгра #RPG</div>
         </div>
     `;
-    
-    // Използваме html2canvas за да направим снимка (проверка дали библиотеката е заредена)
+
+    // Изчакваме изображението да се зареди
+    if (portraitUrl) {
+        await new Promise((resolve) => {
+            const img = new Image();
+            img.crossOrigin = "Anonymous";
+            img.onload = () => resolve();
+            img.onerror = () => resolve(); // продължаваме дори при грешка
+            img.src = portraitUrl;
+        });
+        await new Promise(r => setTimeout(r, 200));
+    }
+
     if (typeof html2canvas === 'undefined') {
-        window.showAdvisorPopup("ГРЕШКА", "Библиотеката за генериране на изображения не е заредена. Моля, опреснете страницата.", "error");
+        window.showAdvisorPopup("ГРЕШКА", "Библиотеката за генериране на изображения не е заредена.", "error");
         return;
     }
-    
+
     try {
         const canvas = await html2canvas(shareContainer, {
             scale: 2,
             backgroundColor: null,
-            logging: false
+            logging: false,
+            useCORS: true,      // Разрешава чужди изображения с CORS
+            allowTaint: false
         });
         const imageData = canvas.toDataURL('image/png');
-        
-        // Споделяне (ако е възможно)
+
         if (navigator.share) {
             const blob = await (await fetch(imageData)).blob();
             const file = new File([blob], `${hero.name}_card.png`, { type: 'image/png' });
@@ -390,15 +406,14 @@ window.shareHeroCard = async function(hero) {
             });
             window.showAdvisorPopup("СПОДЕЛЯНЕ", "Картинката е изпратена към социалната мрежа.", "success");
         } else {
-            // Ако Web Share не е поддържано, сваляме картинката
             const link = document.createElement('a');
             link.download = `${hero.name}_card.png`;
             link.href = imageData;
             link.click();
-            window.showAdvisorPopup("СПОДЕЛЯНЕ", "Картинката е готова. Можете да я качите ръчно в TikTok или друга социална мрежа.", "success");
+            window.showAdvisorPopup("СПОДЕЛЯНЕ", "Картинката е готова. Можете да я качите ръчно.", "success");
         }
     } catch (err) {
         console.error("Грешка при генериране на картинка:", err);
-        window.showAdvisorPopup("ГРЕШКА", "Неуспешно генериране на визитката. Уверете се, че портретът е зареден и опитайте отново.", "error");
+        window.showAdvisorPopup("ГРЕШКА", "Неуспешно генериране на визитката. Проверете конзолата.", "error");
     }
 };
