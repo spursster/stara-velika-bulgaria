@@ -1,13 +1,12 @@
 /**
 ==========================================================================
 ПРОЕКТ: ВЕЛИКА БЪЛГАРИЯ
-ФАЙЛ: battle.js (ФИНАЛНА ВЕРСИЯ – С ПЕРМАНЕНТНО ЗДРАВЕ, СМЪРТ И ВЪЗСТАНОВЯВАНЕ)
-ВЕРСИЯ: 7.0
+ФАЙЛ: battle.js (ВЕРСИЯ 8.1 – ПОРТРЕТИ, АНИМАЦИИ, ФИКСИ)
 ==========================================================================
 */
 
 (function() {
-    // ==================== СТИЛОВЕ ====================
+    // ==================== СТИЛОВЕ (С АНИМАЦИИ) ====================
     if (!document.getElementById('battle-styles-v2')) {
         const style = document.createElement('style');
         style.id = 'battle-styles-v2';
@@ -124,11 +123,28 @@
                 padding: 8px;
                 text-align: center;
                 border: 1px solid rgba(201,168,123,0.4);
-                transition: all 0.2s;
+                transition: transform 0.1s ease, box-shadow 0.1s ease;
+                position: relative;
+            }
+
+            .hero-card.attack-animation {
+                transform: scale(0.95);
+                filter: brightness(1.2);
+            }
+
+            .hero-portrait {
+                width: 56px;
+                height: 56px;
+                border-radius: 50%;
+                border: 2px solid #ffd700;
+                object-fit: cover;
+                margin: 0 auto 4px auto;
+                display: block;
             }
 
             .hero-icon {
                 font-size: 28px;
+                margin-bottom: 4px;
             }
 
             .hero-name {
@@ -155,7 +171,7 @@
                 height: 100%;
                 width: 100%;
                 border-radius: 3px;
-                transition: width 0.3s ease;
+                transition: width 0.2s ease;
             }
 
             .hero-hp-text {
@@ -167,6 +183,21 @@
                 font-size: 8px;
                 color: #aa8866;
                 margin-top: 3px;
+            }
+
+            .damage-number {
+                position: absolute;
+                font-weight: bold;
+                font-size: 18px;
+                text-shadow: 0 0 3px black;
+                pointer-events: none;
+                z-index: 1000;
+                animation: floatUp 0.6s ease-out forwards;
+            }
+
+            @keyframes floatUp {
+                0% { transform: translateY(0); opacity: 1; }
+                100% { transform: translateY(-40px); opacity: 0; }
             }
 
             .action-buttons {
@@ -220,6 +251,11 @@
                 max-width: 300px;
                 margin: 0 auto;
                 border: 2px solid #ff4444;
+                transition: transform 0.1s ease;
+            }
+
+            .monster-card.attack-animation {
+                transform: scale(0.97);
             }
 
             .monster-icon {
@@ -269,6 +305,7 @@
             @media (max-width: 700px) {
                 .ultimate-battle { padding: 8px; }
                 .heroes-grid { gap: 5px; }
+                .hero-portrait { width: 40px; height: 40px; }
                 .hero-icon { font-size: 20px; }
                 .hero-name { font-size: 9px; }
                 .hero-class { font-size: 7px; }
@@ -284,6 +321,7 @@
             @media (max-width: 480px) {
                 .heroes-grid { grid-template-columns: repeat(5, 1fr); gap: 4px; }
                 .hero-card { padding: 4px; }
+                .hero-portrait { width: 32px; height: 32px; }
                 .hero-icon { font-size: 16px; }
                 .hero-name { font-size: 7px; }
                 .battle-btn { padding: 5px 8px; font-size: 0.65rem; min-width: 65px; }
@@ -390,58 +428,73 @@
     // ==================== НОВИ ФУНКЦИИ ЗА HP И ВЪЗСТАНОВЯВАНЕ ====================
     function calculatePostBattleHealing(originalHero, battleHero) {
         let heal = 0;
-        // Базово възстановяване от умение "endurance" (2 HP на ниво)
         let endurance = originalHero.skills?.endurance || 0;
         heal += endurance * 2;
-        // Бонус от артефакти с hpRegen
         if (originalHero.inventory) {
             originalHero.inventory.forEach(item => {
                 if (item.bonus && item.bonus.hpRegen) heal += item.bonus.hpRegen;
             });
         }
-        // Бонус от любимец с healAllies
         if (originalHero.pet && window.divinePets?.[originalHero.pet]?.bonus?.healAllies) {
             heal += window.divinePets[originalHero.pet].bonus.healAllies;
         }
-        return Math.max(5, heal); // минимум 5
+        return Math.max(5, heal);
     }
 
-function applyBattleOutcome(originalHero, battleHero) {
-    if (!originalHero || !battleHero) return;
-    let damageTaken = battleHero.maxHp - battleHero.hp;
-    if (damageTaken > 0) {
-        originalHero.hp = Math.max(0, (originalHero.hp || originalHero.maxHp) - damageTaken);
-        console.log(`❤️ ${originalHero.name} загуби ${damageTaken} HP. Остава: ${originalHero.hp}/${originalHero.maxHp}`);
-        if (originalHero.hp <= 0) {
-            let deathRoll = Math.random() < 0.05;
-            if (deathRoll) {
-                originalHero.isAlive = false;
-                originalHero.isJoined = false;
-                originalHero.isFavorite = false;
-                if (window.addWorldEvent) {
-                    window.addWorldEvent("💀 ПЕРМАНЕНТНА СМЪРТ", `${originalHero.name} загина завинаги в битка!`, "💀");
+    function applyBattleOutcome(originalHero, battleHero) {
+        if (!originalHero || !battleHero) return;
+        let damageTaken = battleHero.maxHp - battleHero.hp;
+        if (damageTaken > 0) {
+            originalHero.hp = Math.max(0, (originalHero.hp || originalHero.maxHp) - damageTaken);
+            console.log(`❤️ ${originalHero.name} загуби ${damageTaken} HP. Остава: ${originalHero.hp}/${originalHero.maxHp}`);
+            if (originalHero.hp <= 0) {
+                let deathRoll = Math.random() < 0.05;
+                if (deathRoll) {
+                    originalHero.isAlive = false;
+                    originalHero.isJoined = false;
+                    originalHero.isFavorite = false;
+                    if (window.addWorldEvent) {
+                        window.addWorldEvent("💀 ПЕРМАНЕНТНА СМЪРТ", `${originalHero.name} загина завинаги в битка!`, "💀");
+                    }
+                    if (typeof window.renderFavoriteHeroesBar === 'function') window.renderFavoriteHeroesBar();
+                    if (typeof window.renderTop6HeroesUI === 'function') window.renderTop6HeroesUI();
+                    if (typeof window.renderBarracksLayout === 'function') window.renderBarracksLayout();
+                } else {
+                    originalHero.hp = 1;
+                    if (window.addWorldEvent) window.addWorldEvent("⚡ ЕДВА ОЦЕЛЯВАНЕ", `${originalHero.name} беше на ръба на смъртта, но оживя!`, "⚡");
                 }
-                if (typeof window.renderFavoriteHeroesBar === 'function') window.renderFavoriteHeroesBar();
-                if (typeof window.renderTop6HeroesUI === 'function') window.renderTop6HeroesUI();
-                if (typeof window.renderBarracksLayout === 'function') window.renderBarracksLayout();
-            } else {
-                originalHero.hp = 1;
-                if (window.addWorldEvent) window.addWorldEvent("⚡ ЕДВА ОЦЕЛЯВАНЕ", `${originalHero.name} беше на ръба на смъртта, но оживя!`, "⚡");
             }
         }
+        let postHeal = calculatePostBattleHealing(originalHero, battleHero);
+        if (postHeal > 0 && originalHero.hp > 0) {
+            originalHero.hp = Math.min(originalHero.maxHp, originalHero.hp + postHeal);
+            console.log(`💚 ${originalHero.name} се излекува с ${postHeal} HP след битката.`);
+        }
+        originalHero.hp = Math.min(originalHero.maxHp, originalHero.hp);
+        
+        if (originalHero === window.currentHero && typeof window.updateCharacterUI === 'function') {
+            window.updateCharacterUI(originalHero);
+        }
     }
-    let postHeal = calculatePostBattleHealing(originalHero, battleHero);
-    if (postHeal > 0 && originalHero.hp > 0) {
-        originalHero.hp = Math.min(originalHero.maxHp, originalHero.hp + postHeal);
-        console.log(`💚 ${originalHero.name} се излекува с ${postHeal} HP след битката.`);
+
+    // ==================== ПОМОЩНИ ФУНКЦИИ ЗА АНИМАЦИИ ====================
+    function showFloatingNumber(targetElement, value, isHeal = false) {
+        const rect = targetElement.getBoundingClientRect();
+        const div = document.createElement('div');
+        div.className = 'damage-number';
+        div.innerText = isHeal ? `+${value}` : `-${value}`;
+        div.style.color = isHeal ? '#88ff88' : '#ff5555';
+        div.style.left = `${rect.left + rect.width/2}px`;
+        div.style.top = `${rect.top}px`;
+        document.body.appendChild(div);
+        setTimeout(() => div.remove(), 600);
     }
-    originalHero.hp = Math.min(originalHero.maxHp, originalHero.hp);
-    
-    // Обновяване на UI, ако героят е активният
-    if (originalHero === window.currentHero && typeof window.updateCharacterUI === 'function') {
-        window.updateCharacterUI(originalHero);
+
+    function animateCard(cardElement) {
+        if (!cardElement) return;
+        cardElement.classList.add('attack-animation');
+        setTimeout(() => cardElement.classList.remove('attack-animation'), 150);
     }
-}
 
     // ==================== ОСНОВНА ФУНКЦИЯ ====================
     window.startBattle = function(regionInput) {
@@ -451,15 +504,16 @@ function applyBattleOutcome(originalHero, battleHero) {
         let enemyPower = 200;
         let enemyHp = 200;
 
-        if (reg && reg.buildings && reg.buildings.wall) {
-    defenseBonus += reg.buildings.wall * 2;
-}
         if (typeof regionInput === 'string') {
             regionName = regionInput;
             if (window.worldData && window.worldData.regions && window.worldData.regions[regionInput]) {
                 const reg = window.worldData.regions[regionInput];
                 let basePower = reg.armySize || 100;
                 let defenseBonus = (reg.defenseLevel || 1) * 10;
+                // Бонус от крепостна стена (ако има)
+                if (reg.buildings && reg.buildings.wall) {
+                    defenseBonus += reg.buildings.wall * 2;
+                }
                 enemyPower = Math.max(50, basePower + defenseBonus);
                 enemyHp = enemyPower;
                 regionName = reg.name || regionInput;
@@ -549,9 +603,17 @@ function applyBattleOutcome(originalHero, battleHero) {
         for (let i = 0; i < 5; i++) {
             let hero = battleHeroes[i];
             if (hero) {
+                const portraitUrl = hero.clanObj?.portrait || hero.portrait || '';
+                // Генерираме и img, и резервна иконка (иконката е скрита по подразбиране)
+                const portraitHtml = portraitUrl ? `
+                    <div style="position: relative; min-height: 60px;">
+                        <img src="${portraitUrl}" class="hero-portrait" onerror="this.style.display='none'; this.parentElement.querySelector('.hero-icon-fallback').style.display='block';">
+                        <div class="hero-icon hero-icon-fallback" style="display: none; font-size: 28px;">${hero.icon}</div>
+                    </div>
+                ` : `<div class="hero-icon" style="font-size:28px;">${hero.icon}</div>`;
                 heroesHtml += `
                     <div class="hero-card" data-id="${hero.id}">
-                        <div class="hero-icon">${hero.icon}</div>
+                        ${portraitHtml}
                         <div class="hero-name">${hero.name.substring(0, 12)}</div>
                         <div class="hero-class">${hero.className}</div>
                         <div class="hp-bar-bg">
@@ -592,7 +654,7 @@ function applyBattleOutcome(originalHero, battleHero) {
                     <button class="battle-btn" id="battle-reset">🔄 НОВА БИТКА</button>
                 </div>
                 <div class="vs-section">
-                    <div class="monster-card">
+                    <div class="monster-card" id="monster-card">
                         <div class="monster-icon">${monster.icon}</div>
                         <div class="monster-name">${monster.name}</div>
                         <div class="monster-power">💪 ${monster.power} сила</div>
@@ -659,19 +721,19 @@ function applyBattleOutcome(originalHero, battleHero) {
             }
         }
 
-        function animateHero(heroId) {
+        function animateHero(heroId, damage = null, isHeal = false) {
             const card = document.querySelector(`.hero-card[data-id="${heroId}"]`);
             if (card) {
-                card.style.transform = 'scale(0.95)';
-                setTimeout(() => card.style.transform = '', 120);
+                animateCard(card);
+                if (damage !== null) showFloatingNumber(card, damage, isHeal);
             }
         }
 
-        function animateMonster() {
-            const monsterCard = document.querySelector('.monster-card');
-            if (monsterCard) {
-                monsterCard.style.transform = 'scale(0.97)';
-                setTimeout(() => monsterCard.style.transform = '', 120);
+        function animateMonsterCard(damage = null, isHeal = false) {
+            const card = document.querySelector('.monster-card');
+            if (card) {
+                animateCard(card);
+                if (damage !== null) showFloatingNumber(card, damage, isHeal);
             }
         }
 
@@ -764,6 +826,7 @@ function applyBattleOutcome(originalHero, battleHero) {
                     if (healAmount > 0) {
                         hero.hp = Math.min(hero.maxHp, hero.hp + healAmount);
                         addLog(`   💚 ${hero.name} възстановява ${healAmount} живот (Кръвопиец/Любимец)!`);
+                        animateHero(hero.id, healAmount, true);
                     }
                 }
                 
@@ -771,6 +834,7 @@ function applyBattleOutcome(originalHero, battleHero) {
                 currentMonster.hp = Math.max(0, currentMonster.hp - finalDamage);
                 addLog(`   ⚔️ ${hero.name} нанася ${finalDamage} щети${isCrit ? ' 💥 КРИТИЧЕН!' : ''}`);
                 animateHero(hero.id);
+                animateMonsterCard(finalDamage);
             });
 
             addLog(`📊 ОБЩО: ${totalDamage} щети`);
@@ -855,25 +919,23 @@ function applyBattleOutcome(originalHero, battleHero) {
                 
                 if (window.addWorldEvent) window.addWorldEvent(`🏆 ПОБЕДА В БИТКА`, `${battleHeroes.map(h => h.name).join(', ')} победиха ${monster.name}!`, "🏆");
                 
-              // ---------- ПРИЛАГАНЕ НА HP ПРОМЕНИТЕ СЛЕД ПОБЕДА ----------
-for (let i = 0; i < currentHeroes.length; i++) {
-    let battleHero = currentHeroes[i];
-    let originalHero = battleHero.clanObj;
-    if (originalHero && battleHero.hp !== undefined) {
-        applyBattleOutcome(originalHero, battleHero);
-    }
-}
-// НОВО: ОБНОВЯВАНЕ НА UI СЛЕД ПРОМЯНА НА HP
-if (window.currentHero && typeof window.updateCharacterUI === 'function') {
-    window.updateCharacterUI(window.currentHero);
-}
-if (typeof window.renderFavoriteHeroesBar === 'function') {
-    window.renderFavoriteHeroesBar();
-}
-if (typeof window.renderTop6HeroesUI === 'function') {
-    window.renderTop6HeroesUI();
-}
-// ------------------------------------------------------------
+                // ---------- ПРИЛАГАНЕ НА HP ПРОМЕНИТЕ СЛЕД ПОБЕДА ----------
+                for (let i = 0; i < currentHeroes.length; i++) {
+                    let battleHero = currentHeroes[i];
+                    let originalHero = battleHero.clanObj;
+                    if (originalHero && battleHero.hp !== undefined) {
+                        applyBattleOutcome(originalHero, battleHero);
+                    }
+                }
+                if (window.currentHero && typeof window.updateCharacterUI === 'function') {
+                    window.updateCharacterUI(window.currentHero);
+                }
+                if (typeof window.renderFavoriteHeroesBar === 'function') {
+                    window.renderFavoriteHeroesBar();
+                }
+                if (typeof window.renderTop6HeroesUI === 'function') {
+                    window.renderTop6HeroesUI();
+                }
                 // ------------------------------------------------------------
                 
                 battleActive = false;
@@ -927,8 +989,9 @@ if (typeof window.renderTop6HeroesUI === 'function') {
             addLog(`━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`);
             addLog(`👹 ЧУДОВИЩЕТО АТАКУВА ${target.name.toUpperCase()}!`);
             addLog(`   💔 Нанася ${damage} щети (${Math.floor(damagePercent * 100)}% от живота)`);
-            animateMonster();
+            animateMonsterCard();
             screenShake();
+            animateHero(target.id, damage);
             
             if (target.hp <= 0) {
                 let reviveChance = petEffects.reviveChance || skillBonuses.reviveChance || 0;
@@ -948,26 +1011,24 @@ if (typeof window.renderTop6HeroesUI === 'function') {
                 addLog(`━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`);
                 addLog(`💀 ЗАГУБА! Всички герои са победени! 💀`, true);
                 
-        
- // ---------- ПРИЛАГАНЕ НА HP ПРОМЕНИТЕ СЛЕД ЗАГУБА ----------
-    for (let i = 0; i < currentHeroes.length; i++) {
-        let battleHero = currentHeroes[i];
-        let originalHero = battleHero.clanObj;
-        if (originalHero && battleHero.hp !== undefined) {
-            applyBattleOutcome(originalHero, battleHero);
-        }
-    }
-// ОБНОВЯВАНЕ НА UI
-if (window.currentHero && typeof window.updateCharacterUI === 'function') {
-    window.updateCharacterUI(window.currentHero);
-}
-if (typeof window.renderFavoriteHeroesBar === 'function') {
-    window.renderFavoriteHeroesBar();
-}
-if (typeof window.renderTop6HeroesUI === 'function') {
-    window.renderTop6HeroesUI();
-}
-// ------------------------------------------------------------
+                // ---------- ПРИЛАГАНЕ НА HP ПРОМЕНИТЕ СЛЕД ЗАГУБА ----------
+                for (let i = 0; i < currentHeroes.length; i++) {
+                    let battleHero = currentHeroes[i];
+                    let originalHero = battleHero.clanObj;
+                    if (originalHero && battleHero.hp !== undefined) {
+                        applyBattleOutcome(originalHero, battleHero);
+                    }
+                }
+                if (window.currentHero && typeof window.updateCharacterUI === 'function') {
+                    window.updateCharacterUI(window.currentHero);
+                }
+                if (typeof window.renderFavoriteHeroesBar === 'function') {
+                    window.renderFavoriteHeroesBar();
+                }
+                if (typeof window.renderTop6HeroesUI === 'function') {
+                    window.renderTop6HeroesUI();
+                }
+                // ------------------------------------------------------------
                 
                 battleActive = false;
                 const attackBtn = document.getElementById('battle-attack');
@@ -1000,26 +1061,24 @@ if (typeof window.renderTop6HeroesUI === 'function') {
                 if (hero.hp > 0) applyArmyLossFromDamage(hero, 0.2);
             });
             
-          // ---------- ПРИЛАГАНЕ НА HP ПРОМЕНИТЕ ПРИ ОТСТЪПЛЕНИЕ ----------
-
-for (let i = 0; i < currentHeroes.length; i++) {
-    let battleHero = currentHeroes[i];
-    let originalHero = battleHero.clanObj;
-    if (originalHero && battleHero.hp !== undefined) {
-        applyBattleOutcome(originalHero, battleHero);
-    }
-}
-// ОБНОВЯВАНЕ НА UI
-if (window.currentHero && typeof window.updateCharacterUI === 'function') {
-    window.updateCharacterUI(window.currentHero);
-}
-if (typeof window.renderFavoriteHeroesBar === 'function') {
-    window.renderFavoriteHeroesBar();
-}
-if (typeof window.renderTop6HeroesUI === 'function') {
-    window.renderTop6HeroesUI();
-}
-// ---------------------------------------------------------------
+            // ---------- ПРИЛАГАНЕ НА HP ПРОМЕНИТЕ ПРИ ОТСТЪПЛЕНИЕ ----------
+            for (let i = 0; i < currentHeroes.length; i++) {
+                let battleHero = currentHeroes[i];
+                let originalHero = battleHero.clanObj;
+                if (originalHero && battleHero.hp !== undefined) {
+                    applyBattleOutcome(originalHero, battleHero);
+                }
+            }
+            if (window.currentHero && typeof window.updateCharacterUI === 'function') {
+                window.updateCharacterUI(window.currentHero);
+            }
+            if (typeof window.renderFavoriteHeroesBar === 'function') {
+                window.renderFavoriteHeroesBar();
+            }
+            if (typeof window.renderTop6HeroesUI === 'function') {
+                window.renderTop6HeroesUI();
+            }
+            // ---------------------------------------------------------------
             
             battleActive = false;
             const attackBtn = document.getElementById('battle-attack');
@@ -1056,7 +1115,7 @@ if (typeof window.renderTop6HeroesUI === 'function') {
         addLog(`📌 Натисни "АТАКА" за рунд!`);
         addLog(`⚠️ ВНИМАНИЕ: Загубата на живот намалява армията ви!`);
         updateUI();
-        console.log("✅ Битката е готова (с поддръжка на перманентно здраве, смърт и възстановяване)!");
+        console.log("✅ Битката е готова (с портрети, анимации и числови ефекти)!");
     };
-    console.log("✅ battle.js зареден (версия 7.0 – с HP система)");
+    console.log("✅ battle.js зареден (версия 8.1 – фиксирана)");
 })();
