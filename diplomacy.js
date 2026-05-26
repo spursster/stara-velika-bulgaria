@@ -556,6 +556,7 @@ window.openMarriageMenu = function() {
                     modal.classList.remove('active');
                 } else {
                     showDiplomacyMessage("ГРЕШКА", "Функцията proposeMarriage липсва!", "error");
+                    if (window.addHeroLog) window.addHeroLog(hero, "💍", `Сключи брак с ${partnerName}`);
                 }
             };
         });
