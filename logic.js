@@ -1,7 +1,7 @@
 /**
  ==========================================================================
  ПРОЕКТ: ВЕЛИКА БЪЛГАРИЯ
- ФАЙЛ: logic.js (ВЕРСИЯ 4.0 – ХАРМОНИЗИРАН, ВСИЧКИ СА ГЕРОИ)
+ ФАЙЛ: logic.js (ВЕРСИЯ 4.1 – С АВТОМАТИЧНА ИНИЦИАЛИЗАЦИЯ НА HP)
  ==========================================================================
  */
 
@@ -160,9 +160,9 @@ function initializeAllHeroesFromDatabase() {
     console.log(`✅ Инициализирани ${Object.keys(window.worldData.clans).length} герои от database.js`);
 }
 
+// ==================== НОВА ИГРА ====================
 window.startFreshGameLogic = function() {
     console.log("🔄 startFreshGameLogic извикана (версия за мобилни устройства)");
- if (window.initializeHeroRPGData) window.initializeHeroRPGData(window.currentHero);
 
     // 1. Подготовка на worldData и clans
     if (!window.worldData) window.worldData = {};
@@ -235,6 +235,8 @@ window.startFreshGameLogic = function() {
         existingHero.heroPower = heroData.power;
         existingHero.power = heroData.power;
         window.currentHero = existingHero;
+        // Инициализация на HP и други RPG данни
+        if (window.initializeHeroRPGData) window.initializeHeroRPGData(window.currentHero);
     } else {
         window.currentHero = {
             name: selectedName,
@@ -342,6 +344,7 @@ window.startFreshGameLogic = function() {
 
     console.log("✅ startFreshGameLogic завърши. Активен герой:", window.currentHero.name);
 };
+
 // ==================== ЗАПАЗВАНЕ И ЗАРЕЖДАНЕ ====================
 window.saveGreatBulgariaGame = function() {
     if (!window.currentHero) return;
@@ -470,6 +473,17 @@ window.loadGreatBulgariaGame = function() {
         
         if (parsed.favoriteHeroes) localStorage.setItem('favoriteHeroesFinal', parsed.favoriteHeroes);
         if (parsed.autoState) localStorage.setItem('heroAutoState', parsed.autoState);
+        
+        // ========== НОВО: ИНИЦИАЛИЗАЦИЯ НА HP И ДРУГИ RPG ДАННИ ==========
+        if (window.initializeHeroRPGData) {
+            if (window.currentHero) window.initializeHeroRPGData(window.currentHero);
+            for (let key in window.worldData.clans) {
+                let hero = window.worldData.clans[key];
+                if (hero && hero.isJoined === true) window.initializeHeroRPGData(hero);
+            }
+            if (window.companions) window.companions.forEach(comp => window.initializeHeroRPGData(comp));
+        }
+        // ================================================================
         
         if (window.updateCharacterUI) window.updateCharacterUI(window.currentHero);
         if (window.renderTop6HeroesUI) window.renderTop6HeroesUI();
