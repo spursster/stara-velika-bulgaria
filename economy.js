@@ -83,7 +83,18 @@ window.recalculateIncome = function(hero) {
     
     let artifactBonusPercent = (inventoryBonuses.goldBonus || 0);
     let skillBonusPercent = (advancedBonuses.taxBonus || 0) + (advancedBonuses.goldDropBonus || 0);
-    
+
+    // Бонус от сгради в регионите
+if (window.playerRegions) {
+    let totalMarketBonus = 0;
+    for (let r of window.playerRegions.flat()) {
+        const region = window.worldData.regions[r];
+        if (region && region.buildings) {
+            totalMarketBonus += (region.buildings.market || 0) * 30;
+        }
+    }
+    baseIncome += totalMarketBonus;
+}
     // Доходи от региони
     let regionIncome = 0;
     if (window.playerRegions && window.worldData && window.worldData.regions) {
