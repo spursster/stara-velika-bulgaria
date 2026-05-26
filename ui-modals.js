@@ -1,6 +1,5 @@
 // ==================== СЪВЕТНИК ПОПАП (ЗАМЕНЯ STANDARD ALERT) ====================
 window.showAdvisorPopup = function(title, message, type = "info") {
-    // Премахваме стар попап, ако има
     const oldPopup = document.getElementById('advisor-popup');
     if (oldPopup) oldPopup.remove();
 
@@ -65,7 +64,6 @@ window.showAdvisorPopup = function(title, message, type = "info") {
     `;
 
     document.body.appendChild(popup);
-
     const closeBtn = popup.querySelector('#close-advisor-popup');
     const closeHandler = () => popup.remove();
     closeBtn.addEventListener('click', closeHandler);
@@ -74,11 +72,9 @@ window.showAdvisorPopup = function(title, message, type = "info") {
 
 // ==================== ДУЕЛЕН МОДАЛ (ПРЕДИЗВИКАТЕЛСТВО ОТ НЕЛЮБИМ ГЕРОЙ) ====================
 window.showDuelChallenge = function(attackerHero) {
-    // Премахваме стар модал, ако има
     const oldModal = document.getElementById('duel-modal');
     if (oldModal) oldModal.remove();
 
-    // Генерираме HTML за армията на атакуващия
     let armyHtml = '';
     if (attackerHero.armyDetails && window.ALL_TROOP_TYPES) {
         armyHtml = '<div style="margin-top: 15px; text-align: left; max-height: 200px; overflow-y: auto; padding: 8px; background: rgba(0,0,0,0.3); border-radius: 12px;"><h4 style="color:#ffd700; margin: 0 0 8px 0;">⚔️ НЕГОВАТА АРМИЯ ⚔️</h4>';
@@ -141,13 +137,10 @@ window.showDuelChallenge = function(attackerHero) {
             <div style="margin-top: 10px;">
                 <div style="font-size: 1.3rem; font-weight: bold; color: #ffd700; letter-spacing: 1px;">ДВУБОЙ</div>
                 <div style="height: 2px; width: 80px; background: #d4af37; margin: 12px auto;"></div>
-                
                 ${portraitHtml}
                 <div style="font-size: 1.2rem; font-weight: bold; color: #ffdd99;">${attackerName}</div>
                 <div style="font-size: 0.9rem; color: #ccaa77;">${attackerClass} · ⚔️ Сила: ${attackerPower}</div>
-                
                 ${armyHtml}
-                
                 <div style="display: flex; gap: 15px; justify-content: center; margin-top: 20px;">
                     <button id="accept-duel" style="
                         background: linear-gradient(135deg, #7a2e1a, #5a1e0a);
@@ -195,7 +188,7 @@ window.showDuelChallenge = function(attackerHero) {
             window.currentHero.armySize = Math.max(10, window.currentHero.armySize - loss);
             window.currentHero.currentArmy = window.currentHero.armySize;
             if (window.updateCharacterUI) window.updateCharacterUI(window.currentHero);
-            if (window.renderTop6LeadersUI) window.renderTop6LeadersUI();
+            if (window.renderTop6HeroesUI) window.renderTop6HeroesUI();
         }
     };
 };
@@ -220,107 +213,13 @@ window.startBattleAgainstHero = function(enemyHero) {
     }
 };
 
-// ==================== ГЕНЕРИРАНЕ И СПОДЕЛЯНЕ НА ВИЗИТКА НА ГЕРОЯ ====================
-window.shareHeroCard = async function(hero) {
-    if (!hero) return;
-    
-    // Създаваме скрит контейнер за визитката
-    let shareContainer = document.getElementById('hero-share-container');
-    if (!shareContainer) {
-        shareContainer = document.createElement('div');
-        shareContainer.id = 'hero-share-container';
-        shareContainer.style.cssText = `
-            position: fixed;
-            top: -9999px;
-            left: -9999px;
-            width: 500px;
-            background: #0a0a1a;
-            border: 2px solid #d4af37;
-            border-radius: 20px;
-            padding: 20px;
-            font-family: 'Cinzel', serif;
-            color: white;
-            box-shadow: 0 0 30px rgba(0,0,0,0.8);
-            z-index: -1;
-        `;
-        document.body.appendChild(shareContainer);
-    }
-    
-    // Подготовка на данни за визитката
-    const needXP = (hero.level || 1) * 150;
-    const currentXP = hero.isAuto ? (hero.xp || 0) : (hero.storedXP || 0);
-    const xpPercent = Math.min(100, Math.floor((currentXP / needXP) * 100));
-    const skillCount = hero.learnedSkills ? Object.keys(hero.learnedSkills).length : 0;
-    const titles = hero.titles && hero.titles.length ? hero.titles.slice(0, 2).join(', ') : 'Няма';
-    const petName = hero.pet ? (window.rpgDatabase.petsDatabase[hero.pet]?.name || 'Неизвестен') : 'Няма';
-    
-    // Портрет (ако има)
-    const portraitHtml = hero.portrait ? 
-        `<img src="${hero.portrait}" style="width: 100px; height: 100px; border-radius: 50%; border: 2px solid #ffd700; margin: 10px auto; display: block;">` : 
-        `<div style="font-size: 60px; text-align: center;">${window.getClassIcon ? window.getClassIcon(hero.currentClass) : '⚔️'}</div>`;
-    
-    // Попълваме HTML на визитката
-    shareContainer.innerHTML = `
-        <div style="text-align: center;">
-            <div style="font-size: 22px; font-weight: bold; color: #ffd700;">⚔️ ВЕЛИКА БЪЛГАРИЯ ⚔️</div>
-            <div style="height: 2px; background: #d4af37; width: 80%; margin: 10px auto;"></div>
-            ${portraitHtml}
-            <div style="font-size: 18px; font-weight: bold; margin-top: 10px;">${hero.name}</div>
-            <div>${window.getClassIcon ? window.getClassIcon(hero.currentClass) : ''} ${hero.currentClass || 'Багатур'}</div>
-            <div>⭐ Ниво ${hero.level || 1}</div>
-            <div>💪 Сила: ${hero.heroPower || 100}</div>
-            <div>⚔️ Армия: ${hero.armySize || 0}</div>
-            <div>🐾 Любимец: ${petName}</div>
-            <div>📚 Умения: ${skillCount} научени</div>
-            <div>🏆 Постижения: ${titles}</div>
-            <div class="xp-bar" style="background: #2a1a0a; height: 6px; border-radius: 3px; margin: 10px 0; width: 100%;">
-                <div style="background: #44aa44; height: 100%; width: ${xpPercent}%; border-radius: 3px;"></div>
-            </div>
-            <div style="font-size: 10px; color: #aaa; margin-top: 15px;">#ВеликаБългария #СтратегическаИгра #RPG</div>
-        </div>
-    `;
-    
-    // Използваме html2canvas за да направим снимка
-    try {
-        const canvas = await html2canvas(shareContainer, {
-            scale: 2,
-            backgroundColor: null,
-            logging: false
-        });
-        const imageData = canvas.toDataURL('image/png');
-        
-        // Споделяне (ако е възможно)
-        if (navigator.share) {
-            // Преобразуваме data URL в blob
-            const blob = await (await fetch(imageData)).blob();
-            const file = new File([blob], `${hero.name}_card.png`, { type: 'image/png' });
-            await navigator.share({
-                title: `Моят герой в "Велика България"`,
-                text: `Вижте моя герой ${hero.name} (Ниво ${hero.level})!`,
-                files: [file]
-            });
-        } else {
-            // Ако Web Share не е поддържано, сваляме картинката
-            const link = document.createElement('a');
-            link.download = `${hero.name}_card.png`;
-            link.href = imageData;
-            link.click();
-            window.showAdvisorPopup("СПОДЕЛЯНЕ", "Картинката е готова. Можете да я качите ръчно в TikTok или друга социална мрежа.", "success");
-        }
-    } catch (err) {
-        console.error("Грешка при генериране на картинка:", err);
-        window.showAdvisorPopup("ГРЕШКА", "Неуспешно генериране на визитката.", "error");
-    }
-};
 // ==================== ГЕНЕРИРАНЕ НА СЛУЧАЙНО ПРЕДИЗВИКАТЕЛСТВО ====================
 window.triggerRandomDuelChallenge = function() {
     if (!window.worldData || !window.worldData.clans) return;
     let potentialChallengers = [];
     for (let key in window.worldData.clans) {
         let hero = window.worldData.clans[key];
-        // Условия: герой е нает, НЕ Е любим, НЕ Е текущият активен герой
         if (hero.isJoined === true && hero.isFavorite !== true && hero !== window.currentHero) {
-            // Допълнителна проверка за име (за всеки случай)
             if (hero.name !== window.currentHero.name) {
                 potentialChallengers.push(hero);
             }
@@ -331,110 +230,6 @@ window.triggerRandomDuelChallenge = function() {
     if (window.showDuelChallenge) {
         window.showDuelChallenge(challenger);
     }
-};
-
-window.startBattleAgainstHero = function(enemyHero) {
-    if (!enemyHero) return;
-    let enemyPower = enemyHero.heroPower || 100;
-    let enemyArmy = enemyHero.armySize || 200;
-    // Комбинираме мощ и армия
-    let finalPower = Math.floor(enemyPower * (enemyArmy / 200));
-    const battleTarget = {
-        name: enemyHero.leaderName || enemyHero.name,
-        armySize: finalPower,
-        heroObj: enemyHero,
-        isHero: true
-    };
-    window.startBattle(battleTarget);
-};
-
-// ==================== СЪЗДАВАНЕ НА ЛЕГЕНДАРЕН ГЕРОЙ ====================
-window.createLegendaryHero = function(baseName = null, customClan = null) {
-    // Избор на име от легендарни владетели (ако не е подадено)
-    const legendaryNames = ["Атила", "Кубрат", "Симеон Велики", "Александър III Велики", "Спартак", "Децебал", "Калоян", "Самуил", "Владимир Велики", "Ричард Лъвското сърце"];
-    const name = baseName || legendaryNames[Math.floor(Math.random() * legendaryNames.length)];
-    const clan = customClan || "Легендарен";
-    
-    // Избор на хибриден клас (от classes.js)
-    let className = "Воевода";
-    if (window.hybridClasses && window.hybridClasses.length) {
-        const highLevelClasses = window.hybridClasses.filter(c => c.reqLevel >= 5);
-        if (highLevelClasses.length) {
-            className = highLevelClasses[Math.floor(Math.random() * highLevelClasses.length)].name;
-        }
-    }
-    
-    // По-висока мощ (200-300) и злато (3000-5000)
-    const power = 200 + Math.floor(Math.random() * 150);
-    const gold = 3000 + Math.floor(Math.random() * 3000);
-    const armySize = 400 + Math.floor(Math.random() * 300);
-    
-    const newHero = {
-        name: name,
-        leaderName: name,
-        clan: clan,
-        isJoined: true,
-        isFavoriteInBarracks: false,   // НЕ е любим – за да може да предизвиква
-        level: 5 + Math.floor(Math.random() * 4), // Ниво 5-8
-        xp: 0,
-        heroPower: power,
-        power: power,
-        gold: gold,
-        armySize: armySize,
-        currentArmy: armySize,
-        currentClass: className,
-        className: className,
-        age: 30 + Math.floor(Math.random() * 20),
-        isAuto: true,
-        skillPoints: 3 + Math.floor(Math.random() * 4),
-        skills: { tactics: 2, endurance: 2, economy: 2, mysticism: 2, leadership: 2 },
-        equipment: Array(12).fill(null),
-        inventory: [],
-        pet: null,
-        learnedSkills: {},
-        armyDetails: {
-            infantry: Math.floor(armySize * 0.4),
-            archers: Math.floor(armySize * 0.2),
-            cavalry: Math.floor(armySize * 0.2),
-            elite: Math.floor(armySize * 0.1),
-            dragon_young: Math.floor(armySize * 0.05),
-            wizard: Math.floor(armySize * 0.05)
-        }
-    };
-    
-    // Инициализация на RPG данни
-    if (window.initializeHeroRPGData) window.initializeHeroRPGData(newHero);
-    if (window.ensureCompleteArmyDetails) window.ensureCompleteArmyDetails(newHero);
-    
-    // Добавяне в света
-    if (!window.worldData) window.worldData = {};
-    if (!window.worldData.clans) window.worldData.clans = {};
-    const newId = "legendary_" + Date.now() + "_" + Math.floor(Math.random() * 10000);
-    window.worldData.clans[newId] = newHero;
-    if (!window.unlockedLeaders) window.unlockedLeaders = [];
-    window.unlockedLeaders.push(newHero);
-    
-    // Генериране на портрет (асинхронно)
-    if (typeof window.generateHeroPortrait === 'function') {
-        window.generateHeroPortrait(newHero).catch(e => console.warn(e));
-    }
-    
-    // Синхронизация с армията и UI
-    if (window.armyMarket && typeof window.armyMarket.sync === 'function') window.armyMarket.sync(newHero);
-    if (window.renderTop6LeadersUI) window.renderTop6LeadersUI();
-    if (typeof window.renderSingleBar === 'function') window.renderSingleBar();
-    
-    // Съобщение в летописа
-    if (window.addWorldEvent) {
-        window.addWorldEvent("🏆 ЛЕГЕНДАРЕН ГЕРОЙ", `${name} (${className}) се появи на сцената!`, "🏆");
-    }
-    if (window.showAdvisorPopup) {
-        window.showAdvisorPopup("ЛЕГЕНДАРЕН ГЕРОЙ", `⭐ Великият ${name} от ${clan} се присъедини към играта! ⭐`, "success");
-    } else if (window.showAdvisorMsg) {
-        window.showAdvisorMsg(`🏆 Легендарен герой ${name} се появи!`);
-    }
-    
-    return newHero;
 };
 
 // ==================== МОДАЛ С ЕЛИТНИ ГЕРОИ (НАЙ-ВИСОК ОПИТ/НИВО) ====================
@@ -452,8 +247,6 @@ window.showEliteHeroesModal = function() {
         }
         return;
     }
-    
-    // Сортиране: първо по ниво (нисходящо), после по опит (нисходящо)
     heroes.sort((a,b) => {
         if ((b.level || 1) !== (a.level || 1)) return (b.level || 1) - (a.level || 1);
         let xpA = a.isAuto ? (a.xp || 0) : (a.storedXP || 0);
@@ -510,4 +303,102 @@ window.showEliteHeroesModal = function() {
             }
         });
     });
+};
+
+// ==================== ГЕНЕРИРАНЕ И СПОДЕЛЯНЕ НА ВИЗИТКА НА ГЕРОЯ (TikTok, Instagram и др.) ====================
+window.shareHeroCard = async function(hero) {
+    if (!hero) return;
+    
+    // Създаваме скрит контейнер за визитката
+    let shareContainer = document.getElementById('hero-share-container');
+    if (!shareContainer) {
+        shareContainer = document.createElement('div');
+        shareContainer.id = 'hero-share-container';
+        shareContainer.style.cssText = `
+            position: fixed;
+            top: -9999px;
+            left: -9999px;
+            width: 500px;
+            background: #0a0a1a;
+            border: 2px solid #d4af37;
+            border-radius: 20px;
+            padding: 20px;
+            font-family: 'Cinzel', serif;
+            color: white;
+            box-shadow: 0 0 30px rgba(0,0,0,0.8);
+            z-index: -1;
+        `;
+        document.body.appendChild(shareContainer);
+    }
+    
+    // Подготовка на данни за визитката
+    const needXP = (hero.level || 1) * 150;
+    const currentXP = hero.isAuto ? (hero.xp || 0) : (hero.storedXP || 0);
+    const xpPercent = Math.min(100, Math.floor((currentXP / needXP) * 100));
+    const skillCount = hero.learnedSkills ? Object.keys(hero.learnedSkills).length : 0;
+    const titles = (hero.titles && hero.titles.length) ? hero.titles.slice(0, 2).join(', ') : 'Няма';
+    const petName = hero.pet ? (window.rpgDatabase?.petsDatabase?.[hero.pet]?.name || 'Неизвестен') : 'Няма';
+    
+    // Портрет (ако има)
+    const portraitHtml = hero.portrait ? 
+        `<img src="${hero.portrait}" style="width: 100px; height: 100px; border-radius: 50%; border: 2px solid #ffd700; margin: 10px auto; display: block;">` : 
+        `<div style="font-size: 60px; text-align: center;">${window.getClassIcon ? window.getClassIcon(hero.currentClass) : '⚔️'}</div>`;
+    
+    // Попълваме HTML на визитката
+    shareContainer.innerHTML = `
+        <div style="text-align: center;">
+            <div style="font-size: 22px; font-weight: bold; color: #ffd700;">⚔️ ВЕЛИКА БЪЛГАРИЯ ⚔️</div>
+            <div style="height: 2px; background: #d4af37; width: 80%; margin: 10px auto;"></div>
+            ${portraitHtml}
+            <div style="font-size: 18px; font-weight: bold; margin-top: 10px;">${hero.name}</div>
+            <div>${window.getClassIcon ? window.getClassIcon(hero.currentClass) : ''} ${hero.currentClass || 'Багатур'}</div>
+            <div>⭐ Ниво ${hero.level || 1}</div>
+            <div>💪 Сила: ${hero.heroPower || 100}</div>
+            <div>⚔️ Армия: ${hero.armySize || 0}</div>
+            <div>🐾 Любимец: ${petName}</div>
+            <div>📚 Умения: ${skillCount} научени</div>
+            <div>🏆 Постижения: ${titles}</div>
+            <div class="xp-bar" style="background: #2a1a0a; height: 6px; border-radius: 3px; margin: 10px 0; width: 100%;">
+                <div style="background: #44aa44; height: 100%; width: ${xpPercent}%; border-radius: 3px;"></div>
+            </div>
+            <div style="font-size: 10px; color: #aaa; margin-top: 15px;">#ВеликаБългария #СтратегическаИгра #RPG</div>
+        </div>
+    `;
+    
+    // Използваме html2canvas за да направим снимка (проверка дали библиотеката е заредена)
+    if (typeof html2canvas === 'undefined') {
+        window.showAdvisorPopup("ГРЕШКА", "Библиотеката за генериране на изображения не е заредена. Моля, опреснете страницата.", "error");
+        return;
+    }
+    
+    try {
+        const canvas = await html2canvas(shareContainer, {
+            scale: 2,
+            backgroundColor: null,
+            logging: false
+        });
+        const imageData = canvas.toDataURL('image/png');
+        
+        // Споделяне (ако е възможно)
+        if (navigator.share) {
+            const blob = await (await fetch(imageData)).blob();
+            const file = new File([blob], `${hero.name}_card.png`, { type: 'image/png' });
+            await navigator.share({
+                title: `Моят герой в "Велика България"`,
+                text: `Вижте моя герой ${hero.name} (Ниво ${hero.level})!`,
+                files: [file]
+            });
+            window.showAdvisorPopup("СПОДЕЛЯНЕ", "Картинката е изпратена към социалната мрежа.", "success");
+        } else {
+            // Ако Web Share не е поддържано, сваляме картинката
+            const link = document.createElement('a');
+            link.download = `${hero.name}_card.png`;
+            link.href = imageData;
+            link.click();
+            window.showAdvisorPopup("СПОДЕЛЯНЕ", "Картинката е готова. Можете да я качите ръчно в TikTok или друга социална мрежа.", "success");
+        }
+    } catch (err) {
+        console.error("Грешка при генериране на картинка:", err);
+        window.showAdvisorPopup("ГРЕШКА", "Неуспешно генериране на визитката. Уверете се, че портретът е зареден и опитайте отново.", "error");
+    }
 };
