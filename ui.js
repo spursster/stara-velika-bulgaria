@@ -1,6 +1,6 @@
 /** ========================================================================== 
 ПРОЕКТ: ВЕЛИКА БЪЛГАРИЯ
-ФАЙЛ: ui.js (ВЕРСИЯ 5.0 – ПЪЛНА ХАРМОНИЗАЦИЯ – ВСИЧКИ СА ГЕРОИ)
+ФАЙЛ: ui.js (ВЕРСИЯ 6.0 – НОВА ЛЕНТА С ЛЮБИМИ ГЕРОИ, ЕЛИТЕН МОДАЛ)
 ========================================================================== */ 
 
 // ==================== ОБНОВЯВАНЕ НА ВРЕМЕТО ====================
@@ -70,7 +70,8 @@ window.generateHeroPortrait = async function(hero, retries = 2) {
                 hero.portrait = url;
                 if (typeof window.saveGreatBulgariaGame === 'function') window.saveGreatBulgariaGame();
                 if (typeof window.renderSingleBar === 'function') window.renderSingleBar();
-                //if (typeof window.renderTop6HeroesUI === 'function') window.renderTop6HeroesUI();
+                // Обновяваме лентата с любими (ако съществува)
+                if (typeof window.renderFavoriteHeroesBar === 'function') window.renderFavoriteHeroesBar();
                 if (window.currentHero === hero && typeof window.updateCharacterUI === 'function') {
                     window.updateCharacterUI(hero);
                 }
@@ -253,7 +254,6 @@ window.hireNewHero = function() {
     let goldSpan = document.getElementById('val-gold');
     if (goldSpan) goldSpan.innerText = oldHero.gold;
     if (window.updateCharacterUI) window.updateCharacterUI(oldHero);
-    //if (window.renderTop6HeroesUI) window.renderTop6HeroesUI();
     if (typeof window.renderSingleBar === 'function') window.renderSingleBar();
     
     window.showAdvisorPopup(
@@ -545,6 +545,56 @@ function showHeroProfile(hero) {
     }
 }
 
+// ==================== ЛЕНТА С ЛЮБИМИ ГЕРОИ (5 СЛОТА) ====================
+window.renderFavoriteHeroesBar = function() {
+    const container = document.getElementById('favorite-heroes-bar');
+    if (!container) return;
+    
+    let favoriteHeroesList = [];
+    if (window.worldData && window.worldData.clans) {
+        for (let key in window.worldData.clans) {
+            let hero = window.worldData.clans[key];
+            if (hero.isJoined === true && hero.isFavorite === true) {
+                favoriteHeroesList.push(hero);
+            }
+        }
+    }
+    // Сортиране по ниво (най-високо отгоре) – не е задължително, но за подредба
+    favoriteHeroesList.sort((a,b) => (b.level || 1) - (a.level || 1));
+    const top5 = favoriteHeroesList.slice(0, 5);
+    
+    container.innerHTML = '';
+    for (let i = 0; i < 5; i++) {
+        const hero = top5[i];
+        const slot = document.createElement('div');
+        slot.className = 'favorite-slot';
+        if (hero) {
+            const classIcon = getClassIcon(hero.currentClass);
+            const portraitHtml = hero.portrait ? 
+                `<img src="${hero.portrait}" style="width: 30px; height: 30px; border-radius: 50%; object-fit: cover; margin-bottom: 2px;">` : 
+                `<div class="hero-icon" style="font-size: 24px;">${classIcon}</div>`;
+            slot.innerHTML = `
+                ${portraitHtml}
+                <div class="hero-name" title="${hero.name}">${hero.name.substring(0, 10)}</div>
+                <div class="hero-level">Ниво ${hero.level || 1}</div>
+            `;
+            slot.onclick = () => {
+                if (window.showHeroProfile) window.showHeroProfile(hero);
+            };
+        } else {
+            slot.classList.add('empty');
+            slot.innerHTML = '➕';
+            slot.onclick = () => {
+                if (typeof window.showHeroSelectionModal === 'function') {
+                    window.showHeroSelectionModal();
+                } else {
+                    window.showAdvisorPopup("ИНФО", "Можете да добавите любими от казармите (🏹).", "info");
+                }
+            };
+        }
+        container.appendChild(slot);
+    }
+};
 
 // ==================== ОСНОВНО ОБНОВЯВАНЕ НА ЛЕВИЯ ПАНЕЛ ====================
 window.updateCharacterUI = function(hero) {
@@ -624,7 +674,10 @@ window.updateCharacterUI = function(hero) {
         profileBox.appendChild(rpgBtn);
     }
 
-    window.renderTop6HeroesUI();
+    // Обновяваме лентата с любими герои
+    if (typeof window.renderFavoriteHeroesBar === 'function') {
+        window.renderFavoriteHeroesBar();
+    }
 };
 
 // ==================== ЖУРНАЛ НА СЪВЕТНИКА ====================
@@ -636,7 +689,7 @@ window.showAdvisorMsg = function(msg) {
     journal.innerHTML = window.eventHistory.map(function(line) { return '<p style="margin:4px 0; border-left:2px solid #ffaa44; padding-left:8px;">📜 ' + line + '</p>'; }).reverse().join(''); 
 }; 
 
-// ==================== ИНСПЕКЦИЯ НА ГЕРОЙ (БИВШ ИНСПЕКЦИЯ НА КЛАН) ====================
+// ==================== ИНСПЕКЦИЯ НА ГЕРОЙ ====================
 window.inspectHeroProfile = function(clanKey) { 
     if (!window.worldData || !window.worldData.clans || !window.worldData.clans[clanKey]) { 
         window.showAdvisorPopup("ГРЕШКА", "Неуспешно извличане на данни за избрания герой.", "error");
@@ -685,7 +738,7 @@ window.inspectHeroProfile = function(clanKey) {
 };
 window.inspectLeaderProfile = window.inspectHeroProfile;
 
-// ==================== АДАПТИВНА ХОРИЗОНТАЛНА ЛЕНТА С ГЕРОИ ====================
+// ==================== АДАПТИВНА ХОРИЗОНТАЛНА ЛЕНТА С ГЕРОИ (за десктоп) ====================
 let currentContainer = null;
 
 function createHeroCard(hero, isMobile) {
@@ -851,6 +904,110 @@ setTimeout(function addNavButtonsAutomatically() {
     window.addEventListener('resize', () => updateHeroesList());
 }, 1000);
 
+// ==================== АДАПТИВНИ БУТОНИ (ЦЯЛ ЕКРАН, ОТКРИЙ, ЕЛИТ) ====================
+function setupResponsiveButtons() {
+    // 1. Бутон "Цял екран"
+    let fullscreenBtn = document.querySelector('button[onclick*="toggleGameFullScreen"]');
+    if (!fullscreenBtn) {
+        const btns = document.querySelectorAll('.glass-btn');
+        for (let b of btns) {
+            if (b.innerText.includes('⬚') || b.innerHTML.includes('⬚')) {
+                fullscreenBtn = b;
+                break;
+            }
+        }
+    }
+    
+    // 2. Бутон "Открий нови земи" (само за десктоп, при ширина > 600)
+    let discoverBtn = document.getElementById('discover-lands-btn');
+    if (!discoverBtn && document.querySelector('.top-bar-controls') && window.innerWidth > 600) {
+        discoverBtn = document.createElement('button');
+        discoverBtn.id = 'discover-lands-btn';
+        discoverBtn.className = 'glass-btn';
+        discoverBtn.title = 'Открий нови земи';
+        discoverBtn.onclick = function() {
+            if (typeof window.generateProceduralRegions === 'function') {
+                let count = 5 + Math.floor(Math.random() * 6);
+                let generated = window.generateProceduralRegions(count, true);
+                if (window.showAdvisorMsg) {
+                    window.showAdvisorMsg(`🌍 Открихте ${generated} нови непознати земи!`);
+                } else {
+                    window.showAdvisorPopup("ОТКРИТИЕ", `Открихте ${generated} нови региона!`, "info");
+                }
+                if (document.getElementById('regions-map-overlay') && typeof window.openRegionsMap === 'function') {
+                    window.openRegionsMap();
+                }
+            } else {
+                window.showAdvisorPopup("ГРЕШКА", "Системата за генериране на региони не е заредена.", "error");
+            }
+        };
+        document.querySelector('.top-bar-controls').appendChild(discoverBtn);
+    }
+    
+    // 3. НОВ БУТОН: "Елитни герои" (отворя модала с най-висок опит/ниво)
+    let eliteBtn = document.getElementById('elite-heroes-btn');
+    if (!eliteBtn && document.querySelector('.top-bar-controls')) {
+        eliteBtn = document.createElement('button');
+        eliteBtn.id = 'elite-heroes-btn';
+        eliteBtn.className = 'glass-btn';
+        eliteBtn.innerHTML = '🏆 Елит';
+        eliteBtn.title = 'Елитни герои (най-висок опит)';
+        eliteBtn.onclick = function() {
+            if (typeof window.showEliteHeroesModal === 'function') {
+                window.showEliteHeroesModal();
+            } else {
+                window.showAdvisorPopup("ГРЕШКА", "Функцията showEliteHeroesModal не е дефинирана (проверете ui-modals.js).", "error");
+            }
+        };
+        document.querySelector('.top-bar-controls').appendChild(eliteBtn);
+    }
+    
+    // Обновяване на външния вид на бутоните според ширината на екрана (мобилни/десктоп)
+    function updateButtons() {
+        const isMobile = window.innerWidth <= 768;
+        
+        // Бутон за цял екран
+        if (fullscreenBtn) {
+            if (isMobile) {
+                fullscreenBtn.innerHTML = '⬚';
+                fullscreenBtn.style.cssText = 'font-size:1.2rem; padding:0; width:36px; height:36px; display:flex; align-items:center; justify-content:center;';
+            } else {
+                fullscreenBtn.innerHTML = '⬚ Цял екран';
+                fullscreenBtn.style.cssText = '';
+            }
+        }
+        
+        // Бутон "Открий"
+        if (discoverBtn) {
+            if (isMobile) {
+                discoverBtn.innerHTML = '🌍';
+                discoverBtn.style.cssText = 'font-size:1.2rem; padding:0; width:36px; height:36px; display:flex; align-items:center; justify-content:center;';
+            } else {
+                discoverBtn.innerHTML = '🌍 Открий';
+                discoverBtn.style.cssText = '';
+            }
+        }
+        
+        // Бутон "Елит"
+        if (eliteBtn) {
+            if (isMobile) {
+                eliteBtn.innerHTML = '🏆';
+                eliteBtn.style.cssText = 'font-size:1.2rem; padding:0; width:36px; height:36px; display:flex; align-items:center; justify-content:center;';
+            } else {
+                eliteBtn.innerHTML = '🏆 Елит';
+                eliteBtn.style.cssText = '';
+            }
+        }
+    }
+    
+    updateButtons();
+    window.addEventListener('resize', updateButtons);
+}
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', setupResponsiveButtons);
+} else {
+    setupResponsiveButtons();
+}
 
 // ==================== МОБИЛНА АДАПТАЦИЯ – БЕЗ ДУБЛИРАНЕ НА ЛЕНТИ ====================
 let isMobileLayoutActive = false;
@@ -1089,7 +1246,6 @@ function showAllHeroesModal() {
                 } else {
                     hero.isFavorite = !hero.isFavorite;
                     if (window.saveFavoriteHeroes) window.saveFavoriteHeroes();
-                    //if (window.renderTop6HeroesUI) window.renderTop6HeroesUI();
                 }
                 btn.innerText = hero.isFavorite ? '❤️' : '🤍';
             }
@@ -1215,3 +1371,10 @@ function showAllHeroesModal() {
         }
     });
 })();
+
+// ==================== ИНИЦИАЛИЗАЦИЯ НА НОВАТА ЛЕНТА С ЛЮБИМИ ГЕРОИ ====================
+setTimeout(() => {
+    if (typeof window.renderFavoriteHeroesBar === 'function') {
+        window.renderFavoriteHeroesBar();
+    }
+}, 500);
