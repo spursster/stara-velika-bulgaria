@@ -70,7 +70,7 @@ window.generateHeroPortrait = async function(hero, retries = 2) {
                 hero.portrait = url;
                 if (typeof window.saveGreatBulgariaGame === 'function') window.saveGreatBulgariaGame();
                 if (typeof window.renderSingleBar === 'function') window.renderSingleBar();
-                if (typeof window.renderTop6HeroesUI === 'function') window.renderTop6HeroesUI();
+                //if (typeof window.renderTop6HeroesUI === 'function') window.renderTop6HeroesUI();
                 if (window.currentHero === hero && typeof window.updateCharacterUI === 'function') {
                     window.updateCharacterUI(hero);
                 }
@@ -253,7 +253,7 @@ window.hireNewHero = function() {
     let goldSpan = document.getElementById('val-gold');
     if (goldSpan) goldSpan.innerText = oldHero.gold;
     if (window.updateCharacterUI) window.updateCharacterUI(oldHero);
-    if (window.renderTop6HeroesUI) window.renderTop6HeroesUI();
+    //if (window.renderTop6HeroesUI) window.renderTop6HeroesUI();
     if (typeof window.renderSingleBar === 'function') window.renderSingleBar();
     
     window.showAdvisorPopup(
@@ -1215,7 +1215,7 @@ function showAllHeroesModal() {
                 } else {
                     hero.isFavorite = !hero.isFavorite;
                     if (window.saveFavoriteHeroes) window.saveFavoriteHeroes();
-                    if (window.renderTop6HeroesUI) window.renderTop6HeroesUI();
+                    //if (window.renderTop6HeroesUI) window.renderTop6HeroesUI();
                 }
                 btn.innerText = hero.isFavorite ? '❤️' : '🤍';
             }
