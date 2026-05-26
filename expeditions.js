@@ -276,3 +276,15 @@ window.openExpeditionsMenu = window.openExpeditionsMenu || function() {
     if (typeof window.openExpeditionsMenu === 'function') window.openExpeditionsMenu();
     else console.warn("Експедициите не са готови");
 };
+
+// В expeditions.js, нов тип портал
+function openTradePortal(world) {
+    let items = [];
+    // Генерира няколко случайни артефакта от историческите
+    for (let i = 0; i < 3; i++) {
+        let artId = Object.keys(window.historicalArtifacts)[Math.floor(Math.random() * Object.keys(window.historicalArtifacts).length)];
+        let art = { ...window.historicalArtifacts[artId], price: 300 + Math.random() * 700 };
+        items.push(art);
+    }
+    showTradeModal(items, world);
+}
