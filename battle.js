@@ -1,13 +1,13 @@
 /**
 ==========================================================================
 ПРОЕКТ: ВЕЛИКА БЪЛГАРИЯ
-ФАЙЛ: battle.js (ФИНАЛНА ПОДОБРЕНА ВЕРСИЯ – С ПОДДРЪЖКА НА ADVANCED SKILLS)
-ВЕРСИЯ: 6.0
+ФАЙЛ: battle.js (ФИНАЛНА ВЕРСИЯ – С ПЕРМАНЕНТНО ЗДРАВЕ, СМЪРТ И ВЪЗСТАНОВЯВАНЕ)
+ВЕРСИЯ: 7.0
 ==========================================================================
 */
 
 (function() {
-    // ==================== СТИЛОВЕ (същите като преди) ====================
+    // ==================== СТИЛОВЕ ====================
     if (!document.getElementById('battle-styles-v2')) {
         const style = document.createElement('style');
         style.id = 'battle-styles-v2';
@@ -332,7 +332,6 @@
         return effects;
     }
 
-    // КОРИГИРАНА: правилно вземане на любимеца от hero.pet
     function getPetEffects(hero) {
         if (!hero || !hero.pet) return {};
         let petId = hero.pet;
@@ -367,16 +366,14 @@
             if (petName === "родов сокол") effects.damageBonus = 0.15;
             else if (petName === "вълк единак") effects.critChanceBonus = 0.10;
             else if (petName === "степен жребец") effects.damageReduction = 0.15;
-            else if (petName === "балканска мечка") { /* defense handled in recalculateHeroPower */ }
+            else if (petName === "балканска мечка") { /* handled elsewhere */ }
         }
         return effects;
     }
 
-    // НОВА ФУНКЦИЯ: взема бонуси от напредналите умения (skills.js)
     function getAdvancedSkillCombatBonuses(hero) {
         if (!hero || typeof window.getAdvancedSkillBonuses !== 'function') return {};
         const bonuses = window.getAdvancedSkillBonuses(hero);
-        // Филтрираме само бонусите, които влияят на битката
         return {
             critChance: bonuses.critChance || 0,
             firstStrikeBonus: bonuses.firstStrikeBonus || 0,
@@ -388,6 +385,60 @@
             attackBonus: bonuses.attackBonus || 0,
             spellPower: bonuses.spellPower || 0
         };
+    }
+
+    // ==================== НОВИ ФУНКЦИИ ЗА HP И ВЪЗСТАНОВЯВАНЕ ====================
+    function calculatePostBattleHealing(originalHero, battleHero) {
+        let heal = 0;
+        // Базово възстановяване от умение "endurance" (2 HP на ниво)
+        let endurance = originalHero.skills?.endurance || 0;
+        heal += endurance * 2;
+        // Бонус от артефакти с hpRegen
+        if (originalHero.inventory) {
+            originalHero.inventory.forEach(item => {
+                if (item.bonus && item.bonus.hpRegen) heal += item.bonus.hpRegen;
+            });
+        }
+        // Бонус от любимец с healAllies
+        if (originalHero.pet && window.divinePets?.[originalHero.pet]?.bonus?.healAllies) {
+            heal += window.divinePets[originalHero.pet].bonus.healAllies;
+        }
+        return Math.max(5, heal); // минимум 5
+    }
+
+    function applyBattleOutcome(originalHero, battleHero) {
+        if (!originalHero || !battleHero) return;
+        let damageTaken = battleHero.maxHp - battleHero.hp;
+        if (damageTaken > 0) {
+            originalHero.hp = Math.max(0, (originalHero.hp || originalHero.maxHp) - damageTaken);
+            if (originalHero.hp <= 0) {
+                // 5% шанс за перманентна смърт
+                let deathRoll = Math.random() < 0.05;
+                if (deathRoll) {
+                    originalHero.isAlive = false;
+                    originalHero.isJoined = false;
+                    originalHero.isFavorite = false;
+                    if (window.addWorldEvent) {
+                        window.addWorldEvent("💀 ПЕРМАНЕНТНА СМЪРТ", `${originalHero.name} загина завинаги в битка!`, "💀");
+                    }
+                    // Актуализиране на UI
+                    if (typeof window.renderFavoriteHeroesBar === 'function') window.renderFavoriteHeroesBar();
+                    if (typeof window.renderTop6HeroesUI === 'function') window.renderTop6HeroesUI();
+                    if (typeof window.renderBarracksLayout === 'function') window.renderBarracksLayout();
+                } else {
+                    originalHero.hp = 1;
+                    if (window.addWorldEvent) window.addWorldEvent("⚡ ЕДВА ОЦЕЛЯВАНЕ", `${originalHero.name} беше на ръба на смъртта, но оживя!`, "⚡");
+                }
+            }
+        }
+        // Прилагане на възстановяване след битка (ако е жив)
+        if (originalHero.hp > 0) {
+            let postHeal = calculatePostBattleHealing(originalHero, battleHero);
+            if (postHeal > 0) {
+                originalHero.hp = Math.min(originalHero.maxHp, originalHero.hp + postHeal);
+            }
+        }
+        originalHero.hp = Math.min(originalHero.maxHp, originalHero.hp);
     }
 
     // ==================== ОСНОВНА ФУНКЦИЯ ====================
@@ -418,7 +469,7 @@
         if (window.worldData && window.worldData.clans) {
             for (let key in window.worldData.clans) {
                 let clan = window.worldData.clans[key];
-                if (clan.isJoined === true) {
+                if (clan.isJoined === true && clan.isAlive !== false) {
                     if (window.ensureCompleteArmyDetails) window.ensureCompleteArmyDetails(clan);
                     let calculatedPower = clan.heroPower || 100;
                     if (window.recalculateHeroPower) calculatedPower = window.recalculateHeroPower(clan);
@@ -436,8 +487,8 @@
                         name: clan.leaderName || clan.name || key,
                         className: clan.currentClass || "Воевода",
                         power: finalPower,
-                        hp: 100,
-                        maxHp: 100,
+                        hp: clan.hp || clan.maxHp || 100,
+                        maxHp: clan.maxHp || 100,
                         icon: "⚔️",
                         armySize: armySize,
                         clanObj: clan,
@@ -447,7 +498,7 @@
             }
         }
 
-        if (heroes.length === 0 && window.currentHero) {
+        if (heroes.length === 0 && window.currentHero && window.currentHero.isAlive !== false) {
             let heroPower = window.currentHero.heroPower || 100;
             let armySize = window.currentHero.armySize || 300;
             heroes.push({
@@ -455,8 +506,8 @@
                 name: window.currentHero.name || "Воевода",
                 className: window.currentHero.currentClass || "Багатур",
                 power: Math.max(50, heroPower),
-                hp: 100,
-                maxHp: 100,
+                hp: window.currentHero.hp || window.currentHero.maxHp || 100,
+                maxHp: window.currentHero.maxHp || 100,
                 icon: "⚔️",
                 armySize: armySize,
                 clanObj: window.currentHero,
@@ -466,7 +517,7 @@
 
         const battleHeroes = heroes.slice(0, 5);
         if (battleHeroes.length === 0) {
-            if (window.showAdvisorMsg) window.showAdvisorMsg("Нямате отключени герои за битка!");
+            if (window.showAdvisorMsg) window.showAdvisorMsg("Нямате живи герои за битка!");
             return;
         }
 
@@ -499,7 +550,7 @@
                         <div class="hero-name">${hero.name.substring(0, 12)}</div>
                         <div class="hero-class">${hero.className}</div>
                         <div class="hp-bar-bg">
-                            <div class="hp-bar-fill" id="hp-${hero.id}" style="width: 100%"></div>
+                            <div class="hp-bar-fill" id="hp-${hero.id}" style="width: ${(hero.hp/hero.maxHp)*100}%"></div>
                         </div>
                         <div class="hero-hp-text" id="hp-text-${hero.id}">❤️ ${hero.hp}/${hero.maxHp}</div>
                         <div class="hero-power">⚔️ ${hero.power}</div>
@@ -646,18 +697,14 @@
                 if (currentMonster.hp <= 0) return;
                 let baseDamage = Math.max(1, Math.floor(hero.power * (0.5 + Math.random() * 0.7)));
                 
-                // Бонуси от войски
                 let troopEffects = hero.troopEffects || {};
-                // Бонуси от любимец
                 let petEffects = getPetEffects(hero.clanObj);
-                // Бонуси от напреднали умения
                 let skillBonuses = getAdvancedSkillCombatBonuses(hero.clanObj);
                 
                 let damageMultiplier = 1.0;
-                let critChance = 0.15; // базов шанс
+                let critChance = 0.15;
                 let isFirstStrike = (currentRound === 1);
                 
-                // Добавяне на бонуси
                 if (troopEffects.firstStrikeBonus && isFirstStrike) {
                     damageMultiplier += troopEffects.firstStrikeBonus;
                     addLog(`   ⚡ ${hero.name} използва Пикиране от войски (първи удар)!`);
@@ -682,19 +729,16 @@
                     baseDamage += skillBonuses.attackBonus;
                     addLog(`   📈 ${hero.name} получава +${skillBonuses.attackBonus} атака от умения!`);
                 }
-                // Критичен шанс
                 if (troopEffects.critChanceBonus) critChance += troopEffects.critChanceBonus;
                 if (petEffects.critChanceBonus) critChance += petEffects.critChanceBonus;
                 if (skillBonuses.critChance) critChance += skillBonuses.critChance;
                 
-                // Огнени щети от любимец
                 if (petEffects.fireDamage) {
                     let fireBonus = petEffects.fireDamage;
                     addLog(`   🔥 ${hero.name} добавя ${fireBonus} огнени щети от любимеца!`);
                     baseDamage += fireBonus;
                 }
                 
-                // Бонус от ниско здраве (берсерк)
                 if (skillBonuses.lowHpBonus && hero.hp < hero.maxHp * 0.3) {
                     let lowBonus = 1 + (hero.maxHp - hero.hp) / hero.maxHp * skillBonuses.lowHpBonus;
                     damageMultiplier += lowBonus - 1;
@@ -709,7 +753,6 @@
                     finalDamage = Math.floor(finalDamage * critMultiplier);
                 }
                 
-                // Life steal от войски и любимец
                 let totalLifeSteal = troopEffects.lifeSteal + petEffects.lifeSteal;
                 if (totalLifeSteal > 0) {
                     let healAmount = Math.floor(finalDamage * totalLifeSteal);
@@ -807,11 +850,23 @@
                 
                 if (window.addWorldEvent) window.addWorldEvent(`🏆 ПОБЕДА В БИТКА`, `${battleHeroes.map(h => h.name).join(', ')} победиха ${monster.name}!`, "🏆");
                 
+                // ---------- ПРИЛАГАНЕ НА HP ПРОМЕНИТЕ СЛЕД ПОБЕДА ----------
+                if (window._lastBattleHeroes) {
+                    for (let i = 0; i < window._lastBattleHeroes.length; i++) {
+                        let battleHero = window._lastBattleHeroes[i];
+                        let originalHero = battleHero.clanObj;
+                        if (originalHero && battleHero.hp !== undefined) {
+                            applyBattleOutcome(originalHero, battleHero);
+                        }
+                    }
+                }
+                // ------------------------------------------------------------
+                
                 battleActive = false;
                 const attackBtn = document.getElementById('battle-attack');
                 if (attackBtn) attackBtn.disabled = true;
                 if (typeof window.renderSingleBar === 'function') window.renderSingleBar();
-                if (typeof window.renderTop6LeadersUI === 'function') window.renderTop6LeadersUI();
+                if (typeof window.renderTop6HeroesUI === 'function') window.renderTop6HeroesUI();
                 if (typeof window.hidePortalIndicator === 'function') window.hidePortalIndicator();
                 if (typeof window.endGroupBattle === 'function') window.endGroupBattle(true, 'victory');
                 window.currentBattleState = null;
@@ -835,7 +890,6 @@
             let petEffects = getPetEffects(target.clanObj);
             let skillBonuses = getAdvancedSkillCombatBonuses(target.clanObj);
             
-            // Намаляване на щетите
             let damageReduction = 0;
             if (troopEffects.damageReduction) damageReduction += troopEffects.damageReduction;
             if (petEffects.damageReduction) damageReduction += petEffects.damageReduction;
@@ -846,7 +900,6 @@
                 damage = reduced;
             }
             
-            // Непробиваемост (invincibleOnce)
             if (troopEffects.hasInvincibleOnce && !invincibleUsed[target.id]) {
                 invincibleUsed[target.id] = true;
                 damage = 0;
@@ -864,7 +917,6 @@
             screenShake();
             
             if (target.hp <= 0) {
-                // Опит за възкресение от pet или умения
                 let reviveChance = petEffects.reviveChance || skillBonuses.reviveChance || 0;
                 if (reviveChance > 0 && Math.random() < reviveChance) {
                     target.hp = Math.floor(target.maxHp * 0.3);
@@ -881,6 +933,19 @@
             if (!stillAlive) {
                 addLog(`━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`);
                 addLog(`💀 ЗАГУБА! Всички герои са победени! 💀`, true);
+                
+                // ---------- ПРИЛАГАНЕ НА HP ПРОМЕНИТЕ СЛЕД ЗАГУБА ----------
+                if (window._lastBattleHeroes) {
+                    for (let i = 0; i < window._lastBattleHeroes.length; i++) {
+                        let battleHero = window._lastBattleHeroes[i];
+                        let originalHero = battleHero.clanObj;
+                        if (originalHero && battleHero.hp !== undefined) {
+                            applyBattleOutcome(originalHero, battleHero);
+                        }
+                    }
+                }
+                // ------------------------------------------------------------
+                
                 battleActive = false;
                 const attackBtn = document.getElementById('battle-attack');
                 if (attackBtn) attackBtn.disabled = true;
@@ -911,6 +976,25 @@
             currentHeroes.forEach(hero => {
                 if (hero.hp > 0) applyArmyLossFromDamage(hero, 0.2);
             });
+            
+            // ---------- ПРИЛАГАНЕ НА HP ПРОМЕНИТЕ ПРИ ОТСТЪПЛЕНИЕ ----------
+            if (window._lastBattleHeroes) {
+                for (let i = 0; i < window._lastBattleHeroes.length; i++) {
+                    let battleHero = window._lastBattleHeroes[i];
+                    let originalHero = battleHero.clanObj;
+                    if (originalHero && battleHero.hp !== undefined) {
+                        // При отстъпление героите не умират, но губят HP
+                        let damageTaken = battleHero.maxHp - battleHero.hp;
+                        if (damageTaken > 0) {
+                            originalHero.hp = Math.max(1, (originalHero.hp || originalHero.maxHp) - damageTaken);
+                        }
+                        if (originalHero.hp <= 0) originalHero.hp = 1;
+                        originalHero.hp = Math.min(originalHero.maxHp, originalHero.hp);
+                    }
+                }
+            }
+            // ---------------------------------------------------------------
+            
             battleActive = false;
             const attackBtn = document.getElementById('battle-attack');
             if (attackBtn) attackBtn.disabled = true;
@@ -946,7 +1030,7 @@
         addLog(`📌 Натисни "АТАКА" за рунд!`);
         addLog(`⚠️ ВНИМАНИЕ: Загубата на живот намалява армията ви!`);
         updateUI();
-        console.log("✅ Битката е готова (с поддръжка на специални умения, домашни любимци и advanced skills)!");
+        console.log("✅ Битката е готова (с поддръжка на перманентно здраве, смърт и възстановяване)!");
     };
-    console.log("✅ battle.js зареден (подобрена версия с advanced skills)");
+    console.log("✅ battle.js зареден (версия 7.0 – с HP система)");
 })();
