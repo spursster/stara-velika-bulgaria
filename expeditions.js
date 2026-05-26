@@ -1,6 +1,6 @@
 /**
 МОДУЛ: МИСТИЧНИ ПОРТАЛИ И ЕКСПЕДИЦИИ – ВЕЛИКА БЪЛГАРИЯ
-ВЕРСИЯ: 5.0 – ХАРМОНИЗИРАНА С НОВАТА ТЕРМИНОЛОГИЯ
+ВЕРСИЯ: 6.0 – ПОРТАЛИ ВЪРХУ КАРТАТА
 */
 window.addPortalLog = window.addPortalLog || function(heroName, worldName, isVictory) {
     console.log(`[PortalLog] ${heroName} ${isVictory ? 'победи' : 'загуби'} в ${worldName}`);
@@ -35,7 +35,48 @@ if (window.unknownWorldsDatabase.length < 50) {
     }
 }
 
-window.currentPortalState = {
+// ========== НОВА СТРУКТУРА ЗА АКТИВНИ ПОРТАЛИ ==========
+window.activePortals = window.activePortals || []; // { regionName, world, enemyLevel, explorationProgress }
+
+// Функция за добавяне на портал в конкретен регион
+window.addPortalToRegion = function(regionName, world, enemyLevel) {
+    if (!regionName || !world) return false;
+    // Проверка дали вече има портал в този регион
+    if (window.activePortals.some(p => p.regionName === regionName)) return false;
+    window.activePortals.push({
+        regionName: regionName,
+        world: world,
+        enemyLevel: enemyLevel,
+        explorationProgress: 0
+    });
+    // Актуализираме картата (ако е отворена)
+    if (typeof window.refreshMap === 'function') window.refreshMap();
+    return true;
+};
+
+// Функция за премахване на портал след използване
+window.removePortalFromRegion = function(regionName) {
+    const index = window.activePortals.findIndex(p => p.regionName === regionName);
+    if (index !== -1) {
+        window.activePortals.splice(index, 1);
+        if (typeof window.refreshMap === 'function') window.refreshMap();
+        return true;
+    }
+    return false;
+};
+
+// Помощна функция за избор на случаен регион (без портал)
+function getRandomRegionWithoutPortal() {
+    if (!window.worldData || !window.worldData.regions) return null;
+    const allRegions = Object.keys(window.worldData.regions);
+    const occupied = window.activePortals.map(p => p.regionName);
+    const free = allRegions.filter(r => !occupied.includes(r));
+    if (free.length === 0) return null;
+    return free[Math.floor(Math.random() * free.length)];
+}
+
+// Старата глобална променлива (запазваме за обратна съвместимост)
+window.currentPortalState = window.currentPortalState || {
     currentWorld: window.unknownWorldsDatabase[0],
     isOpen: false,
     explorationProgress: {},
@@ -96,20 +137,13 @@ function autoBattleForHero(hero, portalWorld, enemyLevel) {
 
 function attemptAutonomousPortalEntry() {
     if (!window.worldData || !window.worldData.clans) return;
-    if (!window.currentPortalState || !window.currentPortalState.isOpen) return;
-
-    // Събираме любимите герои, за да не ги използваме за авто-експедиции
+    if (window.activePortals.length === 0) return;
     let favoriteIds = new Set();
     for (let key in window.worldData.clans) {
         let hero = window.worldData.clans[key];
-        if (hero.isFavorite === true) {
-            favoriteIds.add(key);
-        }
+        if (hero.isFavorite === true) favoriteIds.add(key);
     }
-
-    // Само 25% шанс за автономно влизане
     if (Math.random() > 0.25) return;
-
     let autonomousHeroes = [];
     for (let key in window.worldData.clans) {
         let hero = window.worldData.clans[key];
@@ -117,41 +151,43 @@ function attemptAutonomousPortalEntry() {
             autonomousHeroes.push(hero);
         }
     }
-
     if (autonomousHeroes.length === 0) return;
-
     const randomHero = autonomousHeroes[Math.floor(Math.random() * autonomousHeroes.length)];
-    const portalWorld = window.currentPortalState.currentWorld;
-    const enemyLevel = window.currentPortalState.enemyLevel;
-    const isVictory = autoBattleForHero(randomHero, portalWorld, enemyLevel);
-
+    const randomPortal = window.activePortals[Math.floor(Math.random() * window.activePortals.length)];
+    const isVictory = autoBattleForHero(randomHero, randomPortal.world, randomPortal.enemyLevel);
     if (isVictory && Math.random() < 0.1 && !randomHero.pet) {
-        randomHero.pet = portalWorld.petName;
-        if (window.showAdvisorMsg) window.showAdvisorMsg(`🎉 ${randomHero.name} опитоми ${portalWorld.petName}!`);
-    }
-
-    if (!window.currentPortalState.explorationProgress[portalWorld.name]) {
-        window.currentPortalState.explorationProgress[portalWorld.name] = 0;
+        randomHero.pet = randomPortal.world.petName;
+        if (window.showAdvisorMsg) window.showAdvisorMsg(`🎉 ${randomHero.name} опитоми ${randomPortal.world.petName}!`);
     }
     if (isVictory) {
-        window.currentPortalState.explorationProgress[portalWorld.name] = Math.min(100, window.currentPortalState.explorationProgress[portalWorld.name] + 5);
+        randomPortal.explorationProgress = Math.min(100, (randomPortal.explorationProgress || 0) + 5);
+        if (randomPortal.explorationProgress >= 100) {
+            window.removePortalFromRegion(randomPortal.regionName);
+        }
     }
-
     if (window.ensureCompleteArmyDetails) window.ensureCompleteArmyDetails(randomHero);
     if (typeof window.renderSingleBar === 'function') window.renderSingleBar();
     if (window.renderTop6HeroesUI) window.renderTop6HeroesUI();
-
 }
 
 window.advanceExpeditionsTurn = function() {
-    const randomIndex = Math.floor(Math.random() * window.unknownWorldsDatabase.length);
-    const selectedWorld = window.unknownWorldsDatabase[randomIndex];
-    if (!window.currentPortalState.explorationProgress[selectedWorld.name]) window.currentPortalState.explorationProgress[selectedWorld.name] = 0;
-    window.currentPortalState.isOpen = Math.random() < 0.40;
-    window.currentPortalState.currentWorld = selectedWorld;
-    window.currentPortalState.enemyLevel = Math.floor(Math.random() * 1000) + 1;
-    window.updatePortalContainerUI();
+    // 30% шанс да се отвори нов портал (ако има под 3 активни)
+    if (window.activePortals.length < 3 && Math.random() < 0.3) {
+        const randomRegion = getRandomRegionWithoutPortal();
+        if (randomRegion) {
+            const randomIndex = Math.floor(Math.random() * window.unknownWorldsDatabase.length);
+            const selectedWorld = { ...window.unknownWorldsDatabase[randomIndex] };
+            const enemyLevel = Math.floor(Math.random() * 1000) + 1;
+            window.addPortalToRegion(randomRegion, selectedWorld, enemyLevel);
+            if (window.addWorldEvent) {
+                window.addWorldEvent("🌀 НОВ ПОРТАЛ", `Мистериозен портал се появи в ${randomRegion}!`, "🌀");
+            }
+        }
+    }
+    // Автономни опити за влизане
     attemptAutonomousPortalEntry();
+    // Актуализираме UI на страничната лента (за обратна съвместимост)
+    window.updatePortalContainerUI();
 };
 
 window.updatePortalContainerUI = function() {
@@ -164,53 +200,57 @@ window.updatePortalContainerUI = function() {
             document.body.appendChild(container);
         }
     }
-    const state = window.currentPortalState;
-    const world = state.currentWorld;
-    const progress = state.explorationProgress[world.name] || 0;
-    let statusText = state.isOpen ? `<b style="color: #00ffcc; text-shadow: 0 0 8px #00ffcc; animation: blink 1s infinite;">💥 ОТВОРЕН ЗА ИЗСЛЕДВАНЕ</b>` : `<span style="color: #666;">🛑 СТАБИЛИЗИРА СЕ (ЗАТВОРЕН)</span>`;
-    let cursorStyle = state.isOpen ? "cursor: pointer; border-color: #a020f0; box-shadow: 0 0 15px rgba(160,32,240,0.4); " : "cursor: not-allowed; border-color: #333; ";
-    let bgAnim = state.isOpen ? "background: radial-gradient(circle, #1a0033 0%, #050505 100%); " : "background: #0d0d0d; ";
-    if (!document.getElementById('portal-glow-style')) {
-        const style = document.createElement('style');
-        style.id = 'portal-glow-style';
-        style.innerHTML = `@keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } } .portal-active-glow { animation: portalPulse 2s infinite alternate; } @keyframes portalPulse { 0% { box-shadow: 0 0 10px #8a2be2; } 100% { box-shadow: 0 0 25px #00ffcc; } }`;
-        document.head.appendChild(style);
+    if (window.activePortals.length === 0) {
+        container.innerHTML = `<div style="text-align:center; border-bottom:1px solid #333; padding-bottom:5px; margin-bottom:8px;"><span style="font-size:18px;">🌌</span> <b style="color:#ffd700;">МИСТИЧНИ ПОРТАЛИ</b></div><div style="font-size:12px; color:#aaa;">Няма активни портали.</div>`;
+        window.hidePortalIndicator();
+        return;
     }
-    container.style.cssText = `${bgAnim} border: 2px solid #d4af37; border-radius: 8px; padding: 15px; color: #fff; font-family: 'Cinzel', serif; margin-bottom: 15px; transition: all 0.3s; ${cursorStyle}`;
-    if (state.isOpen) container.classList.add('portal-active-glow');
-    else container.classList.remove('portal-active-glow');
-    container.onclick = state.isOpen ? () => window.enterMysticPortal() : null;
-    container.innerHTML = `<div style="text-align: center; border-bottom: 1px solid #333; padding-bottom: 5px; margin-bottom: 8px;"> <span style="font-size: 18px;">🌌</span> <b style="color: #ffd700; font-size: 13px;">МИСТИЧЕН ПОРТАЛ</b> </div> <div style="font-size: 12px; line-height: 1.6;"> <div> Свят: <span style="color: #fff; font-weight: bold;">"${world.name}"</span></div> <div>📡 Статус: ${statusText}</div> <div>🧬 Същества: <span style="color: #aaa;">${world.creatureType}</span></div> <div> Опасност: <b style="color: #ff3366;">Ниво ${state.enemyLevel}</b></div> <div style="margin-top: 6px;"> <div style="display: flex; justify-content: space-between; font-size: 10px; color: #888;"> <span>Проучен:</span> <span>${progress}%</span> </div> <div style="width: 100%; background: #222; height: 5px; border-radius: 3px; overflow: hidden; border: 1px solid #444; margin-top: 2px;"> <div style="width: ${progress}%; background: #8a2be2; height: 100%;"></div> </div> </div> </div>`;
-    createPortalIndicator();
-    state.isOpen ? window.showPortalIndicator() : window.hidePortalIndicator();
+    let html = `<div style="text-align:center; border-bottom:1px solid #333; padding-bottom:5px; margin-bottom:8px;"><span style="font-size:18px;">🌌</span> <b style="color:#ffd700;">АКТИВНИ ПОРТАЛИ (${window.activePortals.length})</b></div>`;
+    window.activePortals.forEach(portal => {
+        const progress = portal.explorationProgress || 0;
+        html += `<div style="font-size:11px; margin-bottom:10px; background:rgba(0,0,0,0.3); border-radius:8px; padding:5px;">
+                    <div>📍 ${portal.regionName}</div>
+                    <div>🌍 ${portal.world.name}</div>
+                    <div>⚠️ Ниво ${portal.enemyLevel}</div>
+                    <div class="xp-bar" style="background:#222; height:3px; margin:4px 0;"><div style="width:${progress}%; background:#8a2be2; height:100%;"></div></div>
+                    <button class="enter-portal-btn" data-region="${portal.regionName}" style="background:#daa520; border:none; border-radius:20px; padding:2px 8px; color:#000; font-size:10px; cursor:pointer;">🌌 ВЛЕЗ</button>
+                </div>`;
+    });
+    container.innerHTML = html;
+    container.querySelectorAll('.enter-portal-btn').forEach(btn => {
+        btn.onclick = () => {
+            const regionName = btn.getAttribute('data-region');
+            const portal = window.activePortals.find(p => p.regionName === regionName);
+            if (portal) window.enterMysticPortal(regionName);
+        };
+    });
+    window.showPortalIndicator();
 };
 
-window.enterMysticPortal = function() {
-    const state = window.currentPortalState;
-    if (!state.isOpen) return;
+window.enterMysticPortal = function(regionName) {
+    const portalIndex = window.activePortals.findIndex(p => p.regionName === regionName);
+    if (portalIndex === -1) {
+        if (window.showAdvisorMsg) window.showAdvisorMsg("Този портал вече не съществува!");
+        return;
+    }
+    const portal = window.activePortals[portalIndex];
     let portalTargetRegion = {
-        id: "portal_world_" + state.currentWorld.name.replace(/\s+/g, '_'),
-        name: `🌌 Портал: ${state.currentWorld.name} (Ниво ${state.enemyLevel})`,
-        armySize: Math.floor(state.enemyLevel * 1.5) + 80,
-        defenseLevel: Math.min(10, Math.ceil(state.enemyLevel / 100)),
-        difficulty: Math.min(100, Math.ceil(state.enemyLevel / 10)),
+        id: "portal_world_" + portal.world.name.replace(/\s+/g, '_'),
+        name: `🌌 Портал: ${portal.world.name} (Ниво ${portal.enemyLevel})`,
+        armySize: Math.floor(portal.enemyLevel * 1.5) + 80,
+        defenseLevel: Math.min(10, Math.ceil(portal.enemyLevel / 100)),
+        difficulty: Math.min(100, Math.ceil(portal.enemyLevel / 10)),
         isPortalWorld: true
     };
-    if (window.showAdvisorMsg) window.showAdvisorMsg(`🌌 Преминаване през пространството! Петицата навлиза в "${state.currentWorld.name}"!`);
-    state.isOpen = false;
-    window.updatePortalContainerUI();
-
-    const currentWorldName = state.currentWorld.name;
-    const currentPetName = state.currentWorld.petName;
-
+    if (window.showAdvisorMsg) window.showAdvisorMsg(`🌌 Преминаване през портала в ${regionName}! Навлизате в "${portal.world.name}".`);
+    
     if (window.startBattle) {
         window.startBattle(portalTargetRegion);
-        
         const originalEndGroupBattle = window.endGroupBattle || function(){};
         window.endGroupBattle = function(isVictory, reason) {
             originalEndGroupBattle(isVictory, reason);
             if (isVictory) {
-                state.explorationProgress[currentWorldName] = Math.min(100, (state.explorationProgress[currentWorldName] || 0) + 10);
+                portal.explorationProgress = Math.min(100, (portal.explorationProgress || 0) + 10);
                 const diceRoll = Math.floor(Math.random() * 100) + 1;
                 if (diceRoll === 77) {
                     let luckyHero = null;
@@ -219,52 +259,69 @@ window.enterMysticPortal = function() {
                         if (alive.length) luckyHero = alive[Math.floor(Math.random() * alive.length)];
                     }
                     if (luckyHero && luckyHero.clanObj) {
-                        luckyHero.clanObj.pet = currentPetName;
+                        luckyHero.clanObj.pet = portal.world.petName;
                         if (window.worldData && window.worldData.clans && luckyHero.clanObj.clan) {
-                            window.worldData.clans[luckyHero.clanObj.clan].pet = currentPetName;
+                            window.worldData.clans[luckyHero.clanObj.clan].pet = portal.world.petName;
                         }
-                        if (window.showAdvisorMsg) window.showAdvisorMsg(`🎉 ЛЕГЕНДАРЕН КЪСМЕТ! ${luckyHero.name} опитоми "${currentPetName}"!`);
+                        if (window.showAdvisorMsg) window.showAdvisorMsg(`🎉 ЛЕГЕНДАРЕН КЪСМЕТ! ${luckyHero.name} опитоми "${portal.world.petName}"!`);
                     } else if (window.currentHero) {
-                        window.currentHero.pet = currentPetName;
-                        if (window.showAdvisorMsg) window.showAdvisorMsg(`🎉 ЛЕГЕНДАРЕН КЪСМЕТ! ${window.currentHero.name} опитоми "${currentPetName}"!`);
+                        window.currentHero.pet = portal.world.petName;
+                        if (window.showAdvisorMsg) window.showAdvisorMsg(`🎉 ЛЕГЕНДАРЕН КЪСМЕТ! ${window.currentHero.name} опитоми "${portal.world.petName}"!`);
                     }
                 }
+                if (portal.explorationProgress >= 100) {
+                    window.removePortalFromRegion(regionName);
+                    if (window.showAdvisorMsg) window.showAdvisorMsg(`🌀 Порталът в ${regionName} се затвори след пълно проучване!`);
+                } else {
+                    // Актуализираме UI на страничната лента
+                    window.updatePortalContainerUI();
+                    // Обновяваме картата, за да премахнем иконката, ако е проучен 100%
+                    if (typeof window.refreshMap === 'function') window.refreshMap();
+                }
+            } else {
+                // При загуба порталът остава, но може да се намали прогреса (по желание)
+                if (window.showAdvisorMsg) window.showAdvisorMsg(`💔 Загубихте битката. Порталът в ${regionName} остава отворен.`);
             }
             window.endGroupBattle = originalEndGroupBattle;
-            window.updatePortalContainerUI();
         };
     }
 };
 
 window.openExpeditionsMenu = function() {
     if (document.getElementById('expeditions-modal')) return;
-    const state = window.currentPortalState;
-    if (!state) {
-        if (window.showAdvisorPopup) {
-            window.showAdvisorPopup("ГРЕШКА", "Порталната система не е готова.", "error");
-        } else {
-            alert("Порталната система не е готова.");
-        }
+    if (window.activePortals.length === 0) {
+        if (window.showAdvisorPopup) window.showAdvisorPopup("ЕКСПЕДИЦИИ", "Няма активни портали в момента.", "info");
         return;
     }
-    const world = state.currentWorld;
-    const isOpen = state.isOpen;
-    const enemyLevel = state.enemyLevel;
-    const progress = (state.explorationProgress && state.explorationProgress[world.name]) || 0;
     const modal = document.createElement('div');
     modal.id = 'expeditions-modal';
     modal.style.cssText = `position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); backdrop-filter: blur(8px); z-index: 200000; display: flex; align-items: center; justify-content: center; font-family: 'Cinzel', serif;`;
-    modal.innerHTML = `<div style="background: #0a0a1a; border: 2px solid #d4af37; border-radius: 24px; padding: 25px; max-width: 400px; width: 90%; text-align: center; position: relative;"> <button class="close-modal-x" style="position: absolute; top: 10px; left: 10px; background: rgba(255,80,80,0.2); border: none; color: #ff8888; font-size: 20px; width: 32px; height: 32px; border-radius: 50%; cursor: pointer;">✕</button> <h2 style="color: #ffd700;">🌌 Мистични Експедиции</h2> <div style="margin: 15px 0; text-align: left;"> <div>🪐 Свят: <span style="color: #ffd700;">${world.name}</span></div> <div>📡 Статус: <span style="color: ${isOpen ? '#00ffcc' : '#ff6666'};">${isOpen ? 'ОТВОРЕН' : 'ЗАТВОРЕН'}</span></div> <div>🔥 Опасност: Ниво ${enemyLevel}</div> <div>🧬 Същества: ${world.creatureType}</div> <div>📊 Проучване: ${progress}%</div> </div> ${isOpen ? `<button id="enter-portal-btn" style="background:#daa520; color:#000; border:none; padding:12px 20px; border-radius:40px; font-weight:bold; cursor:pointer; width:100%; margin-top:10px;">🌌 ВЛЕЗ В ПОРТАЛА</button>` : `<button style="background:#2c2c3a; border:1px solid #d4af37; color:#666; padding:12px 20px; border-radius:40px; width:100%; cursor:not-allowed;" disabled>🔒 Порталът е затворен</button>`} <button class="close-modal-footer" style="background:#2c2c3a; border:1px solid #d4af37; color:#ffd700; padding:8px 16px; border-radius:30px; cursor:pointer; width:100%; margin-top:15px;">Затвори</button> </div>`;
+    let content = `<div style="background: #0a0a1a; border: 2px solid #d4af37; border-radius: 24px; padding: 25px; max-width: 400px; width: 90%; text-align: center; position: relative;"> 
+        <button class="close-modal-x" style="position: absolute; top: 10px; left: 10px; background: rgba(255,80,80,0.2); border: none; color: #ff8888; font-size: 20px; width: 32px; height: 32px; border-radius: 50%; cursor: pointer;">✕</button>
+        <h2 style="color: #ffd700;">🌌 Мистични Експедиции</h2>
+        <div style="margin: 15px 0; text-align: left;">`;
+    window.activePortals.forEach(portal => {
+        content += `<div style="margin-bottom: 12px; background:rgba(0,0,0,0.3); border-radius:12px; padding:8px;">
+                        <div>📍 Регион: <strong>${portal.regionName}</strong></div>
+                        <div>🌍 Свят: ${portal.world.name}</div>
+                        <div>⚠️ Опасност: Ниво ${portal.enemyLevel}</div>
+                        <div>📊 Проучване: ${portal.explorationProgress || 0}%</div>
+                        <button class="enter-portal-modal-btn" data-region="${portal.regionName}" style="background:#daa520; border:none; border-radius:20px; padding:4px 12px; margin-top:6px; cursor:pointer;">🌌 ВЛЕЗ</button>
+                    </div>`;
+    });
+    content += `</div><button class="close-modal-footer" style="background:#2c2c3a; border:1px solid #d4af37; color:#ffd700; padding:8px 16px; border-radius:30px; cursor:pointer; width:100%; margin-top:15px;">Затвори</button></div>`;
+    modal.innerHTML = content;
     document.body.appendChild(modal);
     const closeModal = () => modal.remove();
     modal.querySelectorAll('.close-modal-x, .close-modal-footer').forEach(btn => btn.addEventListener('click', closeModal));
     modal.addEventListener('click', (e) => { if (e.target === modal) closeModal(); });
-    if (isOpen) {
-        modal.querySelector('#enter-portal-btn')?.addEventListener('click', () => {
+    modal.querySelectorAll('.enter-portal-modal-btn').forEach(btn => {
+        btn.onclick = () => {
+            const region = btn.getAttribute('data-region');
             closeModal();
-            if (typeof window.enterMysticPortal === 'function') window.enterMysticPortal();
-        });
-    }
+            window.enterMysticPortal(region);
+        };
+    });
 };
 
 setTimeout(() => {
@@ -272,19 +329,4 @@ setTimeout(() => {
     window.updatePortalContainerUI();
 }, 1000);
 
-window.openExpeditionsMenu = window.openExpeditionsMenu || function() {
-    if (typeof window.openExpeditionsMenu === 'function') window.openExpeditionsMenu();
-    else console.warn("Експедициите не са готови");
-};
-
-// В expeditions.js, нов тип портал
-function openTradePortal(world) {
-    let items = [];
-    // Генерира няколко случайни артефакта от историческите
-    for (let i = 0; i < 3; i++) {
-        let artId = Object.keys(window.historicalArtifacts)[Math.floor(Math.random() * Object.keys(window.historicalArtifacts).length)];
-        let art = { ...window.historicalArtifacts[artId], price: 300 + Math.random() * 700 };
-        items.push(art);
-    }
-    showTradeModal(items, world);
-}
+console.log("✅ expeditions.js версия 6.0 зареден – портали върху картата");
