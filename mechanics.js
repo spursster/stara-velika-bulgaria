@@ -207,4 +207,3 @@ window.recalculateHeroMaxHp = function(hero) {
     if (hero.hp > hero.maxHp) hero.hp = hero.maxHp;
     return hero.maxHp;
 };
-
