@@ -545,63 +545,6 @@ function showHeroProfile(hero) {
     }
 }
 
-// ==================== ЛЕНТА НА ЕЛИТА (6-те героя) ====================
-window.renderTop6HeroesUI = function() { 
-    const eliteBar = document.getElementById('top-elite-bar'); 
-    if (!eliteBar) return; 
-    if (!window.worldData || !window.worldData.clans) { 
-        if (window.currentHero) { 
-            window.worldData = window.worldData || {}; 
-            window.worldData.clans = window.worldData.clans || {}; 
-            window.worldData.clans[window.currentHero.clan] = window.currentHero; 
-        } else { return; } 
-    } 
-    let heroes = Object.entries(window.worldData.clans).map(([clanKey, data]) => { return { clanKey: clanKey, ...data }; }); 
-    
-    if (window.gameMode === 'solo') {
-        let mainClan = window.currentHero ? window.currentHero.clan : null;
-        heroes = heroes.filter(h => h.clanKey === mainClan || h.isCompanion === true);
-    }
-    
-    heroes.sort((a, b) => {
-        if ((b.level || 1) !== (a.level || 1)) return (b.level || 1) - (a.level || 1);
-        let xpA = a.isAuto ? (a.xp || 0) : (a.storedXP || 0);
-        let xpB = b.isAuto ? (b.xp || 0) : (b.storedXP || 0);
-        return xpB - xpA;
-    });
-    
-    const top5 = heroes.slice(0, 5); 
-    eliteBar.innerHTML = ""; 
-    eliteBar.style.cssText = "display: flex; gap: 10px; overflow-x: auto; padding: 10px; background: rgba(0,0,0,0.4);"; 
-    top5.forEach(hero => { 
-        if (window.initializeHeroRPGData) window.initializeHeroRPGData(hero); 
-        const card = document.createElement('div'); 
-        card.className = "elite-hero-card"; 
-        card.style.cssText = "background: rgba(0,0,0,0.6); border-radius: 12px; padding: 6px 12px; min-width: 100px; text-align: center; cursor: pointer; border: 1px solid #c9a87b; flex-shrink: 0;";
-        card.setAttribute('data-class', hero.currentClass || '');
-        card.onclick = (e) => { if (e.target.classList.contains('auto-btn')) return; if (window.openHeroRPGModal) window.openHeroRPGModal(hero.clanKey); }; 
-        
-        let currentXP = hero.isAuto ? (hero.xp || 0) : (hero.storedXP || 0);
-        let reqXP = 150; 
-        if (window.rpgDatabase && window.rpgDatabase.getXPRequiredForLevel) { 
-            reqXP = window.rpgDatabase.getXPRequiredForLevel(hero.level || 1); 
-        } 
-        if (reqXP <= 0) reqXP = 1; 
-        let xpPercent = Math.min(100, Math.floor((currentXP / reqXP) * 100)); 
-        let petIcon = ""; 
-        if (hero.pet && window.rpgDatabase && window.rpgDatabase.petsDatabase && window.rpgDatabase.petsDatabase[hero.pet]) { 
-            petIcon = window.rpgDatabase.petsDatabase[hero.pet].icon; 
-        } 
-        const autoClass = hero.isAuto ? "auto-btn active" : "auto-btn"; 
-        const autoText = hero.isAuto ? "Auto" : "Manual"; 
-        const classIcon = getClassIcon(hero.currentClass);
-        
-        card.innerHTML = petIcon + '<div style="font-weight:bold;color:#ffdd99;">' + classIcon + ' ' + (hero.name || hero.hero || "Воевода") + '</div><div style="font-size:10px;color:#ccaa77;">Ниво ' + (hero.level || 1) + ' | ' + (hero.currentClass || "Багатур") + '</div><div style="background:#2a1a0a;height:3px;border-radius:2px;margin:4px 0;"><div style="background:#44aa44;height:100%;width:' + xpPercent + '%;border-radius:2px;"></div></div><button class="' + autoClass + '" style="background:#2c1a0c;border:none;font-size:9px;padding:2px 6px;border-radius:20px;color:#ffdd99;margin-top:4px;cursor:pointer;">' + autoText + '</button>'; 
-        eliteBar.appendChild(card); 
-    }); 
-}; 
-
-window.renderTop6LeadersUI = window.renderTop6HeroesUI; // съвместимост
 
 // ==================== ОСНОВНО ОБНОВЯВАНЕ НА ЛЕВИЯ ПАНЕЛ ====================
 window.updateCharacterUI = function(hero) {
