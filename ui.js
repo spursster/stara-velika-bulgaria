@@ -545,12 +545,11 @@ function showHeroProfile(hero) {
     }
 }
 
-// ==================== ЛЕНТА С ЛЮБИМИ ГЕРОИ (5 СЛОТА, ПЪЛНА ФУНКЦИОНАЛНОСТ) ====================
+// ==================== ЛЕНТА С ЛЮБИМИ ГЕРОИ (5 СЛОТА, XP ЛЕНТА, AUTO/РЪЧЕН ТОГЪЛ) ====================
 window.renderFavoriteHeroesBar = function() {
     const container = document.getElementById('favorite-heroes-bar');
     if (!container) return;
     
-    // Вземаме всички любими герои (isFavorite === true)
     let favoriteHeroesList = [];
     if (window.worldData && window.worldData.clans) {
         for (let key in window.worldData.clans) {
@@ -560,9 +559,8 @@ window.renderFavoriteHeroesBar = function() {
             }
         }
     }
-    // Сортиране (по ниво, за подредба)
+    // Сортиране (по ниво)
     favoriteHeroesList.sort((a,b) => (b.level || 1) - (a.level || 1));
-    // Показваме първите 5 (ако има повече от 5, показваме само 5 – останалите не се виждат, но те са любими)
     const top5 = favoriteHeroesList.slice(0, 5);
     
     container.innerHTML = '';
@@ -574,7 +572,7 @@ window.renderFavoriteHeroesBar = function() {
         
         if (hero) {
             // Цвят на рамката според класа
-            let borderColor = "#c9a87b"; // златисто по подразбиране
+            let borderColor = "#c9a87b";
             if (window.getClassBorderColor) {
                 borderColor = window.getClassBorderColor(hero.currentClass);
             } else if (hero.classColor) {
@@ -590,8 +588,57 @@ window.renderFavoriteHeroesBar = function() {
                 `<img src="${hero.portrait}" style="width: 36px; height: 36px; border-radius: 50%; object-fit: cover; margin-bottom: 4px;">` : 
                 `<div class="hero-icon" style="font-size: 28px;">${classIcon}</div>`;
             
-            // Сърце (любим/нелюбим)
-            const heartIcon = '❤️';
+            // XP изчисления
+            let currentXP = hero.isAuto ? (hero.xp || 0) : (hero.storedXP || 0);
+            let reqXP = 150;
+            if (window.rpgDatabase && window.rpgDatabase.getXPRequiredForLevel) {
+                reqXP = window.rpgDatabase.getXPRequiredForLevel(hero.level || 1);
+            }
+            if (reqXP <= 0) reqXP = 1;
+            let xpPercent = Math.min(100, Math.floor((currentXP / reqXP) * 100));
+            const fillGrad = hero.isAuto ? "linear-gradient(90deg, #00ffcc, #0072ff)" : "linear-gradient(90deg, #ffcc00, #ff6600)";
+            
+            // Текущ режим
+            const isAutoMode = hero.isAuto !== undefined ? hero.isAuto : true;
+            const autoIcon = isAutoMode ? "🤖" : "👤";
+            const autoTitle = isAutoMode ? "Автоматичен (Auto)" : "Ръчен (Manual) – може да учи умения";
+            
+            // Бутон за превключване на режима
+            const toggleAuto = () => {
+                if (window.setAuto) {
+                    window.setAuto(hero.id, !isAutoMode);
+                }
+                hero.isAuto = !isAutoMode;
+                if (!isAutoMode && hero.xp > 0) {
+                    hero.storedXP = (hero.storedXP || 0) + hero.xp;
+                    hero.xp = 0;
+                } else if (isAutoMode && hero.storedXP > 0) {
+                    let amount = hero.storedXP;
+                    hero.storedXP = 0;
+                    if (window.gainHeroXP) window.gainHeroXP(hero, amount);
+                }
+                if (window.renderFavoriteHeroesBar) window.renderFavoriteHeroesBar();
+                if (window.updateCharacterUI) window.updateCharacterUI(hero);
+                if (window.renderTop6HeroesUI) window.renderTop6HeroesUI();
+                if (window.saveAuto) window.saveAuto();
+            };
+            
+            // Бутон за умения (само за ръчен режим)
+            const skillsBtnHtml = !isAutoMode ? 
+                `<button class="skills-toggle" style="background: none; border: none; font-size: 12px; cursor: pointer; margin-left: 4px; color: #ffd700;" title="Отвори дърветата с умения">⭐</button>` : '';
+            
+            const skillsHandler = (e) => {
+                e.stopPropagation();
+                // Запазваме текущия герой като активен временно, за да отворим неговите умения
+                const originalHero = window.currentHero;
+                window.currentHero = hero;
+                if (typeof window.openSkillsUI === 'function') {
+                    window.openSkillsUI();
+                } else {
+                    window.showAdvisorPopup("ГРЕШКА", "Системата за умения не е заредена.", "error");
+                }
+                window.currentHero = originalHero;
+            };
             
             slot.innerHTML = `
                 <div style="position: relative; width: 100%;">
@@ -599,33 +646,55 @@ window.renderFavoriteHeroesBar = function() {
                     ${portraitHtml}
                     <div class="hero-name" title="${hero.name}">${hero.name.substring(0, 10)}</div>
                     <div class="hero-level">Ниво ${hero.level || 1}</div>
-                    <div class="hero-power" style="font-size: 8px; color: #ffaa66;">💪 ${hero.heroPower || 100}</div>
+                    <div class="xp-bar-container" style="background: #2a1a0a; height: 4px; border-radius: 2px; margin: 4px 0; overflow: hidden;">
+                        <div class="xp-bar-fill" style="background: ${fillGrad}; width: ${xpPercent}%; height: 100%;"></div>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 2px;">
+                        <div class="hero-power" style="font-size: 8px; color: #ffaa66;">💪 ${hero.heroPower || 100}</div>
+                        <div style="display: flex; gap: 4px;">
+                            <button class="auto-toggle" style="background: rgba(0,0,0,0.5); border: 1px solid #d4af37; border-radius: 12px; padding: 1px 6px; font-size: 8px; cursor: pointer; color: #ffdd99;" title="${autoTitle}">${autoIcon}</button>
+                            ${skillsBtnHtml}
+                        </div>
+                    </div>
                 </div>
             `;
             
-            // Клик върху целия слот – отваря профил на героя
+            // Клик върху целия слот – отваря профил (освен ако не е натиснат бутон)
             slot.onclick = (e) => {
                 if (e.target.classList.contains('favorite-heart-btn')) return;
+                if (e.target.classList.contains('auto-toggle')) return;
+                if (e.target.classList.contains('skills-toggle')) return;
                 if (window.showHeroProfile) window.showHeroProfile(hero);
             };
             
-            // Бутон за сърце – премахва от любими
+            // Сърце – премахва от любими
             const heartBtn = slot.querySelector('.favorite-heart-btn');
             if (heartBtn) {
                 heartBtn.onclick = (e) => {
                     e.stopPropagation();
-                    // Премахваме от любими
                     hero.isFavorite = false;
-                    // Запазваме в localStorage (ако има функция)
                     if (typeof window.saveFavoriteHeroes === 'function') window.saveFavoriteHeroes();
                     if (typeof window.saveFavorites === 'function') window.saveFavorites();
-                    // Обновяваме лентата
                     window.renderFavoriteHeroesBar();
-                    // Актуализираме и другите UI (например казарми)
                     if (typeof window.renderBarracksLayout === 'function') window.renderBarracksLayout();
-                    if (typeof window.renderTop6HeroesUI === 'function') window.renderTop6HeroesUI(); // ако я има
                 };
             }
+            
+            // Бутон за AUTO/Manual превключване
+            const autoBtn = slot.querySelector('.auto-toggle');
+            if (autoBtn) {
+                autoBtn.onclick = (e) => {
+                    e.stopPropagation();
+                    toggleAuto();
+                };
+            }
+            
+            // Бутон за умения (само при ръчен режим)
+            const skillsBtn = slot.querySelector('.skills-toggle');
+            if (skillsBtn) {
+                skillsBtn.onclick = skillsHandler;
+            }
+            
         } else {
             // Празен слот – добавяне на любим
             slot.classList.add('empty');
@@ -645,7 +714,6 @@ window.renderFavoriteHeroesBar = function() {
         container.appendChild(slot);
     }
 };
-
 // ==================== ОСНОВНО ОБНОВЯВАНЕ НА ЛЕВИЯ ПАНЕЛ ====================
 window.updateCharacterUI = function(hero) {
     if (!hero) return;
