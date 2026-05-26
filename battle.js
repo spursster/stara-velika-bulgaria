@@ -853,13 +853,11 @@ function applyBattleOutcome(originalHero, battleHero) {
                 if (window.addWorldEvent) window.addWorldEvent(`🏆 ПОБЕДА В БИТКА`, `${battleHeroes.map(h => h.name).join(', ')} победиха ${monster.name}!`, "🏆");
                 
               // ---------- ПРИЛАГАНЕ НА HP ПРОМЕНИТЕ СЛЕД ПОБЕДА ----------
-if (window._lastBattleHeroes) {
-    for (let i = 0; i < window._lastBattleHeroes.length; i++) {
-        let battleHero = window._lastBattleHeroes[i];
-        let originalHero = battleHero.clanObj;
-        if (originalHero && battleHero.hp !== undefined) {
-            applyBattleOutcome(originalHero, battleHero);
-        }
+for (let i = 0; i < currentHeroes.length; i++) {
+    let battleHero = currentHeroes[i];
+    let originalHero = battleHero.clanObj;
+    if (originalHero && battleHero.hp !== undefined) {
+        applyBattleOutcome(originalHero, battleHero);
     }
 }
 // НОВО: ОБНОВЯВАНЕ НА UI СЛЕД ПРОМЯНА НА HP
@@ -947,16 +945,15 @@ if (typeof window.renderTop6HeroesUI === 'function') {
                 addLog(`━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`);
                 addLog(`💀 ЗАГУБА! Всички герои са победени! 💀`, true);
                 
-                // ---------- ПРИЛАГАНЕ НА HP ПРОМЕНИТЕ СЛЕД ЗАГУБА ----------
-if (window._lastBattleHeroes) {
-    for (let i = 0; i < window._lastBattleHeroes.length; i++) {
-        let battleHero = window._lastBattleHeroes[i];
+        
+ // ---------- ПРИЛАГАНЕ НА HP ПРОМЕНИТЕ СЛЕД ЗАГУБА ----------
+    for (let i = 0; i < currentHeroes.length; i++) {
+        let battleHero = currentHeroes[i];
         let originalHero = battleHero.clanObj;
         if (originalHero && battleHero.hp !== undefined) {
             applyBattleOutcome(originalHero, battleHero);
         }
     }
-}
 // ОБНОВЯВАНЕ НА UI
 if (window.currentHero && typeof window.updateCharacterUI === 'function') {
     window.updateCharacterUI(window.currentHero);
@@ -1001,18 +998,12 @@ if (typeof window.renderTop6HeroesUI === 'function') {
             });
             
           // ---------- ПРИЛАГАНЕ НА HP ПРОМЕНИТЕ ПРИ ОТСТЪПЛЕНИЕ ----------
-if (window._lastBattleHeroes) {
-    for (let i = 0; i < window._lastBattleHeroes.length; i++) {
-        let battleHero = window._lastBattleHeroes[i];
-        let originalHero = battleHero.clanObj;
-        if (originalHero && battleHero.hp !== undefined) {
-            let damageTaken = battleHero.maxHp - battleHero.hp;
-            if (damageTaken > 0) {
-                originalHero.hp = Math.max(1, (originalHero.hp || originalHero.maxHp) - damageTaken);
-            }
-            if (originalHero.hp <= 0) originalHero.hp = 1;
-            originalHero.hp = Math.min(originalHero.maxHp, originalHero.hp);
-        }
+
+for (let i = 0; i < currentHeroes.length; i++) {
+    let battleHero = currentHeroes[i];
+    let originalHero = battleHero.clanObj;
+    if (originalHero && battleHero.hp !== undefined) {
+        applyBattleOutcome(originalHero, battleHero);
     }
 }
 // ОБНОВЯВАНЕ НА UI
