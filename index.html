@@ -629,7 +629,20 @@
         
         // Автономно завладяване на региони
         if (typeof window.autonomousRegionConquest === 'function') window.autonomousRegionConquest();
-        
+
+        // Пасивно възстановяване на HP за всички живи герои
+if (window.worldData && window.worldData.clans) {
+    for (let key in window.worldData.clans) {
+        let hero = window.worldData.clans[key];
+        if (hero.isJoined === true && hero.isAlive !== false && hero.hp < hero.maxHp) {
+            let regen = Math.max(1, Math.floor(hero.maxHp * 0.05)); // 5% от maxHp
+            // Бонус от умение "endurance"
+            let endurance = hero.skills?.endurance || 0;
+            regen += endurance;
+            hero.hp = Math.min(hero.maxHp, hero.hp + regen);
+        }
+    }
+}
         // Нападения от съперници
         if (typeof window.checkRandomAttack === 'function') window.checkRandomAttack();
         
