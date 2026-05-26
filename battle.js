@@ -406,40 +406,42 @@
         return Math.max(5, heal); // минимум 5
     }
 
-    function applyBattleOutcome(originalHero, battleHero) {
-        if (!originalHero || !battleHero) return;
-        let damageTaken = battleHero.maxHp - battleHero.hp;
-        if (damageTaken > 0) {
-            originalHero.hp = Math.max(0, (originalHero.hp || originalHero.maxHp) - damageTaken);
-            if (originalHero.hp <= 0) {
-                // 5% шанс за перманентна смърт
-                let deathRoll = Math.random() < 0.05;
-                if (deathRoll) {
-                    originalHero.isAlive = false;
-                    originalHero.isJoined = false;
-                    originalHero.isFavorite = false;
-                    if (window.addWorldEvent) {
-                        window.addWorldEvent("💀 ПЕРМАНЕНТНА СМЪРТ", `${originalHero.name} загина завинаги в битка!`, "💀");
-                    }
-                    // Актуализиране на UI
-                    if (typeof window.renderFavoriteHeroesBar === 'function') window.renderFavoriteHeroesBar();
-                    if (typeof window.renderTop6HeroesUI === 'function') window.renderTop6HeroesUI();
-                    if (typeof window.renderBarracksLayout === 'function') window.renderBarracksLayout();
-                } else {
-                    originalHero.hp = 1;
-                    if (window.addWorldEvent) window.addWorldEvent("⚡ ЕДВА ОЦЕЛЯВАНЕ", `${originalHero.name} беше на ръба на смъртта, но оживя!`, "⚡");
+function applyBattleOutcome(originalHero, battleHero) {
+    if (!originalHero || !battleHero) return;
+    let damageTaken = battleHero.maxHp - battleHero.hp;
+    if (damageTaken > 0) {
+        originalHero.hp = Math.max(0, (originalHero.hp || originalHero.maxHp) - damageTaken);
+        console.log(`❤️ ${originalHero.name} загуби ${damageTaken} HP. Остава: ${originalHero.hp}/${originalHero.maxHp}`);
+        if (originalHero.hp <= 0) {
+            let deathRoll = Math.random() < 0.05;
+            if (deathRoll) {
+                originalHero.isAlive = false;
+                originalHero.isJoined = false;
+                originalHero.isFavorite = false;
+                if (window.addWorldEvent) {
+                    window.addWorldEvent("💀 ПЕРМАНЕНТНА СМЪРТ", `${originalHero.name} загина завинаги в битка!`, "💀");
                 }
+                if (typeof window.renderFavoriteHeroesBar === 'function') window.renderFavoriteHeroesBar();
+                if (typeof window.renderTop6HeroesUI === 'function') window.renderTop6HeroesUI();
+                if (typeof window.renderBarracksLayout === 'function') window.renderBarracksLayout();
+            } else {
+                originalHero.hp = 1;
+                if (window.addWorldEvent) window.addWorldEvent("⚡ ЕДВА ОЦЕЛЯВАНЕ", `${originalHero.name} беше на ръба на смъртта, но оживя!`, "⚡");
             }
         }
-        // Прилагане на възстановяване след битка (ако е жив)
-        if (originalHero.hp > 0) {
-            let postHeal = calculatePostBattleHealing(originalHero, battleHero);
-            if (postHeal > 0) {
-                originalHero.hp = Math.min(originalHero.maxHp, originalHero.hp + postHeal);
-            }
-        }
-        originalHero.hp = Math.min(originalHero.maxHp, originalHero.hp);
     }
+    let postHeal = calculatePostBattleHealing(originalHero, battleHero);
+    if (postHeal > 0 && originalHero.hp > 0) {
+        originalHero.hp = Math.min(originalHero.maxHp, originalHero.hp + postHeal);
+        console.log(`💚 ${originalHero.name} се излекува с ${postHeal} HP след битката.`);
+    }
+    originalHero.hp = Math.min(originalHero.maxHp, originalHero.hp);
+    
+    // Обновяване на UI, ако героят е активният
+    if (originalHero === window.currentHero && typeof window.updateCharacterUI === 'function') {
+        window.updateCharacterUI(originalHero);
+    }
+}
 
     // ==================== ОСНОВНА ФУНКЦИЯ ====================
     window.startBattle = function(regionInput) {
