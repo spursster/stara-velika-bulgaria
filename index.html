@@ -717,45 +717,32 @@ if (window.worldData && window.worldData.clans) {
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 
 <script>
-// ==================== ИНТЕРАКТИВНА КАРТА (ФИНАЛНА ВЕРСИЯ) ====================
+// ==================== ИНТЕРАКТИВНА КАРТА (РАБОТЕЩА ВЕРСИЯ) ====================
 (function() {
-    // Повишаваме z-index на inspectRegion, ако е по-нисък от картата
+    // Повишаваме z-index на inspectRegion (ако се отваря)
     const originalInspect = window.inspectRegion;
     if (originalInspect) {
         window.inspectRegion = function(regionName) {
-            // Извикваме оригиналната функция
             originalInspect(regionName);
-            // След малко, повишаваме z-index на появилия се модал
             setTimeout(() => {
                 const modal = document.getElementById('region-inspect-overlay');
-                if (modal) {
-                    modal.style.zIndex = '300000'; // по-високо от картата (200000)
-                }
+                if (modal) modal.style.zIndex = '300000';
             }, 50);
         };
     }
 
-    // Генератор на карта (адаптивен)
+    // Генериране на карта с фиксирани размери (700x500)
     window.generateMapCanvas = function(containerId) {
         const container = document.getElementById(containerId);
-        if (!container) {
-            console.error(`Контейнер #${containerId} не съществува`);
-            return;
-        }
-        if (!window.worldData || !window.worldData.regions) {
-            container.innerHTML = '<div style="color:#ffaa66;">Няма заредени региони.</div>';
-            return;
-        }
+        if (!container) return console.error(`Контейнер #${containerId} не съществува`);
 
-        // Вземаме размерите на контейнера (адаптивно)
-        const containerRect = container.getBoundingClientRect();
-        const mapWidth = Math.min(containerRect.width, 900); // макс 900px, но се адаптира
-        const mapHeight = Math.min(containerRect.height, 600);
+        const mapWidth = 700;
+        const mapHeight = 500;
         const tileMargin = 2;
 
-        let regions = Object.values(window.worldData.regions);
-        if (regions.length === 0) {
-            container.innerHTML = '<div style="color:#ffaa66;">Няма региони за показване.</div>';
+        let regions = window.worldData ? Object.values(window.worldData.regions) : [];
+        if (!regions.length) {
+            container.innerHTML = '<div style="color:#ffaa66;">Няма заредени региони.</div>';
             return;
         }
         regions.sort((a, b) => a.name.localeCompare(b.name));
@@ -771,7 +758,6 @@ if (window.worldData && window.worldData.clans) {
         canvas.style.height = 'auto';
         canvas.style.border = '2px solid #d4af37';
         canvas.style.borderRadius = '8px';
-        canvas.style.cursor = 'pointer';
         canvas.style.backgroundColor = '#1a1a2e';
         container.innerHTML = '';
         container.appendChild(canvas);
@@ -789,15 +775,14 @@ if (window.worldData && window.worldData.clans) {
             const y = row * (tileHeight + tileMargin);
             let bgColor = '#5a5a5a';
             if (ownedRegions.includes(region.name)) bgColor = '#2c5a2a';
-            else if (region.nativeClans && region.nativeClans.length > 0) bgColor = '#8b3a3a';
-            else bgColor = '#4a4a4a';
+            else if (region.nativeClans && region.nativeClans.length) bgColor = '#8b3a3a';
             ctx.fillStyle = bgColor;
             ctx.fillRect(x, y, tileWidth, tileHeight);
             ctx.strokeStyle = '#d4af37';
             ctx.strokeRect(x, y, tileWidth, tileHeight);
-            let shortName = region.name.length > 10 ? region.name.substring(0, 8) + '..' : region.name;
+            let shortName = region.name.length > 10 ? region.name.slice(0, 8) + '..' : region.name;
             ctx.fillStyle = '#ffdd99';
-            ctx.font = `${Math.min(12, Math.floor(tileHeight / 4))}px Cinzel, serif`;
+            ctx.font = `${Math.min(11, Math.floor(tileHeight / 4))}px Cinzel, serif`;
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
             ctx.fillText(shortName, x + tileWidth / 2, y + tileHeight / 2);
@@ -811,13 +796,8 @@ if (window.worldData && window.worldData.clans) {
             const mouseX = (e.clientX - rect.left) * scaleX;
             const mouseY = (e.clientY - rect.top) * scaleY;
             const hit = regionRects.find(r => mouseX >= r.x && mouseX <= r.x + r.w && mouseY >= r.y && mouseY <= r.y + r.h);
-            if (hit) {
-                if (typeof window.inspectRegion === 'function') {
-                    window.inspectRegion(hit.region.name);
-                } else {
-                    alert(`Регион: ${hit.region.name}\nТерен: ${hit.region.terrain}\nРесурс: ${hit.region.resource}`);
-                }
-            }
+            if (hit && window.inspectRegion) window.inspectRegion(hit.region.name);
+            else if (hit) alert(`Регион: ${hit.region.name}`);
         });
 
         canvas.addEventListener('mousemove', (e) => {
@@ -828,11 +808,11 @@ if (window.worldData && window.worldData.clans) {
             const mouseY = (e.clientY - rect.top) * scaleY;
             const hit = regionRects.find(r => mouseX >= r.x && mouseX <= r.x + r.w && mouseY >= r.y && mouseY <= r.y + r.h);
             canvas.style.cursor = hit ? 'pointer' : 'default';
-            if (hit) canvas.title = `${hit.region.name} (Сила: ${hit.region.armySize}, Защита: ${hit.region.defenseLevel})`;
-            else canvas.title = '';
+            canvas.title = hit ? `${hit.region.name} (Сила: ${hit.region.armySize})` : '';
         });
     };
 
+    // Отваряне на картата в модал
     window.openInteractiveMap = function() {
         const oldModal = document.getElementById('interactive-map-modal');
         if (oldModal) oldModal.remove();
@@ -844,7 +824,7 @@ if (window.worldData && window.worldData.clans) {
             left: 0;
             width: 100%;
             height: 100%;
-            background: rgba(0, 0, 0, 0.85);
+            background: rgba(0,0,0,0.85);
             backdrop-filter: blur(8px);
             z-index: 200000;
             display: flex;
@@ -855,24 +835,29 @@ if (window.worldData && window.worldData.clans) {
             box-sizing: border-box;
         `;
         modal.innerHTML = `
-            <div style="background: #0a0a1a; border: 2px solid #d4af37; border-radius: 24px; padding: 20px; max-width: 95vw; max-height: 90vh; overflow: auto; text-align: center;">
-                <h2 style="color:#ffd700; margin-top:0;">🗺️ ИНТЕРАКТИВНА КАРТА</h2>
-                <div id="map-container-modal" style="margin:10px 0; width: 100%; min-width: 300px; overflow-x: auto;"></div>
-                <button id="close-map-modal" style="background:#2c1a0c; border:1px solid #d4af37; border-radius:30px; padding:8px 20px; color:#ffdd99; cursor:pointer; margin-top:15px;">Затвори</button>
+            <div style="background: #0a0a1a; border: 2px solid #d4af37; border-radius: 24px; padding: 20px; max-width: 90vw; max-height: 90vh; overflow: auto; text-align: center;">
+                <h2 style="color:#ffd700; margin:0 0 10px 0;">🗺️ ИНТЕРАКТИВНА КАРТА</h2>
+                <div id="map-container-modal" style="margin:10px 0; display: flex; justify-content: center;"></div>
+                <div style="display: flex; gap: 10px; justify-content: center; margin-top: 15px;">
+                    <button id="refresh-map-btn" style="background:#2c5a2a; border:1px solid #d4af37; border-radius:30px; padding:6px 15px; color:#ffdd99; cursor:pointer;">🔄 Обнови картата</button>
+                    <button id="close-map-modal" style="background:#2c1a0c; border:1px solid #d4af37; border-radius:30px; padding:6px 15px; color:#ffdd99; cursor:pointer;">Затвори</button>
+                </div>
             </div>
         `;
         document.body.appendChild(modal);
         const mapContainer = modal.querySelector('#map-container-modal');
-        if (typeof window.generateMapCanvas === 'function') {
-            window.generateMapCanvas('map-container-modal');
-        } else {
-            mapContainer.innerHTML = '<div style="color:#ffaa66;">Грешка: картата не може да се генерира</div>';
-        }
+        const refresh = () => window.generateMapCanvas('map-container-modal');
+        refresh();
+        modal.querySelector('#refresh-map-btn').onclick = refresh;
         modal.querySelector('#close-map-modal').onclick = () => modal.remove();
         modal.addEventListener('click', (e) => { if (e.target === modal) modal.remove(); });
     };
 
-    console.log("✅ Интерактивна карта заредена (адаптивна, с фикс за инспекция)");
+    // Ако искате да замените старата функция openRegionsMap:
+    if (typeof window.openRegionsMap === 'function') {
+        window.openRegionsMap = window.openInteractiveMap;
+    }
+    console.log("✅ Интерактивна карта заредена (финална версия)");
 })();
 </script>
 </body>
