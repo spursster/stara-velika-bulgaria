@@ -344,7 +344,6 @@ function equipArtifact(hero, artifact, slotIndex) {
     else if (window.saveHeroData) window.saveHeroData(hero);
 }
 
-// ==================== ПРОФИЛ НА ГЕРОЯ ====================
 function showHeroProfile(hero) {
     let needXP = 100 + (hero.level - 1) * 50;
     let currentXP = hero.isAuto ? (hero.xp || 0) : (hero.storedXP || 0);
@@ -409,6 +408,9 @@ function showHeroProfile(hero) {
     let autoBtnHtml = `<button id="auto-mode-btn" style="background:${autoOn ? '#4a6a2a' : '#2c1a0c'}; border:none; border-radius:20px; color:#ffdd99; padding:8px 16px; margin-top:10px; cursor:pointer; width:100%;">${autoOn ? '✅ AUTO РЕЖИМ: ВКЛЮЧЕН' : '🤖 AUTO РЕЖИМ: ИЗКЛЮЧЕН'}</button>`;
     let generatePortraitBtnHtml = `<button id="generate-portrait-btn" style="background:#2c1a0c; border:none; border-radius:20px; color:#ffdd99; padding:6px 12px; margin-top:8px; width:100%; cursor:pointer;">🎨 Генерирай портрет</button>`;
     
+    // --- НОВ БУТОН ЗА СПОДЕЛЯНЕ ---
+    let shareBtnHtml = `<button id="share-hero-btn" style="background:#2c1a0c; border:none; border-radius:20px; color:#ffdd99; padding:6px 12px; margin-top:8px; width:100%; cursor:pointer;">📤 Сподели визитка</button>`;
+    
     let oldModal = document.getElementById('ultimate-profile-modal');
     if (oldModal) oldModal.remove();
     let modal = document.createElement('div');
@@ -433,12 +435,14 @@ function showHeroProfile(hero) {
                 ${skillsHtml}
                 ${autoBtnHtml}
                 ${generatePortraitBtnHtml}
+                ${shareBtnHtml}
                 <button id="close-profile-modal" style="background:#2c1a0c; border:none; padding:8px 20px; border-radius:40px; color:#ffdd99; margin-top:15px; cursor:pointer; width:100%;">🔒 ЗАТВОРИ</button>
             </div>
         </div>
     `;
     document.body.appendChild(modal);
     
+    // --- ВСИЧКИ СЛУШАТЕЛИ ---
     // Клик върху екипировъчен слот
     modal.querySelectorAll('.equip-slot').forEach(slotDiv => {
         slotDiv.addEventListener('click', (e) => {
@@ -530,7 +534,8 @@ function showHeroProfile(hero) {
             if (!window.rpgDatabase) window.rpgDatabase = {};
             if (!window.rpgDatabase.petsDatabase) window.rpgDatabase.petsDatabase = {};
             window.rpgDatabase.petsDatabase[randomPet.id] = { name: randomPet.name, icon: randomPet.icon, desc: randomPet.bonus };
-            modal.remove(); showHeroProfile(hero);
+            modal.remove();
+            showHeroProfile(hero);
         };
     }
     
@@ -543,8 +548,16 @@ function showHeroProfile(hero) {
             else window.showAdvisorPopup("ГРЕШКА", "Интерфейсът за умения не е зареден (skills-ui.js).", "error");
         };
     }
+    
+    // ========== НОВ БУТОН ЗА СПОДЕЛЯНЕ ==========
+    const shareBtn = modal.querySelector('#share-hero-btn');
+    if (shareBtn) {
+        shareBtn.onclick = async () => {
+            modal.remove();   // затваряме профила, за да не пречи на canvas
+            await window.shareHeroCard(hero);
+        };
+    }
 }
-
 // ==================== ЛЕНТА С ЛЮБИМИ ГЕРОИ (5 СЛОТА, XP ЛЕНТА, AUTO/РЪЧЕН ТОГЪЛ) ====================
 window.renderFavoriteHeroesBar = function() {
     const container = document.getElementById('favorite-heroes-bar');
