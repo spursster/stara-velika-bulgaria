@@ -1370,3 +1370,12 @@ setTimeout(() => {
         window.renderFavoriteHeroesBar();
     }
 }, 500);
+
+window.openHeroRPGModal = function(heroId) {
+    let hero = null;
+    if (heroId && window.worldData?.clans?.[heroId]) hero = window.worldData.clans[heroId];
+    else if (window.currentHero) hero = window.currentHero;
+    if (!hero) return;
+    if (typeof window.showHeroProfile === 'function') window.showHeroProfile(hero);
+    else console.warn("showHeroProfile не е дефинирана");
+};
