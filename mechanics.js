@@ -185,3 +185,26 @@ window.autonomousRegionConquest = function() {
     if (typeof window.renderSingleBar === 'function') window.renderSingleBar();
     if (window.renderTop6HeroesUI) window.renderTop6HeroesUI();
 };
+
+window.recalculateHeroMaxHp = function(hero) {
+    if (!hero) return;
+    let endurance = hero.skills?.endurance || 0;
+    let levelBonus = (hero.level - 1) * 20;
+    let enduranceBonus = endurance * 15;
+    let newMaxHp = 100 + levelBonus + enduranceBonus;
+    // Бонус от артефакти
+    if (hero.inventory) {
+        hero.inventory.forEach(item => {
+            if (item.bonus && item.bonus.health) newMaxHp += item.bonus.health;
+        });
+    }
+    // Бонус от клас
+    if (hero.classBonuses && hero.currentClass) {
+        let classBonus = hero.classBonuses[hero.currentClass]?.health || 0;
+        newMaxHp += classBonus;
+    }
+    hero.maxHp = Math.max(1, newMaxHp);
+    if (hero.hp > hero.maxHp) hero.hp = hero.maxHp;
+    return hero.maxHp;
+};
+
