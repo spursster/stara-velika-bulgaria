@@ -132,6 +132,8 @@ window.gainHeroXP = function(hero, amount) {
             hero.maxHp = newMaxHp;
             hero.hp = hero.hp + (newMaxHp - oldMaxHp);
             if (hero.hp > hero.maxHp) hero.hp = hero.maxHp;
+
+            if (window.addHeroLog) window.addHeroLog(hero, "⬆️", `Достигна ниво ${hero.level}`);
             
             if (window.addWorldEvent) {
                 window.addWorldEvent("🆙 НИВО НАГОРЕ", `${hero.name} достигна Ниво ${hero.level}! (+1 точка умения)`, "🆙");
