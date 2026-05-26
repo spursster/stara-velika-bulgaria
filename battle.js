@@ -853,6 +853,7 @@
                     else hero.clanObj.xp = (hero.clanObj.xp || 0) + heroXP;
                     hero.clanObj.gold = (hero.clanObj.gold || 0) + heroGold;
                     addLog(`   🎁 ${hero.name} получава +${heroXP} XP и +${heroGold} злато!`);
+                     if (window.addHeroLog) window.addHeroLog(hero.clanObj, "⚔️", `Победи ${monster.name} в ${regionName}`);
                 });
                 
                 if (typeof regionName === 'string' && regionName !== "Портал") {
