@@ -1,5 +1,5 @@
 // =========================================================================
-// ВЕЛИКА БЪЛГАРИЯ - rpg_system.js (ВЕРСИЯ 6.0 – ЕПИЧЕСКА, С АВТО ЕКИПИРОВКА)
+// ВЕЛИКА БЪЛГАРИЯ - rpg_system.js (ВЕРСИЯ 7.0 – ФИКСАНА ИНИЦИАЛИЗАЦИЯ НА HP)
 // =========================================================================
 
 window.rpgDatabase = window.rpgDatabase || {};
@@ -31,10 +31,13 @@ function showRPGMessage(title, message, type = "info") {
         console.log(`${title}: ${message}`);
     }
 }
+
 // ==================== ИНИЦИАЛИЗАЦИЯ НА ГЕРОЙ (С НОВИ ПОЛЕТА) ====================
 window.initializeHeroRPGData = function(hero) {
     if (!hero) return;
-    if (hero.isRPGInitialized) return;
+    
+    // Премахваме проверката isRPGInitialized, за да може да се извиква повторно (заради стари запазени игри)
+    // Но запазваме другите инициализации, ако липсват.
     
     hero.level = hero.level || 1;
     hero.xp = hero.xp || 0;
@@ -54,17 +57,21 @@ window.initializeHeroRPGData = function(hero) {
     if (hero.titles === undefined) hero.titles = [];
     if (hero.prestige === undefined) hero.prestige = 0;
     
-    // === ИНИЦИАЛИЗАЦИЯ НА HP ===
-    if (typeof hero.hp === 'undefined' || hero.hp === null || isNaN(hero.hp)) {
+    // === ИНИЦИАЛИЗАЦИЯ НА HP (ФИКСАНА, без да се разчита на isRPGInitialized) ===
+    // Проверяваме дали hp липсва или е NaN
+    if (hero.hp === undefined || hero.hp === null || isNaN(hero.hp)) {
         let endurance = hero.skills?.endurance || 0;
         let levelBonus = (hero.level - 1) * 20;
         hero.maxHp = 100 + levelBonus + endurance * 15;
         hero.hp = hero.maxHp;
+        console.log(`✅ Инициализиран HP за ${hero.name}: ${hero.hp}/${hero.maxHp}`);
     }
-    if (typeof hero.isAlive === 'undefined') hero.isAlive = true;
+    if (hero.isAlive === undefined) hero.isAlive = true;
     
+    // Маркираме като инициализиран, но не пречи на повторно извикване
     hero.isRPGInitialized = true;
 };
+
 // ==================== ФУНКЦИЯ ЗА КОНСУМИРАНЕ НА STOREDXP ====================
 window.consumeStoredXPForHero = function(hero) {
     if (!hero) return false;
@@ -143,6 +150,7 @@ window.gainHeroXP = function(hero, amount) {
     if (window.renderTop6HeroesUI) window.renderTop6HeroesUI();
     if (window.updateCharacterUI) window.updateCharacterUI(hero);
 };
+
 // ==================== АВТОМАТИЧЕН / РЪЧЕН РЕЖИМ ====================
 window.toggleHeroAutoMode = function(heroId) {
     let hero = null;
@@ -169,6 +177,7 @@ window.toggleHeroAutoMode = function(heroId) {
     let modal = document.getElementById('hero-rpg-modal');
     if (modal && modal.style.display === 'block') window.openHeroRPGModal(heroId);
 };
+
 // ==================== НОВА СИСТЕМА ЗА АВТОМАТИЧНО УЧЕНЕ НА УМЕНИЯ ====================
 window.autoAssignSkillPoint = function(hero) {
     if (hero.skillPoints <= 0) return;
@@ -212,6 +221,7 @@ window.autoAssignSkillPoint = function(hero) {
         attempts++;
     }
 };
+
 // ==================== НОВА КЛАСОВА ЕВОЛЮЦИЯ ====================
 window.checkArcheAgeClass = function(hero) {
     if (!hero) return;
@@ -237,6 +247,7 @@ window.checkArcheAgeClass = function(hero) {
         showRPGMessage("ЕВОЛЮЦИЯ", `👑 ${hero.name} се издигна от "${oldClass}" до "${hero.currentClass}" (${newClass.reqSkills.join(' + ')})!`, "success");
     }
 };
+
 // ==================== ПОМОЩНИ ФУНКЦИИ ====================
 window.calculateArtifactSetBonuses = function(hero) {
     if (!hero || !hero.inventory) return {};
@@ -337,6 +348,7 @@ window.getHeroCombatBonus = function(hero, bonusType) {
     }
     return bonus;
 };
+
 // ==================== RPG МОДАЛ ====================
 window.openHeroRPGModal = function(heroId) {
     let hero = null;
@@ -365,4 +377,4 @@ setTimeout(() => {
     }
 }, 1500);
 
-console.log("✅ rpg_system.js версия 6.0 зареден – с авто-екипировка, нова XP формула, подобрени питомци и пълна синхронизация.");
+console.log("✅ rpg_system.js версия 7.0 зареден – с фиксирана инициализация на HP.");
