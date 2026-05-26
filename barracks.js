@@ -1,7 +1,7 @@
 /**
 ==========================================================================
 ПРОЕКТ: ВЕЛИКА БЪЛГАРИЯ
-ФАЙЛ: barracks.js (ВЕРСИЯ 4.0 – ХАРМОНИЗИРАН, ВСИЧКИ СА ГЕРОИ)
+ФАЙЛ: barracks.js (ВЕРСИЯ 5.0 – ПЪЛНА СИНХРОНИЗАЦИЯ С ЛЕНТАТА ЗА ЛЮБИМИ)
 ==========================================================================
 */
 
@@ -19,7 +19,7 @@ function saveFavoriteHeroes() {
         if (window.worldData && window.worldData.clans) {
             for (let key in window.worldData.clans) {
                 let hero = window.worldData.clans[key];
-                if (hero.isJoined === true && (hero.isFavorite === true || hero.isFavoriteInBarracks === true)) {
+                if (hero.isJoined === true && hero.isFavorite === true) {
                     favorites.push(hero.name || hero.leaderName || key);
                 }
             }
@@ -51,7 +51,6 @@ function loadFavoriteHeroes() {
                     if (hero.isJoined === true) {
                         const isFav = favorites.includes(hero.name || hero.leaderName || key);
                         hero.isFavorite = isFav;
-                        hero.isFavoriteInBarracks = isFav; // за съвместимост
                     }
                 }
             }
@@ -531,6 +530,10 @@ window.showHeroSelectionModal = function() {
                 modal.remove();
                 window.barracksState.currentPage = 0;
                 window.renderBarracksLayout();
+                // Обновяване на долната лента с любими герои
+                if (typeof window.renderFavoriteHeroesBar === 'function') {
+                    window.renderFavoriteHeroesBar();
+                }
             }
         };
     });
@@ -558,6 +561,9 @@ window.selectHeroAsFavorite = function(heroName) {
         if (modal) modal.remove();
         window.barracksState.currentPage = 0;
         window.renderBarracksLayout();
+        if (typeof window.renderFavoriteHeroesBar === 'function') {
+            window.renderFavoriteHeroesBar();
+        }
     }
 };
 
@@ -569,6 +575,10 @@ window.toggleHeroFavoriteInBarracks = function(heroName) {
         hero.isFavorite = !hero.isFavorite;
         saveFavoriteHeroes();
         window.renderBarracksLayout();
+        // Актуализираме и долната лента с любими герои
+        if (typeof window.renderFavoriteHeroesBar === 'function') {
+            window.renderFavoriteHeroesBar();
+        }
     }
 };
 
