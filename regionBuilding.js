@@ -130,8 +130,9 @@ window.buildInRegion = function(regionName, buildingId, hero) {
     if (window.addWorldEvent) {
         window.addWorldEvent(`🏗️ СТРОИТЕЛСТВО`, `${hero.name} построи ниво ${region.buildings[buildingId]} на ${building.name} в ${regionName}.`, "🏗️");
     }
+    if (window.addHeroLog) window.addHeroLog(hero, "🏗️", `Построи ${building.name} ниво ${region.buildings[buildingId]} в ${regionName}`);
+    
     return { success: true, msg: `Успешно построихте ниво ${region.buildings[buildingId]} на ${building.name} в ${regionName}!` };
-        if (window.addHeroLog) window.addHeroLog(hero, "🏗️", `Построи ${building.name} ниво ${region.buildings[buildingId]} в ${regionName}`);
 };
 
 // Показване на бутони за строителство в инспекцията на региона
