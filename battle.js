@@ -276,7 +276,10 @@
             .battle-log-section {
                 padding: 12px 15px;
                 background: rgba(0,0,0,0.4);
-                flex-shrink: 0;
+                flex: 1;
+                display: flex;
+                flex-direction: column;
+                min-height: 0;
             }
 
             .battle-log-title {
@@ -289,7 +292,8 @@
                 background: rgba(0,0,0,0.5);
                 border-radius: 12px;
                 padding: 8px;
-                height: 100px;
+                flex: 1;
+                min-height: 50px;
                 overflow-y: auto;
                 font-size: 10px;
                 font-family: monospace;
@@ -303,20 +307,32 @@
             }
 
             @media (max-width: 700px) {
-                .ultimate-battle { padding: 8px; }
-                .heroes-grid { gap: 5px; }
-                .hero-portrait { width: 40px; height: 40px; }
-                .hero-icon { font-size: 20px; }
-                .hero-name { font-size: 9px; }
-                .hero-class { font-size: 7px; }
-                .hero-power { font-size: 7px; }
-                .monster-icon { font-size: 30px; }
-                .monster-name { font-size: 13px; }
-                .battle-btn { padding: 6px 12px; font-size: 0.75rem; min-width: 80px; }
-                .action-buttons { gap: 8px; padding: 10px; }
-                .battle-log { height: 80px; font-size: 9px; }
-                .close-battle-btn { width: 30px; height: 30px; font-size: 14px; top: 8px; left: 8px; }
-            }
+    .ultimate-battle { padding: 2px; }
+    .battle-container { border-radius: 12px; }
+    
+    /* Header optimization */
+    .battle-header { padding: 4px; }
+    .battle-header h1 { font-size: 0.8rem; }
+    
+    /* Top part: 2 rows (Stats, Buttons) */
+    .vs-section { padding: 2px 4px; }
+    .monster-card { padding: 6px; }
+    .monster-name { font-size: 12px; }
+    
+    .battle-controls-container { padding: 4px; gap: 4px; }
+    .action-buttons { width: 100%; flex-direction: row; flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; }
+    .action-buttons::-webkit-scrollbar { display: none; }
+    .battle-btn { padding: 4px 10px; font-size: 0.65rem; min-width: 70px; }
+    
+    .battle-log-section { min-height: 80px; }
+    .battle-log { font-size: 10px; }
+
+    .heroes-grid { gap: 2px; }
+    .hero-portrait { width: 28px; height: 28px; }
+    .hero-card { padding: 2px; }
+    .hero-name { font-size: 7px; }
+    .close-battle-btn { width: 22px; height: 22px; font-size: 10px; top: 2px; left: 2px; }
+}
 
             @media (max-width: 480px) {
                 .heroes-grid { grid-template-columns: repeat(5, 1fr); gap: 4px; }
@@ -428,17 +444,31 @@
     // ==================== НОВИ ФУНКЦИИ ЗА HP И ВЪЗСТАНОВЯВАНЕ ====================
     function calculatePostBattleHealing(originalHero, battleHero) {
         let heal = 0;
+        // 1. Skill bonus (Endurance)
         let endurance = originalHero.skills?.endurance || 0;
-        heal += endurance * 2;
+        heal += endurance * 8;
+        
+        // 2. Base healing (natural 5% of maxHp)
+        heal += originalHero.maxHp * 0.05;
+
+        // 3. Pet bonus
+        if (originalHero.pet) {
+            if (originalHero.pet === 'bear') heal += originalHero.maxHp * 0.1;
+            if (originalHero.pet === 'wolf') heal += originalHero.maxHp * 0.05;
+        }
+        
+        // 4. Artifact bonus
         if (originalHero.inventory) {
             originalHero.inventory.forEach(item => {
                 if (item.bonus && item.bonus.hpRegen) heal += item.bonus.hpRegen;
             });
         }
-        if (originalHero.pet && window.divinePets?.[originalHero.pet]?.bonus?.healAllies) {
-            heal += window.divinePets[originalHero.pet].bonus.healAllies;
-        }
-        return Math.max(5, heal);
+        
+        // 5. Morale bonus
+        if (originalHero.morale > 70) heal *= 1.2;
+        else if (originalHero.morale < 30) heal *= 0.8;
+                
+        return Math.floor(Math.max(5, heal));
     }
 
     function applyBattleOutcome(originalHero, battleHero) {
@@ -614,13 +644,17 @@
                 heroesHtml += `
                     <div class="hero-card" data-id="${hero.id}">
                         ${portraitHtml}
-                        <div class="hero-name">${hero.name.substring(0, 12)}</div>
-                        <div class="hero-class">${hero.className}</div>
-                        <div class="hp-bar-bg">
-                            <div class="hp-bar-fill" id="hp-${hero.id}" style="width: ${(hero.hp/hero.maxHp)*100}%"></div>
+                        <div class="flex flex-col items-center">
+                            <h3 class="font-bold text-sm text-[#ffdd99] truncate w-full px-1">${hero.name.substring(0, 12)}</h3>
+                            <span class="text-[10px] text-[#ccaa77]">${hero.className}</span>
+                        </div>                
+                        <div class="w-full bg-[#2a1a0a] h-2 rounded-full my-2 overflow-hidden border border-[#5a4a3a]">
+                            <div class="h-full bg-gradient-to-r from-red-700 to-red-500 transition-all duration-300" id="hp-${hero.id}" style="width: ${(hero.hp/hero.maxHp)*100}%"></div>
                         </div>
-                        <div class="hero-hp-text" id="hp-text-${hero.id}">❤️ ${hero.hp}/${hero.maxHp}</div>
-                        <div class="hero-power">⚔️ ${hero.power}</div>
+                        <div class="flex justify-between w-full text-[9px] text-[#ffaa66]">
+                             <span>❤️ ${hero.hp}/${hero.maxHp}</span>
+                             <span>⚔️ ${hero.power}</span>
+                        </div>
                     </div>
                 `;
             } else {
@@ -640,33 +674,34 @@
         battleScreen.innerHTML = `
             <div class="battle-container">
                 <button class="close-battle-btn" id="close-battle-btn">✕</button>
-                <div class="battle-header">
-                    <h1>⚔️ ЕПИЧНА БИТКА ⚔️</h1>
-                    <p>${battleHeroes.length} войни срещу ${monster.name}</p>
+                <div class="battle-header text-sm">
+                    <h1 class="font-bold">⚔️ БИТКА ⚔️</h1>
                 </div>
                 <div class="heroes-section">
-                    <div class="heroes-title">🏰 ВОЙНИТЕ НА КАНА 🏰</div>
                     <div class="heroes-grid" id="heroes-grid">${heroesHtml}</div>
                 </div>
-                <div class="action-buttons">
-                    <button class="battle-btn attack-btn" id="battle-attack">⚔️ АТАКА ⚔️</button>
-                    <button class="battle-btn" id="battle-retreat">🏃 ОТСТЪПЛЕНИЕ</button>
-                    <button class="battle-btn" id="battle-reset">🔄 НОВА БИТКА</button>
-                </div>
                 <div class="vs-section">
-                    <div class="monster-card" id="monster-card">
-                        <div class="monster-icon">${monster.icon}</div>
-                        <div class="monster-name">${monster.name}</div>
-                        <div class="monster-power">💪 ${monster.power} сила</div>
-                        <div class="hp-bar-bg" style="margin-top: 8px;">
-                            <div class="hp-bar-fill" id="monster-hp-fill" style="width: 100%; background: linear-gradient(90deg, #dd4444, #ff6666);"></div>
+                    <div class="monster-card p-3 border-2 border-red-600 rounded-xl bg-black/80 flex items-center justify-between gap-3 shadow-lg" id="monster-card">
+                        <div class="monster-icon text-3xl">${monster.icon}</div>
+                        <div class="flex-1">
+                            <h2 class="monster-name text-sm font-bold text-red-400">${monster.name}</h2>
+                            <div class="w-full bg-[#2a0a0a] h-3 rounded-full mt-1 overflow-hidden border border-red-900 shadow-inner">
+                                <div class="h-full bg-gradient-to-r from-red-600 to-red-400" id="monster-hp-fill" style="width: 100%;"></div>
+                            </div>
                         </div>
-                        <div class="hero-hp-text" id="monster-hp-text">❤️ ${monster.hp}/${monster.maxHp}</div>
+                        <div class="hero-hp-text text-xs text-red-200" id="monster-hp-text">❤️ ${monster.hp}/${monster.maxHp}</div>
                     </div>
                 </div>
-                <div class="battle-log-section">
-                    <div class="battle-log-title">📜 БОЕН ДНЕВНИК</div>
-                    <div class="battle-log" id="battle-log"></div>
+                <!-- Controls and Log Container -->
+                <div class="battle-controls-container flex flex-col gap-2 p-2" id="battle-controls-container">
+                    <div class="battle-log-section p-2 bg-black/60 rounded-lg border border-stone-800 flex-1 min-h-[120px] max-h-[150px]">
+                        <div class="battle-log h-full overflow-y-auto text-[11px] font-mono text-stone-300" id="battle-log"></div>
+                    </div>
+                    <div class="action-buttons flex flex-row gap-2 overflow-x-auto whitespace-nowrap p-2 flex-shrink-0" style="scrollbar-width: none; -ms-overflow-style: none;">
+                        <button class="battle-btn attack-btn text-[10px] p-2 flex-shrink-0" id="battle-attack">⚔️ АТАКА</button>
+                        <button class="battle-btn text-[10px] p-2 flex-shrink-0" id="battle-retreat">🏃 БЯГ</button>
+                        <button class="battle-btn text-[10px] p-2 flex-shrink-0" id="battle-reset">🔄 НОВА</button>
+                    </div>
                 </div>
             </div>
         `;
