@@ -25,9 +25,16 @@
     function getAllHeroes() {
         let heroes = [];
         if (window.worldData && window.worldData.clans) {
+            console.log("Analyzing worldData.clans for heroes...");
             for (let key in window.worldData.clans) {
                 let heroData = window.worldData.clans[key];
-                if (heroData.isJoined === true) {
+                console.log(`Checking hero ${key}:`, heroData);
+                if (heroData.name || heroData.leaderName) {
+                    // Only show heroes that have joined or are favorites
+                    const isFavorite = (heroData.isFavorite === true || heroData.isFavoriteInBarracks === true);
+                    heroData.isFavorite = isFavorite; // Keep consistent
+                    if (heroData.isJoined !== true && !isFavorite) continue;
+
                     ensureArmyDetails(heroData);
                     heroes.push({
                         id: key,
@@ -40,6 +47,7 @@
                 }
             }
         }
+        console.log("Found heroes:", heroes);
         if (heroes.length === 0 && window.currentHero) {
             ensureArmyDetails(window.currentHero);
             heroes.push({
@@ -61,7 +69,13 @@
         }
         if (!hero && window.currentHero) {
             hero = window.currentHero;
-            selectedHeroId = hero.clan;
+            // Find key in worldData.clans for currentHero
+            for (let key in window.worldData.clans) {
+                if (window.worldData.clans[key] === hero) {
+                    selectedHeroId = key;
+                    break;
+                }
+            }
         }
         if (!hero) {
             const heroes = getAllHeroes();
@@ -89,52 +103,31 @@
             if (armySpan) armySpan.innerText = total;
         }
         if (window.renderTop6HeroesUI) window.renderTop6HeroesUI();
-        if (window.updateCharacterUI) window.updateCharacterUI(window.currentHero);
-        saveHeroData(hero);
-    }
-
-    function saveHeroData(hero) {
-        try {
-            localStorage.setItem(`armyMarket_${hero.clan}`, JSON.stringify({ 
-                gold: hero.gold, 
-                armyDetails: hero.armyDetails 
-            }));
-        } catch(e) {}
-    }
-
-    function loadHeroData(hero) {
-        try {
-            let saved = localStorage.getItem(`armyMarket_${hero.clan}`);
-            if (saved) {
-                let data = JSON.parse(saved);
-                hero.gold = data.gold;
-                hero.armyDetails = data.armyDetails;
-                ensureArmyDetails(hero);
-                return true;
-            }
-        } catch(e) {}
-        return false;
+        if (window.updateCharacterUI) window.updateCharacterUI(hero);
+        
+        // Save the main game state instead of custom hero data
+        if (typeof window.saveGreatBulgariaGame === 'function') {
+            window.saveGreatBulgariaGame();
+        }
     }
 
     function initHero(hero) {
         if (!hero.armyDetails) {
-            if (!loadHeroData(hero)) {
-                hero.armyDetails = {};
-                for (let id of allTroopIds) hero.armyDetails[id] = 0;
-                if (hero.armySize > 0) {
-                    hero.armyDetails.infantry = Math.floor(hero.armySize * 0.5);
-                    hero.armyDetails.archers = Math.floor(hero.armySize * 0.25);
-                    hero.armyDetails.cavalry = Math.floor(hero.armySize * 0.15);
-                    hero.armyDetails.elite = hero.armySize - (hero.armyDetails.infantry + hero.armyDetails.archers + hero.armyDetails.cavalry);
-                } else {
-                    hero.armyDetails.infantry = 100;
-                    hero.armyDetails.archers = 50;
-                    hero.armyDetails.cavalry = 30;
-                    hero.armyDetails.elite = 20;
-                }
-                for (let id of fantasyTroopIds) {
-                    if (hero.armyDetails[id] === undefined) hero.armyDetails[id] = 0;
-                }
+            hero.armyDetails = {};
+            for (let id of allTroopIds) hero.armyDetails[id] = 0;
+            if (hero.armySize > 0) {
+                hero.armyDetails.infantry = Math.floor(hero.armySize * 0.5);
+                hero.armyDetails.archers = Math.floor(hero.armySize * 0.25);
+                hero.armyDetails.cavalry = Math.floor(hero.armySize * 0.15);
+                hero.armyDetails.elite = hero.armySize - (hero.armyDetails.infantry + hero.armyDetails.archers + hero.armyDetails.cavalry);
+            } else {
+                hero.armyDetails.infantry = 100;
+                hero.armyDetails.archers = 50;
+                hero.armyDetails.cavalry = 30;
+                hero.armyDetails.elite = 20;
+            }
+            for (let id of fantasyTroopIds) {
+                if (hero.armyDetails[id] === undefined) hero.armyDetails[id] = 0;
             }
         }
         ensureArmyDetails(hero);
@@ -143,35 +136,50 @@
 
     function buyTroop(typeId, quantity = 1, heroParam = null) {
         let hero = heroParam || getSelectedHero();
-        if (!hero) { 
-            if (window.showAdvisorPopup) {
-                window.showAdvisorPopup("ГРЕШКА", "Няма избран герой!", "error");
-            } else if (window.showAdvisorMsg) {
-                window.showAdvisorMsg("❌ Няма избран герой!");
+        if (!hero) return false;
+        
+        // Ensure we are working with the reference in worldData
+        let heroId = selectedHeroId;
+        if (!heroId) {
+             for (let key in window.worldData.clans) {
+                if (window.worldData.clans[key] === hero) { heroId = key; break; }
             }
-            return false; 
         }
-        ensureArmyDetails(hero);
+        let actualHero = heroId ? window.worldData.clans[heroId] : hero;
+
+        console.log("buyTroop called for:", actualHero ? actualHero.name : "null", "Gold before:", actualHero ? actualHero.gold : "N/A");
+        
+        ensureArmyDetails(actualHero);
         let troop = allTroops.find(t => t.id === typeId);
         if (!troop) return false;
         let totalCost = troop.basePrice * quantity;
-        if (hero.gold < totalCost) { 
-            let msg = `${hero.name} няма достатъчно злато! (Нужни: ${totalCost})`;
-            if (window.showAdvisorPopup) {
-                window.showAdvisorPopup("ГРЕШКА", msg, "error");
-            } else if (window.showAdvisorMsg) {
-                window.showAdvisorMsg(`❌ ${msg}`);
-            }
+        
+        let currentGold = Number(actualHero.gold || 0);
+        if (currentGold < totalCost) { 
+            let msg = `${actualHero.name} няма достатъчно злато! (Нужни: ${totalCost}, Налични: ${currentGold})`;
+            console.error(msg);
+            if (window.showAdvisorPopup) window.showAdvisorPopup("ГРЕШКА", msg, "error");
+            else if (window.showAdvisorMsg) window.showAdvisorMsg(`❌ ${msg}`);
             return false; 
         }
-        hero.gold -= totalCost;
-        hero.armyDetails[typeId] = (hero.armyDetails[typeId] || 0) + quantity;
-        syncWithGame(hero);
-        saveHeroData(hero);
-        if (window.updateCharacterUI) window.updateCharacterUI(hero);
+        
+        actualHero.gold = currentGold - totalCost;
+        actualHero.armyDetails[typeId] = (actualHero.armyDetails[typeId] || 0) + quantity;
+        
+        console.log("DEBUG: Gold after purchase:", actualHero.gold, "for ID:", heroId);
+        console.log("DEBUG: Full hero object:", actualHero);
+        
+        syncWithGame(actualHero);
+        
+        // Persist immediately via standard game save
+        if (typeof window.saveGreatBulgariaGame === 'function') {
+            window.saveGreatBulgariaGame();
+        }
+
+        if (window.updateCharacterUI) window.updateCharacterUI(actualHero);
         if (window.renderTop6HeroesUI) window.renderTop6HeroesUI();
+        if (typeof window.renderFavoriteHeroesBar === 'function') window.renderFavoriteHeroesBar();
         if (typeof window.renderSingleBar === 'function') window.renderSingleBar();
-        if (window.addWorldEvent) window.addWorldEvent(`🛒 Покупка на армия`, `${hero.name} купи ${quantity} × ${troop.name} за ${totalCost} злато.`, "💰");
         
         updateMarketUI();
         return true;
@@ -197,7 +205,7 @@
         hero.gold += refund;
         hero.armyDetails[typeId] = current - quantity;
         syncWithGame(hero);
-        saveHeroData(hero);
+        if (typeof window.renderFavoriteHeroesBar === 'function') window.renderFavoriteHeroesBar();
         let msg = `Продадохте ${quantity} × ${troop.name} за ${refund} злато.`;
         if (window.showAdvisorPopup) {
             window.showAdvisorPopup("ПРОДАЖБА", msg, "info");
@@ -309,8 +317,33 @@
     function updateMarketUI() {
         let hero = getSelectedHero();
         if (!hero) return;
+        
         let goldSpan = document.getElementById('playerGoldAmount');
-        if (goldSpan) goldSpan.innerText = hero.gold;
+        if (goldSpan) {
+            goldSpan.innerText = hero.gold;
+        }
+        
+        // Update hero select dropdown text
+        let heroSelect = document.getElementById('heroSelect');
+        if (heroSelect) {
+            let selectedOption = heroSelect.querySelector(`option[value="${selectedHeroId}"]`);
+            if (selectedOption) {
+                selectedOption.innerText = `${hero.name} (💰${hero.gold} злато, ⚔️${hero.armySize})`;
+            }
+        }
+        
+        // Disable afford-able check
+        document.querySelectorAll('.buy-btn').forEach(btn => {
+            const troopId = btn.getAttribute('data-type');
+            const qty = parseInt(btn.getAttribute('data-qty') || '1');
+            const troop = allTroops.find(t => t.id === troopId);
+            if (troop) {
+                btn.disabled = (Number(hero.gold) < troop.basePrice * qty);
+                btn.style.opacity = btn.disabled ? '0.5' : '1';
+                btn.style.cursor = btn.disabled ? 'not-allowed' : 'pointer';
+            }
+        });
+
         let totalPower = 0;
         for (let troop of allTroops) {
             let cnt = hero.armyDetails[troop.id] || 0;
@@ -319,7 +352,9 @@
             if (span) span.innerText = cnt;
         }
         let powerSpan = document.getElementById('totalArmyPower');
-        if (powerSpan) powerSpan.innerText = totalPower;
+        if (powerSpan) {
+            powerSpan.innerText = totalPower;
+        }
     }
 
     function setSelectedHero(heroId) {
@@ -344,7 +379,6 @@
         }
         let hero = getSelectedHero();
         if (hero) {
-            selectedHeroId = hero.clan;
             initHero(hero);
         }
         if (!document.getElementById('armyMarketModal')) {
@@ -354,7 +388,7 @@
         let modal = document.getElementById('armyMarketModal');
         if (modal) modal.style.display = 'flex';
         let heroSelect = document.getElementById('heroSelect');
-        if (heroSelect && hero) heroSelect.value = hero.clan;
+        if (heroSelect && hero) heroSelect.value = selectedHeroId;
         updateMarketUI();
     }
 
@@ -440,7 +474,6 @@
                 }
                 hero.gold += totalRefund;
                 syncWithGame(hero);
-                saveHeroData(hero);
                 updateMarketUI();
                 let resultMsg = `Цялата армия на ${hero.name} е демобилизирана. Получихте ${totalRefund} злато.`;
                 if (window.showAdvisorPopup) {
