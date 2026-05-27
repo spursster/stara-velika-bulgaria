@@ -1,6 +1,6 @@
 /**
  ==========================================================================
- ПРОЕКТ: ВЕЛИКА БЪЛГАРИЯ
+ ПРОЕКТ: ВЕЛИКА БЪЛГАРИЯconst clans = window.bulgarianClans || window.bulgarianDynasties;
  ФАЙЛ: logic.js (ВЕРСИЯ 4.2 – ДИРЕКТНО ЗАДАВАНЕ НА HP)
  ==========================================================================
  */
@@ -104,10 +104,10 @@ function getRandomHeroFromDatabase() {
 function initializeAllHeroesFromDatabase() {
     if (!window.worldData) window.worldData = {};
     if (!window.worldData.clans) window.worldData.clans = {};
-    const clans = window.bulgarianClans || window.bulgarianDynasties;
-    if (!clans) return;
-    for (let clanName in clans) {
-        const heroesList = clans[clanName].heroes || clans[clanName].rulers;
+    const clans = window.bulgarianClans;
+if (!clans) return;
+for (let clanName in clans) {
+    const heroesList = clans[clanName].heroes;
         if (!heroesList) continue;
         for (let heroName of heroesList) {
             const heroId = `hero_${clanName}_${heroName.replace(/\s/g, '_')}`;
