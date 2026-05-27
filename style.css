@@ -14,13 +14,13 @@
 
 html, body {
     height: 100%;
-    background: linear-gradient(rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.4)),
+    background: linear-gradient(rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.1)),
                 url('https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEjJuReyp2P1EHVmb8i_LXu6AQhvvvByWOCKKl4sVeQTuIKnvmu0dZ64-jCPAw7hisWSrzei_lJeAS3tvQvYHuV5vKWGvc4ZRWsd5XZpgkX-KbUA0o9C2MMXiV1H0NGzVhJEj1iRxeT67HYEAe1VTmjmeI__JKiOCkz6hVVbo6O7gbqfsABylSvdnA-P7VAq/s3072/_d012d68d-c196-4d76-be3e-0a44b9f7ccfa.jpeg');
     background-size: cover;
     background-position: center;
     background-attachment: fixed;
     font-family: 'Montserrat', sans-serif;
-    color: #e0e0e0;
+    color: #333;
     overflow-x: hidden;
 }
 
@@ -31,7 +31,7 @@ html, body {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    background: rgba(15, 15, 15, 0.65);
+    background: rgba(240, 240, 240, 0.7);
     backdrop-filter: blur(12px);
     -webkit-backdrop-filter: blur(12px);
     border-bottom: 2px solid #d4af37;
@@ -53,17 +53,17 @@ html, body {
     display: inline-flex;
     align-items: center;
     gap: 8px;
-    background: rgba(0, 0, 0, 0.4);
+    background: rgba(255, 255, 255, 0.4);
     padding: 4px 12px;
     border-radius: 30px;
 }
 
 .active-hero-name {
-    background: rgba(0, 0, 0, 0.6);
+    background: rgba(200, 200, 200, 0.6);
     border-radius: 30px;
     padding: 4px 12px;
     font-size: 0.85rem;
-    color: #ffd700;
+    color: #333;
     font-weight: bold;
     display: inline-flex;
     align-items: center;
@@ -130,7 +130,7 @@ html, body {
 }
 
 #game-main-area {
-    background: rgba(10, 10, 10, 0.5);
+    background: rgba(240, 240, 240, 0.5);
     backdrop-filter: blur(15px);
     border: 1px solid rgba(255, 215, 0, 0.15);
     border-radius: 12px;
@@ -154,7 +154,7 @@ html, body {
     flex-wrap: nowrap;
     justify-content: space-evenly;
     gap: 8px;
-    background: rgba(0, 0, 0, 0.6);
+    background: rgba(240, 240, 240, 0.6);
     backdrop-filter: blur(8px);
     border-top: 1px solid #d4af37;
     border-bottom: 1px solid #d4af37;
@@ -167,7 +167,7 @@ html, body {
 .favorite-slot {
     flex: 1;
     min-width: 0;
-    background: rgba(30, 25, 20, 0.7);
+    background: rgba(240, 230, 220, 0.7);
     border: 1px solid rgba(212, 175, 55, 0.4);
     border-radius: 12px;
     padding: 6px 4px;
@@ -193,7 +193,7 @@ html, body {
 .favorite-slot .hero-name {
     font-size: 10px;
     font-weight: bold;
-    color: #ffdd99;
+    color: #333;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -202,7 +202,7 @@ html, body {
 
 .favorite-slot .hero-level {
     font-size: 8px;
-    color: #ccaa77;
+    color: #666;
 }
 
 .favorite-slot.empty {
