@@ -156,6 +156,37 @@ window.processTime = function() {
     if (typeof window.autonomousRegionConquest === 'function') window.autonomousRegionConquest();
     if (typeof window.triggerAutomatedHeroActions === 'function') window.triggerAutomatedHeroActions();
     if (typeof window.checkRandomAttack === 'function') window.checkRandomAttack();
+ window.processWorldDynamics = function() {
+    if (!window.worldData || !window.worldData.clans) return;
+    
+    // Вземаме всички кланове (герои)
+    const clans = Object.values(window.worldData.clans);
+    
+    clans.forEach(hero => {
+        // Пропускаме теб (играча) и мъртвите герои
+        if (hero.name === window.currentHero.name || hero.isAlive === false) return;
+        
+        // 1. Агресивните герои стават активни
+        if (hero.aggression > 0.5) {
+            // Шанс за NPC-срещу-NPC битка
+            const randomTarget = clans[Math.floor(Math.random() * clans.length)];
+            
+            if (randomTarget.name !== hero.name && randomTarget.isAlive) {
+                // Имитация на битка/завладяване
+                window.addWorldEvent("⚔️ ВОЙНА", `${hero.name} атакува териториите на ${randomTarget.name}!`, "🔥", window.gameTime.year);
+                
+                // Тук викаш логиката за промяна на показателите (напр. отнемане на сила)
+                hero.heroPower += 10;
+                randomTarget.heroPower -= 15;
+            }
+        }
+        
+        // 2. Икономическа активност (за герои с висок Ambition)
+        if (hero.traits && hero.traits.some(t => t.cat === 'amb')) {
+            hero.gold += 50; 
+        }
+    });
+};
 };
 
 // Стартиране
