@@ -364,4 +364,3 @@ window.fantasyRaces = [
     { id: "ghost", name: "Дух", icon: "👻", bonus: { mysticismBonus: 0.25, defense: 10 }, desc: "Духовете са неуязвими на физически атаки" },
     { id: "golem", name: "Голем", icon: "🗿", bonus: { defense: 30, heroPower: 10 }, desc: "Големите са живи бронирани машини" }
 ];
-
