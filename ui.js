@@ -153,7 +153,7 @@ function setAuto(id, enabled) {
 // ==================== НАЕМАНЕ НА ГЕРОИ ====================
 function getAllHeroesFromDatabase() {
     let heroesList = [];
-    let heroesSource = window.clansDatabase || window.clans;
+   let heroesSource = window.bulgarianClans; // Препратка към реалния обект от database.js
     if (!heroesSource) return heroesList;
     for (let clanName in heroesSource) {
         let clanData = heroesSource[clanName];
