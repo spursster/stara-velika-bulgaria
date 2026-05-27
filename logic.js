@@ -339,7 +339,7 @@ window.saveGreatBulgariaGame = function() {
         if (window.worldData && window.worldData.clans) {
             for (let key in window.worldData.clans) {
                 let hero = window.worldData.clans[key];
-                if (hero.isJoined === true) {
+                if (hero.isJoined === true || hero.isFavorite === true) {
                     let heroCopy = { ...hero };
                     if (hero.portrait) heroCopy.portrait = hero.portrait;
                     allHeroes.push(heroCopy);
