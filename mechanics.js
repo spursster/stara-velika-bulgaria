@@ -186,6 +186,52 @@ window.autonomousRegionConquest = function() {
     if (window.renderTop6HeroesUI) window.renderTop6HeroesUI();
 };
 
+window.triggerAutomatedHeroActions = function() {
+    if (!window.worldData || !window.worldData.clans) return;
+    
+    // Choose a non-favorite hero
+    let candidates = [];
+    for (let key in window.worldData.clans) {
+        let hero = window.worldData.clans[key];
+        // Ensure hero object is consistent, and isJoined/isFavorite are set if possible
+        if (hero.name && hero.isJoined === true && hero.isFavorite !== true) {
+            candidates.push(hero);
+        }
+    }
+    if (candidates.length === 0) return;
+    
+    const hero = candidates[Math.floor(Math.random() * candidates.length)];
+    const actions = [
+        { 
+            title: "⚔️ Тренировки", 
+            desc: `${hero.name} тренира своята армия, повишавайки бойния им дух.`, 
+            icon: "⚔️" 
+        },
+        { 
+            title: "💰 Търговска сделка", 
+            desc: `${hero.name} добави злато в хазната чрез успешна търговия.`, 
+            icon: "💰" 
+        },
+        {
+            title: "📜 Дипломатическа мисия",
+            desc: `${hero.name} укрепи връзките с местни старейшини.`,
+            icon: "📜"
+        },
+        {
+            title: "🏗️ Строителство",
+            desc: `${hero.name} надзирава строителството на нови постройки в земите си.`,
+            icon: "🏗️"
+        }
+    ];
+    
+    const action = actions[Math.floor(Math.random() * actions.length)];
+    
+    if (window.addWorldEvent) {
+        const yearStr = (window.gameTime ? `${window.gameTime.year} г. ${window.gameTime.era}` : "");
+        window.addWorldEvent(action.title, action.desc, action.icon, yearStr);
+    }
+};
+
 window.recalculateHeroMaxHp = function(hero) {
     if (!hero) return;
     let endurance = hero.skills?.endurance || 0;
