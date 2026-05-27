@@ -436,6 +436,22 @@ function showHeroProfile(hero) {
             </div>
         </div>
     `;
+
+    // Morale лента
+    let moralePercent = (hero.morale || 50);
+    let moraleBarColor = moralePercent > 70 ? "#2196f3" : (moralePercent > 30 ? "#ff9800" : "#f44336");
+    let moraleHtml = `
+        <div style="margin: 5px 0;" title="Моралът влияе на възстановяването след битка">
+            <div style="display: flex; align-items: center; gap: 8px;">
+                <span>😊</span>
+                <span>Морал</span>
+                <div style="flex:1; background:#c4a67a; height:6px; border-radius:3px;">
+                    <div style="background:${moraleBarColor}; width:${moralePercent}%; height:100%; border-radius:3px;"></div>
+                </div>
+                <span>${moralePercent}%</span>
+            </div>
+        </div>
+    `;
     
     // Портрет
     let portraitHtml = '';
@@ -472,6 +488,7 @@ function showHeroProfile(hero) {
                 <div style="background:#2a1a0a; height:8px; border-radius:4px; margin:10px 0;"><div style="background:#d4a373; height:100%; width:${xpPercent}%; border-radius:4px;"></div></div>
                 <div style="font-size:11px; color:#ffaa66;">⚡ ${Math.floor(currentXP)}/${needXP} XP</div>
                 ${hpHtml}
+                ${moraleHtml}
                 <div style="margin-top:15px; display:flex; justify-content:space-between; gap:10px;">
                     <div style="background:#0d0a07; border-radius:12px; padding:8px; flex:1;"><div>💰 Злато</div><div style="color:#ffdd99;">${hero.gold}</div></div>
                     <div style="background:#0d0a07; border-radius:12px; padding:8px; flex:1;"><div>⚔️ Армия</div><div style="color:#ffdd99;">${hero.army}</div></div>
@@ -693,21 +710,22 @@ window.renderFavoriteHeroesBar = function() {
             slot.innerHTML = `
                 <div style="position: relative; width: 100%;">
                     <button class="favorite-heart-btn" data-name="${hero.name}" style="position: absolute; top: 0; right: 0; background: none; border: none; font-size: 14px; cursor: pointer; color: #ff4466; z-index: 10;">❤️</button>
+                    <button class="auto-toggle" style="position: absolute; top: 0; left: 0; z-index: 10; font-size: 8px; border: 1px solid #d4af37; border-radius: 4px; padding: 1px; ${isAutoMode ? 'background: #4a6a2a; color: #fff;' : 'background: #2c1a0c; color: #ffdd99;'}" title="${autoTitle}">${isAutoMode ? 'AUTO' : 'MAN'}</button>
                     ${portraitHtml}
                     <div class="hero-name" title="${hero.name}">${hero.name.substring(0, 10)}</div>
                     <div class="hero-level">Ниво ${hero.level || 1}</div>
-                    <div class="xp-bar-container" style="background: #2a1a0a; height: 4px; border-radius: 2px; margin: 4px 0; overflow: hidden;">
+                    <div class="xp-bar-container" style="background: #2a1a0a; height: 4px; border-radius: 2px; margin: 4px 0; overflow: hidden;" title="Опит (XP): ${xpPercent}%">
                         <div class="xp-bar-fill" style="background: ${fillGrad}; width: ${xpPercent}%; height: 100%;"></div>
                     </div>
                     <div style="background: #2a1a0a; height: 3px; border-radius: 2px; margin: 2px 0; overflow: hidden;">
                         <div style="background: ${hpColor}; width: ${hpPercent}%; height: 100%;"></div>
                     </div>
+                    <div style="background: #2a1a0a; height: 3px; border-radius: 2px; margin: 2px 0; overflow: hidden;" title="Морал: ${hero.morale || 50}%">
+                        <div style="background: ${hero.morale > 70 ? '#2196f3' : (hero.morale > 30 ? '#ff9800' : '#f44336')}; width: ${hero.morale || 50}%; height: 100%;"></div>
+                    </div>
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 2px;">
                         <div class="hero-power" style="font-size: 8px; color: #ffaa66;">💪 ${hero.heroPower || 100}</div>
-                        <div style="display: flex; gap: 4px;">
-                            <button class="auto-toggle" style="background: rgba(0,0,0,0.5); border: 1px solid #d4af37; border-radius: 12px; padding: 1px 6px; font-size: 8px; cursor: pointer; color: #ffdd99;" title="${autoTitle}">${autoIcon}</button>
-                            ${skillsBtnHtml}
-                        </div>
+                        ${skillsBtnHtml}
                     </div>
                 </div>
             `;
@@ -1125,23 +1143,7 @@ function setupResponsiveButtons() {
         document.querySelector('.top-bar-controls').appendChild(discoverBtn);
     }
     
-    let eliteBtn = document.getElementById('elite-heroes-btn');
-    if (!eliteBtn && document.querySelector('.top-bar-controls')) {
-        eliteBtn = document.createElement('button');
-        eliteBtn.id = 'elite-heroes-btn';
-        eliteBtn.className = 'glass-btn';
-        eliteBtn.innerHTML = '🏆 Елит';
-        eliteBtn.title = 'Елитни герои (най-висок опит)';
-        eliteBtn.onclick = function() {
-            if (typeof window.showEliteHeroesModal === 'function') {
-                window.showEliteHeroesModal();
-            } else {
-                window.showAdvisorPopup("ГРЕШКА", "Функцията showEliteHeroesModal не е дефинирана (проверете ui-modals.js).", "error");
-            }
-        };
-        document.querySelector('.top-bar-controls').appendChild(eliteBtn);
-    }
-    
+
     function updateButtons() {
         const isMobile = window.innerWidth <= 768;
         
@@ -1165,15 +1167,6 @@ function setupResponsiveButtons() {
             }
         }
         
-        if (eliteBtn) {
-            if (isMobile) {
-                eliteBtn.innerHTML = '🏆';
-                eliteBtn.style.cssText = 'font-size:1.2rem; padding:0; width:36px; height:36px; display:flex; align-items:center; justify-content:center;';
-            } else {
-                eliteBtn.innerHTML = '🏆 Елит';
-                eliteBtn.style.cssText = '';
-            }
-        }
     }
     
     updateButtons();
