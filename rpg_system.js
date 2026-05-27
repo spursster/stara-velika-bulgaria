@@ -58,6 +58,8 @@ window.initializeHeroRPGData = function(hero) {
     if (hero.prestige === undefined) hero.prestige = 0;
     if (!hero.actionLog) hero.actionLog = [];
     
+    if (hero.morale === undefined) hero.morale = 50;
+    
     // === ИНИЦИАЛИЗАЦИЯ НА HP (ФИКСАНА, без да се разчита на isRPGInitialized) ===
     // Проверяваме дали hp липсва или е NaN
     if (hero.hp === undefined || hero.hp === null || isNaN(hero.hp)) {
