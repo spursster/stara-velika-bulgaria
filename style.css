@@ -656,37 +656,6 @@ html, body {
         font-size: 0.75rem;
     }
 
-    /* 10. Хамбургер меню панел (добавя се динамично от JS) */
-    #mobile-menu-panel {
-        position: fixed;
-        bottom: 0;
-        left: 0;
-        width: 100%;
-        background: rgba(0, 0, 0, 0.95);
-        backdrop-filter: blur(12px);
-        border-top: 2px solid #d4af37;
-        z-index: 20000;
-        padding: 12px;
-        display: flex;
-        flex-wrap: wrap;
-        justify-content: center;
-        gap: 10px;
-        border-radius: 20px 20px 0 0;
-    }
-    #mobile-menu-panel button {
-        background: rgba(30, 30, 30, 0.9);
-        border: 1px solid #d4af37;
-        border-radius: 40px;
-        padding: 8px 12px;
-        color: #ffdd99;
-        font-size: 0.8rem;
-        font-family: 'Cinzel', serif;
-        cursor: pointer;
-        min-width: 70px;
-    }
-    #mobile-menu-panel button:active {
-        transform: scale(0.96);
-    }
 
     /* 11. Показваме бутона за нова игра */
     .new-game-menu-container .glass-btn {
