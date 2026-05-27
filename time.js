@@ -39,6 +39,7 @@ if (!window.gameTime) {
 
 // ==================== ИСТОРИЧЕСКИ СЪБИТИЯ ПО ГОДИНИ ====================
 function checkHistoricalEvents() {
+    if (!window.gameTime) return;
     const year = window.gameTime.year;
     const era = window.gameTime.era;
     if (era !== "от н.е.") return;
@@ -153,6 +154,7 @@ window.processTime = function() {
     
     if (window.advanceExpeditionsTurn) window.advanceExpeditionsTurn();
     if (typeof window.autonomousRegionConquest === 'function') window.autonomousRegionConquest();
+    if (typeof window.triggerAutomatedHeroActions === 'function') window.triggerAutomatedHeroActions();
     if (typeof window.checkRandomAttack === 'function') window.checkRandomAttack();
 };
 
