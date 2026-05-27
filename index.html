@@ -139,10 +139,21 @@
             backdrop-filter: blur(10px);
             border-top: 2px solid #d4af37;
             display: flex;
-            justify-content: space-evenly;
+            justify-content: flex-start;
             align-items: center;
             padding: 8px;
             z-index: 2000;
+            overflow-x: auto;
+            flex-wrap: nowrap;
+            white-space: nowrap;
+            scroll-behavior: smooth;
+            -webkit-overflow-scrolling: touch;
+            scroll-snap-type: x mandatory; /* Added for snappy scrolling */
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+        #bottom-controls::-webkit-scrollbar {
+            display: none;
         }
         .icon-btn {
             background: none;
@@ -153,6 +164,8 @@
             border-radius: 40px;
             transition: 0.2s;
             color: #ffdd99;
+            flex-shrink: 0;
+            scroll-snap-align: start;
         }
         .icon-btn:hover { transform: scale(1.1); text-shadow: 0 0 8px gold; }
         .next-turn-btn {
@@ -167,6 +180,8 @@
             align-items: center;
             gap: 6px;
             cursor: pointer;
+            flex-shrink: 0;
+            scroll-snap-align: start;
         }
         #bottom-controls .hero-profile-btn,
         #bottom-controls button[onclick*="showHeroProfile"],
@@ -299,6 +314,7 @@
         <button class="glass-btn" onclick="window.toggleGameFullScreen?.()">⬚</button>
         <button class="glass-btn" onclick="window.armyMarket?.show?.()">⚔️ Армия</button>
         <button class="glass-btn" onclick="window.openMarriageMenu?.()">💍 Брак</button>
+        <button class="glass-btn" onclick="window.showLeaderBoardModal()">🏆 Класации</button>
     </div>
 </header>
 
@@ -346,6 +362,8 @@
 <!-- Скриптове – редът е критичен! -->
 <script src="world_data.js"></script>
 <script src="troopsData.js"></script>
+<script src="characterEvolution.js"></script>
+ <script src="leaderboard.js"></script>
 <script src="classes.js"></script>
 <script src="skills.js"></script>
 <script src="skills-ui.js"></script>
@@ -635,12 +653,20 @@
 if (window.worldData && window.worldData.clans) {
     for (let key in window.worldData.clans) {
         let hero = window.worldData.clans[key];
-        if (hero.isJoined === true && hero.isAlive !== false && hero.hp < hero.maxHp) {
+        if (hero.isJoined === true && hero.isAlive !== false) {
+             // evolve heroes every turn
+             if (typeof window.evolveHero === 'function') window.evolveHero(hero);
+             
+             // automate heroes in auto mode
+             if (typeof window.automateHero === 'function') window.automateHero(hero);
+
+             if (hero.hp < hero.maxHp) {
             let regen = Math.max(1, Math.floor(hero.maxHp * 0.05)); // 5% от maxHp
             // Бонус от умение "endurance"
             let endurance = hero.skills?.endurance || 0;
             regen += endurance;
             hero.hp = Math.min(hero.maxHp, hero.hp + regen);
+            }
         }
     }
 }
