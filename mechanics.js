@@ -139,13 +139,12 @@ function autoConquestBattle(attacker, defenderPower, regionName) {
 window.autonomousRegionConquest = function() {
     if (!window.worldData || !window.worldData.clans || !window.worldData.regions) return;
     
-    if (Math.random() > 0.35) return;
+    if (Math.random() > 0.15) return;
     
     let potentialConquerors = [];
     for (let key in window.worldData.clans) {
         let hero = window.worldData.clans[key];
-        // Условие: герой е нает, НЕ Е любим, има достатъчно армия
-        if (hero.isJoined === true && hero.isFavorite !== true && (hero.armySize || 0) > 80) {
+        if (hero.isJoined === true && hero.isFavorite !== true && (hero.armySize || 0) > 150) {
             potentialConquerors.push(hero);
         }
     }
@@ -175,12 +174,17 @@ window.autonomousRegionConquest = function() {
             if (!conqueror.inventory) conqueror.inventory = [];
             if (conqueror.inventory.length < 30) {
                 conqueror.inventory.push(newArtifact);
-                // Запис в летописа вместо попап
                 if (window.addWorldEvent) {
                     window.addWorldEvent("🏺 АРТЕФАКТ", `${conqueror.name} намери ${newArtifact.name} в ${targetRegion}!`, "🏺");
                 }
             }
         }
+        
+        // ========== ДОБАВЕНО: лог съобщение в летописа ==========
+        if (window.addWorldEvent) {
+            window.addWorldEvent("🏰 АВТОНОМНО ЗАВЛАДЯВАНЕ", `${conqueror.name || conqueror.leaderName} завладя ${targetRegion}!`, "🏰");
+        }
+        // =====================================================
     }
     if (typeof window.renderSingleBar === 'function') window.renderSingleBar();
     if (window.renderTop6HeroesUI) window.renderTop6HeroesUI();
