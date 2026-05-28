@@ -8,6 +8,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Montserrat:wght@300;400;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
     <style>
+        /* Глобални стилове, които са извън style.css (за резерв) */
         * {
             box-sizing: border-box;
             user-select: none;
@@ -148,7 +149,7 @@
             white-space: nowrap;
             scroll-behavior: smooth;
             -webkit-overflow-scrolling: touch;
-            scroll-snap-type: x mandatory; /* Added for snappy scrolling */
+            scroll-snap-type: x mandatory;
             -ms-overflow-style: none;
             scrollbar-width: none;
         }
@@ -211,6 +212,7 @@
             overflow: auto;
             padding: 20px;
         }
+        /* Стилове за менюто – по подразбиране */
         .new-game-menu-container {
             position: relative;
             display: inline-block;
@@ -225,7 +227,7 @@
             border-radius: 12px;
             padding: 8px 0;
             min-width: 220px;
-            z-index: 1000;
+            z-index: 10000;
             opacity: 0;
             visibility: hidden;
             transform: translateY(-10px);
@@ -236,6 +238,17 @@
             opacity: 1;
             visibility: visible;
             transform: translateY(0);
+        }
+        /* Специални стилове за менюто в долната лента – отваряне нагоре */
+        #bottom-controls .new-game-menu-container {
+            position: relative;
+        }
+        #bottom-controls .new-game-dropdown {
+            top: auto !important;
+            bottom: 100% !important;
+            left: 0 !important;
+            margin-bottom: 12px !important;
+            transform: translateY(0) !important;
         }
         .new-game-option {
             display: flex;
@@ -275,10 +288,6 @@
             #sidebar-right { order: 3; }
             .stat-box { font-size: 0.7rem; padding: 2px 8px; }
             .active-hero-name { font-size: 0.7rem; padding: 2px 8px; }
-            .new-game-dropdown {
-                left: -80px;
-                min-width: 200px;
-            }
         }
     </style>
 </head>
@@ -292,7 +301,7 @@
         <div class="stat-box">⏳ <span id="current-time-info">пролет, 480 г. пр.н.е.</span></div>
     </div>
     <div class="top-bar-controls">
-      
+        <!-- тук вече няма бутон за нова игра – преместен е долу -->
     </div>
 </header>
 
@@ -328,9 +337,9 @@
 <div id="favorite-heroes-bar" class="favorite-bar"></div>
 
 <div id="bottom-controls">
-      <div class="new-game-menu-container bottom-menu">
-        <button class="glass-btn" id="newGameBtnBottom">🎮 Нова игра / Продължи</button>
-        <div class="new-game-dropdown bottom-dropdown" id="newGameDropdownBottom">
+    <div class="new-game-menu-container bottom-menu">
+        <button class="glass-btn" id="newGameBtn">🎮 Нова игра / Продължи</button>
+        <div class="new-game-dropdown bottom-dropdown" id="newGameDropdown">
             <div class="new-game-option" data-mode="classic">
                 <span class="new-game-option-icon">🏰</span>
                 <span>Класически режим (много герои)</span>
@@ -340,7 +349,7 @@
                 <span>Соло режим (RPG приключение)</span>
             </div>
             <div class="new-game-divider"></div>
-            <div class="new-game-option" id="continueGameOptionBottom">
+            <div class="new-game-option" id="continueGameOption">
                 <span class="new-game-option-icon">📜</span>
                 <span>Продължи текущата игра</span>
             </div>
@@ -353,8 +362,6 @@
     <button class="icon-btn" onclick="window.openEventsMenu?.()" title="Събития">📜</button>
     <button class="icon-btn" onclick="window.openExpeditionsMenu?.()" title="Експедиции">🧭</button>
     <button class="icon-btn" onclick="window.toggleTreasury()" title="Съкровищница">🎒</button>
-
-    <!-- Преместени бутони от горната лента -->
     <button class="icon-btn" onclick="window.hireNewHero?.()" title="Наеми герой">👑</button>
     <button class="icon-btn" onclick="window.toggleGameFullScreen?.()" title="Цял екран">⬚</button>
     <button class="icon-btn" onclick="window.armyMarket?.show?.()" title="Пазар за армия">⚔️</button>
@@ -364,10 +371,10 @@
 
 <!-- Скриптове – редът е критичен! -->
 <script src="world_data.js"></script>
-    <script src="database.js"></script>
+<script src="database.js"></script>
 <script src="troopsData.js"></script>
 <script src="characterEvolution.js"></script>
- <script src="leaderboard.js"></script>
+<script src="leaderboard.js"></script>
 <script src="classes.js"></script>
 <script src="skills.js"></script>
 <script src="skills-ui.js"></script>
@@ -393,13 +400,13 @@
 
 <script>
 (function initNewGameMenu() {
-    const container = document.querySelector('.new-game-menu-container.bottom-menu');
-    const btn = document.getElementById('newGameBtnBottom');
-    const dropdown = document.getElementById('newGameDropdownBottom');
-    const continueOption = document.getElementById('continueGameOptionBottom');
+    const container = document.querySelector('.new-game-menu-container');
+    const btn = document.getElementById('newGameBtn');
+    const dropdown = document.getElementById('newGameDropdown');
+    const continueOption = document.getElementById('continueGameOption');
     
     if (!btn || !dropdown) {
-        console.warn("Бутон или падащо меню не са намерени", {btn, dropdown});
+        console.warn("Бутон или падащо меню не са намерени");
         return;
     }
     
@@ -600,7 +607,6 @@
         if (window.initializeHeroRPGData) window.initializeHeroRPGData(window.currentHero);
     }
 
-    // ==================== ОСНОВНА ФУНКЦИЯ ЗА ХОД (ОБЕДИНЕНА) ====================
     window.updateTimeUI = function() {
         const timeSpan = document.getElementById('current-time-info');
         if (!timeSpan || !window.gameTime) return;
@@ -611,9 +617,7 @@
     
     window.updateTimeUI();
     
-    // Единствена дефиниция на processTurn
     window.processTurn = function() {
-        // Актуализиране на времето (сезони и години)
         if (!window.gameTime) {
             window.gameTime = { seasonIndex: 0, year: 480, era: "пр.н.е." };
         }
@@ -632,61 +636,34 @@
         }
         window.updateTimeUI();
         
-        // Икономика
         if (typeof window.calculateEconomy === 'function') window.calculateEconomy();
-        
-        // Дипломация
         if (typeof window.processClanDiplomacyAutomation === 'function') window.processClanDiplomacyAutomation();
-        
-        // Експедиции
         if (typeof window.advanceExpeditionsTurn === 'function') window.advanceExpeditionsTurn();
-        
-        // Автономно завладяване на региони
         if (typeof window.autonomousRegionConquest === 'function') window.autonomousRegionConquest();
 
-        // Пасивно възстановяване на HP за всички живи герои
-if (window.worldData && window.worldData.clans) {
-    for (let key in window.worldData.clans) {
-        let hero = window.worldData.clans[key];
-        if (hero.isJoined === true && hero.isAlive !== false) {
-             // evolve heroes every turn
-             if (typeof window.evolveHero === 'function') window.evolveHero(hero);
-             
-             // automate heroes in auto mode
-             if (typeof window.automateHero === 'function') window.automateHero(hero);
-
-             if (hero.hp < hero.maxHp) {
-            let regen = Math.max(1, Math.floor(hero.maxHp * 0.05)); // 5% от maxHp
-            // Бонус от умение "endurance"
-            let endurance = hero.skills?.endurance || 0;
-            regen += endurance;
-            hero.hp = Math.min(hero.maxHp, hero.hp + regen);
+        if (window.worldData && window.worldData.clans) {
+            for (let key in window.worldData.clans) {
+                let hero = window.worldData.clans[key];
+                if (hero.isJoined === true && hero.isAlive !== false) {
+                    if (typeof window.evolveHero === 'function') window.evolveHero(hero);
+                    if (typeof window.automateHero === 'function') window.automateHero(hero);
+                    if (hero.hp < hero.maxHp) {
+                        let regen = Math.max(1, Math.floor(hero.maxHp * 0.05));
+                        let endurance = hero.skills?.endurance || 0;
+                        regen += endurance;
+                        hero.hp = Math.min(hero.maxHp, hero.hp + regen);
+                    }
+                }
             }
         }
-    }
-}
-        // Нападения от съперници
         if (typeof window.checkRandomAttack === 'function') window.checkRandomAttack();
-        
-        // Опит за активния герой
         if (window.currentHero && window.gainHeroXP) window.gainHeroXP(window.currentHero, 15);
+        if (Math.random() < 0.02 && typeof window.createLegendaryHero === 'function') window.createLegendaryHero();
+        if (Math.random() < 0.15 && typeof window.triggerRandomDuelChallenge === 'function') window.triggerRandomDuelChallenge();
         
-        // ========== НОВИ ДОБАВКИ ==========
-        // 1. Легендарен герой (2% шанс)
-        if (Math.random() < 0.02 && typeof window.createLegendaryHero === 'function') {
-            window.createLegendaryHero();
-        }
-        // 2. Дуелно предизвикателство (15% шанс)
-        if (Math.random() < 0.15 && typeof window.triggerRandomDuelChallenge === 'function') {
-            window.triggerRandomDuelChallenge();
-        }
-        
-        // Актуализиране на UI
         if (window.updateCharacterUI) window.updateCharacterUI(window.currentHero);
         if (window.renderTop6HeroesUI) window.renderTop6HeroesUI();
         if (typeof window.renderSingleBar === 'function') window.renderSingleBar();
-        
-        // Запазване на играта
         if (typeof window.saveGreatBulgariaGame === 'function') window.saveGreatBulgariaGame();
     };
 
@@ -735,12 +712,10 @@ if (window.worldData && window.worldData.clans) {
     console.log("✅ Играта е напълно готова (с дуели и легендарни герои)!");
 })();
 </script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 
 <script>
-// ==================== ИНТЕРАКТИВНА КАРТА (ФИНАЛНА ВЕРСИЯ С ПОРТАЛИ) ====================
 (function() {
-    // Повишаваме z-index на inspectRegion (ако се отваря)
     const originalInspect = window.inspectRegion;
     if (originalInspect) {
         window.inspectRegion = function(regionName) {
@@ -752,15 +727,12 @@ if (window.worldData && window.worldData.clans) {
         };
     }
 
-    // Генериране на карта с фиксирани размери (700x500) + поддръжка на портали
     window.generateMapCanvas = function(containerId) {
         const container = document.getElementById(containerId);
         if (!container) return console.error(`Контейнер #${containerId} не съществува`);
-
         const mapWidth = 700;
         const mapHeight = 500;
         const tileMargin = 2;
-
         let regions = window.worldData ? Object.values(window.worldData.regions) : [];
         if (!regions.length) {
             container.innerHTML = '<div style="color:#ffaa66;">Няма заредени региони.</div>';
@@ -771,7 +743,6 @@ if (window.worldData && window.worldData.clans) {
         const rows = Math.ceil(regions.length / cols);
         const tileWidth = (mapWidth - (cols - 1) * tileMargin) / cols;
         const tileHeight = (mapHeight - (rows - 1) * tileMargin) / rows;
-
         const canvas = document.createElement('canvas');
         canvas.width = mapWidth;
         canvas.height = mapHeight;
@@ -783,11 +754,9 @@ if (window.worldData && window.worldData.clans) {
         container.innerHTML = '';
         container.appendChild(canvas);
         window.currentMapCanvas = canvas;
-
         const ctx = canvas.getContext('2d');
         let ownedRegions = (window.playerRegions || []).flat();
         const regionRects = [];
-
         for (let i = 0; i < regions.length; i++) {
             const region = regions[i];
             const row = Math.floor(i / cols);
@@ -807,8 +776,6 @@ if (window.worldData && window.worldData.clans) {
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
             ctx.fillText(shortName, x + tileWidth / 2, y + tileHeight / 2);
-
-            // Рисуване на иконка за активен портал (ако има)
             const hasPortal = window.activePortals && window.activePortals.some(p => p.regionName === region.name);
             if (hasPortal) {
                 ctx.font = "24px sans-serif";
@@ -817,11 +784,8 @@ if (window.worldData && window.worldData.clans) {
                 ctx.fillText("🌀", x + tileWidth - 20, y + 20);
                 ctx.shadowBlur = 0;
             }
-
             regionRects.push({ region, x, y, w: tileWidth, h: tileHeight });
         }
-
-        // Клик върху картата – приоритет на портал, иначе инспекция
         canvas.addEventListener('click', (e) => {
             const rect = canvas.getBoundingClientRect();
             const scaleX = canvas.width / rect.width;
@@ -840,7 +804,6 @@ if (window.worldData && window.worldData.clans) {
                 }
             }
         });
-
         canvas.addEventListener('mousemove', (e) => {
             const rect = canvas.getBoundingClientRect();
             const scaleX = canvas.width / rect.width;
@@ -853,46 +816,25 @@ if (window.worldData && window.worldData.clans) {
         });
     };
 
-    // Функция за опресняване на картата (ако е отворена)
     window.refreshMap = function() {
         const container = document.getElementById('map-container-modal');
-        if (container && window.generateMapCanvas) {
-            window.generateMapCanvas('map-container-modal');
-        }
+        if (container && window.generateMapCanvas) window.generateMapCanvas('map-container-modal');
     };
 
-    // Отваряне на картата в модал
     window.openInteractiveMap = function() {
         const oldModal = document.getElementById('interactive-map-modal');
         if (oldModal) oldModal.remove();
         const modal = document.createElement('div');
         modal.id = 'interactive-map-modal';
-        modal.style.cssText = `
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0,0,0,0.85);
-            backdrop-filter: blur(8px);
-            z-index: 200000;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-family: 'Cinzel', serif;
-            padding: 20px;
-            box-sizing: border-box;
-        `;
-        modal.innerHTML = `
-            <div style="background: #0a0a1a; border: 2px solid #d4af37; border-radius: 24px; padding: 20px; max-width: 90vw; max-height: 90vh; overflow: auto; text-align: center;">
-                <h2 style="color:#ffd700; margin:0 0 10px 0;">🗺️ ИНТЕРАКТИВНА КАРТА</h2>
-                <div id="map-container-modal" style="margin:10px 0; display: flex; justify-content: center;"></div>
-                <div style="display: flex; gap: 10px; justify-content: center; margin-top: 15px;">
-                    <button id="refresh-map-btn" style="background:#2c5a2a; border:1px solid #d4af37; border-radius:30px; padding:6px 15px; color:#ffdd99; cursor:pointer;">🔄 Обнови картата</button>
-                    <button id="close-map-modal" style="background:#2c1a0c; border:1px solid #d4af37; border-radius:30px; padding:6px 15px; color:#ffdd99; cursor:pointer;">Затвори</button>
-                </div>
+        modal.style.cssText = `position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.85); backdrop-filter:blur(8px); z-index:200000; display:flex; align-items:center; justify-content:center; font-family:'Cinzel', serif; padding:20px; box-sizing:border-box;`;
+        modal.innerHTML = `<div style="background:#0a0a1a; border:2px solid #d4af37; border-radius:24px; padding:20px; max-width:90vw; max-height:90vh; overflow:auto; text-align:center;">
+            <h2 style="color:#ffd700; margin:0 0 10px 0;">🗺️ ИНТЕРАКТИВНА КАРТА</h2>
+            <div id="map-container-modal" style="margin:10px 0; display:flex; justify-content:center;"></div>
+            <div style="display:flex; gap:10px; justify-content:center; margin-top:15px;">
+                <button id="refresh-map-btn" style="background:#2c5a2a; border:1px solid #d4af37; border-radius:30px; padding:6px 15px; color:#ffdd99; cursor:pointer;">🔄 Обнови картата</button>
+                <button id="close-map-modal" style="background:#2c1a0c; border:1px solid #d4af37; border-radius:30px; padding:6px 15px; color:#ffdd99; cursor:pointer;">Затвори</button>
             </div>
-        `;
+        </div>`;
         document.body.appendChild(modal);
         const mapContainer = modal.querySelector('#map-container-modal');
         const refresh = () => window.generateMapCanvas('map-container-modal');
@@ -902,12 +844,10 @@ if (window.worldData && window.worldData.clans) {
         modal.addEventListener('click', (e) => { if (e.target === modal) modal.remove(); });
     };
 
-    // Ако искате да замените старата функция openRegionsMap:
     if (typeof window.openRegionsMap === 'function') {
         window.openRegionsMap = window.openInteractiveMap;
     }
-
-    console.log("✅ Интерактивна карта заредена – с поддръжка на портали и refreshMap");
+    console.log("✅ Интерактивна карта заредена");
 })();
 </script>
 </body>
