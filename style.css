@@ -1,6 +1,6 @@
 /* ==========================================================================
    ВЕЛИКА БЪЛГАРИЯ – ФИНАЛЕН АДАПТИВЕН СТИЛ
-   Версия: 5.0 – ПРЕХОД КЪМ НОВА ЛЕНТА С ЛЮБИМИ ГЕРОИ
+   Версия: 6.0 – ФИКС НА МЕНЮТО ЗА НОВА ИГРА (ОТВАРЯНЕ НАГОРЕ)
    ========================================================================== */
 
 /* -----------------------------------------------
@@ -366,7 +366,6 @@ html, body {
     color: white;
 }
 
-/* Стилове за картите в модала с елитни герои */
 .elite-modal-card {
     background: rgba(0, 0, 0, 0.6);
     border: 1px solid #c9a87b;
@@ -418,7 +417,6 @@ html, body {
 /* -----------------------------------------------
    11. АДАПТИВНОСТ (RESPONSIVE)
 ----------------------------------------------- */
-/* Таблети (до 1024px) */
 @media (max-width: 1024px) {
     #game-container {
         grid-template-columns: 1fr;
@@ -436,7 +434,6 @@ html, body {
     }
 }
 
-/* Големи телефони (до 768px) */
 @media (max-width: 768px) {
     #top-bar {
         flex-direction: column;
@@ -473,7 +470,6 @@ html, body {
     }
 }
 
-/* Малки телефони (до 480px) */
 @media (max-width: 480px) {
     .heroes-grid {
         grid-template-columns: repeat(2, 1fr);
@@ -495,7 +491,6 @@ html, body {
     }
 }
 
-/* Десктоп (над 1025px) – по-компактни бутони */
 @media (min-width: 1025px) {
     .stat-box {
         font-size: 0.85rem;
@@ -512,18 +507,13 @@ html, body {
 
 /* Специализирана мобилна оптимизация за телефони (≤600px) */
 @media (max-width: 600px) {
-    /* 1. Скриваме страничните панели – те се преместват в основната област от JS */
     #sidebar-left, #sidebar-right {
         display: none;
     }
-
-    /* 2. Основният контейнер става блок (без grid) */
     #game-container {
         display: block;
         padding: 8px;
     }
-
-    /* 3. Горна лента – опростена, с място за хамбургер бутон */
     #top-bar {
         flex-direction: row;
         justify-content: space-between;
@@ -552,24 +542,9 @@ html, body {
         justify-content: space-evenly;
         margin-top: 6px;
     }
-    /* Скриваме повечето бутони от горната лента – те ще са в хамбургер менюто */
     .top-bar-controls .glass-btn:not(.menu-toggle) {
         display: none;
     }
-    /* Бутонът за меню да е видим */
-    .menu-toggle {
-        display: flex;
-        order: 3;
-        background: rgba(212, 175, 55, 0.3);
-        border-radius: 50%;
-        width: 40px;
-        height: 40px;
-        justify-content: center;
-        align-items: center;
-        font-size: 1.4rem;
-    }
-
-    /* 4. Нова лента с любими герои – хоризонтално плъзгане */
     .favorite-bar {
         gap: 4px;
         padding: 4px 6px;
@@ -580,22 +555,16 @@ html, body {
     .favorite-slot .hero-name {
         font-size: 8px;
     }
-
-    /* 5. Основна игрова област – без вътрешни падове */
     #game-main-area {
         padding: 10px;
         margin-top: 10px;
     }
-
-    /* 6. Мобилни секции (клонирани от страничните панели) */
     .mobile-section {
         background: rgba(0, 0, 0, 0.5);
         border-radius: 12px;
         padding: 12px;
         margin-bottom: 15px;
     }
-
-    /* 7. Битка – хоризонтално плъзгане за героите */
     .heroes-grid {
         display: flex;
         overflow-x: auto;
@@ -620,8 +589,6 @@ html, body {
         max-width: 95%;
         margin: 0 auto;
     }
-
-    /* 8. Модали – пълна ширина, по-голям бутон за затваряне */
     .modal-content,
     .glass-panel,
     .wm-container,
@@ -643,8 +610,6 @@ html, body {
         top: 5px !important;
         right: 5px !important;
     }
-
-    /* 9. Казарми и пазар – една колона */
     .troop-shop {
         grid-template-columns: 1fr !important;
     }
@@ -655,21 +620,55 @@ html, body {
         padding: 6px 12px;
         font-size: 0.75rem;
     }
-
-
-    /* 11. Показваме бутона за нова игра */
     .new-game-menu-container .glass-btn {
         display: flex !important;
     }
-
-    /* 12. Падащото меню на нова игра – най-отгоре */
     .new-game-dropdown {
         z-index: 300000 !important;
     }
 }
 
 /* -----------------------------------------------
-   12. ДОПЪЛНИТЕЛНИ КОМПОНЕНТИ (КУЕСТОВЕ, ЛЕТОПИС)
+   13. ПРЕМАХВАНЕ НА ХАМБУРГЕР МЕНЮ (ТЕЛЕФОНИ)
+----------------------------------------------- */
+.menu-toggle,
+#mobile-menu-panel,
+.all-heroes-btn,
+.bottom-hero-btn {
+    display: none !important;
+}
+
+/* -----------------------------------------------
+   14. КОРЕКЦИЯ ЗА МЕНЮТО НА НОВА ИГРА В ДОЛНАТА ЛЕНТА
+       (ОТВАРЯНЕ НАГОРЕ)
+----------------------------------------------- */
+#bottom-controls .new-game-menu-container {
+    position: relative;
+}
+
+#bottom-controls .new-game-dropdown {
+    position: absolute;
+    bottom: 100%;          /* изскача нагоре */
+    left: 0;
+    margin-bottom: 12px;
+    top: auto !important;
+    transform: translateY(0) !important;
+}
+
+/* За мобилни – падащото меню да не се отваря нагоре, а да е центрирано */
+@media (max-width: 600px) {
+    #bottom-controls .new-game-dropdown {
+        position: fixed;
+        bottom: auto;
+        top: 50% !important;
+        left: 50% !important;
+        transform: translate(-50%, -50%) !important;
+        margin-bottom: 0;
+    }
+}
+
+/* -----------------------------------------------
+   15. ДОПЪЛНИТЕЛНИ КОМПОНЕНТИ (КУЕСТОВЕ, ЛЕТОПИС)
 ----------------------------------------------- */
 .chronicle-event {
     background: rgba(20, 20, 40, 0.6);
@@ -692,7 +691,6 @@ html, body {
     margin-top: 8px;
 }
 
-/* Падащо меню за нова игра */
 .new-game-menu-container {
     position: relative;
     display: inline-block;
@@ -736,7 +734,6 @@ html, body {
     color: #ffd700;
 }
 
-/* Специфична корекция за падащо меню на мобилни */
 @media (max-width: 768px) {
     .new-game-dropdown {
         position: fixed;
@@ -751,83 +748,12 @@ html, body {
         transform: translate(-50%, -50%);
     }
 }
-/* Скриваме левия панел с активния герой на телефони */
+
 @media (max-width: 768px) {
     #sidebar-left {
         display: none !important;
     }
-    /* Ако има и мобилно копие (mobile-profile-section) – също го скриваме */
     #mobile-profile-section {
         display: none !important;
     }
-}
-
-/* ---------------------------------------------------------------
-   ПРЕМАХВАНЕ НА ХАМБУРГЕР МЕНЮ (ТЕЛЕФОНИ)
----------------------------------------------------------------- */
-.menu-toggle,
-#mobile-menu-panel,
-.all-heroes-btn {
-    display: none !important;
-}
-
-/* ---------------------------------------------------------------
-   БУТОН ЗА НОВА ИГРА В ДОЛНАТА ЛЕНТА
----------------------------------------------------------------- */
-#bottom-controls .new-game-menu-container {
-    position: relative;
-    display: inline-block;
-    margin-right: 8px;
-}
-
-#bottom-controls .glass-btn {
-    background: rgba(212, 175, 55, 0.2);
-    border-color: #ffd700;
-}
-
-/* Падащо меню, което се отваря НАГОРЕ */
-#bottom-controls .new-game-dropdown {
-    position: absolute;
-    bottom: 100%;           /* ← отваря се нагоре */
-    left: 0;
-    margin-bottom: 8px;     /* разстояние от бутона */
-    top: auto;              /* анулира top */
-    transform: translateY(0);
-}
-
-/* Ако искаме да е центрирано спрямо бутона (по желание) */
-#bottom-controls .new-game-dropdown.show {
-    transform: translateY(0);
-}
-
-/* При много малки екрани (мобилни) – падащото меню да е на цял екран */
-@media (max-width: 600px) {
-    #bottom-controls .new-game-dropdown {
-        position: fixed;
-        bottom: 70px;
-        left: 50%;
-        transform: translateX(-50%);
-        width: 90%;
-        max-width: 280px;
-        margin-bottom: 0;
-    }
-    #bottom-controls .new-game-dropdown.show {
-        transform: translateX(-50%);
-    }
-}
-
-/* Преместване на менюто за нова игра в долната лента – отваряне нагоре */
-#bottom-controls .new-game-menu-container {
-    position: relative;
-}
-#bottom-controls .new-game-dropdown {
-    position: absolute;
-    bottom: 100%;          /* изскача нагоре */
-    left: 0;
-    margin-bottom: 10px;
-    top: auto;
-    transform: translateY(0);
-}
-#bottom-controls .new-game-dropdown.show {
-    transform: translateY(0);
 }
