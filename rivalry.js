@@ -1,59 +1,32 @@
 /**
 ==========================================================================
 ПРОЕКТ: ВЕЛИКА БЪЛГАРИЯ
-ФАЙЛ: rivalry.js (ВЕРСИЯ 4.0 – ХАРМОНИЗИРАН, ВСИЧКИ СА ГЕРОИ)
+ФАЙЛ: rivalry.js (ВЕРСИЯ 5.0 – АГРЕСИВНИ NPC, NPC vs NPC)
 ==========================================================================
 */
 (function() {
-    console.log("🔥 Инициализация на системата за съперничество (с летопис)...");
+    console.log("🔥 Инициализация на системата за съперничество (агресивна версия)...");
 
     const RIVALRY_CONFIG = {
-        attackChance: 0.12,
+        attackChance: 0.35,           // 35% шанс за атака на ход (беше 0.12)
         xpTheftPercent: 0.30,
         xpTransferToAggressor: 0.50,
         revengeBonus: 1.5,
-        minHeroesForAttack: 2,
-        cooldownTurns: 2,
+        minHeroesForAttack: 1,        // достатъчен 1 герой (беше 2)
+        cooldownTurns: 1,             // само 1 ход изчакване (беше 2)
     };
 
     window.pendingAttack = null;
     let lastAttackTurn = 0;
     let turnCounter = 0;
 
-    function getEnemyHeroes() {
-        let enemies = [];
-        if (!window.worldData || !window.worldData.clans) return enemies;
-        const seen = new Set();
-        for (let key in window.worldData.clans) {
-            let hero = window.worldData.clans[key];
-            if (window.currentHero && hero.name !== window.currentHero.name && hero.isJoined !== true) {
-                let id = hero.name || hero.leaderName || key;
-                if (!seen.has(id)) {
-                    seen.add(id);
-                    enemies.push({
-                        id: key,
-                        name: hero.name || hero.leaderName || key,
-                        heroObj: hero,
-                        power: hero.heroPower || 100,
-                        army: hero.armySize || 200
-                    });
-                }
-            }
-        }
-        return enemies;
-    }
-
-    function getPlayerHeroes(excludeMain = true) {
+    // Взима всички герои (без значение дали са наети или не)
+    function getAllHeroes() {
         let heroes = [];
         if (!window.worldData || !window.worldData.clans) return heroes;
-        const seen = new Set();
         for (let key in window.worldData.clans) {
             let hero = window.worldData.clans[key];
-            if (hero.isJoined === true) {
-                let id = hero.name || hero.leaderName || key;
-                if (seen.has(id)) continue;
-                if (excludeMain && window.currentHero && hero.name === window.currentHero.name) continue;
-                seen.add(id);
+            if (hero && hero.isAlive !== false) {
                 heroes.push({
                     id: key,
                     name: hero.name || hero.leaderName || key,
@@ -64,60 +37,12 @@
                     skills: hero.skills || {},
                     pet: hero.pet || null,
                     inventory: hero.inventory || [],
-                    spouse: hero.spouse || null
+                    spouse: hero.spouse || null,
+                    isPlayer: (window.currentHero && (hero.name === window.currentHero.name && hero.clan === window.currentHero.clan)) || false
                 });
             }
         }
         return heroes;
-    }
-
-    function stealArtifact(victim, aggressor) {
-        if (!victim.inventory || victim.inventory.length === 0) return false;
-        const artifactIndex = Math.floor(Math.random() * victim.inventory.length);
-        const stolenArtifact = victim.inventory[artifactIndex];
-        if (!stolenArtifact) return false;
-        victim.inventory.splice(artifactIndex, 1);
-        if (!aggressor.inventory) aggressor.inventory = [];
-        aggressor.inventory.push(stolenArtifact);
-        return { type: "artifact", item: stolenArtifact };
-    }
-
-    function stealSpouse(victim, aggressor) {
-        if (!victim.spouse) return false;
-        const stolenSpouse = victim.spouse;
-        victim.spouse = null;
-        aggressor.spouse = stolenSpouse;
-        return { type: "spouse", item: stolenSpouse };
-    }
-
-    function stealPet(victim, aggressor) {
-        if (!victim.pet) return false;
-        const stolenPet = victim.pet;
-        victim.pet = null;
-        aggressor.pet = stolenPet;
-        return { type: "pet", item: stolenPet };
-    }
-
-    function stealSkill(victim, aggressor) {
-        const skillKeys = Object.keys(victim.skills || {});
-        if (skillKeys.length === 0) return false;
-        const skillKey = skillKeys[Math.floor(Math.random() * skillKeys.length)];
-        const stolenLevel = victim.skills[skillKey];
-        if (stolenLevel <= 0) return false;
-        victim.skills[skillKey] = 0;
-        if (!aggressor.skills) aggressor.skills = {};
-        aggressor.skills[skillKey] = (aggressor.skills[skillKey] || 0) + stolenLevel;
-        return { type: "skill", item: skillKey, level: stolenLevel };
-    }
-
-    function stealXP(victim, aggressor) {
-        const stolenXP = Math.floor(victim.xp * RIVALRY_CONFIG.xpTheftPercent);
-        if (stolenXP <= 0) return false;
-        victim.xp -= stolenXP;
-        const gainXP = Math.floor(stolenXP * RIVALRY_CONFIG.xpTransferToAggressor);
-        if (window.gainHeroXP) window.gainHeroXP(aggressor, gainXP);
-        else aggressor.xp = (aggressor.xp || 0) + gainXP;
-        return { type: "xp", amount: stolenXP, gained: gainXP };
     }
 
     function performTheft(victim, aggressor) {
@@ -128,14 +53,54 @@
         if (victim.skills && Object.keys(victim.skills).length > 0) theftTypes.push("skill");
         if (victim.xp > 100) theftTypes.push("xp");
         if (theftTypes.length === 0) return null;
+        
         const randomType = theftTypes[Math.floor(Math.random() * theftTypes.length)];
         let result = null;
         switch(randomType) {
-            case "artifact": result = stealArtifact(victim, aggressor); break;
-            case "spouse": result = stealSpouse(victim, aggressor); break;
-            case "pet": result = stealPet(victim, aggressor); break;
-            case "skill": result = stealSkill(victim, aggressor); break;
-            case "xp": result = stealXP(victim, aggressor); break;
+            case "artifact":
+                if (!victim.inventory.length) return null;
+                const artifactIndex = Math.floor(Math.random() * victim.inventory.length);
+                const stolenArtifact = victim.inventory[artifactIndex];
+                if (!stolenArtifact) return null;
+                victim.inventory.splice(artifactIndex, 1);
+                if (!aggressor.inventory) aggressor.inventory = [];
+                aggressor.inventory.push(stolenArtifact);
+                result = { type: "artifact", item: stolenArtifact };
+                break;
+            case "spouse":
+                if (!victim.spouse) return null;
+                const stolenSpouse = victim.spouse;
+                victim.spouse = null;
+                aggressor.spouse = stolenSpouse;
+                result = { type: "spouse", item: stolenSpouse };
+                break;
+            case "pet":
+                if (!victim.pet) return null;
+                const stolenPet = victim.pet;
+                victim.pet = null;
+                aggressor.pet = stolenPet;
+                result = { type: "pet", item: stolenPet };
+                break;
+            case "skill":
+                const skillKeys = Object.keys(victim.skills || {});
+                if (skillKeys.length === 0) return null;
+                const skillKey = skillKeys[Math.floor(Math.random() * skillKeys.length)];
+                const stolenLevel = victim.skills[skillKey];
+                if (stolenLevel <= 0) return null;
+                victim.skills[skillKey] = 0;
+                if (!aggressor.skills) aggressor.skills = {};
+                aggressor.skills[skillKey] = (aggressor.skills[skillKey] || 0) + stolenLevel;
+                result = { type: "skill", item: skillKey, level: stolenLevel };
+                break;
+            case "xp":
+                const stolenXP = Math.floor(victim.xp * RIVALRY_CONFIG.xpTheftPercent);
+                if (stolenXP <= 0) return null;
+                victim.xp -= stolenXP;
+                const gainXP = Math.floor(stolenXP * RIVALRY_CONFIG.xpTransferToAggressor);
+                if (window.gainHeroXP) window.gainHeroXP(aggressor, gainXP);
+                else aggressor.xp = (aggressor.xp || 0) + gainXP;
+                result = { type: "xp", amount: stolenXP, gained: gainXP };
+                break;
         }
         return result;
     }
@@ -170,35 +135,73 @@
         console.log(`📜 [ЛЕТОПИС] ${message}`);
     }
 
+    // Нова функция – атаки между всякакви герои (включително NPC срещу NPC)
     window.checkRandomAttack = function() {
         turnCounter++;
         if (turnCounter - lastAttackTurn < RIVALRY_CONFIG.cooldownTurns) return;
         if (window.pendingAttack) return;
         if (Math.random() > RIVALRY_CONFIG.attackChance) return;
-        const enemies = getEnemyHeroes();
-        const playerHeroes = getPlayerHeroes(true);
-        if (enemies.length === 0 || playerHeroes.length < RIVALRY_CONFIG.minHeroesForAttack) return;
-        const aggressor = enemies[Math.floor(Math.random() * enemies.length)];
-        const victim = playerHeroes[Math.floor(Math.random() * playerHeroes.length)];
-        const stolenInfo = performTheft(victim.heroObj, aggressor.heroObj);
+        
+        let allHeroes = getAllHeroes();
+        if (allHeroes.length < 2) return;
+        
+        // Избираме два различни героя
+        let attacker = allHeroes[Math.floor(Math.random() * allHeroes.length)];
+        let victim = allHeroes[Math.floor(Math.random() * allHeroes.length)];
+        let attempts = 0;
+        while (victim.id === attacker.id && attempts < 20) {
+            victim = allHeroes[Math.floor(Math.random() * allHeroes.length)];
+            attempts++;
+        }
+        if (victim.id === attacker.id) return;
+        
+        const stolenInfo = performTheft(victim.heroObj, attacker.heroObj);
         if (!stolenInfo) return;
+        
         lastAttackTurn = turnCounter;
-        addAttackToChronicle(aggressor, victim, stolenInfo);
+        addAttackToChronicle(attacker, victim, stolenInfo);
+        
+        // Ако жертвата е текущият герой на играча – покажи предупреждение
+        if (victim.isPlayer && window.showAdvisorPopup) {
+            window.showAdvisorPopup("⚔️ НАПАДЕНИЕ", `${attacker.name} нападна ${victim.name} и открадна ${stolenInfo.type === 'xp' ? stolenInfo.amount + ' опит' : (stolenInfo.item.name || stolenInfo.item)}`, "warning");
+        }
+        
         if (window.updateCharacterUI) window.updateCharacterUI(window.currentHero);
         if (typeof window.renderSingleBar === 'function') window.renderSingleBar();
-        console.log(`🔥 НАПАДЕНИЕ (${turnCounter} ход): ${aggressor.name} нападна ${victim.name} и открадна ${stolenInfo.type}`);
+        console.log(`🔥 НАПАДЕНИЕ (ход ${turnCounter}): ${attacker.name} нападна ${victim.name} и открадна ${stolenInfo.type}`);
     };
 
+    // Останалите функции (startRevengeBattle и помощните) остават без промяна
     window.startRevengeBattle = function(aggressor, victim, stolenInfo) {
         console.log(`⚔️ ЗАПОЧВА БИТКА ЗА ОТМЪЩЕНИЕ: ${victim.name} срещу ${aggressor.name}`);
         const year = (window.gameTime && window.gameTime.year) ? `${window.gameTime.year} г. ${window.gameTime.era}` : "480 г. пр.н.е.";
         if (window.addWorldEvent) {
             window.addWorldEvent(`⚔️ ОТМЪЩЕНИЕ`, `${victim.name} започва битка срещу ${aggressor.name}!`, "⚔️", year);
         }
-        const playerHeroes = getPlayerHeroes(false);
-        if (playerHeroes.length === 0) { 
+        // Взимаме всички герои на играча (за отмъщение)
+        let playerHeroes = [];
+        for (let key in window.worldData.clans) {
+            let hero = window.worldData.clans[key];
+            if (hero.isJoined === true && hero.isAlive !== false && (window.currentHero && hero.name !== window.currentHero.name)) {
+                playerHeroes.push({
+                    id: key,
+                    name: hero.name || hero.leaderName || key,
+                    heroObj: hero,
+                    power: hero.heroPower || 100
+                });
+            }
+        }
+        if (playerHeroes.length === 0 && window.currentHero) {
+            playerHeroes.push({
+                id: window.currentHero.clan,
+                name: window.currentHero.name,
+                heroObj: window.currentHero,
+                power: window.currentHero.heroPower || 100
+            });
+        }
+        if (playerHeroes.length === 0) {
             if (window.showAdvisorMsg) window.showAdvisorMsg("Нямате герой за отмъщение!");
-            return; 
+            return;
         }
         if (playerHeroes.length === 1) {
             startOneVsOneBattle(playerHeroes[0], aggressor, victim, stolenInfo);
@@ -253,10 +256,10 @@
         window.pendingAttack = null;
     }
 
-    // ==================== ЕКСПОРТ НА API ====================
+    // API
     window.rivalrySystem = {
-        getEnemyHeroes: getEnemyHeroes,
-        getPlayerHeroes: getPlayerHeroes,
+        getEnemyHeroes: getAllHeroes,
+        getPlayerHeroes: function() { return getAllHeroes().filter(h => h.isPlayer); },
         checkRandomAttack: window.checkRandomAttack,
         startRevengeBattle: window.startRevengeBattle,
         performTheft: performTheft,
@@ -264,5 +267,5 @@
         RIVALRY_CONFIG: RIVALRY_CONFIG
     };
 
-    console.log("✅ Системата за съперничество е инициализирана (действията се записват в летописа).");
+    console.log("✅ Системата за съперничество е инициализирана (NPC срещу NPC, агресивна).");
 })();
