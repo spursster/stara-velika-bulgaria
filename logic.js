@@ -472,6 +472,27 @@ if (window.gameMode === 'solo' && typeof initSoloMode === 'function') {
         
         if (parsed.favoriteHeroes) localStorage.setItem('favoriteHeroesFinal', parsed.favoriteHeroes);
         if (parsed.autoState) localStorage.setItem('heroAutoState', parsed.autoState);
+
+     // Миграция на стари любими – изпълни веднъж при зареждане
+function migrateFavorites() {
+    if (localStorage.getItem('favorites_migrated')) return;
+    let changed = false;
+    if (window.worldData && window.worldData.clans) {
+        for (let key in window.worldData.clans) {
+            let hero = window.worldData.clans[key];
+            if (hero.isFavoriteInBarracks === true && hero.isFavorite !== true) {
+                hero.isFavorite = true;
+                changed = true;
+            }
+            delete hero.isFavoriteInBarracks;
+        }
+        if (changed && typeof window.saveGreatBulgariaGame === 'function') {
+            window.saveGreatBulgariaGame();
+        }
+    }
+    localStorage.setItem('favorites_migrated', 'true');
+}
+// Извикай я в loadGreatBulgariaGame и startFreshGameLogic
         
         // Директно задаване на HP при зареждане (за всеки нает герой)
         function setHeroHP(hero) {
