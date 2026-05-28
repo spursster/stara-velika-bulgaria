@@ -249,19 +249,28 @@
     }
 }
 
-/* За мобилни (под 768px) запазваме хоризонтално плъзгане */
+/* За мобилни – хоризонтален скрол с плъзгане */
 @media (max-width: 768px) {
     #bottom-controls {
-        flex-wrap: nowrap;
-        justify-content: flex-start;
-        overflow-x: auto;
-        white-space: nowrap;
-        -webkit-overflow-scrolling: touch;
+        overflow-x: auto !important;
+        overflow-y: hidden !important;
+        -webkit-overflow-scrolling: touch !important;
+        scroll-behavior: auto !important;
+        white-space: nowrap !important;
+        flex-wrap: nowrap !important;
+        display: flex !important;
+        cursor: grab;
     }
-    #bottom-controls .icon-btn,
-    #bottom-controls .next-turn-btn,
-    #bottom-controls .new-game-menu-container {
-        flex-shrink: 0;
+    #bottom-controls:active {
+        cursor: grabbing;
+    }
+    #bottom-controls > * {
+        flex: 0 0 auto !important;
+        display: inline-block !important;
+    }
+    body {
+        overflow-x: visible !important;
+        touch-action: pan-y pan-x !important;
     }
 }
 </style>
@@ -891,6 +900,21 @@
         document.getElementById('closeModalBtn').onclick = () => modal.remove();
         modal.onclick = (e) => { if (e.target === modal) modal.remove(); };
     };
+})();
+</script>
+
+    <script>
+(function enableTouchScroll() {
+    const el = document.getElementById('bottom-controls');
+    if (!el) return;
+    // Премахва всички слушатели, които биха блокирали скрола (ако има)
+    el.addEventListener('touchmove', function(e) {
+        // Позволява естествения скрол – не прави preventDefault
+        e.stopPropagation();
+    }, { passive: false });
+    // Задължително: allow touch scroll
+    el.style.touchAction = 'pan-x pan-y';
+    console.log('✅ Хоризонталното плъзгане за долната лента е активирано.');
 })();
 </script>
 </body>
