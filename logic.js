@@ -158,9 +158,11 @@ for (let clanName in clans) {
 window.startFreshGameLogic = function() {
     console.log("🔄 startFreshGameLogic извикана");
 
+    // Пълно изчистване на worldData.clans
     if (!window.worldData) window.worldData = {};
-    if (!window.worldData.clans) window.worldData.clans = {};
+    window.worldData.clans = {};   // започваме празен списък
 
+    // Създаваме всички герои от базата (с isJoined = false)
     if (typeof initializeAllHeroesFromDatabase === 'function') {
         initializeAllHeroesFromDatabase();
     } else {
@@ -194,6 +196,7 @@ window.startFreshGameLogic = function() {
         }
     }
 
+    // Уверяваме се, че всички герои са isJoined = false (за всеки случай)
     for (let key in window.worldData.clans) {
         let hero = window.worldData.clans[key];
         if (hero) {
@@ -202,6 +205,7 @@ window.startFreshGameLogic = function() {
         }
     }
 
+    // Избираме случаен герой
     let heroData = getRandomHeroFromDatabase();
     let selectedName = heroData.name;
     let selectedClan = heroData.clan;
@@ -216,6 +220,131 @@ window.startFreshGameLogic = function() {
         }
     }
 
+    function setHeroHP(hero) {
+        let endurance = hero.skills?.endurance || 0;
+        hero.maxHp = 100 + (hero.level - 1) * 20 + endurance * 15;
+        hero.hp = hero.maxHp;
+        hero.isAlive = true;
+        console.log(`💚 Зададен HP за ${hero.name}: ${hero.hp}/${hero.maxHp}`);
+    }
+
+    if (existingHero) {
+        existingHero.isJoined = true;
+        existingHero.isFavorite = (window.gameMode === 'solo');
+        existingHero.gold = heroData.gold;
+        existingHero.armySize = heroData.armySize;
+        existingHero.currentArmy = heroData.armySize;
+        existingHero.heroPower = heroData.power;
+        existingHero.power = heroData.power;
+        window.currentHero = existingHero;
+        setHeroHP(window.currentHero);
+    } else {
+        window.currentHero = {
+            name: selectedName,
+            clan: selectedClan,
+            gold: heroData.gold,
+            armySize: heroData.armySize,
+            currentArmy: heroData.armySize,
+            heroPower: heroData.power,
+            power: heroData.power,
+            age: 30 + Math.floor(Math.random() * 31),
+            techLevel: 1,
+            level: 1,
+            xp: 0,
+            storedXP: 0,
+            isAuto: true,
+            skillPoints: 0,
+            equipment: Array(12).fill(null),
+            skills: { tactics: 0, endurance: 0, economy: 0, mysticism: 0, leadership: 0 },
+            inventory: [],
+            isFavorite: (window.gameMode === 'solo'),
+            isJoined: true,
+            portrait: null,
+            armyDetails: { infantry: Math.floor(heroData.armySize * 0.5), archers: Math.floor(heroData.armySize * 0.25), cavalry: Math.floor(heroData.armySize * 0.15), elite: Math.floor(heroData.armySize * 0.1) }
+        };
+        setHeroHP(window.currentHero);
+        if (window.ensureCompleteArmyDetails) window.ensureCompleteArmyDetails(window.currentHero);
+        const heroId = `hero_${selectedClan}_${selectedName.replace(/\s/g, '_')}`;
+        window.worldData.clans[heroId] = window.currentHero;
+    }
+
+    if (typeof window.generateHeroPortrait === 'function') {
+        window.generateHeroPortrait(window.currentHero).catch(e => console.warn(e));
+    }
+
+    // НАЙ-ВАЖНОТО: Зануляваме isJoined за всички останали герои, освен текущия
+    for (let key in window.worldData.clans) {
+        let hero = window.worldData.clans[key];
+        if (hero !== window.currentHero) {
+            hero.isJoined = false;
+            hero.isFavorite = false;
+        }
+    }
+
+    window.unlockedHeroes = [window.currentHero];
+    if (window.gameMode === 'solo') {
+        localStorage.setItem('barracksFavorites', JSON.stringify([window.currentHero.name]));
+    } else {
+        localStorage.setItem('barracksFavorites', JSON.stringify([]));
+    }
+    localStorage.removeItem('favoriteHeroesFinal');
+    localStorage.removeItem('heroAutoState');
+
+    if (window.gameMode === 'classic' && window._originalHireNewHero) {
+        window.hireNewHero = window._originalHireNewHero;
+    }
+    if (window.gameMode === 'solo' && typeof initSoloMode === 'function') {
+        initSoloMode();
+    }
+
+    window.gameTime = { seasonIndex: 0, year: 480, era: "пр.н.е." };
+
+    if (typeof window.generateProceduralRegions === 'function') {
+        window.generateProceduralRegions(30, true);
+    } else {
+        console.warn("generateProceduralRegions не е дефинирана");
+    }
+
+    if (typeof window.buildRegionConnections === 'function') {
+        window.buildRegionConnections();
+    }
+
+    window.playerRegions = ["Плиска"];
+    window.currentRegion = "Пли斯卡";
+
+    if (!window.gameMode) window.gameMode = 'classic';
+
+    if (window.gameMode === 'solo') {
+        console.log("🌍 Стартиране в СОЛО РЕЖИМ със случаен герой:", window.currentHero.name);
+        window.companions = [];
+        window.activeQuests = [];
+        window.completedQuests = [];
+        if (typeof window.addQuest === 'function') {
+            window.addQuest({ title: "Първи стъпки", description: "Завладейте региона Плиска или посетете съседен регион.", reward: { gold: 100, xp: 50 } });
+        }
+        if (window.showAdvisorMsg) {
+            window.showAdvisorMsg(`🌍 Добре дошли, ${window.currentHero.name} от рода ${window.currentHero.clan}!`);
+        }
+        if (typeof window.initSoloMode === 'function') window.initSoloMode();
+    } else {
+        console.log("🏰 Стартиране в КЛАСИЧЕСКИ РЕЖИМ със случаен герой:", window.currentHero.name);
+        if (window.showAdvisorMsg) {
+            window.showAdvisorMsg(`🏰 Вие сте ${window.currentHero.name} от могъщия род ${window.currentHero.clan}.`);
+        }
+    }
+
+    if (window.updateCharacterUI) window.updateCharacterUI(window.currentHero);
+    if (window.renderTop6HeroesUI) window.renderTop6HeroesUI();
+    if (typeof window.renderSingleBar === 'function') window.renderSingleBar();
+    if (window.updateTimeUI) window.updateTimeUI();
+    if (window.updatePortalContainerUI) window.updatePortalContainerUI();
+
+    if (typeof window.saveGreatBulgariaGame === 'function') {
+        window.saveGreatBulgariaGame();
+    }
+
+    console.log("✅ startFreshGameLogic завърши. Активен герой:", window.currentHero.name);
+};
     // Функция за директно задаване на HP
     function setHeroHP(hero) {
         let endurance = hero.skills?.endurance || 0;
