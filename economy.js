@@ -325,7 +325,7 @@ window.calculateEconomy = function() {
             let clan = window.worldData.clans[key];
             if (hero && key === hero.clan) continue;
             let isFavorite = favoriteNames.has(clan.name || clan.leaderName || key);
-            if (isFavorite) continue;
+           // if (isFavorite) continue;
             
             ensureArmyDetails(clan);
             clan.gold = clan.gold || 0;
