@@ -212,86 +212,8 @@
         overflow: auto;
         padding: 20px;
     }
-    /* Стилове за менюто – по подразбиране */
-    .new-game-menu-container {
-        position: relative;
-        display: inline-block;
-    }
-    .new-game-dropdown {
-        position: absolute;
-        top: 100%;
-        left: 0;
-        background: rgba(15, 15, 20, 0.98);
-        backdrop-filter: blur(12px);
-        border: 1px solid rgba(212, 175, 55, 0.5);
-        border-radius: 12px;
-        padding: 8px 0;
-        min-width: 220px;
-        z-index: 10000;
-        opacity: 0;
-        visibility: hidden;
-        transform: translateY(-10px);
-        transition: all 0.25s ease;
-        box-shadow: 0 8px 20px rgba(0,0,0,0.4);
-    }
-    .new-game-dropdown.show {
-        opacity: 1;
-        visibility: visible;
-        transform: translateY(0);
-    }
-    /* Специални стилове за менюто в долната лента – отваряне нагоре */
-    #bottom-controls .new-game-menu-container {
-        position: relative;
-    }
-    #bottom-controls .new-game-dropdown {
-        top: auto !important;
-        bottom: 100% !important;
-        left: 0 !important;
-        margin-bottom: 12px !important;
-        transform: translateY(0) !important;
-    }
-    /* ФИНАЛНА КОРЕКЦИЯ: когато менюто е отворено, да излиза в центъра на екрана и да е над всичко */
-    #bottom-controls .new-game-dropdown.show {
-        position: fixed !important;
-        bottom: auto !important;
-        top: 50% !important;
-        left: 50% !important;
-        transform: translate(-50%, -50%) !important;
-        z-index: 2147483647 !important;
-        width: 260px;
-        max-width: 90vw;
-        margin: 0 !important;
-        opacity: 1 !important;
-        visibility: visible !important;
-    }
-    .new-game-option {
-        display: flex;
-        align-items: center;
-        gap: 12px;
-        padding: 10px 16px;
-        color: #ffdd99;
-        cursor: pointer;
-        transition: background 0.2s;
-        font-size: 0.85rem;
-        border-bottom: 1px solid rgba(255,215,0,0.1);
-    }
-    .new-game-option:last-child {
-        border-bottom: none;
-    }
-    .new-game-option:hover {
-        background: rgba(212, 175, 55, 0.2);
-        color: #ffd700;
-    }
-    .new-game-option-icon {
-        font-size: 1.2rem;
-        min-width: 28px;
-        text-align: center;
-    }
-    .new-game-divider {
-        height: 1px;
-        background: rgba(212, 175, 55, 0.3);
-        margin: 6px 0;
-    }
+
+    
     @media (max-width: 800px) {
         #game-container {
             grid-template-columns: 1fr;
@@ -416,8 +338,7 @@
 <script>
 // Нова, проста и надеждна система за избор на режим
 (function() {
-    const btn = document.getElementById('newGameBtn');
-    if (!btn) return;
+
 
     // Създаване на модален прозорец
     function showGameModeModal() {
@@ -850,6 +771,87 @@
         window.openRegionsMap = window.openInteractiveMap;
     }
     console.log("✅ Интерактивна карта заредена");
+})();
+</script>
+
+    <script>
+(function() {
+    const btn = document.getElementById('newGameBtn');
+    if (!btn) return;
+
+    btn.onclick = function(e) {
+        e.stopPropagation();
+        
+        // Премахваме стар модал, ако има
+        const oldModal = document.getElementById('gameModeModal');
+        if (oldModal) oldModal.remove();
+
+        const modal = document.createElement('div');
+        modal.id = 'gameModeModal';
+        modal.style.cssText = `
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.85);
+            backdrop-filter: blur(8px);
+            z-index: 9999999;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Cinzel', serif;
+        `;
+        modal.innerHTML = `
+            <div style="background: #0a0a1a; border: 2px solid #d4af37; border-radius: 24px; padding: 24px; max-width: 300px; width: 90%; text-align: center;">
+                <h3 style="color: #ffd700; margin-top: 0;">Избор на режим</h3>
+                <button class="mode-btn" data-mode="classic" style="width: 100%; margin: 8px 0; padding: 10px; background: #2c5a2a; border: none; border-radius: 30px; color: white; font-weight: bold; cursor: pointer;">🏰 Класически режим</button>
+                <button class="mode-btn" data-mode="solo" style="width: 100%; margin: 8px 0; padding: 10px; background: #daa520; border: none; border-radius: 30px; color: black; font-weight: bold; cursor: pointer;">⚔️ Соло режим</button>
+                <div style="height: 1px; background: #d4af37; margin: 15px 0;"></div>
+                <button id="continueGameBtn" style="width: 100%; padding: 10px; background: #2c1a0c; border: 1px solid #d4af37; border-radius: 30px; color: #ffdd99; cursor: pointer;">📜 Продължи текущата игра</button>
+                <button id="closeModalBtn" style="width: 100%; margin-top: 12px; padding: 8px; background: none; border: 1px solid #ff6666; border-radius: 30px; color: #ffaaaa; cursor: pointer;">Затвори</button>
+            </div>
+        `;
+        document.body.appendChild(modal);
+
+        function startGame(mode) {
+            localStorage.removeItem('GreatBulgaria_SaveGame');
+            localStorage.removeItem('favoriteHeroesFinal');
+            localStorage.removeItem('heroAutoState');
+            localStorage.removeItem('barracksFavorites');
+            window.gameMode = mode;
+            if (typeof window.startFreshGameLogic === 'function') {
+                window.startFreshGameLogic();
+            } else {
+                location.reload();
+            }
+        }
+
+        function continueGame() {
+            if (!localStorage.getItem('GreatBulgaria_SaveGame')) {
+                alert("Няма запазена игра. Започнете нова игра първо.");
+                modal.remove();
+                return;
+            }
+            if (typeof window.loadGreatBulgariaGame === 'function') {
+                window.loadGreatBulgariaGame();
+                modal.remove();
+            } else {
+                location.reload();
+            }
+        }
+
+        document.querySelectorAll('.mode-btn').forEach(btn => {
+            btn.onclick = () => {
+                const mode = btn.getAttribute('data-mode');
+                modal.remove();
+                startGame(mode);
+            };
+        });
+        document.getElementById('continueGameBtn').onclick = () => continueGame();
+        document.getElementById('closeModalBtn').onclick = () => modal.remove();
+        modal.onclick = (e) => { if (e.target === modal) modal.remove(); };
+    };
 })();
 </script>
 </body>
