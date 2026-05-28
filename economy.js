@@ -313,14 +313,13 @@ window.calculateEconomy = function() {
     }
 
     // ========== АВТОНОМНА ИКОНОМИКА ЗА НЕ-ЛЮБИМИ ГЕРОИ (подобрена) ==========
-    let favoriteNames = new Set();
-    if (window.worldData && window.worldData.clans) {
-        for (let key in window.worldData.clans) {
-            let heroData = window.worldData.clans[key];
-            if (heroData.isFavorite === true || heroData.isFavoriteInBarracks === true) {
-                favoriteNames.add(heroData.name || heroData.leaderName || key);
-            }
-        }
+ let favoriteNames = new Set();
+for (let key in window.worldData.clans) {
+    let heroData = window.worldData.clans[key];
+    if (heroData.isFavorite === true) {
+        favoriteNames.add(heroData.name || heroData.leaderName || key);
+    }
+}
     }
     
     if (window.worldData && window.worldData.clans) {
