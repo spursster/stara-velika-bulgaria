@@ -227,7 +227,7 @@ window.startFreshGameLogic = function() {
 
     if (existingHero) {
         existingHero.isJoined = true;
-        existingHero.isFavorite = true;
+        existingHero.isFavorite = (window.gameMode === 'solo');
         existingHero.gold = heroData.gold;
         existingHero.armySize = heroData.armySize;
         existingHero.currentArmy = heroData.armySize;
@@ -254,7 +254,7 @@ window.startFreshGameLogic = function() {
             equipment: Array(12).fill(null),
             skills: { tactics: 0, endurance: 0, economy: 0, mysticism: 0, leadership: 0 },
             inventory: [],
-            isFavorite: true,
+            isFavorite: (window.gameMode === 'solo'),
             isJoined: true,
             portrait: null,
             armyDetails: { infantry: Math.floor(heroData.armySize * 0.5), archers: Math.floor(heroData.armySize * 0.25), cavalry: Math.floor(heroData.armySize * 0.15), elite: Math.floor(heroData.armySize * 0.1) }
@@ -278,10 +278,22 @@ window.startFreshGameLogic = function() {
     }
 
     window.unlockedHeroes = [window.currentHero];
+   if (window.gameMode === 'solo') {
     localStorage.setItem('barracksFavorites', JSON.stringify([window.currentHero.name]));
+} else {
+    localStorage.setItem('barracksFavorites', JSON.stringify([]));
+}
     localStorage.removeItem('favoriteHeroesFinal');
     localStorage.removeItem('heroAutoState');
-
+// Възстановяване на оригиналната функция за наемане в класически режим
+if (window.gameMode === 'classic' && window._originalHireNewHero) {
+    window.hireNewHero = window._originalHireNewHero;
+}
+// Инициализация на соло режим, ако е избран
+if (window.gameMode === 'solo' && typeof initSoloMode === 'function') {
+    initSoloMode();
+}
+ 
     window.gameTime = { seasonIndex: 0, year: 480, era: "пр.н.е." };
 
     if (typeof window.generateProceduralRegions === 'function') {
@@ -379,6 +391,12 @@ window.loadGreatBulgariaGame = function() {
         window.unlockedHeroes = parsed.unlockedHeroes || [];
         window.gameTime = parsed.gameTime || { seasonIndex: 0, year: 480, era: "пр.н.е." };
         window.gameMode = parsed.gameMode || 'classic';
+     if (window.gameMode === 'classic' && window._originalHireNewHero) {
+    window.hireNewHero = window._originalHireNewHero;
+}
+if (window.gameMode === 'solo' && typeof initSoloMode === 'function') {
+    initSoloMode();
+}
         window.currentRegion = parsed.currentRegion || "Плиска";
         window.companions = parsed.companions || [];
         window.activeQuests = parsed.activeQuests || [];
