@@ -1210,21 +1210,7 @@ function setupMobileLayout() {
             }
         }
         
-        if (!document.querySelector('.menu-toggle')) {
-            const menuBtn = document.createElement('button');
-            menuBtn.className = 'glass-btn menu-toggle';
-            menuBtn.innerHTML = '☰';
-            menuBtn.setAttribute('aria-label', 'Меню');
-            menuBtn.onclick = (e) => {
-                e.stopPropagation();
-                toggleMobileMenu();
-            };
-            if (newGameContainer) {
-                newGameContainer.insertAdjacentElement('afterend', menuBtn);
-            } else {
-                topBarControls.prepend(menuBtn);
-            }
-        }
+      
         
         if (!document.querySelector('.all-heroes-btn')) {
             const allHeroesBtn = document.createElement('button');
