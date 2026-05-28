@@ -573,3 +573,43 @@ window.clearGreatBulgariaSave = function() {
     localStorage.removeItem('barracksFavorites');
     location.reload();
 };
+
+// ==================== НОРМАЛИЗАЦИЯ НА PLAYER REGIONS ====================
+window.normalizePlayerRegions = function() {
+    if (!window.playerRegions) {
+        window.playerRegions = [];
+        return [];
+    }
+    // Изравняване на масива (flat)
+    let flat = [];
+    for (let item of window.playerRegions) {
+        if (Array.isArray(item)) {
+            for (let sub of item) {
+                if (typeof sub === 'string' && sub.trim()) flat.push(sub.trim());
+            }
+        } else if (typeof item === 'string' && item.trim()) {
+            flat.push(item.trim());
+        }
+    }
+    // Премахване на дубликати
+    let unique = [...new Set(flat)];
+    window.playerRegions = unique;
+    return unique;
+};
+
+// Автоматично извикване при стартиране и след зареждане на игра
+if (typeof window.loadGreatBulgariaGame === 'function') {
+    const originalLoad = window.loadGreatBulgariaGame;
+    window.loadGreatBulgariaGame = function() {
+        let result = originalLoad();
+        window.normalizePlayerRegions();
+        return result;
+    };
+}
+if (typeof window.startFreshGameLogic === 'function') {
+    const originalStart = window.startFreshGameLogic;
+    window.startFreshGameLogic = function() {
+        originalStart();
+        window.normalizePlayerRegions();
+    };
+}
