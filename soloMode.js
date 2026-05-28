@@ -153,6 +153,7 @@ function updateRegionIndicator() {
 }
     // ==================== БУТОН ЗА КУЕСТОВЕ ====================
 function addQuestsButton() {
+    if (window.gameMode !== 'solo') return;
     let container = document.querySelector('.top-bar-controls') || document.getElementById('bottom-controls');
     if (!container || document.getElementById('solo-quests-btn')) return;
     if (window._questsButtonAdded) return;
@@ -168,6 +169,7 @@ function addQuestsButton() {
 
 // ==================== БУТОН ЗА НАСТРОЙКИ ====================
 function addSoloSettingsButton() {
+    if (window.gameMode !== 'solo') return;
     let container = document.querySelector('.top-bar-controls') || document.getElementById('bottom-controls');
     if (!container || document.getElementById('solo-settings-btn')) return;
     
