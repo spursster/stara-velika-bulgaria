@@ -357,6 +357,7 @@ function equipArtifact(hero, artifact, slotIndex) {
 }
 
 function showHeroProfile(hero) {
+    const armyValue = hero.armySize !== undefined ? hero.armySize : (hero.army || 0);
     let needXP = 100 + (hero.level - 1) * 50;
     let currentXP = hero.isAuto ? (hero.xp || 0) : (hero.storedXP || 0);
     let xpPercent = Math.min(100, Math.floor((currentXP / needXP) * 100));
@@ -491,7 +492,7 @@ function showHeroProfile(hero) {
                 ${moraleHtml}
                 <div style="margin-top:15px; display:flex; justify-content:space-between; gap:10px;">
                     <div style="background:#0d0a07; border-radius:12px; padding:8px; flex:1;"><div>💰 Злато</div><div style="color:#ffdd99;">${hero.gold}</div></div>
-                    <div style="background:#0d0a07; border-radius:12px; padding:8px; flex:1;"><div>⚔️ Армия</div><div style="color:#ffdd99;">${hero.army}</div></div>
+                    <div style="background:#0d0a07; border-radius:12px; padding:8px; flex:1;"><div>⚔️ Армия</div><div style="color:#ffdd99;">${hero.armySize !== undefined ? hero.armySize : (hero.army || 0)}</div>
                     <div style="background:#0d0a07; border-radius:12px; padding:8px; flex:1;"><div>💪 Сила</div><div style="color:#ffdd99;">${hero.power}</div></div>
                 </div>
                 ${inventoryHtml}
