@@ -59,9 +59,11 @@ function syncHeroGold(hero) {
 }
 
 function ensureArmyDetails(hero) {
+    // Използваме универсалната функция от troopsData.js, която покрива всички 42 типа войски
     if (window.ensureCompleteArmyDetails) {
         return window.ensureCompleteArmyDetails(hero);
     }
+    // Резервен вариант (ако troopsData.js не е зареден)
     if (!hero.armyDetails) hero.armyDetails = {};
     return hero.armyDetails;
 }
@@ -340,23 +342,19 @@ window.calculateEconomy = function() {
                 window.investGold(clan, investAmount, 3);
             }
             
-            // Автономно купуване на войски
-            if (clan.gold >= 150 && (clan.armySize || 0) < 1000) {
-                let cost = 100;
-                let troopsBought = Math.floor(Math.random() * 40) + 20;
-                if (clan.gold >= cost) {
-                    clan.gold -= cost;
-                    let troopTypes = window.ALL_TROOP_IDS || ["infantry", "archers", "cavalry", "elite"];
-                    let selectedType = troopTypes[Math.floor(Math.random() * troopTypes.length)];
-                    if (!clan.armyDetails[selectedType]) clan.armyDetails[selectedType] = 0;
-                    clan.armyDetails[selectedType] += troopsBought;
-                    let total = 0;
-                    for (let t in clan.armyDetails) total += clan.armyDetails[t] || 0;
-                    clan.armySize = total;
-                    clan.currentArmy = total;
-                }
-            }
-            
+         // Автономно купуване на войски – оригиналният код:
+if (clan.gold >= 150 && (clan.armySize || 0) < 1000) {
+    let cost = 100;
+    let troopsBought = Math.floor(Math.random() * 40) + 20;
+    if (clan.gold >= cost) {
+        clan.gold -= cost;
+        let troopTypes = window.ALL_TROOP_IDS || ["infantry", "archers", "cavalry", "elite"];
+        let selectedType = troopTypes[Math.floor(Math.random() * troopTypes.length)];
+        if (!clan.armyDetails[selectedType]) clan.armyDetails[selectedType] = 0;
+        clan.armyDetails[selectedType] += troopsBought;
+        // ...
+    }
+}
             // Автономно модернизиране на регион (ако притежава)
             if (Math.random() < window.economySettings.autonomousUpgradeChance && window.playerRegions && window.playerRegions.length > 0 && clan.gold >= 300) {
                 let regionName = window.playerRegions[Math.floor(Math.random() * window.playerRegions.length)];
