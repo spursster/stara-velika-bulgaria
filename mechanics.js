@@ -139,13 +139,13 @@ function autoConquestBattle(attacker, defenderPower, regionName) {
 window.autonomousRegionConquest = function() {
     if (!window.worldData || !window.worldData.clans || !window.worldData.regions) return;
     
-    if (Math.random() > 0.15) return;
+    if (Math.random() > 0.35) return;
     
     let potentialConquerors = [];
     for (let key in window.worldData.clans) {
         let hero = window.worldData.clans[key];
         // Условие: герой е нает, НЕ Е любим, има достатъчно армия
-        if (hero.isJoined === true && hero.isFavorite !== true && (hero.armySize || 0) > 150) {
+        if (hero.isJoined === true && hero.isFavorite !== true && (hero.armySize || 0) > 80) {
             potentialConquerors.push(hero);
         }
     }
