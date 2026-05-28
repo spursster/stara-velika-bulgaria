@@ -31,7 +31,7 @@
                 console.log(`Checking hero ${key}:`, heroData);
                 if (heroData.name || heroData.leaderName) {
                     // Only show heroes that have joined or are favorites
-                    const isFavorite = (heroData.isFavorite === true || heroData.isFavoriteInBarracks === true);
+                    const isFavorite = (heroData.isFavorite === true);
                     heroData.isFavorite = isFavorite; // Keep consistent
                     if (heroData.isJoined !== true && !isFavorite) continue;
 
