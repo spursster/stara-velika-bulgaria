@@ -165,6 +165,7 @@ html, body {
 }
 
 .favorite-slot {
+   min-height: 120px;  /* по-високи */
     flex: 1;
     min-width: 0;
     background: rgba(240, 230, 220, 0.7);
