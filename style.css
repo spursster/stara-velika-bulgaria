@@ -761,3 +761,57 @@ html, body {
         display: none !important;
     }
 }
+
+/* ---------------------------------------------------------------
+   ПРЕМАХВАНЕ НА ХАМБУРГЕР МЕНЮ (ТЕЛЕФОНИ)
+---------------------------------------------------------------- */
+.menu-toggle,
+#mobile-menu-panel,
+.all-heroes-btn {
+    display: none !important;
+}
+
+/* ---------------------------------------------------------------
+   БУТОН ЗА НОВА ИГРА В ДОЛНАТА ЛЕНТА
+---------------------------------------------------------------- */
+#bottom-controls .new-game-menu-container {
+    position: relative;
+    display: inline-block;
+    margin-right: 8px;
+}
+
+#bottom-controls .glass-btn {
+    background: rgba(212, 175, 55, 0.2);
+    border-color: #ffd700;
+}
+
+/* Падащо меню, което се отваря НАГОРЕ */
+#bottom-controls .new-game-dropdown {
+    position: absolute;
+    bottom: 100%;           /* ← отваря се нагоре */
+    left: 0;
+    margin-bottom: 8px;     /* разстояние от бутона */
+    top: auto;              /* анулира top */
+    transform: translateY(0);
+}
+
+/* Ако искаме да е центрирано спрямо бутона (по желание) */
+#bottom-controls .new-game-dropdown.show {
+    transform: translateY(0);
+}
+
+/* При много малки екрани (мобилни) – падащото меню да е на цял екран */
+@media (max-width: 600px) {
+    #bottom-controls .new-game-dropdown {
+        position: fixed;
+        bottom: 70px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 90%;
+        max-width: 280px;
+        margin-bottom: 0;
+    }
+    #bottom-controls .new-game-dropdown.show {
+        transform: translateX(-50%);
+    }
+}
