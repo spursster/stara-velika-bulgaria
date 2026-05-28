@@ -815,3 +815,19 @@ html, body {
         transform: translateX(-50%);
     }
 }
+
+/* Преместване на менюто за нова игра в долната лента – отваряне нагоре */
+#bottom-controls .new-game-menu-container {
+    position: relative;
+}
+#bottom-controls .new-game-dropdown {
+    position: absolute;
+    bottom: 100%;          /* изскача нагоре */
+    left: 0;
+    margin-bottom: 10px;
+    top: auto;
+    transform: translateY(0);
+}
+#bottom-controls .new-game-dropdown.show {
+    transform: translateY(0);
+}
