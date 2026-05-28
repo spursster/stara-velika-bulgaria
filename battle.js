@@ -876,210 +876,126 @@
 
             addLog(`📊 ОБЩО: ${totalDamage} щети`);
 
-            if (currentMonster.hp <= 0) {
-                addLog(`━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`);
-                addLog(`🏆 ПОБЕДА! ${monster.name} е победен! 🏆`);
-                
-                let totalXP = 50 + Math.floor(Math.random() * 100);
-                let totalGold = 100 + Math.floor(Math.random() * 200);
-                const livingHeroes = currentHeroes.filter(h => h.hp > 0);
-                livingHeroes.forEach(hero => {
-                    let heroXP = Math.floor(totalXP / livingHeroes.length);
-                    let heroGold = Math.floor(totalGold / livingHeroes.length);
-                    if (window.gainHeroXP) window.gainHeroXP(hero.clanObj, heroXP);
-                    else hero.clanObj.xp = (hero.clanObj.xp || 0) + heroXP;
-                    hero.clanObj.gold = (hero.clanObj.gold || 0) + heroGold;
-                    addLog(`   🎁 ${hero.name} получава +${heroXP} XP и +${heroGold} злато!`);
-                     if (window.addHeroLog) window.addHeroLog(hero.clanObj, "⚔️", `Победи ${monster.name} в ${regionName}`);
-                });
-                
-                if (typeof regionName === 'string' && regionName !== "Портал") {
-                    if (!window.playerRegions) window.playerRegions = [];
-                    let normalized = [];
-                    for (let item of window.playerRegions) {
-                        if (Array.isArray(item)) {
-                            for (let sub of item) normalized.push(sub);
-                        } else if (typeof item === 'string') {
-                            normalized.push(item);
-                        }
-                    }
-                    window.playerRegions = normalized;
-                    if (!window.playerRegions.includes(regionName)) {
-                        window.playerRegions.push(regionName);
-                        addLog(`   🏰 ${regionName} е добавен към вашите владения!`);
-                        if (window.addWorldEvent) window.addWorldEvent(`🏰 ЗАВЛАДЯВАНЕ`, `Вие завладяхте ${regionName}!`, "🏰");
-                        if (window.worldData && window.worldData.regions && window.worldData.regions[regionName]) {
-                            window.worldData.regions[regionName].armySize = 0;
-                        }
-                    } else {
-                        addLog(`   ℹ️ ${regionName} вече е ваш.`);
-                    }
+           if (currentMonster.hp <= 0) {
+    addLog(`━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`);
+    addLog(`🏆 ПОБЕДА! ${monster.name} е победен! 🏆`);
+    
+    let totalXP = 50 + Math.floor(Math.random() * 100);
+    let totalGold = 100 + Math.floor(Math.random() * 200);
+    const livingHeroes = currentHeroes.filter(h => h.hp > 0);
+    livingHeroes.forEach(hero => {
+        let heroXP = Math.floor(totalXP / livingHeroes.length);
+        let heroGold = Math.floor(totalGold / livingHeroes.length);
+        if (window.gainHeroXP) window.gainHeroXP(hero.clanObj, heroXP);
+        else hero.clanObj.xp = (hero.clanObj.xp || 0) + heroXP;
+        hero.clanObj.gold = (hero.clanObj.gold || 0) + heroGold;
+        addLog(`   🎁 ${hero.name} получава +${heroXP} XP и +${heroGold} злато!`);
+        if (window.addHeroLog) window.addHeroLog(hero.clanObj, "⚔️", `Победи ${monster.name} в ${regionName}`);
+    });
+    
+    // ========== ДОБАВЯНЕ НА РЕГИОН С НОРМАЛИЗАЦИЯ ==========
+    if (typeof regionName === 'string' && regionName !== "Портал") {
+        // Използваме глобалната функция за нормализиране на playerRegions
+        if (typeof window.normalizePlayerRegions === 'function') {
+            window.normalizePlayerRegions();
+        } else {
+            // Резервна нормализация, ако функцията липсва
+            if (!window.playerRegions) window.playerRegions = [];
+            let flat = [];
+            for (let item of window.playerRegions) {
+                if (Array.isArray(item)) {
+                    for (let sub of item) flat.push(sub);
+                } else if (typeof item === 'string') {
+                    flat.push(item);
                 }
-                
-                if (Math.random() < 0.2 && window.historicalArtifacts) {
-                    const artifactKeys = Object.keys(window.historicalArtifacts);
-                    const randomKey = artifactKeys[Math.floor(Math.random() * artifactKeys.length)];
-                    const newArtifact = { ...window.historicalArtifacts[randomKey] };
-                    const randomHero = livingHeroes[Math.floor(Math.random() * livingHeroes.length)];
-                    if (randomHero && randomHero.clanObj) {
-                        if (!randomHero.clanObj.inventory) randomHero.clanObj.inventory = [];
-                        randomHero.clanObj.inventory.push(newArtifact);
-                        if (window.addHeroLog) window.addHeroLog(randomHero.clanObj, "🏺", `Намери артефакт: ${newArtifact.name}`);
-                        addLog(`   🏺 ${randomHero.name} намери артефакт: ${newArtifact.name}!`);
-                        if (window.addWorldEvent) window.addWorldEvent(`🏺 НАМЕРЕН АРТЕФАКТ`, `${randomHero.name} намери ${newArtifact.name} след битката!`, "🏺");
-                    }
-                }
-                
-                if (Math.random() < 0.15 && window.fantasyRaces && window.fantasyRaces.length > 0) {
-                    const randomRace = window.fantasyRaces[Math.floor(Math.random() * window.fantasyRaces.length)];
-                    const prisoner = {
-                        id: Date.now() + "_" + Math.random(),
-                        name: randomRace.name,
-                        raceId: randomRace.id,
-                        icon: randomRace.icon,
-                        desc: randomRace.desc,
-                        bonus: randomRace.bonus,
-                        capturedFrom: monster.name
-                    };
-                    if (!window.prisoners) window.prisoners = [];
-                    window.prisoners.push(prisoner);
-                    addLog(`   👸 Взехте пленник: ${prisoner.name}! Може да се ожените в дипломацията.`);
-                    if (window.addWorldEvent) window.addWorldEvent(`👸 ПЛЕННИК`, `След битката с ${monster.name}, взехте ${prisoner.name} като пленник!`, "👸");
-                }
-                
-                if (regionInput && regionInput.isPortalWorld) {
-                    const extraBonus = 50 + Math.floor(Math.random() * 100);
-                    const randomHero = livingHeroes[Math.floor(Math.random() * livingHeroes.length)];
-                    if (randomHero) {
-                        randomHero.clanObj.gold += extraBonus;
-                        addLog(`   🌌 ПОРТАЛЕН БОНУС: ${randomHero.name} получава +${extraBonus} злато от мистичния свят!`);
-                    }
-                }
-                
-                if (window.addWorldEvent) window.addWorldEvent(`🏆 ПОБЕДА В БИТКА`, `${battleHeroes.map(h => h.name).join(', ')} победиха ${monster.name}!`, "🏆");
-                
-                // ---------- ПРИЛАГАНЕ НА HP ПРОМЕНИТЕ СЛЕД ПОБЕДА ----------
-                for (let i = 0; i < currentHeroes.length; i++) {
-                    let battleHero = currentHeroes[i];
-                    let originalHero = battleHero.clanObj;
-                    if (originalHero && battleHero.hp !== undefined) {
-                        applyBattleOutcome(originalHero, battleHero);
-                    }
-                }
-                if (window.currentHero && typeof window.updateCharacterUI === 'function') {
-                    window.updateCharacterUI(window.currentHero);
-                }
-                if (typeof window.renderFavoriteHeroesBar === 'function') {
-                    window.renderFavoriteHeroesBar();
-                }
-                if (typeof window.renderTop6HeroesUI === 'function') {
-                    window.renderTop6HeroesUI();
-                }
-                // ------------------------------------------------------------
-                
-                battleActive = false;
-                const attackBtn = document.getElementById('battle-attack');
-                if (attackBtn) attackBtn.disabled = true;
-                if (typeof window.renderSingleBar === 'function') window.renderSingleBar();
-                if (typeof window.renderTop6HeroesUI === 'function') window.renderTop6HeroesUI();
-                if (typeof window.hidePortalIndicator === 'function') window.hidePortalIndicator();
-                if (typeof window.endGroupBattle === 'function') window.endGroupBattle(true, 'victory');
-                window.currentBattleState = null;
-                window._lastBattleHeroes = null;
-                return true;
             }
-            updateUI();
-            return true;
+            window.playerRegions = [...new Set(flat)];
         }
-
-        function monsterAttack() {
-            if (!battleActive) return false;
-            const aliveHeroes = currentHeroes.filter(h => h.hp > 0);
-            if (aliveHeroes.length === 0) return false;
-            
-            const target = aliveHeroes[Math.floor(Math.random() * aliveHeroes.length)];
-            let damage = Math.floor(currentMonster.power * (0.35 + Math.random() * 0.55));
-            damage = Math.max(1, damage);
-            
-            let troopEffects = target.troopEffects || {};
-            let petEffects = getPetEffects(target.clanObj);
-            let skillBonuses = getAdvancedSkillCombatBonuses(target.clanObj);
-            
-            let damageReduction = 0;
-            if (troopEffects.damageReduction) damageReduction += troopEffects.damageReduction;
-            if (petEffects.damageReduction) damageReduction += petEffects.damageReduction;
-            if (skillBonuses.damageReduction) damageReduction += skillBonuses.damageReduction;
-            if (damageReduction > 0) {
-                let reduced = Math.floor(damage * (1 - Math.min(0.9, damageReduction)));
-                addLog(`   🛡️ ${target.name} намалява щетите с ${Math.floor(damageReduction*100)}% (Каменна кожа/умения)!`);
-                damage = reduced;
+        
+        if (!window.playerRegions.includes(regionName)) {
+            window.playerRegions.push(regionName);
+            addLog(`   🏰 ${regionName} е добавен към вашите владения!`);
+            if (window.addWorldEvent) window.addWorldEvent(`🏰 ЗАВЛАДЯВАНЕ`, `Вие завладяхте ${regionName}!`, "🏰");
+            if (window.worldData && window.worldData.regions && window.worldData.regions[regionName]) {
+                window.worldData.regions[regionName].armySize = 0;
             }
-            
-            if (troopEffects.hasInvincibleOnce && !invincibleUsed[target.id]) {
-                invincibleUsed[target.id] = true;
-                damage = 0;
-                addLog(`   ✨ ${target.name} става непробиваем този рунд (Каменен трол)!`);
-            }
-            
-            let damagePercent = damage / target.maxHp;
-            target.hp = Math.max(0, target.hp - damage);
-            applyArmyLossFromDamage(target, damagePercent);
-            
-            addLog(`━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`);
-            addLog(`👹 ЧУДОВИЩЕТО АТАКУВА ${target.name.toUpperCase()}!`);
-            addLog(`   💔 Нанася ${damage} щети (${Math.floor(damagePercent * 100)}% от живота)`);
-            animateMonsterCard();
-            screenShake();
-            animateHero(target.id, damage);
-            
-            if (target.hp <= 0) {
-                let reviveChance = petEffects.reviveChance || skillBonuses.reviveChance || 0;
-                if (reviveChance > 0 && Math.random() < reviveChance) {
-                    target.hp = Math.floor(target.maxHp * 0.3);
-                    addLog(`   🔥 ${target.name} се възкресява от любимец/умения! (${target.hp} HP)`);
-                } else {
-                    addLog(`   💀 ${target.name} е нокаутиран! 💀`, true);
-                    applyArmyLossFromDamage(target, 0.5);
-                }
-            }
-            
-            updateUI();
-            
-            const stillAlive = currentHeroes.some(h => h.hp > 0);
-            if (!stillAlive) {
-                addLog(`━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`);
-                addLog(`💀 ЗАГУБА! Всички герои са победени! 💀`, true);
-                
-                // ---------- ПРИЛАГАНЕ НА HP ПРОМЕНИТЕ СЛЕД ЗАГУБА ----------
-                for (let i = 0; i < currentHeroes.length; i++) {
-                    let battleHero = currentHeroes[i];
-                    let originalHero = battleHero.clanObj;
-                    if (originalHero && battleHero.hp !== undefined) {
-                        applyBattleOutcome(originalHero, battleHero);
-                    }
-                }
-                if (window.currentHero && typeof window.updateCharacterUI === 'function') {
-                    window.updateCharacterUI(window.currentHero);
-                }
-                if (typeof window.renderFavoriteHeroesBar === 'function') {
-                    window.renderFavoriteHeroesBar();
-                }
-                if (typeof window.renderTop6HeroesUI === 'function') {
-                    window.renderTop6HeroesUI();
-                }
-                // ------------------------------------------------------------
-                
-                battleActive = false;
-                const attackBtn = document.getElementById('battle-attack');
-                if (attackBtn) attackBtn.disabled = true;
-                if (typeof window.endGroupBattle === 'function') window.endGroupBattle(false, 'defeat');
-                window.currentBattleState = null;
-                window._lastBattleHeroes = null;
-                return false;
-            }
-            return true;
+        } else {
+            addLog(`   ℹ️ ${regionName} вече е ваш.`);
         }
-
+    }
+    
+    // Артефакт след битка (20% шанс)
+    if (Math.random() < 0.2 && window.historicalArtifacts) {
+        const artifactKeys = Object.keys(window.historicalArtifacts);
+        const randomKey = artifactKeys[Math.floor(Math.random() * artifactKeys.length)];
+        const newArtifact = { ...window.historicalArtifacts[randomKey] };
+        const randomHero = livingHeroes[Math.floor(Math.random() * livingHeroes.length)];
+        if (randomHero && randomHero.clanObj) {
+            if (!randomHero.clanObj.inventory) randomHero.clanObj.inventory = [];
+            randomHero.clanObj.inventory.push(newArtifact);
+            if (window.addHeroLog) window.addHeroLog(randomHero.clanObj, "🏺", `Намери артефакт: ${newArtifact.name}`);
+            addLog(`   🏺 ${randomHero.name} намери артефакт: ${newArtifact.name}!`);
+            if (window.addWorldEvent) window.addWorldEvent(`🏺 НАМЕРЕН АРТЕФАКТ`, `${randomHero.name} намери ${newArtifact.name} след битката!`, "🏺");
+        }
+    }
+    
+    // Пленник (15% шанс)
+    if (Math.random() < 0.15 && window.fantasyRaces && window.fantasyRaces.length > 0) {
+        const randomRace = window.fantasyRaces[Math.floor(Math.random() * window.fantasyRaces.length)];
+        const prisoner = {
+            id: Date.now() + "_" + Math.random(),
+            name: randomRace.name,
+            raceId: randomRace.id,
+            icon: randomRace.icon,
+            desc: randomRace.desc,
+            bonus: randomRace.bonus,
+            capturedFrom: monster.name
+        };
+        if (!window.prisoners) window.prisoners = [];
+        window.prisoners.push(prisoner);
+        addLog(`   👸 Взехте пленник: ${prisoner.name}! Може да се ожените в дипломацията.`);
+        if (window.addWorldEvent) window.addWorldEvent(`👸 ПЛЕННИК`, `След битката с ${monster.name}, взехте ${prisoner.name} като пленник!`, "👸");
+    }
+    
+    // Портал бонус (ако е портален свят)
+    if (regionInput && regionInput.isPortalWorld) {
+        const extraBonus = 50 + Math.floor(Math.random() * 100);
+        const randomHero = livingHeroes[Math.floor(Math.random() * livingHeroes.length)];
+        if (randomHero) {
+            randomHero.clanObj.gold += extraBonus;
+            addLog(`   🌌 ПОРТАЛЕН БОНУС: ${randomHero.name} получава +${extraBonus} злато от мистичния свят!`);
+        }
+    }
+    
+    if (window.addWorldEvent) window.addWorldEvent(`🏆 ПОБЕДА В БИТКА`, `${battleHeroes.map(h => h.name).join(', ')} победиха ${monster.name}!`, "🏆");
+    
+    // Прилагане на HP промените след победа
+    for (let i = 0; i < currentHeroes.length; i++) {
+        let battleHero = currentHeroes[i];
+        let originalHero = battleHero.clanObj;
+        if (originalHero && battleHero.hp !== undefined) {
+            applyBattleOutcome(originalHero, battleHero);
+        }
+    }
+    if (window.currentHero && typeof window.updateCharacterUI === 'function') {
+        window.updateCharacterUI(window.currentHero);
+    }
+    if (typeof window.renderFavoriteHeroesBar === 'function') {
+        window.renderFavoriteHeroesBar();
+    }
+    if (typeof window.renderTop6HeroesUI === 'function') {
+        window.renderTop6HeroesUI();
+    }
+    
+    battleActive = false;
+    const attackBtn = document.getElementById('battle-attack');
+    if (attackBtn) attackBtn.disabled = true;
+    if (typeof window.renderSingleBar === 'function') window.renderSingleBar();
+    if (typeof window.endGroupBattle === 'function') window.endGroupBattle(true, 'victory', regionName);
+    window.currentBattleState = null;
+    window._lastBattleHeroes = null;
+    return true;
+}
         async function battleTurn() {
             if (!battleActive) {
                 addLog(`Битката е приключила! Натисни "НОВА БИТКА".`);
