@@ -649,138 +649,80 @@ window.renderFavoriteHeroesBar = function() {
         slot.className = 'favorite-slot';
         
         if (hero) {
-            let borderColor = "#c9a87b";
-            if (window.getClassBorderColor) {
-                borderColor = window.getClassBorderColor(hero.currentClass);
-            } else if (hero.classColor) {
-                borderColor = hero.classColor;
-            }
-            slot.style.borderColor = borderColor;
-            slot.style.borderWidth = "2px";
-            slot.style.borderStyle = "solid";
-            
-            const classIcon = getClassIcon(hero.currentClass);
-            const portraitHtml = hero.portrait ? 
-                `<img src="${hero.portrait}" style="width: 36px; height: 36px; border-radius: 50%; object-fit: cover; margin-bottom: 4px;">` : 
-                `<div class="hero-icon" style="font-size: 28px;">${classIcon}</div>`;
-            
-            let currentXP = hero.isAuto ? (hero.xp || 0) : (hero.storedXP || 0);
-            let reqXP = 150;
-            if (window.rpgDatabase && window.rpgDatabase.getXPRequiredForLevel) {
-                reqXP = window.rpgDatabase.getXPRequiredForLevel(hero.level || 1);
-            }
-            if (reqXP <= 0) reqXP = 1;
-            let xpPercent = Math.min(100, Math.floor((currentXP / reqXP) * 100));
-            const fillGrad = hero.isAuto ? "linear-gradient(90deg, #00ffcc, #0072ff)" : "linear-gradient(90deg, #ffcc00, #ff6600)";
-            
-            // HP лента
+            // HP процент
             let hpPercent = (hero.hp / hero.maxHp) * 100;
-            let hpColor = hpPercent > 70 ? "#4caf50" : (hpPercent > 30 ? "#ff9800" : "#f44336");
+            let hpColor = hpPercent > 70 ? '#4caf50' : (hpPercent > 30 ? '#ff9800' : '#f44336');
+            // XP процент
+            let needXP = window.rpgDatabase?.getXPRequiredForLevel(hero.level || 1) || 150;
+            let currentXP = hero.isAuto ? (hero.xp || 0) : (hero.storedXP || 0);
+            let xpPercent = Math.min(100, (currentXP / needXP) * 100);
             
-            const isAutoMode = hero.isAuto !== undefined ? hero.isAuto : true;
-            const autoIcon = isAutoMode ? "🤖" : "👤";
-            const autoTitle = isAutoMode ? "Автоматичен (Auto)" : "Ръчен (Manual) – може да учи умения";
+            // Портрет или иконка
+            let portraitHtml = '';
+            if (hero.portrait) {
+                portraitHtml = `<img src="${hero.portrait}" class="hero-portrait-img" onerror="this.style.display='none'; this.parentElement.querySelector('.hero-icon').style.display='block';">`;
+            }
+            const classIcon = window.getClassIcon ? window.getClassIcon(hero.currentClass) : '⚔️';
+            const iconHtml = `<div class="hero-icon" style="${hero.portrait ? 'display:none;' : ''}">${classIcon}</div>`;
             
-            const toggleAuto = () => {
-                if (window.setAuto) window.setAuto(hero.id, !isAutoMode);
-                hero.isAuto = !isAutoMode;
-                if (!isAutoMode && hero.xp > 0) {
+            slot.innerHTML = `
+                ${portraitHtml}
+                ${iconHtml}
+                <div class="hero-name" title="${hero.name}">${hero.name.substring(0, 12)}</div>
+                <div class="hero-level-power">Ниво ${hero.level} | 💪 ${hero.heroPower || 100}</div>
+                <div class="hp-bar"><div class="hp-fill" style="width:${hpPercent}%; background:${hpColor};"></div></div>
+                <div class="xp-bar"><div class="xp-fill" style="width:${xpPercent}%;"></div></div>
+                <div class="hero-stats">
+                    <span>❤️ ${hero.hp}/${hero.maxHp}</span>
+                    <span>💰 ${hero.gold || 0}</span>
+                    <span>⚔️ ${hero.armySize || 0}</span>
+                </div>
+                <div class="auto-badge">${hero.isAuto ? '🤖 AUTO' : '👤 MANUAL'}</div>
+            `;
+            slot.onclick = () => window.showHeroProfile(hero);
+            
+            // Бутон за премахване от любими (сърце)
+            const heartBtn = document.createElement('button');
+            heartBtn.innerHTML = '❤️';
+            heartBtn.style.cssText = 'position:absolute; top:4px; right:4px; background:none; border:none; font-size:12px; cursor:pointer; color:#ff4466;';
+            heartBtn.onclick = (e) => {
+                e.stopPropagation();
+                hero.isFavorite = false;
+                if (typeof window.saveFavoriteHeroes === 'function') window.saveFavoriteHeroes();
+                window.renderFavoriteHeroesBar();
+            };
+            slot.appendChild(heartBtn);
+            
+            // Бутон за Auto/Manual toggle
+            const autoToggle = document.createElement('button');
+            autoToggle.innerText = hero.isAuto ? 'AUTO' : 'MAN';
+            autoToggle.style.cssText = 'position:absolute; bottom:4px; left:4px; font-size:8px; background:#2c1a0c; border:1px solid #d4af37; border-radius:4px; padding:1px 3px; cursor:pointer; color:#ffd700;';
+            autoToggle.onclick = (e) => {
+                e.stopPropagation();
+                hero.isAuto = !hero.isAuto;
+                if (!hero.isAuto && hero.xp > 0) {
                     hero.storedXP = (hero.storedXP || 0) + hero.xp;
                     hero.xp = 0;
-                } else if (isAutoMode && hero.storedXP > 0) {
+                } else if (hero.isAuto && hero.storedXP > 0) {
                     let amount = hero.storedXP;
                     hero.storedXP = 0;
                     if (window.gainHeroXP) window.gainHeroXP(hero, amount);
                 }
-                if (window.renderFavoriteHeroesBar) window.renderFavoriteHeroesBar();
                 if (window.updateCharacterUI) window.updateCharacterUI(hero);
-                if (window.renderTop6HeroesUI) window.renderTop6HeroesUI();
-                if (window.saveAuto) window.saveAuto();
+                window.renderFavoriteHeroesBar();
             };
-            
-            const skillsBtnHtml = !isAutoMode ? 
-                `<button class="skills-toggle" style="background: none; border: none; font-size: 12px; cursor: pointer; margin-left: 4px; color: #ffd700;" title="Отвори дърветата с умения">⭐</button>` : '';
-            
-            const skillsHandler = (e) => {
-                e.stopPropagation();
-                const originalHero = window.currentHero;
-                window.currentHero = hero;
-                if (typeof window.openSkillsUI === 'function') {
-                    window.openSkillsUI();
-                } else {
-                    window.showAdvisorPopup("ГРЕШКА", "Системата за умения не е заредена.", "error");
-                }
-                window.currentHero = originalHero;
-            };
-            
-            slot.innerHTML = `
-                <div style="position: relative; width: 100%;">
-                    <button class="favorite-heart-btn" data-name="${hero.name}" style="position: absolute; top: 0; right: 0; background: none; border: none; font-size: 14px; cursor: pointer; color: #ff4466; z-index: 10;">❤️</button>
-                    <button class="auto-toggle" style="position: absolute; top: 0; left: 0; z-index: 10; font-size: 8px; border: 1px solid #d4af37; border-radius: 4px; padding: 1px; ${isAutoMode ? 'background: #4a6a2a; color: #fff;' : 'background: #2c1a0c; color: #ffdd99;'}" title="${autoTitle}">${isAutoMode ? 'AUTO' : 'MAN'}</button>
-                    ${portraitHtml}
-                    <div class="hero-name" title="${hero.name}">${hero.name.substring(0, 10)}</div>
-                    <div class="hero-level">Ниво ${hero.level || 1}</div>
-                    <div class="xp-bar-container" style="background: #2a1a0a; height: 4px; border-radius: 2px; margin: 4px 0; overflow: hidden;" title="Опит (XP): ${xpPercent}%">
-                        <div class="xp-bar-fill" style="background: ${fillGrad}; width: ${xpPercent}%; height: 100%;"></div>
-                    </div>
-                    <div style="background: #2a1a0a; height: 3px; border-radius: 2px; margin: 2px 0; overflow: hidden;">
-                        <div style="background: ${hpColor}; width: ${hpPercent}%; height: 100%;"></div>
-                    </div>
-                    <div style="background: #2a1a0a; height: 3px; border-radius: 2px; margin: 2px 0; overflow: hidden;" title="Морал: ${hero.morale || 50}%">
-                        <div style="background: ${hero.morale > 70 ? '#2196f3' : (hero.morale > 30 ? '#ff9800' : '#f44336')}; width: ${hero.morale || 50}%; height: 100%;"></div>
-                    </div>
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 2px;">
-                        <div class="hero-power" style="font-size: 8px; color: #ffaa66;">💪 ${hero.heroPower || 100}</div>
-                        ${skillsBtnHtml}
-                    </div>
-                </div>
-            `;
-            
-            slot.onclick = (e) => {
-                if (e.target.classList.contains('favorite-heart-btn')) return;
-                if (e.target.classList.contains('auto-toggle')) return;
-                if (e.target.classList.contains('skills-toggle')) return;
-                if (window.showHeroProfile) window.showHeroProfile(hero);
-            };
-            
-            const heartBtn = slot.querySelector('.favorite-heart-btn');
-            if (heartBtn) {
-                heartBtn.onclick = (e) => {
-                    e.stopPropagation();
-                    hero.isFavorite = false;
-                    if (typeof window.saveFavoriteHeroes === 'function') window.saveFavoriteHeroes();
-                    if (typeof window.saveFavorites === 'function') window.saveFavorites();
-                    window.renderFavoriteHeroesBar();
-                    if (typeof window.renderBarracksLayout === 'function') window.renderBarracksLayout();
-                };
-            }
-            
-            const autoBtn = slot.querySelector('.auto-toggle');
-            if (autoBtn) {
-                autoBtn.onclick = (e) => {
-                    e.stopPropagation();
-                    toggleAuto();
-                };
-            }
-            
-            const skillsBtn = slot.querySelector('.skills-toggle');
-            if (skillsBtn) {
-                skillsBtn.onclick = skillsHandler;
-            }
+            slot.appendChild(autoToggle);
             
         } else {
             slot.classList.add('empty');
-            slot.innerHTML = '<div style="font-size: 24px;">➕</div><div style="font-size: 9px;">Добави</div>';
+            slot.innerHTML = '<div style="font-size:28px;">➕</div><div style="font-size:10px;">Добави герой</div>';
             slot.onclick = () => {
                 if (favoriteHeroesList.length >= 5) {
-                    window.showAdvisorPopup("ВНИМАНИЕ", "Можеш да имаш максимум 5 любими героя! Премахни любим от някой герой, за да добавиш нов.", "warning");
+                    window.showAdvisorPopup("ВНИМАНИЕ", "Максимум 5 любими героя!", "warning");
                     return;
                 }
-                if (typeof window.showHeroSelectionModal === 'function') {
-                    window.showHeroSelectionModal();
-                } else {
-                    window.showAdvisorPopup("ИНФО", "Можете да добавите любими от казармите (🏹).", "info");
-                }
+                if (window.showHeroSelectionModal) window.showHeroSelectionModal();
+                else window.showAdvisorPopup("ИНФО", "Можете да добавите любими от казармите (🏹).", "info");
             };
         }
         container.appendChild(slot);
