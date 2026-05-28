@@ -574,10 +574,13 @@ window.toggleHeroFavoriteInBarracks = function(heroName) {
     if (hero) {
         hero.isFavorite = !hero.isFavorite;
         saveFavoriteHeroes();
-        window.renderBarracksLayout();
-        // Актуализираме и долната лента с любими герои
+        // Незабавно обновяване на лентата
         if (typeof window.renderFavoriteHeroesBar === 'function') {
             window.renderFavoriteHeroesBar();
+        }
+        // Обновяване на казармите, ако са отворени
+        if (typeof window.renderBarracksLayout === 'function') {
+            window.renderBarracksLayout();
         }
     }
 };
