@@ -312,82 +312,84 @@ window.calculateEconomy = function() {
         window.worldData.clans[hero.clan].gold = hero.gold;
     }
 
-    // ========== АВТОНОМНА ИКОНОМИКА ЗА НЕ-ЛЮБИМИ ГЕРОИ (подобрена) ==========
- let favoriteNames = new Set();
+   // ========== АВТОНОМНА ИКОНОМИКА ЗА НЕ-ЛЮБИМИ ГЕРОИ ==========
+let favoriteNames = new Set();
 for (let key in window.worldData.clans) {
     let heroData = window.worldData.clans[key];
     if (heroData.isFavorite === true) {
         favoriteNames.add(heroData.name || heroData.leaderName || key);
     }
 }
+
+for (let key in window.worldData.clans) {
+    let clan = window.worldData.clans[key];
+    if (hero && key === hero.clan) continue;
+    let isFavorite = favoriteNames.has(clan.name || clan.leaderName || key);
+    
+    ensureArmyDetails(clan);
+    clan.gold = clan.gold || 0;
+    
+    // По-висок автономен доход
+    let autonomousIncome = 150 + Math.floor(Math.random() * 100);
+    clan.gold += autonomousIncome;
+    
+    // По-чести инвестиции
+    if (Math.random() < 0.15 && clan.gold > 300) {
+        let investAmount = Math.min(500, Math.floor(clan.gold * 0.3));
+        window.investGold(clan, investAmount, 2);
     }
     
-    if (window.worldData && window.worldData.clans) {
-        for (let key in window.worldData.clans) {
-            let clan = window.worldData.clans[key];
-            if (hero && key === hero.clan) continue;
-            let isFavorite = favoriteNames.has(clan.name || clan.leaderName || key);
-           // if (isFavorite) continue;
-            
-            ensureArmyDetails(clan);
-            clan.gold = clan.gold || 0;
-            
-            // Автономен доход
-            let autonomousIncome = 80 + Math.floor(Math.random() * 70);
-            clan.gold += autonomousIncome;
-            
-            // Автономни инвестиции (рядко)
-            if (Math.random() < 0.05 && clan.gold > 500) {
-                let investAmount = Math.min(300, Math.floor(clan.gold * 0.2));
-                window.investGold(clan, investAmount, 3);
-            }
-            
-         // Автономно купуване на войски – оригиналният код:
-if (clan.gold >= 100 && (clan.armySize || 0) < 1000) {
-    let cost = 100;
-    let troopsBought = Math.floor(Math.random() * 40) + 20;
-    if (clan.gold >= cost) {
-        clan.gold -= cost;
-        let troopTypes = window.ALL_TROOP_IDS || ["infantry", "archers", "cavalry", "elite"];
-        let selectedType = troopTypes[Math.floor(Math.random() * troopTypes.length)];
-        if (!clan.armyDetails[selectedType]) clan.armyDetails[selectedType] = 0;
-        clan.armyDetails[selectedType] += troopsBought;
-        // ...
+    // Автономно купуване на войски (по-агресивно)
+    if (clan.gold >= 80 && (clan.armySize || 0) < 1500) {
+        let cost = 80;
+        let troopsBought = Math.floor(Math.random() * 60) + 30;
+        if (clan.gold >= cost) {
+            clan.gold -= cost;
+            let troopTypes = window.ALL_TROOP_IDS || ["infantry", "archers", "cavalry", "elite"];
+            let selectedType = troopTypes[Math.floor(Math.random() * troopTypes.length)];
+            if (!clan.armyDetails[selectedType]) clan.armyDetails[selectedType] = 0;
+            clan.armyDetails[selectedType] += troopsBought;
+            let total = 0;
+            for (let t in clan.armyDetails) total += clan.armyDetails[t] || 0;
+            clan.armySize = total;
+            clan.currentArmy = total;
+        }
     }
-}
-            // Автономно модернизиране на регион (ако притежава)
-            if (Math.random() < window.economySettings.autonomousUpgradeChance && window.playerRegions && window.playerRegions.length > 0 && clan.gold >= 300) {
-                let regionName = window.playerRegions[Math.floor(Math.random() * window.playerRegions.length)];
-                let region = window.worldData.regions[regionName];
-                if (region && region.infrastructureLevel < 5) {
-                    let upgradeCost = 200 + region.infrastructureLevel * 50;
-                    if (clan.gold >= upgradeCost) {
-                        clan.gold -= upgradeCost;
-                        region.infrastructureLevel++;
-                        showEconomyMessage("МОДЕРНИЗАЦИЯ", `🏗️ ${clan.name || clan.leaderName} подобри инфраструктурата на ${regionName} до ниво ${region.infrastructureLevel}!`, "info");
-                    }
+    
+    // По-често модернизиране на региони (ако притежава)
+    if (Math.random() < 0.3 && window.playerRegions && window.playerRegions.length > 0 && clan.gold >= 200) {
+        let regionName = window.playerRegions[Math.floor(Math.random() * window.playerRegions.length)];
+        let region = window.worldData.regions[regionName];
+        if (region && region.infrastructureLevel < 5) {
+            let upgradeCost = 150 + region.infrastructureLevel * 40;
+            if (clan.gold >= upgradeCost) {
+                clan.gold -= upgradeCost;
+                region.infrastructureLevel++;
+                if (window.addWorldEvent) {
+                    window.addWorldEvent("🏗️ NPC МОДЕРНИЗАЦИЯ", `${clan.name} подобри инфраструктурата на ${regionName} до ниво ${region.infrastructureLevel}!`, "🏗️");
                 }
-            }
-            
-            // Автономен опит
-            if (window.gainHeroXP) {
-                window.gainHeroXP(clan, 12);
-            } else {
-                clan.xp = (clan.xp || 0) + 12;
-                let requiredXP = (clan.level || 1) * 150;
-                if (clan.xp >= requiredXP) {
-                    clan.xp -= requiredXP;
-                    clan.level = (clan.level || 1) + 1;
-                    clan.skillPoints = (clan.skillPoints || 0) + 1;
-                    clan.heroPower = (clan.heroPower || 100) + 15;
-                }
-            }
-            
-            if (window.armyMarket && typeof window.armyMarket.sync === 'function') {
-                window.armyMarket.sync(clan);
             }
         }
     }
+    
+    // Автономен опит
+    if (window.gainHeroXP) {
+        window.gainHeroXP(clan, 25);
+    } else {
+        clan.xp = (clan.xp || 0) + 25;
+        let requiredXP = (clan.level || 1) * 150;
+        if (clan.xp >= requiredXP) {
+            clan.xp -= requiredXP;
+            clan.level = (clan.level || 1) + 1;
+            clan.skillPoints = (clan.skillPoints || 0) + 1;
+            clan.heroPower = (clan.heroPower || 100) + 15;
+        }
+    }
+    
+    if (window.armyMarket && typeof window.armyMarket.sync === 'function') {
+        window.armyMarket.sync(clan);
+    }
+}
 
     // Съобщение за активния герой
     let seasonName = "Текущ сезон";
