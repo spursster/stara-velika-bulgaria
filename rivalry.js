@@ -8,12 +8,12 @@
     console.log("🔥 Инициализация на системата за съперничество (с летопис)...");
 
     const RIVALRY_CONFIG = {
-        attackChance: 0.03,
+        attackChance: 0.12,
         xpTheftPercent: 0.30,
         xpTransferToAggressor: 0.50,
         revengeBonus: 1.5,
         minHeroesForAttack: 2,
-        cooldownTurns: 5,
+        cooldownTurns: 2,
     };
 
     window.pendingAttack = null;
