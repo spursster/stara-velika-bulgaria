@@ -1,6 +1,6 @@
 /* ==========================================================================
    ВЕЛИКА БЪЛГАРИЯ – ФИНАЛЕН АДАПТИВЕН СТИЛ
-   Версия: 6.0 – ФИКС НА МЕНЮТО ЗА НОВА ИГРА (ОТВАРЯНЕ НАГОРЕ)
+   Версия: 6.1 – ПРЕМАХНАТА НОВА ЛЕНТА, ПОДОБРЕНА СТАРАТА
    ========================================================================== */
 
 /* -----------------------------------------------
@@ -147,7 +147,7 @@ html, body {
 }
 
 /* -----------------------------------------------
-   6. НОВА ЛЕНТА С ЛЮБИМИ ГЕРОИ (5 СЛОТА)
+   6. ОСНОВНА ЛЕНТА С ЛЮБИМИ ГЕРОИ (5 СЛОТА)
 ----------------------------------------------- */
 .favorite-bar {
     display: flex;
@@ -165,7 +165,7 @@ html, body {
 }
 
 .favorite-slot {
-   min-height: 120px;  /* по-високи */
+    min-height: 120px;        /* по-високи слотове */
     flex: 1;
     min-width: 0;
     background: rgba(240, 230, 220, 0.7);
@@ -187,8 +187,16 @@ html, body {
     transform: translateY(-2px);
 }
 
+.favorite-slot img {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    object-fit: cover;
+    margin-bottom: 4px;
+}
+
 .favorite-slot .hero-icon {
-    font-size: 24px;
+    font-size: 28px;
 }
 
 .favorite-slot .hero-name {
@@ -649,7 +657,7 @@ html, body {
 
 #bottom-controls .new-game-dropdown {
     position: absolute;
-    bottom: 100%;          /* изскача нагоре */
+    bottom: 100%;
     left: 0;
     margin-bottom: 12px;
     top: auto !important;
@@ -757,114 +765,4 @@ html, body {
     #mobile-profile-section {
         display: none !important;
     }
-}
-
-/* -----------------------------------------------
-   15. НОВА КОМАНДНА ЛЕНТА (HERO DASHBOARD) – 5 СЛОТА НАД ДОЛНИТЕ БУТОНИ
------------------------------------------------ */
-#hero-dashboard {
-    position: fixed;
-    bottom: 70px;          /* височина на долните бутони + малко отстояние */
-    left: 0;
-    width: 100%;
-    background: rgba(0, 0, 0, 0.85);
-    backdrop-filter: blur(12px);
-    border-top: 2px solid #d4af37;
-    border-bottom: 1px solid rgba(212, 175, 55, 0.3);
-    z-index: 1999;
-    display: flex;
-    justify-content: center;
-    gap: 12px;
-    padding: 8px 12px;
-    overflow-x: auto;
-    font-family: 'Cinzel', serif;
-    box-sizing: border-box;
-    scrollbar-width: thin;
-}
-
-/* Всеки слот – адаптивен, минимум 120px, максимум 180px */
-.hero-dashboard-card {
-    flex: 1 1 0;           /* равномерно разпределение */
-    min-width: 120px;
-    max-width: 180px;
-    background: rgba(20, 20, 30, 0.9);
-    border-radius: 16px;
-    padding: 8px 6px;
-    text-align: center;
-    border: 1px solid #c9a87b;
-    font-size: 11px;
-    transition: all 0.2s;
-    cursor: pointer;
-}
-.hero-dashboard-card:hover {
-    transform: translateY(-3px);
-    border-color: #ffd700;
-    background: rgba(30, 30, 45, 0.95);
-}
-
-.hero-dashboard-card .hero-name {
-    font-weight: bold;
-    color: #ffdd99;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    font-size: 12px;
-}
-
-.hero-dashboard-card .hero-level-power {
-    font-size: 9px;
-    color: #ccaa77;
-    margin: 2px 0;
-}
-
-.hp-bar-bg, .xp-bar-bg {
-    background: #2a1a0a;
-    height: 5px;
-    border-radius: 3px;
-    margin: 5px 0;
-    overflow: hidden;
-}
-.hp-fill {
-    background: #4caf50;
-    height: 100%;
-    width: 100%;
-    transition: width 0.2s;
-}
-.xp-fill {
-    background: #ffd700;
-    height: 100%;
-    transition: width 0.2s;
-}
-
-.hero-stats {
-    display: flex;
-    justify-content: space-between;
-    font-size: 9px;
-    margin-top: 4px;
-    color: #ffaa66;
-}
-
-.hero-stats span {
-    white-space: nowrap;
-}
-
-/* Адаптивност за малки екрани */
-@media (max-width: 700px) {
-    #hero-dashboard {
-        bottom: 60px;
-        gap: 6px;
-        padding: 6px 8px;
-    }
-    .hero-dashboard-card {
-        min-width: 90px;
-        padding: 4px 4px;
-    }
-    .hero-name { font-size: 9px; }
-    .hero-stats { font-size: 7px; }
-    .hp-bar-bg, .xp-bar-bg { height: 3px; }
-}
-@media (max-width: 480px) {
-    .hero-dashboard-card { min-width: 70px; }
-    .hero-name { font-size: 8px; }
-    .hero-stats span { display: block; text-align: center; }
 }
