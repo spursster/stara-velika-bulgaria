@@ -164,7 +164,7 @@ if (window.playerRegions) {
     
     // Поддръжка на армия
     let armySize = hero.armySize || 0;
-    let baseMaintenanceCost = Math.floor(armySize * 0.25);
+    let baseMaintenanceCost = Math.floor(armySize * 0.05);
     let logisticsDiscount = Math.min(0.50, (skills.logistics || 0) * 0.05);
     let armyMaintenance = Math.floor(baseMaintenanceCost * (1 - logisticsDiscount));
     
