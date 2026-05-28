@@ -12,7 +12,7 @@ if (!window.economySettings) {
         investmentReturnBase: 0.12,    // 12% възвращаемост на инвестиции (годишно)
         tradeRouteBaseIncome: 50,      // базов доход от търговски маршрут
         randomEventChance: 0.15,       // 15% шанс за случайно икономическо събитие на ход
-        autonomousUpgradeChance: 0.1   // 10% шанс не-любим герой да модернизира регион
+        autonomousUpgradeChance: 0.25   // 10% шанс не-любим герой да модернизира регион
     };
 }
 
@@ -343,7 +343,7 @@ for (let key in window.worldData.clans) {
             }
             
          // Автономно купуване на войски – оригиналният код:
-if (clan.gold >= 150 && (clan.armySize || 0) < 1000) {
+if (clan.gold >= 100 && (clan.armySize || 0) < 1000) {
     let cost = 100;
     let troopsBought = Math.floor(Math.random() * 40) + 20;
     if (clan.gold >= cost) {
