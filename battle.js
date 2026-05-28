@@ -1154,5 +1154,49 @@
         updateUI();
         console.log("✅ Битката е готова (с портрети, анимации и числови ефекти)!");
     };
+            // ... (предишният код на startBattle, включително resetBattle, battleTurn, retreat)
+
+        document.getElementById('battle-attack').onclick = () => battleTurn();
+        document.getElementById('battle-retreat').onclick = () => retreat();
+        document.getElementById('battle-reset').onclick = () => resetBattle();
+
+        addLog(`━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`);
+        addLog(`⚔️ БИТКАТА ЗАПОЧВА! ⚔️`);
+        addLog(`🏰 ${battleHeroes.length} войни срещу ${monster.name}!`);
+        addLog(`📌 Натисни "АТАКА" за рунд!`);
+        addLog(`⚠️ ВНИМАНИЕ: Загубата на живот намалява армията ви!`);
+        updateUI();
+        console.log("✅ Битката е готова (с портрети, анимации и числови ефекти)!");
+    };  // <-- ТУК ЗАТВАРЯ startBattle
+
+    // ==================== ГЛОБАЛНА ФУНКЦИЯ ЗА КРАЙ НА ГРУПОВА БИТКА ====================
+    window.endGroupBattle = function(isVictory, reason, regionName) {
+        console.log(`🏁 Битката приключи. Победа: ${isVictory}, Причина: ${reason}, Регион: ${regionName || 'неизвестен'}`);
+        
+        if (window.checkAllQuestsProgress && window.currentHero) {
+            window.checkAllQuestsProgress(window.currentHero, regionName || window.currentRegion, "battle");
+        }
+        
+        if (typeof window.handleBattleEnd === 'function') {
+            window.handleBattleEnd(isVictory, reason);
+        }
+        
+        if (typeof window.renderFavoriteHeroesBar === 'function') {
+            window.renderFavoriteHeroesBar();
+        }
+        if (typeof window.renderTop6HeroesUI === 'function') {
+            window.renderTop6HeroesUI();
+        }
+        if (typeof window.renderSingleBar === 'function') {
+            window.renderSingleBar();
+        }
+        
+        if (typeof window.saveGreatBulgariaGame === 'function') {
+            window.saveGreatBulgariaGame();
+        }
+    };
+
+    console.log("✅ battle.js зареден (версия 8.1 – фиксирана)");
+})();
     console.log("✅ battle.js зареден (версия 8.1 – фиксирана)");
 })();
