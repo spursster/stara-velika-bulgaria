@@ -1,6 +1,11 @@
 // ==================== СОЛО РЕЖИМ – ВЕРСИЯ 3.0 (ХАРМОНИЗИРАНА) ====================
 // Всички корекции: пътуване, инспекция, куестове, спътници, карта, индикатор, женски спътници
 (function() {
+
+    // Запазваме оригиналната функция за наемане (от ui.js/logic.js)
+if (!window._originalHireNewHero) {
+    window._originalHireNewHero = window.hireNewHero;
+}
 // ==================== ГЛОБАЛНИ НАСТРОЙКИ ====================
 window.soloSettings = window.soloSettings || {
 showNeighborsOnMap: true,      // Показва съседни региони със зелен кант
@@ -520,15 +525,11 @@ function defineShowQuestsUI() {
 }
     // ==================== БЛОКИРАНЕ НА НАЕМАНЕ ====================
 function patchHireHero() {
-    if (typeof window.hireNewHero !== 'function') return;
-    const original = window.hireNewHero;
+    if (window.gameMode !== 'solo') return;
     window.hireNewHero = function() {
         let msg = "В соло режим не можете да наемате герои. Можете да намирате спътници в регионите (до 4).";
-        if (window.showAdvisorPopup) {
-            window.showAdvisorPopup("СОЛО РЕЖИМ", msg, "warning");
-        } else {
-            alert(msg);
-        }
+        if (window.showAdvisorPopup) window.showAdvisorPopup("СОЛО РЕЖИМ", msg, "warning");
+        else alert(msg);
     };
 }
 
@@ -595,12 +596,6 @@ function patchHeroLists() {
     }
 }
 
- // ==================== СТАРТИРАНЕ И ЕКСПОРТ ====================
-if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', initSoloMode);
-} else {
-    initSoloMode();
-}
 
 // Експортиране на функции, които трябва да са глобални
 window.showSoloSettingsUI = showSoloSettingsUI;
