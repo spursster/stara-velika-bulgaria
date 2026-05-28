@@ -274,8 +274,13 @@ window.hireNewHero = function() {
     if (document.getElementById('barracks-screen') && document.getElementById('barracks-screen').style.display === 'flex') {
         if (typeof window.renderBarracksLayout === 'function') window.renderBarracksLayout();
     }
+    
+    // ========== ДОБАВЕНО: веднага обновява лентата с любими герои ==========
+    if (typeof window.renderFavoriteHeroesBar === 'function') {
+        window.renderFavoriteHeroesBar();
+    }
+    // =====================================================================
 };
-
 // ==================== ДАННИ ЗА ГЕРОИТЕ ====================
 function getAllHeroes() {
     let heroes = [];
