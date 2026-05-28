@@ -289,6 +289,25 @@
             .stat-box { font-size: 0.7rem; padding: 2px 8px; }
             .active-hero-name { font-size: 0.7rem; padding: 2px 8px; }
         }
+        /* ========== ДОБАВКА ЗА ГАРАНТИРАНЕ, ЧЕ МЕНЮТО НЕ Е СКРИТО ========== */
+#bottom-controls .new-game-dropdown {
+    z-index: 9999999 !important;        /* Най-високият възможен z-index */
+    background: rgba(15, 15, 20, 0.98);  /* Засилване на фона */
+}
+
+/* За мобилни устройства – центриране на цял екран */
+@media (max-width: 800px) {
+    #bottom-controls .new-game-dropdown {
+        position: fixed !important;
+        bottom: auto !important;
+        top: 50% !important;
+        left: 50% !important;
+        transform: translate(-50%, -50%) !important;
+        width: 90%;
+        max-width: 280px;
+        margin-bottom: 0 !important;
+    }
+}
     </style>
 </head>
 <body>
