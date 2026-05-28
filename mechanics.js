@@ -139,12 +139,14 @@ function autoConquestBattle(attacker, defenderPower, regionName) {
 window.autonomousRegionConquest = function() {
     if (!window.worldData || !window.worldData.clans || !window.worldData.regions) return;
     
-    if (Math.random() > 0.15) return;
+    // 60% шанс на ход – да върви
+    if (Math.random() > 0.6) return;
     
     let potentialConquerors = [];
     for (let key in window.worldData.clans) {
         let hero = window.worldData.clans[key];
-        if (hero.isJoined === true && hero.isFavorite !== true && (hero.armySize || 0) > 150) {
+        // Променено: само да не е любим и армия > 30
+        if (hero.isJoined === true && hero.isFavorite !== true && (hero.armySize || 0) > 30) {
             potentialConquerors.push(hero);
         }
     }
@@ -152,6 +154,7 @@ window.autonomousRegionConquest = function() {
     
     const conqueror = potentialConquerors[Math.floor(Math.random() * potentialConquerors.length)];
     const regionKeys = Object.keys(window.worldData.regions);
+    // Вземаме всички региони, които не са на играча
     let availableRegions = regionKeys.filter(key => !(window.playerRegions && window.playerRegions.includes(key)));
     if (availableRegions.length === 0) return;
     
@@ -161,24 +164,27 @@ window.autonomousRegionConquest = function() {
     const isVictory = autoConquestBattle(conqueror, defenderPower, targetRegion);
     
     if (isVictory) {
-        if (!window.playerRegions) window.playerRegions = [];
-        if (!window.playerRegions.includes(targetRegion)) {
-            window.playerRegions.push(targetRegion);
-            const mapOverlay = document.getElementById('regions-map-overlay');
-            if (mapOverlay) window.openRegionsMap();
+        // Регионът става на играча, защото conqueror е от играча? Не, conqueror е NPC, но регионът трябва да стане негов?
+        // В оригиналния код регионът се дава на играча. Това не е добре. Ще го променим: регионът става собственост на conqueror (не на играча).
+        // За целта трябва да имаме карта на собственост за всеки герой. Но за простота, регионът остава на играча? Не, искаме NPC да завладяват.
+        // Ще създадем масив `npcRegions`, но за момента нека регионът се маркира като завладян от NPC (няма да се добавя към playerRegions).
+        // Вместо това, просто намаляваме армията на региона и добавяме лог.
+        if (window.addWorldEvent) {
+            window.addWorldEvent("🏰 NPC ЗАВЛАДЯВАНЕ", `${conqueror.name} завладя ${targetRegion}!`, "🏰");
         }
-        if (Math.random() < 0.2 && window.historicalArtifacts) {
-            const artifactKeys = Object.keys(window.historicalArtifacts);
-            const randomKey = artifactKeys[Math.floor(Math.random() * artifactKeys.length)];
-            const newArtifact = { ...window.historicalArtifacts[randomKey] };
-            if (!conqueror.inventory) conqueror.inventory = [];
-            if (conqueror.inventory.length < 30) {
-                conqueror.inventory.push(newArtifact);
-                if (window.addWorldEvent) {
-                    window.addWorldEvent("🏺 АРТЕФАКТ", `${conqueror.name} намери ${newArtifact.name} в ${targetRegion}!`, "🏺");
-                }
-            }
+        // Намаляваме армията на региона до 0 (като знак, че е превзет)
+        if (window.worldData.regions[targetRegion]) {
+            window.worldData.regions[targetRegion].armySize = 0;
         }
+        // Даваме награда на завоевателя
+        let rewardGold = 200 + Math.floor(Math.random() * 300);
+        conqueror.gold = (conqueror.gold || 0) + rewardGold;
+        if (window.gainHeroXP) window.gainHeroXP(conqueror, 30);
+        console.log(`🏆 ${conqueror.name} завладя ${targetRegion} и получи ${rewardGold} злато!`);
+    }
+    if (typeof window.renderSingleBar === 'function') window.renderSingleBar();
+    if (window.renderTop6HeroesUI) window.renderTop6HeroesUI();
+};
         
         // ========== ДОБАВЕНО: лог съобщение в летописа ==========
         if (window.addWorldEvent) {
