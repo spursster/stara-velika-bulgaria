@@ -7,308 +7,303 @@
     <link rel="icon" type="image/png" sizes="32x32" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsMAAA7DAcdvqGQAAAGzSURBVFhH7ZbNSsNAEIR3UV/AB/BlfAQfQZ8g4EFPnpXePUhBUIoWCXhWCCKFDf0B0dDG1KzGQEJ2s5tsdvODhQxL2unuzE6y2w8F+chHAYIgCIIg/KNbZQcTodwBp4Ew74DT2iFYd2TajctPIew7MLFnT5jzzqzUzgpCEQpJ0mktkPfwIzsJURwDoGk6NQN2FopQMBwAq7Vg3oFD4cEBUB9kKoIGmHfgUDgKAERQMFwFWq0G+g50BYAJYJsHA8A5r6BMQEZwL3CyP6A7+BZg2p6xQsYGMvT7sQyZMwBWBc2CqKvA/7n1N0OBAdhLhA0EoF8ARVHw9mRaRwZgLxE2EIB+Ac/nD3Sd1l2FmRwAe4mwgQD0CziOYiJ4Pp8BvCR0GfIACkB+vl7e/wHIN+/cO6C/AnkHcE6cc+4d0F8BfcDnBKZpmO04jpm2bUNmAHuJsIEAdB4Ae4mwgQB0HgB7ibCBAHQeAHuJsIEAdB6A3iVYnh/mHK7JYVkWtm0D9neYzx2yxy/yPtP3/cy2bUxTVZ5Op0YXYz+OQgiCIAiCIAg/8AF6hlz2sS1PDgAAAABJRU5ErkJggg==">
     <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Montserrat:wght@300;400;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
-    <style>
-        /* Глобални стилове, които са извън style.css (за резерв) */
-        * {
-            box-sizing: border-box;
-            user-select: none;
-        }
-        body {
-            margin: 0;
-            background: linear-gradient(rgba(0,0,0,0.5), rgba(0,0,0,0.5)), 
-                        url('https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEjJuReyp2P1EHVmb8i_LXu6AQhvvvByWOCKKl4sVeQTuIKnvmu0dZ64-jCPAw7hisWSrzei_lJeAS3tvQvYHuV5vKWGvc4ZRWsd5XZpgkX-KbUA0o9C2MMXiV1H0NGzVhJEj1iRxeT67HYEAe1VTmjmeI__JKiOCkz6hVVbo6O7gbqfsABylSvdnA-P7VAq/s3072/_d012d68d-c196-4d76-be3e-0a44b9f7ccfa.jpeg');
-            background-size: cover;
-            background-attachment: fixed;
-            font-family: 'Montserrat', sans-serif;
-            color: #e0e0e0;
-            padding-bottom: 100px;
-        }
-        #top-bar {
-            display: flex;
-            flex-wrap: wrap;
-            justify-content: space-between;
-            align-items: center;
-            background: rgba(15,15,15,0.85);
-            backdrop-filter: blur(12px);
-            border-bottom: 2px solid #d4af37;
-            padding: 8px 16px;
-            position: sticky;
-            top: 0;
-            z-index: 1000;
-        }
-        .top-bar-stats {
-            display: flex;
-            gap: 15px;
-            flex-wrap: wrap;
-            align-items: center;
-        }
-        .stat-box {
-            font-family: 'Cinzel', serif;
-            font-weight: bold;
-            color: #ffd700;
-            background: rgba(0,0,0,0.5);
-            padding: 4px 12px;
-            border-radius: 30px;
-            font-size: 0.9rem;
-        }
-        .active-hero-name {
-            background: rgba(0,0,0,0.6);
-            border-radius: 30px;
-            padding: 4px 12px;
-            margin-left: 10px;
-            font-size: 0.85rem;
-            color: #ffd700;
-            font-weight: bold;
-            white-space: nowrap;
-            display: inline-flex;
-            align-items: center;
-            gap: 5px;
-        }
-        .top-bar-controls {
-            display: flex;
-            gap: 8px;
-            flex-wrap: wrap;
-        }
-        .glass-btn {
-            background: rgba(255,255,255,0.1);
-            backdrop-filter: blur(4px);
-            border: 1px solid rgba(255,215,0,0.5);
-            border-radius: 30px;
-            padding: 5px 12px;
-            font-weight: bold;
-            color: #ffdd99;
-            cursor: pointer;
-            transition: 0.2s;
-        }
-        .glass-btn:hover {
-            background: rgba(255,215,0,0.2);
-            transform: scale(1.02);
-        }
-        #game-container {
-            display: grid;
-            grid-template-columns: 260px 1fr 260px;
-            gap: 15px;
-            max-width: 1400px;
-            margin: 15px auto;
-            padding: 0 15px 80px 15px;
-        }
-        #sidebar-left, #sidebar-right {
-            background: rgba(10,10,10,0.5);
-            backdrop-filter: blur(8px);
-            border-radius: 16px;
-            padding: 12px;
-            border: 1px solid rgba(212,175,55,0.3);
-        }
-        #game-main-area {
-            background: rgba(0,0,0,0.3);
-            backdrop-filter: blur(12px);
-            border-radius: 20px;
-            padding: 16px;
-        }
-        #unifiedChronicle {
-            background: transparent;
-            margin-bottom: 20px;
-        }
-        .chronicle-event {
-            background: rgba(20,20,40,0.6);
-            border-left: 3px solid #d4af37;
-            padding: 6px 10px;
-            margin-bottom: 6px;
-            border-radius: 8px;
-            display: flex;
-            gap: 10px;
-            font-size: 0.8rem;
-        }
-        .chronicle-icon { font-size: 1.3rem; min-width: 32px; text-align: center; }
-        .chronicle-text { flex: 1; }
-        .chronicle-time { color: #aaa; font-size: 0.65rem; white-space: nowrap; }
-        .load-more-btn {
-            background: rgba(212,175,55,0.2);
-            border: 1px solid #d4af37;
-            border-radius: 30px;
-            color: #ffd700;
-            padding: 4px 12px;
-            cursor: pointer;
-            margin-top: 8px;
-        }
-        #bottom-controls {
-            position: fixed;
-            bottom: 0;
-            left: 0;
-            width: 100%;
-            background: rgba(0,0,0,0.85);
-            backdrop-filter: blur(10px);
-            border-top: 2px solid #d4af37;
-            display: flex;
-            justify-content: flex-start;
-            align-items: center;
-            padding: 8px;
-            z-index: 2000;
-            overflow-x: auto;
-            flex-wrap: nowrap;
-            white-space: nowrap;
-            scroll-behavior: smooth;
-            -webkit-overflow-scrolling: touch;
-            scroll-snap-type: x mandatory;
-            -ms-overflow-style: none;
-            scrollbar-width: none;
-        }
-        #bottom-controls::-webkit-scrollbar {
-            display: none;
-        }
-        .icon-btn {
-            background: none;
-            border: none;
-            font-size: 26px;
-            cursor: pointer;
-            padding: 6px 12px;
-            border-radius: 40px;
-            transition: 0.2s;
-            color: #ffdd99;
-            flex-shrink: 0;
-            scroll-snap-align: start;
-        }
-        .icon-btn:hover { transform: scale(1.1); text-shadow: 0 0 8px gold; }
-        .next-turn-btn {
-            background: linear-gradient(135deg, #ffd700, #b8860b);
-            border: 1px solid white;
-            color: black;
-            font-weight: bold;
-            font-size: 1rem;
-            padding: 6px 18px;
-            border-radius: 40px;
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-            cursor: pointer;
-            flex-shrink: 0;
-            scroll-snap-align: start;
-        }
-        #bottom-controls .hero-profile-btn,
-        #bottom-controls button[onclick*="showHeroProfile"],
-        .bottom-hero-btn {
-            display: none !important;
-        }
-        .modal-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0,0,0,0.9);
-            backdrop-filter: blur(8px);
-            z-index: 200000;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-family: 'Cinzel', serif;
-        }
-        .modal-content {
-            background: #0a0a1a;
-            border: 2px solid #d4af37;
-            border-radius: 24px;
-            max-width: 90%;
-            max-height: 90%;
-            overflow: auto;
-            padding: 20px;
-        }
-        /* Стилове за менюто – по подразбиране */
-        .new-game-menu-container {
-            position: relative;
-            display: inline-block;
-        }
-        .new-game-dropdown {
-            position: absolute;
-            top: 100%;
-            left: 0;
-            background: rgba(15, 15, 20, 0.98);
-            backdrop-filter: blur(12px);
-            border: 1px solid rgba(212, 175, 55, 0.5);
-            border-radius: 12px;
-            padding: 8px 0;
-            min-width: 220px;
-            z-index: 10000;
-            opacity: 0;
-            visibility: hidden;
-            transform: translateY(-10px);
-            transition: all 0.25s ease;
-            box-shadow: 0 8px 20px rgba(0,0,0,0.4);
-        }
-        .new-game-dropdown.show {
-            opacity: 1;
-            visibility: visible;
-            transform: translateY(0);
-        }
-        /* Специални стилове за менюто в долната лента – отваряне нагоре */
-        #bottom-controls .new-game-menu-container {
-            position: relative;
-        }
-        #bottom-controls .new-game-dropdown {
-            top: auto !important;
-            bottom: 100% !important;
-            left: 0 !important;
-            margin-bottom: 12px !important;
-            transform: translateY(0) !important;
-        }
-        .new-game-option {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            padding: 10px 16px;
-            color: #ffdd99;
-            cursor: pointer;
-            transition: background 0.2s;
-            font-size: 0.85rem;
-            border-bottom: 1px solid rgba(255,215,0,0.1);
-        }
-        .new-game-option:last-child {
-            border-bottom: none;
-        }
-        .new-game-option:hover {
-            background: rgba(212, 175, 55, 0.2);
-            color: #ffd700;
-        }
-        .new-game-option-icon {
-            font-size: 1.2rem;
-            min-width: 28px;
-            text-align: center;
-        }
-        .new-game-divider {
-            height: 1px;
-            background: rgba(212, 175, 55, 0.3);
-            margin: 6px 0;
-        }
-        @media (max-width: 800px) {
-            #game-container {
-                grid-template-columns: 1fr;
-                gap: 15px;
-            }
-            #game-main-area { order: 1; }
-            #sidebar-left { order: 2; margin-top: 20px; }
-            #sidebar-right { order: 3; }
-            .stat-box { font-size: 0.7rem; padding: 2px 8px; }
-            .active-hero-name { font-size: 0.7rem; padding: 2px 8px; }
-        }
-        /* ========== ДОБАВКА ЗА ГАРАНТИРАНЕ, ЧЕ МЕНЮТО НЕ Е СКРИТО ========== */
-#bottom-controls .new-game-dropdown {
-    z-index: 9999999 !important;        /* Най-високият възможен z-index */
-    background: rgba(15, 15, 20, 0.98);  /* Засилване на фона */
-}
-
-/* За мобилни устройства – центриране на цял екран */
-@media (max-width: 800px) {
+<style>
+    /* Глобални стилове, които са извън style.css (за резерв) */
+    * {
+        box-sizing: border-box;
+        user-select: none;
+    }
+    body {
+        margin: 0;
+        background: linear-gradient(rgba(0,0,0,0.5), rgba(0,0,0,0.5)), 
+                    url('https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEjJuReyp2P1EHVmb8i_LXu6AQhvvvByWOCKKl4sVeQTuIKnvmu0dZ64-jCPAw7hisWSrzei_lJeAS3tvQvYHuV5vKWGvc4ZRWsd5XZpgkX-KbUA0o9C2MMXiV1H0NGzVhJEj1iRxeT67HYEAe1VTmjmeI__JKiOCkz6hVVbo6O7gbqfsABylSvdnA-P7VAq/s3072/_d012d68d-c196-4d76-be3e-0a44b9f7ccfa.jpeg');
+        background-size: cover;
+        background-attachment: fixed;
+        font-family: 'Montserrat', sans-serif;
+        color: #e0e0e0;
+        padding-bottom: 100px;
+    }
+    #top-bar {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: space-between;
+        align-items: center;
+        background: rgba(15,15,15,0.85);
+        backdrop-filter: blur(12px);
+        border-bottom: 2px solid #d4af37;
+        padding: 8px 16px;
+        position: sticky;
+        top: 0;
+        z-index: 1000;
+    }
+    .top-bar-stats {
+        display: flex;
+        gap: 15px;
+        flex-wrap: wrap;
+        align-items: center;
+    }
+    .stat-box {
+        font-family: 'Cinzel', serif;
+        font-weight: bold;
+        color: #ffd700;
+        background: rgba(0,0,0,0.5);
+        padding: 4px 12px;
+        border-radius: 30px;
+        font-size: 0.9rem;
+    }
+    .active-hero-name {
+        background: rgba(0,0,0,0.6);
+        border-radius: 30px;
+        padding: 4px 12px;
+        margin-left: 10px;
+        font-size: 0.85rem;
+        color: #ffd700;
+        font-weight: bold;
+        white-space: nowrap;
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+    }
+    .top-bar-controls {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+    }
+    .glass-btn {
+        background: rgba(255,255,255,0.1);
+        backdrop-filter: blur(4px);
+        border: 1px solid rgba(255,215,0,0.5);
+        border-radius: 30px;
+        padding: 5px 12px;
+        font-weight: bold;
+        color: #ffdd99;
+        cursor: pointer;
+        transition: 0.2s;
+    }
+    .glass-btn:hover {
+        background: rgba(255,215,0,0.2);
+        transform: scale(1.02);
+    }
+    #game-container {
+        display: grid;
+        grid-template-columns: 260px 1fr 260px;
+        gap: 15px;
+        max-width: 1400px;
+        margin: 15px auto;
+        padding: 0 15px 80px 15px;
+    }
+    #sidebar-left, #sidebar-right {
+        background: rgba(10,10,10,0.5);
+        backdrop-filter: blur(8px);
+        border-radius: 16px;
+        padding: 12px;
+        border: 1px solid rgba(212,175,55,0.3);
+    }
+    #game-main-area {
+        background: rgba(0,0,0,0.3);
+        backdrop-filter: blur(12px);
+        border-radius: 20px;
+        padding: 16px;
+    }
+    #unifiedChronicle {
+        background: transparent;
+        margin-bottom: 20px;
+    }
+    .chronicle-event {
+        background: rgba(20,20,40,0.6);
+        border-left: 3px solid #d4af37;
+        padding: 6px 10px;
+        margin-bottom: 6px;
+        border-radius: 8px;
+        display: flex;
+        gap: 10px;
+        font-size: 0.8rem;
+    }
+    .chronicle-icon { font-size: 1.3rem; min-width: 32px; text-align: center; }
+    .chronicle-text { flex: 1; }
+    .chronicle-time { color: #aaa; font-size: 0.65rem; white-space: nowrap; }
+    .load-more-btn {
+        background: rgba(212,175,55,0.2);
+        border: 1px solid #d4af37;
+        border-radius: 30px;
+        color: #ffd700;
+        padding: 4px 12px;
+        cursor: pointer;
+        margin-top: 8px;
+    }
+    #bottom-controls {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        width: 100%;
+        background: rgba(0,0,0,0.85);
+        backdrop-filter: blur(10px);
+        border-top: 2px solid #d4af37;
+        display: flex;
+        justify-content: flex-start;
+        align-items: center;
+        padding: 8px;
+        z-index: 2000;
+        overflow-x: auto;
+        flex-wrap: nowrap;
+        white-space: nowrap;
+        scroll-behavior: smooth;
+        -webkit-overflow-scrolling: touch;
+        scroll-snap-type: x mandatory;
+        -ms-overflow-style: none;
+        scrollbar-width: none;
+    }
+    #bottom-controls::-webkit-scrollbar {
+        display: none;
+    }
+    .icon-btn {
+        background: none;
+        border: none;
+        font-size: 26px;
+        cursor: pointer;
+        padding: 6px 12px;
+        border-radius: 40px;
+        transition: 0.2s;
+        color: #ffdd99;
+        flex-shrink: 0;
+        scroll-snap-align: start;
+    }
+    .icon-btn:hover { transform: scale(1.1); text-shadow: 0 0 8px gold; }
+    .next-turn-btn {
+        background: linear-gradient(135deg, #ffd700, #b8860b);
+        border: 1px solid white;
+        color: black;
+        font-weight: bold;
+        font-size: 1rem;
+        padding: 6px 18px;
+        border-radius: 40px;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        cursor: pointer;
+        flex-shrink: 0;
+        scroll-snap-align: start;
+    }
+    #bottom-controls .hero-profile-btn,
+    #bottom-controls button[onclick*="showHeroProfile"],
+    .bottom-hero-btn {
+        display: none !important;
+    }
+    .modal-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0,0,0,0.9);
+        backdrop-filter: blur(8px);
+        z-index: 200000;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-family: 'Cinzel', serif;
+    }
+    .modal-content {
+        background: #0a0a1a;
+        border: 2px solid #d4af37;
+        border-radius: 24px;
+        max-width: 90%;
+        max-height: 90%;
+        overflow: auto;
+        padding: 20px;
+    }
+    /* Стилове за менюто – по подразбиране */
+    .new-game-menu-container {
+        position: relative;
+        display: inline-block;
+    }
+    .new-game-dropdown {
+        position: absolute;
+        top: 100%;
+        left: 0;
+        background: rgba(15, 15, 20, 0.98);
+        backdrop-filter: blur(12px);
+        border: 1px solid rgba(212, 175, 55, 0.5);
+        border-radius: 12px;
+        padding: 8px 0;
+        min-width: 220px;
+        z-index: 10000;
+        opacity: 0;
+        visibility: hidden;
+        transform: translateY(-10px);
+        transition: all 0.25s ease;
+        box-shadow: 0 8px 20px rgba(0,0,0,0.4);
+    }
+    .new-game-dropdown.show {
+        opacity: 1;
+        visibility: visible;
+        transform: translateY(0);
+    }
+    /* Специални стилове за менюто в долната лента – отваряне нагоре */
+    #bottom-controls .new-game-menu-container {
+        position: relative;
+    }
     #bottom-controls .new-game-dropdown {
+        top: auto !important;
+        bottom: 100% !important;
+        left: 0 !important;
+        margin-bottom: 12px !important;
+        transform: translateY(0) !important;
+    }
+    /* ФИНАЛНА КОРЕКЦИЯ: когато менюто е отворено, да излиза в центъра на екрана и да е над всичко */
+    #bottom-controls .new-game-dropdown.show {
         position: fixed !important;
         bottom: auto !important;
         top: 50% !important;
         left: 50% !important;
         transform: translate(-50%, -50%) !important;
-        width: 90%;
-        max-width: 280px;
-        margin-bottom: 0 !important;
+        z-index: 2147483647 !important;
+        width: 260px;
+        max-width: 90vw;
+        margin: 0 !important;
+        opacity: 1 !important;
+        visibility: visible !important;
     }
-}
-    </style>
+    .new-game-option {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 10px 16px;
+        color: #ffdd99;
+        cursor: pointer;
+        transition: background 0.2s;
+        font-size: 0.85rem;
+        border-bottom: 1px solid rgba(255,215,0,0.1);
+    }
+    .new-game-option:last-child {
+        border-bottom: none;
+    }
+    .new-game-option:hover {
+        background: rgba(212, 175, 55, 0.2);
+        color: #ffd700;
+    }
+    .new-game-option-icon {
+        font-size: 1.2rem;
+        min-width: 28px;
+        text-align: center;
+    }
+    .new-game-divider {
+        height: 1px;
+        background: rgba(212, 175, 55, 0.3);
+        margin: 6px 0;
+    }
+    @media (max-width: 800px) {
+        #game-container {
+            grid-template-columns: 1fr;
+            gap: 15px;
+        }
+        #game-main-area { order: 1; }
+        #sidebar-left { order: 2; margin-top: 20px; }
+        #sidebar-right { order: 3; }
+        .stat-box { font-size: 0.7rem; padding: 2px 8px; }
+        .active-hero-name { font-size: 0.7rem; padding: 2px 8px; }
+    }
+</style>
 </head>
 <body>
 
