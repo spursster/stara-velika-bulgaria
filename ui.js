@@ -491,10 +491,10 @@ function showHeroProfile(hero) {
                 ${hpHtml}
                 ${moraleHtml}
                 <div style="margin-top:15px; display:flex; justify-content:space-between; gap:10px;">
-                    <div style="background:#0d0a07; border-radius:12px; padding:8px; flex:1;"><div>💰 Злато</div><div style="color:#ffdd99;">${hero.gold}</div></div>
-                    <div style="background:#0d0a07; border-radius:12px; padding:8px; flex:1;"><div>⚔️ Армия</div><div style="color:#ffdd99;">${hero.armySize !== undefined ? hero.armySize : (hero.army || 0)}</div>
-                    <div style="background:#0d0a07; border-radius:12px; padding:8px; flex:1;"><div>💪 Сила</div><div style="color:#ffdd99;">${hero.power}</div></div>
-                </div>
+    <div style="background:#0d0a07; border-radius:12px; padding:8px; flex:1;"><div>💰 Злато</div><div style="color:#ffdd99;">${hero.gold}</div></div>
+    <div style="background:#0d0a07; border-radius:12px; padding:8px; flex:1;"><div>⚔️ Армия</div><div style="color:#ffdd99;">${armyValue}</div></div>
+    <div style="background:#0d0a07; border-radius:12px; padding:8px; flex:1;"><div>💪 Сила</div><div style="color:#ffdd99;">${hero.power}</div></div>
+</div>
                 ${inventoryHtml}
                 ${artifactsHtml}
                 ${petHtml}
