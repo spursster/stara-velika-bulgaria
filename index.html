@@ -680,6 +680,7 @@
     window.displayEvents();
 
     if (window.updateCharacterUI) window.updateCharacterUI(window.currentHero);
+    if (window.addWorldEvent) window.addWorldEvent("⚙️ ХОД", "Светът се променя...", "🌍");
     if (window.renderTop6HeroesUI) window.renderTop6HeroesUI();
     if (window.initHeroBar) window.initHeroBar();
     document.getElementById('clearChronicleBtn')?.addEventListener('click', () => {
