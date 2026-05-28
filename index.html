@@ -225,6 +225,45 @@
         .stat-box { font-size: 0.7rem; padding: 2px 8px; }
         .active-hero-name { font-size: 0.7rem; padding: 2px 8px; }
     }
+
+    /* Подредба на бутоните в долната лента – за десктоп и таблет */
+@media (min-width: 769px) {
+    #bottom-controls {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+        align-items: center;
+        gap: 8px;
+        padding: 8px 12px;
+        overflow-x: visible;
+        white-space: normal;
+    }
+    #bottom-controls .icon-btn,
+    #bottom-controls .next-turn-btn,
+    #bottom-controls .new-game-menu-container {
+        flex: 0 0 auto;
+    }
+    /* Премахваме хоризонталния скрол */
+    #bottom-controls {
+        overflow-x: visible;
+    }
+}
+
+/* За мобилни (под 768px) запазваме хоризонтално плъзгане */
+@media (max-width: 768px) {
+    #bottom-controls {
+        flex-wrap: nowrap;
+        justify-content: flex-start;
+        overflow-x: auto;
+        white-space: nowrap;
+        -webkit-overflow-scrolling: touch;
+    }
+    #bottom-controls .icon-btn,
+    #bottom-controls .next-turn-btn,
+    #bottom-controls .new-game-menu-container {
+        flex-shrink: 0;
+    }
+}
 </style>
 </head>
 <body>
@@ -300,7 +339,7 @@
     <button class="icon-btn" onclick="window.toggleTreasury()" title="Съкровищница">🎒</button>
     <button class="icon-btn" onclick="window.hireNewHero?.()" title="Наеми герой">👑</button>
     <button class="icon-btn" onclick="window.toggleGameFullScreen?.()" title="Цял екран">⬚</button>
-    <button class="icon-btn" onclick="window.armyMarket?.show?.()" title="Пазар за армия">⚔️</button>
+    <button class="icon-btn" onclick="window.armyMarket?.show?.()" title="Пазар за армия">🏪</button>
     <button class="icon-btn" onclick="window.openMarriageMenu?.()" title="Брак">💍</button>
     <button class="icon-btn" onclick="window.showLeaderBoardModal()" title="Класации">🏆</button>
 </div>
