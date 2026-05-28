@@ -393,12 +393,15 @@
 
 <script>
 (function initNewGameMenu() {
-    const container = document.querySelector('.new-game-menu-container');
-    const btn = document.getElementById('newGameBtn');
-    const dropdown = document.getElementById('newGameDropdown');
-    const continueOption = document.getElementById('continueGameOption');
+    const container = document.querySelector('.new-game-menu-container.bottom-menu');
+    const btn = document.getElementById('newGameBtnBottom');
+    const dropdown = document.getElementById('newGameDropdownBottom');
+    const continueOption = document.getElementById('continueGameOptionBottom');
     
-    if (!btn || !dropdown) return;
+    if (!btn || !dropdown) {
+        console.warn("Бутон или падащо меню не са намерени", {btn, dropdown});
+        return;
+    }
     
     function checkForSavedGame() {
         const hasSave = localStorage.getItem('GreatBulgaria_SaveGame') !== null;
@@ -436,31 +439,29 @@
     }
     
     function startNewGame(mode) {
-    localStorage.removeItem('GreatBulgaria_SaveGame');
-    localStorage.removeItem('favoriteHeroesFinal');
-    localStorage.removeItem('heroAutoState');
-    localStorage.removeItem('barracksFavorites');
-    
-    window.gameMode = mode;
-    
-    if (typeof window.startFreshGameLogic === 'function') {
-        const originalStart = window.startFreshGameLogic;
-        window.startFreshGameLogic = function() {
-            window.startFreshGameLogic = originalStart;
-            originalStart();
-        };
-        window.startFreshGameLogic();
-    } else {
-        location.reload();
+        localStorage.removeItem('GreatBulgaria_SaveGame');
+        localStorage.removeItem('favoriteHeroesFinal');
+        localStorage.removeItem('heroAutoState');
+        localStorage.removeItem('barracksFavorites');
+        window.gameMode = mode;
+        if (typeof window.startFreshGameLogic === 'function') {
+            const originalStart = window.startFreshGameLogic;
+            window.startFreshGameLogic = function() {
+                window.startFreshGameLogic = originalStart;
+                originalStart();
+            };
+            window.startFreshGameLogic();
+        } else {
+            location.reload();
+        }
     }
-}
+    
     function continueSavedGame() {
         const hasSave = localStorage.getItem('GreatBulgaria_SaveGame') !== null;
         if (!hasSave) {
             alert("Няма запазена игра. Започнете нова игра първо.");
             return;
         }
-        
         if (typeof window.loadGreatBulgariaGame === 'function') {
             const success = window.loadGreatBulgariaGame();
             if (success) {
@@ -468,20 +469,11 @@
                 if (window.gameMode === 'solo' && typeof window.initSoloMode === 'function') {
                     setTimeout(() => window.initSoloMode(), 100);
                 }
-                if (typeof window.updateCharacterUI === 'function') {
-                    window.updateCharacterUI(window.currentHero);
-                }
-                if (typeof window.renderTop6HeroesUI === 'function') {
-                    window.renderTop6HeroesUI();
-                }
-                if (typeof window.renderSingleBar === 'function') {
-                    window.renderSingleBar();
-                }
-                if (window.showAdvisorMsg) {
-                    window.showAdvisorMsg("👑 Запазената игра е заредена. Продължавайте приключението!");
-                } else {
-                    alert("Запазената игра е заредена!");
-                }
+                if (typeof window.updateCharacterUI === 'function') window.updateCharacterUI(window.currentHero);
+                if (typeof window.renderTop6HeroesUI === 'function') window.renderTop6HeroesUI();
+                if (typeof window.renderSingleBar === 'function') window.renderSingleBar();
+                if (window.showAdvisorMsg) window.showAdvisorMsg("👑 Запазената игра е заредена. Продължавайте приключението!");
+                else alert("Запазената игра е заредена!");
             } else {
                 alert("Грешка при зареждане на запазената игра.");
             }
