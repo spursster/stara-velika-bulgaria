@@ -270,6 +270,7 @@ window.investGold = function(hero, amount, turns = 5) {
 };
 // ==================== ОСНОВНА ИКОНОМИЧЕСКА ФУНКЦИЯ ====================
 window.calculateEconomy = function() {
+    window.normalizePlayerRegions();
     if (!window.currentHero) return;
 
     // Нормализиране на playerRegions
