@@ -181,6 +181,25 @@ function getAllHeroesFromDatabase() {
 }
 
 window.hireNewHero = function() {
+    // ===== 1. ПРОВЕРКА ЗА ЛИМИТ В СОЛО РЕЖИМ =====
+    if (window.gameMode === 'solo') {
+        let favoriteCount = 0;
+        if (window.worldData && window.worldData.clans) {
+            for (let key in window.worldData.clans) {
+                if (window.worldData.clans[key].isFavorite === true) favoriteCount++;
+            }
+        }
+        if (favoriteCount >= 5) {
+            if (window.showAdvisorPopup) {
+                window.showAdvisorPopup("ГРЕШКА", "В соло режим можете да имате най-много 4 спътника (общо 5 героя).", "error");
+            } else {
+                alert("Лимитът от 5 героя в соло режим е достигнат.");
+            }
+            return;
+        }
+    }
+
+    // ===== 2. ОРИГИНАЛНА ЛОГИКА =====
     if (window.gameMode === 'solo') {
         window.showAdvisorPopup("СОЛО РЕЖИМ", "В соло режим не можете да наемате герои. Можете да намирате спътници в регионите (до 4).", "warning");
         return;
@@ -217,7 +236,7 @@ window.hireNewHero = function() {
         name: randomHero.name,
         clan: randomHero.clan,
         isJoined: true,
-        isFavorite: false,
+        isFavorite: true,   // <-- ПРОМЕНА: веднага става любим
         level: 1,
         xp: 0,
         heroPower: randomHero.power,
@@ -694,11 +713,12 @@ window.renderFavoriteHeroesBar = function() {
             heartBtn.innerHTML = '❤️';
             heartBtn.style.cssText = 'position:absolute; top:4px; right:4px; background:none; border:none; font-size:12px; cursor:pointer; color:#ff4466;';
             heartBtn.onclick = (e) => {
-                e.stopPropagation();
-                hero.isFavorite = false;
-                if (typeof window.saveFavoriteHeroes === 'function') window.saveFavoriteHeroes();
-                window.renderFavoriteHeroesBar();
-            };
+    e.stopPropagation();
+    hero.isFavorite = !hero.isFavorite;   // превключва
+    if (typeof window.saveGreatBulgariaGame === 'function') window.saveGreatBulgariaGame();
+    window.renderFavoriteHeroesBar();
+    if (typeof window.renderSingleBar === 'function') window.renderSingleBar();
+};
             slot.appendChild(heartBtn);
             
             // Бутон за Auto/Manual toggle
