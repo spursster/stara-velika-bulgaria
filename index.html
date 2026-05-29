@@ -720,6 +720,7 @@
     window.updateTimeUI();
     
     window.processTurn = function() {
+        if (typeof window.processAncientCivilizations === 'function') window.processAncientCivilizations();
         if (!window.gameTime) {
             window.gameTime = { seasonIndex: 0, year: 480, era: "пр.н.е." };
         }
