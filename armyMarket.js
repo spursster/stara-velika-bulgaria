@@ -22,45 +22,37 @@
         return window.ensureCompleteArmyDetails(hero);
     }
 
-    function getAllHeroes() {
-        let heroes = [];
-        if (window.worldData && window.worldData.clans) {
-            console.log("Analyzing worldData.clans for heroes...");
-            for (let key in window.worldData.clans) {
-                let heroData = window.worldData.clans[key];
-                console.log(`Checking hero ${key}:`, heroData);
-                if (heroData.name || heroData.leaderName) {
-                    // Only show heroes that have joined or are favorites
-                    const isFavorite = (heroData.isFavorite === true);
-                    heroData.isFavorite = isFavorite; // Keep consistent
-                    if (heroData.isJoined !== true && !isFavorite) continue;
-
-                    ensureArmyDetails(heroData);
-                    heroes.push({
-                        id: key,
-                        name: heroData.name || heroData.leaderName || key,
-                        hero: heroData,
-                        gold: heroData.gold || 0,
-                        armySize: heroData.armySize || 0,
-                        armyDetails: heroData.armyDetails
-                    });
-                }
+ function getAllHeroes() {
+    let heroes = [];
+    if (window.worldData && window.worldData.clans) {
+        for (let key in window.worldData.clans) {
+            let heroData = window.worldData.clans[key];
+            if (heroData.isJoined === true && heroData.isFavorite === true) {
+                ensureArmyDetails(heroData);
+                heroes.push({
+                    id: key,
+                    name: heroData.name || heroData.leaderName || key,
+                    hero: heroData,
+                    gold: heroData.gold || 0,
+                    armySize: heroData.armySize || 0,
+                    armyDetails: heroData.armyDetails
+                });
             }
         }
-        console.log("Found heroes:", heroes);
-        if (heroes.length === 0 && window.currentHero) {
-            ensureArmyDetails(window.currentHero);
-            heroes.push({
-                id: window.currentHero.clan || "hero",
-                name: window.currentHero.name || "Воевода",
-                hero: window.currentHero,
-                gold: window.currentHero.gold || 0,
-                armySize: window.currentHero.armySize || 0,
-                armyDetails: window.currentHero.armyDetails
-            });
-        }
-        return heroes;
     }
+    if (heroes.length === 0 && window.currentHero && window.currentHero.isJoined === true) {
+        ensureArmyDetails(window.currentHero);
+        heroes.push({
+            id: window.currentHero.clan || "hero",
+            name: window.currentHero.name || "Воевода",
+            hero: window.currentHero,
+            gold: window.currentHero.gold || 0,
+            armySize: window.currentHero.armySize || 0,
+            armyDetails: window.currentHero.armyDetails
+        });
+    }
+    return heroes;
+}
 
     function getSelectedHero() {
         let hero = null;
