@@ -652,9 +652,9 @@ function applyBattleOutcome(originalHero, battleHero) {
                             <div class="h-full bg-gradient-to-r from-red-700 to-red-500 transition-all duration-300" id="hp-${hero.id}" style="width: ${(hero.hp/hero.maxHp)*100}%"></div>
                         </div>
                         <div class="flex justify-between w-full text-[9px] text-[#ffaa66]">
-                             <span>❤️ ${hero.hp}/${hero.maxHp}</span>
-                             <span>⚔️ ${hero.power}</span>
-                        </div>
+    <span id="hp-text-${hero.id}">❤️ ${hero.hp}/${hero.maxHp}</span>
+    <span>⚔️ ${hero.power}</span>
+</div>
                     </div>
                 `;
             } else {
@@ -714,24 +714,32 @@ function applyBattleOutcome(originalHero, battleHero) {
         let currentRound = 1;
         let invincibleUsed = {};
 
-        function updateUI() {
-            currentHeroes.forEach(hero => {
-                const fillEl = document.getElementById(`hp-${hero.id}`);
-                const textEl = document.getElementById(`hp-text-${hero.id}`);
-                if (fillEl) {
-                    const percent = (hero.hp / hero.maxHp) * 100;
-                    fillEl.style.width = `${Math.max(0, percent)}%`;
-                }
-                if (textEl) textEl.innerHTML = `❤️ ${Math.max(0, hero.hp)}/${hero.maxHp}`;
-            });
-            const monsterFill = document.getElementById('monster-hp-fill');
-            const monsterText = document.getElementById('monster-hp-text');
-            if (monsterFill) {
-                const percent = (currentMonster.hp / currentMonster.maxHp) * 100;
-                monsterFill.style.width = `${Math.max(0, percent)}%`;
-            }
-            if (monsterText) monsterText.innerHTML = `❤️ ${Math.max(0, currentMonster.hp)}/${currentMonster.maxHp}`;
+    function updateUI() {
+    currentHeroes.forEach(hero => {
+        const fillEl = document.getElementById(`hp-${hero.id}`);
+        const textEl = document.getElementById(`hp-text-${hero.id}`);
+        if (fillEl) {
+            const percent = (hero.hp / hero.maxHp) * 100;
+            fillEl.style.width = `${Math.max(0, percent)}%`;
+            // Промяна на цвета според процента
+            if (percent < 30) fillEl.style.background = "#f44336";
+            else if (percent < 70) fillEl.style.background = "#ff9800";
+            else fillEl.style.background = "#4caf50";
         }
+        if (textEl) {
+            textEl.innerHTML = `❤️ ${Math.max(0, hero.hp)}/${hero.maxHp}`;
+        }
+    });
+    const monsterFill = document.getElementById('monster-hp-fill');
+    const monsterText = document.getElementById('monster-hp-text');
+    if (monsterFill) {
+        const percent = (currentMonster.hp / currentMonster.maxHp) * 100;
+        monsterFill.style.width = `${Math.max(0, percent)}%`;
+    }
+    if (monsterText) {
+        monsterText.innerHTML = `❤️ ${Math.max(0, currentMonster.hp)}/${currentMonster.maxHp}`;
+    }
+}
 
         function addLog(message, isError = false) {
             const logDiv = document.getElementById('battle-log');
@@ -787,6 +795,7 @@ function applyBattleOutcome(originalHero, battleHero) {
             if (!battleActive) return false;
             let totalDamage = 0;
             const aliveHeroes = currentHeroes.filter(h => h.hp > 0);
+            updateUI();
             if (aliveHeroes.length === 0) return false;
 
             addLog(`━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`);
