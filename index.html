@@ -384,14 +384,9 @@
 
 
 <script>
-
-// Нова, проста и надеждна система за избор на режим
 (function() {
-
-
     // Създаване на модален прозорец
     function showGameModeModal() {
-        // Проверка за съществуващ модал
         const existingModal = document.getElementById('gameModeModal');
         if (existingModal) existingModal.remove();
 
@@ -423,7 +418,6 @@
         `;
         document.body.appendChild(modal);
 
-        // Функции за избор
         function startGame(mode) {
             localStorage.removeItem('GreatBulgaria_SaveGame');
             localStorage.removeItem('favoriteHeroesFinal');
@@ -446,13 +440,12 @@
             }
             if (typeof window.loadGreatBulgariaGame === 'function') {
                 window.loadGreatBulgariaGame();
+                modal.remove();
             } else {
                 location.reload();
             }
-            modal.remove();
         }
 
-        // Събития
         modal.querySelectorAll('.mode-select-btn').forEach(btn => {
             btn.onclick = () => {
                 const mode = btn.getAttribute('data-mode');
@@ -461,19 +454,22 @@
             };
         });
         const continueBtn = modal.querySelector('#continueGameBtn');
-        if (continueBtn) continueBtn.onclick = () => { continueGame(); };
+        if (continueBtn) continueBtn.onclick = continueGame;
         const closeBtn = modal.querySelector('#closeModalBtn');
         if (closeBtn) closeBtn.onclick = () => modal.remove();
-        // Затваряне при клик извън диалога
         modal.onclick = (e) => { if (e.target === modal) modal.remove(); };
     }
 
-    btn.onclick = showGameModeModal;
+    // Взимаме бутона за нова игра
+    const newGameBtn = document.getElementById('newGameBtn');
+    if (newGameBtn) {
+        newGameBtn.onclick = function(e) {
+            e.stopPropagation();
+            showGameModeModal();
+        };
+    }
 })();
-
 </script>
-
-<script>
 (function() {
     if (window.rivalrySystem && typeof window.rivalrySystem.getEnemyHeroes === 'function') {
         const originalGetEnemy = window.rivalrySystem.getEnemyHeroes;
