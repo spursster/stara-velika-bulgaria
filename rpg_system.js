@@ -35,10 +35,7 @@ function showRPGMessage(title, message, type = "info") {
 // ==================== ИНИЦИАЛИЗАЦИЯ НА ГЕРОЙ (С НОВИ ПОЛЕТА) ====================
 window.initializeHeroRPGData = function(hero) {
     if (!hero) return;
-    
-    // Премахваме проверката isRPGInitialized, за да може да се извиква повторно (заради стари запазени игри)
-    // Но запазваме другите инициализации, ако липсват.
-    
+    // Базови полета
     hero.level = hero.level || 1;
     hero.xp = hero.xp || 0;
     hero.storedXP = hero.storedXP || 0;
@@ -46,7 +43,7 @@ window.initializeHeroRPGData = function(hero) {
     hero.skills = hero.skills || {};
     hero.currentClass = hero.currentClass || "Багатур";
     hero.heroPower = hero.heroPower || 150;
-    hero.isAuto = hero.isAuto !== undefined ? hero.isAuto : true;
+    hero.isAuto = (hero.isAuto !== undefined) ? hero.isAuto : true;
     hero.army = hero.army || 0;
     hero.battlesWon = hero.battlesWon || 0;
     hero.battlesLost = hero.battlesLost || 0;
@@ -57,24 +54,20 @@ window.initializeHeroRPGData = function(hero) {
     if (hero.titles === undefined) hero.titles = [];
     if (hero.prestige === undefined) hero.prestige = 0;
     if (!hero.actionLog) hero.actionLog = [];
-    
     if (hero.morale === undefined) hero.morale = 50;
-    
-    // === ИНИЦИАЛИЗАЦИЯ НА HP (ФИКСАНА, без да се разчита на isRPGInitialized) ===
-    // Проверяваме дали hp липсва или е NaN
-    if (hero.hp === undefined || hero.hp === null || isNaN(hero.hp)) {
-        let endurance = hero.skills?.endurance || 0;
-        let levelBonus = (hero.level - 1) * 20;
-        hero.maxHp = 100 + levelBonus + endurance * 15;
-        hero.hp = hero.maxHp;
-        console.log(`✅ Инициализиран HP за ${hero.name}: ${hero.hp}/${hero.maxHp}`);
-    }
-    if (hero.isAlive === undefined) hero.isAlive = true;
-    
-    // Маркираме като инициализиран, но не пречи на повторно извикване
-    hero.isRPGInitialized = true;
-};
 
+    // ---------- ФИКС НА HP (ВИНАГИ) ----------
+    let endurance = (hero.skills && hero.skills.endurance) || 0;
+    let levelBonus = (hero.level - 1) * 20;
+    let newMaxHp = 100 + levelBonus + endurance * 15;
+    if (isNaN(newMaxHp) || newMaxHp <= 0) newMaxHp = 100;
+    hero.maxHp = newMaxHp;
+    if (isNaN(hero.hp) || hero.hp === undefined || hero.hp > hero.maxHp) {
+        hero.hp = hero.maxHp;
+    }
+    hero.isAlive = true;
+    // ----------------------------------------
+};
 // ==================== ФУНКЦИЯ ЗА КОНСУМИРАНЕ НА STOREDXP ====================
 window.consumeStoredXPForHero = function(hero) {
     if (!hero) return false;
