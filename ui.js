@@ -1,6 +1,6 @@
 /** ========================================================================== 
 ПРОЕКТ: ВЕЛИКА БЪЛГАРИЯ
-ФАЙЛ: ui.js (ВЕРСИЯ 7.0 – С HP ИНДИКАТОРИ, ЖИВОТ И СМЪРТ)
+ФАЙЛ: ui.js (ВЕРСИЯ 7.1 – СИНХРОНИЗАЦИЯ С refreshAllHeroUI)
 ========================================================================== */ 
 
 // ==================== ОБНОВЯВАНЕ НА ВРЕМЕТО ====================
@@ -58,9 +58,11 @@ window.addHeroLog = function(hero, icon, message) {
     if (!hero) return;
     if (!hero.actionLog) hero.actionLog = [];
     hero.actionLog.unshift({ icon, message, time: Date.now() });
-    if (hero.actionLog.length > 15) hero.actionLog.pop(); // пазим последните 15
-    // Ако героят е активният, обновяваме профила (ако е отворен)
+    if (hero.actionLog.length > 15) hero.actionLog.pop();
     if (hero === window.currentHero && window.updateCharacterUI) window.updateCharacterUI(hero);
+    // Синхронизиране на UI след добавяне на лог
+    if (typeof window.refreshAllHeroUI === 'function') window.refreshAllHeroUI();
+    else if (typeof window.renderFavoriteHeroesBar === 'function') window.renderFavoriteHeroesBar();
 };
 
 // ==================== ГЕНЕРИРАНЕ НА ПОРТРЕТ С POLLINATIONS.AI ====================
@@ -134,6 +136,8 @@ function toggleFavorite(id) {
     else favoriteHeroes.add(id);
     saveFavorites();
     renderSingleBar();
+    if (typeof window.refreshAllHeroUI === 'function') window.refreshAllHeroUI();
+    else if (typeof window.renderFavoriteHeroesBar === 'function') window.renderFavoriteHeroesBar();
 }
 
 // ==================== AUTO СИСТЕМА ====================
@@ -153,7 +157,7 @@ function setAuto(id, enabled) {
 // ==================== НАЕМАНЕ НА ГЕРОИ ====================
 function getAllHeroesFromDatabase() {
     let heroesList = [];
-   let heroesSource = window.bulgarianClans; // Препратка към реалния обект от database.js
+   let heroesSource = window.bulgarianClans;
     if (!heroesSource) return heroesList;
     for (let clanName in heroesSource) {
         let clanData = heroesSource[clanName];
@@ -275,11 +279,9 @@ window.hireNewHero = function() {
         if (typeof window.renderBarracksLayout === 'function') window.renderBarracksLayout();
     }
     
-    // ========== ДОБАВЕНО: веднага обновява лентата с любими герои ==========
-    if (typeof window.renderFavoriteHeroesBar === 'function') {
-        window.renderFavoriteHeroesBar();
-    }
-    // =====================================================================
+    // Обновяване на всички UI компоненти след наемане
+    if (typeof window.refreshAllHeroUI === 'function') window.refreshAllHeroUI();
+    else if (typeof window.renderFavoriteHeroesBar === 'function') window.renderFavoriteHeroesBar();
 };
 // ==================== ДАННИ ЗА ГЕРОИТЕ ====================
 function getAllHeroes() {
@@ -359,6 +361,9 @@ function equipArtifact(hero, artifact, slotIndex) {
     if (window.armyMarket && window.armyMarket.sync) window.armyMarket.sync(hero);
     else if (window.saveHeroData) window.saveHeroData(hero);
     if (window.recalculateHeroMaxHp) window.recalculateHeroMaxHp(hero);
+    // Синхронизиране на UI след промяна на екипировка
+    if (typeof window.refreshAllHeroUI === 'function') window.refreshAllHeroUI();
+    else if (typeof window.renderFavoriteHeroesBar === 'function') window.renderFavoriteHeroesBar();
 }
 
 function showHeroProfile(hero) {
@@ -569,6 +574,9 @@ function showHeroProfile(hero) {
             else if (!newState && typeof window.stopAutoTimer === 'function') window.stopAutoTimer(hero.id);
             autoBtnElem.textContent = newState ? '✅ AUTO РЕЖИМ: ВКЛЮЧЕН' : '🤖 AUTO РЕЖИМ: ИЗКЛЮЧЕН';
             autoBtnElem.style.background = newState ? '#4a6a2a' : '#2c1a0c';
+            // Синхронизиране на UI след промяна на режима
+            if (typeof window.refreshAllHeroUI === 'function') window.refreshAllHeroUI();
+            else if (typeof window.renderFavoriteHeroesBar === 'function') window.renderFavoriteHeroesBar();
         };
     }
     
@@ -710,6 +718,8 @@ window.renderFavoriteHeroesBar = function() {
                 }
                 if (window.updateCharacterUI) window.updateCharacterUI(hero);
                 window.renderFavoriteHeroesBar();
+                // Синхронизиране на UI
+                if (typeof window.refreshAllHeroUI === 'function') window.refreshAllHeroUI();
             };
             slot.appendChild(autoToggle);
             
