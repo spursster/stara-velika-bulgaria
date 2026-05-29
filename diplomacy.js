@@ -30,16 +30,49 @@ function showDiplomacyMessage(title, message, type = "info") {
     }
 }
 
+// ====================== DIPLOMACY INITIALIZATION ======================
 window.initDiplomacy = function() {
+    console.log("🔄 Започва инициализация на Diplomacy...");
+
+    // Създаваме обекта ако не съществува
+    if (!window.clanRelations) {
+        window.clanRelations = {};
+    }
+
+    // Всички кланове в играта
     const allClans = [
-        "Дуло", "Комитопули", "Асеневци", "Тертер", "Даки", "Уния Траки",
-        "Шишмановци", "Македони", "Птоломеи", "Одриси", "Бесараб", "Османци Дуло", "Скити"
+        "Дуло", "Комитопули", "Асеневци", "Тертер", 
+        "Даки", "Уния Траки", "Шишмановци", "Македони", 
+        "Птоломеи", "Одриси", "Бесараб", "Османци Дуло", "Скити"
     ];
+
     const hero = window.currentHero;
-    let initialBonus = (hero && hero.skills && (hero.skills.leadership || 0) * 15) || 0;
+
+    // Бонус от Leadership умение
+    let leadershipBonus = 0;
+    if (hero && hero.skills && hero.skills.leadership) {
+        leadershipBonus = hero.skills.leadership * 15;
+    }
+
+    // Инициализираме отношенията
     allClans.forEach(clan => {
-        window.clanRelations[clan] = (hero && clan === hero.clan) ? 100 : Math.min(100, 40 + initialBonus);
+        // Ако вече има запазени отношения - не ги пипаме
+        if (window.clanRelations[clan] === undefined) {
+            if (hero && hero.clan === clan) {
+                window.clanRelations[clan] = 100;     // Максимални към собствения клан
+            } else {
+                // Случайни стойности между 35 и 75 + бонус от leadership
+                window.clanRelations[clan] = Math.max(35, Math.min(85, 50 + leadershipBonus + Math.floor(Math.random() * 20) - 10));
+            }
+        }
     });
+
+    console.log("✅ clanRelations успешно инициализирани:", window.clanRelations);
+
+    // Автоматично запазване
+    if (typeof window.saveGreatBulgariaGame === 'function') {
+        window.saveGreatBulgariaGame();
+    }
 };
 
 window.processClanDiplomacyAutomation = function() {
@@ -180,14 +213,12 @@ window.proposeMarriage = function(clan, cost, successChance) {
 
 // ==================== НОВ ГРАНДИОЗЕН БРАЧЕН ПРОЗОРЕЦ ====================
 window.openMarriageMenu = function() {
-    function closeMarriageModal() {
-    const modal = document.getElementById('wm-marriage-modal');
-    if (modal) {
-        modal.classList.remove('active');
-        // По желание: изчакайте анимацията и след това премахнете модала от DOM
-        setTimeout(() => {
-            if (modal.parentNode) modal.remove();
-        }, 300);
+    // Защита - ако отношенията не са инициализирани
+    if (!window.clanRelations || Object.keys(window.clanRelations).length < 8) {
+        console.warn("⚠️ clanRelations не е инициализиран! Инициализирам сега...");
+        if (typeof window.initDiplomacy === 'function') {
+            window.initDiplomacy();
+        }
     }
 }
     let modal = document.getElementById('wm-marriage-modal');
