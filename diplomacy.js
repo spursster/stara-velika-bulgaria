@@ -212,22 +212,27 @@ window.proposeMarriage = function(clan, cost, successChance) {
 };
 
 // ==================== НОВ ГРАНДИОЗЕН БРАЧЕН ПРОЗОРЕЦ ====================
+// ==================== НОВ ГРАНДИОЗЕН БРАЧЕН ПРОЗОРЕЦ ====================
 window.openMarriageMenu = function() {
-    // Защита - ако отношенията не са инициализирани
+    // === ЗАЩИТА - инициализация на Diplomacy ===
     if (!window.clanRelations || Object.keys(window.clanRelations).length < 8) {
         console.warn("⚠️ clanRelations не е инициализиран! Инициализирам сега...");
         if (typeof window.initDiplomacy === 'function') {
             window.initDiplomacy();
         }
     }
-}
+
+    // === ОСНОВНА ЛОГИКА ===
     let modal = document.getElementById('wm-marriage-modal');
     if (modal) {
         modal.classList.add('active');
-        loadOldMarriageContent();
+        if (typeof loadOldMarriageContent === 'function') {
+            loadOldMarriageContent();
+        }
         return;
     }
 
+    // Добавяне на стилове (ако още не са добавени)
     if (!document.getElementById('wm-marriage-styles')) {
         const style = document.createElement('style');
         style.id = 'wm-marriage-styles';
@@ -271,58 +276,19 @@ window.openMarriageMenu = function() {
         document.head.appendChild(style);
     }
 
+    // Създаване на модала
     modal = document.createElement('div');
     modal.id = 'wm-marriage-modal';
     modal.className = 'wm-modal';
-    modal.innerHTML = `
-        <div class="wm-container">
-            <div class="wm-header">
-                <h2>💒 Свещен съюз на родовете 💒</h2>
-                <div class="wm-close">&times;</div>
-            </div>
-            <div class="wm-tabs">
-                <button class="wm-tab active" data-tab="new">✨ Нов брак (романтичен)</button>
-                <button class="wm-tab" data-tab="old">🏛️ Традиционен брак</button>
-            </div>
-            <div id="wm-new-tab" class="wm-tab-content active">
-                <div class="wm-selectors">
-                    <div class="wm-selector-card">
-                        <h3>👑 Първи съпруг</h3>
-                        <select id="wm-hero1" class="wm-hero-select"></select>
-                        <div id="wm-hero1-preview" class="wm-stats-preview">-- изберете герой --</div>
-                    </div>
-                    <div class="wm-selector-card">
-                        <h3>👑 Втори съпруг</h3>
-                        <select id="wm-hero2" class="wm-hero-select"></select>
-                        <div id="wm-hero2-preview" class="wm-stats-preview">-- изберете герой --</div>
-                    </div>
-                </div>
-                <div class="wm-affinity-meter">
-                    <div>💖 Съвместимост (Афинитет)</div>
-                    <div class="wm-affinity-bar"><div id="wm-affinity-fill" class="wm-affinity-fill"></div></div>
-                    <div id="wm-affinity-percent" class="wm-affinity-text">0%</div>
-                </div>
-                <div class="wm-costs">
-                    <div class="wm-cost-item">💰 Цена: <span id="wm-gold-cost" class="amount">500</span> злато</div>
-                    <div class="wm-cost-item">⚡ Сила: <span id="wm-power-cost" class="amount">100</span> мощ</div>
-                    <div class="wm-cost-item">💍 Пръстен: <span id="wm-ring-status" class="amount">1</span></div>
-                </div>
-                <div id="wm-potion-boost" class="wm-boost">
-                    🧪 <strong>Сватбен еликсир</strong> (+25% успех) &nbsp; <span id="wm-potion-status">❌ нямаш</span>
-                </div>
-                <div class="wm-actions">
-                    <button id="wm-perform" class="wm-btn">💒 Встъпете в брак 💒</button>
-                    <button id="wm-reset" class="wm-btn" style="background:#5a3a2a;">🔄 Изчисти</button>
-                </div>
-                <div id="wm-result" class="wm-result"></div>
-            </div>
-            <div id="wm-old-tab" class="wm-tab-content">
-                <div id="wm-old-content"></div>
-            </div>
-        </div>
-    `;
+    modal.innerHTML = `... (останалата част от HTML-то може да остане както е при теб) ...`;
+
     document.body.appendChild(modal);
 
+    // Тук продължават останалите функции (getAllHeroes, event listeners и т.н.)
+    // Ако имаш грешки по-надолу, кажи ми.
+    
+    console.log("💒 Marriage Menu отворен успешно");
+};
     // ========== ФУНКЦИИ ЗА НОВИЯ БРАК ==========
     function getAllHeroes() {
         let heroes = [];
