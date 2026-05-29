@@ -1387,47 +1387,5 @@ window.openHeroRPGModal = function(heroId) {
     if (typeof window.showHeroProfile === 'function') window.showHeroProfile(hero);
     else console.warn("showHeroProfile не е дефинирана");
 
-// ====================== ДИПЛОМАЦИЯ БУТОН (НОВА ВЕРСИЯ) ======================
-window.createDiplomacyButton = function() {
-    if (document.getElementById('open-diplomacy-btn')) return;
 
-    const btn = document.createElement('button');
-    btn.id = "open-diplomacy-btn";
-    btn.style.cssText = `
-        position: fixed;
-        bottom: 90px;
-        right: 20px;
-        z-index: 99999;
-        padding: 14px 20px;
-        background: linear-gradient(135deg, #0f4c75, #1e88e5);
-        color: white;
-        border: none;
-        border-radius: 50px;
-        font-size: 15px;
-        font-weight: bold;
-        box-shadow: 0 6px 20px rgba(0,0,0,0.5);
-        cursor: pointer;
-        display: flex;
-        align-items: center;
-        gap: 8px;
-    `;
-    btn.innerHTML = `🕊️ ДИПЛОМАЦИЯ`;
-
-    btn.onclick = () => {
-        if (typeof window.openDiplomacyHub === "function") {
-            window.openDiplomacyHub();
-        } else {
-            alert("Diplomacy Hub не е зареден. Провери ui-modals.js");
-        }
-    };
-
-    document.body.appendChild(btn);
-};
-
-// Извикваме го автоматично
-if (document.readyState === "loading") {
-    document.addEventListener('DOMContentLoaded', window.createDiplomacyButton);
-} else {
-    window.createDiplomacyButton();
-}
 };
