@@ -1371,112 +1371,6 @@ function showAllHeroesModal() {
     });
 }
 
-// ==================== ФОРСИРАНО ДОБАВЯНЕ НА ХАМБУРГЕР МЕНЮ ЗА ТЕЛЕФОНИ ====================
-(function forceHamburgerMenu() {
-    function createHamburgerButton() {
-        if (document.querySelector('.menu-toggle')) {
-            return;
-        }
-        
-        const topBarControls = document.querySelector('.top-bar-controls');
-        if (!topBarControls) {
-            setTimeout(createHamburgerButton, 500);
-            return;
-        }
-        
-        const menuBtn = document.createElement('button');
-        menuBtn.className = 'glass-btn menu-toggle';
-        menuBtn.innerHTML = '☰';
-        menuBtn.setAttribute('aria-label', 'Меню');
-        menuBtn.style.cssText = `
-            display: flex !important;
-            align-items: center !important;
-            justify-content: center !important;
-            width: 40px !important;
-            height: 40px !important;
-            font-size: 1.6rem !important;
-            background: rgba(212, 175, 55, 0.4) !important;
-            border-radius: 50% !important;
-            margin: 0 5px !important;
-            color: #ffd700 !important;
-            border: 1px solid #d4af37 !important;
-            cursor: pointer !important;
-            z-index: 1000 !important;
-        `;
-        
-        const newGameContainer = document.querySelector('.new-game-menu-container');
-        if (newGameContainer) {
-            newGameContainer.insertAdjacentElement('afterend', menuBtn);
-        } else {
-            topBarControls.prepend(menuBtn);
-        }
-        
-        menuBtn.onclick = function(e) {
-            e.stopPropagation();
-            toggleMobileMenu();
-        };
-    }
-    
-    if (typeof window.toggleMobileMenu !== 'function') {
-        window.toggleMobileMenu = function() {
-            let menu = document.getElementById('mobile-menu-panel');
-            if (!menu) {
-                menu = document.createElement('div');
-                menu.id = 'mobile-menu-panel';
-                menu.style.cssText = `
-                    position: fixed;
-                    bottom: 0;
-                    left: 0;
-                    width: 100%;
-                    background: rgba(0, 0, 0, 0.95);
-                    backdrop-filter: blur(12px);
-                    border-top: 2px solid #d4af37;
-                    z-index: 200000;
-                    padding: 12px;
-                    display: flex;
-                    flex-wrap: wrap;
-                    justify-content: center;
-                    gap: 10px;
-                    border-radius: 20px 20px 0 0;
-                `;
-                const buttonsToClone = document.querySelectorAll('.top-bar-controls .glass-btn:not(.menu-toggle):not(.all-heroes-btn)');
-                buttonsToClone.forEach(btn => {
-                    if (btn.closest('.new-game-menu-container')) return;
-                    const clone = btn.cloneNode(true);
-                    if (btn.onclick) clone.onclick = btn.onclick;
-                    else if (btn.getAttribute('onclick')) clone.setAttribute('onclick', btn.getAttribute('onclick'));
-                    menu.appendChild(clone);
-                });
-                document.body.appendChild(menu);
-            } else {
-                menu.remove();
-            }
-        };
-    }
-    
-    function init() {
-        if (window.innerWidth <= 600) {
-            createHamburgerButton();
-        }
-    }
-    
-    if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', init);
-    } else {
-        init();
-    }
-    
-    window.addEventListener('resize', function() {
-        if (window.innerWidth <= 600 && !document.querySelector('.menu-toggle')) {
-            createHamburgerButton();
-        } else if (window.innerWidth > 600 && document.querySelector('.menu-toggle')) {
-            const btn = document.querySelector('.menu-toggle');
-            if (btn) btn.remove();
-            const menu = document.getElementById('mobile-menu-panel');
-            if (menu) menu.remove();
-        }
-    });
-})();
 
 // ==================== ИНИЦИАЛИЗАЦИЯ НА НОВАТА ЛЕНТА С ЛЮБИМИ ГЕРОИ ====================
 setTimeout(() => {
@@ -1492,4 +1386,56 @@ window.openHeroRPGModal = function(heroId) {
     if (!hero) return;
     if (typeof window.showHeroProfile === 'function') window.showHeroProfile(hero);
     else console.warn("showHeroProfile не е дефинирана");
+
+    // ====================== ДИПЛОМАЦИЯ БУТОН ======================
+if (!document.getElementById('open-diplomacy-btn')) {
+    const diplomacyBtn = document.createElement('button');
+    diplomacyBtn.id = "open-diplomacy-btn";
+    diplomacyBtn.className = "menu-btn";
+    diplomacyBtn.style.cssText = `
+        width: 100%; 
+        margin: 12px 0 8px 0; 
+        padding: 14px; 
+        background: linear-gradient(135deg, #0f4c75, #1e88e5); 
+        border: none; 
+        border-radius: 12px; 
+        color: white; 
+        font-weight: bold; 
+        font-size: 16px;
+        cursor: pointer;
+        box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+    `;
+    diplomacyBtn.innerHTML = "🕊️ ДИПЛОМАЦИЯ";
+
+    diplomacyBtn.onclick = () => {
+        if (typeof window.openDiplomacyHub === "function") {
+            window.openDiplomacyHub();
+        } else {
+            console.error("openDiplomacyHub не е дефинирана! Добави кода в ui-modals.js");
+            alert("Моля добави Diplomacy Hub кода в ui-modals.js");
+        }
+    };
+
+    // Опитваме се да го добавим на подходящо място
+    const containers = [
+        document.getElementById('sidebar'),
+        document.querySelector('.menu-container'),
+        document.getElementById('active-character-profile'),
+        document.querySelector('.side-panel'),
+        document.getElementById('main-menu')
+    ];
+
+    let added = false;
+    for (let container of containers) {
+        if (container) {
+            container.appendChild(diplomacyBtn);
+            added = true;
+            break;
+        }
+    }
+
+    if (!added) {
+        document.body.appendChild(diplomacyBtn); // fallback
+    }
+}
 };
