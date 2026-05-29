@@ -145,7 +145,6 @@ window.autonomousRegionConquest = function() {
     let potentialConquerors = [];
     for (let key in window.worldData.clans) {
         let hero = window.worldData.clans[key];
-        // Променено: само да не е любим и армия > 30
         if (hero.isJoined === true && hero.isFavorite !== true && (hero.armySize || 0) > 30) {
             potentialConquerors.push(hero);
         }
@@ -154,7 +153,6 @@ window.autonomousRegionConquest = function() {
     
     const conqueror = potentialConquerors[Math.floor(Math.random() * potentialConquerors.length)];
     const regionKeys = Object.keys(window.worldData.regions);
-    // Вземаме всички региони, които не са на играча
     let availableRegions = regionKeys.filter(key => !(window.playerRegions && window.playerRegions.includes(key)));
     if (availableRegions.length === 0) return;
     
@@ -164,38 +162,24 @@ window.autonomousRegionConquest = function() {
     const isVictory = autoConquestBattle(conqueror, defenderPower, targetRegion);
     
     if (isVictory) {
-        // Регионът става на играча, защото conqueror е от играча? Не, conqueror е NPC, но регионът трябва да стане негов?
-        // В оригиналния код регионът се дава на играча. Това не е добре. Ще го променим: регионът става собственост на conqueror (не на играча).
-        // За целта трябва да имаме карта на собственост за всеки герой. Но за простота, регионът остава на играча? Не, искаме NPC да завладяват.
-        // Ще създадем масив `npcRegions`, но за момента нека регионът се маркира като завладян от NPC (няма да се добавя към playerRegions).
-        // Вместо това, просто намаляваме армията на региона и добавяме лог.
-        if (window.addWorldEvent) {
-            window.addWorldEvent("🏰 NPC ЗАВЛАДЯВАНЕ", `${conqueror.name} завладя ${targetRegion}!`, "🏰");
-        }
-        // Намаляваме армията на региона до 0 (като знак, че е превзет)
+        // Регионът става на играча? Не, NPC завладява – само намаляваме армията
         if (window.worldData.regions[targetRegion]) {
             window.worldData.regions[targetRegion].armySize = 0;
         }
-        // Даваме награда на завоевателя
         let rewardGold = 200 + Math.floor(Math.random() * 300);
         conqueror.gold = (conqueror.gold || 0) + rewardGold;
         if (window.gainHeroXP) window.gainHeroXP(conqueror, 30);
         console.log(`🏆 ${conqueror.name} завладя ${targetRegion} и получи ${rewardGold} злато!`);
-    }
-    if (typeof window.renderSingleBar === 'function') window.renderSingleBar();
-    if (window.renderTop6HeroesUI) window.renderTop6HeroesUI();
-};
         
-        // ========== ДОБАВЕНО: лог съобщение в летописа ==========
+        // Лог в летописа
         if (window.addWorldEvent) {
             window.addWorldEvent("🏰 АВТОНОМНО ЗАВЛАДЯВАНЕ", `${conqueror.name || conqueror.leaderName} завладя ${targetRegion}!`, "🏰");
         }
-        // =====================================================
     }
+    
     if (typeof window.renderSingleBar === 'function') window.renderSingleBar();
     if (window.renderTop6HeroesUI) window.renderTop6HeroesUI();
 };
-
 window.triggerAutomatedHeroActions = function() {
     if (!window.worldData || !window.worldData.clans) return;
     
