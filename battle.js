@@ -457,7 +457,7 @@ function calculatePostBattleHealing(originalHero, battleHero) {
 function applyBattleOutcome(originalHero, battleHero) {
     if (!originalHero || !battleHero) return;
     
-    // 1. Уверяваме се, че оригиналният герой има валиден maxHp
+    // Уверяваме се, че оригиналният герой има валиден maxHp
     if (!originalHero.maxHp || originalHero.maxHp <= 0) {
         let endurance = originalHero.skills?.endurance || 0;
         originalHero.maxHp = 100 + (originalHero.level - 1) * 20 + endurance * 15;
@@ -466,11 +466,10 @@ function applyBattleOutcome(originalHero, battleHero) {
         }
     }
     
-    // 2. Изчисляваме реално получените щети по време на битка
-    //    battleHero.hp е текущото здраве в битката (копие), а battleHero.maxHp е оригиналното maxHp
-    let maxHpOriginal = battleHero.maxHp;          // това е копие от оригиналния maxHp
-    let hpBeforeDamage = battleHero.hp;
-    let damageTaken = maxHpOriginal - hpBeforeDamage;   // колко HP е загубил в битката
+    // Изчисляваме реално получените щети по време на битка
+    let startingHp = battleHero.startingHp !== undefined ? battleHero.startingHp : battleHero.maxHp;
+    let damageTaken = startingHp - battleHero.hp;
+    if (damageTaken < 0) damageTaken = 0;
     
     if (damageTaken > 0) {
         // Намаляваме оригиналния герой с точно толкова
@@ -497,7 +496,7 @@ function applyBattleOutcome(originalHero, battleHero) {
         }
     }
     
-    // 3. Лечение след битка
+    // Пост-битка лечение
     let postHeal = calculatePostBattleHealing(originalHero, battleHero);
     if (postHeal > 0 && originalHero.hp > 0) {
         originalHero.hp = Math.min(originalHero.maxHp, originalHero.hp + postHeal);
@@ -505,11 +504,11 @@ function applyBattleOutcome(originalHero, battleHero) {
     }
     originalHero.hp = Math.min(originalHero.maxHp, originalHero.hp);
     
-    // 4. Актуализиране на UI
+    // Актуализиране на UI
     if (originalHero === window.currentHero && typeof window.updateCharacterUI === 'function') {
         window.updateCharacterUI(originalHero);
     }
-}
+}    
     // ==================== ПОМОЩНИ ФУНКЦИИ ЗА АНИМАЦИИ ====================
     function showFloatingNumber(targetElement, value, isHeal = false) {
         const rect = targetElement.getBoundingClientRect();
@@ -709,7 +708,7 @@ function applyBattleOutcome(originalHero, battleHero) {
         document.body.appendChild(battleScreen);
         document.getElementById('close-battle-btn').onclick = () => battleScreen.remove();
 
-        let currentHeroes = battleHeroes.map(h => ({ ...h }));
+        let currentHeroes = battleHeroes.map(h => ({ ...h, startingHp: h.hp }));
         let currentMonster = { ...monster };
         let battleActive = true;
         let currentRound = 1;
