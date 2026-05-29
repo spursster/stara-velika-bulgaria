@@ -1,95 +1,57 @@
 /**
  =========================================================================
- МОДУЛ: ДРЕВНИ ЦИВИЛИЗАЦИИ – АКТИВНИ ФРАКЦИИ
- Версия: 1.0 – събужда света
+ МОДУЛ: ДРЕВНИ ЦИВИЛИЗАЦИИ – 100% СЛУЧАЙНИ ДЕЙСТВИЯ (БЕЗ ПРОЦЕНТИ)
  =========================================================================
  */
 
 (function() {
-    // ========== КОНФИГУРАЦИЯ ==========
-    const CIV_CONFIG = {
-        checkIntervalTurns: 3,     // на всеки 3 хода проверява
-        activationChance: 0.6,     // 60% шанс да активира цивилизация
-        eventChance: 0.4,          // 40% шанс за специално събитие (модал)
-    };
+    // Списък на всички цивилизации (взети от вашия worldData)
+    const allCivilizations = [
+        { id: "elven_kingdom", name: "Елфийско кралство", icon: "🧝", action: "giveBoost" },
+        { id: "fairy_court", name: "Двор на феите", icon: "🧚", action: "giveGoldArtifact" },
+        { id: "celestial_empire", name: "Небесна империя", icon: "☁️", action: "healHeroes" },
+        { id: "orc_horde", name: "Оркска орда", icon: "👹", action: "attackRegion" },
+        { id: "demon_legions", name: "Демонични легиони", icon: "😈", action: "destroyArmy" },
+        { id: "shadow_realm", name: "Царство на сенките", icon: "🌑", action: "stealArtifact" },
+        { id: "dragon_lords", name: "Драконови лордове", icon: "🐉", action: "burnRegion" },
+        { id: "undead_legion", name: "Легион на мъртвите", icon: "💀", action: "curseRegion" },
+        { id: "atlantean_dominion", name: "Атлантидско владение", icon: "🌊", action: "portalOrSkill" },
+        { id: "dwarf_holds", name: "Джуджешки подземия", icon: "⛏️", action: "giveArtifact" },
+        { id: "mongol_empire", name: "Монголска империя", icon: "🏹", action: "attackRegion" },
+        { id: "ottoman_empire", name: "Османска империя", icon: "☪️", action: "destroyArmy" },
+        { id: "viking_kingdoms", name: "Викингски кралства", icon: "⚔️", action: "attackRegion" },
+        { id: "khazar_khanate", name: "Хазарски каганат", icon: "🏇", action: "attackRegion" },
+        { id: "abbasid_caliphate", name: "Абасидски халифат", icon: "🕌", action: "giveGoldArtifact" },
+    ];
 
-    // Типове цивилизации според фракциите в worldData
-    const civilizationTypes = {
-        // Мирни/Помощни
-        elven_kingdom: { type: "peaceful", name: "Елфийско кралство", icon: "🧝", action: "giveBoost" },
-        fairy_court: { type: "peaceful", name: "Двор на феите", icon: "🧚", action: "giveGoldArtifact" },
-        celestial_empire: { type: "peaceful", name: "Небесна империя", icon: "☁️", action: "healHeroes" },
-        
-        // Агресивни
-        orc_horde: { type: "aggressive", name: "Оркска орда", icon: "👹", action: "attackRegion" },
-        demon_legions: { type: "aggressive", name: "Демонични легиони", icon: "😈", action: "destroyArmy" },
-        shadow_realm: { type: "aggressive", name: "Царство на сенките", icon: "🌑", action: "stealArtifact" },
-        
-        // Катастрофални
-        dragon_lords: { type: "disaster", name: "Драконови лордове", icon: "🐉", action: "burnRegion" },
-        undead_legion: { type: "disaster", name: "Легион на мъртвите", icon: "💀", action: "curseRegion" },
-        
-        // Магически
-        atlantean_dominion: { type: "magic", name: "Атлантидско владение", icon: "🌊", action: "portalOrSkill" },
-        dwarf_holds: { type: "magic", name: "Джуджешки подземия", icon: "⛏️", action: "giveArtifact" },
-    };
-
-    let turnsSinceLastCheck = 0;
-
-    // ========== ПОМОЩНИ ФУНКЦИИ ==========
-    function getRandomCivilization() {
-        if (!window.worldData || !window.worldData.factions) return null;
-        let available = [];
-        for (let key in window.worldData.factions) {
-            if (civilizationTypes[key]) {
-                available.push({ id: key, data: window.worldData.factions[key], typeData: civilizationTypes[key] });
-            }
-        }
-        if (available.length === 0) return null;
-        return available[Math.floor(Math.random() * available.length)];
+    function addLog(title, message, icon) {
+        if (window.addWorldEvent) window.addWorldEvent(title, message, icon);
+        else console.log(icon, title, message);
     }
 
-    function addLog(title, message, icon = "🏛️") {
-        if (window.addWorldEvent) {
-            window.addWorldEvent(title, message, icon);
-        } else {
-            console.log(`${icon} ${title}: ${message}`);
-        }
-    }
-
-    function showCivilizationModal(title, message, options, callback) {
-        if (typeof window.showEventModal === 'function') {
-            window.showEventModal(title, message, options);
-        } else {
-            // Резервен вариант
-            let result = confirm(message + "\n\nНатиснете OK за първата опция или Cancel за втората.");
-            if (callback) callback(result ? options[0].action : (options[1] ? options[1].action : null));
-        }
-    }
-
-    // ========== ДЕЙСТВИЯ ==========
+    // ========== ВСИЧКИ ВЪЗМОЖНИ ДЕЙСТВИЯ (СЛУЧАЙНИ) ==========
     function giveBoost(civ) {
         let hero = window.currentHero;
         if (!hero) return;
-        let boost = Math.floor(Math.random() * 50) + 20;
+        let boost = Math.floor(Math.random() * 100) + 20;
         hero.heroPower = (hero.heroPower || 100) + boost;
         if (window.recalculateHeroPower) window.recalculateHeroPower(hero);
-        addLog(`✨ Благословия от ${civ.typeData.name}`, `${civ.typeData.name} дарява +${boost} бойна мощ на ${hero.name}.`, civ.typeData.icon);
+        addLog(`✨ Благословия от ${civ.name}`, `${civ.name} дарява +${boost} бойна мощ на ${hero.name}.`, civ.icon);
         if (window.updateCharacterUI) window.updateCharacterUI(hero);
     }
 
     function giveGoldArtifact(civ) {
         let hero = window.currentHero;
         if (!hero) return;
-        let gold = Math.floor(Math.random() * 300) + 150;
+        let gold = Math.floor(Math.random() * 600) + 200;
         hero.gold = (hero.gold || 0) + gold;
-        addLog(`💰 Дар от ${civ.typeData.name}`, `Получихте ${gold} злато от ${civ.typeData.name}.`, civ.typeData.icon);
+        addLog(`💰 Дар от ${civ.name}`, `Получихте ${gold} злато от ${civ.name}.`, civ.icon);
         if (window.historicalArtifacts && Math.random() < 0.3) {
             let keys = Object.keys(window.historicalArtifacts);
             let randomArtifact = { ...window.historicalArtifacts[keys[Math.floor(Math.random() * keys.length)]] };
             if (!hero.inventory) hero.inventory = [];
             hero.inventory.push(randomArtifact);
-            addLog(`🏺 Древен артефакт`, `${civ.typeData.name} ви подарява ${randomArtifact.name}!`, "🏺");
+            addLog(`🏺 Древен артефакт`, `${civ.name} ви подарява ${randomArtifact.name}!`, "🏺");
         }
         if (window.updateCharacterUI) window.updateCharacterUI(hero);
     }
@@ -97,9 +59,9 @@
     function healHeroes(civ) {
         let hero = window.currentHero;
         if (!hero) return;
-        let healAmount = Math.floor(hero.maxHp * 0.3);
+        let healAmount = Math.floor(hero.maxHp * 0.4);
         hero.hp = Math.min(hero.maxHp, hero.hp + healAmount);
-        addLog(`💚 Лечение от ${civ.typeData.name}`, `${civ.typeData.name} възстановява ${healAmount} HP на ${hero.name}.`, civ.typeData.icon);
+        addLog(`💚 Лечение от ${civ.name}`, `${civ.name} възстановява ${healAmount} HP на ${hero.name}.`, civ.icon);
         if (window.updateCharacterUI) window.updateCharacterUI(hero);
     }
 
@@ -108,12 +70,11 @@
         let regionName = window.playerRegions[Math.floor(Math.random() * window.playerRegions.length)];
         let region = window.worldData?.regions?.[regionName];
         if (region) {
-            let damage = Math.floor((region.armySize || 200) * 0.2);
+            let damage = Math.floor((region.armySize || 200) * 0.3);
             region.armySize = Math.max(0, (region.armySize || 200) - damage);
-            addLog(`⚔️ Нападение от ${civ.typeData.name}`, `${civ.typeData.name} атакува ${regionName}! Армията намалява с ${damage}.`, civ.typeData.icon);
+            addLog(`⚔️ Нападение от ${civ.name}`, `${civ.name} атакува ${regionName}! Армията намалява с ${damage}.`, civ.icon);
             if (region.armySize <= 0) {
-                // Регионът е превзет от цивилизацията (символично)
-                addLog(`🏚️ Загуба на регион`, `${regionName} попада под контрола на ${civ.typeData.name}.`, "🏚️");
+                addLog(`🏚️ Загуба на регион`, `${regionName} попада под контрола на ${civ.name}.`, "🏚️");
                 window.playerRegions = window.playerRegions.filter(r => r !== regionName);
             }
         }
@@ -122,11 +83,11 @@
     function destroyArmy(civ) {
         let hero = window.currentHero;
         if (!hero) return;
-        let loss = Math.floor((hero.armySize || 300) * 0.15);
+        let loss = Math.floor((hero.armySize || 300) * 0.2);
         hero.armySize = Math.max(10, (hero.armySize || 300) - loss);
         hero.currentArmy = hero.armySize;
         if (window.ensureCompleteArmyDetails) window.ensureCompleteArmyDetails(hero);
-        addLog(`💀 Демонична атака`, `${civ.typeData.name} унищожава ${loss} войници от армията ви!`, civ.typeData.icon);
+        addLog(`💀 Демонична атака`, `${civ.name} унищожава ${loss} войници от армията ви!`, civ.icon);
         if (window.updateCharacterUI) window.updateCharacterUI(hero);
     }
 
@@ -136,7 +97,7 @@
         let randomIndex = Math.floor(Math.random() * hero.inventory.length);
         let stolen = hero.inventory[randomIndex];
         hero.inventory.splice(randomIndex, 1);
-        addLog(`🌑 Кражба от ${civ.typeData.name}`, `${civ.typeData.name} ви открадна артефакта "${stolen.name}".`, civ.typeData.icon);
+        addLog(`🌑 Кражба от ${civ.name}`, `${civ.name} ви открадна артефакта "${stolen.name}".`, civ.icon);
         if (window.updateCharacterUI) window.updateCharacterUI(hero);
     }
 
@@ -146,44 +107,38 @@
         let region = window.worldData?.regions?.[regionName];
         if (region) {
             let oldInfra = region.infrastructureLevel || 1;
-            region.infrastructureLevel = Math.max(1, oldInfra - 1);
-            addLog(`🐉 Огнено наказание`, `${civ.typeData.name} изгаря ${regionName}! Инфраструктурата пада от ниво ${oldInfra} на ${region.infrastructureLevel}.`, civ.typeData.icon);
+            region.infrastructureLevel = Math.max(1, oldInfra - 2);
+            addLog(`🐉 Огнено наказание`, `${civ.name} изгаря ${regionName}! Инфраструктурата пада от ниво ${oldInfra} на ${region.infrastructureLevel}.`, civ.icon);
         }
     }
 
     function curseRegion(civ) {
         if (!window.playerRegions || window.playerRegions.length === 0) return;
         let regionName = window.playerRegions[Math.floor(Math.random() * window.playerRegions.length)];
-        addLog(`💀 Проклятие от ${civ.typeData.name}`, `${civ.typeData.name} проклина ${regionName} – приходите ще са намалени за 3 хода.`, civ.typeData.icon);
-        // Може да добавим временен ефект (напр. намален доход), но за опростяване – само съобщение.
+        addLog(`💀 Проклятие от ${civ.name}`, `${civ.name} проклина ${regionName} – приходите са намалени за 3 хода.`, civ.icon);
     }
 
     function portalOrSkill(civ) {
         let hero = window.currentHero;
         if (!hero) return;
-        // Дава случаен бонус: опит, умение или отваря портал
         let r = Math.random();
         if (r < 0.33) {
-            let xp = 50 + Math.floor(Math.random() * 100);
+            let xp = 80 + Math.floor(Math.random() * 150);
             if (window.gainHeroXP) window.gainHeroXP(hero, xp);
-            addLog(`🌀 Магия от ${civ.typeData.name}`, `${civ.typeData.name} ви дарява ${xp} опит.`, civ.typeData.icon);
+            addLog(`🌀 Магия от ${civ.name}`, `${civ.name} ви дарява ${xp} опит.`, civ.icon);
         } else if (r < 0.66 && window.advancedSkills) {
-            // Дава случайно умение (ако има свободни точки)
-            if (hero.skillPoints > 0) {
-                if (typeof window.autoAssignSkillPoint === 'function') {
-                    window.autoAssignSkillPoint(hero);
-                    addLog(`📖 Просветление`, `${civ.typeData.name} ви научи на ново умение!`, civ.typeData.icon);
-                }
+            if (hero.skillPoints > 0 && typeof window.autoAssignSkillPoint === 'function') {
+                window.autoAssignSkillPoint(hero);
+                addLog(`📖 Просветление`, `${civ.name} ви научи на ново умение!`, civ.icon);
             } else {
-                addLog(`✨ Благословия`, `${civ.typeData.name} зарежда силите ви.`, civ.typeData.icon);
+                addLog(`✨ Благословия`, `${civ.name} зарежда силите ви.`, civ.icon);
             }
         } else {
-            // Отваря временен портал (експедиция)
             if (typeof window.addPortalToRegion === 'function' && window.currentRegion) {
                 let world = window.unknownWorldsDatabase?.[Math.floor(Math.random() * (window.unknownWorldsDatabase?.length || 1))];
                 if (world) {
-                    window.addPortalToRegion(window.currentRegion, world, 200);
-                    addLog(`🌀 Портал към ${world.name}`, `${civ.typeData.name} отваря мистичен портал в ${window.currentRegion}!`, civ.typeData.icon);
+                    window.addPortalToRegion(window.currentRegion, world, 300);
+                    addLog(`🌀 Портал към ${world.name}`, `${civ.name} отваря мистичен портал в ${window.currentRegion}!`, civ.icon);
                 }
             }
         }
@@ -198,26 +153,19 @@
             let randomArtifact = { ...window.historicalArtifacts[keys[Math.floor(Math.random() * keys.length)]] };
             if (!hero.inventory) hero.inventory = [];
             hero.inventory.push(randomArtifact);
-            addLog(`🔨 Дарове от ${civ.typeData.name}`, `Получихте артефакт "${randomArtifact.name}" от джуджетата.`, civ.typeData.icon);
+            addLog(`🔨 Дарове от ${civ.name}`, `Получихте артефакт "${randomArtifact.name}" от ${civ.name}.`, civ.icon);
             if (window.updateCharacterUI) window.updateCharacterUI(hero);
         }
     }
 
-    // ========== ОСНОВНА ФУНКЦИЯ ==========
+    // ========== ОСНОВНА ФУНКЦИЯ – ВИНАГИ ИЗБИРА СЛУЧАЙНА ЦИВИЛИЗАЦИЯ И ДЕЙСТВИЕ ==========
     window.processAncientCivilizations = function() {
         if (!window.worldData || !window.worldData.factions) return;
-        turnsSinceLastCheck++;
-        if (turnsSinceLastCheck < CIV_CONFIG.checkIntervalTurns) return;
-        turnsSinceLastCheck = 0;
-
-        if (Math.random() > CIV_CONFIG.activationChance) return;
-
-        let civ = getRandomCivilization();
+        // Избираме напълно случайна цивилизация от списъка
+        let civ = allCivilizations[Math.floor(Math.random() * allCivilizations.length)];
         if (!civ) return;
-
-        let action = civ.typeData.action;
-        // Изпълнява действието
-        switch(action) {
+        // Изпълняваме нейното действие
+        switch(civ.action) {
             case "giveBoost": giveBoost(civ); break;
             case "giveGoldArtifact": giveGoldArtifact(civ); break;
             case "healHeroes": healHeroes(civ); break;
@@ -230,36 +178,10 @@
             case "giveArtifact": giveArtifact(civ); break;
             default: giveBoost(civ);
         }
-
-        // Специално събитие с модал (ако има)
-        if (Math.random() < CIV_CONFIG.eventChance) {
-            let title = `📜 Пратеник от ${civ.typeData.name}`;
-            let message = `${civ.typeData.name} изпраща пратеник до вашия двор. Той предлага:`;
-            let options = [
-                { text: "👑 Приеми дара", action: () => { /* вече е изпълнено */ } },
-                { text: "❌ Отхвърли", action: () => { addLog(`🙅 Отказ`, `Вие отказахте помощта от ${civ.typeData.name}.`, "🙅"); } }
-            ];
-            // Показваме модал само ако има функция
-            if (typeof window.showEventModal === 'function') {
-                window.showEventModal(title, message, options);
-            }
-        }
-
-        // Актуализиране на интерфейса
+        // Обновяване на интерфейса
         if (window.refreshAllHeroUI) window.refreshAllHeroUI();
         if (window.saveGreatBulgariaGame) window.saveGreatBulgariaGame();
     };
 
-    // Hook във веригата на хода – извиква се от `processTurn` във `index.html`
-    if (typeof window.processTurn === 'function') {
-        const originalProcessTurn = window.processTurn;
-        window.processTurn = function() {
-            originalProcessTurn();
-            window.processAncientCivilizations();
-        };
-    } else {
-        console.warn("processTurn не е дефинирана, древните цивилизации няма да се активират автоматично.");
-    }
-
-    console.log("✅ Древните цивилизации са будни! Светът ще бъде по-динамичен.");
+    console.log("✅ Древните цивилизации са активни – на всеки ход се случва случайно събитие!");
 })();
