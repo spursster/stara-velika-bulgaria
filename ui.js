@@ -260,10 +260,16 @@ window.hireNewHero = function() {
         learnedSkills: {}
     };
 
-    // === ФИКС НА HP И АРМИЯТА ===
-    if (window.initializeHeroRPGData) window.initializeHeroRPGData(newHero);
-    if (window.ensureCompleteArmyDetails) window.ensureCompleteArmyDetails(newHero);
-    // ============================
+    // ========== ДИРЕКТНО ЗАДАВАНЕ НА HP (ГАРАНТИРАНО) ==========
+    if (!newHero.skills) newHero.skills = {};
+    var endurance = newHero.skills.endurance || 0;
+    var levelBonus = (newHero.level - 1) * 20;
+    var calcMax = 100 + levelBonus + endurance * 15;
+    if (isNaN(calcMax) || calcMax <= 0) calcMax = 100;
+    newHero.maxHp = calcMax;
+    newHero.hp = calcMax;
+    newHero.isAlive = true;
+    // ===========================================================
 
     const oldHero = window.currentHero;
     oldHero.gold -= randomHero.cost;
