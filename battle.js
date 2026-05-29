@@ -435,7 +435,7 @@
     }
 
     // ==================== КОРЕКТНО ИЗЧИСЛЯВАНЕ НА HP ====================
-    function calculatePostBattleHealing(originalHero, battleHero) {
+       function calculatePostBattleHealing(originalHero, battleHero) {
         let heal = 0;
         let endurance = originalHero.skills?.endurance || 0;
         heal += endurance * 8;
@@ -444,16 +444,17 @@
             if (originalHero.pet === 'bear') heal += originalHero.maxHp * 0.1;
             if (originalHero.pet === 'wolf') heal += originalHero.maxHp * 0.05;
         }
-        if (originalHero.inventory) {
+        if (originalHero.inventory && Array.isArray(originalHero.inventory)) {
             originalHero.inventory.forEach(item => {
-                if (item.bonus && item.bonus.hpRegen) heal += item.bonus.hpRegen;
+                if (item && item.bonus && item.bonus.hpRegen) {
+                    heal += item.bonus.hpRegen;
+                }
             });
         }
         if (originalHero.morale > 70) heal *= 1.2;
         else if (originalHero.morale < 30) heal *= 0.8;
         return Math.floor(Math.max(5, heal));
     }
-
     function applyBattleOutcome(originalHero, battleHero) {
         if (!originalHero || !battleHero) return;
         
