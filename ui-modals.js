@@ -525,78 +525,71 @@ window.shareHeroCard = async function(hero) {
     }
 };
 
-// ====================== ДИПЛОМАЦИЯ HUB ======================
+// ====================== ДИПЛОМАЦИЯ HUB (АДАПТИВНА ВЕРСИЯ) ======================
 window.openDiplomacyHub = function() {
-    // Премахваме стар модал ако има
-    let old = document.getElementById('diplomacy-hub-modal');
-    if (old) old.remove();
+    let oldModal = document.getElementById('diplomacy-hub-modal');
+    if (oldModal) oldModal.remove();
 
     const modal = document.createElement('div');
     modal.id = 'diplomacy-hub-modal';
-    modal.style.cssText = `
-        position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-        background: rgba(0,0,0,0.9); backdrop-filter: blur(10px);
-        z-index: 200000; display: flex; justify-content: center; align-items: center;
-        font-family: 'Cinzel', serif;
-    `;
+    modal.className = 'modal-overlay';
+    modal.style.display = 'flex';
 
-    let html = `
-    <div style="background: #0f1b2e; border: 3px solid #c9a87b; border-radius: 20px; width: 92%; max-width: 1100px; max-height: 92vh; overflow: hidden; display: flex; flex-direction: column;">
+    modal.innerHTML = `
+    <div class="modal-content" style="width: 96%; max-width: 1100px; max-height: 94vh; overflow: hidden; display: flex; flex-direction: column; margin: 10px;">
         
-        <div style="padding: 15px 20px; background: #1a2538; border-bottom: 2px solid #c9a87b; display: flex; justify-content: space-between; align-items: center;">
-            <h2 style="margin:0; color:#ffd700;">🕊️ ДИПЛОМАЦИЯ — ВЕЛИКА БЪЛГАРИЯ</h2>
-            <button onclick="this.closest('#diplomacy-hub-modal').remove()" style="background:#2c1a0c; color:#ffaa66; border:none; padding:8px 16px; border-radius:30px; cursor:pointer;">✕ ЗАТВОРИ</button>
+        <div style="padding: 15px 20px; background: #1a2538; border-bottom: 2px solid #d4af37; display: flex; justify-content: space-between; align-items: center; flex-shrink: 0;">
+            <h2 style="margin:0; color:#ffd700; font-size: 1.4rem;">🕊️ ДИПЛОМАЦИЯ</h2>
+            <button onclick="this.closest('.modal-overlay').remove()" style="background:#2c1a0c; color:#ffaa66; border:none; padding:8px 14px; border-radius:50%; font-size:20px; cursor:pointer; width:40px; height:40px;">✕</button>
         </div>
-
-        <div style="padding: 20px; overflow-y: auto; flex: 1;">
-            <table style="width:100%; border-collapse: collapse; color:#ddd;">
-                <thead>
-                    <tr style="background:#1e2a44;">
-                        <th style="padding:12px; text-align:left;">Род / Клан</th>
-                        <th style="padding:12px;">Отношение</th>
-                        <th style="padding:12px;">Сила</th>
-                        <th style="padding:12px;">Действия</th>
+        
+        <div style="padding: 15px 10px; overflow-y: auto; flex: 1; background:#0f1625;">
+            <table style="width:100%; border-collapse: collapse; color:#ddd; font-size: 0.95rem;">
+                <thead style="position: sticky; top: 0; background:#1e2a44; z-index: 10;">
+                    <tr>
+                        <th style="padding:12px 8px; text-align:left;">Клан</th>
+                        <th style="padding:12px 8px;">Отношение</th>
+                        <th style="padding:12px 8px; display:none;" class="desktop-only">Статус</th>
+                        <th style="padding:12px 8px;">Действия</th>
                     </tr>
                 </thead>
-                <tbody id="diplomacy-table-body">
-                    <!-- Запълва се с JS -->
-                </tbody>
+                <tbody id="diplomacy-table-body" style="font-size: 0.92rem;"></tbody>
             </table>
+        </div>
+
+        <div style="padding:12px; background:#1a2538; text-align:center; font-size:0.85rem; color:#aaa; flex-shrink:0;">
+            Отношенията се променят с твоите действия
         </div>
     </div>`;
 
-    modal.innerHTML = html;
     document.body.appendChild(modal);
-
     renderDiplomacyTable();
 };
 
-// Помощна функция за рендериране на таблицата
+// Обновена render функция с по-добра мобилна поддръжка
 function renderDiplomacyTable() {
     const tbody = document.getElementById('diplomacy-table-body');
     if (!tbody) return;
 
-    let rows = '';
     const relations = window.clanRelations || {};
-    const allClans = Object.keys(relations);
+    let rows = '';
 
-    allClans.forEach(clan => {
-        const rel = relations[clan] || 50;
-        let color = rel > 70 ? '#4caf50' : (rel > 40 ? '#ffeb3b' : '#f44336');
-        let status = rel > 70 ? 'Съюзник' : (rel > 40 ? 'Неутрален' : 'Враждебен');
+    Object.keys(relations).forEach(clan => {
+        const rel = Math.floor(relations[clan] || 50);
+        let color = rel >= 70 ? '#4caf50' : (rel >= 40 ? '#ffeb3b' : '#f44336');
+        let status = rel >= 70 ? 'Съюзник' : (rel >= 40 ? 'Неутрален' : 'Враждебен');
 
         rows += `
-        <tr style="border-bottom:1px solid #2a3a55;">
-            <td style="padding:12px; font-weight:bold;">${clan}</td>
-            <td style="padding:12px; color:${color}; font-weight:bold;">${rel}% — ${status}</td>
-            <td style="padding:12px;">???</td>
-            <td style="padding:12px;">
-                <button onclick="window.proposeMarriage('${clan}', 800, 45)" style="margin-right:6px; padding:6px 12px; background:#2c5f2c; border:none; border-radius:20px; color:white; cursor:pointer;">💍 Брак</button>
-                <button onclick="alert('Подарък към ${clan} - в разработка')" style="margin-right:6px; padding:6px 12px; background:#b8860b; border:none; border-radius:20px; color:white; cursor:pointer;">🎁 Подарък</button>
-                <button onclick="alert('Военен съюз с ${clan} - в разработка')" style="padding:6px 12px; background:#1e3a8a; border:none; border-radius:20px; color:white; cursor:pointer;">⚔️ Съюз</button>
+        <tr style="border-bottom: 1px solid #334466;">
+            <td style="padding:14px 8px; font-weight: bold;">${clan}</td>
+            <td style="padding:14px 8px; color:${color}; font-weight:bold;">${rel}%</td>
+            <td style="padding:14px 8px; display:none;" class="desktop-only">${status}</td>
+            <td style="padding:14px 8px;">
+                <button onclick="alert('💍 Брак с ${clan} - в разработка')" style="margin:3px; padding:7px 12px; background:#2c5f2c; border:none; border-radius:20px; color:white; font-size:0.9rem;">💍</button>
+                <button onclick="alert('🎁 Подарък към ${clan}')" style="margin:3px; padding:7px 12px; background:#b8860b; border:none; border-radius:20px; color:white; font-size:0.9rem;">🎁</button>
             </td>
         </tr>`;
     });
 
-    tbody.innerHTML = rows;
+    tbody.innerHTML = rows || `<tr><td colspan="4" style="text-align:center; padding:40px; color:#777;">Все още няма данни за дипломатически отношения...</td></tr>`;
 }
