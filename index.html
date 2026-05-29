@@ -394,16 +394,12 @@
 
     // Ако createLegendaryHero не съществува, добавяме празна функция
     if (typeof window.createLegendaryHero !== 'function') {
-        window.createLegendaryHero = function() {
-            // празна заглушка
-        };
+        window.createLegendaryHero = function() {};
     }
 
     // Ако triggerRandomDuelChallenge не съществува, добавяме празна функция
     if (typeof window.triggerRandomDuelChallenge !== 'function') {
-        window.triggerRandomDuelChallenge = function() {
-            // празна заглушка
-        };
+        window.triggerRandomDuelChallenge = function() {};
     }
 
     // Защита на toggleTreasury
@@ -422,92 +418,104 @@
         };
     }
 
-    // Функция за показване на модал за избор на режим (ако не съществува)
-    if (typeof window.showGameModeModal !== 'function') {
-        window.showGameModeModal = function() {
-            const existingModal = document.getElementById('gameModeModal');
-            if (existingModal) existingModal.remove();
+    // Функция за показване на модал за избор на режим
+    window.showGameModeModal = function() {
+        const existingModal = document.getElementById('gameModeModal');
+        if (existingModal) existingModal.remove();
 
-            const modal = document.createElement('div');
-            modal.id = 'gameModeModal';
-            modal.style.cssText = `
-                position: fixed;
-                top: 0;
-                left: 0;
-                width: 100%;
-                height: 100%;
-                background: rgba(0,0,0,0.85);
-                backdrop-filter: blur(8px);
-                z-index: 2147483647;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                font-family: 'Cinzel', serif;
-            `;
-            modal.innerHTML = `
-                <div style="background: #0a0a1a; border: 2px solid #d4af37; border-radius: 24px; padding: 20px; max-width: 300px; width: 90%; text-align: center;">
-                    <h3 style="color: #ffd700; margin-top: 0;">Избор на режим</h3>
-                    <button class="mode-select-btn" data-mode="classic" style="width: 100%; margin: 8px 0; padding: 10px; background: #2c5a2a; border: none; border-radius: 30px; color: white; font-weight: bold; cursor: pointer;">🏰 Класически режим</button>
-                    <button class="mode-select-btn" data-mode="solo" style="width: 100%; margin: 8px 0; padding: 10px; background: #daa520; border: none; border-radius: 30px; color: black; font-weight: bold; cursor: pointer;">⚔️ Соло режим</button>
-                    <div style="height: 1px; background: #d4af37; margin: 12px 0;"></div>
-                    <button id="continueGameBtn" style="width: 100%; padding: 10px; background: #2c1a0c; border: 1px solid #d4af37; border-radius: 30px; color: #ffdd99; cursor: pointer;">📜 Продължи текущата игра</button>
-                    <button id="closeModalBtn" style="width: 100%; margin-top: 12px; padding: 8px; background: none; border: 1px solid #ff6666; border-radius: 30px; color: #ffaaaa; cursor: pointer;">Затвори</button>
-                </div>
-            `;
-            document.body.appendChild(modal);
+        const modal = document.createElement('div');
+        modal.id = 'gameModeModal';
+        modal.style.cssText = `
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.85);
+            backdrop-filter: blur(8px);
+            z-index: 2147483647;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Cinzel', serif;
+        `;
+        modal.innerHTML = `
+            <div style="background: #0a0a1a; border: 2px solid #d4af37; border-radius: 24px; padding: 20px; max-width: 300px; width: 90%; text-align: center;">
+                <h3 style="color: #ffd700; margin-top: 0;">Избор на режим</h3>
+                <button class="mode-select-btn" data-mode="classic" style="width: 100%; margin: 8px 0; padding: 10px; background: #2c5a2a; border: none; border-radius: 30px; color: white; font-weight: bold; cursor: pointer;">🏰 Класически режим</button>
+                <button class="mode-select-btn" data-mode="solo" style="width: 100%; margin: 8px 0; padding: 10px; background: #daa520; border: none; border-radius: 30px; color: black; font-weight: bold; cursor: pointer;">⚔️ Соло режим</button>
+                <div style="height: 1px; background: #d4af37; margin: 12px 0;"></div>
+                <button id="continueGameBtn" style="width: 100%; padding: 10px; background: #2c1a0c; border: 1px solid #d4af37; border-radius: 30px; color: #ffdd99; cursor: pointer;">📜 Продължи текущата игра</button>
+                <button id="closeModalBtn" style="width: 100%; margin-top: 12px; padding: 8px; background: none; border: 1px solid #ff6666; border-radius: 30px; color: #ffaaaa; cursor: pointer;">Затвори</button>
+            </div>
+        `;
+        document.body.appendChild(modal);
 
-            function startGame(mode) {
-                localStorage.removeItem('GreatBulgaria_SaveGame');
-                localStorage.removeItem('favoriteHeroesFinal');
-                localStorage.removeItem('heroAutoState');
-                localStorage.removeItem('barracksFavorites');
-                window.gameMode = mode;
-                if (typeof window.startFreshGameLogic === 'function') {
-                    window.startFreshGameLogic();
-                } else {
-                    location.reload();
-                }
+        function startGame(mode) {
+            localStorage.removeItem('GreatBulgaria_SaveGame');
+            localStorage.removeItem('favoriteHeroesFinal');
+            localStorage.removeItem('heroAutoState');
+            localStorage.removeItem('barracksFavorites');
+            window.gameMode = mode;
+            if (typeof window.startFreshGameLogic === 'function') {
+                window.startFreshGameLogic();
+            } else {
+                location.reload();
             }
+        }
 
-            function continueGame() {
-                const hasSave = localStorage.getItem('GreatBulgaria_SaveGame');
-                if (!hasSave) {
-                    alert("Няма запазена игра. Започнете нова игра първо.");
-                    modal.remove();
-                    return;
-                }
-                if (typeof window.loadGreatBulgariaGame === 'function') {
-                    window.loadGreatBulgariaGame();
-                    modal.remove();
-                } else {
-                    location.reload();
-                }
+        function continueGame() {
+            const hasSave = localStorage.getItem('GreatBulgaria_SaveGame');
+            if (!hasSave) {
+                alert("Няма запазена игра. Започнете нова игра първо.");
+                modal.remove();
+                return;
             }
+            if (typeof window.loadGreatBulgariaGame === 'function') {
+                window.loadGreatBulgariaGame();
+                modal.remove();
+            } else {
+                location.reload();
+            }
+        }
 
-            modal.querySelectorAll('.mode-select-btn').forEach(btn => {
-                btn.onclick = () => {
-                    const mode = btn.getAttribute('data-mode');
-                    modal.remove();
-                    startGame(mode);
-                };
-            });
-            const continueBtn = modal.querySelector('#continueGameBtn');
-            if (continueBtn) continueBtn.onclick = continueGame;
-            const closeBtn = modal.querySelector('#closeModalBtn');
-            if (closeBtn) closeBtn.onclick = () => modal.remove();
-            modal.onclick = (e) => { if (e.target === modal) modal.remove(); };
-        };
-    }
+        modal.querySelectorAll('.mode-select-btn').forEach(btn => {
+            btn.onclick = () => {
+                const mode = btn.getAttribute('data-mode');
+                modal.remove();
+                startGame(mode);
+            };
+        });
+        const continueBtn = modal.querySelector('#continueGameBtn');
+        if (continueBtn) continueBtn.onclick = continueGame;
+        const closeBtn = modal.querySelector('#closeModalBtn');
+        if (closeBtn) closeBtn.onclick = () => modal.remove();
+        modal.onclick = (e) => { if (e.target === modal) modal.remove(); };
+    };
 
-    // При зареждане: ако няма запазена игра, показваме модала
+    // Ако няма запазена игра, показваме модала след кратко закъснение
     const hasSave = localStorage.getItem('GreatBulgaria_SaveGame');
     if (!hasSave) {
         setTimeout(window.showGameModeModal, 200);
     } else {
-        // Опитваме да заредим запазената игра
         if (typeof window.loadGreatBulgariaGame === 'function') {
             window.loadGreatBulgariaGame();
         }
+    }
+})();
+
+// Прикачване на бутона "Нова игра" към модала
+(function() {
+    const newGameBtn = document.getElementById('newGameBtn');
+    if (newGameBtn) {
+        newGameBtn.onclick = function(e) {
+            e.stopPropagation();
+            if (typeof window.showGameModeModal === 'function') {
+                window.showGameModeModal();
+            } else {
+                alert("Системата за нова игра не е готова. Моля, презаредете страницата.");
+            }
+        };
     }
 })();
 </script>
