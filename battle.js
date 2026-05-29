@@ -714,7 +714,7 @@ function applyBattleOutcome(originalHero, battleHero) {
         let currentRound = 1;
         let invincibleUsed = {};
 
-    function updateUI() {
+function updateUI() {
     currentHeroes.forEach(hero => {
         const fillEl = document.getElementById(`hp-${hero.id}`);
         const textEl = document.getElementById(`hp-text-${hero.id}`);
