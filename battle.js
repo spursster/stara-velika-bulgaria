@@ -1,12 +1,12 @@
 /**
 ==========================================================================
 ПРОЕКТ: ВЕЛИКА БЪЛГАРИЯ
-ФАЙЛ: battle.js (ВЕРСИЯ 8.2 – ФИНАЛНА С ВСИЧКИ ФИКСИ)
+ФАЙЛ: battle.js (ВЕРСИЯ 8.3 – ФИКС НА СИНХРОНИЗАЦИЯТА НА HP В UI)
 ==========================================================================
 */
 
 (function() {
-    // ==================== СТИЛОВЕ (С АНИМАЦИИ) ====================
+    // ==================== СТИЛОВЕ ====================
     if (!document.getElementById('battle-styles-v2')) {
         const style = document.createElement('style');
         style.id = 'battle-styles-v2';
@@ -435,80 +435,98 @@
     }
 
     // ==================== КОРЕКТНО ИЗЧИСЛЯВАНЕ НА HP ====================
-function calculatePostBattleHealing(originalHero, battleHero) {
-    let heal = 0;
-    let endurance = originalHero.skills?.endurance || 0;
-    heal += endurance * 8;
-    heal += originalHero.maxHp * 0.05;
-    if (originalHero.pet) {
-        if (originalHero.pet === 'bear') heal += originalHero.maxHp * 0.1;
-        if (originalHero.pet === 'wolf') heal += originalHero.maxHp * 0.05;
-    }
-    if (originalHero.inventory) {
-        originalHero.inventory.forEach(item => {
-            if (item.bonus && item.bonus.hpRegen) heal += item.bonus.hpRegen;
-        });
-    }
-    if (originalHero.morale > 70) heal *= 1.2;
-    else if (originalHero.morale < 30) heal *= 0.8;
-    return Math.floor(Math.max(5, heal));
-}
-
-function applyBattleOutcome(originalHero, battleHero) {
-    if (!originalHero || !battleHero) return;
-    
-    // Уверяваме се, че оригиналният герой има валиден maxHp
-    if (!originalHero.maxHp || originalHero.maxHp <= 0) {
+    function calculatePostBattleHealing(originalHero, battleHero) {
+        let heal = 0;
         let endurance = originalHero.skills?.endurance || 0;
-        originalHero.maxHp = 100 + (originalHero.level - 1) * 20 + endurance * 15;
-        if (originalHero.hp === undefined || originalHero.hp > originalHero.maxHp) {
-            originalHero.hp = originalHero.maxHp;
+        heal += endurance * 8;
+        heal += originalHero.maxHp * 0.05;
+        if (originalHero.pet) {
+            if (originalHero.pet === 'bear') heal += originalHero.maxHp * 0.1;
+            if (originalHero.pet === 'wolf') heal += originalHero.maxHp * 0.05;
         }
+        if (originalHero.inventory) {
+            originalHero.inventory.forEach(item => {
+                if (item.bonus && item.bonus.hpRegen) heal += item.bonus.hpRegen;
+            });
+        }
+        if (originalHero.morale > 70) heal *= 1.2;
+        else if (originalHero.morale < 30) heal *= 0.8;
+        return Math.floor(Math.max(5, heal));
     }
-    
-    // Изчисляваме реално получените щети по време на битка
-    let startingHp = battleHero.startingHp !== undefined ? battleHero.startingHp : battleHero.maxHp;
-    let damageTaken = startingHp - battleHero.hp;
-    if (damageTaken < 0) damageTaken = 0;
-    
-    if (damageTaken > 0) {
-        // Намаляваме оригиналния герой с точно толкова
-        originalHero.hp = Math.max(0, (originalHero.hp || originalHero.maxHp) - damageTaken);
-        console.log(`❤️ ${originalHero.name} загуби ${damageTaken} HP. Остава: ${originalHero.hp}/${originalHero.maxHp}`);
+
+    function applyBattleOutcome(originalHero, battleHero) {
+        if (!originalHero || !battleHero) return;
         
-        // Проверка за смърт (5% шанс)
-        if (originalHero.hp <= 0) {
-            let deathRoll = Math.random() < 0.05;
-            if (deathRoll) {
-                originalHero.isAlive = false;
-                originalHero.isJoined = false;
-                originalHero.isFavorite = false;
-                if (window.addWorldEvent) {
-                    window.addWorldEvent("💀 ПЕРМАНЕНТНА СМЪРТ", `${originalHero.name} загина завинаги в битка!`, "💀");
-                }
-                if (typeof window.renderFavoriteHeroesBar === 'function') window.renderFavoriteHeroesBar();
-                if (typeof window.renderTop6HeroesUI === 'function') window.renderTop6HeroesUI();
-                if (typeof window.renderBarracksLayout === 'function') window.renderBarracksLayout();
-            } else {
-                originalHero.hp = 1;
-                if (window.addWorldEvent) window.addWorldEvent("⚡ ЕДВА ОЦЕЛЯВАНЕ", `${originalHero.name} беше на ръба на смъртта, но оживя!`, "⚡");
+        // Уверяваме се, че оригиналният герой има валиден maxHp
+        if (!originalHero.maxHp || originalHero.maxHp <= 0) {
+            let endurance = originalHero.skills?.endurance || 0;
+            originalHero.maxHp = 100 + (originalHero.level - 1) * 20 + endurance * 15;
+            if (originalHero.hp === undefined || originalHero.hp > originalHero.maxHp) {
+                originalHero.hp = originalHero.maxHp;
             }
         }
+        
+        // Изчисляваме реално получените щети по време на битка
+        let startingHp = battleHero.startingHp !== undefined ? battleHero.startingHp : battleHero.maxHp;
+        let damageTaken = startingHp - battleHero.hp;
+        if (damageTaken < 0) damageTaken = 0;
+        
+        if (damageTaken > 0) {
+            // Намаляваме оригиналния герой с точно толкова
+            originalHero.hp = Math.max(0, (originalHero.hp || originalHero.maxHp) - damageTaken);
+            console.log(`❤️ ${originalHero.name} загуби ${damageTaken} HP. Остава: ${originalHero.hp}/${originalHero.maxHp}`);
+            
+            // Проверка за смърт (5% шанс)
+            if (originalHero.hp <= 0) {
+                let deathRoll = Math.random() < 0.05;
+                if (deathRoll) {
+                    originalHero.isAlive = false;
+                    originalHero.isJoined = false;
+                    originalHero.isFavorite = false;
+                    if (window.addWorldEvent) {
+                        window.addWorldEvent("💀 ПЕРМАНЕНТНА СМЪРТ", `${originalHero.name} загина завинаги в битка!`, "💀");
+                    }
+                } else {
+                    originalHero.hp = 1;
+                    if (window.addWorldEvent) window.addWorldEvent("⚡ ЕДВА ОЦЕЛЯВАНЕ", `${originalHero.name} беше на ръба на смъртта, но оживя!`, "⚡");
+                }
+            }
+        }
+        
+        // Пост-битка лечение
+        let postHeal = calculatePostBattleHealing(originalHero, battleHero);
+        if (postHeal > 0 && originalHero.hp > 0) {
+            originalHero.hp = Math.min(originalHero.maxHp, originalHero.hp + postHeal);
+            console.log(`💚 ${originalHero.name} се излекува с ${postHeal} HP след битката.`);
+        }
+        originalHero.hp = Math.min(originalHero.maxHp, originalHero.hp);
     }
-    
-    // Пост-битка лечение
-    let postHeal = calculatePostBattleHealing(originalHero, battleHero);
-    if (postHeal > 0 && originalHero.hp > 0) {
-        originalHero.hp = Math.min(originalHero.maxHp, originalHero.hp + postHeal);
-        console.log(`💚 ${originalHero.name} се излекува с ${postHeal} HP след битката.`);
+
+    // ==================== ЦЕНТРАЛИЗИРАНО ОБНОВЯВАНЕ НА UI ====================
+    function refreshAllHeroUI() {
+        // Обновява лентата с любими герои
+        if (typeof window.renderFavoriteHeroesBar === 'function') {
+            window.renderFavoriteHeroesBar();
+        }
+        // Обновява страничния панел на активния герой
+        if (window.currentHero && typeof window.updateCharacterUI === 'function') {
+            window.updateCharacterUI(window.currentHero);
+        }
+        // Обновява общата лента с герои (ако съществува)
+        if (typeof window.renderSingleBar === 'function') {
+            window.renderSingleBar();
+        }
+        // Обновява класацията на героите (ако е отворена)
+        if (typeof window.renderTop6HeroesUI === 'function') {
+            window.renderTop6HeroesUI();
+        }
+        // Ако казармите са отворени, обновява и тях
+        const barracksScreen = document.getElementById('barracks-screen');
+        if (barracksScreen && barracksScreen.style.display === 'flex' && typeof window.renderBarracksLayout === 'function') {
+            window.renderBarracksLayout();
+        }
     }
-    originalHero.hp = Math.min(originalHero.maxHp, originalHero.hp);
-    
-    // Актуализиране на UI
-    if (originalHero === window.currentHero && typeof window.updateCharacterUI === 'function') {
-        window.updateCharacterUI(originalHero);
-    }
-}    
+
     // ==================== ПОМОЩНИ ФУНКЦИИ ЗА АНИМАЦИИ ====================
     function showFloatingNumber(targetElement, value, isHeal = false) {
         const rect = targetElement.getBoundingClientRect();
@@ -652,9 +670,9 @@ function applyBattleOutcome(originalHero, battleHero) {
                             <div class="h-full bg-gradient-to-r from-red-700 to-red-500 transition-all duration-300" id="hp-${hero.id}" style="width: ${(hero.hp/hero.maxHp)*100}%"></div>
                         </div>
                         <div class="flex justify-between w-full text-[9px] text-[#ffaa66]">
-    <span id="hp-text-${hero.id}">❤️ ${hero.hp}/${hero.maxHp}</span>
-    <span>⚔️ ${hero.power}</span>
-</div>
+                            <span id="hp-text-${hero.id}">❤️ ${hero.hp}/${hero.maxHp}</span>
+                            <span>⚔️ ${hero.power}</span>
+                        </div>
                     </div>
                 `;
             } else {
@@ -714,32 +732,34 @@ function applyBattleOutcome(originalHero, battleHero) {
         let currentRound = 1;
         let invincibleUsed = {};
 
-function updateUI() {
-    currentHeroes.forEach(hero => {
-        const fillEl = document.getElementById(`hp-${hero.id}`);
-        const textEl = document.getElementById(`hp-text-${hero.id}`);
-        if (fillEl) {
-            const percent = (hero.hp / hero.maxHp) * 100;
-            fillEl.style.width = `${Math.max(0, percent)}%`;
-            // Промяна на цвета според процента
-            if (percent < 30) fillEl.style.background = "#f44336";
-            else if (percent < 70) fillEl.style.background = "#ff9800";
-            else fillEl.style.background = "#4caf50";
+        function updateUI() {
+            currentHeroes.forEach(hero => {
+                const fillEl = document.getElementById(`hp-${hero.id}`);
+                const textEl = document.getElementById(`hp-text-${hero.id}`);
+                if (fillEl) {
+                    const percent = (hero.hp / hero.maxHp) * 100;
+                    fillEl.style.width = `${Math.max(0, percent)}%`;
+                    if (percent < 30) fillEl.style.background = "#f44336";
+                    else if (percent < 70) fillEl.style.background = "#ff9800";
+                    else fillEl.style.background = "#4caf50";
+                }
+                if (textEl) {
+                    textEl.innerHTML = `❤️ ${Math.max(0, hero.hp)}/${hero.maxHp}`;
+                }
+            });
+            const monsterFill = document.getElementById('monster-hp-fill');
+            const monsterText = document.getElementById('monster-hp-text');
+            if (monsterFill) {
+                const percent = (currentMonster.hp / currentMonster.maxHp) * 100;
+                monsterFill.style.width = `${Math.max(0, percent)}%`;
+                if (percent < 30) monsterFill.style.background = "#ff4444";
+                else if (percent < 70) monsterFill.style.background = "#ffaa44";
+                else monsterFill.style.background = "#ff8888";
+            }
+            if (monsterText) {
+                monsterText.innerHTML = `❤️ ${Math.max(0, currentMonster.hp)}/${currentMonster.maxHp}`;
+            }
         }
-        if (textEl) {
-            textEl.innerHTML = `❤️ ${Math.max(0, hero.hp)}/${hero.maxHp}`;
-        }
-    });
-    const monsterFill = document.getElementById('monster-hp-fill');
-    const monsterText = document.getElementById('monster-hp-text');
-    if (monsterFill) {
-        const percent = (currentMonster.hp / currentMonster.maxHp) * 100;
-        monsterFill.style.width = `${Math.max(0, percent)}%`;
-    }
-    if (monsterText) {
-        monsterText.innerHTML = `❤️ ${Math.max(0, currentMonster.hp)}/${currentMonster.maxHp}`;
-    }
-}
 
         function addLog(message, isError = false) {
             const logDiv = document.getElementById('battle-log');
@@ -899,7 +919,7 @@ function updateUI() {
                     if (window.addHeroLog) window.addHeroLog(hero.clanObj, "⚔️", `Победи ${monster.name} в ${regionName}`);
                 });
                 
-                // ========== ДОБАВЯНЕ НА РЕГИОН С НОРМАЛИЗАЦИЯ ==========
+                // ========== ДОБАВЯНЕ НА РЕГИОН ==========
                 if (typeof regionName === 'string' && regionName !== "Портал") {
                     if (typeof window.normalizePlayerRegions === 'function') {
                         window.normalizePlayerRegions();
@@ -970,6 +990,7 @@ function updateUI() {
                 
                 if (window.addWorldEvent) window.addWorldEvent(`🏆 ПОБЕДА В БИТКА`, `${battleHeroes.map(h => h.name).join(', ')} победиха ${monster.name}!`, "🏆");
                 
+                // Прилагаме реалните щети към оригиналните герои
                 for (let i = 0; i < currentHeroes.length; i++) {
                     let battleHero = currentHeroes[i];
                     let originalHero = battleHero.clanObj;
@@ -977,15 +998,9 @@ function updateUI() {
                         applyBattleOutcome(originalHero, battleHero);
                     }
                 }
-                if (window.currentHero && typeof window.updateCharacterUI === 'function') {
-                    window.updateCharacterUI(window.currentHero);
-                }
-                if (typeof window.renderFavoriteHeroesBar === 'function') {
-                    window.renderFavoriteHeroesBar();
-                }
-                if (typeof window.renderTop6HeroesUI === 'function') {
-                    window.renderTop6HeroesUI();
-                }
+                
+                // Обновяваме всички UI компоненти
+                refreshAllHeroUI();
                 
                 battleActive = false;
                 const attackBtn = document.getElementById('battle-attack');
@@ -1065,15 +1080,9 @@ function updateUI() {
                         applyBattleOutcome(originalHero, battleHero);
                     }
                 }
-                if (window.currentHero && typeof window.updateCharacterUI === 'function') {
-                    window.updateCharacterUI(window.currentHero);
-                }
-                if (typeof window.renderFavoriteHeroesBar === 'function') {
-                    window.renderFavoriteHeroesBar();
-                }
-                if (typeof window.renderTop6HeroesUI === 'function') {
-                    window.renderTop6HeroesUI();
-                }
+                
+                // Обновяваме всички UI компоненти
+                refreshAllHeroUI();
                 
                 battleActive = false;
                 const attackBtn = document.getElementById('battle-attack');
@@ -1113,15 +1122,9 @@ function updateUI() {
                     applyBattleOutcome(originalHero, battleHero);
                 }
             }
-            if (window.currentHero && typeof window.updateCharacterUI === 'function') {
-                window.updateCharacterUI(window.currentHero);
-            }
-            if (typeof window.renderFavoriteHeroesBar === 'function') {
-                window.renderFavoriteHeroesBar();
-            }
-            if (typeof window.renderTop6HeroesUI === 'function') {
-                window.renderTop6HeroesUI();
-            }
+            
+            // Обновяваме всички UI компоненти
+            refreshAllHeroUI();
             
             battleActive = false;
             const attackBtn = document.getElementById('battle-attack');
@@ -1173,20 +1176,16 @@ function updateUI() {
             window.handleBattleEnd(isVictory, reason);
         }
         
-        if (typeof window.renderFavoriteHeroesBar === 'function') {
-            window.renderFavoriteHeroesBar();
-        }
-        if (typeof window.renderTop6HeroesUI === 'function') {
-            window.renderTop6HeroesUI();
-        }
-        if (typeof window.renderSingleBar === 'function') {
-            window.renderSingleBar();
-        }
+        // Обновяваме всички UI компоненти
+        refreshAllHeroUI();
         
         if (typeof window.saveGreatBulgariaGame === 'function') {
             window.saveGreatBulgariaGame();
         }
     };
 
-    console.log("✅ battle.js зареден (версия 8.2 – финална)");
+    // Експортираме refreshAllHeroUI, за да може да се използва и от други модули
+    window.refreshAllHeroUI = refreshAllHeroUI;
+
+    console.log("✅ battle.js зареден (версия 8.3 – фиксирана синхронизация на HP)");
 })();
