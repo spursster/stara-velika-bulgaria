@@ -732,35 +732,35 @@
         let currentRound = 1;
         let invincibleUsed = {};
 
-        function updateUI() {
-            currentHeroes.forEach(hero => {
-                const fillEl = document.getElementById(`hp-${hero.id}`);
-                const textEl = document.getElementById(`hp-text-${hero.id}`);
-                if (fillEl) {
-                    const percent = (hero.hp / hero.maxHp) * 100;
-                    fillEl.style.width = `${Math.max(0, percent)}%`;
-                    if (percent < 30) fillEl.style.background = "#f44336";
-                    else if (percent < 70) fillEl.style.background = "#ff9800";
-                    else fillEl.style.background = "#4caf50";
-                }
-                if (textEl) {
-                    textEl.innerHTML = `❤️ ${Math.max(0, hero.hp)}/${hero.maxHp}`;
-                }
-            });
-            const monsterFill = document.getElementById('monster-hp-fill');
-            const monsterText = document.getElementById('monster-hp-text');
-            if (monsterFill) {
-                const percent = (currentMonster.hp / currentMonster.maxHp) * 100;
-                monsterFill.style.width = `${Math.max(0, percent)}%`;
-                if (percent < 30) monsterFill.style.background = "#ff4444";
-                else if (percent < 70) monsterFill.style.background = "#ffaa44";
-                else monsterFill.style.background = "#ff8888";
-            }
-            if (monsterText) {
-                monsterText.innerHTML = `❤️ ${Math.max(0, currentMonster.hp)}/${currentMonster.maxHp}`;
-            }
+       function updateUI() {
+    currentHeroes.forEach(hero => {
+        const fillEl = document.getElementById(`hp-${hero.id}`);
+        const textEl = document.getElementById(`hp-text-${hero.id}`);
+        if (fillEl) {
+            const percent = (hero.hp / hero.maxHp) * 100;
+            fillEl.style.width = `${Math.max(0, percent)}%`;
+            // Промяна на цвета според процента
+            if (percent < 30) fillEl.style.background = "#f44336";
+            else if (percent < 70) fillEl.style.background = "#ff9800";
+            else fillEl.style.background = "#4caf50";
         }
-
+        if (textEl) {
+            textEl.innerHTML = `❤️ ${Math.max(0, hero.hp)}/${hero.maxHp}`;
+        }
+    });
+    const monsterFill = document.getElementById('monster-hp-fill');
+    const monsterText = document.getElementById('monster-hp-text');
+    if (monsterFill) {
+        const percent = (currentMonster.hp / currentMonster.maxHp) * 100;
+        monsterFill.style.width = `${Math.max(0, percent)}%`;
+        if (percent < 30) monsterFill.style.background = "#ff4444";
+        else if (percent < 70) monsterFill.style.background = "#ffaa44";
+        else monsterFill.style.background = "#ff8888";
+    }
+    if (monsterText) {
+        monsterText.innerHTML = `❤️ ${Math.max(0, currentMonster.hp)}/${currentMonster.maxHp}`;
+    }
+}
         function addLog(message, isError = false) {
             const logDiv = document.getElementById('battle-log');
             if (logDiv) {
