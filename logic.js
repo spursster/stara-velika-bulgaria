@@ -385,26 +385,24 @@ window.saveGreatBulgariaGame = function() {
     }
 };
 
+// ==================== ЗАРЕЖДАНЕ НА ЗАПАЗЕНА ИГРА ====================
 window.loadGreatBulgariaGame = function() {
     const saved = localStorage.getItem('GreatBulgaria_SaveGame');
     if (!saved) return false;
     try {
         const parsed = JSON.parse(saved);
+        
+        // 1. Възстановяване на основните данни
         window.currentHero = parsed.currentHero;
         window.unlockedHeroes = parsed.unlockedHeroes || [];
         window.gameTime = parsed.gameTime || { seasonIndex: 0, year: 480, era: "пр.н.е." };
         window.gameMode = parsed.gameMode || 'classic';
-        if (window.gameMode === 'classic' && window._originalHireNewHero) {
-            window.hireNewHero = window._originalHireNewHero;
-        }
-        if (window.gameMode === 'solo' && typeof initSoloMode === 'function') {
-            initSoloMode();
-        }
         window.currentRegion = parsed.currentRegion || "Плиска";
         window.companions = parsed.companions || [];
         window.activeQuests = parsed.activeQuests || [];
         window.completedQuests = parsed.completedQuests || [];
         
+        // 2. Нормализиране на playerRegions (изравняване на масива)
         let rawRegions = parsed.playerRegions || [];
         if (Array.isArray(rawRegions)) {
             let normalized = [];
@@ -423,34 +421,60 @@ window.loadGreatBulgariaGame = function() {
             window.playerRegions.push(window.currentRegion);
         }
         
-        if (window.worldData && window.worldData.clans) {
-            for (let key in window.worldData.clans) {
-                if (!window.worldData.clans[key].isJoined && key !== window.currentHero?.clan) {
-                    let found = window.unlockedHeroes.some(h => (h.clan === key || h.name === key));
-                    if (!found && key !== window.currentHero?.clan) {
-                        delete window.worldData.clans[key];
-                    }
-                }
-            }
-            window.unlockedHeroes.forEach(hero => {
-                if (hero && hero.clan) {
-                    window.worldData.clans[hero.clan] = hero;
-                    window.worldData.clans[hero.clan].isJoined = true;
-                }
-            });
-            const uniqueNames = new Map();
-            for (let key in window.worldData.clans) {
-                let hero = window.worldData.clans[key];
-                let name = hero.name || hero.leaderName || key;
-                if (!uniqueNames.has(name)) {
-                    uniqueNames.set(name, hero);
-                } else {
-                    delete window.worldData.clans[key];
-                    console.log(`Премахнат дублиращ се герой при зареждане: ${name}`);
-                }
-            }
+        // 3. Възстановяване на worldData.clans от запазените герои
+        //    Важно: Запазваме всички герои, които са били наети (isJoined = true)
+        //    или любими (isFavorite = true), за да не се губят данни.
+        if (!window.worldData) window.worldData = {};
+        if (!window.worldData.clans) window.worldData.clans = {};
+        
+        // Изчистваме старите кланове, но запазваме тези, които ще възстановим
+        // (за да няма дублиране)
+        for (let key in window.worldData.clans) {
+            delete window.worldData.clans[key];
         }
         
+        // Възстановяваме всички герои от unlockedHeroes (които са били наети)
+        window.unlockedHeroes.forEach(hero => {
+            if (hero && hero.clan) {
+                // Гарантираме, че isJoined и isFavorite са запазени от записа
+                hero.isJoined = true;
+                // Ако няма isFavorite в записа (стара версия), задаваме по подразбиране
+                if (hero.isFavorite === undefined) hero.isFavorite = false;
+                window.worldData.clans[hero.clan] = hero;
+            }
+        });
+        
+        // Допълнително: Ако текущият герой не е в worldData.clans, добавяме го
+        if (window.currentHero && window.currentHero.clan && !window.worldData.clans[window.currentHero.clan]) {
+            window.currentHero.isJoined = true;
+            if (window.currentHero.isFavorite === undefined) window.currentHero.isFavorite = true;
+            window.worldData.clans[window.currentHero.clan] = window.currentHero;
+        }
+        
+        // 4. Миграция на стари любими (isFavoriteInBarracks -> isFavorite)
+        //    Тази функция гарантира, че всички герои, които някога са били любими,
+        //    получават isFavorite = true.
+        function migrateFavorites() {
+            if (localStorage.getItem('favorites_migrated')) return;
+            let changed = false;
+            for (let key in window.worldData.clans) {
+                let hero = window.worldData.clans[key];
+                // Ако има старото поле isFavoriteInBarracks и е true, прехвърляме
+                if (hero.isFavoriteInBarracks === true && hero.isFavorite !== true) {
+                    hero.isFavorite = true;
+                    changed = true;
+                }
+                // Изтриваме старото поле, за да не пречи
+                delete hero.isFavoriteInBarracks;
+            }
+            if (changed && typeof window.saveGreatBulgariaGame === 'function') {
+                window.saveGreatBulgariaGame();
+            }
+            localStorage.setItem('favorites_migrated', 'true');
+        }
+        migrateFavorites();
+        
+        // 5. Възстановяване на портретите (ако има запазени)
         if (parsed.unlockedHeroes) {
             parsed.unlockedHeroes.forEach(savedHero => {
                 if (savedHero.portrait) {
@@ -473,9 +497,59 @@ window.loadGreatBulgariaGame = function() {
             });
         }
         
-        if (parsed.favoriteHeroes) localStorage.setItem('favoriteHeroesFinal', parsed.favoriteHeroes);
-        if (parsed.autoState) localStorage.setItem('heroAutoState', parsed.autoState);
+        // 6. Възстановяване на HP за всички герои (важно за живучест)
+        function setHeroHP(hero) {
+            if (!hero) return;
+            let endurance = hero.skills?.endurance || 0;
+            hero.maxHp = 100 + (hero.level - 1) * 20 + endurance * 15;
+            if (!hero.hp || isNaN(hero.hp) || hero.hp > hero.maxHp) hero.hp = hero.maxHp;
+            if (typeof hero.isAlive === 'undefined') hero.isAlive = true;
+        }
+        if (window.currentHero) setHeroHP(window.currentHero);
+        for (let key in window.worldData.clans) {
+            let hero = window.worldData.clans[key];
+            if (hero && hero.isJoined === true) setHeroHP(hero);
+        }
+        if (window.companions) window.companions.forEach(comp => setHeroHP(comp));
         
+        // 7. Възстановяване на настройките за auto режим (от localStorage)
+        if (parsed.autoState) localStorage.setItem('heroAutoState', parsed.autoState);
+        if (parsed.favoriteHeroes) localStorage.setItem('favoriteHeroesFinal', parsed.favoriteHeroes);
+        
+        // 8. Обновяване на целия потребителски интерфейс
+        if (window.updateCharacterUI) window.updateCharacterUI(window.currentHero);
+        if (window.renderTop6HeroesUI) window.renderTop6HeroUI(); // беше с малка грешка - оправено
+        if (typeof window.renderSingleBar === 'function') window.renderSingleBar();
+        if (window.updatePortalContainerUI) window.updatePortalContainerUI();
+        if (window.updateTimeUI) window.updateTimeUI();
+        
+        // 9. Специални действия за соло режим
+        if (window.gameMode === 'solo' && typeof window.initSoloMode === 'function') {
+            window.initSoloMode();
+        }
+        
+        // 10. Генериране на липсващи портрети (асинхронно, не блокира)
+        if (typeof window.ensureHeroesHavePortraits === 'function') {
+            window.ensureHeroesHavePortraits();
+        }
+        
+        // 11. Показване на съобщение за успешно зареждане
+        if (window.showAdvisorMsg) {
+            window.showAdvisorMsg("👑 Добре дошъл обратно, Воеводо!");
+        }
+        
+        // 12. Запазване на текущото състояние (за всеки случай)
+        if (typeof window.saveGreatBulgariaGame === 'function') {
+            window.saveGreatBulgariaGame();
+        }
+        
+        return true;
+    } catch (e) {
+        console.error("Грешка при зареждане на запазената игра:", e);
+        localStorage.removeItem('GreatBulgaria_SaveGame');
+        return false;
+    }
+};
         // Миграция на стари любими
         function migrateFavorites() {
             if (localStorage.getItem('favorites_migrated')) return;
