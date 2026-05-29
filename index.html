@@ -15,9 +15,8 @@
     }
     body {
         margin: 0;
-        background: linear-gradient(rgba(0,0,0,0.5), rgba(0,0,0,0.5)), 
-                    url('https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEjJuReyp2P1EHVmb8i_LXu6AQhvvvByWOCKKl4sVeQTuIKnvmu0dZ64-jCPAw7hisWSrzei_lJeAS3tvQvYHuV5vKWGvc4ZRWsd5XZpgkX-KbUA0o9C2MMXiV1H0NGzVhJEj1iRxeT67HYEAe1VTmjmeI__JKiOCkz6hVVbo6O7gbqfsABylSvdnA-P7VAq/s3072/_d012d68d-c196-4d76-be3e-0a44b9f7ccfa.jpeg');
-        background-size: cover;
+        background: #0a0a2e !important;
+    background-image: none !important;
         background-attachment: fixed;
         font-family: 'Montserrat', sans-serif;
         color: #e0e0e0;
@@ -272,6 +271,30 @@
         overflow-x: visible !important;
         touch-action: pan-y pan-x !important;
     }
+    /* Тъмносин матов фон за цялата страница (премахва картинката) */
+body {
+    background: #0a0a2e !important;
+    background-image: none !important;
+}
+
+/* Фон на лентата с любими герои */
+.favorite-bar {
+    background: #0a0a2e !important;
+    backdrop-filter: none !important;
+}
+
+/* Фон на слотовете (картичките) в лентата */
+.favorite-slot {
+    background: #1e1e2e !important;
+    backdrop-filter: none !important;
+    border-color: #3a3a4a !important;
+}
+
+/* Ако искаш и долната лента с бутоните да е същия цвят */
+#bottom-controls {
+    background: #0a0a2e !important;
+    backdrop-filter: none !important;
+}
 }
 </style>
 </head>
