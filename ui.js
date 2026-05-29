@@ -1387,55 +1387,47 @@ window.openHeroRPGModal = function(heroId) {
     if (typeof window.showHeroProfile === 'function') window.showHeroProfile(hero);
     else console.warn("showHeroProfile не е дефинирана");
 
-    // ====================== ДИПЛОМАЦИЯ БУТОН ======================
-if (!document.getElementById('open-diplomacy-btn')) {
-    const diplomacyBtn = document.createElement('button');
-    diplomacyBtn.id = "open-diplomacy-btn";
-    diplomacyBtn.className = "menu-btn";
-    diplomacyBtn.style.cssText = `
-        width: 100%; 
-        margin: 12px 0 8px 0; 
-        padding: 14px; 
-        background: linear-gradient(135deg, #0f4c75, #1e88e5); 
-        border: none; 
-        border-radius: 12px; 
-        color: white; 
-        font-weight: bold; 
-        font-size: 16px;
-        cursor: pointer;
-        box-shadow: 0 4px 8px rgba(0,0,0,0.3);
-    `;
-    diplomacyBtn.innerHTML = "🕊️ ДИПЛОМАЦИЯ";
+// ====================== ДИПЛОМАЦИЯ БУТОН (НОВА ВЕРСИЯ) ======================
+window.createDiplomacyButton = function() {
+    if (document.getElementById('open-diplomacy-btn')) return;
 
-    diplomacyBtn.onclick = () => {
+    const btn = document.createElement('button');
+    btn.id = "open-diplomacy-btn";
+    btn.style.cssText = `
+        position: fixed;
+        bottom: 90px;
+        right: 20px;
+        z-index: 99999;
+        padding: 14px 20px;
+        background: linear-gradient(135deg, #0f4c75, #1e88e5);
+        color: white;
+        border: none;
+        border-radius: 50px;
+        font-size: 15px;
+        font-weight: bold;
+        box-shadow: 0 6px 20px rgba(0,0,0,0.5);
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    `;
+    btn.innerHTML = `🕊️ ДИПЛОМАЦИЯ`;
+
+    btn.onclick = () => {
         if (typeof window.openDiplomacyHub === "function") {
             window.openDiplomacyHub();
         } else {
-            console.error("openDiplomacyHub не е дефинирана! Добави кода в ui-modals.js");
-            alert("Моля добави Diplomacy Hub кода в ui-modals.js");
+            alert("Diplomacy Hub не е зареден. Провери ui-modals.js");
         }
     };
 
-    // Опитваме се да го добавим на подходящо място
-    const containers = [
-        document.getElementById('sidebar'),
-        document.querySelector('.menu-container'),
-        document.getElementById('active-character-profile'),
-        document.querySelector('.side-panel'),
-        document.getElementById('main-menu')
-    ];
+    document.body.appendChild(btn);
+};
 
-    let added = false;
-    for (let container of containers) {
-        if (container) {
-            container.appendChild(diplomacyBtn);
-            added = true;
-            break;
-        }
-    }
-
-    if (!added) {
-        document.body.appendChild(diplomacyBtn); // fallback
-    }
+// Извикваме го автоматично
+if (document.readyState === "loading") {
+    document.addEventListener('DOMContentLoaded', window.createDiplomacyButton);
+} else {
+    window.createDiplomacyButton();
 }
 };
