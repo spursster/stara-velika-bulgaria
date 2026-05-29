@@ -230,7 +230,7 @@ window.startFreshGameLogic = function() {
 
     if (existingHero) {
         existingHero.isJoined = true;
-        existingHero.isFavorite = (window.gameMode === 'solo');
+        existingHero.isFavorite = true;
         existingHero.gold = heroData.gold;
         existingHero.armySize = heroData.armySize;
         existingHero.currentArmy = heroData.armySize;
@@ -257,7 +257,7 @@ window.startFreshGameLogic = function() {
             equipment: Array(12).fill(null),
             skills: { tactics: 0, endurance: 0, economy: 0, mysticism: 0, leadership: 0 },
             inventory: [],
-            isFavorite: (window.gameMode === 'solo'),
+            isFavorite: true,
             isJoined: true,
             portrait: null,
             armyDetails: { infantry: Math.floor(heroData.armySize * 0.5), archers: Math.floor(heroData.armySize * 0.25), cavalry: Math.floor(heroData.armySize * 0.15), elite: Math.floor(heroData.armySize * 0.1) }
