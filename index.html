@@ -171,14 +171,77 @@
         gap: 10px;
         padding: 8px;
         margin: 0;
+        overflow-x: auto;
+        scrollbar-width: thin;
     }
     /* Слотовете – черна матова */
     .favorite-slot {
         background: #1a1a1a !important;
         backdrop-filter: none !important;
         border-color: #3a3a4a !important;
+        text-align: center;
+        padding: 6px;
+        min-width: 85px;
+        border-radius: 10px;
     }
-    /* Стилове за бутоните в долната лента */
+    /* Име на героя – жълто и удебелено */
+    .favorite-slot .hero-name {
+        color: #ffd700 !important;
+        font-weight: bold !important;
+        font-size: 12px;
+        white-space: nowrap;
+        overflow-x: hidden;
+        text-overflow: ellipsis;
+    }
+    /* Адаптивност за малки екрани */
+    @media (max-width: 768px) {
+        body {
+            padding-bottom: 120px;
+        }
+        .favorite-bar {
+            gap: 6px;
+            padding: 6px;
+        }
+        .favorite-slot {
+            min-width: 70px;
+            padding: 4px;
+        }
+        .favorite-slot .hero-name {
+            font-size: 10px;
+        }
+        .favorite-slot .hero-level-power {
+            font-size: 8px !important;
+        }
+        .favorite-slot .hero-stats span {
+            font-size: 7px !important;
+        }
+        .favorite-slot .auto-badge {
+            font-size: 6px !important;
+        }
+    }
+    @media (max-width: 480px) {
+        .favorite-bar {
+            gap: 4px;
+            padding: 4px;
+        }
+        .favorite-slot {
+            min-width: 60px;
+            padding: 3px;
+        }
+        .favorite-slot .hero-name {
+            font-size: 9px;
+        }
+        .favorite-slot .hero-level-power {
+            font-size: 7px !important;
+        }
+        .favorite-slot .hero-stats span {
+            font-size: 6px !important;
+        }
+        .favorite-slot .auto-badge {
+            font-size: 5px !important;
+        }
+    }
+    /* Стилове за бутоните в долната лента (запазени от оригинал) */
     .icon-btn {
         background: none;
         border: none;
