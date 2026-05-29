@@ -8,7 +8,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Montserrat:wght@300;400;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
 <style>
-    /* Глобални стилове, които са извън style.css (за резерв) */
+    /* Глобални стилове */
     * {
         box-sizing: border-box;
         user-select: none;
@@ -16,7 +16,7 @@
     body {
         margin: 0;
         background: #0a0a2e !important;
-    background-image: none !important;
+        background-image: none !important;
         background-attachment: fixed;
         font-family: 'Montserrat', sans-serif;
         color: #e0e0e0;
@@ -130,14 +130,31 @@
         cursor: pointer;
         margin-top: 8px;
     }
+    /* Лента с любими герои – сива матова */
+    .favorite-bar {
+        background: #4a4a5a !important;
+        backdrop-filter: none !important;
+        border-top: 1px solid #d4af37;
+        border-bottom: none;
+    }
+    /* Слотовете – черна матова */
+    .favorite-slot {
+        background: #1a1a1a !important;
+        backdrop-filter: none !important;
+        border-color: #3a3a4a !important;
+    }
+    /* Долна лента с бутони – синя матова */
+    #bottom-controls {
+        background: #0a2a4a !important;
+        backdrop-filter: none !important;
+        border-top: 2px solid #d4af37;
+    }
+    /* Стилове за останалите елементи */
     #bottom-controls {
         position: fixed;
         bottom: 0;
         left: 0;
         width: 100%;
-        background: rgba(0,0,0,0.85);
-        backdrop-filter: blur(10px);
-        border-top: 2px solid #d4af37;
         display: flex;
         justify-content: flex-start;
         align-items: center;
@@ -211,8 +228,6 @@
         overflow: auto;
         padding: 20px;
     }
-
-    
     @media (max-width: 800px) {
         #game-container {
             grid-template-columns: 1fr;
@@ -224,78 +239,49 @@
         .stat-box { font-size: 0.7rem; padding: 2px 8px; }
         .active-hero-name { font-size: 0.7rem; padding: 2px 8px; }
     }
-
-    /* Подредба на бутоните в долната лента – за десктоп и таблет */
-@media (min-width: 769px) {
-    #bottom-controls {
-        display: flex;
-        flex-wrap: wrap;
-        justify-content: center;
-        align-items: center;
-        gap: 8px;
-        padding: 8px 12px;
-        overflow-x: visible;
-        white-space: normal;
+    @media (min-width: 769px) {
+        #bottom-controls {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 12px;
+            overflow-x: visible;
+            white-space: normal;
+        }
+        #bottom-controls .icon-btn,
+        #bottom-controls .next-turn-btn,
+        #bottom-controls .new-game-menu-container {
+            flex: 0 0 auto;
+        }
+        #bottom-controls {
+            overflow-x: visible;
+        }
     }
-    #bottom-controls .icon-btn,
-    #bottom-controls .next-turn-btn,
-    #bottom-controls .new-game-menu-container {
-        flex: 0 0 auto;
+    @media (max-width: 768px) {
+        #bottom-controls {
+            overflow-x: auto !important;
+            overflow-y: hidden !important;
+            -webkit-overflow-scrolling: touch !important;
+            scroll-behavior: auto !important;
+            white-space: nowrap !important;
+            flex-wrap: nowrap !important;
+            display: flex !important;
+            cursor: grab;
+        }
+        #bottom-controls:active {
+            cursor: grabbing;
+        }
+        #bottom-controls > * {
+            flex: 0 0 auto !important;
+            display: inline-block !important;
+        }
+        body {
+            overflow-x: visible !important;
+            touch-action: pan-y pan-x !important;
+        }
     }
-    /* Премахваме хоризонталния скрол */
-    #bottom-controls {
-        overflow-x: visible;
-    }
-}
-
-/* За мобилни – хоризонтален скрол с плъзгане */
-@media (max-width: 768px) {
-    #bottom-controls {
-        overflow-x: auto !important;
-        overflow-y: hidden !important;
-        -webkit-overflow-scrolling: touch !important;
-        scroll-behavior: auto !important;
-        white-space: nowrap !important;
-        flex-wrap: nowrap !important;
-        display: flex !important;
-        cursor: grab;
-    }
-    #bottom-controls:active {
-        cursor: grabbing;
-    }
-    #bottom-controls > * {
-        flex: 0 0 auto !important;
-        display: inline-block !important;
-    }
-    body {
-        overflow-x: visible !important;
-        touch-action: pan-y pan-x !important;
-    }
-    /* Тъмносин матов фон за цялата страница (премахва картинката) */
-body {
-    background: #0a0a2e !important;
-    background-image: none !important;
-}
-
-/* Фон на лентата с любими герои */
-.favorite-bar {
-    background: #0a0a2e !important;
-    backdrop-filter: none !important;
-}
-
-/* Фон на слотовете (картичките) в лентата */
-.favorite-slot {
-    background: #1e1e2e !important;
-    backdrop-filter: none !important;
-    border-color: #3a3a4a !important;
-}
-
-/* Ако искаш и долната лента с бутоните да е същия цвят */
-#bottom-controls {
-    background: #0a0a2e !important;
-    backdrop-filter: none !important;
-}
-}
 </style>
 </head>
 <body>
