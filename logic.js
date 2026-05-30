@@ -5,15 +5,23 @@
  ========================================================================
  */
 document.addEventListener('DOMContentLoaded', function() {
-    console.log("🏛️ DOM готов – стартирам играта...");
+    console.log("🏛️ DOM готов...");
 
     setTimeout(() => {
-        if (localStorage.getItem('GreatBulgaria_SaveGame')) {
-            window.loadGreatBulgariaGame();
+        const loaded = window.GameSave.load();
+        
+        if (!loaded) {
+            window.startGameCore();   // новата функция от предишния бъг
         } else {
-            window.startGameCore();        // ← новата функция
+            // Ако е заредено успешно - обнови UI
+            if (typeof window.updateAllUI === 'function') {
+                window.updateAllUI();
+            }
         }
-    }, 100);
+
+        // Стартирай авто-save
+        window.GameSave.startAutoSave();
+    }, 150);
 });
 
 // ========== ФУНКЦИЯ ЗА СЛУЧАЕН ГЕРОЙ ОТ DATABASE ==========
@@ -138,6 +146,63 @@ function getRandomHeroFromDatabase() {
                 " (" + selected.clan + ")");
     return selected;
 }
+
+// === SAFE SAVE / LOAD SYSTEM ===
+window.GameSave = window.GameSave || {};
+
+window.GameSave.save = function() {
+    try {
+        const saveData = {
+            version: "1.0.1",                    // увеличавай при големи промени
+            timestamp: Date.now(),
+            worldData: window.worldData,
+            currentTurn: window.currentTurn || 1,
+            // добави други важни глобални променливи ако имаш
+        };
+
+        localStorage.setItem('GreatBulgaria_SaveGame', JSON.stringify(saveData));
+        console.log("💾 Играта е запазена успешно");
+        return true;
+    } catch (e) {
+        console.error("❌ Грешка при запис:", e);
+        return false;
+    }
+};
+
+window.GameSave.load = function() {
+    try {
+        const saved = localStorage.getItem('GreatBulgaria_SaveGame');
+        if (!saved) return false;
+
+        const data = JSON.parse(saved);
+
+        // Миграция при нова версия
+        if (data.version && data.version !== "1.0.1") {
+            console.warn("🔄 Стара версия на save-а. Прилагам миграция...");
+        }
+
+        if (data.worldData) {
+            window.worldData = data.worldData;
+        }
+
+        if (data.currentTurn) window.currentTurn = data.currentTurn;
+
+        console.log("✅ Играта е заредена успешно (версия " + (data.version || "неизвестна") + ")");
+        return true;
+    } catch (e) {
+        console.error("💥 Save файлът е повреден!", e);
+        alert("Save файлът е повреден. Ще започнеш нова игра.");
+        localStorage.removeItem('GreatBulgaria_SaveGame');
+        return false;
+    }
+};
+
+// Автоматичен save на всеки 30 секунди + при важни действия
+window.GameSave.startAutoSave = function() {
+    setInterval(() => {
+        window.GameSave.save();
+    }, 30000);
+};
 
 // ========== ИНИЦИАЛИЗАЦИЯ НА ВСИЧКИ ГЕРОИ ==========
 function initializeAllHeroesFromDatabase() {
