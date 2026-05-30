@@ -1,5 +1,5 @@
 // =========================================================================
-// ВЕЛИКА БЪЛГАРИЯ - rpg_system.js (ВЕРСИЯ 7.0 – ФИКСАНА ИНИЦИАЛИЗАЦИЯ НА HP)
+// ВЕЛИКА БЪЛГАРИЯ - rpg_system.js (ВЕРСИЯ 7.1 – БЕЗ currentHero В КЛАСИЧЕСКИ РЕЖИМ)
 // =========================================================================
 
 window.rpgDatabase = window.rpgDatabase || {};
@@ -68,6 +68,7 @@ window.initializeHeroRPGData = function(hero) {
     hero.isAlive = true;
     // ----------------------------------------
 };
+
 // ==================== ФУНКЦИЯ ЗА КОНСУМИРАНЕ НА STOREDXP ====================
 window.consumeStoredXPForHero = function(hero) {
     if (!hero) return false;
@@ -81,22 +82,23 @@ window.consumeStoredXPForHero = function(hero) {
             hero.heroPower += 25;
             leveledUp = true;
             requiredXP = window.rpgDatabase.getXPRequiredForLevel(hero.level);
-           // showRPGMessage("НИВО НАГОРЕ", `🆙 ${hero.name} достигна Ниво ${hero.level} (от натрупан опит)! +1 Точка за умения`, "success");
         }
-        if (hero === window.currentHero || hero.isFavorite === true) {
-    showRPGMessage("НИВО НАГОРЕ", `🆙 ${hero.name} достигна Ниво ${hero.level} (от натрупан опит)! +1 Точка за умения`, "success");
-}
+        // Показваме съобщение само за любими герои (те са в лентата)
+        if (hero.isFavorite === true) {
+            showRPGMessage("НИВО НАГОРЕ", `🆙 ${hero.name} достигна Ниво ${hero.level} (от натрупан опит)! +1 Точка за умения`, "success");
+        }
         if (leveledUp) {
             if (window.checkArcheAgeClass) window.checkArcheAgeClass(hero);
             if (!hero.isAuto && hero.skillPoints > 0 && window.autoAssignSkillPoint) {
                 window.autoAssignSkillPoint(hero);
             }
-            // Автоматична екипировка (ако съществува функцията от items.js)
             if (hero.isAuto && typeof window.autoEquipHero === 'function') {
                 window.autoEquipHero(hero);
             }
             if (window.updateCharacterUI) window.updateCharacterUI(hero);
-            if (window.renderTop6HeroesUI) window.renderTop6HeroesUI();
+            if (typeof window.updateStrongestHeroUI === 'function') {
+                window.updateStrongestHeroUI();
+            }
         }
         return leveledUp;
     }
@@ -145,7 +147,9 @@ window.gainHeroXP = function(hero, amount) {
         hero.storedXP += amount;
         window.consumeStoredXPForHero(hero);
     }
-    if (window.renderTop6HeroesUI) window.renderTop6HeroesUI();
+    if (typeof window.updateStrongestHeroUI === 'function') {
+        window.updateStrongestHeroUI();
+    }
     if (window.updateCharacterUI) window.updateCharacterUI(hero);
 };
 
@@ -156,8 +160,6 @@ window.toggleHeroAutoMode = function(heroId) {
         hero = window.worldData.clans[heroId];
     } else if (window.unlockedHeroes) {
         hero = window.unlockedHeroes.find(h => h.clan === heroId || h.name === heroId);
-    } else if (window.currentHero && window.currentHero.clan === heroId) {
-        hero = window.currentHero;
     }
     if (!hero) return;
     window.initializeHeroRPGData(hero);
@@ -171,9 +173,16 @@ window.toggleHeroAutoMode = function(heroId) {
         hero.storedXP = 0;
         window.gainHeroXP(hero, amount);
     }
-    if (window.renderTop6HeroesUI) window.renderTop6HeroesUI();
+    if (typeof window.updateStrongestHeroUI === 'function') {
+        window.updateStrongestHeroUI();
+    }
     let modal = document.getElementById('hero-rpg-modal');
-    if (modal && modal.style.display === 'block') window.openHeroRPGModal(heroId);
+    if (modal && modal.style.display === 'block') {
+        // Използваме универсалния метод за отваряне на профил
+        if (typeof window.showHeroProfile === 'function') {
+            window.showHeroProfile(hero);
+        }
+    }
 };
 
 // ==================== НОВА СИСТЕМА ЗА АВТОМАТИЧНО УЧЕНЕ НА УМЕНИЯ ====================
@@ -351,7 +360,14 @@ window.getHeroCombatBonus = function(hero, bonusType) {
 window.openHeroRPGModal = function(heroId) {
     let hero = null;
     if (heroId && window.worldData?.clans?.[heroId]) hero = window.worldData.clans[heroId];
-    else if (window.currentHero) hero = window.currentHero;
+    else {
+        // Ако няма подаден ID, взимаме избрания герой (selectedHero) или най-силния
+        if (typeof window.getSelectedHero === 'function') {
+            hero = window.getSelectedHero();
+        } else if (typeof window.getStrongestHero === 'function') {
+            hero = window.getStrongestHero();
+        }
+    }
     if (!hero) {
         console.warn("Няма избран герой за RPG модала");
         return;
@@ -369,10 +385,8 @@ setTimeout(() => {
                 window.autoEquipHero(hero);
             }
         }
-        if (window.currentHero && window.currentHero.isAuto) {
-            window.autoEquipHero(window.currentHero);
-        }
+        // В класически режим няма currentHero – премахваме тази част
     }
 }, 1500);
 
-console.log("✅ rpg_system.js версия 7.0 зареден – с фиксирана инициализация на HP.");
+console.log("✅ rpg_system.js версия 7.1 зареден – без currentHero (използва getSelectedHero/getStrongestHero)");
