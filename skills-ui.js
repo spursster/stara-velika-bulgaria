@@ -30,9 +30,19 @@ window.openSkillsUI = function(heroParam) {
     if (document.getElementById('skills-ui-modal')) return;
     
     let hero = heroParam || null;
-    if (!hero && typeof window.getStrongestHero === 'function') {
-        hero = window.getStrongestHero();
+    if (!hero && window.gameMode !== 'solo') {
+        hero = window.selectedHero || null;
+        if (!hero) {
+            for (let id in window.worldData.clans) {
+                let h = window.worldData.clans[id];
+                if (h.isJoined && h.isFavorite) {
+                    hero = h;
+                    break;
+                }
+            }
+        }
     }
+    if (!hero && window.gameMode === 'solo') hero = window.currentHero;
     if (!hero) {
         showSkillsMessage("ГРЕШКА", "Няма намерен герой за уменията!", "error");
         return;
@@ -43,6 +53,7 @@ window.openSkillsUI = function(heroParam) {
     }
     if (!hero.learnedSkills) hero.learnedSkills = {};
 
+    // Изчисляваме колко точки са вложени във всяко дърво
     function getTreePoints(treeKey) {
         let total = 0;
         for (let sk in hero.learnedSkills) {
@@ -53,6 +64,7 @@ window.openSkillsUI = function(heroParam) {
         return total;
     }
 
+    // Генерира HTML за едно дърво (с филтър)
     function renderTree(treeKey, tree, filterText = "") {
         let pointsInTree = getTreePoints(treeKey);
         let skillsHtml = '';
@@ -93,6 +105,7 @@ window.openSkillsUI = function(heroParam) {
         `;
     }
 
+    // Генерира табове и съдържание
     let tabsHtml = '<div style="display:flex; gap:10px; border-bottom:1px solid #d4af37; margin-bottom:15px; flex-wrap:wrap; align-items:center;">';
     let panelsHtml = '';
     let first = true;
@@ -139,11 +152,13 @@ window.openSkillsUI = function(heroParam) {
     `;
     document.body.appendChild(modal);
 
+    // Затваряне
     const closeModal = () => modal.remove();
     modal.querySelector('#close-skills-ui')?.addEventListener('click', closeModal);
     modal.querySelector('#close-skills-footer')?.addEventListener('click', closeModal);
     modal.addEventListener('click', (e) => { if (e.target === modal) closeModal(); });
 
+    // Табове
     const tabBtns = modal.querySelectorAll('.skill-tab-btn');
     const panels = modal.querySelectorAll('.skill-tab-panel');
     let currentTree = tabBtns[0]?.getAttribute('data-tree') || null;
@@ -245,7 +260,7 @@ window.openSkillsUI = function(heroParam) {
                 window.openSkillsUI(hero);
                 if (window.updateCharacterUI) window.updateCharacterUI(hero);
                 if (typeof window.updateStrongestHeroUI === 'function') {
-                    window.updateStrongestHeroUI();
+                    window.updateStrongestHeroUI(); // обновява левия панел (най-силен)
                 }
             } else {
                 showSkillsMessage("ВНИМАНИЕ", "Няма достъпни умения за научаване (изпълнени ли са всички изисквания?)", "warning");
@@ -255,5 +270,3 @@ window.openSkillsUI = function(heroParam) {
     
     attachLearnButtons(modal);
 };
-
-console.log("✅ skills-ui.js – версия без currentHero, с автоматичен избор на най-силен герой");
