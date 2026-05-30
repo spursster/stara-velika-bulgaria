@@ -61,8 +61,7 @@ window.addHeroLog = function(hero, icon, message) {
     if (hero.actionLog.length > 15) hero.actionLog.pop();
     if (hero === window.currentHero && window.updateCharacterUI) window.updateCharacterUI(hero);
     // Синхронизиране на UI след добавяне на лог
-    window.updateAllUI();
-    else if (typeof window.renderFavoriteHeroesBar === 'function') window.updateAllUI();
+        window.updateAllUI();
 };
 
 // ==================== ГЕНЕРИРАНЕ НА ПОРТРЕТ С POLLINATIONS.AI ====================
