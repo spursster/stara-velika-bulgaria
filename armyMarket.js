@@ -239,11 +239,10 @@
         let basicSection = basicTroops.map(t => troopCard(t)).join('');
         let fantasySection = fantasyTroops.map(t => troopCard(t)).join('');
         
-        return `
-        <div id="armyMarketModal" class="market-modal" style="display: none;">
-            <div class="market-content glass-panel">
-                <div class="market-header">
-                    <h2>🏰 Военен пазар <span class="close-market">&times;</span></h2>
+  return `
+<div id="armyMarketModal" class="market-modal" style="display: none;" onclick="if(event.target === this) window.armyMarket.hide();">
+    <div class="market-content glass-panel">
+                   <h2>🏰 Военен пазар <span class="close-market" onclick="window.armyMarket.hide();" style="cursor:pointer;">&times;</span></h2>
                     <div class="player-resources">
                         <div class="resource-box gold">💰 Злато: <span id="playerGoldAmount">0</span></div>
                         <div class="resource-box power">⚔️ Сила: <span id="totalArmyPower">0</span></div>
