@@ -624,54 +624,52 @@ function showHeroProfile(hero) {
     
     modal.querySelector('#close-profile-modal').onclick = () => modal.remove();
     
-    let autoBtnElem = modal.querySelector('#auto-mode-btn');
-    if (autoBtnElem) {
-       let autoBtnElem = modal.querySelector('#auto-mode-btn');
-    if (autoBtnElem) {
-        autoBtnElem.onclick = () => {
-            let newState = !isAuto(hero.id);
-            setAuto(hero.id, newState);
-            if (window.worldData && window.worldData.clans && window.worldData.clans[hero.id]) 
-                window.worldData.clans[hero.id].isAuto = newState;
-            if (window.currentHero && window.currentHero.id === hero.id) 
-                window.currentHero.isAuto = newState;
-            hero.isAuto = newState;
+   let autoBtnElem = modal.querySelector('#auto-mode-btn');
+if (autoBtnElem) {
+    autoBtnElem.onclick = () => {
+        let newState = !isAuto(hero.id);
+        setAuto(hero.id, newState);
+        if (window.worldData && window.worldData.clans && window.worldData.clans[hero.id]) 
+            window.worldData.clans[hero.id].isAuto = newState;
+        if (window.currentHero && window.currentHero.id === hero.id) 
+            window.currentHero.isAuto = newState;
+        hero.isAuto = newState;
 
-            if (newState && typeof window.startAutoTimer === 'function') 
-                window.startAutoTimer(hero.id);
-            else if (!newState && typeof window.stopAutoTimer === 'function') 
-                window.stopAutoTimer(hero.id);
+        if (newState && typeof window.startAutoTimer === 'function') 
+            window.startAutoTimer(hero.id);
+        else if (!newState && typeof window.stopAutoTimer === 'function') 
+            window.stopAutoTimer(hero.id);
 
-            autoBtnElem.textContent = newState ? '✅ AUTO РЕЖИМ: ВКЛЮЧЕН' : '🤖 AUTO РЕЖИМ: ИЗКЛЮЧЕН';
-            autoBtnElem.style.background = newState ? '#4a6a2a' : '#2c1a0c';
-            
-            if (typeof window.updateAllUI === 'function') {
-                window.updateAllUI();
-            } else if (typeof window.renderFavoriteHeroesBar === 'function') {
-                window.renderFavoriteHeroesBar();
+        autoBtnElem.textContent = newState ? '✅ AUTO РЕЖИМ: ВКЛЮЧЕН' : '🤖 AUTO РЕЖИМ: ИЗКЛЮЧЕН';
+        autoBtnElem.style.background = newState ? '#4a6a2a' : '#2c1a0c';
+        
+        if (typeof window.updateAllUI === 'function') {
+            window.updateAllUI();
+        } else if (typeof window.renderFavoriteHeroesBar === 'function') {
+            window.renderFavoriteHeroesBar();
+        }
+    };
+}
+
+const genBtn = modal.querySelector('#generate-portrait-btn');
+if (genBtn) {
+    genBtn.onclick = async () => {
+        genBtn.innerText = '⏳ Генериране...';
+        genBtn.disabled = true;
+        try {
+            await window.generateHeroPortrait(hero);
+            const portraitContainer = modal.querySelector('div[style*="text-align:center"] > div:first-child');
+            if (portraitContainer && hero.portrait) {
+                portraitContainer.innerHTML = `<img src="${hero.portrait}" style="width: 100px; height: 100px; border-radius: 50%; border: 3px solid #ffd700; object-fit: cover; box-shadow: 0 0 15px rgba(0,0,0,0.5);">`;
             }
-        };
-    
-    const genBtn = modal.querySelector('#generate-portrait-btn');
-    if (genBtn) {
-        genBtn.onclick = async () => {
-            genBtn.innerText = '⏳ Генериране...';
-            genBtn.disabled = true;
-            try {
-                await window.generateHeroPortrait(hero);
-                const portraitContainer = modal.querySelector('div[style*="text-align:center"] > div:first-child');
-                if (portraitContainer && hero.portrait) {
-                    portraitContainer.innerHTML = `<img src="${hero.portrait}" style="width: 100px; height: 100px; border-radius: 50%; border: 3px solid #ffd700; object-fit: cover; box-shadow: 0 0 15px rgba(0,0,0,0.5);">`;
-                }
-                genBtn.innerText = '✅ Портретът е готов';
-                setTimeout(() => genBtn.remove(), 1500);
-            } catch(e) {
-                genBtn.innerText = '❌ Грешка, опитай отново';
-                genBtn.disabled = false;
-            }
-        };
-    }
-    
+            genBtn.innerText = '✅ Портретът е готов';
+            setTimeout(() => genBtn.remove(), 1500);
+        } catch(e) {
+            genBtn.innerText = '❌ Грешка, опитай отново';
+            genBtn.disabled = false;
+        }
+    };
+}
     let adoptBtn = modal.querySelector('#adopt-pet-btn');
     if (adoptBtn) {
         adoptBtn.onclick = () => {
