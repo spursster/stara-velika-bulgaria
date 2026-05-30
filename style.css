@@ -1,5 +1,6 @@
 /* ==========================================================================
    ВЕЛИКА БЪЛГАРИЯ – МАТОВ СИН ФОН, БЯЛ И ЖЪЛТ ТЕКСТ
+   Добавени стилове за армия пазара (трооп карти)
    ========================================================================== */
 
 /* -----------------------------------------------
@@ -13,9 +14,9 @@
 
 html, body {
     height: 100%;
-    background: #0a2a4a;  /* матово синьо – без изображение */
+    background: #0a2a4a;
     font-family: 'Montserrat', sans-serif;
-    color: #f0f0f0;       /* бял матов текст */
+    color: #f0f0f0;
     overflow-x: hidden;
 }
 
@@ -46,7 +47,7 @@ html, body {
 .stat-box {
     font-family: 'Cinzel', serif;
     font-weight: bold;
-    color: #ffd966;      /* матово жълт */
+    color: #ffd966;
     background: rgba(0, 0, 0, 0.5);
     padding: 4px 12px;
     border-radius: 30px;
@@ -206,7 +207,7 @@ html, body {
 }
 
 .favorite-slot {
-    background: #1e3a5f !important;   /* матово синьо за слотовете */
+    background: #1e3a5f !important;
     backdrop-filter: none !important;
     border: 1px solid #d4af37;
     text-align: center;
@@ -236,10 +237,10 @@ html, body {
 }
 .favorite-slot .hero-icon {
     font-size: 28px;
-    color: #ffd966;   /* жълт иконки */
+    color: #ffd966;
 }
 .favorite-slot .hero-name {
-    color: #ffd966 !important;   /* матово жълто за имената */
+    color: #ffd966 !important;
     font-weight: bold !important;
     font-size: 12px;
     white-space: nowrap;
@@ -249,7 +250,7 @@ html, body {
 }
 .favorite-slot .hero-level, 
 .favorite-slot .hero-stats span {
-    color: #f0f0f0;   /* бял текст за останалите данни */
+    color: #f0f0f0;
 }
 .favorite-slot.empty {
     background: rgba(255, 255, 255, 0.03);
@@ -259,7 +260,6 @@ html, body {
     color: #aaa;
 }
 
-/* Стилове за бутоните в долната лента */
 .icon-btn {
     background: none;
     border: none;
@@ -805,7 +805,7 @@ html, body {
 
 .modal-content,
 .glass-panel,
-#diplomacy-hub-modal .modal-content {   /* специално за дипломацията */
+#diplomacy-hub-modal .modal-content {
     margin: auto !important;
     max-width: 90% !important;
     max-height: 90% !important;
@@ -818,7 +818,7 @@ html, body {
     transform: none !important;
 }
 
-/* ========== КОРЕКЦИЯ ЗА ДИПЛОМАЦИЯТА (да не е под лентите) ========== */
+/* ========== КОРЕКЦИЯ ЗА ДИПЛОМАЦИЯТА ========== */
 #diplomacy-hub-modal {
     position: fixed !important;
     top: 0 !important;
@@ -829,7 +829,7 @@ html, body {
     height: 100% !important;
     background: rgba(0, 0, 0, 0.85) !important;
     backdrop-filter: blur(8px) !important;
-    z-index: 300000 !important;  /* по-високо от лентите (z-index:2000) */
+    z-index: 300000 !important;
     display: flex !important;
     align-items: center !important;
     justify-content: center !important;
@@ -852,7 +852,7 @@ html, body {
 /* ========== АДАПТИВНОСТ ЗА СЛОТОВЕТЕ НА ГЕРОИТЕ (ТЕЛЕФОНИ) ========== */
 @media (max-width: 768px) {
     .favorite-slot {
-        min-height: 80px !important;   /* по-ниски слотове */
+        min-height: 80px !important;
         padding: 4px 2px !important;
         min-width: 65px !important;
     }
@@ -861,7 +861,7 @@ html, body {
     }
     .favorite-slot .hero-name {
         font-size: 9px !important;
-        white-space: normal !important;  /* пренасяне на текста на нов ред */
+        white-space: normal !important;
         word-break: break-word !important;
         line-height: 1.2 !important;
     }
@@ -899,81 +899,44 @@ html, body {
     }
 }
 
-/* ========== АРМИЯ ПАЗАР – АДАПТАЦИЯ ЗА ТЕЛЕФОНИ ========== */
-@media (max-width: 600px) {
-    .market-modal {
-        padding: 5px !important;
-    }
-    .market-modal .glass-panel,
-    .market-modal .modal-content {
-        width: 98% !important;
-        max-width: 98% !important;
-        max-height: 95vh !important;
-        padding: 10px !important;
-        border-radius: 16px !important;
-    }
-    /* Голям бутон за затваряне (ако има клас .close-market) */
-    .market-modal .close-market {
-        font-size: 36px !important;
-        width: 48px !important;
-        height: 48px !important;
-        display: flex !important;
-        align-items: center !important;
-        justify-content: center !important;
-        top: 5px !important;
-        right: 5px !important;
-        background: rgba(0,0,0,0.5) !important;
-        border-radius: 50% !important;
-        cursor: pointer !important;
-        z-index: 10 !important;
-    }
-    /* Секция с войски – по-удобно скролване */
-    .market-modal .troop-shop {
-        max-height: 55vh !important;
-        overflow-y: auto !important;
-        -webkit-overflow-scrolling: touch !important;
-    }
-    /* Бутоните за покупка/продажба да са по-лесни за натискане */
-    .market-modal .buy-btn,
-    .market-modal .sell-btn {
-        padding: 8px 12px !important;
-        font-size: 0.8rem !important;
-        min-width: 60px !important;
-    }
-    /* Селектът за герой да не излиза извън екрана */
-    .market-modal #heroSelect {
-        max-width: 100% !important;
-        font-size: 12px !important;
-        padding: 6px !important;
-    }
+/* ========== АРМИЯ ПАЗАР – ДОПЪЛНИТЕЛНИ СТИЛОВЕ ЗА ТРООП КАРТИ ========== */
+.troop-card {
+    transition: transform 0.1s;
+}
+.troop-card:hover {
+    transform: scale(1.02);
+    border-color: #ffd700 !important;
+}
+.buy-btn, .sell-btn {
+    font-family: inherit;
+    font-weight: bold;
+    transition: 0.1s;
+}
+.buy-btn:active, .sell-btn:active {
+    transform: scale(0.95);
+}
+.troop-shop {
+    scrollbar-width: thin;
+    scrollbar-color: #d4af37 #0a1a2e;
+}
+.troop-shop::-webkit-scrollbar {
+    width: 6px;
+}
+.troop-shop::-webkit-scrollbar-track {
+    background: #0a1a2e;
+}
+.troop-shop::-webkit-scrollbar-thumb {
+    background: #d4af37;
+    border-radius: 3px;
 }
 
-/* Затваряне при клик върху фоновата тъмна област */
-.market-modal {
+/* Затваряне при клик върху фоновата тъмна област (за всички модали) */
+.market-modal,
+#armyMarketModal {
     cursor: pointer;
 }
 .market-modal .glass-panel,
-.market-modal .modal-content {
+.market-modal .modal-content,
+#armyMarketModal > div {
     cursor: default;
-}
-
-/* Осигуряване, че фонът на армия пазара е цял екран и кликването върху него затваря */
-.market-modal {
-    cursor: pointer;  /* показва, че може да се кликне за затваряне */
-}
-.market-modal .glass-panel,
-.market-modal .modal-content {
-    cursor: default;  /* но съдържанието да не показва ръчичка */
-    pointer-events: auto; /* съдържанието да си получава кликове нормално */
-}
-/* Увеличаваме бутона за затваряне (×) за по-лесно натискане с пръст */
-.market-modal .close-market {
-    font-size: 40px !important;
-    width: 48px !important;
-    height: 48px !important;
-    display: inline-flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-    background: rgba(0,0,0,0.3) !important;
-    border-radius: 50% !important;
 }
