@@ -2,7 +2,25 @@
 ПРОЕКТ: ВЕЛИКА БЪЛГАРИЯ
 ФАЙЛ: ui.js (ВЕРСИЯ 7.1 – СИНХРОНИЗАЦИЯ С refreshAllHeroUI)
 ========================================================================== */ 
+window.selectedHero = null;
 
+window.setSelectedHero = function(hero) {
+    if (!hero) return;
+    window.selectedHero = hero;
+    // Не променяме левия панел – той си остава със strongestHero
+    // Но можем да маркираме визуално избрания герой в лентата
+    const slots = document.querySelectorAll('.favorite-slot');
+    slots.forEach(slot => {
+        const nameDiv = slot.querySelector('.hero-name');
+        if (nameDiv && nameDiv.innerText === hero.name) {
+            slot.style.border = '2px solid #ffaa44';
+            slot.style.backgroundColor = 'rgba(255,170,68,0.2)';
+        } else {
+            slot.style.border = '';
+            slot.style.backgroundColor = '';
+        }
+    });
+};
 // ==================== ОБНОВЯВАНЕ НА ВРЕМЕТО ====================
 window.getStrongestHero = function() {
     let strongest = null;
@@ -248,14 +266,31 @@ window.hireNewHero = function() {
         window.showAdvisorPopup("СОЛО РЕЖИМ", "В соло режим не можете да наемате герои. Можете да намирате спътници в регионите (до 4).", "warning");
         return;
     }
+    
     let payingHero = null;
     if (window.gameMode === 'solo') {
         if (!window.currentHero) { window.showAdvisorPopup("ГРЕШКА", "Няма активен герой!", "error"); return; }
         payingHero = window.currentHero;
     } else {
-        payingHero = window.getStrongestHero ? window.getStrongestHero() : null;
-        if (!payingHero) { window.showAdvisorPopup("ГРЕШКА", "Няма нает герой, който да плати!", "error"); return; }
+        // В класически режим – използваме selectedHero (ако има), иначе първия любим
+        if (window.selectedHero && window.selectedHero.isJoined && window.selectedHero.isAlive !== false) {
+            payingHero = window.selectedHero;
+        } else {
+            for (let id in window.worldData.clans) {
+                let h = window.worldData.clans[id];
+                if (h.isJoined && h.isFavorite) {
+                    payingHero = h;
+                    window.setSelectedHero(h);
+                    break;
+                }
+            }
+        }
     }
+    if (!payingHero) {
+        window.showAdvisorPopup("ГРЕШКА", "Няма герой, който да плати за наемането!", "error");
+        return;
+    }
+    
     let allHeroes = getAllHeroesFromDatabase();
     if (!allHeroes.length) { window.showAdvisorPopup("ГРЕШКА", "Няма налични герои за наемане!", "error"); return; }
     let hiredNames = new Set();
@@ -298,8 +333,9 @@ window.hireNewHero = function() {
         window.renderFavoriteHeroesBar();
     }
     if (typeof window.renderSingleBar === 'function') window.renderSingleBar();
+    // Обновяваме левия панел с най-силния герой (без да пипаме selectedHero)
     if (typeof window.updateStrongestHeroUI === 'function') window.updateStrongestHeroUI();
-    window.showAdvisorPopup("УСПЕШНО НАЕМАНЕ", "✨ " + newHero.name + " от род " + newHero.clan + " се закле във вярност!<br><br>💰 Останало злато: " + payingHero.gold + "<br>⚔️ Бойна сила: " + newHero.power, "success");
+    window.showAdvisorPopup("УСПЕШНО НАЕМАНЕ", "✨ " + newHero.name + " от род " + newHero.clan + " се закле във вярност!<br><br>💰 Останало злато на " + payingHero.name + ": " + payingHero.gold + "<br>⚔️ Бойна сила: " + newHero.power, "success");
     if (newHero.isAuto && typeof window.startAutoTimer === 'function') window.startAutoTimer(newId);
     if (document.getElementById('barracks-screen') && document.getElementById('barracks-screen').style.display === 'flex') {
         if (typeof window.renderBarracksLayout === 'function') window.renderBarracksLayout();
@@ -684,15 +720,12 @@ window.renderFavoriteHeroesBar = function() {
         slot.className = 'favorite-slot';
         
         if (hero) {
-            // HP процент
             let hpPercent = (hero.hp / hero.maxHp) * 100;
             let hpColor = hpPercent > 70 ? '#4caf50' : (hpPercent > 30 ? '#ff9800' : '#f44336');
-            // XP процент
             let needXP = window.rpgDatabase?.getXPRequiredForLevel(hero.level || 1) || 150;
             let currentXP = hero.isAuto ? (hero.xp || 0) : (hero.storedXP || 0);
             let xpPercent = Math.min(100, (currentXP / needXP) * 100);
             
-            // Портрет или иконка
             let portraitHtml = '';
             if (hero.portrait) {
                 portraitHtml = `<img src="${hero.portrait}" class="hero-portrait-img" onerror="this.style.display='none'; this.parentElement.querySelector('.hero-icon').style.display='block';">`;
@@ -714,22 +747,28 @@ window.renderFavoriteHeroesBar = function() {
                 </div>
                 <div class="auto-badge">${hero.isAuto ? '🤖 AUTO' : '👤 MANUAL'}</div>
             `;
-            slot.onclick = () => window.showHeroProfile(hero);
+            // Клик – избира героя за действия, после показва профил
+            slot.onclick = () => {
+                window.setSelectedHero(hero);
+                if (typeof window.showHeroProfile === 'function') {
+                    window.showHeroProfile(hero);
+                }
+            };
             
-            // Бутон за премахване от любими (сърце)
+            // Бутон за сърце
             const heartBtn = document.createElement('button');
             heartBtn.innerHTML = '❤️';
             heartBtn.style.cssText = 'position:absolute; top:4px; right:4px; background:none; border:none; font-size:12px; cursor:pointer; color:#ff4466;';
             heartBtn.onclick = (e) => {
-    e.stopPropagation();
-    hero.isFavorite = !hero.isFavorite;   // превключва
-    if (typeof window.saveGreatBulgariaGame === 'function') window.saveGreatBulgariaGame();
-    window.updateAllUI();
-    if (typeof window.renderSingleBar === 'function') window.renderSingleBar();
-};
+                e.stopPropagation();
+                hero.isFavorite = !hero.isFavorite;
+                if (typeof window.saveGreatBulgariaGame === 'function') window.saveGreatBulgariaGame();
+                window.updateAllUI();
+                if (typeof window.renderSingleBar === 'function') window.renderSingleBar();
+            };
             slot.appendChild(heartBtn);
             
-            // Бутон за Auto/Manual toggle
+            // Бутон AUTO/MANUAL
             const autoToggle = document.createElement('button');
             autoToggle.innerText = hero.isAuto ? 'AUTO' : 'MAN';
             autoToggle.style.cssText = 'position:absolute; bottom:4px; left:4px; font-size:8px; background:#2c1a0c; border:1px solid #d4af37; border-radius:4px; padding:1px 3px; cursor:pointer; color:#ffd700;';
@@ -745,8 +784,6 @@ window.renderFavoriteHeroesBar = function() {
                     if (window.gainHeroXP) window.gainHeroXP(hero, amount);
                 }
                 if (window.updateCharacterUI) window.updateCharacterUI(hero);
-                window.updateAllUI();
-                // Синхронизиране на UI
                 window.updateAllUI();
             };
             slot.appendChild(autoToggle);
@@ -766,7 +803,6 @@ window.renderFavoriteHeroesBar = function() {
         container.appendChild(slot);
     }
 };
-
 // ==================== ОСНОВНО ОБНОВЯВАНЕ НА ЛЕВИЯ ПАНЕЛ ====================
 window.updateCharacterUI = function(hero) {
     if (!hero) return;
