@@ -101,7 +101,7 @@
         if (!hero.armyDetails) hero.armyDetails = {};
         hero.armyDetails[typeId] = (hero.armyDetails[typeId] || 0) + quantity;
         syncWithGame(hero);
-        if (window.showAdvisorPopup) window.showAdvisorPopup("УСПЕХ", `Купихте ${quantity} × ${troop.name}`, "success");
+        //if (window.showAdvisorPopup) window.showAdvisorPopup("УСПЕХ", `Купихте ${quantity} × ${troop.name}`, "success");
         updateMarketUI();
     }
     
@@ -119,7 +119,7 @@
         hero.gold += refund;
         hero.armyDetails[typeId] = current - quantity;
         syncWithGame(hero);
-        if (window.showAdvisorPopup) window.showAdvisorPopup("ПРОДАЖБА", `Продадохте ${quantity} × ${troop.name} за ${refund} злато.`, "info");
+        //if (window.showAdvisorPopup) window.showAdvisorPopup("ПРОДАЖБА", `Продадохте ${quantity} × ${troop.name} за ${refund} злато.`, "info");
         updateMarketUI();
     }
     
