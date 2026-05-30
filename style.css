@@ -956,3 +956,24 @@ html, body {
 .market-modal .modal-content {
     cursor: default;
 }
+
+/* Осигуряване, че фонът на армия пазара е цял екран и кликването върху него затваря */
+.market-modal {
+    cursor: pointer;  /* показва, че може да се кликне за затваряне */
+}
+.market-modal .glass-panel,
+.market-modal .modal-content {
+    cursor: default;  /* но съдържанието да не показва ръчичка */
+    pointer-events: auto; /* съдържанието да си получава кликове нормално */
+}
+/* Увеличаваме бутона за затваряне (×) за по-лесно натискане с пръст */
+.market-modal .close-market {
+    font-size: 40px !important;
+    width: 48px !important;
+    height: 48px !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    background: rgba(0,0,0,0.3) !important;
+    border-radius: 50% !important;
+}
