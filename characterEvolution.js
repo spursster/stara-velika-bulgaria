@@ -219,9 +219,6 @@ setTimeout(() => {
             }
         }
     }
-    if (window.currentHero && !window.currentHero.personality) {
-        window.assignPersonalityTraits(window.currentHero, 3);
-    }
     console.log("✅ Личностните черти са синхронизирани с всички герои.");
 }, 1000);
 
