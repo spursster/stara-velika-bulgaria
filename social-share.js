@@ -1,131 +1,177 @@
 // social-share.js
+
 window.ShareUtils = window.ShareUtils || {};
 
 /**
- * Генерира 9:16 видео с профила на героя.
- * Автоматично фолбеква към PNG при грешка.
+ * Генерира вертикална картичка (1080x1920) за TikTok,
+ * която показва пълния визуален профил на героя.
  */
-window.ShareUtils.generateHeroTikTokVideo = async function(hero) {
-    if (!hero) { alert('⚠️ Няма активен герой.'); return; }
+window.ShareUtils.generateHeroCard = function(hero) {
+    if (!hero) { alert('⚠️ Няма данни за героя.'); return; }
 
     const btn = document.querySelector('.tiktok-share-btn, #share-hero-btn');
-    if (btn) { btn.disabled = true; btn.textContent = '⏳ Генериране...'; }
+    if (btn) { btn.disabled = true; btn.textContent = '⏳ Създаване...'; }
 
-    try {
-        // 1. Проверка за съвместимост
-        if (!window.MediaRecorder || !HTMLCanvasElement.prototype.captureStream) {
-            throw new Error('Браузърът не поддържа video recording. Използвай Chrome/Edge.');
+    // 1. Създаваме Canvas с размери за TikTok (9:16)
+    const canvas = document.createElement('canvas');
+    canvas.width = 1080;
+    canvas.height = 1920;
+    const ctx = canvas.getContext('2d');
+
+    // 2. Функция за рисуване на всичко
+    function drawCard(portraitImg) {
+        // --- ФОН ---
+        const gradient = ctx.createLinearGradient(0, 0, 0, 1920);
+        gradient.addColorStop(0, '#1a0f2a');
+        gradient.addColorStop(0.5, '#0f0a1a');
+        gradient.addColorStop(1, '#2a1a0a');
+        ctx.fillStyle = gradient;
+        ctx.fillRect(0, 0, 1080, 1920);
+
+        // Декоративна рамка
+        ctx.strokeStyle = '#c9a227';
+        ctx.lineWidth = 10;
+        ctx.strokeRect(20, 20, 1040, 1880);
+
+        // --- ПОРТРЕТ ---
+        ctx.save();
+        ctx.beginPath();
+        // Кръг в горната част
+        const centerX = 540;
+        const centerY = 400;
+        const radius = 180;
+        ctx.arc(centerX, centerY, radius, 0, Math.PI * 2, true);
+        ctx.clip();
+
+        if (portraitImg) {
+            // Рисуване на портрета (fit into circle)
+            const size = radius * 2;
+            ctx.drawImage(portraitImg, centerX - radius, centerY - radius, size, size);
+        } else {
+            // Фолбек ако няма портрет
+            ctx.fillStyle = '#333';
+            ctx.fill();
+            ctx.fillStyle = '#fff';
+            ctx.font = '150px sans-serif';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText('⚔️', centerX, centerY);
+        }
+        ctx.restore();
+
+        // Златна рамка около портрета
+        ctx.beginPath();
+        ctx.arc(centerX, centerY, radius, 0, Math.PI * 2, true);
+        ctx.lineWidth = 12;
+        ctx.strokeStyle = '#ffd700';
+        ctx.stroke();
+
+        // --- ТЕКСТОВА ИНФОРМАЦИЯ ---
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+
+        // Име
+        ctx.fillStyle = '#ffffff';
+        ctx.font = 'bold 70px sans-serif';
+        ctx.shadowColor = "black";
+        ctx.shadowBlur = 10;
+        ctx.fillText(hero.name || 'Безименен Герой', 540, 700);
+        ctx.shadowBlur = 0;
+
+        // Клас и Ниво
+        ctx.fillStyle = '#ffd700';
+        ctx.font = '50px sans-serif';
+        const classIcon = hero.currentClass === 'Воин' ? '⚔️' : 
+                          hero.currentClass === 'Магьосник' ? '🔮' : 
+                          hero.currentClass === 'Стрелец' ? '🏹' : '🛡️';
+        ctx.fillText(`${classIcon} ${hero.currentClass || 'Клас'} • Ниво ${hero.level || 1}`, 540, 780);
+
+        // --- СТАТИСТИКИ (Визуални ленти) ---
+        let yPos = 900;
+        
+        // Функция за лента
+        function drawBar(label, val, max, color) {
+            ctx.fillStyle = '#ffffff';
+            ctx.font = '40px sans-serif';
+            ctx.textAlign = 'left';
+            ctx.fillText(label, 150, yPos);
+
+            // Фон на бара
+            ctx.fillStyle = 'rgba(0,0,0,0.5)';
+            ctx.fillRect(150, yPos + 20, 780, 30);
+
+            // Прогрес
+            let pct = max > 0 ? Math.min(1, val / max) : 1;
+            ctx.fillStyle = color;
+            ctx.fillRect(150, yPos + 20, 780 * pct, 30);
+
+            // Текст стойност
+            ctx.fillStyle = '#fff';
+            ctx.font = 'bold 30px sans-serif';
+            ctx.textAlign = 'right';
+            ctx.fillText(`${val} / ${max}`, 930, yPos);
+
+            yPos += 100;
         }
 
-        const canvas = document.createElement('canvas');
-        canvas.width = 1080; canvas.height = 1920;
-        const ctx = canvas.getContext('2d');
+        // Здраве
+        drawBar('❤️ Здраве', hero.hp || 0, hero.maxHp || 100, '#4caf50');
+        
+        // Морал
+        drawBar('😊 Морал', hero.morale || 0, 100, '#2196f3');
 
-        // 2. MediaRecorder с безопасен mimeType
-        const videoStream = canvas.captureStream(30);
-        let mimeType = 'video/webm';
-        if (MediaRecorder.isTypeSupported('video/webm;codecs=vp8')) mimeType = 'video/webm;codecs=vp8';
-        if (MediaRecorder.isTypeSupported('video/webm;codecs=vp9')) mimeType = 'video/webm;codecs=vp9';
+        yPos += 20; // Разделител
 
-        const recorder = new MediaRecorder(videoStream, { mimeType, videoBitsPerSecond: 2500000 });
-        const chunks = [];
-        recorder.ondataavailable = e => { if (e.data.size > 0) chunks.push(e.data); };
+        // --- ЧИСЛОВИ ДАННИ (Злато, Армия, Сила) ---
+        ctx.textAlign = 'center';
+        ctx.fillStyle = '#c9a227';
+        ctx.font = '45px sans-serif';
+        
+        // Злато
+        ctx.fillText(`💰 ${hero.gold ? hero.gold.toLocaleString() : 0}`, 360, yPos);
+        // Армия
+        ctx.fillText(`⚔️ ${hero.armySize || hero.army || 0}`, 540, yPos);
+        // Сила
+        ctx.fillText(`💪 ${hero.power || 0}`, 720, yPos);
 
-        recorder.onstop = () => {
-            const blob = new Blob(chunks, { type: 'video/webm' });
-            if (blob.size < 5000) throw new Error('Файлът е празен/повреден.');
+        // --- ФУТЪР ---
+        ctx.fillStyle = '#888';
+        ctx.font = '35px sans-serif';
+        ctx.fillText('🔗 spursster.github.io/stara-velika-bulgaria', 540, 1700);
+        
+        ctx.fillStyle = '#25F4EE';
+        ctx.font = 'bold 45px sans-serif';
+        ctx.fillText('👑 Велика България 👑', 540, 1800);
 
+        // --- ЗАПАЗВАНЕ ---
+        canvas.toBlob(function(blob) {
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url;
-            a.download = `${(hero.name || 'hero').replace(/[^\wа-яА-Я]/gi, '_')}.webm`;
+            a.download = `${hero.name || 'hero'}_profile.png`;
+            document.body.appendChild(a);
             a.click();
+            document.body.removeChild(a);
             URL.revokeObjectURL(url);
 
-            alert('✅ Видеото е свалено!\n📲 В TikTok: Upload → избери файла → Add Sound → Publish');
-            if (btn) { btn.disabled = false; btn.textContent = '🎬 TikTok Видео'; }
-        };
+            if (btn) { btn.disabled = false; btn.textContent = '📤 Сподели визитка'; }
+            alert('✅ Картината е готова!\n\n📲 Качи я в TikTok и добави любимата си музика.');
+        }, 'image/png');
+    }
 
-        recorder.start();
-
-        // 3. Зареждане на портрет
-        let portraitImg = null;
-        if (hero.portrait) {
-            portraitImg = new Image();
-            portraitImg.crossOrigin = 'anonymous';
-            await new Promise((res, rej) => {
-                portraitImg.onload = res;
-                portraitImg.onerror = rej;
-                portraitImg.src = hero.portrait;
-            });
-        }
-
-        // 4. Анимационен цикъл
-        const duration = 4000;
-        const startTime = performance.now();
-        let isRunning = true;
-
-        function draw() {
-            if (!isRunning) return;
-            const t = Math.min((performance.now() - startTime) / duration, 1);
-
-            // Фон
-            const bg = ctx.createLinearGradient(0, 0, 0, 1920);
-            bg.addColorStop(0, '#0a0a14'); bg.addColorStop(1, '#1a0f2a');
-            ctx.fillStyle = bg; ctx.fillRect(0, 0, 1080, 1920);
-
-            // Портрет
-            if (portraitImg) {
-                ctx.save();
-                ctx.beginPath(); ctx.arc(540, 380, 140, 0, Math.PI * 2); ctx.clip();
-                ctx.drawImage(portraitImg, 400, 240, 280, 280);
-                ctx.restore();
-                ctx.beginPath(); ctx.arc(540, 380, 146, 0, Math.PI * 2);
-                ctx.strokeStyle = '#ffd700'; ctx.lineWidth = 8; ctx.stroke();
-            } else {
-                ctx.fillStyle = '#ffd700'; ctx.font = '120px sans-serif';
-                ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-                ctx.fillText('⚔️', 540, 380);
-            }
-
-            // Текст
-            ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-            ctx.fillStyle = '#ffffff'; ctx.font = 'bold 64px sans-serif';
-            ctx.fillText(hero.name || 'Безименен', 540, 620);
-
-            ctx.fillStyle = '#ffd700'; ctx.font = '46px sans-serif';
-            const cls = hero.currentClass || 'Воин';
-            ctx.fillText(`🏛️ ${cls} • Ниво ${hero.level || 1}`, 540, 690);
-
-            ctx.fillStyle = '#e0e0e0'; ctx.font = '40px sans-serif';
-            ctx.fillText(`❤️ ${hero.hp}/${hero.maxHp}  |  💪 ${hero.power || 0}`, 540, 780);
-            ctx.fillText(`💰 ${hero.gold || 0}  |  ⚔️ ${hero.armySize || hero.army || 0}`, 540, 840);
-
-            // CTA
-            ctx.fillStyle = '#25F4EE'; ctx.font = '50px sans-serif';
-            ctx.fillText('🔗 Линк в Bio', 540, 1450);
-            ctx.fillStyle = '#888'; ctx.font = '32px sans-serif';
-            ctx.fillText('spursster.github.io/stara-velika-bulgaria', 540, 1520);
-
-            if (t < 1) {
-                requestAnimationFrame(draw);
-            } else {
-                setTimeout(() => { isRunning = false; recorder.stop(); }, 200);
-            }
-        }
-
-        requestAnimationFrame(draw);
-
-    } catch (err) {
-        console.error('🎬 Video generation failed:', err);
-        alert('⚠️ Не успяхме да генерираме видео. Сваляме като картинка вместо това.');
-        if (btn) { btn.disabled = false; btn.textContent = '📤 Сподели визитка'; }
-        // Автоматичен фолбек към PNG
-        window.ShareUtils.generateHeroCard(hero);
+    // 3. Зареждане на портрета (ако има)
+    if (hero.portrait) {
+        const img = new Image();
+        img.crossOrigin = "Anonymous"; // Важно за сигурност
+        img.onload = function() { drawCard(img); };
+        img.onerror = function() { drawCard(null); }; // Ако портретът е счупен
+        img.src = hero.portrait;
+    } else {
+        drawCard(null);
     }
 };
 
-// Обвързваща функция
+// Обвързваща функция за UI
 window.shareHeroCard = function(hero) {
-    window.ShareUtils.generateHeroTikTokVideo(hero);
+    window.ShareUtils.generateHeroCard(hero);
 };
