@@ -504,12 +504,12 @@
     }
 
     // ==================== ЦЕНТРАЛИЗИРАНО ОБНОВЯВАНЕ НА UI ====================
-    function refreshAllHeroUI() {
+              function refreshAllHeroUI() {
         if (typeof window.renderFavoriteHeroesBar === 'function') {
             window.renderFavoriteHeroesBar();
         }
-        if (window.currentHero && typeof window.updateCharacterUI === 'function') {
-            window.updateCharacterUI(window.currentHero);
+        if (typeof window.updateStrongestHeroUI === 'function') {
+            window.updateStrongestHeroUI();
         }
         if (typeof window.renderSingleBar === 'function') {
             window.renderSingleBar();
@@ -599,21 +599,27 @@
             }
         }
 
-        if (heroes.length === 0 && window.currentHero && window.currentHero.isAlive !== false) {
-            let heroPower = window.currentHero.heroPower || 100;
-            let armySize = window.currentHero.armySize || 300;
-            heroes.push({
-                id: window.currentHero.clan || "hero",
-                name: window.currentHero.name || "Воевода",
-                className: window.currentHero.currentClass || "Багатур",
-                power: Math.max(50, heroPower),
-                hp: window.currentHero.hp || window.currentHero.maxHp || 100,
-                maxHp: window.currentHero.maxHp || 100,
-                icon: "⚔️",
-                armySize: armySize,
-                clanObj: window.currentHero,
-                troopEffects: getTroopSpecialEffects(window.currentHero)
-            });
+                       if (heroes.length === 0) {
+            let fallbackHero = null;
+            if (typeof window.getStrongestHero === 'function') {
+                fallbackHero = window.getStrongestHero();
+            }
+            if (fallbackHero && fallbackHero.isAlive !== false) {
+                let heroPower = fallbackHero.heroPower || 100;
+                let armySize = fallbackHero.armySize || 300;
+                heroes.push({
+                    id: fallbackHero.clan || "hero",
+                    name: fallbackHero.name || "Воевода",
+                    className: fallbackHero.currentClass || "Багатур",
+                    power: Math.max(50, heroPower),
+                    hp: fallbackHero.hp || fallbackHero.maxHp || 100,
+                    maxHp: fallbackHero.maxHp || 100,
+                    icon: "⚔️",
+                    armySize: armySize,
+                    clanObj: fallbackHero,
+                    troopEffects: getTroopSpecialEffects(fallbackHero)
+                });
+            }
         }
 
         const battleHeroes = heroes.slice(0, 5);
@@ -1158,19 +1164,26 @@
     };
 
     // ==================== ГЛОБАЛНА ФУНКЦИЯ ЗА КРАЙ НА ГРУПОВА БИТКА ====================
-    window.endGroupBattle = function(isVictory, reason, regionName) {
+        window.endGroupBattle = function(isVictory, reason, regionName) {
         console.log(`🏁 Битката приключи. Победа: ${isVictory}, Причина: ${reason}, Регион: ${regionName || 'неизвестен'}`);
         
-        if (window.checkAllQuestsProgress && window.currentHero) {
-            window.checkAllQuestsProgress(window.currentHero, regionName || window.currentRegion, "battle");
+        let questHero = null;
+        if (typeof window.getStrongestHero === 'function') {
+            questHero = window.getStrongestHero();
+        }
+        if (window.checkAllQuestsProgress && questHero) {
+            window.checkAllQuestsProgress(questHero, regionName || window.currentRegion, "battle");
         }
         
         if (typeof window.handleBattleEnd === 'function') {
             window.handleBattleEnd(isVictory, reason);
         }
         
-        // Обновяваме всички UI компоненти
         refreshAllHeroUI();
+        
+        if (typeof window.updateStrongestHeroUI === 'function') {
+            window.updateStrongestHeroUI();
+        }
         
         if (typeof window.saveGreatBulgariaGame === 'function') {
             window.saveGreatBulgariaGame();
