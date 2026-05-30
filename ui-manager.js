@@ -37,8 +37,15 @@ window.UIManager.processUpdates = function() {
         }
 
         if (queue.has("all") || queue.has("character")) {
-            if (typeof window.updateCharacterUI === 'function' && window.currentHero) {
-                window.updateCharacterUI();
+            // Взимаме най-силния герой (или избрания) за обновяване на левия панел
+            let heroToUpdate = null;
+            if (typeof window.getSelectedHero === 'function') {
+                heroToUpdate = window.getSelectedHero();
+            } else if (typeof window.getStrongestHero === 'function') {
+                heroToUpdate = window.getStrongestHero();
+            }
+            if (typeof window.updateCharacterUI === 'function' && heroToUpdate) {
+                window.updateCharacterUI(heroToUpdate);
             }
         }
     } catch (e) {
