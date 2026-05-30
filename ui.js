@@ -7,11 +7,10 @@ window.selectedHero = null;
 window.setSelectedHero = function(hero) {
     if (!hero) return;
     window.selectedHero = hero;
-    // Не променяме левия панел – той си остава със strongestHero
-    // Но можем да маркираме визуално избрания герой в лентата
-    const slots = document.querySelectorAll('.favorite-slot');
-    slots.forEach(slot => {
-        const nameDiv = slot.querySelector('.hero-name');
+    var slots = document.querySelectorAll('.favorite-slot');
+    for (var i = 0; i < slots.length; i++) {
+        var slot = slots[i];
+        var nameDiv = slot.querySelector('.hero-name');
         if (nameDiv && nameDiv.innerText === hero.name) {
             slot.style.border = '2px solid #ffaa44';
             slot.style.backgroundColor = 'rgba(255,170,68,0.2)';
@@ -19,7 +18,7 @@ window.setSelectedHero = function(hero) {
             slot.style.border = '';
             slot.style.backgroundColor = '';
         }
-    });
+    }
 };
 // ==================== ОБНОВЯВАНЕ НА ВРЕМЕТО ====================
 window.getStrongestHero = function() {
@@ -249,16 +248,18 @@ function getAllHeroesFromDatabase() {
 
 window.hireNewHero = function() {
     if (window.gameMode === 'solo') {
-        let favoriteCount = 0;
+        var favoriteCount = 0;
         if (window.worldData && window.worldData.clans) {
-            for (let key in window.worldData.clans) {
+            for (var key in window.worldData.clans) {
                 if (window.worldData.clans[key].isFavorite === true) favoriteCount++;
             }
         }
         if (favoriteCount >= 5) {
             if (window.showAdvisorPopup) {
                 window.showAdvisorPopup("ГРЕШКА", "В соло режим можете да имате най-много 4 спътника (общо 5 героя).", "error");
-            } else { alert("Лимитът от 5 героя в соло режим е достигнат."); }
+            } else {
+                alert("Лимитът от 5 героя в соло режим е достигнат.");
+            }
             return;
         }
     }
@@ -267,17 +268,19 @@ window.hireNewHero = function() {
         return;
     }
     
-    let payingHero = null;
+    var payingHero = null;
     if (window.gameMode === 'solo') {
-        if (!window.currentHero) { window.showAdvisorPopup("ГРЕШКА", "Няма активен герой!", "error"); return; }
+        if (!window.currentHero) {
+            window.showAdvisorPopup("ГРЕШКА", "Няма активен герой!", "error");
+            return;
+        }
         payingHero = window.currentHero;
     } else {
-        // В класически режим – използваме selectedHero (ако има), иначе първия любим
         if (window.selectedHero && window.selectedHero.isJoined && window.selectedHero.isAlive !== false) {
             payingHero = window.selectedHero;
         } else {
-            for (let id in window.worldData.clans) {
-                let h = window.worldData.clans[id];
+            for (var id in window.worldData.clans) {
+                var h = window.worldData.clans[id];
                 if (h.isJoined && h.isFavorite) {
                     payingHero = h;
                     window.setSelectedHero(h);
@@ -291,52 +294,87 @@ window.hireNewHero = function() {
         return;
     }
     
-    let allHeroes = getAllHeroesFromDatabase();
-    if (!allHeroes.length) { window.showAdvisorPopup("ГРЕШКА", "Няма налични герои за наемане!", "error"); return; }
-    let hiredNames = new Set();
+    var allHeroes = getAllHeroesFromDatabase();
+    if (allHeroes.length === 0) {
+        window.showAdvisorPopup("ГРЕШКА", "Няма налични герои за наемане!", "error");
+        return;
+    }
+    var hiredNames = new Set();
     if (window.worldData && window.worldData.clans) {
-        for (let key in window.worldData.clans) {
-            let clan = window.worldData.clans[key];
-            if (clan.isJoined === true) hiredNames.add(clan.name || clan.leaderName || key);
+        for (var key2 in window.worldData.clans) {
+            var clan = window.worldData.clans[key2];
+            if (clan.isJoined === true) hiredNames.add(clan.name || clan.leaderName || key2);
         }
     }
     if (payingHero) hiredNames.add(payingHero.name);
-    let available = allHeroes.filter(h => !hiredNames.has(h.name));
-    if (!available.length) { window.showAdvisorPopup("ВНИМАНИЕ", "Всички герои вече са наети!", "warning"); return; }
-    let randomHero = available[Math.floor(Math.random() * available.length)];
-    if (payingHero.gold < randomHero.cost) { window.showAdvisorPopup("ГРЕШКА", "Недостатъчно злато! Нужни: " + randomHero.cost, "error"); return; }
-    let newId = "hero_" + Date.now() + "_" + Math.floor(Math.random() * 10000);
-    let newHero = {
-        name: randomHero.name, clan: randomHero.clan, isJoined: true, isFavorite: true, level: 1, xp: 0,
-        heroPower: randomHero.power, power: randomHero.power, gold: 1500, armySize: 200, currentArmy: 200,
-        currentClass: randomHero.className, className: randomHero.className,
-        skills: { tactics:0, endurance:0, economy:0, mysticism:0, leadership:0 }, skillPoints:0, storedXP:0, isAuto: true,
-        equipment: Array(12).fill(null), inventory: Array(12).fill(null), pet: null, age: 30, learnedSkills: {}, morale: 50, maxHp: 0, hp: 0
+    var available = allHeroes.filter(function(h) { return !hiredNames.has(h.name); });
+    if (available.length === 0) {
+        window.showAdvisorPopup("ВНИМАНИЕ", "Всички герои вече са наети!", "warning");
+        return;
+    }
+    var randomHero = available[Math.floor(Math.random() * available.length)];
+    if (payingHero.gold < randomHero.cost) {
+        window.showAdvisorPopup("ГРЕШКА", "Недостатъчно злато! Нужни: " + randomHero.cost, "error");
+        return;
+    }
+    var newId = "hero_" + Date.now() + "_" + Math.floor(Math.random() * 10000);
+    var newHero = {
+        name: randomHero.name,
+        clan: randomHero.clan,
+        isJoined: true,
+        isFavorite: true,
+        level: 1,
+        xp: 0,
+        heroPower: randomHero.power,
+        power: randomHero.power,
+        gold: 1500,
+        armySize: 200,
+        currentArmy: 200,
+        currentClass: randomHero.className,
+        className: randomHero.className,
+        skills: { tactics:0, endurance:0, economy:0, mysticism:0, leadership:0 },
+        skillPoints:0,
+        storedXP:0,
+        isAuto: true,
+        equipment: Array(12).fill(null),
+        inventory: Array(12).fill(null),
+        pet: null,
+        age: 30,
+        learnedSkills: {},
+        morale: 50,
+        maxHp: 0,
+        hp: 0
     };
-    let endurance = newHero.skills.endurance || 0;
-    let levelBonus = (newHero.level - 1) * 20;
-    let calcMax = 100 + levelBonus + endurance * 15;
+    var endurance = newHero.skills.endurance || 0;
+    var levelBonus = (newHero.level - 1) * 20;
+    var calcMax = 100 + levelBonus + endurance * 15;
     if (isNaN(calcMax) || calcMax <= 0) calcMax = 100;
     newHero.maxHp = calcMax;
     newHero.hp = calcMax;
     newHero.isAlive = true;
+    
     payingHero.gold -= randomHero.cost;
+    
     if (!window.worldData) window.worldData = {};
     if (!window.worldData.clans) window.worldData.clans = {};
     window.worldData.clans[newId] = newHero;
     if (!window.unlockedHeroes) window.unlockedHeroes = [];
     window.unlockedHeroes.push(newHero);
+    
     if (window.gameMode === 'solo' && !window.currentHero) window.currentHero = newHero;
+    
     if (typeof window.renderFavoriteHeroesBar === 'function') {
-        const container = document.getElementById('favorite-heroes-bar');
+        var container = document.getElementById('favorite-heroes-bar');
         if (container) container.innerHTML = '';
         window.renderFavoriteHeroesBar();
     }
     if (typeof window.renderSingleBar === 'function') window.renderSingleBar();
-    // Обновяваме левия панел с най-силния герой (без да пипаме selectedHero)
     if (typeof window.updateStrongestHeroUI === 'function') window.updateStrongestHeroUI();
+    
     window.showAdvisorPopup("УСПЕШНО НАЕМАНЕ", "✨ " + newHero.name + " от род " + newHero.clan + " се закле във вярност!<br><br>💰 Останало злато на " + payingHero.name + ": " + payingHero.gold + "<br>⚔️ Бойна сила: " + newHero.power, "success");
+    
     if (newHero.isAuto && typeof window.startAutoTimer === 'function') window.startAutoTimer(newId);
+    
     if (document.getElementById('barracks-screen') && document.getElementById('barracks-screen').style.display === 'flex') {
         if (typeof window.renderBarracksLayout === 'function') window.renderBarracksLayout();
     }
@@ -697,101 +735,100 @@ if (genBtn) {
 
 // ==================== ЛЕНТА С ЛЮБИМИ ГЕРОИ (5 СЛОТА, XP, HP, AUTO/РЪЧЕН) ====================
 window.renderFavoriteHeroesBar = function() {
-    const container = document.getElementById('favorite-heroes-bar');
+    var container = document.getElementById('favorite-heroes-bar');
     if (!container) return;
     
-    let favoriteHeroesList = [];
+    var favoriteHeroesList = [];
     if (window.worldData && window.worldData.clans) {
-        for (let key in window.worldData.clans) {
-            let hero = window.worldData.clans[key];
+        for (var key in window.worldData.clans) {
+            var hero = window.worldData.clans[key];
             if (hero.isJoined === true && hero.isFavorite === true && hero.isAlive !== false) {
                 favoriteHeroesList.push(hero);
             }
         }
     }
-    favoriteHeroesList.sort((a,b) => (b.level || 1) - (a.level || 1));
-    const top5 = favoriteHeroesList.slice(0, 5);
+    favoriteHeroesList.sort(function(a, b) { return (b.level || 1) - (a.level || 1); });
+    var top5 = favoriteHeroesList.slice(0, 5);
     
     container.innerHTML = '';
     
-    for (let i = 0; i < 5; i++) {
-        const hero = top5[i];
-        const slot = document.createElement('div');
+    for (var i = 0; i < 5; i++) {
+        var hero = top5[i];
+        var slot = document.createElement('div');
         slot.className = 'favorite-slot';
         
         if (hero) {
-            let hpPercent = (hero.hp / hero.maxHp) * 100;
-            let hpColor = hpPercent > 70 ? '#4caf50' : (hpPercent > 30 ? '#ff9800' : '#f44336');
-            let needXP = window.rpgDatabase?.getXPRequiredForLevel(hero.level || 1) || 150;
-            let currentXP = hero.isAuto ? (hero.xp || 0) : (hero.storedXP || 0);
-            let xpPercent = Math.min(100, (currentXP / needXP) * 100);
+            var hpPercent = (hero.hp / hero.maxHp) * 100;
+            var hpColor = hpPercent > 70 ? '#4caf50' : (hpPercent > 30 ? '#ff9800' : '#f44336');
+            var needXP = (window.rpgDatabase && window.rpgDatabase.getXPRequiredForLevel) ? window.rpgDatabase.getXPRequiredForLevel(hero.level || 1) : 150;
+            var currentXP = hero.isAuto ? (hero.xp || 0) : (hero.storedXP || 0);
+            var xpPercent = Math.min(100, (currentXP / needXP) * 100);
             
-            let portraitHtml = '';
+            var portraitHtml = '';
             if (hero.portrait) {
-                portraitHtml = `<img src="${hero.portrait}" class="hero-portrait-img" onerror="this.style.display='none'; this.parentElement.querySelector('.hero-icon').style.display='block';">`;
+                portraitHtml = '<img src="' + hero.portrait + '" class="hero-portrait-img" onerror="this.style.display=\'none\'; this.parentElement.querySelector(\'.hero-icon\').style.display=\'block\';">';
             }
-            const classIcon = window.getClassIcon ? window.getClassIcon(hero.currentClass) : '⚔️';
-            const iconHtml = `<div class="hero-icon" style="${hero.portrait ? 'display:none;' : ''}">${classIcon}</div>`;
+            var classIcon = window.getClassIcon ? window.getClassIcon(hero.currentClass) : '⚔️';
+            var iconHtml = '<div class="hero-icon" style="' + (hero.portrait ? 'display:none;' : '') + '">' + classIcon + '</div>';
             
-            slot.innerHTML = `
-                ${portraitHtml}
-                ${iconHtml}
-                <div class="hero-name" title="${hero.name}">${hero.name.substring(0, 12)}</div>
-                <div class="hero-level-power">Ниво ${hero.level} | 💪 ${hero.heroPower || 100}</div>
-                <div class="hp-bar"><div class="hp-fill" style="width:${hpPercent}%; background:${hpColor};"></div></div>
-                <div class="xp-bar"><div class="xp-fill" style="width:${xpPercent}%;"></div></div>
-                <div class="hero-stats">
-                    <span>❤️ ${hero.hp}/${hero.maxHp}</span>
-                    <span>💰 ${hero.gold || 0}</span>
-                    <span>⚔️ ${hero.armySize || 0}</span>
-                </div>
-                <div class="auto-badge">${hero.isAuto ? '🤖 AUTO' : '👤 MANUAL'}</div>
-            `;
-            // Клик – избира героя за действия, после показва профил
-            slot.onclick = () => {
-                window.setSelectedHero(hero);
-                if (typeof window.showHeroProfile === 'function') {
-                    window.showHeroProfile(hero);
-                }
-            };
+            slot.innerHTML = portraitHtml + iconHtml +
+                '<div class="hero-name" title="' + hero.name + '">' + hero.name.substring(0, 12) + '</div>' +
+                '<div class="hero-level-power">Ниво ' + hero.level + ' | 💪 ' + (hero.heroPower || 100) + '</div>' +
+                '<div class="hp-bar"><div class="hp-fill" style="width:' + hpPercent + '%; background:' + hpColor + ';"></div></div>' +
+                '<div class="xp-bar"><div class="xp-fill" style="width:' + xpPercent + '%;"></div></div>' +
+                '<div class="hero-stats">' +
+                    '<span>❤️ ' + hero.hp + '/' + hero.maxHp + '</span>' +
+                    '<span>💰 ' + (hero.gold || 0) + '</span>' +
+                    '<span>⚔️ ' + (hero.armySize || 0) + '</span>' +
+                '</div>' +
+                '<div class="auto-badge">' + (hero.isAuto ? '🤖 AUTO' : '👤 MANUAL') + '</div>';
             
-            // Бутон за сърце
-            const heartBtn = document.createElement('button');
+            slot.onclick = function(h) {
+                return function() {
+                    window.setSelectedHero(h);
+                    if (typeof window.showHeroProfile === 'function') window.showHeroProfile(h);
+                };
+            }(hero);
+            
+            var heartBtn = document.createElement('button');
             heartBtn.innerHTML = '❤️';
             heartBtn.style.cssText = 'position:absolute; top:4px; right:4px; background:none; border:none; font-size:12px; cursor:pointer; color:#ff4466;';
-            heartBtn.onclick = (e) => {
-                e.stopPropagation();
-                hero.isFavorite = !hero.isFavorite;
-                if (typeof window.saveGreatBulgariaGame === 'function') window.saveGreatBulgariaGame();
-                window.updateAllUI();
-                if (typeof window.renderSingleBar === 'function') window.renderSingleBar();
-            };
+            heartBtn.onclick = (function(h) {
+                return function(e) {
+                    e.stopPropagation();
+                    h.isFavorite = !h.isFavorite;
+                    if (typeof window.saveGreatBulgariaGame === 'function') window.saveGreatBulgariaGame();
+                    window.updateAllUI();
+                    if (typeof window.renderSingleBar === 'function') window.renderSingleBar();
+                };
+            })(hero);
             slot.appendChild(heartBtn);
             
-            // Бутон AUTO/MANUAL
-            const autoToggle = document.createElement('button');
+            var autoToggle = document.createElement('button');
             autoToggle.innerText = hero.isAuto ? 'AUTO' : 'MAN';
             autoToggle.style.cssText = 'position:absolute; bottom:4px; left:4px; font-size:8px; background:#2c1a0c; border:1px solid #d4af37; border-radius:4px; padding:1px 3px; cursor:pointer; color:#ffd700;';
-            autoToggle.onclick = (e) => {
-                e.stopPropagation();
-                hero.isAuto = !hero.isAuto;
-                if (!hero.isAuto && hero.xp > 0) {
-                    hero.storedXP = (hero.storedXP || 0) + hero.xp;
-                    hero.xp = 0;
-                } else if (hero.isAuto && hero.storedXP > 0) {
-                    let amount = hero.storedXP;
-                    hero.storedXP = 0;
-                    if (window.gainHeroXP) window.gainHeroXP(hero, amount);
-                }
-                if (window.updateCharacterUI) window.updateCharacterUI(hero);
-                window.updateAllUI();
-            };
+            autoToggle.onclick = (function(h) {
+                return function(e) {
+                    e.stopPropagation();
+                    h.isAuto = !h.isAuto;
+                    if (!h.isAuto && h.xp > 0) {
+                        h.storedXP = (h.storedXP || 0) + h.xp;
+                        h.xp = 0;
+                    } else if (h.isAuto && h.storedXP > 0) {
+                        var amount = h.storedXP;
+                        h.storedXP = 0;
+                        if (window.gainHeroXP) window.gainHeroXP(h, amount);
+                    }
+                    if (window.updateCharacterUI) window.updateCharacterUI(h);
+                    window.updateAllUI();
+                };
+            })(hero);
             slot.appendChild(autoToggle);
             
         } else {
             slot.classList.add('empty');
             slot.innerHTML = '<div style="font-size:28px;">➕</div><div style="font-size:10px;">Добави герой</div>';
-            slot.onclick = () => {
+            slot.onclick = function() {
                 if (favoriteHeroesList.length >= 5) {
                     window.showAdvisorPopup("ВНИМАНИЕ", "Максимум 5 любими героя!", "warning");
                     return;
