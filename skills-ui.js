@@ -5,6 +5,14 @@
 =========================================================================
 */
 
+// Заглушка за съвместимост (сложете в началото на skills-ui.js)
+if (typeof window.renderTop6HeroesUI !== 'function') {
+    window.renderTop6HeroesUI = function() {
+        if (typeof window.renderFavoriteHeroesBar === 'function') {
+            window.renderFavoriteHeroesBar();
+        }
+    };
+}
 // Помощна функция за показване на съобщения
 function showSkillsMessage(title, message, type = "info") {
     if (window.showAdvisorPopup) {
@@ -255,26 +263,6 @@ window.openSkillsUI = function() {
     attachLearnButtons(modal);
 };
 
-// Добавяме бутон към RPG модала (синхронизиран с новите имена)
-if (typeof window.openHeroRPGModal === 'function') {
-    const originalOpenModal = window.openHeroRPGModal;
-    window.openHeroRPGModal = function(heroId) {
-        originalOpenModal(heroId);
-        setTimeout(() => {
-            const modal = document.getElementById('hero-rpg-modal');
-            if (modal && !modal.querySelector('.skills-ui-btn')) {
-                const skillsBtn = document.createElement('button');
-                skillsBtn.className = 'skills-ui-btn';
-                skillsBtn.innerHTML = '⭐ УМЕНИЯ (НОВИ) ⭐';
-                skillsBtn.style.cssText = 'margin-top:15px; width:100%; background:#daa520; border:none; border-radius:30px; padding:8px; color:#000; font-weight:bold; cursor:pointer; font-family:"Cinzel",serif;';
-                skillsBtn.onclick = () => { modal.style.display = 'none'; window.openSkillsUI(); };
-                const container = modal.querySelector('.modal-content > div:last-child') || modal;
-                container.appendChild(skillsBtn);
-            }
-        }, 100);
-    };
-} else {
-    console.warn("openHeroRPGModal не е дефинирана – не мога да добавя бутон за умения в RPG модала.");
-}
+
 
 console.log("✅ skills-ui.js версия 2.0 зареден – с търсене, автоматично разпределение, подобрен интерфейс и пълна синхронизация.");
