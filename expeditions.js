@@ -1,7 +1,16 @@
 /**
 МОДУЛ: МИСТИЧНИ ПОРТАЛИ И ЕКСПЕДИЦИИ – ВЕЛИКА БЪЛГАРИЯ
-ВЕРСИЯ: 6.0 – ПОРТАЛИ ВЪРХУ КАРТАТА
+ВЕРСИЯ: 6.1 – БЕЗ currentHero, С ОБЩ ДОСТЪП ДО ГЛАВЕН ГЕРОЙ
 */
+
+// Помощна функция за вземане на главния герой (без currentHero)
+function getMainHeroForExpeditions() {
+    if (window.gameMode === 'solo') return window.currentHero || null;
+    if (typeof window.getStrongestHero === 'function') return window.getStrongestHero();
+    if (typeof window.getSelectedHero === 'function') return window.getSelectedHero();
+    return null;
+}
+
 window.addPortalLog = window.addPortalLog || function(heroName, worldName, isVictory) {
     console.log(`[PortalLog] ${heroName} ${isVictory ? 'победи' : 'загуби'} в ${worldName}`);
 };
@@ -35,13 +44,10 @@ if (window.unknownWorldsDatabase.length < 50) {
     }
 }
 
-// ========== НОВА СТРУКТУРА ЗА АКТИВНИ ПОРТАЛИ ==========
-window.activePortals = window.activePortals || []; // { regionName, world, enemyLevel, explorationProgress }
+window.activePortals = window.activePortals || [];
 
-// Функция за добавяне на портал в конкретен регион
 window.addPortalToRegion = function(regionName, world, enemyLevel) {
     if (!regionName || !world) return false;
-    // Проверка дали вече има портал в този регион
     if (window.activePortals.some(p => p.regionName === regionName)) return false;
     window.activePortals.push({
         regionName: regionName,
@@ -49,12 +55,10 @@ window.addPortalToRegion = function(regionName, world, enemyLevel) {
         enemyLevel: enemyLevel,
         explorationProgress: 0
     });
-    // Актуализираме картата (ако е отворена)
     if (typeof window.refreshMap === 'function') window.refreshMap();
     return true;
 };
 
-// Функция за премахване на портал след използване
 window.removePortalFromRegion = function(regionName) {
     const index = window.activePortals.findIndex(p => p.regionName === regionName);
     if (index !== -1) {
@@ -65,7 +69,6 @@ window.removePortalFromRegion = function(regionName) {
     return false;
 };
 
-// Помощна функция за избор на случаен регион (без портал)
 function getRandomRegionWithoutPortal() {
     if (!window.worldData || !window.worldData.regions) return null;
     const allRegions = Object.keys(window.worldData.regions);
@@ -75,7 +78,6 @@ function getRandomRegionWithoutPortal() {
     return free[Math.floor(Math.random() * free.length)];
 }
 
-// Старата глобална променлива (запазваме за обратна съвместимост)
 window.currentPortalState = window.currentPortalState || {
     currentWorld: window.unknownWorldsDatabase[0],
     isOpen: false,
@@ -167,11 +169,10 @@ function attemptAutonomousPortalEntry() {
     }
     if (window.ensureCompleteArmyDetails) window.ensureCompleteArmyDetails(randomHero);
     if (typeof window.renderSingleBar === 'function') window.renderSingleBar();
-    if (window.renderTop6HeroesUI) window.renderTop6HeroesUI();
+    if (typeof window.updateStrongestHeroUI === 'function') window.updateStrongestHeroUI();
 }
 
 window.advanceExpeditionsTurn = function() {
-    // 30% шанс да се отвори нов портал (ако има под 3 активни)
     if (window.activePortals.length < 3 && Math.random() < 0.3) {
         const randomRegion = getRandomRegionWithoutPortal();
         if (randomRegion) {
@@ -184,9 +185,7 @@ window.advanceExpeditionsTurn = function() {
             }
         }
     }
-    // Автономни опити за влизане
     attemptAutonomousPortalEntry();
-    // Актуализираме UI на страничната лента (за обратна съвместимост)
     window.updatePortalContainerUI();
 };
 
@@ -264,22 +263,23 @@ window.enterMysticPortal = function(regionName) {
                             window.worldData.clans[luckyHero.clanObj.clan].pet = portal.world.petName;
                         }
                         if (window.showAdvisorMsg) window.showAdvisorMsg(`🎉 ЛЕГЕНДАРЕН КЪСМЕТ! ${luckyHero.name} опитоми "${portal.world.petName}"!`);
-                    } else if (window.currentHero) {
-                        window.currentHero.pet = portal.world.petName;
-                        if (window.showAdvisorMsg) window.showAdvisorMsg(`🎉 ЛЕГЕНДАРЕН КЪСМЕТ! ${window.currentHero.name} опитоми "${portal.world.petName}"!`);
+                    } else {
+                        // В класически режим – опитваме главния герой
+                        const mainHero = getMainHeroForExpeditions();
+                        if (mainHero) {
+                            mainHero.pet = portal.world.petName;
+                            if (window.showAdvisorMsg) window.showAdvisorMsg(`🎉 ЛЕГЕНДАРЕН КЪСМЕТ! ${mainHero.name} опитоми "${portal.world.petName}"!`);
+                        }
                     }
                 }
                 if (portal.explorationProgress >= 100) {
                     window.removePortalFromRegion(regionName);
                     if (window.showAdvisorMsg) window.showAdvisorMsg(`🌀 Порталът в ${regionName} се затвори след пълно проучване!`);
                 } else {
-                    // Актуализираме UI на страничната лента
                     window.updatePortalContainerUI();
-                    // Обновяваме картата, за да премахнем иконката, ако е проучен 100%
                     if (typeof window.refreshMap === 'function') window.refreshMap();
                 }
             } else {
-                // При загуба порталът остава, но може да се намали прогреса (по желание)
                 if (window.showAdvisorMsg) window.showAdvisorMsg(`💔 Загубихте битката. Порталът в ${regionName} остава отворен.`);
             }
             window.endGroupBattle = originalEndGroupBattle;
@@ -329,4 +329,4 @@ setTimeout(() => {
     window.updatePortalContainerUI();
 }, 1000);
 
-console.log("✅ expeditions.js версия 6.0 зареден – портали върху картата");
+console.log("✅ expeditions.js версия 6.1 зареден – без currentHero, с getMainHeroForExpeditions()");
