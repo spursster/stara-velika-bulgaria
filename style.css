@@ -940,3 +940,27 @@ html, body {
 #armyMarketModal > div {
     cursor: default;
 }
+
+/* TikTok Share Button */
+#share-hero-btn {
+  background: linear-gradient(135deg, #25F4EE 0%, #FE2C55 100%) !important;
+  color: #fff !important;
+  font-weight: bold;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 20px;
+  cursor: pointer;
+  transition: transform 0.2s, box-shadow 0.2s;
+  box-shadow: 0 4px 12px rgba(37, 244, 238, 0.3);
+}
+
+#share-hero-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(37, 244, 238, 0.5);
+}
+
+#share-hero-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
