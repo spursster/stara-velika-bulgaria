@@ -1,51 +1,66 @@
 /**
 ==========================================================================
 ПРОЕКТ: ВЕЛИКА БЪЛГАРИЯ
-ФАЙЛ: rivalry.js (ВЕРСИЯ 5.0 – АГРЕСИВНИ NPC, NPC vs NPC)
+ФАЙЛ: rivalry.js (ВЕРСИЯ 5.1 – БЕЗ currentHero, С getStrongestHero)
 ==========================================================================
 */
 (function() {
-    console.log("🔥 Инициализация на системата за съперничество (агресивна версия)...");
+    console.log("🔥 Инициализация на системата за съперничество (без currentHero)...");
 
     const RIVALRY_CONFIG = {
-        attackChance: 0.35,           // 35% шанс за атака на ход (беше 0.12)
+        attackChance: 0.35,
         xpTheftPercent: 0.30,
         xpTransferToAggressor: 0.50,
         revengeBonus: 1.5,
-        minHeroesForAttack: 1,        // достатъчен 1 герой (беше 2)
-        cooldownTurns: 1,             // само 1 ход изчакване (беше 2)
+        minHeroesForAttack: 1,
+        cooldownTurns: 1,
     };
 
     window.pendingAttack = null;
     let lastAttackTurn = 0;
     let turnCounter = 0;
 
-    // Взима всички герои (без значение дали са наети или не)
-function getAllHeroes(forAttackers = true) {
-    let heroes = [];
-    if (!window.worldData || !window.worldData.clans) return heroes;
-    for (let key in window.worldData.clans) {
-        let hero = window.worldData.clans[key];
-        if (hero && hero.isAlive !== false && hero.isJoined === true) {
-            if (forAttackers && hero.isFavorite === true) continue;
-            heroes.push({
-                id: key,
-                name: hero.name || hero.leaderName || key,
-                heroObj: hero,
-                power: hero.heroPower || 100,
-                army: hero.armySize || 200,
-                xp: hero.xp || 0,
-                skills: hero.skills || {},
-                pet: hero.pet || null,
-                inventory: hero.inventory || [],
-                spouse: hero.spouse || null,
-                isPlayer: (window.currentHero && (hero.name === window.currentHero.name && hero.clan === window.currentHero.clan)) || false,
-                isFavorite: hero.isFavorite === true
-            });
+    // Помощна функция за намиране на "играча" (най-силен герой)
+    function getPlayerHero() {
+        if (typeof window.getStrongestHero === 'function') {
+            return window.getStrongestHero();
         }
+        // Резервен вариант (само за соло режим)
+        if (window.currentHero) return window.currentHero;
+        return null;
     }
-    return heroes;
-}
+
+    function getAllHeroes(forAttackers = true) {
+        let heroes = [];
+        if (!window.worldData || !window.worldData.clans) return heroes;
+        
+        const playerHero = getPlayerHero();
+        
+        for (let key in window.worldData.clans) {
+            let hero = window.worldData.clans[key];
+            if (hero && hero.isAlive !== false && hero.isJoined === true) {
+                if (forAttackers) {
+                    if (playerHero && hero.name === playerHero.name) continue;
+                    if (hero.isFavorite === true) continue;
+                }
+                heroes.push({
+                    id: key,
+                    name: hero.name || hero.leaderName || key,
+                    heroObj: hero,
+                    power: hero.heroPower || 100,
+                    army: hero.armySize || 200,
+                    xp: hero.xp || 0,
+                    skills: hero.skills || {},
+                    pet: hero.pet || null,
+                    inventory: hero.inventory || [],
+                    spouse: hero.spouse || null,
+                    isPlayer: (playerHero && hero.name === playerHero.name) || false,
+                    isFavorite: hero.isFavorite === true
+                });
+            }
+        }
+        return heroes;
+    }
 
     function performTheft(victim, aggressor) {
         const theftTypes = [];
@@ -137,88 +152,86 @@ function getAllHeroes(forAttackers = true) {
         console.log(`📜 [ЛЕТОПИС] ${message}`);
     }
 
-    // Нова функция – атаки между всякакви герои (включително NPC срещу NPC)
-  window.checkRandomAttack = function() {
-    turnCounter++;
-    if (turnCounter - lastAttackTurn < RIVALRY_CONFIG.cooldownTurns) return;
-    if (window.pendingAttack) return;
-    if (Math.random() > RIVALRY_CONFIG.attackChance) return;
+    window.checkRandomAttack = function() {
+        turnCounter++;
+        if (turnCounter - lastAttackTurn < RIVALRY_CONFIG.cooldownTurns) return;
+        if (window.pendingAttack) return;
+        if (Math.random() > RIVALRY_CONFIG.attackChance) return;
 
-    // Вземаме потенциални агресори (само нелюбими наети герои)
-    let possibleAttackers = getAllHeroes(true);
-    if (possibleAttackers.length < 1) return;
+        let possibleAttackers = getAllHeroes(true);
+        if (possibleAttackers.length < 1) return;
 
-    // Вземаме потенциални жертви (всички наети герои)
-    let possibleVictims = getAllHeroes(false);
-    if (possibleVictims.length < 1) return;
+        let possibleVictims = getAllHeroes(false);
+        if (possibleVictims.length < 1) return;
 
-    // Избираме случаен агресор
-    let attacker = possibleAttackers[Math.floor(Math.random() * possibleAttackers.length)];
+        let attacker = possibleAttackers[Math.floor(Math.random() * possibleAttackers.length)];
+        let victims = possibleVictims.filter(v => v.id !== attacker.id);
+        if (victims.length === 0) return;
+        let victim = victims[Math.floor(Math.random() * victims.length)];
 
-    // Филтрираме жертвите да са различни от агресора
-    let victims = possibleVictims.filter(v => v.id !== attacker.id);
-    if (victims.length === 0) return;
+        const stolenInfo = performTheft(victim.heroObj, attacker.heroObj);
+        if (!stolenInfo) return;
 
-    // Избираме случайна жертва
-    let victim = victims[Math.floor(Math.random() * victims.length)];
+        lastAttackTurn = turnCounter;
+        addAttackToChronicle(attacker, victim, stolenInfo);
 
-    // Извършваме кражба
-    const stolenInfo = performTheft(victim.heroObj, attacker.heroObj);
-    if (!stolenInfo) return;
+        const playerHero = getPlayerHero();
+        const isPlayerVictim = (playerHero && victim.name === playerHero.name);
 
-    lastAttackTurn = turnCounter;
-    addAttackToChronicle(attacker, victim, stolenInfo);
+        if (isPlayerVictim && window.showAdvisorPopup) {
+            let stolenDesc = "";
+            if (stolenInfo.type === 'xp') stolenDesc = `${stolenInfo.amount} опит`;
+            else if (stolenInfo.type === 'artifact') stolenDesc = `артефакт "${stolenInfo.item.name}"`;
+            else if (stolenInfo.type === 'spouse') stolenDesc = `съпруг/съпруга "${stolenInfo.item}"`;
+            else if (stolenInfo.type === 'pet') stolenDesc = `домашен любимец`;
+            else if (stolenInfo.type === 'skill') stolenDesc = `умение "${stolenInfo.item}" (Ниво ${stolenInfo.level})`;
+            window.showAdvisorPopup("⚔️ НАПАДЕНИЕ", `${attacker.name} нападна ${victim.name} и открадна ${stolenDesc}!`, "warning");
+        }
 
-    // Ако жертвата е текущият герой на играча – покажи предупреждение
-    if (victim.isPlayer && window.showAdvisorPopup) {
-        let stolenDesc = "";
-        if (stolenInfo.type === 'xp') stolenDesc = `${stolenInfo.amount} опит`;
-        else if (stolenInfo.type === 'artifact') stolenDesc = `артефакт "${stolenInfo.item.name}"`;
-        else if (stolenInfo.type === 'spouse') stolenDesc = `съпруг/съпруга "${stolenInfo.item}"`;
-        else if (stolenInfo.type === 'pet') stolenDesc = `домашен любимец`;
-        else if (stolenInfo.type === 'skill') stolenDesc = `умение "${stolenInfo.item}" (Ниво ${stolenInfo.level})`;
-        window.showAdvisorPopup("⚔️ НАПАДЕНИЕ", `${attacker.name} нападна ${victim.name} и открадна ${stolenDesc}!`, "warning");
-    }
+        if (typeof window.saveGreatBulgariaGame === 'function') {
+            window.saveGreatBulgariaGame();
+        }
 
-    // Запазване на играта след промени
-    if (typeof window.saveGreatBulgariaGame === 'function') {
-        window.saveGreatBulgariaGame();
-    }
+        if (typeof window.updateStrongestHeroUI === 'function') {
+            window.updateStrongestHeroUI();
+        }
+        if (typeof window.renderSingleBar === 'function') window.renderSingleBar();
 
-    // Обновяване на интерфейса
-    if (window.updateCharacterUI) window.updateCharacterUI(window.currentHero);
-    if (typeof window.renderSingleBar === 'function') window.renderSingleBar();
+        console.log(`🔥 НАПАДЕНИЕ (ход ${turnCounter}): ${attacker.name} нападна ${victim.name} и открадна ${stolenInfo.type}`);
+    };
 
-    console.log(`🔥 НАПАДЕНИЕ (ход ${turnCounter}): ${attacker.name} нападна ${victim.name} и открадна ${stolenInfo.type}`);
-};
-    // Останалите функции (startRevengeBattle и помощните) остават без промяна
     window.startRevengeBattle = function(aggressor, victim, stolenInfo) {
         console.log(`⚔️ ЗАПОЧВА БИТКА ЗА ОТМЪЩЕНИЕ: ${victim.name} срещу ${aggressor.name}`);
         const year = (window.gameTime && window.gameTime.year) ? `${window.gameTime.year} г. ${window.gameTime.era}` : "480 г. пр.н.е.";
         if (window.addWorldEvent) {
             window.addWorldEvent(`⚔️ ОТМЪЩЕНИЕ`, `${victim.name} започва битка срещу ${aggressor.name}!`, "⚔️", year);
         }
-        // Взимаме всички герои на играча (за отмъщение)
+        
         let playerHeroes = [];
+        const playerHero = getPlayerHero();
+        
         for (let key in window.worldData.clans) {
             let hero = window.worldData.clans[key];
-            if (hero.isJoined === true && hero.isAlive !== false && (window.currentHero && hero.name !== window.currentHero.name)) {
-                playerHeroes.push({
-                    id: key,
-                    name: hero.name || hero.leaderName || key,
-                    heroObj: hero,
-                    power: hero.heroPower || 100
-                });
+            if (hero.isJoined === true && hero.isAlive !== false) {
+                if (playerHero && hero.name !== playerHero.name) {
+                    playerHeroes.push({
+                        id: key,
+                        name: hero.name || hero.leaderName || key,
+                        heroObj: hero,
+                        power: hero.heroPower || 100
+                    });
+                }
             }
         }
-        if (playerHeroes.length === 0 && window.currentHero) {
+        if (playerHero && !playerHeroes.some(h => h.name === playerHero.name)) {
             playerHeroes.push({
-                id: window.currentHero.clan,
-                name: window.currentHero.name,
-                heroObj: window.currentHero,
-                power: window.currentHero.heroPower || 100
+                id: playerHero.id || playerHero.clan,
+                name: playerHero.name,
+                heroObj: playerHero,
+                power: playerHero.heroPower || 100
             });
         }
+        
         if (playerHeroes.length === 0) {
             if (window.showAdvisorMsg) window.showAdvisorMsg("Нямате герой за отмъщение!");
             return;
@@ -271,15 +284,20 @@ function getAllHeroes(forAttackers = true) {
             }
             if (window.showAdvisorMsg) window.showAdvisorMsg(`💀 Отмъщението се провали! ${victim.name} не успя да си върне откраднатото.`);
         }
-        if (window.updateCharacterUI) window.updateCharacterUI(window.currentHero);
+        if (typeof window.updateStrongestHeroUI === 'function') {
+            window.updateStrongestHeroUI();
+        }
         if (typeof window.renderSingleBar === 'function') window.renderSingleBar();
         window.pendingAttack = null;
     }
 
-    // API
     window.rivalrySystem = {
         getEnemyHeroes: getAllHeroes,
-        getPlayerHeroes: function() { return getAllHeroes().filter(h => h.isPlayer); },
+        getPlayerHeroes: function() {
+            const playerHero = getPlayerHero();
+            if (!playerHero) return [];
+            return [{ name: playerHero.name, heroObj: playerHero, power: playerHero.heroPower || 100, isPlayer: true }];
+        },
         checkRandomAttack: window.checkRandomAttack,
         startRevengeBattle: window.startRevengeBattle,
         performTheft: performTheft,
@@ -287,5 +305,5 @@ function getAllHeroes(forAttackers = true) {
         RIVALRY_CONFIG: RIVALRY_CONFIG
     };
 
-    console.log("✅ Системата за съперничество е инициализирана (NPC срещу NPC, агресивна).");
+    console.log("✅ rivalry.js – напълно без currentHero (използва getStrongestHero)");
 })();
