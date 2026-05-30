@@ -56,14 +56,29 @@ function getClassIcon(className) {
 window.getClassIcon = getClassIcon;
 window.addHeroLog = function(hero, icon, message) {
     if (!hero) return;
+    
     if (!hero.actionLog) hero.actionLog = [];
-    hero.actionLog.unshift({ icon, message, time: Date.now() });
+    
+    hero.actionLog.unshift({ 
+        icon, 
+        message, 
+        time: Date.now() 
+    });
+    
     if (hero.actionLog.length > 15) hero.actionLog.pop();
-    if (hero === window.currentHero && window.updateCharacterUI) window.updateCharacterUI(hero);
-    // Синхронизиране на UI след добавяне на лог
-        window.updateAllUI();
-};
 
+    // Синхронизиране на UI
+    if (hero === window.currentHero && typeof window.updateCharacterUI === 'function') {
+        window.updateCharacterUI(hero);
+    }
+    
+    // Обновяване на всички UI елементи
+    if (typeof window.updateAllUI === 'function') {
+        window.updateAllUI();
+    } else if (typeof window.renderFavoriteHeroesBar === 'function') {
+        window.renderFavoriteHeroesBar();
+    }
+};
 // ==================== ГЕНЕРИРАНЕ НА ПОРТРЕТ С POLLINATIONS.AI ====================
 window.generateHeroPortrait = async function(hero, retries = 2) {
     if (!hero) return;
@@ -136,7 +151,6 @@ function toggleFavorite(id) {
     saveFavorites();
     renderSingleBar();
     window.updateAllUI();
-    else if (typeof window.renderFavoriteHeroesBar === 'function') window.updateAllUI();
 }
 
 // ==================== AUTO СИСТЕМА ====================
