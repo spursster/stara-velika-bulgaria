@@ -64,7 +64,7 @@
         return null;
     }
 
-    // Обновяване на лентата с любими герои (пълно прерисуване) и запазване
+    // Обновяване на лентата с любими герои, общата лента и левия панел (най-силен герой)
     function refreshFavoritesBar() {
         if (typeof window.renderFavoriteHeroesBar === 'function') {
             const container = document.getElementById('favorite-heroes-bar');
@@ -72,6 +72,10 @@
             window.renderFavoriteHeroesBar();
         }
         if (typeof window.renderSingleBar === 'function') window.renderSingleBar();
+        // Обновяваме левия панел, за да покаже най-силния герой (неговата сила и злато)
+        if (typeof window.updateStrongestHeroUI === 'function') {
+            window.updateStrongestHeroUI();
+        }
         if (typeof window.saveGreatBulgariaGame === 'function') window.saveGreatBulgariaGame();
     }
 
@@ -261,7 +265,7 @@
         function refreshModalAfterAction() {
             const updatedHero = getSelectedHero();
             if (updatedHero) updateModalContent(modal, updatedHero);
-            refreshFavoritesBar();  // обновява лентата с любими, за да покаже новото злато
+            refreshFavoritesBar();  // обновява лентата с любими и левия панел
         }
 
         // ----- Бутони за покупка -----
@@ -345,5 +349,5 @@
         sync: refreshFavoritesBar   // за външна синхронизация, ако е нужна
     };
 
-    console.log("✅ armyMarket.js – напълно самостоятелна версия (без active hero, с обновяване на лентата и падащото меню)");
+    console.log("✅ armyMarket.js – напълно самостоятелна версия (без active hero, с обновяване на лентата и левия панел)");
 })();
