@@ -61,8 +61,8 @@ window.addHeroLog = function(hero, icon, message) {
     if (hero.actionLog.length > 15) hero.actionLog.pop();
     if (hero === window.currentHero && window.updateCharacterUI) window.updateCharacterUI(hero);
     // Синхронизиране на UI след добавяне на лог
-    if (typeof window.refreshAllHeroUI === 'function') window.window.updateAllUI();;
-    else if (typeof window.renderFavoriteHeroesBar === 'function') window.window.updateAllUI();;
+    window.updateAllUI();
+    else if (typeof window.renderFavoriteHeroesBar === 'function') window.updateAllUI();
 };
 
 // ==================== ГЕНЕРИРАНЕ НА ПОРТРЕТ С POLLINATIONS.AI ====================
@@ -80,7 +80,7 @@ window.generateHeroPortrait = async function(hero, retries = 2) {
                 hero.portrait = url;
                 if (typeof window.saveGreatBulgariaGame === 'function') window.saveGreatBulgariaGame();
                 if (typeof window.renderSingleBar === 'function') window.renderSingleBar();
-                if (typeof window.renderFavoriteHeroesBar === 'function') window.window.updateAllUI();;
+                if (typeof window.renderFavoriteHeroesBar === 'function') window.updateAllUI();
                 if (window.currentHero === hero && typeof window.updateCharacterUI === 'function') {
                     window.updateCharacterUI(hero);
                 }
@@ -136,8 +136,8 @@ function toggleFavorite(id) {
     else favoriteHeroes.add(id);
     saveFavorites();
     renderSingleBar();
-    if (typeof window.refreshAllHeroUI === 'function') window.window.updateAllUI();;
-    else if (typeof window.renderFavoriteHeroesBar === 'function') window.window.updateAllUI();;
+    window.updateAllUI();
+    else if (typeof window.renderFavoriteHeroesBar === 'function') window.updateAllUI();
 }
 
 // ==================== AUTO СИСТЕМА ====================
@@ -322,9 +322,9 @@ window.hireNewHero = function() {
     }
 
     if (typeof window.refreshAllHeroUI === 'function') {
-        window.window.updateAllUI();;
+        window.updateAllUI();
     } else if (typeof window.renderFavoriteHeroesBar === 'function') {
-        window.window.updateAllUI();;
+        window.updateAllUI();
     }
 };
 // ==================== ДАННИ ЗА ГЕРОИТЕ ====================
@@ -406,8 +406,8 @@ function equipArtifact(hero, artifact, slotIndex) {
     else if (window.saveHeroData) window.saveHeroData(hero);
     if (window.recalculateHeroMaxHp) window.recalculateHeroMaxHp(hero);
     // Синхронизиране на UI след промяна на екипировка
-    if (typeof window.refreshAllHeroUI === 'function') window.window.updateAllUI();;
-    else if (typeof window.renderFavoriteHeroesBar === 'function') window.window.updateAllUI();;
+    window.updateAllUI();
+    else if (typeof window.renderFavoriteHeroesBar === 'function') window.updateAllUI();
 }
 
 function showHeroProfile(hero) {
@@ -619,8 +619,8 @@ function showHeroProfile(hero) {
             autoBtnElem.textContent = newState ? '✅ AUTO РЕЖИМ: ВКЛЮЧЕН' : '🤖 AUTO РЕЖИМ: ИЗКЛЮЧЕН';
             autoBtnElem.style.background = newState ? '#4a6a2a' : '#2c1a0c';
             // Синхронизиране на UI след промяна на режима
-            if (typeof window.refreshAllHeroUI === 'function') window.window.updateAllUI();;
-            else if (typeof window.renderFavoriteHeroesBar === 'function') window.window.updateAllUI();;
+            window.updateAllUI();
+            else if (typeof window.renderFavoriteHeroesBar === 'function') window.updateAllUI();
         };
     }
     
@@ -741,7 +741,7 @@ window.renderFavoriteHeroesBar = function() {
     e.stopPropagation();
     hero.isFavorite = !hero.isFavorite;   // превключва
     if (typeof window.saveGreatBulgariaGame === 'function') window.saveGreatBulgariaGame();
-    window.window.updateAllUI();;
+    window.updateAllUI();
     if (typeof window.renderSingleBar === 'function') window.renderSingleBar();
 };
             slot.appendChild(heartBtn);
@@ -762,9 +762,9 @@ window.renderFavoriteHeroesBar = function() {
                     if (window.gainHeroXP) window.gainHeroXP(hero, amount);
                 }
                 if (window.updateCharacterUI) window.updateCharacterUI(hero);
-                window.window.updateAllUI();;
+                window.updateAllUI();
                 // Синхронизиране на UI
-                if (typeof window.refreshAllHeroUI === 'function') window.window.updateAllUI();;
+                window.updateAllUI();
             };
             slot.appendChild(autoToggle);
             
@@ -862,7 +862,7 @@ window.updateCharacterUI = function(hero) {
     }
 
     if (typeof window.renderFavoriteHeroesBar === 'function') {
-        window.window.updateAllUI();;
+        window.updateAllUI();
     }
     
     const mobileProfile = document.getElementById('mobile-profile-section');
@@ -1420,7 +1420,7 @@ function showAllHeroesModal() {
 // ==================== ИНИЦИАЛИЗАЦИЯ НА НОВАТА ЛЕНТА С ЛЮБИМИ ГЕРОИ ====================
 setTimeout(() => {
     if (typeof window.renderFavoriteHeroesBar === 'function') {
-        window.window.updateAllUI();;
+        window.updateAllUI();
     }
 }, 500);
 
