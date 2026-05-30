@@ -334,11 +334,11 @@ window.hireNewHero = function() {
         if (typeof window.renderBarracksLayout === 'function') window.renderBarracksLayout();
     }
 
-    if (typeof window.refreshAllHeroUI === 'function') {
+  if (typeof window.updateAllUI === 'function') {
         window.updateAllUI();
     } else if (typeof window.renderFavoriteHeroesBar === 'function') {
-        window.updateAllUI();
-    }
+        window.renderFavoriteHeroesBar();
+      }
 };
 // ==================== ДАННИ ЗА ГЕРОИТЕ ====================
 function getAllHeroes() {
@@ -413,14 +413,19 @@ function equipArtifact(hero, artifact, slotIndex) {
     hero.equipment[slotIndex] = artifact;
     let idx = hero.inventory.indexOf(artifact);
     if (idx !== -1) hero.inventory.splice(idx, 1);
+    
     if (window.recalculateHeroPower) window.recalculateHeroPower(hero);
     if (window.updateCharacterUI) window.updateCharacterUI(hero);
     if (window.armyMarket && window.armyMarket.sync) window.armyMarket.sync(hero);
     else if (window.saveHeroData) window.saveHeroData(hero);
     if (window.recalculateHeroMaxHp) window.recalculateHeroMaxHp(hero);
-    // Синхронизиране на UI след промяна на екипировка
-    window.updateAllUI();
-    else if (typeof window.renderFavoriteHeroesBar === 'function') window.updateAllUI();
+    
+    // Поправено
+    if (typeof window.updateAllUI === 'function') {
+        window.updateAllUI();
+    } else if (typeof window.renderFavoriteHeroesBar === 'function') {
+        window.renderFavoriteHeroesBar();
+    }
 }
 
 function showHeroProfile(hero) {
@@ -621,21 +626,31 @@ function showHeroProfile(hero) {
     
     let autoBtnElem = modal.querySelector('#auto-mode-btn');
     if (autoBtnElem) {
+       let autoBtnElem = modal.querySelector('#auto-mode-btn');
+    if (autoBtnElem) {
         autoBtnElem.onclick = () => {
             let newState = !isAuto(hero.id);
             setAuto(hero.id, newState);
-            if (window.worldData && window.worldData.clans && window.worldData.clans[hero.id]) window.worldData.clans[hero.id].isAuto = newState;
-            if (window.currentHero && window.currentHero.id === hero.id) window.currentHero.isAuto = newState;
+            if (window.worldData && window.worldData.clans && window.worldData.clans[hero.id]) 
+                window.worldData.clans[hero.id].isAuto = newState;
+            if (window.currentHero && window.currentHero.id === hero.id) 
+                window.currentHero.isAuto = newState;
             hero.isAuto = newState;
-            if (newState && typeof window.startAutoTimer === 'function') window.startAutoTimer(hero.id);
-            else if (!newState && typeof window.stopAutoTimer === 'function') window.stopAutoTimer(hero.id);
+
+            if (newState && typeof window.startAutoTimer === 'function') 
+                window.startAutoTimer(hero.id);
+            else if (!newState && typeof window.stopAutoTimer === 'function') 
+                window.stopAutoTimer(hero.id);
+
             autoBtnElem.textContent = newState ? '✅ AUTO РЕЖИМ: ВКЛЮЧЕН' : '🤖 AUTO РЕЖИМ: ИЗКЛЮЧЕН';
             autoBtnElem.style.background = newState ? '#4a6a2a' : '#2c1a0c';
-            // Синхронизиране на UI след промяна на режима
-            window.updateAllUI();
-            else if (typeof window.renderFavoriteHeroesBar === 'function') window.updateAllUI();
+            
+            if (typeof window.updateAllUI === 'function') {
+                window.updateAllUI();
+            } else if (typeof window.renderFavoriteHeroesBar === 'function') {
+                window.renderFavoriteHeroesBar();
+            }
         };
-    }
     
     const genBtn = modal.querySelector('#generate-portrait-btn');
     if (genBtn) {
