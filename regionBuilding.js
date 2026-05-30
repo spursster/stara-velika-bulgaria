@@ -1,12 +1,12 @@
 // ==================== СТРОИТЕЛСТВО В РЕГИОНИТЕ ====================
-// Версия 1.0
+// Версия 1.1 (без currentHero)
 
 // База данни за сгради
 window.buildingsDB = {
     barracks: {
         name: "Казарма",
         icon: "🏛️",
-        effect: { armyBonus: 50 },   // увеличава максималната армия в региона
+        effect: { armyBonus: 50 },
         basePrice: 300,
         priceMultiplier: 1.5,
         maxLevel: 5,
@@ -15,7 +15,7 @@ window.buildingsDB = {
     market: {
         name: "Пазар",
         icon: "🏪",
-        effect: { goldBonus: 30 },    // увеличава златния доход на региона
+        effect: { goldBonus: 30 },
         basePrice: 200,
         priceMultiplier: 1.6,
         maxLevel: 5,
@@ -24,7 +24,7 @@ window.buildingsDB = {
     temple: {
         name: "Храм",
         icon: "⛪",
-        effect: { luckBonus: 5 },     // +5% късмет в битка (критичен удар/избягване)
+        effect: { luckBonus: 5 },
         basePrice: 400,
         priceMultiplier: 1.4,
         maxLevel: 3,
@@ -33,7 +33,7 @@ window.buildingsDB = {
     wall: {
         name: "Крепостна стена",
         icon: "🧱",
-        effect: { defenseBonus: 2 },  // +2 ниво на защита на региона
+        effect: { defenseBonus: 2 },
         basePrice: 500,
         priceMultiplier: 1.7,
         maxLevel: 5,
@@ -42,13 +42,21 @@ window.buildingsDB = {
     harbor: {
         name: "Пристанище",
         icon: "⚓",
-        effect: { tradeIncome: 50 },  // допълнителен доход от търговия
+        effect: { tradeIncome: 50 },
         basePrice: 600,
         priceMultiplier: 1.5,
         maxLevel: 3,
         description: "Дава +50 злато на ход от търговия и позволява търговски маршрути с отдалечени региони."
     }
 };
+
+// Помощна функция за вземане на "главния герой" (без currentHero)
+function getMainHeroForBuilding() {
+    if (window.gameMode === 'solo') return window.currentHero || null;
+    if (typeof window.getStrongestHero === 'function') return window.getStrongestHero();
+    if (typeof window.getSelectedHero === 'function') return window.getSelectedHero();
+    return null;
+}
 
 // Инициализация на сградите за региони (ако липсват)
 function initRegionBuildings() {
@@ -65,7 +73,6 @@ function initRegionBuildings() {
             };
         }
         if (!region.resources) {
-            // Добавяме ресурси за региона (процедурно)
             const resourcesList = ["дърво", "камък", "желязо"];
             region.resources = {
                 wood: Math.floor(Math.random() * 100) + 20,
@@ -80,8 +87,8 @@ function initRegionBuildings() {
 window.buildInRegion = function(regionName, buildingId, hero) {
     const region = window.worldData?.regions?.[regionName];
     if (!region) return { success: false, msg: "Регионът не съществува." };
-    if (!hero) hero = window.currentHero;
-    if (!hero) return { success: false, msg: "Няма активен герой." };
+    if (!hero) hero = getMainHeroForBuilding();
+    if (!hero) return { success: false, msg: "Няма намерен герой за строителство." };
 
     const building = window.buildingsDB[buildingId];
     if (!building) return { success: false, msg: "Невалидна сграда." };
@@ -96,7 +103,6 @@ window.buildInRegion = function(regionName, buildingId, hero) {
         return { success: false, msg: `Недостатъчно злато! Нужни: ${price}.` };
     }
 
-    // Проверка за ресурси (ако са въведени)
     const woodCost = (buildingId === 'barracks' ? 20 : buildingId === 'harbor' ? 30 : 0) * (currentLevel + 1);
     const stoneCost = (buildingId === 'wall' ? 30 : buildingId === 'temple' ? 15 : 0) * (currentLevel + 1);
     const ironCost = (buildingId === 'barracks' ? 10 : 0) * (currentLevel + 1);
@@ -105,14 +111,12 @@ window.buildInRegion = function(regionName, buildingId, hero) {
         return { success: false, msg: `Недостатъчно ресурси в региона! Нужни: дърво ${woodCost}, камък ${stoneCost}, желязо ${ironCost}.` };
     }
 
-    // Плащане
     hero.gold -= price;
     region.resources.wood -= woodCost;
     region.resources.stone -= stoneCost;
     region.resources.iron -= ironCost;
     region.buildings[buildingId] = currentLevel + 1;
 
-    // Прилагане на ефектите върху региона
     if (building.effect.armyBonus) {
         region.armySize = (region.baseArmySize || 200) + (region.buildings.barracks * 50);
     }
@@ -120,13 +124,11 @@ window.buildInRegion = function(regionName, buildingId, hero) {
         region.defenseLevel = (region.baseDefenseLevel || 1) + (region.buildings.wall * 2);
     }
     if (building.effect.goldBonus) {
-        region.goldBonus = (region.goldBonus || 0) + 30; // за опростяване, но може да се изчислява динамично
+        region.goldBonus = (region.goldBonus || 0) + 30;
     }
-    // Други ефекти се отчитат в recalculateIncome или battle.js
 
-    // Актуализиране на UI
     if (window.updateCharacterUI) window.updateCharacterUI(hero);
-    if (window.refreshMap) window.refreshMap(); // ако картата е отворена, да се обнови
+    if (window.refreshMap) window.refreshMap();
     if (window.addWorldEvent) {
         window.addWorldEvent(`🏗️ СТРОИТЕЛСТВО`, `${hero.name} построи ниво ${region.buildings[buildingId]} на ${building.name} в ${regionName}.`, "🏗️");
     }
@@ -136,25 +138,21 @@ window.buildInRegion = function(regionName, buildingId, hero) {
 };
 
 // Показване на бутони за строителство в инспекцията на региона
-// За да не променяме съществуващата функция inspectRegion твърде много, ще я презапишем (или ще добавим hook)
 const originalInspectRegion = window.inspectRegion;
 window.inspectRegion = function(regionName) {
-    // Извикваме оригиналната инспекция
     if (originalInspectRegion) originalInspectRegion(regionName);
-    // След това добавяме бутони за строителство в модала
     setTimeout(() => {
         const modal = document.getElementById('region-inspect-overlay');
         if (!modal) return;
         const actionDiv = modal.querySelector('#action-div');
         if (!actionDiv) return;
 
-        // Предотвратяваме дублиране
         if (document.getElementById('buildings-container')) return;
 
         const region = window.worldData?.regions[regionName];
         if (!region) return;
 
-        const hero = window.currentHero;
+        const hero = getMainHeroForBuilding();
         if (!hero) return;
 
         const buildingsContainer = document.createElement('div');
@@ -178,7 +176,7 @@ window.inspectRegion = function(regionName) {
                     const result = await window.buildInRegion(regionName, bid, hero);
                     if (result.success) {
                         if (window.showAdvisorPopup) window.showAdvisorPopup("УСПЕХ", result.msg, "success");
-                        modal.remove(); // затваряме инспекцията, за да се обнови при следващо отваряне
+                        modal.remove();
                     } else {
                         if (window.showAdvisorPopup) window.showAdvisorPopup("ГРЕШКА", result.msg, "error");
                     }
@@ -194,7 +192,6 @@ window.inspectRegion = function(regionName) {
     }, 100);
 };
 
-// Добавяме инициализация при стартиране на играта
 if (typeof window.startFreshGameLogic === 'function') {
     const originalStart = window.startFreshGameLogic;
     window.startFreshGameLogic = function() {
@@ -211,4 +208,4 @@ if (typeof window.loadGreatBulgariaGame === 'function') {
     };
 }
 
-console.log("✅ regionBuilding.js зареден – строителство в регионите");
+console.log("✅ regionBuilding.js зареден – строителство в регионите (без currentHero)");
