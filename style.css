@@ -817,3 +817,84 @@ html, body {
     right: auto !important;
     transform: none !important;
 }
+
+/* ========== КОРЕКЦИЯ ЗА ДИПЛОМАЦИЯТА (да не е под лентите) ========== */
+#diplomacy-hub-modal {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    bottom: 0 !important;
+    width: 100% !important;
+    height: 100% !important;
+    background: rgba(0, 0, 0, 0.85) !important;
+    backdrop-filter: blur(8px) !important;
+    z-index: 300000 !important;  /* по-високо от лентите (z-index:2000) */
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    margin: 0 !important;
+    padding: 15px !important;
+    box-sizing: border-box !important;
+}
+
+#diplomacy-hub-modal .modal-content {
+    margin: auto !important;
+    max-width: 95% !important;
+    max-height: 90% !important;
+    overflow: auto !important;
+    position: relative !important;
+    top: auto !important;
+    bottom: auto !important;
+    transform: none !important;
+}
+
+/* ========== АДАПТИВНОСТ ЗА СЛОТОВЕТЕ НА ГЕРОИТЕ (ТЕЛЕФОНИ) ========== */
+@media (max-width: 768px) {
+    .favorite-slot {
+        min-height: 80px !important;   /* по-ниски слотове */
+        padding: 4px 2px !important;
+        min-width: 65px !important;
+    }
+    .favorite-slot .hero-icon {
+        font-size: 20px !important;
+    }
+    .favorite-slot .hero-name {
+        font-size: 9px !important;
+        white-space: normal !important;  /* пренасяне на текста на нов ред */
+        word-break: break-word !important;
+        line-height: 1.2 !important;
+    }
+    .favorite-slot .hero-level-power,
+    .favorite-slot .hero-stats span,
+    .favorite-slot .auto-badge {
+        font-size: 7px !important;
+    }
+    .favorite-slot img {
+        width: 32px !important;
+        height: 32px !important;
+    }
+}
+
+@media (max-width: 480px) {
+    .favorite-slot {
+        min-height: 70px !important;
+        min-width: 55px !important;
+        padding: 3px 1px !important;
+    }
+    .favorite-slot .hero-icon {
+        font-size: 16px !important;
+    }
+    .favorite-slot .hero-name {
+        font-size: 8px !important;
+    }
+    .favorite-slot .hero-level-power,
+    .favorite-slot .hero-stats span,
+    .favorite-slot .auto-badge {
+        font-size: 6px !important;
+    }
+    .favorite-slot img {
+        width: 28px !important;
+        height: 28px !important;
+    }
+}
