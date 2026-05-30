@@ -270,11 +270,13 @@ window.hireNewHero = function() {
         inventory: Array(12).fill(null),
         pet: null,
         age: 30,
-        learnedSkills: {}
+        learnedSkills: {},
+        morale: 50,
+        maxHp: 0,
+        hp: 0
     };
 
-    // ========== ДИРЕКТНО ЗАДАВАНЕ НА HP (ГАРАНТИРАНО) ==========
-    if (!newHero.skills) newHero.skills = {};
+    // Задаване на HP
     var endurance = newHero.skills.endurance || 0;
     var levelBonus = (newHero.level - 1) * 20;
     var calcMax = 100 + levelBonus + endurance * 15;
@@ -282,7 +284,6 @@ window.hireNewHero = function() {
     newHero.maxHp = calcMax;
     newHero.hp = calcMax;
     newHero.isAlive = true;
-    // ===========================================================
 
     const oldHero = window.currentHero;
     oldHero.gold -= randomHero.cost;
@@ -313,10 +314,24 @@ window.hireNewHero = function() {
         localStorage.setItem('barracksFavorites', JSON.stringify(favs));
     }
 
+    // ===== ОБНОВЯВАНЕ НА UI (златото да се види) =====
     let goldSpan = document.getElementById('val-gold');
     if (goldSpan) goldSpan.innerText = oldHero.gold;
-    if (window.updateCharacterUI) window.updateCharacterUI(oldHero);
-    if (typeof window.renderSingleBar === 'function') window.renderSingleBar();
+    
+    // Принудително обновяване на лентата с любими герои
+    if (typeof window.renderFavoriteHeroesBar === 'function') {
+        const container = document.getElementById('favorite-heroes-bar');
+        if (container) container.innerHTML = '';
+        window.renderFavoriteHeroesBar();
+    }
+    // Обновяване на страничния панел на активния герой
+    if (typeof window.updateCharacterUI === 'function') {
+        window.updateCharacterUI(oldHero);
+    }
+    // Обновяване на общата лента с герои (ако съществува)
+    if (typeof window.renderSingleBar === 'function') {
+        window.renderSingleBar();
+    }
 
     window.showAdvisorPopup(
         "УСПЕШНО НАЕМАНЕ",
@@ -334,11 +349,9 @@ window.hireNewHero = function() {
         if (typeof window.renderBarracksLayout === 'function') window.renderBarracksLayout();
     }
 
-  if (typeof window.updateAllUI === 'function') {
+    if (typeof window.updateAllUI === 'function') {
         window.updateAllUI();
-    } else if (typeof window.renderFavoriteHeroesBar === 'function') {
-        window.renderFavoriteHeroesBar();
-      }
+    }
 };
 // ==================== ДАННИ ЗА ГЕРОИТЕ ====================
 function getAllHeroes() {
