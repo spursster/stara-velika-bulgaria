@@ -4,17 +4,16 @@
  ФАЙЛ: logic.js (ВЕРСИЯ 5.1 – КЪСИ РЕДОВЕ, УНИКАЛНИ ID)
  ========================================================================
  */
-
 document.addEventListener('DOMContentLoaded', function() {
-    console.log("🏛️ Инициализация на системата за запис...");
-    setTimeout(function() {
-        const hasSave = localStorage.getItem('GreatBulgaria_SaveGame');
-        if (hasSave) {
+    console.log("🏛️ DOM готов – стартирам играта...");
+
+    setTimeout(() => {
+        if (localStorage.getItem('GreatBulgaria_SaveGame')) {
             window.loadGreatBulgariaGame();
         } else {
-            window.startFreshGameLogic();
+            window.startGameCore();        // ← новата функция
         }
-    }, 150);
+    }, 100);
 });
 
 // ========== ФУНКЦИЯ ЗА СЛУЧАЕН ГЕРОЙ ОТ DATABASE ==========
