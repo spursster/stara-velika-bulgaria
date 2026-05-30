@@ -105,3 +105,7 @@ window.GameHeroes.initializeAll = function() {
 
     console.log(`✅ Инициализирани ${Object.keys(window.worldData.heroes).length} героя`);
 };
+// Стартирай UI Manager
+if (typeof window.UIManager !== 'undefined') {
+    window.UIManager.requestUpdate("all");
+}
