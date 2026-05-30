@@ -4,6 +4,37 @@
 ========================================================================== */ 
 
 // ==================== ОБНОВЯВАНЕ НА ВРЕМЕТО ====================
+window.getStrongestHero = function() {
+    let strongest = null;
+    let maxPower = -1;
+    if (!window.worldData || !window.worldData.clans) return window.currentHero || null;
+    for (let id in window.worldData.clans) {
+        let hero = window.worldData.clans[id];
+        if (!hero.isJoined || hero.isAlive === false) continue;
+        let power = (hero.heroPower || 100) + (hero.armySize || 0) / 10 + (hero.level || 1) * 5;
+        if (power > maxPower) {
+            maxPower = power;
+            strongest = hero;
+        }
+    }
+    if (!strongest && window.currentHero) strongest = window.currentHero;
+    return strongest;
+};
+
+window.updateStrongestHeroUI = function() {
+    const hero = window.getStrongestHero();
+    if (!hero) return;
+    const goldSpan = document.getElementById('val-gold');
+    if (goldSpan) goldSpan.innerText = hero.gold;
+    const armySpan = document.getElementById('val-army');
+    if (armySpan) armySpan.innerText = hero.armySize || 0;
+    const powerSpan = document.getElementById('val-hero-power');
+    if (powerSpan) powerSpan.innerText = hero.heroPower || 100;
+    if (typeof window.updateCharacterUI === 'function') {
+        window.updateCharacterUI(hero);
+    }
+};
+
 window.updateTimeUI = function() {
     if (!window.gameTime) return;
     
@@ -95,8 +126,10 @@ window.generateHeroPortrait = async function(hero, retries = 2) {
                 if (typeof window.saveGreatBulgariaGame === 'function') window.saveGreatBulgariaGame();
                 if (typeof window.renderSingleBar === 'function') window.renderSingleBar();
                 if (typeof window.renderFavoriteHeroesBar === 'function') window.updateAllUI();
-                if (window.currentHero === hero && typeof window.updateCharacterUI === 'function') {
-                    window.updateCharacterUI(hero);
+               // След генериране на портрет обновяваме левия панел с най-силния герой
+if (typeof window.updateStrongestHeroUI === 'function') {
+    window.updateStrongestHeroUI();
+}
                 }
                 resolve(url);
             };
@@ -119,6 +152,9 @@ window.generateHeroPortrait = async function(hero, retries = 2) {
         return null;
     }
 };
+
+
+
 
 // ==================== ПРЕВКЛЮЧВАНЕ НА ЦЯЛ ЕКРАН ====================
 window.toggleGameFullScreen = function() { 
@@ -194,7 +230,6 @@ function getAllHeroesFromDatabase() {
 }
 
 window.hireNewHero = function() {
-    // ===== 1. ПРОВЕРКА ЗА ЛИМИТ В СОЛО РЕЖИМ =====
     if (window.gameMode === 'solo') {
         let favoriteCount = 0;
         if (window.worldData && window.worldData.clans) {
@@ -204,32 +239,25 @@ window.hireNewHero = function() {
         }
         if (favoriteCount >= 5) {
             if (window.showAdvisorPopup) {
-                window.showAdvisorPopup("ГРЕШКА",
-                    "В соло режим можете да имате най-много 4 спътника (общо 5 героя).",
-                    "error");
-            } else {
-                alert("Лимитът от 5 героя в соло режим е достигнат.");
-            }
+                window.showAdvisorPopup("ГРЕШКА", "В соло режим можете да имате най-много 4 спътника (общо 5 героя).", "error");
+            } else { alert("Лимитът от 5 героя в соло режим е достигнат."); }
             return;
         }
     }
-
-    // ===== 2. ОРИГИНАЛНА ЛОГИКА =====
     if (window.gameMode === 'solo') {
-        window.showAdvisorPopup("СОЛО РЕЖИМ",
-            "В соло режим не можете да наемате герои. Можете да намирате спътници в регионите (до 4).",
-            "warning");
+        window.showAdvisorPopup("СОЛО РЕЖИМ", "В соло режим не можете да наемате герои. Можете да намирате спътници в регионите (до 4).", "warning");
         return;
     }
-    if (!window.currentHero) {
-        window.showAdvisorPopup("ГРЕШКА", "Няма активен герой!", "error");
-        return;
+    let payingHero = null;
+    if (window.gameMode === 'solo') {
+        if (!window.currentHero) { window.showAdvisorPopup("ГРЕШКА", "Няма активен герой!", "error"); return; }
+        payingHero = window.currentHero;
+    } else {
+        payingHero = window.getStrongestHero ? window.getStrongestHero() : null;
+        if (!payingHero) { window.showAdvisorPopup("ГРЕШКА", "Няма нает герой, който да плати!", "error"); return; }
     }
     let allHeroes = getAllHeroesFromDatabase();
-    if (allHeroes.length === 0) {
-        window.showAdvisorPopup("ГРЕШКА", "Няма налични герои за наемане!", "error");
-        return;
-    }
+    if (!allHeroes.length) { window.showAdvisorPopup("ГРЕШКА", "Няма налични герои за наемане!", "error"); return; }
     let hiredNames = new Set();
     if (window.worldData && window.worldData.clans) {
         for (let key in window.worldData.clans) {
@@ -237,120 +265,44 @@ window.hireNewHero = function() {
             if (clan.isJoined === true) hiredNames.add(clan.name || clan.leaderName || key);
         }
     }
-    if (window.currentHero) hiredNames.add(window.currentHero.name);
+    if (payingHero) hiredNames.add(payingHero.name);
     let available = allHeroes.filter(h => !hiredNames.has(h.name));
-    if (available.length === 0) {
-        window.showAdvisorPopup("ВНИМАНИЕ", "Всички герои вече са наети!", "warning");
-        return;
-    }
+    if (!available.length) { window.showAdvisorPopup("ВНИМАНИЕ", "Всички герои вече са наети!", "warning"); return; }
     let randomHero = available[Math.floor(Math.random() * available.length)];
-    if (window.currentHero.gold < randomHero.cost) {
-        window.showAdvisorPopup("ГРЕШКА",
-            "Недостатъчно злато! Нужни: " + randomHero.cost, "error");
-        return;
-    }
+    if (payingHero.gold < randomHero.cost) { window.showAdvisorPopup("ГРЕШКА", "Недостатъчно злато! Нужни: " + randomHero.cost, "error"); return; }
     let newId = "hero_" + Date.now() + "_" + Math.floor(Math.random() * 10000);
     let newHero = {
-        name: randomHero.name,
-        clan: randomHero.clan,
-        isJoined: true,
-        isFavorite: true,
-        level: 1,
-        xp: 0,
-        heroPower: randomHero.power,
-        power: randomHero.power,
-        gold: 1500,
-        armySize: 200,
-        currentArmy: 200,
-        currentClass: randomHero.className,
-        className: randomHero.className,
-        skills: { tactics:0, endurance:0, economy:0, mysticism:0, leadership:0 },
-        skillPoints:0, storedXP:0, isAuto: true,
-        equipment: Array(12).fill(null),
-        inventory: Array(12).fill(null),
-        pet: null,
-        age: 30,
-        learnedSkills: {},
-        morale: 50,
-        maxHp: 0,
-        hp: 0
+        name: randomHero.name, clan: randomHero.clan, isJoined: true, isFavorite: true, level: 1, xp: 0,
+        heroPower: randomHero.power, power: randomHero.power, gold: 1500, armySize: 200, currentArmy: 200,
+        currentClass: randomHero.className, className: randomHero.className,
+        skills: { tactics:0, endurance:0, economy:0, mysticism:0, leadership:0 }, skillPoints:0, storedXP:0, isAuto: true,
+        equipment: Array(12).fill(null), inventory: Array(12).fill(null), pet: null, age: 30, learnedSkills: {}, morale: 50, maxHp: 0, hp: 0
     };
-
-    // Задаване на HP
-    var endurance = newHero.skills.endurance || 0;
-    var levelBonus = (newHero.level - 1) * 20;
-    var calcMax = 100 + levelBonus + endurance * 15;
+    let endurance = newHero.skills.endurance || 0;
+    let levelBonus = (newHero.level - 1) * 20;
+    let calcMax = 100 + levelBonus + endurance * 15;
     if (isNaN(calcMax) || calcMax <= 0) calcMax = 100;
     newHero.maxHp = calcMax;
     newHero.hp = calcMax;
     newHero.isAlive = true;
-
-    const oldHero = window.currentHero;
-    oldHero.gold -= randomHero.cost;
-
+    payingHero.gold -= randomHero.cost;
     if (!window.worldData) window.worldData = {};
     if (!window.worldData.clans) window.worldData.clans = {};
     window.worldData.clans[newId] = newHero;
     if (!window.unlockedHeroes) window.unlockedHeroes = [];
     window.unlockedHeroes.push(newHero);
-
-    if (typeof ensureActiveHeroInBarracks === 'function') {
-        ensureActiveHeroInBarracks();
-    } else {
-        oldHero.isJoined = true;
-        oldHero.isFavorite = true;
-        if (!window.worldData.clans[oldHero.clan]) {
-            window.worldData.clans[oldHero.clan] = oldHero;
-        } else {
-            window.worldData.clans[oldHero.clan].isJoined = true;
-            window.worldData.clans[oldHero.clan].isFavorite = true;
-        }
-        let favs = [];
-        for (let k in window.worldData.clans) {
-            const c = window.worldData.clans[k];
-            if (c.isJoined && c.isFavorite) favs.push(c.name);
-        }
-        if (!favs.includes(oldHero.name)) favs.push(oldHero.name);
-        localStorage.setItem('barracksFavorites', JSON.stringify(favs));
-    }
-
-    // ===== ОБНОВЯВАНЕ НА UI (златото да се види) =====
-    let goldSpan = document.getElementById('val-gold');
-    if (goldSpan) goldSpan.innerText = oldHero.gold;
-    
-    // Принудително обновяване на лентата с любими герои
+    if (window.gameMode === 'solo' && !window.currentHero) window.currentHero = newHero;
     if (typeof window.renderFavoriteHeroesBar === 'function') {
         const container = document.getElementById('favorite-heroes-bar');
         if (container) container.innerHTML = '';
         window.renderFavoriteHeroesBar();
     }
-    // Обновяване на страничния панел на активния герой
-    if (typeof window.updateCharacterUI === 'function') {
-        window.updateCharacterUI(oldHero);
-    }
-    // Обновяване на общата лента с герои (ако съществува)
-    if (typeof window.renderSingleBar === 'function') {
-        window.renderSingleBar();
-    }
-
-    window.showAdvisorPopup(
-        "УСПЕШНО НАЕМАНЕ",
-        "✨ " + newHero.name + " от род " + newHero.clan + " се закле във вярност!<br><br>" +
-        "💰 Останало злато: " + oldHero.gold + "<br>⚔️ Бойна сила: " + newHero.power,
-        "success"
-    );
-
-    if (newHero.isAuto && typeof window.startAutoTimer === 'function') {
-        window.startAutoTimer(newId);
-    }
-
-    if (document.getElementById('barracks-screen') &&
-        document.getElementById('barracks-screen').style.display === 'flex') {
+    if (typeof window.renderSingleBar === 'function') window.renderSingleBar();
+    if (typeof window.updateStrongestHeroUI === 'function') window.updateStrongestHeroUI();
+    window.showAdvisorPopup("УСПЕШНО НАЕМАНЕ", "✨ " + newHero.name + " от род " + newHero.clan + " се закле във вярност!<br><br>💰 Останало злато: " + payingHero.gold + "<br>⚔️ Бойна сила: " + newHero.power, "success");
+    if (newHero.isAuto && typeof window.startAutoTimer === 'function') window.startAutoTimer(newId);
+    if (document.getElementById('barracks-screen') && document.getElementById('barracks-screen').style.display === 'flex') {
         if (typeof window.renderBarracksLayout === 'function') window.renderBarracksLayout();
-    }
-
-    if (typeof window.updateAllUI === 'function') {
-        window.updateAllUI();
     }
 };
 // ==================== ДАННИ ЗА ГЕРОИТЕ ====================
@@ -426,19 +378,12 @@ function equipArtifact(hero, artifact, slotIndex) {
     hero.equipment[slotIndex] = artifact;
     let idx = hero.inventory.indexOf(artifact);
     if (idx !== -1) hero.inventory.splice(idx, 1);
-    
     if (window.recalculateHeroPower) window.recalculateHeroPower(hero);
     if (window.updateCharacterUI) window.updateCharacterUI(hero);
     if (window.armyMarket && window.armyMarket.sync) window.armyMarket.sync(hero);
     else if (window.saveHeroData) window.saveHeroData(hero);
     if (window.recalculateHeroMaxHp) window.recalculateHeroMaxHp(hero);
-    
-    // Поправено
-    if (typeof window.updateAllUI === 'function') {
-        window.updateAllUI();
-    } else if (typeof window.renderFavoriteHeroesBar === 'function') {
-        window.renderFavoriteHeroesBar();
-    }
+    if (typeof window.updateStrongestHeroUI === 'function') window.updateStrongestHeroUI();
 }
 
 function showHeroProfile(hero) {
@@ -644,8 +589,7 @@ if (autoBtnElem) {
         setAuto(hero.id, newState);
         if (window.worldData && window.worldData.clans && window.worldData.clans[hero.id]) 
             window.worldData.clans[hero.id].isAuto = newState;
-        if (window.currentHero && window.currentHero.id === hero.id) 
-            window.currentHero.isAuto = newState;
+      
         hero.isAuto = newState;
 
         if (newState && typeof window.startAutoTimer === 'function') 
@@ -826,29 +770,13 @@ window.renderFavoriteHeroesBar = function() {
 // ==================== ОСНОВНО ОБНОВЯВАНЕ НА ЛЕВИЯ ПАНЕЛ ====================
 window.updateCharacterUI = function(hero) {
     if (!hero) return;
-
-    const isActive = window.currentHero &&
-        (window.currentHero.name === hero.name && window.currentHero.clan === hero.clan);
-
-    if (isActive) {
-        window.currentHero = hero;
-    } else if (!window.currentHero) {
-        window.currentHero = hero;
-    } else {
-        return;
-    }
-
     if (window.initializeHeroRPGData) window.initializeHeroRPGData(hero);
-
     const goldDisplay = document.getElementById('val-gold');
     if (goldDisplay) goldDisplay.innerText = hero.gold || 0;
-
     const armyDisplay = document.getElementById('val-army');
     if (armyDisplay) armyDisplay.innerText = hero.armySize || 0;
-
     const powerDisplay = document.getElementById('val-hero-power');
     if (powerDisplay) powerDisplay.innerText = hero.heroPower || 100;
-
     const profileBox = document.getElementById('active-character-profile');
     if (profileBox) {
         let petStatus = "Няма";
@@ -866,7 +794,6 @@ window.updateCharacterUI = function(hero) {
             '<div>Любимец: ' + petStatus + '</div>' +
             '</div>';
     }
-
     if (hero.portrait) {
         const profileBox = document.getElementById('active-character-profile');
         if (profileBox) {
@@ -887,7 +814,6 @@ window.updateCharacterUI = function(hero) {
             if (oldImg) oldImg.remove();
         }
     }
-
     if (profileBox && !document.getElementById('open-rpg-modal-btn')) {
         const rpgBtn = document.createElement('button');
         rpgBtn.id = "open-rpg-modal-btn";
@@ -895,34 +821,28 @@ window.updateCharacterUI = function(hero) {
         rpgBtn.style.cssText = "width:100%; margin-top:10px; padding:8px; font-size:11px; font-family:'Cinzel';";
         rpgBtn.innerText = " Управление на Героя";
         rpgBtn.onclick = function() {
-            if (window.openHeroRPGModal) window.openHeroRPGModal(window.currentHero.clan);
+            if (window.openHeroRPGModal) window.openHeroRPGModal(hero.clan);
         };
         profileBox.appendChild(rpgBtn);
     }
-
-    if (typeof window.renderFavoriteHeroesBar === 'function') {
-        window.updateAllUI();
-    }
-    
     const mobileProfile = document.getElementById('mobile-profile-section');
     if (mobileProfile) {
-        const profileBox = mobileProfile.querySelector('#active-character-profile');
-        if (profileBox) {
+        const mobileProfileBox = mobileProfile.querySelector('#active-character-profile');
+        if (mobileProfileBox) {
             const originalProfile = document.getElementById('active-character-profile');
             if (originalProfile) {
-                profileBox.innerHTML = originalProfile.innerHTML;
-                const rpgBtn = profileBox.querySelector('#open-rpg-modal-btn');
-                if (rpgBtn && !rpgBtn.hasAttribute('data-mobile-fixed')) {
-                    rpgBtn.onclick = function() {
-                        if (window.openHeroRPGModal) window.openHeroRPGModal(window.currentHero.clan);
+                mobileProfileBox.innerHTML = originalProfile.innerHTML;
+                const rpgBtnMobile = mobileProfileBox.querySelector('#open-rpg-modal-btn');
+                if (rpgBtnMobile && !rpgBtnMobile.hasAttribute('data-mobile-fixed')) {
+                    rpgBtnMobile.onclick = function() {
+                        if (window.openHeroRPGModal) window.openHeroRPGModal(hero.clan);
                     };
-                    rpgBtn.setAttribute('data-mobile-fixed', 'true');
+                    rpgBtnMobile.setAttribute('data-mobile-fixed', 'true');
                 }
             }
         }
     }
 };
-
 // ==================== ЖУРНАЛ НА СЪВЕТНИКА ====================
 window.showAdvisorMsg = function(msg) { 
     const journal = document.getElementById('advisor-journal'); 
@@ -1466,11 +1386,12 @@ setTimeout(() => {
 window.openHeroRPGModal = function(heroId) {
     let hero = null;
     if (heroId && window.worldData?.clans?.[heroId]) hero = window.worldData.clans[heroId];
-    else if (window.currentHero) hero = window.currentHero;
+    else hero = window.getStrongestHero ? window.getStrongestHero() : null;
     if (!hero) return;
     if (typeof window.showHeroProfile === 'function') window.showHeroProfile(hero);
     else console.warn("showHeroProfile не е дефинирана");
 };
+if (typeof window.updateStrongestHeroUI === 'function') window.updateStrongestHeroUI();
 
 // ==================== КРАЙ НА ui.js ====================
 console.log("✅ ui.js зареден успешно - SyntaxError поправен");
