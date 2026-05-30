@@ -143,10 +143,8 @@ window.generateHeroPortrait = async function(hero, retries = 2) {
                 if (typeof window.saveGreatBulgariaGame === 'function') window.saveGreatBulgariaGame();
                 if (typeof window.renderSingleBar === 'function') window.renderSingleBar();
                 if (typeof window.renderFavoriteHeroesBar === 'function') window.updateAllUI();
-               // След генериране на портрет обновяваме левия панел с най-силния герой
-if (typeof window.updateStrongestHeroUI === 'function') {
-    window.updateStrongestHeroUI();
-}
+                if (typeof window.updateStrongestHeroUI === 'function') {
+                    window.updateStrongestHeroUI();
                 }
                 resolve(url);
             };
@@ -169,10 +167,6 @@ if (typeof window.updateStrongestHeroUI === 'function') {
         return null;
     }
 };
-
-
-
-
 // ==================== ПРЕВКЛЮЧВАНЕ НА ЦЯЛ ЕКРАН ====================
 window.toggleGameFullScreen = function() { 
     if (!document.fullscreenElement && !document.mozFullScreenElement && !document.webkitFullscreenElement && !document.msFullscreenElement) { 
