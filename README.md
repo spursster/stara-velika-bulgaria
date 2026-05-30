@@ -1,34 +1,78 @@
-# Project Overview: "Велика България"
+# 🏰 Велика България (Magna Bulgaria)
 
-This project is a web-based fantasy strategy game, "Велика България" (Great Bulgaria).
+> Уеб-базирана фентъзи стратегия с RPG елементи, вдъхновена от историческото наследство на Стара Велика България.
 
-## File Structure & Functions
+🌐 [Играйте онлайн](https://spursster.github.io/stara-velika-bulgaria/)
 
-### Core & Logic Files
-- `database.js`: Manages local data persistence for game state.
-- `logic.js`: Contains main game mechanics and loop logic.
-- `mechanics.js`: Additional game mechanics rules.
-- `rpg_system.js`: RPG elements: hero stats, leveling, and management.
-- `economy.js`: Handles resources (gold), production, and trade.
-- `time.js`: Manages game time, seasons, and years.
-- `battle.js`: Battles and strategic combat simulation.
-- `armyMarket.js`: UI and logic for army and troop management.
-- `barracks.js`: Barracks management logic.
-- `diplomacy.js`: Diplomatic relationships.
-- `expeditions.js`: Logic for historical expeditions.
-- `quests.js`: Quest system and rewards.
-- `regions.js`: Map regions and management.
-- `rivalry.js`: Rivalry systems between states.
-- `soloMode.js`: Special solo gameplay modes.
-- `world_data.js`: Global configuration and data.
-- `troopsData.js`: Data definitions for various troop types.
-- `items.js`: Defines various items available in the game.
+---
 
-### UI & Presentation Files
-- `index.html`: Main entry point, structure of the game interface.
-- `style.css`: Global styles, layout, theme definitions, and media queries for responsiveness.
-- `ui.js`: Manages user interface interactions, popups, sidebar menu, and dynamic updates to the DOM.
-- `skills-ui.js`: Specific UI components related to the skills system.
-- `skills.js`: Logic behind the skills system.
-- `events.js`: Event system for UI updates or in-game events.
-- `classes.js`: Class definitions for game entities.
+## 🎮 За играта
+
+**Велика България** е браузърна стратегическа игра, която комбинира дълбоки механики за управление на империя с ролеви елементи. Изградете своята държава, развивайте икономика, командвайте армии, водете дипломация и предприемайте исторически експедиции в динамичен свят, където всяко решение има значение.
+
+### ✨ Основни възможности
+
+| Категория | Функционалности |
+|-----------|----------------|
+| ⚔️ **Бойна система** | Симулация на стратегически битки, управление на войски, тактики |
+| 💰 **Икономика** | Производство, търговия, управление на злато и ресурси |
+| 🤝 **Дипломация** | Отношения с други държави, съюзи, съперничества |
+| 🗺️ **Карта и региони** | Управление на територии, експедиции, исторически локации |
+| 🦸 **RPG елементи** | Герои с нива, умения, инвентар и развитие |
+| 📜 **Куестове** | Система от задачи с награди и сюжетни линии |
+| 🕐 **Времева система** | Динамични сезони, години и исторически събития |
+| 👥 **Режими на игра** | Включително Solo Mode за самостоятелно преживяване |
+
+---
+
+## 🗂️ Структура на проекта
+📁 stara-velika-bulgaria/
+├── 📄 index.html # Основна точка на вход, структура на интерфейса
+├── 🎨 style.css # Глобални стилове, теми, адаптивен дизайн
+│
+├── 🧠 Core Logic
+│ ├── logic.js # Основна механика и игрови цикъл
+│ ├── mechanics.js # Допълнителни правила и механики
+│ ├── database.js # Локално съхранение на игровото състояние
+│ └── world_data.js # Глобални конфигурации и данни
+│
+├── ⚔️ Бойни системи
+│ ├── battle.js # Симулация на битки
+│ ├── armyMarket.js # Управление на войски и пазар
+│ ├── barracks.js # Логика на казармите
+│ └── troopsData.js # Дефиниции на типове войски
+│
+├── 💼 Икономика и управление
+│ ├── economy.js # Ресурси, производство, търговия
+│ ├── regions.js # Управление на карта и региони
+│ ├── diplomacy.js # Дипломатически отношения
+│ └── rivalry.js # Система на съперничество
+│
+├── 🦸 RPG и герои
+│ ├── rpg_system.js # Статистики, нива, развитие на герои
+│ ├── skills.js # Логика на уменията
+│ ├── skills-ui.js # UI компоненти за умения
+│ ├── items.js # Дефиниции на предмети и инвентар
+│ └── quests.js # Система от куестове и награди
+│
+├── 🌍 Събития и експедиции
+│ ├── expeditions.js # Логика за исторически експедиции
+│ ├── events.js # Система за игрови събития
+│ └── time.js # Управление на време, сезони, години
+│
+├── 🎨 Потребителски интерфейс
+│ ├── ui.js # Интеракции, менюта, динамични обновления
+│ └── classes.js # Дефиниции на класове за игрови обекти
+│
+└── 🎮 Допълнителни режими
+└── soloMode.js # Специални режими за самостоятелна игра
+
+
+⚙️ Конфигурация и данни
+🗄️ Съхранение: Играта използва localStorage за запазване на прогреса в браузъра
+🌍 world_data.js: Централен файл за глобални настройки, константи и начални данни
+🗃️ database.js: Абстракция за операции със запазване/зареждане на игровото състояние
+
+🙏 Благодарности
+Вдъхновено от историята на Стара Велика България и нейното културно наследство
+Благодаря на всички играчи и тестери за обратната връзка!
