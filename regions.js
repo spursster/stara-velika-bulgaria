@@ -175,8 +175,14 @@ window.inspectRegion = function(regionName) {
         return;
     }
     const reg = window.worldData.regions[regionName];
-    const hero = window.currentHero;
-    if (!hero) return;
+  // Взимаме подходящия герой според режима
+let hero = null;
+if (window.gameMode === 'solo' && window.currentHero) {
+    hero = window.currentHero;
+} else {
+    hero = window.getSelectedHero ? window.getSelectedHero() : (window.getStrongestHero ? window.getStrongestHero() : null);
+}
+if (!hero) return;
 
     const owned = (window.playerRegions && window.playerRegions.flat) ? window.playerRegions.flat() : [];
     const isOwned = owned.includes(regionName);
