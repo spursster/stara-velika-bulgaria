@@ -237,16 +237,25 @@
         if (anyChanged && typeof window.refreshQuestsUI === 'function') window.refreshQuestsUI();
     };
 
-    // Хук за събития (без да презаписва други модули)
-    if (typeof window.endGroupBattle === 'function') {
-        const originalEndBattle = window.endGroupBattle;
-        window.endGroupBattle = function(isVictory, reason, ...args) {
-            originalEndBattle(isVictory, reason, ...args);
-            if (isVictory && window.currentHero && window.currentRegion) {
-                window.checkAllQuestsProgress(window.currentHero, window.currentRegion, "battle");
+ // Хук за събития (без да презаписва други модули)
+if (typeof window.endGroupBattle === 'function') {
+    const originalEndBattle = window.endGroupBattle;
+    window.endGroupBattle = function(isVictory, reason, ...args) {
+        originalEndBattle(isVictory, reason, ...args);
+        if (isVictory && window.currentRegion) {
+            // В класически режим – взимаме избрания герой, иначе най-силния
+            let hero = null;
+            if (window.gameMode === 'solo' && window.currentHero) {
+                hero = window.currentHero;
+            } else {
+                hero = window.getSelectedHero ? window.getSelectedHero() : (window.getStrongestHero ? window.getStrongestHero() : null);
             }
-        };
-    }
+            if (hero) {
+                window.checkAllQuestsProgress(hero, window.currentRegion, "battle");
+            }
+        }
+    };
+}
 
     console.log("✅ Епическата система за куестове е активна (хармонизирана версия).");
 })();
