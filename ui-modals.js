@@ -70,6 +70,21 @@ window.showAdvisorPopup = function(title, message, type = "info") {
     popup.addEventListener('click', (e) => { if (e.target === popup) closeHandler(); });
 };
 
+// Помощна функция за получаване на "активния" герой в текущия режим
+function getGameHero() {
+    if (window.gameMode === 'solo') {
+        return window.currentHero || null;
+    } else {
+        if (typeof window.getStrongestHero === 'function') {
+            return window.getStrongestHero();
+        }
+        if (typeof window.getSelectedHero === 'function') {
+            return window.getSelectedHero();
+        }
+        return null;
+    }
+}
+
 // ==================== ДУЕЛЕН МОДАЛ (ПРЕДИЗВИКАТЕЛСТВО ОТ НЕЛЮБИМ ГЕРОЙ) ====================
 window.showDuelChallenge = function(attackerHero) {
     const oldModal = document.getElementById('duel-modal');
@@ -183,12 +198,14 @@ window.showDuelChallenge = function(attackerHero) {
         modal.remove();
         const attackerNameShow = attackerHero.leaderName || attackerHero.name || "Непознат";
         if (window.showAdvisorMsg) window.showAdvisorMsg(`🏃‍♂️ Избягахте от двубоя с ${attackerNameShow}!`);
-        if (window.currentHero && window.currentHero.armySize) {
-            let loss = Math.floor(window.currentHero.armySize * 0.05);
-            window.currentHero.armySize = Math.max(10, window.currentHero.armySize - loss);
-            window.currentHero.currentArmy = window.currentHero.armySize;
-            if (window.updateCharacterUI) window.updateCharacterUI(window.currentHero);
+        let playerHero = getGameHero();
+        if (playerHero && playerHero.armySize) {
+            let loss = Math.floor(playerHero.armySize * 0.05);
+            playerHero.armySize = Math.max(10, playerHero.armySize - loss);
+            playerHero.currentArmy = playerHero.armySize;
+            if (window.updateCharacterUI) window.updateCharacterUI(playerHero);
             if (window.renderTop6HeroesUI) window.renderTop6HeroesUI();
+            if (typeof window.updateStrongestHeroUI === 'function') window.updateStrongestHeroUI();
         }
     };
 };
@@ -216,11 +233,14 @@ window.startBattleAgainstHero = function(enemyHero) {
 // ==================== ГЕНЕРИРАНЕ НА СЛУЧАЙНО ПРЕДИЗВИКАТЕЛСТВО ====================
 window.triggerRandomDuelChallenge = function() {
     if (!window.worldData || !window.worldData.clans) return;
+    let playerHero = getGameHero();
+    if (!playerHero) return;
+    
     let potentialChallengers = [];
     for (let key in window.worldData.clans) {
         let hero = window.worldData.clans[key];
-        if (hero.isJoined === true && hero.isFavorite !== true && hero !== window.currentHero) {
-            if (hero.name !== window.currentHero.name) {
+        if (hero.isJoined === true && hero.isFavorite !== true && hero !== playerHero) {
+            if (hero.name !== playerHero.name) {
                 potentialChallengers.push(hero);
             }
         }
@@ -394,7 +414,6 @@ window.shareHeroCard = async function(hero) {
     if (hero.inventory && Array.isArray(hero.inventory)) {
         artifactsList = hero.inventory.filter(a => a && a.name && a.icon);
     }
-    // Показваме до 6 артефакта
     artifactsList = artifactsList.slice(0, 6);
 
     let artifactsHtml = '';
