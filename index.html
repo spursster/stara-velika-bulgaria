@@ -124,30 +124,33 @@
 <script src="skills-ui.js"></script>
 
 <script>
-// ==================== ГЛОБАЛНИ ДОПЪЛНЕНИЯ ====================
+// ==================== ГЛОБАЛНИ ДОПЪЛНЕНИЯ (без currentHero в класически режим) ====================
 (function() {
-    // Ако renderTop6HeroesUI не съществува, добавяме заглушка
+    // Заглушки за липсващи функции (ако не са заредени)
     if (typeof window.renderTop6HeroesUI !== 'function') {
         window.renderTop6HeroesUI = function() {
             console.log("⚠️ renderTop6HeroesUI извикана, но не е дефинирана (заглушка)");
         };
     }
-
-    // Ако createLegendaryHero не съществува, добавяме празна функция
     if (typeof window.createLegendaryHero !== 'function') {
         window.createLegendaryHero = function() {};
     }
-
-    // Ако triggerRandomDuelChallenge не съществува, добавяме празна функция
     if (typeof window.triggerRandomDuelChallenge !== 'function') {
         window.triggerRandomDuelChallenge = function() {};
     }
 
-    // Защита на toggleTreasury
+    // Коригирана toggleTreasury – работи с избрания герой (getSelectedHero)
     const originalToggle = window.toggleTreasury;
     if (originalToggle) {
         window.toggleTreasury = function() {
-            if (!window.currentHero) {
+            let hero = null;
+            if (window.gameMode === 'solo') {
+                hero = window.currentHero;
+            } else {
+                hero = (typeof window.getSelectedHero === 'function') ? window.getSelectedHero() : null;
+                if (!hero && typeof window.getStrongestHero === 'function') hero = window.getStrongestHero();
+            }
+            if (!hero) {
                 if (window.showAdvisorPopup) {
                     window.showAdvisorPopup("ВНИМАНИЕ", "Заредете игра или започнете нова, за да отворите съкровищницата.", "warning");
                 } else {
@@ -260,8 +263,10 @@
     }
 })();
 </script>
+
 <script>
 (function() {
+    // Филтър за дублиращи се врагове (без промяна)
     if (window.rivalrySystem && typeof window.rivalrySystem.getEnemyHeroes === 'function') {
         const originalGetEnemy = window.rivalrySystem.getEnemyHeroes;
         window.rivalrySystem.getEnemyHeroes = function() {
@@ -280,8 +285,15 @@
         console.log("✅ Филтър за дублиращи се врагове активиран.");
     }
 
+    // Обновяване на името в горната лента – работи с най-силния герой в класически режим
     function updateHeroNameInTopBar() {
-        let hero = window.currentHero;
+        let hero = null;
+        if (window.gameMode === 'solo') {
+            hero = window.currentHero;
+        } else {
+            if (typeof window.getStrongestHero === 'function') hero = window.getStrongestHero();
+            if (!hero && typeof window.getSelectedHero === 'function') hero = window.getSelectedHero();
+        }
         if (!hero) return;
         let heroName = hero.name || "Герой";
         let container = document.querySelector('#top-bar .top-bar-stats');
@@ -299,22 +311,28 @@
     setInterval(updateHeroNameInTopBar, 1000);
     updateHeroNameInTopBar();
 
+    // Заглушка за openRegionsMap
     if (typeof window.openRegionsMap !== 'function') {
         window.openRegionsMap = function() {};
     }
 
+    // Заглушка за startBattle (ако липсва)
     if (typeof window.startBattle !== 'function') {
         window.startBattle = function(region) {
             console.log(`Битка в ${region} (симулация)`);
-            if (window.currentHero && window.gainHeroXP) {
+            let hero = null;
+            if (window.gameMode === 'solo') hero = window.currentHero;
+            else if (typeof window.getStrongestHero === 'function') hero = window.getStrongestHero();
+            if (hero && window.gainHeroXP) {
                 let xp = 50 + Math.floor(Math.random() * 80);
-                window.gainHeroXP(window.currentHero, xp);
-                if (window.addWorldEvent) window.addWorldEvent(`⚔️ Битка в ${region}`, `${window.currentHero.name} победи! +${xp} XP`, "⚔️");
+                window.gainHeroXP(hero, xp);
+                if (window.addWorldEvent) window.addWorldEvent(`⚔️ Битка в ${region}`, `${hero.name} победи! +${xp} XP`, "⚔️");
                 else alert(`Победа! +${xp} XP`);
             } else alert("Не може да се получи XP");
         };
     }
 
+    // Инициализация на летописа (worldEvents)
     if (!window.worldEvents) window.worldEvents = [];
     window.addWorldEvent = function(title, desc, icon, year) {
         window.worldEvents.unshift({ id: Date.now(), title, description: desc, icon: icon || '📜', time: year || window.gameTime?.year ? `${window.gameTime.year} г. ${window.gameTime.era}` : "480 г. пр.н.е." });
@@ -344,27 +362,8 @@
         cont.innerHTML = html;
     };
 
-    if (!window.currentHero) {
-        window.currentHero = {
-            name: "Кубрат",
-            clan: "Дуло",
-            gold: 2000,
-            armySize: 500,
-            currentArmy: 500,
-            heroPower: 150,
-            level: 1,
-            xp: 0,
-            storedXP: 0,
-            isAuto: true,
-            skillPoints: 0,
-            skills: { tactics: 0, endurance: 0, economy: 0, mysticism: 0, leadership: 0 },
-            inventory: []
-        };
-        if (window.initializeHeroRPGData) window.initializeHeroRPGData(window.currentHero);
-    } else {
-        window.currentHero.isAuto = true;
-        if (window.initializeHeroRPGData) window.initializeHeroRPGData(window.currentHero);
-    }
+    // Премахваме създаването на фалшив window.currentHero – в класически режим той не трябва да съществува.
+    // Вместо това, ако няма герой, разчитаме на getStrongestHero / getSelectedHero.
 
     window.updateTimeUI = function() {
         const timeSpan = document.getElementById('current-time-info');
@@ -401,6 +400,7 @@
         if (typeof window.advanceExpeditionsTurn === 'function') window.advanceExpeditionsTurn();
         if (typeof window.autonomousRegionConquest === 'function') window.autonomousRegionConquest();
 
+        // Обновяване на героите (без currentHero)
         if (window.worldData && window.worldData.clans) {
             for (let key in window.worldData.clans) {
                 let hero = window.worldData.clans[key];
@@ -417,11 +417,25 @@
             }
         }
         if (typeof window.checkRandomAttack === 'function') window.checkRandomAttack();
-        if (window.currentHero && window.gainHeroXP) window.gainHeroXP(window.currentHero, 15);
+        
+        // В класически режим даваме XP на най-силния герой (или на всички живи?)
+        // За простота – на най-силния
+        let mainHero = null;
+        if (window.gameMode === 'solo') {
+            mainHero = window.currentHero;
+        } else {
+            if (typeof window.getStrongestHero === 'function') mainHero = window.getStrongestHero();
+        }
+        if (mainHero && window.gainHeroXP) window.gainHeroXP(mainHero, 15);
+        
         if (Math.random() < 0.02 && typeof window.createLegendaryHero === 'function') window.createLegendaryHero();
         if (Math.random() < 0.15 && typeof window.triggerRandomDuelChallenge === 'function') window.triggerRandomDuelChallenge();
         
-        if (window.updateCharacterUI) window.updateCharacterUI(window.currentHero);
+        // Обновяване на UI с най-силния герой (ляв панел)
+        if (typeof window.updateStrongestHeroUI === 'function') {
+            window.updateStrongestHeroUI();
+        }
+        // За съвместимост със стари функции
         if (window.renderTop6HeroesUI) window.renderTop6HeroesUI();
         if (typeof window.renderSingleBar === 'function') window.renderSingleBar();
         if (typeof window.saveGreatBulgariaGame === 'function') window.saveGreatBulgariaGame();
@@ -429,7 +443,10 @@
 
     if (typeof window.toggleTreasury !== 'function') {
         window.toggleTreasury = function() {
-            const hero = window.currentHero;
+            let hero = null;
+            if (window.gameMode === 'solo') hero = window.currentHero;
+            else if (typeof window.getSelectedHero === 'function') hero = window.getSelectedHero();
+            else if (typeof window.getStrongestHero === 'function') hero = window.getStrongestHero();
             if (!hero) { alert("Няма герой"); return; }
             const inv = hero.inventory || [];
             let html = '<div class="modal-overlay" id="treasuryModal"><div class="modal-content"><h2>🏺 Съкровищница</h2>';
@@ -456,13 +473,17 @@
         };
     }
 
+    // Добавяне на няколко примерни събития в летописа, ако е празен
     if (window.worldEvents.length === 0) {
         window.addWorldEvent("🏛️ Основаване на Тракийското царство", "Тракийските племена се обединяват", "🏰", "480 г. пр.н.е.");
         window.addWorldEvent("⚔️ Подготовка за война", "Персийската империя набира войски", "⚔️", "480 г. пр.н.е.");
     }
     window.displayEvents();
 
-    if (window.updateCharacterUI) window.updateCharacterUI(window.currentHero);
+    // Обновяване на UI с най-силния герой при старт
+    if (typeof window.updateStrongestHeroUI === 'function') {
+        window.updateStrongestHeroUI();
+    }
     if (window.addWorldEvent) window.addWorldEvent("⚙️ ХОД", "Светът се променя...", "🌍");
     if (window.renderTop6HeroesUI) window.renderTop6HeroesUI();
     if (window.initHeroBar) window.initHeroBar();
@@ -470,7 +491,7 @@
         if(confirm("Изчисти летописа?")) { window.worldEvents = []; window.displayEvents(); }
     });
     
-    console.log("✅ Играта е напълно готова (с дуели и легендарни герои)!");
+    console.log("✅ Играта е напълно готова (без currentHero в класически режим)!");
 })();
 </script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
