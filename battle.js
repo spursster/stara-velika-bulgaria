@@ -505,23 +505,15 @@
 
     // ==================== ЦЕНТРАЛИЗИРАНО ОБНОВЯВАНЕ НА UI ====================
     function refreshAllHeroUI() {
-        // Обновява лентата с любими герои
         if (typeof window.renderFavoriteHeroesBar === 'function') {
             window.renderFavoriteHeroesBar();
         }
-        // Обновява страничния панел на активния герой
         if (window.currentHero && typeof window.updateCharacterUI === 'function') {
             window.updateCharacterUI(window.currentHero);
         }
-        // Обновява общата лента с герои (ако съществува)
         if (typeof window.renderSingleBar === 'function') {
             window.renderSingleBar();
         }
-        // Обновява класацията на героите (ако е отворена)
-        if (typeof window.renderTop6HeroesUI === 'function') {
-            window.renderTop6HeroesUI();
-        }
-        // Ако казармите са отворени, обновява и тях
         const barracksScreen = document.getElementById('barracks-screen');
         if (barracksScreen && barracksScreen.style.display === 'flex' && typeof window.renderBarracksLayout === 'function') {
             window.renderBarracksLayout();
