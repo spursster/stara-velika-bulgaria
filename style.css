@@ -776,3 +776,44 @@ html, body {
 .bottom-hero-btn {
     display: none !important;
 }
+
+/* Принудително центриране на всички модали (вкл. дипломация) */
+.modal-overlay,
+.market-modal,
+#barracks-screen,
+#regions-map-overlay,
+#hero-rpg-modal,
+#skills-ui-modal,
+#event-overlay-modal,
+#treasury-overlay,
+#wm-marriage-modal,
+#elite-heroes-modal {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    bottom: 0 !important;
+    width: 100% !important;
+    height: 100% !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    margin: 0 !important;
+    padding: 15px !important;
+    box-sizing: border-box !important;
+}
+
+.modal-content,
+.glass-panel,
+#diplomacy-hub-modal .modal-content {   /* специално за дипломацията */
+    margin: auto !important;
+    max-width: 90% !important;
+    max-height: 90% !important;
+    overflow: auto !important;
+    position: relative !important;
+    top: auto !important;
+    bottom: auto !important;
+    left: auto !important;
+    right: auto !important;
+    transform: none !important;
+}
