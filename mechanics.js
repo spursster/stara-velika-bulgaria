@@ -1,6 +1,6 @@
 /**
  * МОДУЛ: ОСНОВНИ ИГРОВИ МЕХАНИКИ - Велика България
- * ВЕРСИЯ: 5.0 – ХАРМОНИЗИРАНА (ВСИЧКИ СА ГЕРОИ)
+ * ВЕРСИЯ: 6.0 – БЕЗ currentHero, С updateStrongestHeroUI
  */
 
 window.clanPerks = {
@@ -65,7 +65,10 @@ window.upgradeHeroSkill = function(hero, skillKey) {
     }
     if (window.rpgDatabase && window.rpgDatabase.checkArcheAgeClass) window.rpgDatabase.checkArcheAgeClass(hero);
     if (window.updateCharacterUI) window.updateCharacterUI(hero);
-    if (window.renderTop6HeroesUI) window.renderTop6HeroesUI();
+    // Обновяваме левия панел с най-силния герой
+    if (typeof window.updateStrongestHeroUI === 'function') {
+        window.updateStrongestHeroUI();
+    }
     return { success: true, msg: `Успешно подобрихте умението ${skillKey}!` };
 };
 // Старо име за съвместимост
@@ -77,7 +80,10 @@ window.evolveHeroClass = function(hero, targetClass) {
     hero.heroPower = (hero.heroPower || 100) + 50;
     showGameMessage("ЕВОЛЮЦИЯ", `👑 Героят ${hero.name} прие клас "${targetClass}"!`, "success");
     if (window.updateCharacterUI) window.updateCharacterUI(hero);
-    if (window.renderTop6HeroesUI) window.renderTop6HeroesUI();
+    // Обновяваме левия панел
+    if (typeof window.updateStrongestHeroUI === 'function') {
+        window.updateStrongestHeroUI();
+    }
     return { success: true, msg: `Класът е променен на ${targetClass}!` };
 };
 // Старо име за съвместимост
@@ -100,8 +106,10 @@ window.performResurrectionRitual = function(caster, deadHero) {
             window.worldData.clans[deadHero.clan].armySize = 50;
         }
         showGameMessage("СЪДБА", `🔮 Ритуалът успя! ${deadHero.name} се завърна!`, "success");
-        if (window.updateCharacterUI) window.updateCharacterUI(window.currentHero);
-        if (window.renderTop6HeroesUI) window.renderTop6HeroesUI();
+        // Обновяваме левия панел (най-силен герой), защото силата на играча може да се промени
+        if (typeof window.updateStrongestHeroUI === 'function') {
+            window.updateStrongestHeroUI();
+        }
         return { success: true, msg: "Успешно възкресяване!" };
     } else {
         showGameMessage("ПРОВАЛ", `📉 Ритуалът не върна ${deadHero.name}.`, "error");
@@ -139,7 +147,6 @@ function autoConquestBattle(attacker, defenderPower, regionName) {
 window.autonomousRegionConquest = function() {
     if (!window.worldData || !window.worldData.clans || !window.worldData.regions) return;
     
-    // 60% шанс на ход – да върви
     if (Math.random() > 0.6) return;
     
     let potentialConquerors = [];
@@ -162,7 +169,6 @@ window.autonomousRegionConquest = function() {
     const isVictory = autoConquestBattle(conqueror, defenderPower, targetRegion);
     
     if (isVictory) {
-        // Регионът става на играча? Не, NPC завладява – само намаляваме армията
         if (window.worldData.regions[targetRegion]) {
             window.worldData.regions[targetRegion].armySize = 0;
         }
@@ -171,23 +177,24 @@ window.autonomousRegionConquest = function() {
         if (window.gainHeroXP) window.gainHeroXP(conqueror, 30);
         console.log(`🏆 ${conqueror.name} завладя ${targetRegion} и получи ${rewardGold} злато!`);
         
-        // Лог в летописа
         if (window.addWorldEvent) {
             window.addWorldEvent("🏰 АВТОНОМНО ЗАВЛАДЯВАНЕ", `${conqueror.name || conqueror.leaderName} завладя ${targetRegion}!`, "🏰");
         }
     }
     
     if (typeof window.renderSingleBar === 'function') window.renderSingleBar();
-    if (window.renderTop6HeroesUI) window.renderTop6HeroesUI();
+    // Обновяваме левия панел след промени в силата на NPC (най-силният играч може да се е променил)
+    if (typeof window.updateStrongestHeroUI === 'function') {
+        window.updateStrongestHeroUI();
+    }
 };
+
 window.triggerAutomatedHeroActions = function() {
     if (!window.worldData || !window.worldData.clans) return;
     
-    // Choose a non-favorite hero
     let candidates = [];
     for (let key in window.worldData.clans) {
         let hero = window.worldData.clans[key];
-        // Ensure hero object is consistent, and isJoined/isFavorite are set if possible
         if (hero.name && hero.isJoined === true && hero.isFavorite !== true) {
             candidates.push(hero);
         }
@@ -196,26 +203,10 @@ window.triggerAutomatedHeroActions = function() {
     
     const hero = candidates[Math.floor(Math.random() * candidates.length)];
     const actions = [
-        { 
-            title: "⚔️ Тренировки", 
-            desc: `${hero.name} тренира своята армия, повишавайки бойния им дух.`, 
-            icon: "⚔️" 
-        },
-        { 
-            title: "💰 Търговска сделка", 
-            desc: `${hero.name} добави злато в хазната чрез успешна търговия.`, 
-            icon: "💰" 
-        },
-        {
-            title: "📜 Дипломатическа мисия",
-            desc: `${hero.name} укрепи връзките с местни старейшини.`,
-            icon: "📜"
-        },
-        {
-            title: "🏗️ Строителство",
-            desc: `${hero.name} надзирава строителството на нови постройки в земите си.`,
-            icon: "🏗️"
-        }
+        { title: "⚔️ Тренировки", desc: `${hero.name} тренира своята армия, повишавайки бойния им дух.`, icon: "⚔️" },
+        { title: "💰 Търговска сделка", desc: `${hero.name} добави злато в хазната чрез успешна търговия.`, icon: "💰" },
+        { title: "📜 Дипломатическа мисия", desc: `${hero.name} укрепи връзките с местни старейшини.`, icon: "📜" },
+        { title: "🏗️ Строителство", desc: `${hero.name} надзирава строителството на нови постройки в земите си.`, icon: "🏗️" }
     ];
     
     const action = actions[Math.floor(Math.random() * actions.length)];
@@ -232,13 +223,11 @@ window.recalculateHeroMaxHp = function(hero) {
     let levelBonus = (hero.level - 1) * 20;
     let enduranceBonus = endurance * 15;
     let newMaxHp = 100 + levelBonus + enduranceBonus;
-    // Бонус от артефакти
     if (hero.inventory) {
         hero.inventory.forEach(item => {
             if (item.bonus && item.bonus.health) newMaxHp += item.bonus.health;
         });
     }
-    // Бонус от клас
     if (hero.classBonuses && hero.currentClass) {
         let classBonus = hero.classBonuses[hero.currentClass]?.health || 0;
         newMaxHp += classBonus;
