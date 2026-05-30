@@ -1,9 +1,17 @@
 /**
 ==========================================================================
 ПРОЕКТ: ВЕЛИКА БЪЛГАРИЯ
-ФАЙЛ: items.js (ВЕРСИЯ 6.0 – АВТОМАТИЧНА ЕКИПИРОВКА ЗА AUTO РЕЖИМ)
+ФАЙЛ: items.js (ВЕРСИЯ 6.1 – БЕЗ currentHero, С ГЕТЪР ЗА ГЛАВЕН ГЕРОЙ)
 ==========================================================================
 */
+
+// Помощна функция за вземане на главния герой (без currentHero)
+function getMainHeroForItems() {
+    if (window.gameMode === 'solo') return window.currentHero || null;
+    if (typeof window.getStrongestHero === 'function') return window.getStrongestHero();
+    if (typeof window.getSelectedHero === 'function') return window.getSelectedHero();
+    return null;
+}
 
 // ==================== БАЗА ДАННИ С ИМПЕРСКИ АРТЕФАКТИ ====================
 window.artifactsDatabase = {
@@ -21,7 +29,7 @@ window.artifactsDatabase = {
     "osmanci_saber": { id: "osmanci_saber", name: "Сабята на Османци Дуло", icon: "⚔️", bonus: { heroPower: 40 }, clan: "Османци Дуло" }
 };
 
-// ==================== ИЗЧИСЛЯВАНЕ НА БОНУСИ ОТ ИНВЕНТАРА (КОРИГИРАНО) ====================
+// ==================== ИЗЧИСЛЯВАНЕ НА БОНУСИ ОТ ИНВЕНТАРА ====================
 window.getInventoryBonuses = function(hero) {
     let totalBonus = { heroPower: 0, goldBonus: 0 };
     if (!hero || !hero.inventory || !Array.isArray(hero.inventory)) return totalBonus;
@@ -38,8 +46,8 @@ window.getInventoryBonuses = function(hero) {
     });
     return totalBonus;
 };
+
 // ==================== АВТОМАТИЧНА ЕКИПИРОВКА ЗА ГЕРОИ В AUTO РЕЖИМ ====================
-// Оценява артефакт по приоритет: heroPower > goldBonus > други
 function getArtifactScore(artifact, hero) {
     if (!artifact || !artifact.bonus) return 0;
     let score = 0;
@@ -49,12 +57,10 @@ function getArtifactScore(artifact, hero) {
     if (artifact.bonus.armyBonus) score += artifact.bonus.armyBonus * 20;
     if (artifact.bonus.mysticismBonus) score += artifact.bonus.mysticismBonus * 15;
     if (artifact.bonus.diplomacyBonus) score += artifact.bonus.diplomacyBonus * 10;
-    // Бонус за клан синхрон
     if (artifact.clan && hero.clan === artifact.clan) score += 30;
     return score;
 }
 
-// Взема най-добрите артефакти от инвентара (според резултат)
 function getBestArtifacts(hero, limit = 12) {
     if (!hero.inventory || hero.inventory.length === 0) return [];
     let scored = hero.inventory
@@ -64,16 +70,14 @@ function getBestArtifacts(hero, limit = 12) {
     return scored.slice(0, limit).map(s => s.item);
 }
 
-// Автоматично екипиране (замества текущата екипировка с най-добрите артефакти)
 window.autoEquipHero = function(hero) {
     if (!hero) return false;
-    if (!hero.isAuto) return false;  // само за автоматични герои
+    if (!hero.isAuto) return false;
     if (!hero.inventory || hero.inventory.length === 0) return false;
     
     const best = getBestArtifacts(hero, 12);
     if (best.length === 0) return false;
     
-    // Запазваме старите артефакти, които не са в най-добрия списък
     let equippedChanged = false;
     for (let i = 0; i < Math.min(12, best.length); i++) {
         if (hero.equipment[i] !== best[i]) {
@@ -81,7 +85,6 @@ window.autoEquipHero = function(hero) {
             equippedChanged = true;
         }
     }
-    // Изчистваме останалите слотове (ако има по-малко от 12)
     for (let i = best.length; i < 12; i++) {
         if (hero.equipment[i] !== null) {
             hero.equipment[i] = null;
@@ -92,29 +95,31 @@ window.autoEquipHero = function(hero) {
     if (equippedChanged && window.recalculateHeroPower) {
         window.recalculateHeroPower(hero);
         if (window.updateCharacterUI) window.updateCharacterUI(hero);
-        if (window.renderTop6HeroesUI) window.renderTop6HeroesUI();
+        if (typeof window.updateStrongestHeroUI === 'function') {
+            window.updateStrongestHeroUI();
+        }
     }
     return equippedChanged;
 };
 
-// Извиква се при добавяне на нов артефакт или при нивап
 window.attemptAutoEquip = function(hero) {
     if (hero && hero.isAuto) {
         window.autoEquipHero(hero);
     }
 };
-// ==================== СЪКРОВИЩНИЦА (КОРИГИРАНА – ДОБАВЕН AUTO EQUip ПРИ ЗАТВАРЯНЕ) ====================
+
+// ==================== СЪКРОВИЩНИЦА (КОРИГИРАНА – БЕЗ currentHero) ====================
 window.toggleTreasury = function() {
     let treasuryOverlay = document.getElementById('treasury-overlay');
     if (treasuryOverlay) {
         treasuryOverlay.remove();
-        // След затваряне на съкровищницата, ако героят е в авто режим, пробваме да екипираме автоматично
-        if (window.currentHero && window.currentHero.isAuto) {
-            window.autoEquipHero(window.currentHero);
+        const hero = getMainHeroForItems();
+        if (hero && hero.isAuto) {
+            window.autoEquipHero(hero);
         }
         return;
     }
-    const hero = window.currentHero;
+    const hero = getMainHeroForItems();
     if (!hero) return;
     if (!hero.inventory) hero.inventory = [];
     const validInventory = hero.inventory.filter(item => item !== null && item !== undefined);
@@ -167,8 +172,9 @@ window.toggleTreasury = function() {
     document.body.appendChild(treasuryOverlay);
     const close = () => {
         treasuryOverlay.remove();
-        if (window.currentHero && window.currentHero.isAuto) {
-            window.autoEquipHero(window.currentHero);
+        const heroAfter = getMainHeroForItems();
+        if (heroAfter && heroAfter.isAuto) {
+            window.autoEquipHero(heroAfter);
         }
     };
     treasuryOverlay.querySelector('#close-treasury-x')?.addEventListener('click', close);
@@ -212,7 +218,7 @@ window.historicalArtifacts = {
     // Скитски артефакти
     "scythian_gold_deer": { id: "scythian_gold_deer", name: "Скитски златен елен", icon: "🦌", era: "Скитски", bonus: { heroPower: 15, armyBonus: 0.1 }, set: "scythian_gold" },
     "scythian_animal_style_belt": { id: "scythian_animal_style_belt", name: "Скитски пояс", icon: "🔗", era: "Скитски", bonus: { defense: 12 }, set: "scythian_gold" },
-    "scythian_akinakes": { id: "scythian_akinakes", name: "Скитски акинак", icon: "🗡️", era: "Скитски", bonus: { heroPower: 16 }, set: "scythian_warrior" },
+    "scythian_akinakes_hist": { id: "scythian_akinakes_hist", name: "Скитски акинак", icon: "🗡️", era: "Скитски", bonus: { heroPower: 16 }, set: "scythian_warrior" },
     "scythian_gorytos": { id: "scythian_gorytos", name: "Скитски горит", icon: "🏹", era: "Скитски", bonus: { heroPower: 14 }, set: "scythian_warrior" },
     "scythian_cauldron": { id: "scythian_cauldron", name: "Скитски котел", icon: "🍲", era: "Скитски", bonus: { goldBonus: 15 }, set: "scythian_ritual" },
     
@@ -229,7 +235,7 @@ window.historicalArtifacts = {
     "gothic_belt_buckle": { id: "gothic_belt_buckle", name: "Готска катарама", icon: "🔗", era: "Готски", bonus: { defense: 10 }, set: "gothic_art" },
     
     // Български артефакти
-    "sword_of_kubrat": { id: "sword_of_kubrat", name: "Мечът на Кубрат", icon: "⚔️", era: "Български", bonus: { heroPower: 25 }, set: "bulgarian_royal" },
+    "sword_of_kubrat_hist": { id: "sword_of_kubrat_hist", name: "Мечът на Кубрат", icon: "⚔️", era: "Български", bonus: { heroPower: 25 }, set: "bulgarian_royal" },
     "ring_of_tervel": { id: "ring_of_tervel", name: "Пръстенът на Тервел", icon: "💍", era: "Български", bonus: { heroPower: 15, diplomacyBonus: 0.1 }, set: "bulgarian_royal" },
     "madara_horseman_relief": { id: "madara_horseman_relief", name: "Мадарски конник", icon: "🏇", era: "Български", bonus: { heroPower: 20, armyBonus: 0.1 }, set: "bulgarian_sacred" },
     "pliska_rosette": { id: "pliska_rosette", name: "Плисковска розета", icon: "⭐", era: "Български", bonus: { heroPower: 12, mysticismBonus: 0.1 }, set: "bulgarian_sacred" },
@@ -340,7 +346,7 @@ window.divinePets = {
     "void_hound": { name: "Празничен хрътка", icon: "🐕🌌", desc: "Космическо създание", bonus: { heroPower: 110, portalChance: 0.15, enemyConfuse: 0.3, extraTurn: 0.1 } }
 };
 
-// ==================== ФУНКЦИЯ ЗА БОНУСИ ОТ ЕКИПИРОВЪЧНИ СЕТОВЕ ====================
+// ==================== БОНУСИ ОТ ЕКИПИРОВЪЧНИ СЕТОВЕ ====================
 window.calculateEquipmentSetBonuses = function(hero) {
     if (!hero || !hero.equipment || !Array.isArray(hero.equipment)) return {};
     const equippedNames = hero.equipment.filter(item => item !== null).map(item => item.name);
@@ -400,8 +406,6 @@ if (typeof window.recalculateHeroPower === 'function') {
 }
 
 // ==================== ХУК ЗА АВТОМАТИЧНА ЕКИПИРОВКА ПРИ НИВАП ====================
-// Ако rpg_system.js вече дефинира gainHeroXP, добавяме извикване след повишаване на нивото.
-// За целта създаваме безопасен hook, който не презаписва съществуващата функция, а я разширява.
 if (typeof window.gainHeroXP === 'function') {
     const originalGainXP = window.gainHeroXP;
     window.gainHeroXP = function(hero, amount) {
@@ -413,7 +417,6 @@ if (typeof window.gainHeroXP === 'function') {
         }
     };
 } else {
-    // Ако функцията не съществува, я дефинираме с вграден auto equip
     window.gainHeroXP = function(hero, amount) {
         if (!hero) return;
         hero.xp = (hero.xp || 0) + amount;
@@ -435,7 +438,9 @@ if (typeof window.gainHeroXP === 'function') {
             setTimeout(() => window.autoEquipHero(hero), 100);
         }
         if (window.updateCharacterUI) window.updateCharacterUI(hero);
-        if (window.renderTop6HeroesUI) window.renderTop6HeroesUI();
+        if (typeof window.updateStrongestHeroUI === 'function') {
+            window.updateStrongestHeroUI();
+        }
     };
 }
 
@@ -449,9 +454,10 @@ setTimeout(() => {
             }
         }
     }
-    if (window.currentHero && window.currentHero.isAuto) {
-        window.autoEquipHero(window.currentHero);
+    const mainHero = getMainHeroForItems();
+    if (mainHero && mainHero.isAuto) {
+        window.autoEquipHero(mainHero);
     }
 }, 1000);
 
-console.log("✅ items.js версия 6.0 зареден – автоматична екипировка за авто режим, нови хукове и пълна синхронизация.");
+console.log("✅ items.js версия 6.1 зареден – без currentHero (използва getMainHeroForItems)");
