@@ -1,7 +1,7 @@
 /**
  ==========================================================================
  МОДУЛ: ВРЕМЕ И ЛЕТОБРОЕНЕ - Велика България
- ВЕРСИЯ: 3.1 – БЕЗСМЪРТНИ ГЕРОИ (ВЪЗРАСТТА Е САМО ЗА ИНФОРМАЦИЯ)
+ ВЕРСИЯ: 3.2 – БЕЗ currentHero, С ИЗВАДЕНА processWorldDynamics
  ==========================================================================
  */
 
@@ -87,7 +87,8 @@ function applyAgeEffects(hero) {
             if (window.renderTop6HeroesUI) window.renderTop6HeroesUI();
         }
     }
-    if (age >= 80 && hero !== window.currentHero) {
+    // Премахната зависимост от window.currentHero – няма специално изключение за "активен герой"
+    if (age >= 80) {
         let deathChance = Math.min(0.15, (age - 80) * 0.02);
         if (Math.random() < deathChance) {
             showTimeMessage("СМЪРТ", `💀 ${hero.name} умира от старост на ${age} години.`, "error");
@@ -104,6 +105,51 @@ function applyAgeEffects(hero) {
         }
     }
 }
+
+// ==================== СВЕТОВНА ДИНАМИКА (ИЗВАДЕНА ОТ processTime) ====================
+window.processWorldDynamics = function() {
+    if (!window.worldData || !window.worldData.clans) return;
+    
+    // Вземаме всички кланове (герои) – без филтър за currentHero
+    const clans = Object.values(window.worldData.clans);
+    
+    // Намираме "играча" – първия любим или най-силния, но не е задължително да има currentHero
+    let playerHero = null;
+    if (typeof window.getStrongestHero === 'function') {
+        playerHero = window.getStrongestHero();
+    }
+    if (!playerHero && window.currentHero) playerHero = window.currentHero; // резерв за соло режим
+    
+    clans.forEach(hero => {
+        // Пропускаме мъртвите герои
+        if (hero.isAlive === false) return;
+        // Пропускаме героя на играча (ако е намерен)
+        if (playerHero && hero.name === playerHero.name) return;
+        
+        // 1. Агресивните герои стават активни
+        if (hero.aggression > 0.5) {
+            // Шанс за NPC-срещу-NPC битка
+            const randomTarget = clans[Math.floor(Math.random() * clans.length)];
+            
+            if (randomTarget && randomTarget.name !== hero.name && randomTarget.isAlive !== false) {
+                // Избягваме да атакуваме играча (за да не се обърква)
+                if (playerHero && randomTarget.name === playerHero.name) return;
+                
+                // Имитация на битка/завладяване
+                window.addWorldEvent("⚔️ ВОЙНА", `${hero.name} атакува териториите на ${randomTarget.name}!`, "🔥", window.gameTime.year);
+                
+                // Тук викаш логиката за промяна на показателите (напр. отнемане на сила)
+                hero.heroPower = (hero.heroPower || 100) + 10;
+                randomTarget.heroPower = Math.max(0, (randomTarget.heroPower || 100) - 15);
+            }
+        }
+        
+        // 2. Икономическа активност (за герои с висок Ambition)
+        if (hero.traits && hero.traits.some(t => t.cat === 'amb')) {
+            hero.gold = (hero.gold || 0) + 50;
+        }
+    });
+};
 
 // ==================== ОСНОВНА ФУНКЦИЯ ЗА ПРОЦЕС НА ВРЕМЕТО ====================
 window.processTime = function() {
@@ -136,10 +182,7 @@ window.processTime = function() {
                 }
             }
         }
-        if (window.currentHero) {
-            window.currentHero.age = (window.currentHero.age || 30) + 1;
-            if (!window.immortalHeroes) applyAgeEffects(window.currentHero);
-        }
+        // Премахната зависимост от window.currentHero – вече не увеличаваме възрастта на несъществуващ обект
         
         checkHistoricalEvents();
         
@@ -156,37 +199,7 @@ window.processTime = function() {
     if (typeof window.autonomousRegionConquest === 'function') window.autonomousRegionConquest();
     if (typeof window.triggerAutomatedHeroActions === 'function') window.triggerAutomatedHeroActions();
     if (typeof window.checkRandomAttack === 'function') window.checkRandomAttack();
- window.processWorldDynamics = function() {
-    if (!window.worldData || !window.worldData.clans) return;
-    
-    // Вземаме всички кланове (герои)
-    const clans = Object.values(window.worldData.clans);
-    
-    clans.forEach(hero => {
-        // Пропускаме теб (играча) и мъртвите герои
-        if (hero.name === window.currentHero.name || hero.isAlive === false) return;
-        
-        // 1. Агресивните герои стават активни
-        if (hero.aggression > 0.5) {
-            // Шанс за NPC-срещу-NPC битка
-            const randomTarget = clans[Math.floor(Math.random() * clans.length)];
-            
-            if (randomTarget.name !== hero.name && randomTarget.isAlive) {
-                // Имитация на битка/завладяване
-                window.addWorldEvent("⚔️ ВОЙНА", `${hero.name} атакува териториите на ${randomTarget.name}!`, "🔥", window.gameTime.year);
-                
-                // Тук викаш логиката за промяна на показателите (напр. отнемане на сила)
-                hero.heroPower += 10;
-                randomTarget.heroPower -= 15;
-            }
-        }
-        
-        // 2. Икономическа активност (за герои с висок Ambition)
-        if (hero.traits && hero.traits.some(t => t.cat === 'amb')) {
-            hero.gold += 50; 
-        }
-    });
-};
+    if (typeof window.processWorldDynamics === 'function') window.processWorldDynamics();
 };
 
 // Стартиране
@@ -205,4 +218,4 @@ if (document.readyState === 'loading') {
 window.applyAgeEffects = applyAgeEffects;
 window.checkHistoricalEvents = checkHistoricalEvents;
 
-console.log("✅ time.js версия 3.1 зареден – безсмъртни герои (възрастта е само за информация), исторически събития, пълна синхронизация.");
+console.log("✅ time.js версия 3.2 зареден – без currentHero, с извадена processWorldDynamics");
