@@ -1309,24 +1309,24 @@ function moveSidebarContentToMain() {
     const leftSidebar = document.getElementById('sidebar-left');
     const rightSidebar = document.getElementById('sidebar-right');
     if (!mainArea || !leftSidebar || !rightSidebar) return;
-    
+   
     if (!document.getElementById('mobile-profile-section') && leftSidebar.innerHTML.trim() !== '') {
         const profileClone = leftSidebar.cloneNode(true);
         profileClone.id = 'mobile-profile-section';
         profileClone.classList.add('mobile-section');
         mainArea.prepend(profileClone);
     }
-    
+   
     if (!document.getElementById('mobile-portal-section') && rightSidebar.innerHTML.trim() !== '') {
         const portalClone = rightSidebar.cloneNode(true);
         portalClone.id = 'mobile-portal-section';
         portalClone.classList.add('mobile-section');
         mainArea.appendChild(portalClone);
     }
-    
+   
     leftSidebar.style.display = 'none';
     rightSidebar.style.display = 'none';
-    
+   
     const mobileProfile = document.getElementById('mobile-profile-section');
     if (mobileProfile) {
         const rpgBtn = mobileProfile.querySelector('#open-rpg-modal-btn');
@@ -1344,7 +1344,7 @@ function restoreSidebarContent() {
     const rightSidebar = document.getElementById('sidebar-right');
     if (leftSidebar) leftSidebar.style.display = '';
     if (rightSidebar) rightSidebar.style.display = '';
-    
+   
     const mobileProfile = document.getElementById('mobile-profile-section');
     const mobilePortal = document.getElementById('mobile-portal-section');
     if (mobileProfile) mobileProfile.remove();
@@ -1369,6 +1369,7 @@ function showAllHeroesModal() {
 
     let modal = document.getElementById('all-heroes-modal');
     if (modal) modal.remove();
+
     modal = document.createElement('div');
     modal.id = 'all-heroes-modal';
     modal.className = 'market-modal';
@@ -1400,7 +1401,7 @@ function showAllHeroesModal() {
                 <div style="display: flex; justify-content: space-between; font-size: 8px; margin-top: 4px;">
                     <span>💪 ${hero.power}</span>
                     <span>💰 ${hero.gold}</span>
-                    <span>⚔️ ${hero.army}</span>
+                    <span>⚔️ ${hero.army || hero.armySize || 0}</span>
                 </div>
                 <div style="font-size: 7px; color: #aaa;">${hero.isAuto ? '🤖 Auto' : '👤 Manual'}</div>
             </div>
@@ -1444,8 +1445,7 @@ function showAllHeroesModal() {
     });
 }
 
-
-// ==================== ИНИЦИАЛИЗАЦИЯ НА НОВАТА ЛЕНТА С ЛЮБИМИ ГЕРОИ ====================
+// ==================== ИНИЦИАЛИЗАЦИЯ ====================
 setTimeout(() => {
     if (typeof window.renderFavoriteHeroesBar === 'function') {
         window.updateAllUI();
@@ -1459,6 +1459,7 @@ window.openHeroRPGModal = function(heroId) {
     if (!hero) return;
     if (typeof window.showHeroProfile === 'function') window.showHeroProfile(hero);
     else console.warn("showHeroProfile не е дефинирана");
-
-
 };
+
+// ==================== КРАЙ НА ui.js ====================
+console.log("✅ ui.js зареден успешно - SyntaxError поправен");
