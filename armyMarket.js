@@ -498,6 +498,27 @@
                 if (modalEl && modalEl.style.display === 'flex') hideMarket();
             }
         });
+
+                // Допълнителна сигурност: ако няма close бутон в долния footer, добавяме такъв
+        let footer = modal.querySelector('.market-footer');
+        if (footer && !footer.querySelector('.force-close-btn')) {
+            let extraClose = document.createElement('button');
+            extraClose.innerText = '✕ Затвори';
+            extraClose.className = 'footer-btn force-close-btn';
+            extraClose.style.marginLeft = 'auto';
+            extraClose.style.background = '#d4af37';
+            extraClose.style.color = '#000';
+            extraClose.onclick = () => hideMarket();
+            footer.appendChild(extraClose);
+        }
+        
+        // Гарантираме, че клик върху фоновия overlay затваря дори ако събитието е спряно
+        modal.style.pointerEvents = 'auto';
+        modal.onclick = (e) => {
+            if (e.target === modal || e.target.classList.contains('market-modal')) {
+                hideMarket();
+            }
+        };
     }
 
     window.armyMarket = {
@@ -512,6 +533,8 @@
 
     let initialHero = getSelectedHero();
     if (initialHero) initHero(initialHero);
+
+    
     
     console.log("✅ armyMarket.js зареден (хармонизирана версия – всички са герои)");
 })();
