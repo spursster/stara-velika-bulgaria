@@ -47,45 +47,65 @@
         return null;
     }
     
-    function syncWithGame(hero) {
-        if (!hero) hero = getSelectedHero();
-        if (!hero) return;
-        if (window.ensureCompleteArmyDetails) window.ensureCompleteArmyDetails(hero);
-        let total = 0;
-        for (let id of allTroopIds) total += hero.armyDetails?.[id] || 0;
-        hero.armySize = total;
-        hero.currentArmy = total;
-        if (window.currentHero && window.currentHero.clan === hero.clan) {
-            let goldSpan = document.getElementById('val-gold'); if (goldSpan) goldSpan.innerText = hero.gold;
-            let armySpan = document.getElementById('val-army'); if (armySpan) armySpan.innerText = total;
-        }
-        if (window.updateCharacterUI) window.updateCharacterUI(hero);
-        if (typeof window.saveGreatBulgariaGame === 'function') window.saveGreatBulgariaGame();
+   function syncWithGame(hero) {
+    if (!hero) hero = getSelectedHero();
+    if (!hero) return;
+    if (window.ensureCompleteArmyDetails) window.ensureCompleteArmyDetails(hero);
+    let total = 0;
+    for (let id of allTroopIds) total += hero.armyDetails?.[id] || 0;
+    hero.armySize = total;
+    hero.currentArmy = total;
+    if (window.currentHero && window.currentHero.clan === hero.clan) {
+        let goldSpan = document.getElementById('val-gold'); if (goldSpan) goldSpan.innerText = hero.gold;
+        let armySpan = document.getElementById('val-army'); if (armySpan) armySpan.innerText = total;
+    }
+    if (window.updateCharacterUI) window.updateCharacterUI(hero);
+    
+    // === НОВО: обновяване на лентата с любими герои ===
+    if (typeof window.renderFavoriteHeroesBar === 'function') {
+        const container = document.getElementById('favorite-heroes-bar');
+        if (container) container.innerHTML = '';
+        window.renderFavoriteHeroesBar();
+    }
+    if (typeof window.renderSingleBar === 'function') {
+        window.renderSingleBar();
     }
     
-    function updateMarketUI() {
-        let hero = getSelectedHero();
-        if (!hero) return;
-        let goldSpan = document.getElementById('playerGoldAmount');
-        if (goldSpan) goldSpan.innerText = hero.gold;
-        let heroSelect = document.getElementById('heroSelect');
-        if (heroSelect && heroSelect.value !== selectedHeroId) heroSelect.value = selectedHeroId;
-        for (let troop of allTroops) {
-            let cnt = hero.armyDetails?.[troop.id] || 0;
-            let span = document.getElementById(`count-${troop.id}`);
-            if (span) span.innerText = cnt;
-        }
-        let totalPower = 0;
-        for (let troop of allTroops) totalPower += (hero.armyDetails?.[troop.id] || 0) * (troop.attack + troop.defense);
-        let powerSpan = document.getElementById('totalArmyPower');
-        if (powerSpan) powerSpan.innerText = totalPower;
-        document.querySelectorAll('.buy-btn').forEach(btn => {
-            let troopId = btn.getAttribute('data-type');
-            let qty = parseInt(btn.getAttribute('data-qty') || '1');
-            let troop = allTroops.find(t => t.id === troopId);
-            if (troop) btn.disabled = (hero.gold < troop.basePrice * qty);
-        });
+    if (typeof window.saveGreatBulgariaGame === 'function') window.saveGreatBulgariaGame();
+}
+    
+   function updateMarketUI() {
+    let hero = getSelectedHero();
+    if (!hero) return;
+    let goldSpan = document.getElementById('playerGoldAmount');
+    if (goldSpan) goldSpan.innerText = hero.gold;
+    
+    // === НОВО: обновяване на горния панел (val-gold) при смяна на герой ===
+    if (window.currentHero && window.currentHero.clan === hero.clan) {
+        let mainGoldSpan = document.getElementById('val-gold');
+        if (mainGoldSpan) mainGoldSpan.innerText = hero.gold;
+        let mainArmySpan = document.getElementById('val-army');
+        if (mainArmySpan) mainArmySpan.innerText = hero.armySize || 0;
     }
+    
+    let heroSelect = document.getElementById('heroSelect');
+    if (heroSelect && heroSelect.value !== selectedHeroId) heroSelect.value = selectedHeroId;
+    for (let troop of allTroops) {
+        let cnt = hero.armyDetails?.[troop.id] || 0;
+        let span = document.getElementById(`count-${troop.id}`);
+        if (span) span.innerText = cnt;
+    }
+    let totalPower = 0;
+    for (let troop of allTroops) totalPower += (hero.armyDetails?.[troop.id] || 0) * (troop.attack + troop.defense);
+    let powerSpan = document.getElementById('totalArmyPower');
+    if (powerSpan) powerSpan.innerText = totalPower;
+    document.querySelectorAll('.buy-btn').forEach(btn => {
+        let troopId = btn.getAttribute('data-type');
+        let qty = parseInt(btn.getAttribute('data-qty') || '1');
+        let troop = allTroops.find(t => t.id === troopId);
+        if (troop) btn.disabled = (hero.gold < troop.basePrice * qty);
+    });
+}
     
     function buyTroop(typeId, quantity) {
         let hero = getSelectedHero();
