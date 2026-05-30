@@ -1,11 +1,11 @@
 /**
  =========================================================================
- МОДУЛ: ДРЕВНИ ЦИВИЛИЗАЦИИ – 100% СЛУЧАЙНИ ДЕЙСТВИЯ (БЕЗ ПРОЦЕНТИ)
+ МОДУЛ: ДРЕВНИ ЦИВИЛИЗАЦИИ – 100% СЛУЧАЙНИ ДЕЙСТВИЯ (БЕЗ currentHero)
  =========================================================================
  */
 
 (function() {
-    // Списък на всички цивилизации (взети от вашия worldData)
+    // Списък на всички цивилизации
     const allCivilizations = [
         { id: "elven_kingdom", name: "Елфийско кралство", icon: "🧝", action: "giveBoost" },
         { id: "fairy_court", name: "Двор на феите", icon: "🧚", action: "giveGoldArtifact" },
@@ -29,9 +29,24 @@
         else console.log(icon, title, message);
     }
 
+    // Помощна функция за вземане на "главния герой" (в класически режим – най-силния, в соло – currentHero)
+    function getMainHero() {
+        if (window.gameMode === 'solo') {
+            return window.currentHero || null;
+        } else {
+            if (typeof window.getStrongestHero === 'function') {
+                return window.getStrongestHero();
+            }
+            if (typeof window.getSelectedHero === 'function') {
+                return window.getSelectedHero();
+            }
+            return null;
+        }
+    }
+
     // ========== ВСИЧКИ ВЪЗМОЖНИ ДЕЙСТВИЯ (СЛУЧАЙНИ) ==========
     function giveBoost(civ) {
-        let hero = window.currentHero;
+        let hero = getMainHero();
         if (!hero) return;
         let boost = Math.floor(Math.random() * 100) + 20;
         hero.heroPower = (hero.heroPower || 100) + boost;
@@ -41,7 +56,7 @@
     }
 
     function giveGoldArtifact(civ) {
-        let hero = window.currentHero;
+        let hero = getMainHero();
         if (!hero) return;
         let gold = Math.floor(Math.random() * 600) + 200;
         hero.gold = (hero.gold || 0) + gold;
@@ -57,7 +72,7 @@
     }
 
     function healHeroes(civ) {
-        let hero = window.currentHero;
+        let hero = getMainHero();
         if (!hero) return;
         let healAmount = Math.floor(hero.maxHp * 0.4);
         hero.hp = Math.min(hero.maxHp, hero.hp + healAmount);
@@ -81,23 +96,23 @@
     }
 
     function destroyArmy(civ) {
-        let hero = window.currentHero;
+        let hero = getMainHero();
         if (!hero) return;
         let loss = Math.floor((hero.armySize || 300) * 0.2);
         hero.armySize = Math.max(10, (hero.armySize || 300) - loss);
         hero.currentArmy = hero.armySize;
         if (window.ensureCompleteArmyDetails) window.ensureCompleteArmyDetails(hero);
-        addLog(`💀 Демонична атака`, `${civ.name} унищожава ${loss} войници от армията ви!`, civ.icon);
+        addLog(`💀 Демонична атака`, `${civ.name} унищожава ${loss} войници от армията на ${hero.name}!`, civ.icon);
         if (window.updateCharacterUI) window.updateCharacterUI(hero);
     }
 
     function stealArtifact(civ) {
-        let hero = window.currentHero;
+        let hero = getMainHero();
         if (!hero || !hero.inventory || hero.inventory.length === 0) return;
         let randomIndex = Math.floor(Math.random() * hero.inventory.length);
         let stolen = hero.inventory[randomIndex];
         hero.inventory.splice(randomIndex, 1);
-        addLog(`🌑 Кражба от ${civ.name}`, `${civ.name} ви открадна артефакта "${stolen.name}".`, civ.icon);
+        addLog(`🌑 Кражба от ${civ.name}`, `${civ.name} открадна от ${hero.name} артефакта "${stolen.name}".`, civ.icon);
         if (window.updateCharacterUI) window.updateCharacterUI(hero);
     }
 
@@ -119,19 +134,19 @@
     }
 
     function portalOrSkill(civ) {
-        let hero = window.currentHero;
+        let hero = getMainHero();
         if (!hero) return;
         let r = Math.random();
         if (r < 0.33) {
             let xp = 80 + Math.floor(Math.random() * 150);
             if (window.gainHeroXP) window.gainHeroXP(hero, xp);
-            addLog(`🌀 Магия от ${civ.name}`, `${civ.name} ви дарява ${xp} опит.`, civ.icon);
+            addLog(`🌀 Магия от ${civ.name}`, `${civ.name} дарява ${hero.name} с ${xp} опит.`, civ.icon);
         } else if (r < 0.66 && window.advancedSkills) {
             if (hero.skillPoints > 0 && typeof window.autoAssignSkillPoint === 'function') {
                 window.autoAssignSkillPoint(hero);
-                addLog(`📖 Просветление`, `${civ.name} ви научи на ново умение!`, civ.icon);
+                addLog(`📖 Просветление`, `${civ.name} научи ${hero.name} на ново умение!`, civ.icon);
             } else {
-                addLog(`✨ Благословия`, `${civ.name} зарежда силите ви.`, civ.icon);
+                addLog(`✨ Благословия`, `${civ.name} зарежда силите на ${hero.name}.`, civ.icon);
             }
         } else {
             if (typeof window.addPortalToRegion === 'function' && window.currentRegion) {
@@ -146,14 +161,14 @@
     }
 
     function giveArtifact(civ) {
-        let hero = window.currentHero;
+        let hero = getMainHero();
         if (!hero) return;
         if (window.historicalArtifacts) {
             let keys = Object.keys(window.historicalArtifacts);
             let randomArtifact = { ...window.historicalArtifacts[keys[Math.floor(Math.random() * keys.length)]] };
             if (!hero.inventory) hero.inventory = [];
             hero.inventory.push(randomArtifact);
-            addLog(`🔨 Дарове от ${civ.name}`, `Получихте артефакт "${randomArtifact.name}" от ${civ.name}.`, civ.icon);
+            addLog(`🔨 Дарове от ${civ.name}`, `${hero.name} получи артефакт "${randomArtifact.name}" от ${civ.name}.`, civ.icon);
             if (window.updateCharacterUI) window.updateCharacterUI(hero);
         }
     }
@@ -183,5 +198,5 @@
         if (window.saveGreatBulgariaGame) window.saveGreatBulgariaGame();
     };
 
-    console.log("✅ Древните цивилизации са активни – на всеки ход се случва случайно събитие!");
+    console.log("✅ Древните цивилизации са активни – на всеки ход се случва случайно събитие (без currentHero).");
 })();
