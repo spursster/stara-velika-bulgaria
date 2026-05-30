@@ -1,10 +1,10 @@
-// ======================== АРМИЯ ПАЗАР – ФИНАЛНА ВЕРСИЯ (САМО INLINE ONCLICK) ========================
+// ======================== АРМИЯ ПАЗАР – ФИНАЛНА ВЕРСИЯ (С ОПИСАНИЯ И ГОЛЕМИ ИКОНКИ) ========================
 (function() {
-    // Разширяване на войските (както преди)
+    // Разширяване на войските (ако липсват)
     if (window.ALL_TROOP_TYPES) {
         let existingIds = new Set(window.ALL_TROOP_TYPES.map(t => t.id));
         const newBasic = [
-            { id: "spearman", name: "Копиеносец", basePrice: 12, attack: 10, defense: 14, icon: "🔱", desc: "Дълги копия", special: "bonusVsCavalry:0.2", category: "basic" },
+            { id: "spearman", name: "Копиеносец", basePrice: 12, attack: 10, defense: 14, icon: "🔱", desc: "Дълги копия срещу конница", special: "bonusVsCavalry:0.2", category: "basic" },
             { id: "maceman", name: "Боздуганар", basePrice: 14, attack: 14, defense: 12, icon: "🔨", desc: "Смазващи удари", special: "armorPenetration:0.1", category: "basic" },
             { id: "crossbowman", name: "Арбалетчик", basePrice: 18, attack: 20, defense: 8, icon: "🏹", desc: "Тежки арбалети", special: "ignoreArmor:0.15", category: "basic" },
             { id: "lightCavalry", name: "Лек конник", basePrice: 28, attack: 22, defense: 16, icon: "🐎", desc: "Бързи разузнавачи", special: "firstStrikeBonus:0.2", category: "basic" },
@@ -16,8 +16,8 @@
             { id: "royalGuard", name: "Царска гвардия", basePrice: 90, attack: 60, defense: 55, icon: "👑", desc: "Елитни телохранители", special: "moraleBonus:0.2", category: "basic" }
         ];
         const newFantasy = [
-            { id: "ghost", name: "Призрак", basePrice: 85, attack: 30, defense: 25, icon: "👻", desc: "Неуязвим", special: "physicalImmune:0.5", category: "fantasy" },
-            { id: "goblin", name: "Гоблин", basePrice: 25, attack: 18, defense: 10, icon: "👺", desc: "Бързи", special: "poisonDamage:5", category: "fantasy" },
+            { id: "ghost", name: "Призрак", basePrice: 85, attack: 30, defense: 25, icon: "👻", desc: "Неуязвим за физически атаки", special: "physicalImmune:0.5", category: "fantasy" },
+            { id: "goblin", name: "Гоблин", basePrice: 25, attack: 18, defense: 10, icon: "👺", desc: "Бързи и досадни", special: "poisonDamage:5", category: "fantasy" },
             { id: "minotaur", name: "Минотавър", basePrice: 120, attack: 65, defense: 45, icon: "🐂", desc: "Страшна сила", special: "stunChance:0.2", category: "fantasy" },
             { id: "skeleton", name: "Скелет", basePrice: 40, attack: 20, defense: 15, icon: "💀", desc: "Вървят отново", special: "undead:true", category: "fantasy" },
             { id: "zombie", name: "Зомби", basePrice: 35, attack: 15, defense: 20, icon: "🧟", desc: "Заразяват", special: "plague:0.1", category: "fantasy" },
@@ -141,8 +141,31 @@
         selectedHeroId = hero.clan || hero.id;
         
         let heroOptions = heroes.map(h => `<option value="${h.clan || h.id}" ${selectedHeroId === (h.clan || h.id) ? 'selected' : ''}>${h.name} (💰${h.gold} злато, ⚔️${h.armySize})</option>`).join('');
-        let basicHtml = basicTroops.map(t => `<div class="troop-card"><div class="troop-icon">${t.icon}</div><div class="troop-name">${t.name}</div><div class="troop-stats">⚔️${t.attack} 🛡️${t.defense}</div><div class="troop-price">💰${t.basePrice}</div><div class="troop-controls"><button class="buy-btn" data-type="${t.id}" data-qty="1">+1</button><button class="buy-btn" data-type="${t.id}" data-qty="10">+10</button><button class="sell-btn" data-type="${t.id}" data-qty="1">-1</button></div><div class="owned-count">📦 <span id="count-${t.id}">${hero.armyDetails?.[t.id] || 0}</span></div></div>`).join('');
-        let fantasyHtml = fantasyTroops.map(t => `<div class="troop-card"><div class="troop-icon">${t.icon}</div><div class="troop-name">${t.name}</div><div class="troop-stats">⚔️${t.attack} 🛡️${t.defense}</div><div class="troop-price">💰${t.basePrice}</div><div class="troop-controls"><button class="buy-btn" data-type="${t.id}" data-qty="1">+1</button><button class="buy-btn" data-type="${t.id}" data-qty="10">+10</button><button class="sell-btn" data-type="${t.id}" data-qty="1">-1</button></div><div class="owned-count">📦 <span id="count-${t.id}">${hero.armyDetails?.[t.id] || 0}</span></div></div>`).join('');
+        
+        // Функция за генериране на карта на войска с описание
+        function troopCard(t) {
+            let cnt = hero.armyDetails?.[t.id] || 0;
+            return `
+            <div class="troop-card" style="background:rgba(0,0,0,0.5); border:1px solid #d4af37; border-radius:12px; padding:10px; margin:5px; transition:0.1s;">
+                <div style="font-size:52px; text-align:center;">${t.icon}</div>
+                <div style="font-weight:bold; color:#ffd700; text-align:center; font-size:16px;">${t.name}</div>
+                <div style="font-size:11px; color:#ccc; text-align:center; margin:5px 0;">${t.desc || ''}</div>
+                <div style="display:flex; justify-content:space-between; font-size:12px; margin:5px 0;">
+                    <span>⚔️ ${t.attack}</span> <span>🛡️ ${t.defense}</span> <span>💰 ${t.basePrice}</span>
+                </div>
+                ${t.special ? `<div style="font-size:10px; color:#ffaa66; text-align:center;">✨ ${t.special}</div>` : ''}
+                <div style="display:flex; justify-content:center; gap:8px; margin:8px 0;">
+                    <button class="buy-btn" data-type="${t.id}" data-qty="1" style="background:#daa520; border:none; border-radius:20px; padding:5px 12px; cursor:pointer;">+1</button>
+                    <button class="buy-btn" data-type="${t.id}" data-qty="10" style="background:#daa520; border:none; border-radius:20px; padding:5px 12px; cursor:pointer;">+10</button>
+                    <button class="sell-btn" data-type="${t.id}" data-qty="1" style="background:#8b3a3a; border:none; border-radius:20px; padding:5px 12px; cursor:pointer;">-1</button>
+                </div>
+                <div style="text-align:center; font-size:12px;">📦 <span id="count-${t.id}">${cnt}</span></div>
+            </div>
+            `;
+        }
+        
+        let basicHtml = basicTroops.map(t => troopCard(t)).join('');
+        let fantasyHtml = fantasyTroops.map(t => troopCard(t)).join('');
         
         let html = `
         <div id="armyMarketModal" style="position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.85); z-index:300000; display:flex; align-items:center; justify-content:center; font-family:'Cinzel',serif;" onclick="if(event.target===this) window.armyMarket.hide();">
@@ -160,8 +183,8 @@
                     <button class="tab-btn active" data-tab="basic" style="background:#daa520; border:none; border-radius:20px; padding:5px 15px; cursor:pointer;">⚔️ Основни (${basicTroops.length})</button>
                     <button class="tab-btn" data-tab="fantasy" style="background:#2c2c3a; border:none; border-radius:20px; padding:5px 15px; cursor:pointer;">✨ Фентъзи (${fantasyTroops.length})</button>
                 </div>
-                <div id="basic-tab" class="troop-shop" style="display:grid; grid-template-columns:repeat(auto-fill, minmax(180px,1fr)); gap:10px; max-height:55vh; overflow-y:auto; padding:5px;">${basicHtml}</div>
-                <div id="fantasy-tab" class="troop-shop" style="display:none; grid-template-columns:repeat(auto-fill, minmax(180px,1fr)); gap:10px; max-height:55vh; overflow-y:auto; padding:5px;">${fantasyHtml}</div>
+                <div id="basic-tab" class="troop-shop" style="display:grid; grid-template-columns:repeat(auto-fill, minmax(220px,1fr)); gap:10px; max-height:55vh; overflow-y:auto; padding:5px;">${basicHtml}</div>
+                <div id="fantasy-tab" class="troop-shop" style="display:none; grid-template-columns:repeat(auto-fill, minmax(220px,1fr)); gap:10px; max-height:55vh; overflow-y:auto; padding:5px;">${fantasyHtml}</div>
                 <div style="display:flex; justify-content:center; gap:15px; margin-top:20px; padding-top:10px; border-top:1px solid #d4af37;">
                     <button onclick="window.armyMarket.hide();" style="background:#2c1a0c; border:1px solid #d4af37; border-radius:30px; padding:6px 20px; color:#ffdd99; cursor:pointer;">Затвори</button>
                     <button id="quickBuyMaxBtn" style="background:#daa520; border:none; border-radius:30px; padding:6px 20px; color:#000; cursor:pointer;">💰 Купи макс. пехота</button>
@@ -261,5 +284,5 @@
     }
     
     window.armyMarket = { show: showMarket, hide: hideMarket, buy: buyTroop, sell: sellTroop, sync: syncWithGame };
-    console.log("✅ armyMarket.js – ФИНАЛНА ВЕРСИЯ (затваря се гарантирано)");
+    console.log("✅ armyMarket.js – окончателна версия (с описания и големи иконки)");
 })();
