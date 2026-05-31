@@ -185,47 +185,26 @@ function triggerRandomEconomicEvent() {
     
     let eventData = {};
     switch(eventType) {
-        case 0:
-            eventData = {
-                title: "ИКОНОМИЧЕСКИ БУМ",
-                message: `📈 Търговията процъфтява! Получавате бонус злато.`,
-                gain: 200 + Math.floor(Math.random() * 300),
-                type: "success"
-            };
-            break;
-        case 1:
-            eventData = {
-                title: "РЕЦЕСИЯ",
-                message: `📉 Икономически спад! Губите злато.`,
-                loss: 100 + Math.floor(Math.random() * 200),
-                type: "error"
-            };
-            break;
-        case 2:
-            eventData = {
-                title: "ДАНЪЧНА РЕФОРМА",
-                message: `🏛️ Нови данъчни правила ви носят злато.`,
-                gain: Math.floor(hero.gold * 0.05),
-                type: "success"
-            };
-            break;
-        case 3:
-            eventData = {
-                title: "КРАЖБА НА ХАЗНАТА",
-                message: `💰 Крадци задигнаха част от златото!`,
-                loss: Math.floor(hero.gold * 0.1) + 50,
-                type: "error"
-            };
-            break;
-        case 4:
-            eventData = {
-                title: "НОВ ПАЗАР",
-                message: `🛒 Открит е нов търговски път!`,
-                gain: 150 + Math.floor(Math.random() * 250),
-                type: "success"
-            };
-            break;
+        case 0: eventData = { title: "📈 ИКОНОМИЧЕСКИ БУМ", gain: 200 + Math.floor(Math.random() * 300), msg: "Търговията процъфтява!" }; break;
+        case 1: eventData = { title: "📉 РЕЦЕСИЯ", loss: 100 + Math.floor(Math.random() * 200), msg: "Икономически спад!" }; break;
+        case 2: eventData = { title: "🏛️ ДАНЪЧНА РЕФОРМА", gain: Math.floor(hero.gold * 0.05), msg: "Нови данъчни правила ви носят злато." }; break;
+        case 3: eventData = { title: "💰 КРАЖБА НА ХАЗНАТА", loss: Math.floor(hero.gold * 0.1) + 50, msg: "Крадци задигнаха част от златото!" }; break;
+        case 4: eventData = { title: "🛒 НОВ ПАЗАР", gain: 150 + Math.floor(Math.random() * 250), msg: "Открит е нов търговски път!" }; break;
     }
+    
+    window.showAdvisorMsg(
+        `${eventData.title} ${eventData.msg}`,
+        [
+            { label: '💰 Приеми ефекта', action: () => {
+                if (eventData.gain) { hero.gold += eventData.gain; window.showAdvisorMsg(`+${eventData.gain} злато`); }
+                if (eventData.loss) { hero.gold = Math.max(0, hero.gold - eventData.loss); window.showAdvisorMsg(`-${eventData.loss} злато`); }
+                if (window.updateCharacterUI) window.updateCharacterUI(hero);
+                if (window.updateStrongestHeroUI) window.updateStrongestHeroUI();
+            }},
+            { label: '📜 Игнорирай', action: () => window.showAdvisorMsg(`Игнорирахте събитието.`) }
+        ]
+    );
+}
     
     // ========== ИНТЕРАКТИВЕН ЛЕТОПИС ==========
     if (window.ChronicleEvents && typeof window.ChronicleEvents.generateEconomicEvent === 'function') {
