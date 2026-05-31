@@ -266,6 +266,37 @@ window.autoEquipBestArtifacts = function(hero) {
         }
     }
 };
+
+window.aiDiplomacy = function() {
+    let heroes = [];
+    for (let key in window.worldData.clans) {
+        let h = window.worldData.clans[key];
+        if (h.isJoined && h.isAuto && h.isAlive !== false) heroes.push(h);
+    }
+    for (let hero of heroes) {
+        if (Math.random() > 0.05) continue;
+        let other = heroes.find(h => h !== hero && Math.random() < 0.3);
+        if (!other) continue;
+        let relation = (hero.relations?.[other.name]) || 0;
+        if (relation < -20 && Math.random() < 0.3) {
+            // Обявяване на война (ако има региони)
+            if (hero.armySize > other.armySize * 1.2 && typeof window.startBattle === 'function') {
+                window.addHeroLog(hero, "⚔️", `Обявява война на ${other.name}!`);
+                // Може да атакува регион на other
+            }
+        } else if (relation > 30 && Math.random() < 0.2) {
+            // Подобряване на съюз – дарение
+            let gift = Math.min(200, Math.floor(hero.gold * 0.1));
+            if (gift > 0) {
+                hero.gold -= gift;
+                other.gold += gift;
+                if (!hero.relations) hero.relations = {};
+                hero.relations[other.name] = (hero.relations[other.name] || 0) + 10;
+                window.addHeroLog(hero, "🤝", `Изпрати ${gift} злато на ${other.name} (съюз).`);
+            }
+        }
+    }
+};
 // ==================== 4. ВЗЕМАНЕ НА РЕШЕНИЯ ЗА ДЕЙСТВИЯ (ЗА NPC) ====================
 
 window.getHeroAction = function(hero) {
