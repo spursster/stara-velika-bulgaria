@@ -696,7 +696,7 @@ if (shareBtn) {
         await window.shareHeroCard(hero);
     };
 }
-}
+
 // ==================== ЛЕНТА С ЛЮБИМИ ГЕРОИ (5 СЛОТА, XP, HP, AUTO/РЪЧЕН) ====================
 window.renderFavoriteHeroesBar = function() {
 var container = document.getElementById('favorite-heroes-bar');
