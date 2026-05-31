@@ -173,24 +173,32 @@ html, body {
 
 /* Долна лента с бутони */
 #bottom-controls {
-    background: #0a2a4a !important;
-    backdrop-filter: none !important;
-    border-top: 2px solid #d4af37;
-    display: flex;
-    justify-content: flex-start;
-    align-items: center;
-    padding: 8px;
-    overflow-x: auto;
-    flex-wrap: nowrap;
-    white-space: nowrap;
-    scroll-behavior: smooth;
-    -webkit-overflow-scrolling: touch;
-    scroll-snap-type: x mandatory;
-    -ms-overflow-style: none;
-    scrollbar-width: none;
-    margin: 0;
+background: #0a2a4a !important;
+backdrop-filter: none !important;
+border-top: 2px solid #d4af37;
+display: flex;
+justify-content: flex-start;
+align-items: center;
+padding: 8px 16px; /* ⭐ ПРОМЕНЕНО: 8px -> 8px 16px (добавяме padding отстрани) */
+overflow-x: auto;
+flex-wrap: nowrap;
+white-space: nowrap;
+scroll-behavior: smooth;
+-webkit-overflow-scrolling: touch;
+scroll-snap-type: x mandatory;
+overscroll-behavior-x: contain; /* ⭐ ДОБАВЕНО: Спира "bounce" ефекта */
+-ms-overflow-style: none;
+scrollbar-width: none;
+margin: 0;
+gap: 8px; /* ⭐ ДОБАВЕНО: Разстояние между бутоните */
 }
 #bottom-controls::-webkit-scrollbar { display: none; }
+
+/* Бутони в менюто */
+.icon-btn, .next-turn-btn {
+scroll-snap-align: center; /* ⭐ ПРОМЕНЕНО: start -> center (центрира бутоните при скрол) */
+flex-shrink: 0;
+}
 
 /* Лента с любими герои */
 .favorite-bar {
@@ -555,6 +563,19 @@ html, body {
         font-size: 0.85rem;
         padding: 2px 8px;
     }
+}
+@media (max-width: 768px) {
+#bottom-controls {
+padding: 8px 12px; /* По-малък padding за таблети */
+gap: 6px;
+}
+}
+
+@media (max-width: 600px) {
+#bottom-controls {
+padding: 6px 10px; /* Още по-малък за телефони */
+gap: 4px;
+}
 }
 @media (max-width: 768px) {
     #top-bar {
