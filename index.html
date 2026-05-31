@@ -91,42 +91,58 @@
     <div id="favorite-heroes-bar" class="favorite-bar"></div>
 </div>
 
-<!-- Скриптове – редът е критичен! -->
+<!-- 1. ДАННИ И БАЗИ -->
 <script src="world_data.js"></script>
 <script src="database.js"></script>
 <script src="troopsData.js"></script>
 <script src="PersonalityTraits.js"></script>
-<script src="characterEvolution.js"></script>
-<script src="leaderboard.js"></script>
 <script src="classes.js"></script>
 <script src="skills.js"></script>
 <script src="items.js"></script>
+
+<!-- 2. ОСНОВНИ СИСТЕМИ (RPG, ЕВОЛЮЦИЯ) -->
 <script src="rpg_system.js"></script>
+<script src="characterEvolution.js"></script>
+<script src="leaderboard.js"></script>
+<script src="time.js"></script>
+
+<!-- 3. UI И ЛЕТОПИС (важно: ui.js преди всички модули, които го използват) -->
+<script src="ui.js"></script>
+<script src="chronicle_events.js"></script>     <!-- ИНТЕРАКТИВЕН ЛЕТОПИС (бутони) -->
+<script src="ui-manager.js"></script>
+<script src="ui-modals.js"></script>
+
+<!-- 4. ИКОНОМИКА, ДИПЛОМАЦИЯ, РЕГИОНИ, БИТКИ (разчитат на UI и летопис) -->
 <script src="economy.js"></script>
-<script src="expeditions.js"></script>
-<script src="events.js"></script>
 <script src="diplomacy.js"></script>
 <script src="regions.js"></script>
-<script src="quests.js"></script>
-<script src="mechanics.js"></script>
-<script src="ancientCivilizations.js"></script>
+<script src="regionBuilding.js"></script>
+<script src="expeditions.js"></script>
 <script src="battle.js"></script>
 <script src="armyMarket.js"></script>
 <script src="barracks.js"></script>
+
+<!-- 5. КУЕСТИ, СЪБИТИЯ, МЕХАНИКИ -->
+<script src="quests.js"></script>
+<script src="events.js"></script>
+<script src="mechanics.js"></script>
+<script src="ancientCivilizations.js"></script>
 <script src="rivalry.js"></script>
+
+<!-- 6. ТЪРГОВИЯ И ДИНАМИЧНИ СЪБИТИЯ (ако има отделен файл) -->
+<script src="trade_events.js"></script>
+
+<!-- 7. СОЛО РЕЖИМ (НЕ СЕ ПИПА, НО ТРЯБВА ДА Е ЗАРЕДЕН) -->
 <script src="soloMode.js"></script>
-<script src="time.js"></script>
+
+<!-- 8. ОСНОВНА ЛОГИКА НА ИГРАТА (САВ, ЗАРЕЖДАНЕ, НОВА ИГРА) – НАЙ-ОТЗАД -->
 <script src="core-init.js"></script>
-<script src="ui-manager.js"></script>
 <script src="logic.js"></script>
-<script src="regionBuilding.js"></script>
-<script src="ui.js"></script>
-<script src="chronicle_events.js"></script>
-<script src="ui-modals.js"></script>
+
+<!-- 9. ДОПЪЛНИТЕЛНИ UI ЕКСТРИ (СКИЛОВЕ, СПОДЕЛЯНЕ) -->
+<script src="skills-ui.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <script src="social-share.js"></script>
-<script src="trade_events.js"></script>
-<script src="skills-ui.js"></script>
 
 <script>
 // ==================== ГЛОБАЛНИ ДОПЪЛНЕНИЯ (без currentHero в класически режим) ====================
