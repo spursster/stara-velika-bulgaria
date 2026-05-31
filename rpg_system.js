@@ -83,10 +83,13 @@ window.consumeStoredXPForHero = function(hero) {
             leveledUp = true;
             requiredXP = window.rpgDatabase.getXPRequiredForLevel(hero.level);
         }
-        // Показваме съобщение само за любими герои (те са в лентата)
-        if (hero.isFavorite === true) {
-            showRPGMessage("НИВО НАГОРЕ", `🆙 ${hero.name} достигна Ниво ${hero.level} (от натрупан опит)! +1 Точка за умения`, "success");
-        }
+      if (hero.isFavorite === true) {
+    if (window.addHeroLog) window.addHeroLog(hero, "⬆️", `Достигна ниво ${hero.level}`);
+    
+    if (window.addWorldEvent) {
+        window.addWorldEvent("🆙 НИВО НАГОРЕ", `${hero.name} достигна Ниво ${hero.level}! (+1 точка умения)`, "🆙");
+    }
+}
         if (leveledUp) {
             if (window.checkArcheAgeClass) window.checkArcheAgeClass(hero);
             if (!hero.isAuto && hero.skillPoints > 0 && window.autoAssignSkillPoint) {
