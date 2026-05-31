@@ -1500,7 +1500,51 @@ document.addEventListener('keydown', (e) => {
   if (e.code === 'Escape') {
     document.querySelectorAll('.market-modal, #ultimate-profile-modal, #skills-ui-modal, #hero-rpg-modal, .battle-container').forEach(m => m.remove());
   }
+    
 });
 
+// ==================== 🎛️ ФИЛТЪР ЗА ЖУРНАЛА НА СЪВЕТНИКА ====================
+// 🔘 За да ВКЛЮЧИШ филтъра: остави реда така
+// 🔘 За да ИЗКЛЮЧИШ филтъра (и да виждаш ВСИЧКИ съобщения): добави // в началото на реда
+const FILTER_JOURNAL_NON_FAV_LEVELS = true;
+
+if (typeof FILTER_JOURNAL_NON_FAV_LEVELS !== 'undefined' && FILTER_JOURNAL_NON_FAV_LEVELS) {
+    const _origMsg = window.showAdvisorMsg || function(m){ console.log(m); };
+    
+    window.showAdvisorMsg = function(msg) {
+        if (typeof msg !== 'string') return _origMsg(msg);
+
+        // 1. Дали е съобщение за автоматично вдигане на ниво?
+        const isAutoLevel = /ниво|level|вдигна|auto|автоматично|опит|xp/i.test(msg);
+
+        if (isAutoLevel) {
+            // 2. Извличаме името на героя от началото на текста
+            const nameMatch = msg.match(/^([А-Яа-яA-Za-z\s\-']+?)[:\s\-–]/) ||
+                              msg.match(/за\s+([А-Яа-яA-Za-z\s\-']+?)[\s.!]/i);
+            const heroName = nameMatch ? nameMatch[1].trim() : null;
+
+            // 3. Проверяваме дали героят е любим (isFavorite === true)
+            let isMyFav = false;
+            if (heroName && window.worldData?.clans) {
+                for (let id in window.worldData.clans) {
+                    const h = window.worldData.clans[id];
+                    if (h.name === heroName && h.isFavorite === true) {
+                        isMyFav = true;
+                        break;
+                    }
+                }
+            }
+            // Ако не успеем да разпознаем името, показваме съобщението (за безопасност)
+            if (!heroName) isMyFav = true;
+
+            // 4. АКО НЕ Е ЛЮБИМ → тихо блокираме
+            if (!isMyFav) return;
+        }
+
+        // 5. Всичко останало (или ако героят е любим) → показваме нормално
+        _origMsg(msg);
+    };
+}
+// ============================================================================
 // ==================== КРАЙ НА ui.js ====================
 console.log("✅ ui.js зареден успешно - SyntaxError поправен");
