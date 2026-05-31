@@ -183,32 +183,66 @@ function triggerRandomEconomicEvent() {
     const hero = getMainEconomicHero();
     if (!hero) return;
     
+    let eventData = {};
     switch(eventType) {
         case 0:
-            let boomBonus = 200 + Math.floor(Math.random() * 300);
-            hero.gold += boomBonus;
-            showEconomyMessage("ИКОНОМИЧЕСКИ БУМ", `📈 Търговията процъфтява! Получавате +${boomBonus} злато.`, "success");
+            eventData = {
+                title: "ИКОНОМИЧЕСКИ БУМ",
+                message: `📈 Търговията процъфтява! Получавате бонус злато.`,
+                gain: 200 + Math.floor(Math.random() * 300),
+                type: "success"
+            };
             break;
         case 1:
-            let recessionLoss = 100 + Math.floor(Math.random() * 200);
-            hero.gold = Math.max(0, hero.gold - recessionLoss);
-            showEconomyMessage("РЕЦЕСИЯ", `📉 Икономически спад! Губите ${recessionLoss} злато.`, "error");
+            eventData = {
+                title: "РЕЦЕСИЯ",
+                message: `📉 Икономически спад! Губите злато.`,
+                loss: 100 + Math.floor(Math.random() * 200),
+                type: "error"
+            };
             break;
         case 2:
-            let taxBonus = Math.floor(hero.gold * 0.05);
-            hero.gold += taxBonus;
-            showEconomyMessage("ДАНЪЧНА РЕФОРМА", `🏛️ Нови данъчни правила ви носят +${taxBonus} злато.`, "success");
+            eventData = {
+                title: "ДАНЪЧНА РЕФОРМА",
+                message: `🏛️ Нови данъчни правила ви носят злато.`,
+                gain: Math.floor(hero.gold * 0.05),
+                type: "success"
+            };
             break;
         case 3:
-            let stolen = Math.floor(hero.gold * 0.1) + 50;
-            hero.gold = Math.max(0, hero.gold - stolen);
-            showEconomyMessage("КРАЖБА НА ХАЗНАТА", `💰 Крадци задигнаха ${stolen} злато!`, "error");
+            eventData = {
+                title: "КРАЖБА НА ХАЗНАТА",
+                message: `💰 Крадци задигнаха част от златото!`,
+                loss: Math.floor(hero.gold * 0.1) + 50,
+                type: "error"
+            };
             break;
         case 4:
-            let newMarketGold = 150 + Math.floor(Math.random() * 250);
-            hero.gold += newMarketGold;
-            showEconomyMessage("НОВ ПАЗАР", `🛒 Открит е нов търговски път! +${newMarketGold} злато.`, "success");
+            eventData = {
+                title: "НОВ ПАЗАР",
+                message: `🛒 Открит е нов търговски път!`,
+                gain: 150 + Math.floor(Math.random() * 250),
+                type: "success"
+            };
             break;
+    }
+    
+    // ========== ИНТЕРАКТИВЕН ЛЕТОПИС ==========
+    if (window.ChronicleEvents && typeof window.ChronicleEvents.generateEconomicEvent === 'function') {
+        const ev = window.ChronicleEvents.generateEconomicEvent(hero, eventData);
+        if (window.showAdvisorMsg) {
+            window.showAdvisorMsg(ev.message, ev.buttons);
+            return;
+        }
+    }
+    
+    // Резервен вариант – директно прилагане на ефекта
+    if (eventData.gain) {
+        hero.gold += eventData.gain;
+        showEconomyMessage(eventData.title, `${eventData.message} +${eventData.gain} злато.`, eventData.type);
+    } else if (eventData.loss) {
+        hero.gold = Math.max(0, hero.gold - eventData.loss);
+        showEconomyMessage(eventData.title, `${eventData.message} -${eventData.loss} злато.`, eventData.type);
     }
     syncHeroGold(hero);
 }
@@ -252,6 +286,17 @@ window.investGold = function(hero, amount, turns = 5) {
         return false;
     }
     let expectedReturn = Math.floor(amount * (1 + window.economySettings.investmentReturnBase * (turns / 4)));
+    
+    // ========== ИНТЕРАКТИВЕН ЛЕТОПИС ==========
+    if (window.ChronicleEvents && typeof window.ChronicleEvents.generateInvestmentOpportunity === 'function') {
+        const ev = window.ChronicleEvents.generateInvestmentOpportunity(hero, amount, expectedReturn, turns);
+        if (window.showAdvisorMsg) {
+            window.showAdvisorMsg(ev.message, ev.buttons);
+            return true; // Бутонът ще извика реалната инвестиция
+        }
+    }
+    
+    // Резервно – директно инвестиране (без бутон)
     hero.gold -= amount;
     window.investments.push({
         heroId: hero.id,
@@ -259,6 +304,7 @@ window.investGold = function(hero, amount, turns = 5) {
         turnsLeft: turns,
         returnAmount: expectedReturn
     });
+    showEconomyMessage("ИНВЕСТИЦИЯ", `✅ Инвестирахте ${amount} злато за ${turns} хода. Очаквана печалба: ${expectedReturn}.`, "success");
     return true;
 };
 
