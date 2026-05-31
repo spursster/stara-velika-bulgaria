@@ -70,7 +70,9 @@ window.updateTimeUI = function() {
             return;
         }
     }
-    
+    const seasons = ['season-spring', 'season-summer', 'season-autumn', 'season-winter'];
+document.body.classList.remove(...seasons);
+document.body.classList.add(seasons[window.gameTime.seasonIndex] || seasons[0]);
     const targetEl = timeDisplay || window.timeElement;
     if (!targetEl) return;
     
