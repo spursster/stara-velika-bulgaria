@@ -364,13 +364,13 @@ window.getHeroCombatBonus = function(hero, bonusType) {
 // ==================== RPG МОДАЛ ====================
 window.openHeroRPGModal = function(heroId) {
     let hero = null;
-    if (heroId && window.worldData?.clans?.[heroId]) hero = window.worldData.clans[heroId];
-    else {
-        // Ако няма подаден ID, взимаме избрания герой (selectedHero) или най-силния
-        if (typeof window.getSelectedHero === 'function') {
-            hero = window.getSelectedHero();
-        } else if (typeof window.getStrongestHero === 'function') {
-            hero = window.getStrongestHero();
+    if (heroId && window.worldData?.clans?.[heroId]) {
+        hero = window.worldData.clans[heroId];
+    } else {
+        if (window.gameMode === 'solo' && window.currentHero) {
+            hero = window.currentHero;
+        } else {
+            hero = window.getSelectedHero ? window.getSelectedHero() : (window.getStrongestHero ? window.getStrongestHero() : null);
         }
     }
     if (!hero) {
@@ -378,7 +378,7 @@ window.openHeroRPGModal = function(heroId) {
         return;
     }
     if (typeof window.showHeroProfile === 'function') window.showHeroProfile(hero);
-    else showRPGMessage("ГРЕШКА", "RPG системата не е напълно заредена, но можете да управлявате героя от профила", "error");
+    else showRPGMessage("ГРЕШКА", "RPG системата не е напълно заредена", "error");
 };
 
 // Автоматично извикване на autoEquipHero при старт (за всички авто герои)
