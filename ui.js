@@ -114,7 +114,7 @@ if (typeof window.updateAllUI === 'function') {
     window.updateAllUI();
 } else if (typeof window.renderFavoriteHeroesBar === 'function') {
     window.renderFavoriteHeroesBar();
-}
+
 };
 // ==================== ГЕНЕРИРАНЕ НА ПОРТРЕТ С POLLINATIONS.AI ====================
 window.generateHeroPortrait = async function(hero, retries = 2) {
