@@ -191,46 +191,48 @@ window.toggleHeroAutoMode = function(heroId) {
 // ==================== НОВА СИСТЕМА ЗА АВТОМАТИЧНО УЧЕНЕ НА УМЕНИЯ ====================
 window.autoAssignSkillPoint = function(hero) {
     if (hero.skillPoints <= 0) return;
-    if (!window.advancedSkills) {
-        console.warn("advancedSkills не е зареден – няма нови умения.");
-        return;
-    }
+    if (!window.advancedSkills) return;
     if (!hero.learnedSkills) hero.learnedSkills = {};
-    const allSkills = [];
-    for (let treeKey in window.advancedSkills) {
-        const tree = window.advancedSkills[treeKey];
-        if (!tree || !tree.skills) continue;
-        for (let skillKey in tree.skills) {
-            const skill = tree.skills[skillKey];
-            const currentLevel = hero.learnedSkills[skillKey] || 0;
-            if (currentLevel < skill.maxLevel) {
-                allSkills.push({ treeKey, skillKey, skill });
+    
+    // Приоритет: агресивните взимат атака, предпазливите защита, дипломатичните икономика
+    let priority = [];
+    if (hero.personality?.some(p => p.categories?.includes("agg"))) priority = ["attack", "crit", "berserk"];
+    else if (hero.personality?.some(p => p.categories?.includes("cautious"))) priority = ["defense", "hp", "endurance"];
+    else if (hero.personality?.some(p => p.categories?.includes("dip"))) priority = ["economy", "trade", "diplomacy"];
+    else priority = ["leadership", "tactics"];
+    
+    // Намери умение от приоритета, което не е на макс
+    for (let p of priority) {
+        for (let treeKey in window.advancedSkills) {
+            for (let skillKey in window.advancedSkills[treeKey].skills) {
+                let skill = window.advancedSkills[treeKey].skills[skillKey];
+                if (skill.name.toLowerCase().includes(p) && (hero.learnedSkills[skillKey] || 0) < skill.maxLevel) {
+                    // Провери дали са изпълнени изискванията
+                    let pointsInTree = 0;
+                    for (let sk in hero.learnedSkills) {
+                        if (window.advancedSkills[treeKey].skills[sk]) pointsInTree += hero.learnedSkills[sk];
+                    }
+                    if (hero.level >= skill.reqLevel && pointsInTree >= skill.reqPointsInTree) {
+                        hero.learnedSkills[skillKey] = (hero.learnedSkills[skillKey] || 0) + 1;
+                        hero.skillPoints--;
+                        window.addHeroLog(hero, "🧠", `Научи ${skill.name} (приоритетно).`);
+                        return;
+                    }
+                }
             }
         }
     }
-    if (allSkills.length === 0) return;
-    let attempts = 0;
-    let learned = false;
-    while (!learned && attempts < 10 && hero.skillPoints > 0 && allSkills.length > 0) {
-        const random = allSkills[Math.floor(Math.random() * allSkills.length)];
-        let pointsInTree = 0;
-        for (let sk in hero.learnedSkills) {
-            if (window.advancedSkills[random.treeKey] && window.advancedSkills[random.treeKey].skills[sk]) {
-                pointsInTree += hero.learnedSkills[sk];
+    // Ако няма подходящо от приоритета, вземи първото възможно
+    for (let treeKey in window.advancedSkills) {
+        for (let skillKey in window.advancedSkills[treeKey].skills) {
+            let skill = window.advancedSkills[treeKey].skills[skillKey];
+            if ((hero.learnedSkills[skillKey] || 0) < skill.maxLevel) {
+                hero.learnedSkills[skillKey] = (hero.learnedSkills[skillKey] || 0) + 1;
+                hero.skillPoints--;
+                window.addHeroLog(hero, "🧠", `Научи ${skill.name}.`);
+                return;
             }
         }
-        if (hero.level >= random.skill.reqLevel && pointsInTree >= random.skill.reqPointsInTree) {
-            hero.learnedSkills[random.skillKey] = (hero.learnedSkills[random.skillKey] || 0) + 1;
-            hero.skillPoints--;
-            learned = true;
-            const effect = random.skill.effect(hero.learnedSkills[random.skillKey]);
-            if (effect.attackBonus) hero.heroPower += effect.attackBonus;
-            if (effect.defenseBonus) hero.defense = (hero.defense || 0) + effect.defenseBonus;
-           if (hero.isFavorite === true) {
-    showRPGMessage("АВТО-УМЕНИЕ", `🤖 ${hero.name} научи "${random.skill.name}" (Ниво ${hero.learnedSkills[random.skillKey]})!`, "info");
-}
-        }
-        attempts++;
     }
 };
 
