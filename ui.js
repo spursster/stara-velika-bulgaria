@@ -901,60 +901,37 @@ window.updateCharacterUI = function(hero) {
 
 // ==================== ЖУРНАЛ НА СЪВЕТНИКА ====================
 // ========== ПОПРАВЕНА showAdvisorMsg С БУТОНИ ==========
-window.showAdvisorMsg = function(msg, buttons) {
-    const journal = document.getElementById('advisor-journal');
-    if (!journal) {
-        console.log("📜", msg);
-        return;
-    }
-
+window.showAdvisorMsg = function(msg, btns) {
+    const box = document.getElementById('advisor-journal');
+    if (!box) return;
     const msgDiv = document.createElement('div');
-    msgDiv.style.borderLeft = '3px solid #ffaa44';
-    msgDiv.style.backgroundColor = 'rgba(0,0,0,0.6)';
-    msgDiv.style.margin = '6px 0';
+    msgDiv.style.backgroundColor = '#1e1a0c';
+    msgDiv.style.borderLeft = '3px solid #daa520';
+    msgDiv.style.margin = '4px 0';
     msgDiv.style.padding = '6px';
-    msgDiv.style.borderRadius = '0 6px 6px 0';
-    msgDiv.style.fontSize = '12px';
     msgDiv.style.color = '#ffdd99';
-
-    const textSpan = document.createElement('span');
-    textSpan.innerHTML = `📜 ${msg}`;
-    msgDiv.appendChild(textSpan);
-
-    if (buttons && Array.isArray(buttons) && buttons.length > 0) {
-        const btnContainer = document.createElement('div');
-        btnContainer.style.marginTop = '8px';
-        btnContainer.style.display = 'flex';
-        btnContainer.style.gap = '8px';
-        btnContainer.style.flexWrap = 'wrap';
-
-        buttons.forEach(btn => {
-            const button = document.createElement('button');
-            button.innerText = btn.label;
-            // Стилове за CSS бутон
-            button.style.backgroundColor = '#d4af37';
-            button.style.color = '#000';
-            button.style.border = 'none';
-            button.style.borderRadius = '20px';
-            button.style.padding = '4px 12px';
-            button.style.fontSize = '11px';
-            button.style.fontWeight = 'bold';
-            button.style.cursor = 'pointer';
-            button.style.boxShadow = '0 1px 2px rgba(0,0,0,0.3)';
-            button.style.transition = '0.1s';
-            button.onmouseenter = () => button.style.transform = 'scale(1.02)';
-            button.onmouseleave = () => button.style.transform = 'scale(1)';
-            button.onclick = () => {
-                if (typeof btn.action === 'function') btn.action();
-                else if (typeof btn.action === 'string') window[btn.action]?.();
-                btnContainer.remove();   // премахва бутоните след клик, за да не се повтаря действието
-            };
-            btnContainer.appendChild(button);
-        });
-        msgDiv.appendChild(btnContainer);
+    msgDiv.innerHTML = `<span>📜 ${msg}</span>`;
+    if (btns && btns.length) {
+        const btnWrap = document.createElement('div');
+        btnWrap.style.marginTop = '6px';
+        btnWrap.style.display = 'flex';
+        btnWrap.style.gap = '6px';
+        for (let b of btns) {
+            const btn = document.createElement('button');
+            btn.textContent = b.label;
+            btn.style.background = '#daa520';
+            btn.style.border = 'none';
+            btn.style.borderRadius = '20px';
+            btn.style.padding = '2px 12px';
+            btn.style.cursor = 'pointer';
+            btn.style.fontSize = '11px';
+            btn.onclick = () => { b.action(); btnWrap.remove(); };
+            btnWrap.appendChild(btn);
+        }
+        msgDiv.appendChild(btnWrap);
     }
-
-    journal.prepend(msgDiv);
+    box.prepend(msgDiv);
+    while (box.children.length > 50) box.removeChild(box.lastChild);
 };
 // ==================== ИНСПЕКЦИЯ НА ГЕРОЙ ====================
 window.inspectHeroProfile = function(clanKey) { 
