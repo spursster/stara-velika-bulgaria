@@ -160,6 +160,51 @@ window.marryPrisoner = function(index) {
     if (window.openRegionsMap) window.openRegionsMap();
 };
 
+// ==================== ПРЕДЛОЖЕНИЕ ЗА СЪЮЗ (ИНТЕРАКТИВЕН ЛЕТОПИС) ====================
+window.proposeAlliance = function(proposer, target) {
+    if (!proposer || !target) {
+        if (window.showAdvisorMsg) window.showAdvisorMsg("❌ Невалидни герои за съюз.");
+        return false;
+    }
+    if (proposer === target) {
+        if (window.showAdvisorMsg) window.showAdvisorMsg("❌ Не можете да предложите съюз на себе си.");
+        return false;
+    }
+    
+    // Проверка дали вече са съюзници
+    if (proposer.allies && proposer.allies.includes(target.name)) {
+        if (window.showAdvisorMsg) window.showAdvisorMsg(`🤝 ${proposer.name} и ${target.name} вече са съюзници.`);
+        return false;
+    }
+    
+    // ========== ИНТЕРАКТИВЕН ЛЕТОПИС ==========
+    if (window.ChronicleEvents && typeof window.ChronicleEvents.generateAllianceProposal === 'function') {
+        const ev = window.ChronicleEvents.generateAllianceProposal(proposer, target);
+        if (window.showAdvisorMsg) {
+            window.showAdvisorMsg(ev.message, ev.buttons);
+            return true;
+        }
+    }
+    
+    // Резервен вариант – диалог с confirm
+    let result = confirm(`${proposer.name} предлага съюз на ${target.name}. Приемате ли?`);
+    if (result) {
+        if (!proposer.allies) proposer.allies = [];
+        if (!target.allies) target.allies = [];
+        proposer.allies.push(target.name);
+        target.allies.push(proposer.name);
+        if (window.addHeroLog) {
+            window.addHeroLog(proposer, "🤝", `Сключи съюз с ${target.name}.`);
+            window.addHeroLog(target, "🤝", `Сключи съюз с ${proposer.name}.`);
+        }
+        if (window.showAdvisorMsg) window.showAdvisorMsg(`✅ ${proposer.name} и ${target.name} вече са съюзници!`);
+        return true;
+    } else {
+        if (window.showAdvisorMsg) window.showAdvisorMsg(`❌ ${target.name} отказа съюза.`);
+        return false;
+    }
+};
+
 window.proposeMarriage = function(clan, cost, successChance) {
     const hero = getMainDiplomacyHero();
     if (!hero) return;
@@ -167,9 +212,21 @@ window.proposeMarriage = function(clan, cost, successChance) {
         showDiplomacyMessage("ГРЕШКА", "Нямате достатъчно злато!", "error");
         return;
     }
-    hero.gold -= cost;
+    
     let currentRel = window.clanRelations[clan] || 40;
     let finalChance = Math.min(95, successChance + Math.floor((currentRel - 40) * 0.5));
+    
+    // ========== ИНТЕРАКТИВЕН ЛЕТОПИС ==========
+    if (window.ChronicleEvents && typeof window.ChronicleEvents.generateMarriageProposal === 'function') {
+        const ev = window.ChronicleEvents.generateMarriageProposal(hero, clan, cost, finalChance);
+        if (window.showAdvisorMsg) {
+            window.showAdvisorMsg(ev.message, ev.buttons);
+            return;
+        }
+    }
+    
+    // Резервен вариант – директно изпълнение (старият код)
+    hero.gold -= cost;
     let roll = Math.random() * 100;
     if (roll < finalChance) {
         window.clanRelations[clan] = 100;
