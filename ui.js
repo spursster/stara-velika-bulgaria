@@ -913,14 +913,21 @@ window.updateCharacterUI = function(hero) {
         }
     }
 };
+
 // ==================== ЖУРНАЛ НА СЪВЕТНИКА ====================
-window.showAdvisorMsg = function(msg) { 
-    const journal = document.getElementById('advisor-journal'); 
-    if (!journal) { console.log("Журнал съветник:", msg); return; } 
-    window.eventHistory.push(msg); 
-    if (window.eventHistory.length > 50) window.eventHistory.shift(); 
-    journal.innerHTML = window.eventHistory.map(function(line) { return '<p style="margin:4px 0; border-left:2px solid #ffaa44; padding-left:8px;">📜 ' + line + '</p>'; }).reverse().join(''); 
-}; 
+window.showAdvisorMsg = function(msg) {
+    // Поправих "getEle mentById" на "getElementById", за да работи журнала
+    const journal = document.getElementById('advisor-journal');
+    if (!journal) { console.log("Журнал съветник: ", msg); return; }
+    
+    window.eventHistory.push(msg);
+    if (window.eventHistory.length > 50) window.eventHistory.shift();
+    
+    journal.innerHTML = window.eventHistory.map(function(line) { 
+        return '<p style="margin:4px 0; border-left:2px solid #ffaa44; padding-left:8px;">📜 ' + line + '</p>'; 
+    }).reverse().join('');
+};
+// ================================================================
 
 // ==================== ИНСПЕКЦИЯ НА ГЕРОЙ ====================
 window.inspectHeroProfile = function(clanKey) { 
@@ -1503,44 +1510,6 @@ document.addEventListener('keydown', (e) => {
     
 });
 
-// ==================== ЖУРНАЛ НА СЪВЕТНИКА ====================
-window.showAdvisorMsg = function(msg) {
-    if (typeof msg !== 'string') msg = String(msg);
 
-    // 🎛️ НАСТРОЙКА: true = филтрира авто-ниво съобщения за нелюбими герои | false = показва всички
-    const FILTER_AUTO_LEVELS = true;
-
-    if (FILTER_AUTO_LEVELS) {
-        const isAutoLevel = /автоматичн.*ниво|вдигна.*ниво|auto.*level|получи.*опит|gain.*xp/i.test(msg);
-        
-        if (isAutoLevel) {
-            const nameMatch = msg.match(/^([А-Яа-яA-Za-z\s\-']+?)[:\s\-–]/);
-            const heroName = nameMatch ? nameMatch[1].trim() : null;
-            
-            let isFav = false;
-            if (heroName && window.worldData?.clans) {
-                for (let id in window.worldData.clans) {
-                    const h = window.worldData.clans[id];
-                    if (h.name === heroName && h.isFavorite === true) {
-                        isFav = true;
-                        break;
-                    }
-                }
-            }
-            if (!heroName) isFav = true; // Безопасност: ако не разпознаем име, пропускаме
-            if (!isFav) return; // 🔇 БЛОКИРАМЕ съобщението, ако героят не е любим
-        }
-    }
-
-    // ✅ ОРИГИНАЛНА ЛОГИКА (изпълнява се само ако филтърът пропусне)
-    const journal = document.getElementById('advisor-journal');
-    if (!journal) { console.log("Журнал съветник: ", msg); return; }
-    window.eventHistory.push(msg);
-    if (window.eventHistory.length > 50) window.eventHistory.shift();
-    journal.innerHTML = window.eventHistory.map(function(line) {
-        return '<p style="margin:4px 0; border-left:2px solid #ffaa44; padding-left:8px;">📜 ' + line + '</p>';
-    }).reverse().join('');
-};
-// ================================================================
 // ==================== КРАЙ НА ui.js ====================
 console.log("✅ ui.js зареден успешно - SyntaxError поправен");
