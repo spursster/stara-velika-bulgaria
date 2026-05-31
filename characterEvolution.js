@@ -132,60 +132,140 @@ window.automateHero = function(hero) {
     const isRational = categories.includes("rational");
     
     // 1. Икономически действия
-    if (isGreedy && hero.gold > 500 && Math.random() < 0.2) {
-        // Алчните инвестират част от златото
-        let investAmount = Math.min(500, Math.floor(hero.gold * 0.3));
+    // Алчните инвестират част от златото, ако имат над 500
+    if (isGreedy && hero.gold > 500 && Math.random() < 0.25) {
+        let investAmount = Math.min(800, Math.floor(hero.gold * 0.4));
         if (typeof window.investGold === 'function') {
             window.investGold(hero, investAmount, 3);
-            console.log(`💰 ${hero.name} (Алчен) инвестира ${investAmount} злато.`);
+            window.addHeroLog(hero, "💰", `Инвестира ${investAmount} злато (Алчен).`);
         }
     }
     
-    // 2. Военни действия
-    if (isAggressive && hero.armySize > 200 && Math.random() < 0.25) {
-        // Агресивните атакуват случаен регион (ако има такъв)
-        if (window.playerRegions && window.playerRegions.length > 0 && typeof window.startBattle === 'function') {
-            let target = window.playerRegions[Math.floor(Math.random() * window.playerRegions.length)];
-            if (target && target !== hero.currentRegion) {
-                console.log(`⚔️ ${hero.name} (Агресивен) атакува ${target}!`);
+    // Рационалните купуват войски когато са под 200 и имат злато
+    if (isRational && hero.armySize < 200 && hero.gold > 500 && Math.random() < 0.4) {
+        let qty = Math.min(100, Math.floor(hero.gold / 12));
+        if (qty > 0 && typeof window.armyMarket?.buy === 'function') {
+            window.armyMarket.buy("infantry", qty, hero);
+            window.addHeroLog(hero, "⚔️", `Купи ${qty} пехотинци (Рационален).`);
+        }
+    }
+    
+    // 2. Военни действия – агресивните атакуват съседен регион, който не е техен
+    if (isAggressive && hero.armySize > 300 && Math.random() < 0.3) {
+        let possibleTargets = [];
+        if (window.regionConnections && hero.currentRegion) {
+            let neighbors = window.regionConnections[hero.currentRegion] || [];
+            for (let reg of neighbors) {
+                if (!window.playerRegions?.includes(reg)) {
+                    possibleTargets.push(reg);
+                }
+            }
+        }
+        if (possibleTargets.length === 0 && window.worldData?.regions) {
+            possibleTargets = Object.keys(window.worldData.regions).filter(r => !window.playerRegions?.includes(r));
+        }
+        if (possibleTargets.length > 0) {
+            let target = possibleTargets[Math.floor(Math.random() * possibleTargets.length)];
+            window.addHeroLog(hero, "⚔️", `Атакува ${target} (Агресивен).`);
+            if (typeof window.startBattle === 'function') {
                 window.startBattle(target);
             }
         }
     }
     
-    // 3. Защитни / предпазливи действия
-    if (isCautious && hero.armySize < 100 && hero.gold > 200 && Math.random() < 0.3) {
-        // Предпазливите купуват войски, за да се защитят
-        if (window.armyMarket && typeof window.armyMarket.buy === 'function') {
-            let qty = Math.min(50, Math.floor(hero.gold / 10));
-            if (qty > 0) {
-                window.armyMarket.buy("infantry", qty, hero);
-                console.log(`🛡️ ${hero.name} (Предпазлив) купува ${qty} пехотинци за защита.`);
-            }
+    // 3. Защитни / предпазливи действия – строят укрепления или купуват войски
+    if (isCautious && hero.armySize < 150 && hero.gold > 300 && Math.random() < 0.4) {
+        let qty = Math.min(80, Math.floor(hero.gold / 15));
+        if (qty > 0 && typeof window.armyMarket?.buy === 'function') {
+            window.armyMarket.buy("archers", qty, hero);
+            window.addHeroLog(hero, "🛡️", `Нае ${qty} стрелци за защита (Предпазлив).`);
         }
     }
     
-    // 4. Дипломатически действия (само ако има съответната механика)
-    if (isDiplomatic && Math.random() < 0.1) {
-        // Дипломатичните подобряват отношенията (примерно даряват злато на някой друг герой)
-        // Тук може да се добави логика за подобряване на репутация
-        console.log(`🤝 ${hero.name} (Дипломатичен) опитва да подобри отношенията си.`);
+    // 4. Дипломатически действия – даряват злато на някой друг герой (ако има такъв)
+    if (isDiplomatic && hero.gold > 800 && Math.random() < 0.2) {
+        let otherHeroes = [];
+        if (window.worldData?.clans) {
+            for (let id in window.worldData.clans) {
+                let h = window.worldData.clans[id];
+                if (h !== hero && h.isJoined && h.isAlive !== false) otherHeroes.push(h);
+            }
+        }
+        if (otherHeroes.length > 0) {
+            let target = otherHeroes[Math.floor(Math.random() * otherHeroes.length)];
+            let gift = Math.min(300, Math.floor(hero.gold * 0.2));
+            hero.gold -= gift;
+            target.gold += gift;
+            window.addHeroLog(hero, "🤝", `Дари ${gift} злато на ${target.name} (Дипломатичен).`);
+            if (typeof window.updateCharacterUI === 'function') window.updateCharacterUI(hero);
+            if (typeof window.updateCharacterUI === 'function') window.updateCharacterUI(target);
+        }
     }
     
-    // 5. Предателски действия (ако има пленници или съюзници)
-    if (isTraitor && hero.prisoners && hero.prisoners.length > 0 && Math.random() < 0.1) {
-        // Предателски настроен герой може да освободи пленник срещу откуп или да го убие
-        console.log(`⚠️ ${hero.name} (Предател) извършва коварно действие.`);
-        // Може да се добави специфична логика
+    // 5. Предателски действия – ако има пленници, ги убива или освобождава срещу откуп
+    if (isTraitor && hero.prisoners && hero.prisoners.length > 0 && Math.random() < 0.15) {
+        let prisoner = hero.prisoners[0];
+        let action = Math.random() < 0.5 ? "release" : "execute";
+        if (action === "release") {
+            let ransom = Math.floor(prisoner.gold * 0.3);
+            hero.gold += ransom;
+            window.addHeroLog(hero, "💔", `Освободи ${prisoner.name} срещу ${ransom} злато (Предател).`);
+            hero.prisoners.shift();
+        } else {
+            window.addHeroLog(hero, "💀", `Екзекутира ${prisoner.name} (Предател).`);
+            hero.prisoners.shift();
+        }
+        if (typeof window.updateCharacterUI === 'function') window.updateCharacterUI(hero);
     }
     
-    // 6. Рационални действия – например, ако има свободни точки за умения, да ги разпредели оптимално
+    // 6. Рационални действия – разпределяне на точки за умения
     if (isRational && hero.skillPoints > 0 && typeof window.autoAssignSkillPoint === 'function') {
         window.autoAssignSkillPoint(hero);
-        console.log(`🧠 ${hero.name} (Рационален) разпредели точка за умение.`);
+        window.addHeroLog(hero, "🧠", `Разпредели точка умение (Рационален).`);
+    }
+    
+    // 7. За всички герои – автоматично екипиране на най-добрите артефакти (ако има такава функция)
+    if (Math.random() < 0.1 && typeof window.autoEquipBestArtifacts === 'function') {
+        window.autoEquipBestArtifacts(hero);
+    }
+    
+    // 8. За всички – ако има любимец, той дава бонус (вече е в сила, но можем да добавим лог)
+    if (hero.pet && Math.random() < 0.05) {
+        window.addHeroLog(hero, "🐾", `Любимецът ${hero.pet} носи късмет.`);
+    }
+    
+    // 9. Край на хода – обновяваме UI
+    if (typeof window.updateStrongestHeroUI === 'function') {
+        window.updateStrongestHeroUI();
+    }
+    if (typeof window.updateAllUI === 'function') {
+        window.updateAllUI();
     }
 };
 
+window.autoEquipBestArtifacts = function(hero) {
+    if (!hero.inventory || hero.inventory.length === 0) return;
+    let bestArtifact = null;
+    let bestBonus = 0;
+    for (let art of hero.inventory) {
+        if (!art || !art.bonus) continue;
+        let totalBonus = (art.bonus.heroPower || 0) + (art.bonus.goldBonus || 0) * 2;
+        if (totalBonus > bestBonus) {
+            bestBonus = totalBonus;
+            bestArtifact = art;
+        }
+    }
+    if (bestArtifact && hero.equipment && hero.equipment[0] !== bestArtifact) {
+        // слагаме в първи свободен слот (0)
+        if (!hero.equipment[0]) {
+            hero.equipment[0] = bestArtifact;
+            let idx = hero.inventory.indexOf(bestArtifact);
+            if (idx !== -1) hero.inventory.splice(idx, 1);
+            window.addHeroLog(hero, "🏺", `Екипира ${bestArtifact.name} автоматично.`);
+            if (typeof window.recalculateHeroPower === 'function') window.recalculateHeroPower(hero);
+        }
+    }
+};
 // ==================== 4. ВЗЕМАНЕ НА РЕШЕНИЯ ЗА ДЕЙСТВИЯ (ЗА NPC) ====================
 
 window.getHeroAction = function(hero) {
