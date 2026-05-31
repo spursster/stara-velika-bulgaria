@@ -901,55 +901,64 @@ window.updateCharacterUI = function(hero) {
 
 // ==================== ЖУРНАЛ НА СЪВЕТНИКА ====================
 // ========== ПОПРАВЕНА showAdvisorMsg С БУТОНИ ==========
-window.showAdvisorMsg = function(msg, buttons = null) {
-    const journal = document.getElementById('advisor-journal');
-    if (!journal) { console.log("📜", msg); return; }
-    const msgDiv = document.createElement('div');
+window.showAdvisorMsg = function(msg, buttons) {
+    let journal = document.getElementById('advisor-journal');
+    if (!journal) {
+        console.log("📜", msg);
+        return;
+    }
+    
+    // Създаваме основния контейнер за съобщението
+    let msgDiv = document.createElement('div');
+    msgDiv.style.borderLeft = '4px solid #ffaa44';
+    msgDiv.style.backgroundColor = '#2a2a2a';
     msgDiv.style.margin = '4px 0';
-    msgDiv.style.borderLeft = '2px solid #ffaa44';
-    msgDiv.style.paddingLeft = '8px';
-    msgDiv.style.borderRadius = '0 8px 8px 0';
-    msgDiv.style.backgroundColor = 'rgba(0,0,0,0.3)';
     msgDiv.style.padding = '6px';
-    const textSpan = document.createElement('span');
+    msgDiv.style.borderRadius = '0 8px 8px 0';
+    msgDiv.style.color = '#ffdd99';
+    msgDiv.style.fontSize = '12px';
+    
+    // Текст на съобщението
+    let textSpan = document.createElement('span');
     textSpan.innerHTML = `📜 ${msg}`;
     msgDiv.appendChild(textSpan);
     
-    if (buttons && Array.isArray(buttons) && buttons.length) {
-        const btnContainer = document.createElement('div');
+    // Ако има бутони, ги добавяме по същия начин като ръчния тест
+    if (buttons && buttons.length > 0) {
+        let btnContainer = document.createElement('div');
         btnContainer.style.marginTop = '6px';
         btnContainer.style.display = 'flex';
         btnContainer.style.gap = '8px';
         btnContainer.style.flexWrap = 'wrap';
-        buttons.forEach(btn => {
-            const button = document.createElement('button');
+        
+        for (let i = 0; i < buttons.length; i++) {
+            let btn = buttons[i];
+            let button = document.createElement('button');
             button.innerText = btn.label;
-            button.style.background = '#2c1a0c';
-            button.style.border = '1px solid #c9a87b';
+            // Стилове – това са твоите CSS бутони
+            button.style.backgroundColor = '#d4af37';
+            button.style.color = '#000';
+            button.style.border = 'none';
             button.style.borderRadius = '20px';
             button.style.padding = '4px 12px';
-            button.style.fontSize = '10px';
+            button.style.fontSize = '11px';
+            button.style.fontWeight = 'bold';
             button.style.cursor = 'pointer';
-            button.style.color = '#ffdd99';
-            button.onclick = () => {
-                if (typeof btn.action === 'function') btn.action();
-                else if (typeof btn.action === 'string') window[btn.action]?.();
-                btnContainer.remove();
-            };
+            button.style.boxShadow = '0 1px 2px rgba(0,0,0,0.3)';
+            button.onclick = (function(action) {
+                return function() {
+                    if (typeof action === 'function') action();
+                    else if (typeof action === 'string') window[action]?.();
+                    btnContainer.remove(); // премахва бутоните след натискане
+                };
+            })(btn.action);
             btnContainer.appendChild(button);
-        });
+        }
         msgDiv.appendChild(btnContainer);
     }
     
     journal.prepend(msgDiv);
-    if (!window.eventHistory) window.eventHistory = [];
-    window.eventHistory.unshift(msgDiv);
-    if (window.eventHistory.length > 50) {
-        const last = window.eventHistory.pop();
-        if (last && last.remove) last.remove();
-    }
 };
-
 // ==================== ИНСПЕКЦИЯ НА ГЕРОЙ ====================
 window.inspectHeroProfile = function(clanKey) { 
     if (!window.worldData || !window.worldData.clans || !window.worldData.clans[clanKey]) { 
