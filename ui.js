@@ -105,9 +105,18 @@ window.addHeroLog = function(hero, icon, message) {
     if (!hero.actionLog) hero.actionLog = [];
     hero.actionLog.unshift({ icon, message, time: Date.now() });
     if (hero.actionLog.length > 15) hero.actionLog.pop();
-    if (hero === window.currentHero && typeof window.updateCharacterUI === 'function') {
+    
+    // Обновяваме UI само ако този герой е избраният или най-силният (в класически режим)
+    let currentDisplayHero = null;
+    if (window.gameMode === 'solo' && window.currentHero) {
+        currentDisplayHero = window.currentHero;
+    } else {
+        currentDisplayHero = window.getSelectedHero ? window.getSelectedHero() : (window.getStrongestHero ? window.getStrongestHero() : null);
+    }
+    if (hero === currentDisplayHero && typeof window.updateCharacterUI === 'function') {
         window.updateCharacterUI(hero);
     }
+    
     if (typeof window.updateAllUI === 'function') {
         window.updateAllUI();
     } else if (typeof window.renderFavoriteHeroesBar === 'function') {
@@ -1280,9 +1289,19 @@ function moveSidebarContentToMain() {
     if (mobileProfile) {
         const rpgBtn = mobileProfile.querySelector('#open-rpg-modal-btn');
         if (rpgBtn && !rpgBtn.hasAttribute('data-mobile-fixed')) {
-            rpgBtn.onclick = function() {
-                if (window.openHeroRPGModal) window.openHeroRPGModal(window.currentHero.clan);
-            };
+           rpgBtn.onclick = function() {
+    let heroForModal = null;
+    if (window.gameMode === 'solo' && window.currentHero) {
+        heroForModal = window.currentHero;
+    } else {
+        heroForModal = window.getSelectedHero ? window.getSelectedHero() : (window.getStrongestHero ? window.getStrongestHero() : null);
+    }
+    if (heroForModal && window.openHeroRPGModal) {
+        window.openHeroRPGModal(heroForModal.clan);
+    } else if (window.openHeroRPGModal) {
+        window.openHeroRPGModal(null);
+    }
+};
             rpgBtn.setAttribute('data-mobile-fixed', 'true');
         }
     }
