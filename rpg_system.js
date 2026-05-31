@@ -87,7 +87,7 @@ window.consumeStoredXPForHero = function(hero) {
     if (window.addHeroLog) window.addHeroLog(hero, "⬆️", `Достигна ниво ${hero.level}`);
     
     if (window.addWorldEvent) {
-        window.addWorldEvent("🆙 НИВО НАГОРЕ", `${hero.name} достигна Ниво ${hero.level}! (+1 точка умения)`, "🆙");
+        //window.addWorldEvent("🆙 НИВО НАГОРЕ", `${hero.name} достигна Ниво ${hero.level}! (+1 точка умения)`, "🆙");
     }
 }
         if (leveledUp) {
@@ -136,7 +136,7 @@ window.gainHeroXP = function(hero, amount) {
             if (window.addHeroLog) window.addHeroLog(hero, "⬆️", `Достигна ниво ${hero.level}`);
             
             if (window.addWorldEvent) {
-                window.addWorldEvent("🆙 НИВО НАГОРЕ", `${hero.name} достигна Ниво ${hero.level}! (+1 точка умения)`, "🆙");
+                //window.addWorldEvent("🆙 НИВО НАГОРЕ", `${hero.name} достигна Ниво ${hero.level}! (+1 точка умения)`, "🆙");
             }
             if (window.checkArcheAgeClass) window.checkArcheAgeClass(hero);
             if (hero.isAuto && hero.skillPoints > 0 && window.autoAssignSkillPoint) {
