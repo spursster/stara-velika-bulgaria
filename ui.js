@@ -61,24 +61,20 @@ window.updateTimeUI = function() {
     if (!window.gameTime) return;
     
     const timeDisplay = document.getElementById('current-time-info');
-    if (!timeDisplay) {
-        const fallback = document.querySelector('.stat-box:last-child');
-        if (fallback) {
-            window.timeElement = fallback;
-        } else {
-            console.warn("⚠️ Елемент за време не е намерен");
-            return;
-        }
+    const targetEl = timeDisplay || window.timeElement || document.querySelector('.stat-box:last-child');
+    
+    if (!targetEl) {
+        console.warn("⚠️ updateTimeUI: Елемент за време не е намерен в DOM.");
+        return;
     }
-    const seasons = ['season-spring', 'season-summer', 'season-autumn', 'season-winter'];
-document.body.classList.remove(...seasons);
-document.body.classList.add(seasons[window.gameTime.seasonIndex] || seasons[0]);
-    const targetEl = timeDisplay || window.timeElement;
-    if (!targetEl) return;
-    const SEASONS_LIST = ["🌱 Пролет", "☀️ Лято", "🍂 Есен", "❄️ Зима"];
-const currentSeason = SEASONS_LIST[window.gameTime.seasonIndex] || "Сезон";
-    const currentSeason = seasons[window.gameTime.seasonIndex] || "Сезон";
-    targetEl.innerHTML = `⏳ ${currentSeason} ${window.gameTime.year} г. ${window.gameTime.era}`;
+    
+    window.timeElement = targetEl;
+
+    const SVB_SEASONS = ["🌱 Пролет", "☀️ Лято", "🍂 Есен", "❄️ Зима"];
+    const safeIndex = Math.max(0, Math.min(3, window.gameTime.seasonIndex || 0));
+    const currentSeason = SVB_SEASONS[safeIndex] || "Сезон";
+    
+    targetEl.innerHTML = `⏳ ${currentSeason} ${window.gameTime.year || 0} г. ${window.gameTime.era || ""}`;
 };
 
 window.eventHistory = []; 
@@ -1452,10 +1448,16 @@ function showAllHeroesModal() {
 
 // ==================== ИНИЦИАЛИЗАЦИЯ ====================
 setTimeout(() => {
-    if (typeof window.renderFavoriteHeroesBar === 'function') {
-        window.updateAllUI();
-    }
+    if (typeof window.renderFavoriteHeroesBar === 'function') window.renderFavoriteHeroesBar();
+    if (typeof window.updateStrongestHeroUI === 'function') window.updateStrongestHeroUI();
+    if (typeof window.updateTimeUI === 'function') window.updateTimeUI();
 }, 500);
+
+window.updateAllUI = function() {
+    if (typeof window.renderFavoriteHeroesBar === 'function') window.renderFavoriteHeroesBar();
+    if (typeof window.updateStrongestHeroUI === 'function') window.updateStrongestHeroUI();
+    if (typeof window.updateTimeUI === 'function') window.updateTimeUI();
+};
 
 window.openHeroRPGModal = function(heroId) {
     let hero = null;
