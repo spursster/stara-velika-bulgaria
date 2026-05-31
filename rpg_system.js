@@ -223,7 +223,9 @@ window.autoAssignSkillPoint = function(hero) {
             const effect = random.skill.effect(hero.learnedSkills[random.skillKey]);
             if (effect.attackBonus) hero.heroPower += effect.attackBonus;
             if (effect.defenseBonus) hero.defense = (hero.defense || 0) + effect.defenseBonus;
-            showRPGMessage("АВТО-УМЕНИЕ", `🤖 ${hero.name} научи "${random.skill.name}" (Ниво ${hero.learnedSkills[random.skillKey]})!`, "info");
+           if (hero.isFavorite === true) {
+    showRPGMessage("АВТО-УМЕНИЕ", `🤖 ${hero.name} научи "${random.skill.name}" (Ниво ${hero.learnedSkills[random.skillKey]})!`, "info");
+}
         }
         attempts++;
     }
