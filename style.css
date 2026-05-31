@@ -161,14 +161,15 @@ html, body {
    5. ФИКСИРАН КОНТЕЙНЕР ОТДОЛУ (БУТОНИ + ЛЕНТА)
 ----------------------------------------------- */
 .bottom-fixed-wrapper {
-    position: fixed;
-    bottom: 0;
-    left: 0;
-    width: 100%;
-    display: flex;
-    flex-direction: column;
-    z-index: 2000;
-    background: transparent;
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  width: 100vw; /* ⭐ КРИТИЧНО: предотвратява хоризонтален overflow на страницата */
+  display: flex;
+  flex-direction: column;
+  z-index: 2000;
+  background: transparent;
+  overscroll-behavior: none; /* ⭐ Спира скрол на цялото приложение при плъзгане в менюто */
 }
 
 /* Долна лента с бутони */
@@ -179,33 +180,52 @@ html, body {
   display: flex;
   justify-content: flex-start;
   align-items: center;
-  padding: 10px 24px; /* ⭐ 24px отляво/дясно: предотвратява излизането на първия/последния бутон извън екрана */
+  
+  /* ⭐ ФИЗИЧЕСКА БУФЕРНА ЗОНА */
+  padding: 12px 16px 12px 32px !important; 
+  margin: 0;
+  width: 100%;
+  box-sizing: border-box;
+  
+  /* ⭐ СКРОЛ ПОВЕДЕНИЕ */
   overflow-x: auto;
   flex-wrap: nowrap;
   white-space: nowrap;
-  scroll-behavior: auto; /* ⭐ auto вместо smooth: по-прецизен контрол при плъзгане с пръст */
+  scroll-behavior: auto; /* ⭐ Махаме smooth за директна реакция на пръста */
   -webkit-overflow-scrolling: touch;
-  overscroll-behavior-x: contain; /* ⭐ Спира "elastic bounce" ефекта на таблети */
-  touch-action: pan-x; /* ⭐ Позволява САМО хоризонтално плъзгане, игнорира вертикалните жестове */
+  overscroll-behavior-x: contain;
+  touch-action: pan-x pinch-zoom; /* ⭐ Блокира вертикалния скрол ВЪРХУ менюто */
+  
+  /* ⭐ КРИТИЧНО ЗА ТАБЛЕТИ */
+  scroll-snap-type: none; /* ⭐ ИЗКЛЮЧЕНО напълно */
+  scroll-padding-left: 32px; /* ⭐ Казва на браузъра да спира скрола точно тук */
+  
   -ms-overflow-style: none;
   scrollbar-width: none;
-  margin: 0;
-  gap: 8px;
 }
 #bottom-controls::-webkit-scrollbar { display: none; }
 
-/* Бутони в менюто */
+/* Сигурност: първият елемент да не залепва за ръба */
+#bottom-controls > *:first-child {
+  margin-left: 2px;
+}
+
 .icon-btn, .next-turn-btn {
   background: none;
   border: none;
   font-size: 26px;
   cursor: pointer;
-  padding: 6px 12px;
+  padding: 6px 14px;
   border-radius: 40px;
   transition: 0.2s;
   color: #ffdd99;
   flex-shrink: 0;
-  /* scroll-snap-align: start; ⬅️ ПРЕМАХНАТО, за да спира точно където пуснеш пръста */
+  scroll-snap-align: none; /* ⭐ Премахваме залепването */
+  margin-right: 10px; /* ⭐ Разстояние между бутоните */
+}
+#bottom-controls .icon-btn:last-child, 
+#bottom-controls .next-turn-btn:last-child {
+  margin-right: 0;
 }
 
 /* Лента с любими герои */
