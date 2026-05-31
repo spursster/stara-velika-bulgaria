@@ -568,7 +568,7 @@ window.loadGreatBulgariaGame = function() {
             }
             window.playerRegions = normalized;
         } else {
-            window.playerReif (window.gameMode === 'solo' && parsed.currentHero) {
+          if (window.gameMode === 'solo' && parsed.currentHero) {
     window.currentHero = parsed.currentHero;
 } else {
     // В класически режим и при липса на currentHero в соло – изтриваме
