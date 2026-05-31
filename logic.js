@@ -568,17 +568,18 @@ window.loadGreatBulgariaGame = function() {
             }
             window.playerRegions = normalized;
         } else {
-            window.playerRegions = [];
+            window.playerReif (window.gameMode === 'solo' && parsed.currentHero) {
+    window.currentHero = parsed.currentHero;
+} else {
+    // В класически режим и при липса на currentHero в соло – изтриваме
+    if (window.currentHero) delete window.currentHero;
+}gions = [];
         }
         if (window.playerRegions.length === 0 && window.currentRegion) {
             window.playerRegions.push(window.currentRegion);
         }
 
-        if (window.gameMode === 'solo' && parsed.currentHero) {
-            window.currentHero = parsed.currentHero;
-        } else if (window.gameMode !== 'solo') {
-            if (window.currentHero) delete window.currentHero;
-        }
+      
 
         if (!window.worldData.clans) window.worldData.clans = {};
 
