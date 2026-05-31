@@ -741,3 +741,122 @@ window.clearGreatBulgariaSave = function() {
     localStorage.removeItem('barracksFavorites');
     location.reload();
 };
+
+// Проверка дали има живи герои
+window.hasAnyAliveHero = function() {
+    if (!window.worldData || !window.worldData.clans) return false;
+    for (let key in window.worldData.clans) {
+        let hero = window.worldData.clans[key];
+        if (hero.isJoined === true && hero.isAlive !== false) return true;
+    }
+    return false;
+};
+
+// Взема случаен ненает герой от базата (който не е в worldData.clans с isJoined=true)
+window.getRandomUnhiredHero = function() {
+    let allHeroes = [];
+    for (let key in window.worldData.clans) {
+        let h = window.worldData.clans[key];
+        if (!h.isJoined && h.isAlive !== false) {
+            allHeroes.push({ id: key, ...h });
+        }
+    }
+    if (allHeroes.length === 0) return null;
+    return allHeroes[Math.floor(Math.random() * allHeroes.length)];
+};
+
+// Показва предложение за наемане на герой
+window.offerHeroHire = function() {
+    if (window.hasAnyAliveHero()) return; // Има живи, няма нужда от оферта
+    
+    let hero = window.getRandomUnhiredHero();
+    if (!hero) {
+        // Ако няма свободни герои, създаваме нов (аварийно)
+        if (window.reviveFromAshes) window.reviveFromAshes();
+        return;
+    }
+    
+    // Изчисляване на цена според сила, клас, личност
+    let baseCost = 800;
+    if (hero.currentClass === "Легенда") baseCost = 2000;
+    else if (hero.currentClass === "Герой") baseCost = 1500;
+    else if (hero.currentClass === "Войн") baseCost = 1200;
+    
+    // Корекция според personality (ако има)
+    let personalityMod = 1.0;
+    if (hero.personality && hero.personality.some(p => p.categories?.includes("greedy"))) personalityMod = 1.3;
+    if (hero.personality && hero.personality.some(p => p.categories?.includes("loy"))) personalityMod = 0.8;
+    let finalCost = Math.floor(baseCost * personalityMod);
+    
+    let modal = document.createElement('div');
+    modal.id = 'hero-offer-modal';
+    modal.style.cssText = 'position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.85); z-index:500000; display:flex; justify-content:center; align-items:center;';
+    modal.innerHTML = `
+        <div style="background:#1a1a2e; border:2px solid #c9a87b; border-radius:24px; padding:20px; max-width:350px; width:90%; text-align:center; color:#ffdd99;">
+            <h3>⚔️ Предложение за присъединяване ⚔️</h3>
+            <div style="font-size:48px; margin:10px;">${hero.currentClass === "Легенда" ? "👑" : (hero.currentClass === "Герой" ? "⭐" : "⚔️")}</div>
+            <div><strong>${hero.name}</strong> от род <strong>${hero.clan}</strong></div>
+            <div>Клас: ${hero.currentClass}</div>
+            <div>Сила: ${hero.heroPower}</div>
+            <div>Войски: ${hero.armySize}</div>
+            <div style="margin:15px 0;">💰 Иска <strong style="color:#ffd700;">${finalCost}</strong> злато за да се присъедини към вас.</div>
+            <button id="accept-offer-btn" style="background:#daa520; border:none; border-radius:30px; padding:8px 20px; color:#000; font-weight:bold; cursor:pointer;">✅ Приеми</button>
+            <button id="decline-offer-btn" style="background:#2c1a0c; border:none; border-radius:30px; padding:8px 20px; margin-left:10px; cursor:pointer;">❌ Откажи</button>
+            <div style="margin-top:10px; font-size:10px;">(Ако откажете, ще получите друга оферта след време)</div>
+        </div>
+    `;
+    document.body.appendChild(modal);
+    
+    document.getElementById('accept-offer-btn').onclick = () => {
+        // Проверка дали играчът има достатъчно злато (трябва да има някаква начална сума, или да се даде заем)
+        // В този момент обаче играчът няма жив герой, значи няма от кого да вземе злато. Затова даваме базова сума 500 злато.
+        let playerGold = 500; // Аварийна сума, ако няма жив герой
+        if (playerGold >= finalCost) {
+            // Наемаме героя
+            hero.isJoined = true;
+            hero.isFavorite = true;
+            hero.isAlive = true;
+            // Уверяваме се, че има HP
+            if (!hero.hp || hero.hp <= 0) {
+                let endurance = hero.skills?.endurance || 0;
+                hero.maxHp = 100 + (hero.level - 1) * 20 + endurance * 15;
+                hero.hp = hero.maxHp;
+            }
+            // Обновяваме UI
+            if (typeof window.updateStrongestHeroUI === 'function') window.updateStrongestHeroUI();
+            if (typeof window.renderFavoriteHeroesBar === 'function') window.renderFavoriteHeroesBar();
+            if (typeof window.updateAllUI === 'function') window.updateAllUI();
+            if (window.showAdvisorPopup) window.showAdvisorPopup("ПРИСЪЕДИНЯВАНЕ", `${hero.name} се присъедини към вашата дружина!`, "success");
+            modal.remove();
+        } else {
+            if (window.showAdvisorPopup) window.showAdvisorPopup("ГРЕШКА", `Нямате достатъчно злато! Нужни: ${finalCost}`, "error");
+            modal.remove();
+            // Отказът води до повторна оферта след време
+        }
+    };
+    document.getElementById('decline-offer-btn').onclick = () => {
+        modal.remove();
+        if (window.showAdvisorPopup) window.showAdvisorPopup("ОТКАЗ", "Ще получите друга оферта по-късно.", "info");
+    };
+};
+
+// След като няма живи герои, задействаме оферта веднага и след това на всеки 5 хода
+function monitorHeroesAlive() {
+    if (!window.hasAnyAliveHero()) {
+        window.offerHeroHire();
+        // Слагаме интервал за повторна проверка на всеки 30 секунди (ако откаже)
+        if (!window._heroMonitorInterval) {
+            window._heroMonitorInterval = setInterval(() => {
+                if (!window.hasAnyAliveHero()) window.offerHeroHire();
+                else clearInterval(window._heroMonitorInterval);
+            }, 30000);
+        }
+    }
+}
+
+// Стартираме монитора при зареждане на играта
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', monitorHeroesAlive);
+} else {
+    monitorHeroesAlive();
+}
