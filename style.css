@@ -173,31 +173,39 @@ html, body {
 
 /* Долна лента с бутони */
 #bottom-controls {
-background: #0a2a4a !important;
-backdrop-filter: none !important;
-border-top: 2px solid #d4af37;
-display: flex;
-justify-content: flex-start;
-align-items: center;
-padding: 8px 16px; /* ⭐ ПРОМЕНЕНО: 8px -> 8px 16px (добавяме padding отстрани) */
-overflow-x: auto;
-flex-wrap: nowrap;
-white-space: nowrap;
-scroll-behavior: smooth;
--webkit-overflow-scrolling: touch;
-scroll-snap-type: x mandatory;
-overscroll-behavior-x: contain; /* ⭐ ДОБАВЕНО: Спира "bounce" ефекта */
--ms-overflow-style: none;
-scrollbar-width: none;
-margin: 0;
-gap: 8px; /* ⭐ ДОБАВЕНО: Разстояние между бутоните */
+  background: #0a2a4a !important;
+  backdrop-filter: none !important;
+  border-top: 2px solid #d4af37;
+  display: flex;
+  justify-content: flex-start;
+  align-items: center;
+  padding: 10px 24px; /* ⭐ 24px отляво/дясно: предотвратява излизането на първия/последния бутон извън екрана */
+  overflow-x: auto;
+  flex-wrap: nowrap;
+  white-space: nowrap;
+  scroll-behavior: auto; /* ⭐ auto вместо smooth: по-прецизен контрол при плъзгане с пръст */
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-x: contain; /* ⭐ Спира "elastic bounce" ефекта на таблети */
+  touch-action: pan-x; /* ⭐ Позволява САМО хоризонтално плъзгане, игнорира вертикалните жестове */
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+  margin: 0;
+  gap: 8px;
 }
 #bottom-controls::-webkit-scrollbar { display: none; }
 
 /* Бутони в менюто */
 .icon-btn, .next-turn-btn {
-scroll-snap-align: center; /* ⭐ ПРОМЕНЕНО: start -> center (центрира бутоните при скрол) */
-flex-shrink: 0;
+  background: none;
+  border: none;
+  font-size: 26px;
+  cursor: pointer;
+  padding: 6px 12px;
+  border-radius: 40px;
+  transition: 0.2s;
+  color: #ffdd99;
+  flex-shrink: 0;
+  /* scroll-snap-align: start; ⬅️ ПРЕМАХНАТО, за да спира точно където пуснеш пръста */
 }
 
 /* Лента с любими герои */
