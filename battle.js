@@ -952,19 +952,19 @@
                     }
                 }
                 
-                if (Math.random() < 0.2 && window.historicalArtifacts) {
-                    const artifactKeys = Object.keys(window.historicalArtifacts);
-                    const randomKey = artifactKeys[Math.floor(Math.random() * artifactKeys.length)];
-                    const newArtifact = { ...window.historicalArtifacts[randomKey] };
-                    const randomHero = livingHeroes[Math.floor(Math.random() * livingHeroes.length)];
-                    if (randomHero && randomHero.clanObj) {
-                        if (!randomHero.clanObj.inventory) randomHero.clanObj.inventory = [];
-                        randomHero.clanObj.inventory.push(newArtifact);
-                        if (window.addHeroLog) window.addHeroLog(randomHero.clanObj, "🏺", `Намери артефакт: ${newArtifact.name}`);
-                        addLog(`   🏺 ${randomHero.name} намери артефакт: ${newArtifact.name}!`);
-                        if (window.addWorldEvent) window.addWorldEvent(`🏺 НАМЕРЕН АРТЕФАКТ`, `${randomHero.name} намери ${newArtifact.name} след битката!`, "🏺");
-                    }
-                }
+       if (Math.random() < 0.2 && window.historicalArtifacts) {
+    const artifactKeys = Object.keys(window.historicalArtifacts);
+    const randomKey = artifactKeys[Math.floor(Math.random() * artifactKeys.length)];
+    const newArtifact = { ...window.historicalArtifacts[randomKey] };
+    const randomHero = livingHeroes[Math.floor(Math.random() * livingHeroes.length)];
+    if (randomHero && randomHero.clanObj) {
+        if (!randomHero.clanObj.inventory) randomHero.clanObj.inventory = [];
+        randomHero.clanObj.inventory.push(newArtifact);
+        if (window.addHeroLog) window.addHeroLog(randomHero.clanObj, "🏺", `Намери артефакт: ${newArtifact.name}`);
+        addLog(`   🏺 ${randomHero.name} намери артефакт: ${newArtifact.name}!`);
+        if (window.addWorldEvent) window.addWorldEvent(`🏺 НАМЕРЕН АРТЕФАКТ`, `${randomHero.name} намери ${newArtifact.name} след битката!`, "🏺");
+    }
+}
                 
                 if (Math.random() < 0.15 && window.fantasyRaces && window.fantasyRaces.length > 0) {
                     const randomRace = window.fantasyRaces[Math.floor(Math.random() * window.fantasyRaces.length)];
