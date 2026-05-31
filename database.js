@@ -2,7 +2,7 @@
  * МОДУЛ: БАЗА ДАННИ - Велика България
  * ВСИЧКИ СА ГЕРОИ (HEROES) – НЯМА ВОДАЧИ, НЯМА ЙЕРАРХИЯ
  * 13 РАВНОПРАВНИ КЛАНОВЕ
- * ВЕРСИЯ: 7.0 – БЕЗ currentHero, С ГЕТЪР ЗА ПЛАЩАЩ ГЕРОЙ
+ * ВЕРСИЯ: 7.1 – ИНТЕГРИРАНА С CHRONICLE EVENTS
  */
 
 window.bulgarianClans = {
@@ -177,6 +177,7 @@ function getAllHeroesFromWorld() {
     return heroes;
 }
 
+// ==================== ТАВЕРНА UI (оставяме както е) ====================
 window.openTavernUI = function() {
     const mainArea = document.getElementById('game-main-area');
     if (!mainArea) return;
@@ -229,11 +230,15 @@ window.openTavernUI = function() {
     mainArea.innerHTML = htmlContent;
 };
 
-// ==================== НАЕМАНЕ НА СЪЩЕСТВУВАЩ ГЕРОЙ ====================
+// ==================== НАЕМАНЕ НА СЪЩЕСТВУВАЩ ГЕРОЙ (С ИНТЕРАКТИВЕН ЛЕТОПИС) ====================
 window.hireExistingHero = function(heroId, cost) {
     const payingHero = getPayingHeroForHire();
     if (!payingHero) {
         if (window.showAdvisorPopup) window.showAdvisorPopup("ГРЕШКА", "Няма герой, който да плати!", "error");
+        // Можем да покажем оферта в летописа, ако няма жив герой
+        if (typeof window.showJoinOffer === 'function' && !window.hasAnyAliveHero()) {
+            window.showJoinOffer();
+        }
         return;
     }
     const hero = window.worldData.clans[heroId];
@@ -253,18 +258,32 @@ window.hireExistingHero = function(heroId, cost) {
         
         if (window.armyMarket && typeof window.armyMarket.sync === 'function') window.armyMarket.sync(hero);
         if (window.updateCharacterUI) window.updateCharacterUI(payingHero);
-        // Обновяваме левия панел с най-силния герой
         if (typeof window.updateStrongestHeroUI === 'function') {
             window.updateStrongestHeroUI();
         }
         if (typeof window.renderSingleBar === 'function') window.renderSingleBar();
         window.openTavernUI();
         
-        if (window.showAdvisorPopup) {
-            window.showAdvisorPopup("УСПЕШНО НАЕМАНЕ", `${hero.name} от клан ${hero.clan} се присъедини! Останало злато на ${payingHero.name}: ${payingHero.gold}`, "success");
-        } else if (window.showAdvisorMsg) {
-            window.showAdvisorMsg(`👑 ОТКЛЮЧВАНЕ: Героят ${hero.name} от Клан ${hero.clan} се присъедини!`);
+        // ========== НОВО: ИНТЕРАКТИВНО СЪОБЩЕНИЕ В ЛЕТОПИСА ==========
+        const successMsg = `${hero.name} от клан ${hero.clan} се присъедини! Останало злато на ${payingHero.name}: ${payingHero.gold}`;
+        
+        // Ако имаме ChronicleEvents, генерираме съобщение с бутони
+        if (window.ChronicleEvents && typeof window.ChronicleEvents.generateHeroHired === 'function') {
+            const ev = window.ChronicleEvents.generateHeroHired(hero, payingHero, cost);
+            if (window.showAdvisorMsg) window.showAdvisorMsg(ev.message, ev.buttons);
+        } else {
+            // Резервно – обикновен popup
+            if (window.showAdvisorPopup) {
+                window.showAdvisorPopup("УСПЕШНО НАЕМАНЕ", successMsg, "success");
+            } else if (window.showAdvisorMsg) {
+                window.showAdvisorMsg(`👑 ОТКЛЮЧВАНЕ: ${successMsg}`);
+            }
         }
+        
+        // Добавяме и стандартен лог в героя
+        if (window.addHeroLog) window.addHeroLog(payingHero, "🤝", `Нае ${hero.name} за ${cost} злато.`);
+        if (window.addHeroLog) window.addHeroLog(hero, "🤝", `Присъедини се към дружината на ${payingHero.name}.`);
+        
     } else {
         if (window.showAdvisorPopup) {
             window.showAdvisorPopup("ГРЕШКА", `Недостатъчно злато! Нужни: ${cost}`, "error");
