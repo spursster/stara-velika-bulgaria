@@ -1,6 +1,6 @@
 /** ========================================================================== 
 ПРОЕКТ: ВЕЛИКА БЪЛГАРИЯ
-ФАЙЛ: ui.js (ВЕРСИЯ 7.1 – СИНХРОНИЗАЦИЯ С refreshAllHeroUI)
+ФАЙЛ: ui.js (ВЕРСИЯ 7.1 – СИНХРОНИЗАЦИЯ С refreshAllHeroUI)const seasons
 ========================================================================== */ 
 window.selectedHero = null;
 
@@ -75,8 +75,8 @@ document.body.classList.remove(...seasons);
 document.body.classList.add(seasons[window.gameTime.seasonIndex] || seasons[0]);
     const targetEl = timeDisplay || window.timeElement;
     if (!targetEl) return;
-    
-    const seasons = ["🌱 Пролет", "☀️ Лято", "🍂 Есен", "❄️ Зима"];
+    const SEASONS_LIST = ["🌱 Пролет", "☀️ Лято", "🍂 Есен", "❄️ Зима"];
+const currentSeason = SEASONS_LIST[window.gameTime.seasonIndex] || "Сезон";
     const currentSeason = seasons[window.gameTime.seasonIndex] || "Сезон";
     targetEl.innerHTML = `⏳ ${currentSeason} ${window.gameTime.year} г. ${window.gameTime.era}`;
 };
