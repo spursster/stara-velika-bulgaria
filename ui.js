@@ -50,7 +50,12 @@ window.updateStrongestHeroUI = function() {
     if (typeof window.updateCharacterUI === 'function') {
         window.updateCharacterUI(hero);
     }
+    const saveIndicator = document.getElementById('save-indicator');
+if (saveIndicator) {
+  saveIndicator.innerText = `💾 Запазено: ${new Date().toLocaleTimeString('bg-BG', {hour:'2-digit', minute:'2-digit'})}`;
+}
 };
+
 
 window.updateTimeUI = function() {
     if (!window.gameTime) return;
@@ -1459,6 +1464,39 @@ window.openHeroRPGModal = function(heroId) {
     else console.warn("showHeroProfile не е дефинирана");
 };
 if (typeof window.updateStrongestHeroUI === 'function') window.updateStrongestHeroUI();
+
+window.showToast = function(msg, type = 'info') {
+  let container = document.querySelector('.toast-container');
+  if (!container) {
+    container = document.createElement('div');
+    container.className = 'toast-container';
+    document.body.appendChild(container);
+  }
+  const t = document.createElement('div');
+  t.className = `toast ${type}`;
+  t.innerHTML = msg;
+  container.appendChild(t);
+  setTimeout(() => t.remove(), 4000);
+};
+
+// Автоматична подмяна на съществуващия popup (по избор)
+const oldShow = window.showAdvisorPopup;
+window.showAdvisorPopup = function(title, msg, type='info') {
+  window.showToast(`<strong>${title}</strong><br>${msg}`, type);
+  if (oldShow) oldShow(title, msg, type); // запазва оригиналния ако го ползваш другаде
+};
+
+document.addEventListener('keydown', (e) => {
+  if (['INPUT','TEXTAREA','SELECT'].includes(e.target.tagName)) return; // Игнорирай при писане
+  
+  if (e.code === 'Space') {
+    e.preventDefault();
+    if (typeof window.nextTurn === 'function') window.nextTurn();
+  }
+  if (e.code === 'Escape') {
+    document.querySelectorAll('.market-modal, #ultimate-profile-modal, #skills-ui-modal, #hero-rpg-modal, .battle-container').forEach(m => m.remove());
+  }
+});
 
 // ==================== КРАЙ НА ui.js ====================
 console.log("✅ ui.js зареден успешно - SyntaxError поправен");
