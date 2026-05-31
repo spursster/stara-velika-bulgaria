@@ -1506,7 +1506,7 @@ document.addEventListener('keydown', (e) => {
 // ==================== 🎛️ ФИЛТЪР ЗА ЖУРНАЛА НА СЪВЕТНИКА ====================
 // 🔘 За да ВКЛЮЧИШ филтъра: остави реда така
 // 🔘 За да ИЗКЛЮЧИШ филтъра (и да виждаш ВСИЧКИ съобщения): добави // в началото на реда
-const FILTER_JOURNAL_NON_FAV_LEVELS = true;
+//const FILTER_JOURNAL_NON_FAV_LEVELS = true;
 
 if (typeof FILTER_JOURNAL_NON_FAV_LEVELS !== 'undefined' && FILTER_JOURNAL_NON_FAV_LEVELS) {
     const _origMsg = window.showAdvisorMsg || function(m){ console.log(m); };
