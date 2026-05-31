@@ -87,6 +87,58 @@ window.assignPersonalityTraits = function(hero, count = 3) {
     if (window.showAdvisorMsg) window.showAdvisorMsg(logMsg);
 };
 
+// Генератор за инвестиционна възможност
+window.ChronicleEvents.generateInvestmentOpportunity = function(hero, amount, expectedReturn, turns) {
+    return {
+        message: `💎 ${hero.name}, инвестиционна възможност: вложете ${amount} злато за ${turns} хода. Очаквана печалба: ${expectedReturn} злато.`,
+        buttons: [
+            { label: `💸 Инвестирай ${amount}`, action: () => {
+                if (hero.gold >= amount) {
+                    hero.gold -= amount;
+                    window.investments.push({
+                        heroId: hero.id,
+                        amount: amount,
+                        turnsLeft: turns,
+                        returnAmount: expectedReturn
+                    });
+                    if (window.updateCharacterUI) window.updateCharacterUI(hero);
+                    window.showAdvisorMsg(`✅ Инвестирахте ${amount} злато. Очаквайте печалба след ${turns} хода.`);
+                } else {
+                    window.showAdvisorMsg(`❌ Нямате достатъчно злато!`);
+                }
+            }},
+            { label: '🚫 Откажи', action: () => window.showAdvisorMsg(`Инвестицията беше отказана.`) }
+        ]
+    };
+};
+
+// Генератор за икономически събития
+window.ChronicleEvents.generateEconomicEvent = function(hero, eventData) {
+    let action = null;
+    if (eventData.gain) {
+        action = () => {
+            hero.gold += eventData.gain;
+            window.showAdvisorMsg(`✅ ${eventData.message} +${eventData.gain} злато.`);
+            if (window.updateCharacterUI) window.updateCharacterUI(hero);
+            if (window.updateStrongestHeroUI) window.updateStrongestHeroUI();
+        };
+    } else if (eventData.loss) {
+        action = () => {
+            hero.gold = Math.max(0, hero.gold - eventData.loss);
+            window.showAdvisorMsg(`⚠️ ${eventData.message} -${eventData.loss} злато.`);
+            if (window.updateCharacterUI) window.updateCharacterUI(hero);
+            if (window.updateStrongestHeroUI) window.updateStrongestHeroUI();
+        };
+    }
+    return {
+        message: `${eventData.message} Какво ще правите?`,
+        buttons: [
+            { label: '💰 Приеми ефекта', action: action },
+            { label: '📜 Игнорирай', action: () => window.showAdvisorMsg(`Игнорирахте събитието.`) }
+        ]
+    };
+};
+
 window.evolveHero = function(hero) {
     if (!hero) return;
     if (!hero.personality) {
