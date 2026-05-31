@@ -902,40 +902,36 @@ window.updateCharacterUI = function(hero) {
 // ==================== ЖУРНАЛ НА СЪВЕТНИКА ====================
 // ========== ПОПРАВЕНА showAdvisorMsg С БУТОНИ ==========
 window.showAdvisorMsg = function(msg, buttons) {
-    let journal = document.getElementById('advisor-journal');
+    const journal = document.getElementById('advisor-journal');
     if (!journal) {
         console.log("📜", msg);
         return;
     }
-    
-    // Създаваме основния контейнер за съобщението
-    let msgDiv = document.createElement('div');
-    msgDiv.style.borderLeft = '4px solid #ffaa44';
-    msgDiv.style.backgroundColor = '#2a2a2a';
-    msgDiv.style.margin = '4px 0';
+
+    const msgDiv = document.createElement('div');
+    msgDiv.style.borderLeft = '3px solid #ffaa44';
+    msgDiv.style.backgroundColor = 'rgba(0,0,0,0.6)';
+    msgDiv.style.margin = '6px 0';
     msgDiv.style.padding = '6px';
-    msgDiv.style.borderRadius = '0 8px 8px 0';
-    msgDiv.style.color = '#ffdd99';
+    msgDiv.style.borderRadius = '0 6px 6px 0';
     msgDiv.style.fontSize = '12px';
-    
-    // Текст на съобщението
-    let textSpan = document.createElement('span');
+    msgDiv.style.color = '#ffdd99';
+
+    const textSpan = document.createElement('span');
     textSpan.innerHTML = `📜 ${msg}`;
     msgDiv.appendChild(textSpan);
-    
-    // Ако има бутони, ги добавяме по същия начин като ръчния тест
-    if (buttons && buttons.length > 0) {
-        let btnContainer = document.createElement('div');
-        btnContainer.style.marginTop = '6px';
+
+    if (buttons && Array.isArray(buttons) && buttons.length > 0) {
+        const btnContainer = document.createElement('div');
+        btnContainer.style.marginTop = '8px';
         btnContainer.style.display = 'flex';
         btnContainer.style.gap = '8px';
         btnContainer.style.flexWrap = 'wrap';
-        
-        for (let i = 0; i < buttons.length; i++) {
-            let btn = buttons[i];
-            let button = document.createElement('button');
+
+        buttons.forEach(btn => {
+            const button = document.createElement('button');
             button.innerText = btn.label;
-            // Стилове – това са твоите CSS бутони
+            // Стилове за CSS бутон
             button.style.backgroundColor = '#d4af37';
             button.style.color = '#000';
             button.style.border = 'none';
@@ -945,18 +941,19 @@ window.showAdvisorMsg = function(msg, buttons) {
             button.style.fontWeight = 'bold';
             button.style.cursor = 'pointer';
             button.style.boxShadow = '0 1px 2px rgba(0,0,0,0.3)';
-            button.onclick = (function(action) {
-                return function() {
-                    if (typeof action === 'function') action();
-                    else if (typeof action === 'string') window[action]?.();
-                    btnContainer.remove(); // премахва бутоните след натискане
-                };
-            })(btn.action);
+            button.style.transition = '0.1s';
+            button.onmouseenter = () => button.style.transform = 'scale(1.02)';
+            button.onmouseleave = () => button.style.transform = 'scale(1)';
+            button.onclick = () => {
+                if (typeof btn.action === 'function') btn.action();
+                else if (typeof btn.action === 'string') window[btn.action]?.();
+                btnContainer.remove();   // премахва бутоните след клик, за да не се повтаря действието
+            };
             btnContainer.appendChild(button);
-        }
+        });
         msgDiv.appendChild(btnContainer);
     }
-    
+
     journal.prepend(msgDiv);
 };
 // ==================== ИНСПЕКЦИЯ НА ГЕРОЙ ====================
