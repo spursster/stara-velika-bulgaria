@@ -139,6 +139,62 @@ window.ChronicleEvents.generateEconomicEvent = function(hero, eventData) {
     };
 };
 
+// Генератор за предложение за съюз (между герои)
+window.ChronicleEvents.generateAllianceProposal = function(proposer, target) {
+    return {
+        message: `🤝 ${proposer.name} от ${proposer.clan} предлага военен съюз на ${target.name} от ${target.clan}.`,
+        buttons: [
+            { label: '✅ Приеми съюза', action: () => {
+                if (!proposer.allies) proposer.allies = [];
+                if (!target.allies) target.allies = [];
+                proposer.allies.push(target.name);
+                target.allies.push(proposer.name);
+                if (window.addHeroLog) {
+                    window.addHeroLog(proposer, "🤝", `Сключи съюз с ${target.name}.`);
+                    window.addHeroLog(target, "🤝", `Сключи съюз с ${proposer.name}.`);
+                }
+                window.showAdvisorMsg(`✅ ${proposer.name} и ${target.name} вече са съюзници!`);
+                if (window.updateCharacterUI) {
+                    window.updateCharacterUI(proposer);
+                    window.updateCharacterUI(target);
+                }
+            }},
+            { label: '❌ Откажи', action: () => window.showAdvisorMsg(`${target.name} отказа съюза.`) }
+        ]
+    };
+};
+
+// Генератор за предложение за брак с клан
+window.ChronicleEvents.generateMarriageProposal = function(hero, clan, cost, successChance) {
+    return {
+        message: `💒 ${hero.name} предлага брак на знатен род от ${clan}. Изисква ${cost} злато. Шанс за успех: ${successChance}%.`,
+        buttons: [
+            { label: `💍 Сключи брак (${cost} злато)`, action: () => {
+                if (hero.gold >= cost) {
+                    hero.gold -= cost;
+                    let roll = Math.random() * 100;
+                    if (roll < successChance) {
+                        window.clanRelations[clan] = 100;
+                        // ... останалата логика за успех (същата като в proposeMarriage)
+                        const dowryMap = { "Дуло": "Дардания", "Комитопули": "Пелагония", "Асеневци": "Илирия", "Тертер": "Галатия", "Даки": "Дакия", "Уния Траки": "Мизия", "Шишмановци": "Месопотамия", "Македони": "Македония", "Птоломеи": "Кипър", "Одриси": "Тракия", "Бесараб": "Добруджа", "Османци Дуло": "Витиния", "Скити": "Сарматия" };
+                        const region = dowryMap[clan] || "Мизия";
+                        if (!window.playerRegions.includes(region)) window.playerRegions.push(region);
+                        window.showAdvisorMsg(`✅ Бракът е успешен! Получихте регион ${region}.`, "success");
+                    } else {
+                        window.clanRelations[clan] = Math.max(10, (window.clanRelations[clan] || 40) - 10);
+                        window.showAdvisorMsg(`❌ Бракът се провали. Отношенията се влошиха.`, "error");
+                    }
+                    if (window.updateCharacterUI) window.updateCharacterUI(hero);
+                    if (window.updateStrongestHeroUI) window.updateStrongestHeroUI();
+                } else {
+                    window.showAdvisorMsg(`❌ Нямате достатъчно злато за брак!`, "error");
+                }
+            }},
+            { label: '🚫 Откажи', action: () => window.showAdvisorMsg(`Брачното предложение беше отказано.`) }
+        ]
+    };
+};
+
 window.evolveHero = function(hero) {
     if (!hero) return;
     if (!hero.personality) {
