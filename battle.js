@@ -455,70 +455,75 @@
         else if (originalHero.morale < 30) heal *= 0.8;
         return Math.floor(Math.max(5, heal));
     }
-    function applyBattleOutcome(originalHero, battleHero) {
-        if (!originalHero || !battleHero) return;
-        
-        // Уверяваме се, че оригиналният герой има валиден maxHp
-        if (!originalHero.maxHp || originalHero.maxHp <= 0) {
-            let endurance = originalHero.skills?.endurance || 0;
-            originalHero.maxHp = 100 + (originalHero.level - 1) * 20 + endurance * 15;
-            if (originalHero.hp === undefined || originalHero.hp > originalHero.maxHp) {
-                originalHero.hp = originalHero.maxHp;
-            }
+   function applyBattleOutcome(originalHero, battleHero) {
+    if (!originalHero || !battleHero) return;
+    
+    // Уверяваме се, че maxHp е валиден
+    if (!originalHero.maxHp || originalHero.maxHp <= 0) {
+        let endurance = originalHero.skills?.endurance || 0;
+        originalHero.maxHp = 100 + (originalHero.level - 1) * 20 + endurance * 15;
+        if (originalHero.hp === undefined || originalHero.hp > originalHero.maxHp) {
+            originalHero.hp = originalHero.maxHp;
         }
+    }
+    
+    // Изчисляваме реално получените щети по време на битка
+    let startingHp = battleHero.startingHp !== undefined ? battleHero.startingHp : battleHero.maxHp;
+    let damageTaken = startingHp - battleHero.hp;
+    if (damageTaken < 0) damageTaken = 0;
+    
+    if (damageTaken > 0) {
+        // Директно намаляваме оригиналния герой
+        originalHero.hp = Math.max(0, (originalHero.hp || originalHero.maxHp) - damageTaken);
+        console.log(`🔥 ${originalHero.name} загуби ${damageTaken} HP. Остава: ${originalHero.hp}/${originalHero.maxHp}`);
         
-        // Изчисляваме реално получените щети по време на битка
-        let startingHp = battleHero.startingHp !== undefined ? battleHero.startingHp : battleHero.maxHp;
-        let damageTaken = startingHp - battleHero.hp;
-        if (damageTaken < 0) damageTaken = 0;
-        
-        if (damageTaken > 0) {
-            // Намаляваме оригиналния герой с точно толкова
-            originalHero.hp = Math.max(0, (originalHero.hp || originalHero.maxHp) - damageTaken);
-            console.log(`❤️ ${originalHero.name} загуби ${damageTaken} HP. Остава: ${originalHero.hp}/${originalHero.maxHp}`);
-            
-            // Проверка за смърт (5% шанс)
-            if (originalHero.hp <= 0) {
-                let deathRoll = Math.random() < 0.05;
-                if (deathRoll) {
-                    originalHero.isAlive = false;
-                    originalHero.isJoined = false;
-                    originalHero.isFavorite = false;
-                    if (window.addWorldEvent) {
-                        window.addWorldEvent("💀 ПЕРМАНЕНТНА СМЪРТ", `${originalHero.name} загина завинаги в битка!`, "💀");
-                    }
-                } else {
-                    originalHero.hp = 1;
-                    if (window.addWorldEvent) window.addWorldEvent("⚡ ЕДВА ОЦЕЛЯВАНЕ", `${originalHero.name} беше на ръба на смъртта, но оживя!`, "⚡");
+        // Проверка за смърт (5% шанс)
+        if (originalHero.hp <= 0) {
+            let deathRoll = Math.random() < 0.05;
+            if (deathRoll) {
+                originalHero.isAlive = false;
+                originalHero.isJoined = false;
+                originalHero.isFavorite = false;
+                if (window.addWorldEvent) {
+                    window.addWorldEvent("💀 ПЕРМАНЕНТНА СМЪРТ", `${originalHero.name} загина завинаги в битка!`, "💀");
                 }
+            } else {
+                originalHero.hp = 1;
+                if (window.addWorldEvent) window.addWorldEvent("⚡ ЕДВА ОЦЕЛЯВАНЕ", `${originalHero.name} беше на ръба на смъртта, но оживя!`, "⚡");
             }
         }
-        
-        // Пост-битка лечение
-        let postHeal = calculatePostBattleHealing(originalHero, battleHero);
-        if (postHeal > 0 && originalHero.hp > 0) {
-            originalHero.hp = Math.min(originalHero.maxHp, originalHero.hp + postHeal);
-            console.log(`💚 ${originalHero.name} се излекува с ${postHeal} HP след битката.`);
-        }
-        originalHero.hp = Math.min(originalHero.maxHp, originalHero.hp);
+    } else {
+        console.log(`ℹ️ ${originalHero.name} не е получил щети.`);
     }
-
+    
+    // Пост-битка лечение (леко намалено)
+    let postHeal = Math.floor(Math.max(5, originalHero.maxHp * 0.05));
+    if (postHeal > 0 && originalHero.hp > 0 && originalHero.hp < originalHero.maxHp) {
+        originalHero.hp = Math.min(originalHero.maxHp, originalHero.hp + postHeal);
+        console.log(`💚 ${originalHero.name} се излекува с ${postHeal} HP след битката. Сега: ${originalHero.hp}/${originalHero.maxHp}`);
+    }
+}
     // ==================== ЦЕНТРАЛИЗИРАНО ОБНОВЯВАНЕ НА UI ====================
-              function refreshAllHeroUI() {
-        if (typeof window.renderFavoriteHeroesBar === 'function') {
-            window.renderFavoriteHeroesBar();
-        }
-        if (typeof window.updateStrongestHeroUI === 'function') {
-            window.updateStrongestHeroUI();
-        }
-        if (typeof window.renderSingleBar === 'function') {
-            window.renderSingleBar();
-        }
-        const barracksScreen = document.getElementById('barracks-screen');
-        if (barracksScreen && barracksScreen.style.display === 'flex' && typeof window.renderBarracksLayout === 'function') {
-            window.renderBarracksLayout();
-        }
+        function refreshAllHeroUI() {
+    console.log("🔄 refreshAllHeroUI извикана");
+    if (typeof window.renderFavoriteHeroesBar === 'function') {
+        window.renderFavoriteHeroesBar();
     }
+    if (typeof window.updateStrongestHeroUI === 'function') {
+        window.updateStrongestHeroUI();
+    }
+    if (typeof window.renderSingleBar === 'function') {
+        window.renderSingleBar();
+    }
+    if (typeof window.updateCharacterUI === 'function') {
+        let hero = window.getStrongestHero ? window.getStrongestHero() : null;
+        if (hero) window.updateCharacterUI(hero);
+    }
+    const barracksScreen = document.getElementById('barracks-screen');
+    if (barracksScreen && barracksScreen.style.display === 'flex' && typeof window.renderBarracksLayout === 'function') {
+        window.renderBarracksLayout();
+    }
+}
 
     // ==================== ПОМОЩНИ ФУНКЦИИ ЗА АНИМАЦИИ ====================
     function showFloatingNumber(targetElement, value, isHeal = false) {
@@ -1011,6 +1016,7 @@
                 return true;
             }
             updateUI();
+            refreshAllHeroUI();
             return true;
         }
 
@@ -1091,6 +1097,7 @@
                 window._lastBattleHeroes = null;
                 return false;
             }
+            refreshAllHeroUI();
             return true;
         }
 
