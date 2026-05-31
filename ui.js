@@ -900,14 +900,59 @@ window.updateCharacterUI = function(hero) {
 };
 
 // ==================== ЖУРНАЛ НА СЪВЕТНИКА ====================
-window.showAdvisorMsg = function(msg) {
+window.showAdvisorMsg = function(msg, buttons = null) {
     const journal = document.getElementById('advisor-journal');
     if (!journal) { console.log("Журнал съветник: ", msg); return; }
-    window.eventHistory.push(msg);
-    if (window.eventHistory.length > 50) window.eventHistory.shift();
-    journal.innerHTML = window.eventHistory.map(function(line) { 
-        return '<p style="margin:4px 0; border-left:2px solid #ffaa44; padding-left:8px;">📜 ' + line + '</p>'; 
-    }).reverse().join('');
+    
+    // Създаваме контейнер за съобщението
+    const msgDiv = document.createElement('div');
+    msgDiv.style.margin = '4px 0';
+    msgDiv.style.borderLeft = '2px solid #ffaa44';
+    msgDiv.style.paddingLeft = '8px';
+    msgDiv.style.borderRadius = '0 8px 8px 0';
+    msgDiv.style.backgroundColor = 'rgba(0,0,0,0.3)';
+    msgDiv.style.padding = '6px';
+    
+    // Текст на съобщението
+    const textSpan = document.createElement('span');
+    textSpan.innerHTML = `📜 ${msg}`;
+    msgDiv.appendChild(textSpan);
+    
+    // Ако има бутони, добавяме ги
+    if (buttons && Array.isArray(buttons) && buttons.length) {
+        const btnContainer = document.createElement('div');
+        btnContainer.style.marginTop = '6px';
+        btnContainer.style.display = 'flex';
+        btnContainer.style.gap = '8px';
+        btnContainer.style.flexWrap = 'wrap';
+        buttons.forEach(btn => {
+            const button = document.createElement('button');
+            button.innerText = btn.label;
+            button.style.background = '#2c1a0c';
+            button.style.border = '1px solid #c9a87b';
+            button.style.borderRadius = '20px';
+            button.style.padding = '4px 12px';
+            button.style.fontSize = '10px';
+            button.style.cursor = 'pointer';
+            button.style.color = '#ffdd99';
+            button.onclick = () => {
+                // Изпълнява действието
+                if (typeof btn.action === 'function') btn.action();
+                else if (typeof btn.action === 'string') window[btn.action]?.();
+                // Премахваме бутоните след натискане, за да не се повтаря
+                btnContainer.remove();
+            };
+            btnContainer.appendChild(button);
+        });
+        msgDiv.appendChild(btnContainer);
+    }
+    
+    journal.prepend(msgDiv);
+    window.eventHistory.unshift(msgDiv); // ако ползвате eventHistory
+    if (window.eventHistory.length > 50) {
+        const last = window.eventHistory.pop();
+        if (last && last.remove) last.remove();
+    }
 };
 
 // ==================== ИНСПЕКЦИЯ НА ГЕРОЙ ====================
