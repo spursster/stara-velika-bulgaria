@@ -1464,5 +1464,52 @@ window.openHeroRPGModal = function(heroId) {
 
 if (typeof window.updateStrongestHeroUI === 'function') window.updateStrongestHeroUI();
 
+// Адаптивни стилове за бутоните в летописа
+(function addResponsiveButtonStyles() {
+    const style = document.createElement('style');
+    style.textContent = `
+        /* Стилове за всички бутони в летописа */
+        .chronicle-event button {
+            background: #d4af37 !important;
+            color: #000 !important;
+            border: none !important;
+            border-radius: 20px !important;
+            padding: 4px 12px !important;
+            font-size: 12px !important;
+            font-weight: bold !important;
+            cursor: pointer !important;
+            transition: 0.1s;
+            white-space: nowrap;
+        }
+        /* За мобилни устройства (ширина под 768px) */
+        @media (max-width: 768px) {
+            .chronicle-event button {
+                padding: 2px 8px !important;
+                font-size: 9px !important;
+                border-radius: 16px !important;
+                white-space: normal !important;
+                word-break: keep-all;
+            }
+            .chronicle-event {
+                padding: 4px !important;
+            }
+            .chronicle-text {
+                font-size: 11px !important;
+            }
+            .chronicle-time {
+                font-size: 9px !important;
+            }
+        }
+        /* За много малки телефони (ширина под 480px) */
+        @media (max-width: 480px) {
+            .chronicle-event button {
+                padding: 2px 6px !important;
+                font-size: 8px !important;
+            }
+        }
+    `;
+    document.head.appendChild(style);
+})();
+
 // ==================== КРАЙ НА ui.js ====================
 console.log("✅ ui.js зареден успешно - версия без toast");
