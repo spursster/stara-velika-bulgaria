@@ -1,7 +1,7 @@
 /**
 ==========================================================================
 ПРОЕКТ: ВЕЛИКА БЪЛГАРИЯ
-ФАЙЛ: economy.js (ВЕРСИЯ 7.0 – БЕЗ currentHero, С updateStrongestHeroUI)
+ФАЙЛ: economy.js (ВЕРСИЯ 7.1 – С БУТОНИ В ЛЕТОПИСА)
 ==========================================================================
 */
 
@@ -20,7 +20,6 @@ if (!window.tradeRoutes) window.tradeRoutes = [];
 if (!window.investments) window.investments = [];
 if (!window.economyHistory) window.economyHistory = [];
 
-// Помощна функция за изглаждане на масив
 function flattenArray(arr) {
     if (!arr) return [];
     if (!Array.isArray(arr)) return [arr];
@@ -35,35 +34,7 @@ function flattenArray(arr) {
     return result;
 }
 
-window.investGold = function(hero, amount, turns = 5) {
-    if (!hero) return false;
-    if (amount <= 0 || amount > hero.gold) {
-        window.showAdvisorMsg("Невалидна сума!", [{ label: "OK", action: () => {} }]);
-        return false;
-    }
-    let expectedReturn = Math.floor(amount * (1 + window.economySettings.investmentReturnBase * (turns / 4)));
-    if (window.ChronicleEvents && window.ChronicleEvents.generateInvestmentOpportunity) {
-        let ev = window.ChronicleEvents.generateInvestmentOpportunity(hero, amount, expectedReturn, turns);
-        window.showAdvisorMsg(ev.message, ev.buttons);
-        return true;
-    }
-    // резерв
-    hero.gold -= amount;
-    window.investments.push({ heroId: hero.id, amount: amount, turnsLeft: turns, returnAmount: expectedReturn });
-    return true;
-};
-
-function showEconomyMessage(title, message, type = "info") {
-    if (window.showAdvisorPopup) {
-        window.showAdvisorPopup(title, message, type);
-    } else if (window.showAdvisorMsg) {
-        window.showAdvisorMsg(message);
-    } else {
-        console.log(`${title}: ${message}`);
-    }
-}
-
-// ==================== ПОМОЩНИ ФУНКЦИИ ЗА ГЛАВЕН ГЕРОЙ (БЕЗ currentHero) ====================
+// ==================== ПОМОЩНИ ФУНКЦИИ ====================
 function getMainEconomicHero() {
     if (window.gameMode === 'solo') return window.currentHero || null;
     if (typeof window.getStrongestHero === 'function') return window.getStrongestHero();
@@ -76,7 +47,6 @@ function syncHeroGold(hero) {
     if (window.worldData && window.worldData.clans && hero.clan && window.worldData.clans[hero.clan]) {
         window.worldData.clans[hero.clan].gold = hero.gold;
     }
-    // Обновяваме горния панел само ако този герой е най-силният (т.е. този, който се показва в левия панел)
     const strongest = getMainEconomicHero();
     if (strongest && strongest.clan === hero.clan) {
         let goldSpan = document.getElementById('val-gold');
@@ -85,14 +55,12 @@ function syncHeroGold(hero) {
 }
 
 function ensureArmyDetails(hero) {
-    if (window.ensureCompleteArmyDetails) {
-        return window.ensureCompleteArmyDetails(hero);
-    }
+    if (window.ensureCompleteArmyDetails) return window.ensureCompleteArmyDetails(hero);
     if (!hero.armyDetails) hero.armyDetails = {};
     return hero.armyDetails;
 }
 
-// ==================== ОСНОВЕН ДОХОД ОТ РЕГИОНИ + ТЪРГОВИЯ + ИНВЕСТИЦИИ ====================
+// ==================== ОСНОВЕН ДОХОД ====================
 window.recalculateIncome = function(hero) {
     if (!hero) hero = getMainEconomicHero();
     if (!hero) return 0;
@@ -184,22 +152,23 @@ window.recalculateIncome = function(hero) {
     let logisticsDiscount = Math.min(0.50, (skills.logistics || 0) * 0.05);
     let armyMaintenance = Math.floor(baseMaintenanceCost * (1 - logisticsDiscount));
     
-    let finalProfit = totalIncome - armyMaintenance;
-    return finalProfit;
+    return totalIncome - armyMaintenance;
 };
 
-// ==================== ИНФЛАЦИЯ И СЛУЧАЙНИ СЪБИТИЯ ====================
+// ==================== ИНФЛАЦИЯ ====================
 function updateInflation() {
     let delta = (Math.random() - 0.6) * 0.02;
     window.economySettings.inflationRate += delta;
     window.economySettings.inflationRate = Math.min(0.05, Math.max(-0.02, window.economySettings.inflationRate));
 }
 
+// ==================== ИНТЕРАКТИВНИ ИКОНОМИЧЕСКИ СЪБИТИЯ ====================
 function triggerRandomEconomicEvent() {
     if (Math.random() > window.economySettings.randomEventChance) return;
     const eventType = Math.floor(Math.random() * 5);
     const hero = getMainEconomicHero();
     if (!hero) return;
+    
     let eventData = {};
     switch(eventType) {
         case 0: eventData = { title: "📈 ИКОНОМИЧЕСКИ БУМ", gain: 200 + Math.floor(Math.random() * 300), msg: "Търговията процъфтява!" }; break;
@@ -208,53 +177,59 @@ function triggerRandomEconomicEvent() {
         case 3: eventData = { title: "💰 КРАЖБА НА ХАЗНАТА", loss: Math.floor(hero.gold * 0.1) + 50, msg: "Крадци задигнаха част от златото!" }; break;
         case 4: eventData = { title: "🛒 НОВ ПАЗАР", gain: 150 + Math.floor(Math.random() * 250), msg: "Открит е нов търговски път!" }; break;
     }
-    if (window.ChronicleEvents && window.ChronicleEvents.generateEconomicEvent) {
-        let ev = window.ChronicleEvents.generateEconomicEvent(hero, eventData);
-        window.showAdvisorMsg(ev.message, ev.buttons);
-        return;
-    }
-    // резерв
-    if (eventData.gain) hero.gold += eventData.gain;
-    if (eventData.loss) hero.gold = Math.max(0, hero.gold - eventData.loss);
-}
     
-// ========== ИНТЕРАКТИВЕН ЛЕТОПИС ==========
-if (window.ChronicleEvents && typeof window.ChronicleEvents.generateEconomicEvent === 'function') {
-    const ev = window.ChronicleEvents.generateEconomicEvent(hero, eventData);
-    if (window.showAdvisorMsg) {
+    if (window.ChronicleEvents && typeof window.ChronicleEvents.generateEconomicEvent === 'function') {
+        const ev = window.ChronicleEvents.generateEconomicEvent(hero, eventData);
         window.showAdvisorMsg(ev.message, ev.buttons);
-        return; // Спира по-нататъшното изпълнение, защото бутоните вече са показани
+    } else {
+        // Резервен вариант (без бутони)
+        if (eventData.gain) hero.gold += eventData.gain;
+        if (eventData.loss) hero.gold = Math.max(0, hero.gold - eventData.loss);
+        syncHeroGold(hero);
     }
 }
-// Резервен вариант (ако няма ChronicleEvents) – директно прилагане на ефекта
-if (eventData.gain) {
-    hero.gold += eventData.gain;
-    showEconomyMessage(eventData.title, `${eventData.msg} +${eventData.gain} злато.`, eventData.type);
-} else if (eventData.loss) {
-    hero.gold = Math.max(0, hero.gold - eventData.loss);
-    showEconomyMessage(eventData.title, `${eventData.msg} -${eventData.loss} злато.`, eventData.type);
-}
-syncHeroGold(hero);
+
+// ==================== ИНВЕСТИЦИИ (С БУТОНИ) ====================
+window.investGold = function(hero, amount, turns = 5) {
+    if (!hero) return false;
+    if (amount <= 0 || amount > hero.gold) {
+        window.showAdvisorMsg("Невалидна сума!", [{ label: "OK", action: () => {} }]);
+        return false;
+    }
+    let expectedReturn = Math.floor(amount * (1 + window.economySettings.investmentReturnBase * (turns / 4)));
+    
+    if (window.ChronicleEvents && typeof window.ChronicleEvents.generateInvestmentOpportunity === 'function') {
+        const ev = window.ChronicleEvents.generateInvestmentOpportunity(hero, amount, expectedReturn, turns);
+        window.showAdvisorMsg(ev.message, ev.buttons);
+        return true;
+    }
+    
+    // Резервен вариант (директно)
+    hero.gold -= amount;
+    window.investments.push({ heroId: hero.id, amount: amount, turnsLeft: turns, returnAmount: expectedReturn });
+    window.showAdvisorMsg(`✅ Инвестирахте ${amount} злато за ${turns} хода. Очаквана печалба: ${expectedReturn}.`);
+    return true;
+};
 
 // ==================== ТЪРГОВСКИ МАРШРУТИ ====================
 window.establishTradeRoute = function(hero, fromRegion, toRegion) {
     if (!hero || !fromRegion || !toRegion) return false;
     if (!window.playerRegions.includes(fromRegion) || !window.playerRegions.includes(toRegion)) {
-        showEconomyMessage("ГРЕШКА", "Можете да търгувате само между ваши региони!", "error");
+        window.showAdvisorMsg("Можете да търгувате само между ваши региони!");
         return false;
     }
     if (fromRegion === toRegion) {
-        showEconomyMessage("ГРЕШКА", "Не можете да търгувате със себе си!", "error");
+        window.showAdvisorMsg("Не можете да търгувате със себе си!");
         return false;
     }
     let existing = window.tradeRoutes.find(r => r.heroId === hero.id && ((r.from === fromRegion && r.to === toRegion) || (r.from === toRegion && r.to === fromRegion)));
     if (existing) {
-        showEconomyMessage("ГРЕШКА", "Този маршрут вече съществува!", "error");
+        window.showAdvisorMsg("Този маршрут вече съществува!");
         return false;
     }
     let cost = 200;
     if (hero.gold < cost) {
-        showEconomyMessage("ГРЕШКА", `Нямате достатъчно злато! Нужни: ${cost}`, "error");
+        window.showAdvisorMsg(`Нямате достатъчно злато! Нужни: ${cost}`);
         return false;
     }
     hero.gold -= cost;
@@ -264,34 +239,7 @@ window.establishTradeRoute = function(hero, fromRegion, toRegion) {
         to: toRegion,
         established: window.gameTime ? `${window.gameTime.year} ${window.gameTime.era}` : "днес"
     });
-    showEconomyMessage("ТЪРГОВСКИ МАРШРУТ", `✅ Установихте търговия между ${fromRegion} и ${toRegion}!`, "success");
-    return true;
-};
-
-if (window.ChronicleEvents && typeof window.ChronicleEvents.generateInvestmentOpportunity === 'function') {
-    const ev = window.ChronicleEvents.generateInvestmentOpportunity(hero, amount, expectedReturn, turns);
-    window.showAdvisorMsg(ev.message, ev.buttons);
-    return true;
-}
-    
-    // ========== ИНТЕРАКТИВЕН ЛЕТОПИС ==========
-    if (window.ChronicleEvents && typeof window.ChronicleEvents.generateInvestmentOpportunity === 'function') {
-        const ev = window.ChronicleEvents.generateInvestmentOpportunity(hero, amount, expectedReturn, turns);
-        if (window.showAdvisorMsg) {
-            window.showAdvisorMsg(ev.message, ev.buttons);
-            return true; // Бутонът ще извика реалната инвестиция
-        }
-    }
-    
-    // Резервно – директно инвестиране (без бутон)
-    hero.gold -= amount;
-    window.investments.push({
-        heroId: hero.id,
-        amount: amount,
-        turnsLeft: turns,
-        returnAmount: expectedReturn
-    });
-    showEconomyMessage("ИНВЕСТИЦИЯ", `✅ Инвестирахте ${amount} злато за ${turns} хода. Очаквана печалба: ${expectedReturn}.`, "success");
+    window.showAdvisorMsg(`✅ Установихте търговия между ${fromRegion} и ${toRegion}!`);
     return true;
 };
 
@@ -299,36 +247,26 @@ if (window.ChronicleEvents && typeof window.ChronicleEvents.generateInvestmentOp
 window.calculateEconomy = function() {
     window.normalizePlayerRegions();
     
-    // Нормализиране на playerRegions
-    if (!window.playerRegions || !Array.isArray(window.playerRegions)) {
-        window.playerRegions = [];
-    }
+    if (!window.playerRegions || !Array.isArray(window.playerRegions)) window.playerRegions = [];
     let normalized = [];
     for (let item of window.playerRegions) {
         if (Array.isArray(item)) {
-            for (let sub of item) {
-                if (typeof sub === 'string') normalized.push(sub);
-            }
-        } else if (typeof item === 'string') {
-            normalized.push(item);
-        }
+            for (let sub of item) if (typeof sub === 'string') normalized.push(sub);
+        } else if (typeof item === 'string') normalized.push(item);
     }
     window.playerRegions = normalized;
-    if (window.playerRegions.length === 0 && window.currentRegion) {
-        window.playerRegions.push(window.currentRegion);
-    }
+    if (window.playerRegions.length === 0 && window.currentRegion) window.playerRegions.push(window.currentRegion);
     
     const hero = getMainEconomicHero();
     if (!hero) return;
     
     if (window.initializeHeroRPGData) window.initializeHeroRPGData(hero);
     ensureArmyDetails(hero);
-
+    
     updateInflation();
     triggerRandomEconomicEvent();
     
     let finalProfit = window.recalculateIncome(hero);
-    
     hero.gold = (hero.gold || 0) + finalProfit;
     if (hero.gold < 0) hero.gold = 0;
     syncHeroGold(hero);
@@ -336,26 +274,20 @@ window.calculateEconomy = function() {
     if (window.worldData && window.worldData.clans && hero.clan && window.worldData.clans[hero.clan]) {
         window.worldData.clans[hero.clan].gold = hero.gold;
     }
-
-    // ========== АВТОНОМНА ИКОНОМИКА ЗА НЕ-ЛЮБИМИ ГЕРОИ ==========
+    
+    // Автономна икономика за другите герои (без бутони)
     let favoriteNames = new Set();
     for (let key in window.worldData.clans) {
-        let heroData = window.worldData.clans[key];
-        if (heroData.isFavorite === true) {
-            favoriteNames.add(heroData.name || heroData.leaderName || key);
-        }
+        let h = window.worldData.clans[key];
+        if (h.isFavorite === true) favoriteNames.add(h.name || h.leaderName || key);
     }
-
+    
     for (let key in window.worldData.clans) {
         let clan = window.worldData.clans[key];
         if (hero && key === hero.clan) continue;
-        let isFavorite = favoriteNames.has(clan.name || clan.leaderName || key);
-        
         ensureArmyDetails(clan);
         clan.gold = clan.gold || 0;
-        
-        let autonomousIncome = 150 + Math.floor(Math.random() * 100);
-        clan.gold += autonomousIncome;
+        clan.gold += 150 + Math.floor(Math.random() * 100);
         
         if (Math.random() < 0.15 && clan.gold > 300) {
             let investAmount = Math.min(500, Math.floor(clan.gold * 0.3));
@@ -378,24 +310,8 @@ window.calculateEconomy = function() {
             }
         }
         
-        if (Math.random() < 0.3 && window.playerRegions && window.playerRegions.length > 0 && clan.gold >= 200) {
-            let regionName = window.playerRegions[Math.floor(Math.random() * window.playerRegions.length)];
-            let region = window.worldData.regions[regionName];
-            if (region && region.infrastructureLevel < 5) {
-                let upgradeCost = 150 + region.infrastructureLevel * 40;
-                if (clan.gold >= upgradeCost) {
-                    clan.gold -= upgradeCost;
-                    region.infrastructureLevel++;
-                    if (window.addWorldEvent) {
-                        window.addWorldEvent("🏗️ NPC МОДЕРНИЗАЦИЯ", `${clan.name} подобри инфраструктурата на ${regionName} до ниво ${region.infrastructureLevel}!`, "🏗️");
-                    }
-                }
-            }
-        }
-        
-        if (window.gainHeroXP) {
-            window.gainHeroXP(clan, 25);
-        } else {
+        if (window.gainHeroXP) window.gainHeroXP(clan, 25);
+        else {
             clan.xp = (clan.xp || 0) + 25;
             let requiredXP = (clan.level || 1) * 150;
             if (clan.xp >= requiredXP) {
@@ -405,42 +321,19 @@ window.calculateEconomy = function() {
                 clan.heroPower = (clan.heroPower || 100) + 15;
             }
         }
-        
-        if (window.armyMarket && typeof window.armyMarket.sync === 'function') {
-            window.armyMarket.sync(clan);
-        }
+        if (window.armyMarket && typeof window.armyMarket.sync === 'function') window.armyMarket.sync(clan);
     }
-
-    // Съобщение за икономика (само ако има значителна промяна)
-    let seasonName = "Текущ сезон";
-    if (window.gameTime) {
-        const seasons = ["Пролет", "Лято", "Есен", "Зима"];
-        seasonName = seasons[window.gameTime.seasonIndex] || "Сезон";
-    }
-    let classTitle = (hero.currentClass && hero.currentClass !== "Няма клас") ? ` (${hero.currentClass})` : "";
-    if (finalProfit < 0) {
-        showEconomyMessage("ИКОНОМИКА", `📉 ${seasonName}: ${hero.name}${classTitle} загуби ${Math.abs(finalProfit)} злато.`, "warning");
-    }
-    // Положителният доход не се показва, за да не спами
-
-    if (window.updateCharacterUI) window.updateCharacterUI(hero);
-    if (typeof window.updateStrongestHeroUI === 'function') {
-        window.updateStrongestHeroUI();
-    }
-    if (typeof window.renderSingleBar === 'function') window.renderSingleBar();
     
-    if (window.armyMarket && typeof window.armyMarket.sync === 'function') {
-        window.armyMarket.sync(hero);
-    }
-
-    if (window.advanceExpeditionsTurn) {
-        window.advanceExpeditionsTurn();
-    }
+    if (window.updateCharacterUI) window.updateCharacterUI(hero);
+    if (typeof window.updateStrongestHeroUI === 'function') window.updateStrongestHeroUI();
+    if (typeof window.renderSingleBar === 'function') window.renderSingleBar();
+    if (window.armyMarket && typeof window.armyMarket.sync === 'function') window.armyMarket.sync(hero);
+    if (window.advanceExpeditionsTurn) window.advanceExpeditionsTurn();
 };
 
-// Експорт на функциите
+// Експорт
 window.syncHeroGold = syncHeroGold;
 window.establishTradeRoute = window.establishTradeRoute;
 window.investGold = window.investGold;
 
-console.log("✅ economy.js версия 7.0 зареден – без currentHero, с updateStrongestHeroUI");
+console.log("✅ economy.js версия 7.1 зареден – с бутони в летописа");
