@@ -1038,6 +1038,17 @@ gap: 4px;
     .troop-type { width: 40px; }
     .troop-type .icon { font-size: 24px; }
 }
+@media (max-width: 768px) {
+    #active-character-profile .troops-list {
+        gap: 2px;
+    }
+    #active-character-profile .troops-list div {
+        min-width: 30px;
+    }
+    #active-character-profile .troops-list div div:first-child {
+        font-size: 1rem;
+    }
+}
 
 
 #save-indicator { background: transparent !important; border: none !important; }
