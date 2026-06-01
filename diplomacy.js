@@ -160,7 +160,8 @@ window.marryPrisoner = function(index) {
     if (window.openRegionsMap) window.openRegionsMap();
 };
 
-// ==================== ПРЕДЛОЖЕНИЕ ЗА СЪЮЗ (ИНТЕРАКТИВЕН ЛЕТОПИС) ====================
+
+// ==================== ПРЕДЛОЖЕНИЕ ЗА СЪЮЗ МЕЖДУ ГЕРОИ ====================
 window.proposeAlliance = function(proposer, target) {
     if (!proposer || !target) {
         if (window.showAdvisorMsg) window.showAdvisorMsg("❌ Невалидни герои за съюз.");
@@ -177,7 +178,7 @@ window.proposeAlliance = function(proposer, target) {
         return false;
     }
     
-    // ========== ИНТЕРАКТИВЕН ЛЕТОПИС ==========
+    // Използване на интерактивен летопис
     if (window.ChronicleEvents && typeof window.ChronicleEvents.generateAllianceProposal === 'function') {
         const ev = window.ChronicleEvents.generateAllianceProposal(proposer, target);
         if (window.showAdvisorMsg) {
@@ -186,7 +187,7 @@ window.proposeAlliance = function(proposer, target) {
         }
     }
     
-    // Резервен вариант – диалог с confirm
+    // Резервен вариант (confirm)
     let result = confirm(`${proposer.name} предлага съюз на ${target.name}. Приемате ли?`);
     if (result) {
         if (!proposer.allies) proposer.allies = [];
