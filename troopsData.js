@@ -2,14 +2,25 @@
 // ГЛОБАЛНА БАЗА ДАННИ ЗА ВСИЧКИ ТИПОВЕ ВОЙНИЦИ (42 ТИПА)
 // ВЕРСИЯ: 2.0 – РАЗШИРЕНА, БАЛАНСИРАНА, С НОВИ ЕДИНИЦИ И ФУНКЦИИ
 
+// ==================== ВСИЧКИ ВОЙСКИ (БАЗОВИ + ФЕНТЪЗИ + НОВИ) ====================
 window.ALL_TROOP_TYPES = [
-    // ===== ОСНОВНИ ВОЙСКИ (4) =====
+    // Базови войски
     { id: "infantry", name: "Пехотинец", basePrice: 10, attack: 8, defense: 12, icon: "⚔️", desc: "Основна пехота – добра защита", special: null, category: "basic" },
     { id: "archers", name: "Стрелец", basePrice: 15, attack: 15, defense: 6, icon: "🏹", desc: "Далекобойни стрелци", special: null, category: "basic" },
     { id: "cavalry", name: "Конник", basePrice: 30, attack: 25, defense: 18, icon: "🐎", desc: "Бързи атакуващи части", special: null, category: "basic" },
     { id: "elite", name: "Елитен войн", basePrice: 70, attack: 45, defense: 40, icon: "🛡️", desc: "Най-добрите бойци", special: null, category: "basic" },
-    
-    // ===== ФЕНТЪЗИ ВОЙСКИ (28 оригинални) =====
+    { id: "spearman", name: "Копиеносец", basePrice: 12, attack: 10, defense: 14, icon: "🔱", desc: "Дълги копия срещу конница", special: "bonusVsCavalry:0.2", category: "basic" },
+    { id: "maceman", name: "Боздуганар", basePrice: 14, attack: 14, defense: 12, icon: "🔨", desc: "Смазващи удари", special: "armorPenetration:0.1", category: "basic" },
+    { id: "crossbowman", name: "Арбалетчик", basePrice: 18, attack: 20, defense: 8, icon: "🏹", desc: "Тежки арбалети", special: "ignoreArmor:0.15", category: "basic" },
+    { id: "lightCavalry", name: "Лек конник", basePrice: 28, attack: 22, defense: 16, icon: "🐎", desc: "Бързи разузнавачи", special: "firstStrikeBonus:0.2", category: "basic" },
+    { id: "heavyCavalry", name: "Тежък конник", basePrice: 45, attack: 38, defense: 30, icon: "🏇", desc: "Ударна сила", special: "chargeBonus:0.25", category: "basic" },
+    { id: "axeman", name: "Секирник", basePrice: 15, attack: 16, defense: 10, icon: "🪓", desc: "Страховити атаки", special: "critChance:0.05", category: "basic" },
+    { id: "pikeman", name: "Пикинер", basePrice: 13, attack: 8, defense: 18, icon: "⛏️", desc: "Срещу всичко", special: "defenseBonus:2", category: "basic" },
+    { id: "slinger", name: "Прашкаджия", basePrice: 9, attack: 12, defense: 4, icon: "🪨", desc: "Далечни атаки", special: null, category: "basic" },
+    { id: "chariot", name: "Колесница", basePrice: 55, attack: 45, defense: 35, icon: "🏎️", desc: "Страх за враговете", special: "splashDamage:2", category: "basic" },
+    { id: "royalGuard", name: "Царска гвардия", basePrice: 90, attack: 60, defense: 55, icon: "👑", desc: "Елитни телохранители", special: "moraleBonus:0.2", category: "basic" },
+
+    // Фентъзи войски (оригинал 28)
     { id: "vampire", name: "Вампир", basePrice: 120, attack: 35, defense: 25, icon: "🧛", desc: "Кръвопиец – лекува 20% от нанесените щети", special: "lifeSteal:0.2", category: "fantasy" },
     { id: "werewolf", name: "Върколак", basePrice: 100, attack: 40, defense: 20, icon: "🐺", desc: "Луда свирепост – +15% атака през нощта", special: "nightFury:0.15", category: "fantasy" },
     { id: "highelf", name: "Висш елф", basePrice: 90, attack: 30, defense: 15, icon: "🧝", desc: "Точност – +25% критичен удар", special: "critChance:0.25", category: "fantasy" },
@@ -41,7 +52,7 @@ window.ALL_TROOP_TYPES = [
     { id: "bronze_dragon", name: "Бронзов дракон", basePrice: 280, attack: 65, defense: 60, icon: "🐉", desc: "Дихание на времето – връща врага в предишен рунд", special: "timeSkip:true", category: "fantasy" },
     { id: "titan", name: "Титан", basePrice: 500, attack: 120, defense: 90, icon: "👑", desc: "Гигантски скок – намалява вражеската армия с 20%", special: "armyShrink:0.2", category: "fantasy" },
 
-    // ===== 10 НОВИ ФЕНТЪЗИ ВОЙСКИ (ВЕРСИЯ 2.0) =====
+    // Нови 10 фентъзи войски (версия 2.0)
     { id: "shadow_assassin", name: "Сенчест убиец", basePrice: 140, attack: 48, defense: 22, icon: "🗡️", desc: "Нападение от сенките – +30% щети при първа атака", special: "firstStrikeBonus:0.3", category: "fantasy" },
     { id: "paladin", name: "Паладин", basePrice: 180, attack: 40, defense: 50, icon: "🛡️", desc: "Свещена защита – намалява щетите на съюзниците с 10%", special: "allyProtection:0.1", category: "fantasy" },
     { id: "druid", name: "Друид", basePrice: 95, attack: 25, defense: 30, icon: "🌿", desc: "Сили на природата – лекува 15 живот на рунд", special: "healAllies:15", category: "fantasy" },
