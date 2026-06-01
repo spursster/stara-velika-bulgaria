@@ -266,7 +266,7 @@ window.calculateEconomy = function() {
     
     updateInflation();
     
-    // ========== РЯДКА ИНВЕСТИЦИОННА ВЪЗМОЖНОСТ (КОЛДЪУН 20 хода, 0.3% шанс) ==========
+      // ========== РЯДКА ИНВЕСТИЦИОННА ВЪЗМОЖНОСТ (КОЛДЪУН 20 хода, 0.3% шанс) ==========
     if (window._invCooldown === undefined) window._invCooldown = 0;
     window._invCooldown++;
     
