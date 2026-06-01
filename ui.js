@@ -899,26 +899,26 @@ window.updateCharacterUI = function(hero) {
     }
 };
 
-// ==================== ЖУРНАЛ НА СЪВЕТНИКА ====================
+// ========== ГЛАВНАТА ФУНКЦИЯ – РАБОТИ САМО С ОРИГИНАЛНИЯ ЛЕТОПИС ==========
 window.showAdvisorMsg = function(msg, buttons) {
-    let container = document.querySelector('.chronicle-list, #chronicle-container, .chronicle');
+    // Намира оригиналния контейнер, който съдържа .chronicle-event
+    let container = document.querySelector('.chronicle-event')?.parentNode;
     if (!container) {
-        let firstEvent = document.querySelector('.chronicle-event');
-        if (firstEvent && firstEvent.parentNode) container = firstEvent.parentNode;
+        console.error('Летописът не е намерен');
+        return;
     }
-    if (!container) {
-        container = document.createElement('div');
-        container.className = 'chronicle-list';
-        container.style.cssText = 'background:#0a0a0a; border:1px solid #d4af37; padding:5px; max-height:300px; overflow-y:auto;';
-        document.body.appendChild(container);
-    }
-    let div = document.createElement('div');
-    div.className = 'chronicle-event';
-    div.style.cssText = 'background:rgba(0,0,0,0.5); border-left:3px solid #d4af37; margin:5px 0; padding:5px; border-radius:0 6px 6px 0;';
+    let eventDiv = document.createElement('div');
+    eventDiv.className = 'chronicle-event';
+    // Копира стилове от първото съществуващо събитие
+    let existing = document.querySelector('.chronicle-event');
+    if (existing) eventDiv.style.cssText = existing.style.cssText;
+    else eventDiv.style.cssText = 'background:rgba(0,0,0,0.5);border-left:3px solid #d4af37;margin:5px 0;padding:5px;border-radius:0 6px 6px 0;';
+    
     let textSpan = document.createElement('div');
     textSpan.className = 'chronicle-text';
     textSpan.innerHTML = `<strong>📜</strong> ${msg}`;
-    div.appendChild(textSpan);
+    eventDiv.appendChild(textSpan);
+    
     if (buttons && buttons.length) {
         let wrap = document.createElement('div');
         wrap.style.marginTop = '6px';
@@ -935,14 +935,16 @@ window.showAdvisorMsg = function(msg, buttons) {
             btn.onclick = () => { b.action(); wrap.remove(); };
             wrap.appendChild(btn);
         });
-        div.appendChild(wrap);
+        eventDiv.appendChild(wrap);
     }
+    
     let timeSpan = document.createElement('div');
     timeSpan.className = 'chronicle-time';
     if (window.gameTime) timeSpan.innerText = `${window.gameTime.year || 480} г. ${window.gameTime.era || 'пр.н.е.'}`;
     else timeSpan.innerText = new Date().toLocaleTimeString();
-    div.appendChild(timeSpan);
-    container.prepend(div);
+    eventDiv.appendChild(timeSpan);
+    
+    container.prepend(eventDiv);
     while (container.children.length > 50) container.removeChild(container.lastChild);
 };
 // ==================== ИНСПЕКЦИЯ НА ГЕРОЙ ====================
