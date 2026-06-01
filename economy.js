@@ -38,26 +38,18 @@ function flattenArray(arr) {
 window.investGold = function(hero, amount, turns = 5) {
     if (!hero) return false;
     if (amount <= 0 || amount > hero.gold) {
-        window.showAdvisorMsg("Невалидна сума за инвестиция!", [{ label: "OK", action: () => {} }]);
+        window.showAdvisorMsg("Невалидна сума!", [{ label: "OK", action: () => {} }]);
         return false;
     }
     let expectedReturn = Math.floor(amount * (1 + window.economySettings.investmentReturnBase * (turns / 4)));
-    
-    if (window.ChronicleEvents && typeof window.ChronicleEvents.generateInvestmentOpportunity === 'function') {
-        const ev = window.ChronicleEvents.generateInvestmentOpportunity(hero, amount, expectedReturn, turns);
+    if (window.ChronicleEvents && window.ChronicleEvents.generateInvestmentOpportunity) {
+        let ev = window.ChronicleEvents.generateInvestmentOpportunity(hero, amount, expectedReturn, turns);
         window.showAdvisorMsg(ev.message, ev.buttons);
         return true;
     }
-    
-    // Резервен вариант
+    // резерв
     hero.gold -= amount;
-    window.investments.push({
-        heroId: hero.id,
-        amount: amount,
-        turnsLeft: turns,
-        returnAmount: expectedReturn
-    });
-    showEconomyMessage("ИНВЕСТИЦИЯ", `✅ Инвестирахте ${amount} злато за ${turns} хода. Очаквана печалба: ${expectedReturn}.`, "success");
+    window.investments.push({ heroId: hero.id, amount: amount, turnsLeft: turns, returnAmount: expectedReturn });
     return true;
 };
 
@@ -208,64 +200,22 @@ function triggerRandomEconomicEvent() {
     const eventType = Math.floor(Math.random() * 5);
     const hero = getMainEconomicHero();
     if (!hero) return;
-    
     let eventData = {};
     switch(eventType) {
-        case 0:
-            eventData = {
-                title: "📈 ИКОНОМИЧЕСКИ БУМ",
-                gain: 200 + Math.floor(Math.random() * 300),
-                msg: "Търговията процъфтява!",
-                type: "success"
-            };
-            break;
-        case 1:
-            eventData = {
-                title: "📉 РЕЦЕСИЯ",
-                loss: 100 + Math.floor(Math.random() * 200),
-                msg: "Икономически спад!",
-                type: "error"
-            };
-            break;
-        case 2:
-            eventData = {
-                title: "🏛️ ДАНЪЧНА РЕФОРМА",
-                gain: Math.floor(hero.gold * 0.05),
-                msg: "Нови данъчни правила ви носят злато.",
-                type: "success"
-            };
-            break;
-        case 3:
-            eventData = {
-                title: "💰 КРАЖБА НА ХАЗНАТА",
-                loss: Math.floor(hero.gold * 0.1) + 50,
-                msg: "Крадци задигнаха част от златото!",
-                type: "error"
-            };
-            break;
-        case 4:
-            eventData = {
-                title: "🛒 НОВ ПАЗАР",
-                gain: 150 + Math.floor(Math.random() * 250),
-                msg: "Открит е нов търговски път!",
-                type: "success"
-            };
-            break;
+        case 0: eventData = { title: "📈 ИКОНОМИЧЕСКИ БУМ", gain: 200 + Math.floor(Math.random() * 300), msg: "Търговията процъфтява!" }; break;
+        case 1: eventData = { title: "📉 РЕЦЕСИЯ", loss: 100 + Math.floor(Math.random() * 200), msg: "Икономически спад!" }; break;
+        case 2: eventData = { title: "🏛️ ДАНЪЧНА РЕФОРМА", gain: Math.floor(hero.gold * 0.05), msg: "Нови данъчни правила ви носят злато." }; break;
+        case 3: eventData = { title: "💰 КРАЖБА НА ХАЗНАТА", loss: Math.floor(hero.gold * 0.1) + 50, msg: "Крадци задигнаха част от златото!" }; break;
+        case 4: eventData = { title: "🛒 НОВ ПАЗАР", gain: 150 + Math.floor(Math.random() * 250), msg: "Открит е нов търговски път!" }; break;
     }
-    
-    if (window.ChronicleEvents && typeof window.ChronicleEvents.generateEconomicEvent === 'function') {
-        const ev = window.ChronicleEvents.generateEconomicEvent(hero, eventData);
-        if (window.showAdvisorMsg) {
-            window.showAdvisorMsg(ev.message, ev.buttons);
-            return;
-        }
+    if (window.ChronicleEvents && window.ChronicleEvents.generateEconomicEvent) {
+        let ev = window.ChronicleEvents.generateEconomicEvent(hero, eventData);
+        window.showAdvisorMsg(ev.message, ev.buttons);
+        return;
     }
-    
-    // Резервен вариант (ако няма генератор)
+    // резерв
     if (eventData.gain) hero.gold += eventData.gain;
     if (eventData.loss) hero.gold = Math.max(0, hero.gold - eventData.loss);
-    showEconomyMessage(eventData.title, `${eventData.msg} ${eventData.gain ? '+' + eventData.gain : '-' + eventData.loss} злато.`, eventData.type);
-    syncHeroGold(hero);
 }
     
 // ========== ИНТЕРАКТИВЕН ЛЕТОПИС ==========
