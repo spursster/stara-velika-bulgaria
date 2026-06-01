@@ -195,7 +195,7 @@ function triggerRandomEconomicEvent() {
 window.investGold = function(hero, amount, turns = 5) {
     if (!hero) return false;
     if (amount <= 0 || amount > hero.gold) {
-        window.showAdvisorMsg("Невалидна сума!", [{ label: "OK", action: () => {} }]);
+       // window.showAdvisorMsg("Невалидна сума!", [{ label: "OK", action: () => {} }]);
         return false;
     }
     let expectedReturn = Math.floor(amount * (1 + window.economySettings.investmentReturnBase * (turns / 4)));
@@ -208,7 +208,7 @@ window.investGold = function(hero, amount, turns = 5) {
     
     hero.gold -= amount;
     window.investments.push({ heroId: hero.id, amount: amount, turnsLeft: turns, returnAmount: expectedReturn });
-    window.showAdvisorMsg(`✅ Инвестирахте ${amount} злато за ${turns} хода. Очаквана печалба: ${expectedReturn}.`);
+   // window.showAdvisorMsg(`✅ Инвестирахте ${amount} злато за ${turns} хода. Очаквана печалба: ${expectedReturn}.`);
     return true;
 };
 
@@ -279,7 +279,7 @@ window.calculateEconomy = function() {
                 const ev = window.ChronicleEvents.generateInvestmentOpportunity(hero, amount, profit, turns);
                 window.showAdvisorMsg(ev.message, ev.buttons);
             } else {
-                window.showAdvisorMsg(`💎 Рядка инвестиционна възможност: вложете ${amount} злато за ${turns} хода, ще получите ${profit} злато.`);
+                //window.showAdvisorMsg(`💎 Рядка инвестиционна възможност: вложете ${amount} злато за ${turns} хода, ще получите ${profit} злато.`);
             }
         }
         // Нулираме брояча след проверката (независимо дали се е случило или не)
