@@ -1511,5 +1511,25 @@ if (typeof window.updateStrongestHeroUI === 'function') window.updateStrongestHe
     document.head.appendChild(style);
 })();
 
+// Перманентна синхронизация на HP след всяка битка
+if (typeof window.endGroupBattle === 'function') {
+    const originalEndBattle = window.endGroupBattle;
+    window.endGroupBattle = function(isVictory, reason, regionName) {
+        // Извикваме оригиналната функция
+        originalEndBattle(isVictory, reason, regionName);
+        // Принудително обновяване на UI
+        if (typeof window.refreshAllHeroUI === 'function') {
+            window.refreshAllHeroUI();
+        } else {
+            if (typeof window.updateStrongestHeroUI === 'function') window.updateStrongestHeroUI();
+            if (typeof window.renderFavoriteHeroesBar === 'function') window.renderFavoriteHeroesBar();
+            if (typeof window.renderSingleBar === 'function') window.renderSingleBar();
+        }
+        // Запазване на играта след битка
+        if (typeof window.saveGreatBulgariaGame === 'function') window.saveGreatBulgariaGame();
+    };
+    console.log("✅ Перманентна поправка за HP инсталирана");
+}
+
 // ==================== КРАЙ НА ui.js ====================
 console.log("✅ ui.js зареден успешно - версия без toast");
