@@ -1119,7 +1119,7 @@ if (Math.random() < 0.2 && window.historicalArtifacts) {
             updateUI();
         }
 
-        function retreat() {
+                function retreat() {
             if (!battleActive) { addLog(`Битката вече е приключила.`); return; }
             addLog(`🏃 Отстъпление! Героите се изтеглят...`);
             currentHeroes.forEach(hero => {
@@ -1134,26 +1134,19 @@ if (Math.random() < 0.2 && window.historicalArtifacts) {
                 }
             }
             
-            // Обновяваме всички UI компоненти
-           function refreshAllHeroUI() {
-    if (typeof window.renderFavoriteHeroesBar === 'function') window.renderFavoriteHeroesBar();
-    if (typeof window.updateStrongestHeroUI === 'function') window.updateStrongestHeroUI();
-    if (typeof window.renderSingleBar === 'function') window.renderSingleBar();
-    // Ако има отворен профил, обнови и него
-    let profileModal = document.getElementById('ultimate-profile-modal');
-    if (profileModal && profileModal.style.display !== 'none') {
-        let heroName = profileModal.querySelector('.hero-name')?.innerText;
-        if (heroName && window.worldData) {
-            for (let key in window.worldData.clans) {
-                let hero = window.worldData.clans[key];
-                if (hero.name === heroName && hero.isJoined) {
-                    if (typeof window.showHeroProfile === 'function') window.showHeroProfile(hero);
-                    break;
-                }
-            }
+            // Обновяваме всички UI компоненти – извикваме глобалната функция
+            refreshAllHeroUI();
+            
+            battleActive = false;
+            const attackBtn = document.getElementById('battle-attack');
+            if (attackBtn) attackBtn.disabled = true;
+            if (typeof window.endGroupBattle === 'function') window.endGroupBattle(false, 'retreat');
+            window.currentBattleState = null;
+            window._lastBattleHeroes = null;
+            setTimeout(() => battleScreen.remove(), 1500);
         }
-    }
-}
+            
+            
         function resetBattle() {
             currentHeroes = battleHeroes.map(h => ({ ...h, hp: h.maxHp, armySize: h.armySize }));
             currentMonster = { ...monster };
@@ -1212,6 +1205,5 @@ if (Math.random() < 0.2 && window.historicalArtifacts) {
 
     // Експортираме refreshAllHeroUI, за да може да се използва и от други модули
     window.refreshAllHeroUI = refreshAllHeroUI;
-
     console.log("✅ battle.js зареден (версия 8.3 – фиксирана синхронизация на HP)");
 })();
