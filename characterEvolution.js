@@ -118,6 +118,21 @@ window.ChronicleEvents.generateEconomicEvent = function(hero, eventData) {
     };
 };
 
+window.getPersonalityDescription = function(hero) {
+    if (!hero || !hero.personality || hero.personality.length === 0) {
+        return `${hero.name} все още няма ясно изразен характер.`;
+    }
+    let desc = `${hero.name} е `;
+    const traits = hero.personality.map(t => t.name.toLowerCase());
+    desc += traits.join(', ');
+    desc += '. ';
+    if (hero.personality.some(p => p.categories.includes("agg"))) desc += "Предпочита силата пред преговорите. ";
+    if (hero.personality.some(p => p.categories.includes("dip"))) desc += "Умее да намира съюзници. ";
+    if (hero.personality.some(p => p.categories.includes("greedy"))) desc += "Цени богатството над всичко. ";
+    if (hero.personality.some(p => p.categories.includes("cautious"))) desc += "Никога не прави нищо необмислено. ";
+    return desc;
+};
+
 window.ChronicleEvents.generateHeroOffer = function(candidate, cost) {
     return {
         message: `🏰 ${candidate.name} от род ${candidate.clan} желае да се присъедини срещу ${cost} злато.`,
