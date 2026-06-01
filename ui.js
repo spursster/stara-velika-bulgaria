@@ -900,38 +900,50 @@ window.updateCharacterUI = function(hero) {
 };
 
 // ==================== ЖУРНАЛ НА СЪВЕТНИКА ====================
-// ========== ПОПРАВЕНА showAdvisorMsg С БУТОНИ ==========
-window.showAdvisorMsg = function(msg, btns) {
-    const box = document.getElementById('advisor-journal');
-    if (!box) return;
-    const msgDiv = document.createElement('div');
-    msgDiv.style.backgroundColor = '#1e1a0c';
-    msgDiv.style.borderLeft = '3px solid #daa520';
-    msgDiv.style.margin = '4px 0';
-    msgDiv.style.padding = '6px';
-    msgDiv.style.color = '#ffdd99';
-    msgDiv.innerHTML = `<span>📜 ${msg}</span>`;
-    if (btns && btns.length) {
-        const btnWrap = document.createElement('div');
-        btnWrap.style.marginTop = '6px';
-        btnWrap.style.display = 'flex';
-        btnWrap.style.gap = '6px';
-        for (let b of btns) {
-            const btn = document.createElement('button');
-            btn.textContent = b.label;
-            btn.style.background = '#daa520';
+window.showAdvisorMsg = function(msg, buttons) {
+    let container = document.querySelector('.chronicle-list, #chronicle-container, .chronicle');
+    if (!container) {
+        let firstEvent = document.querySelector('.chronicle-event');
+        if (firstEvent && firstEvent.parentNode) container = firstEvent.parentNode;
+    }
+    if (!container) {
+        container = document.createElement('div');
+        container.className = 'chronicle-list';
+        container.style.cssText = 'background:#0a0a0a; border:1px solid #d4af37; padding:5px; max-height:300px; overflow-y:auto;';
+        document.body.appendChild(container);
+    }
+    let div = document.createElement('div');
+    div.className = 'chronicle-event';
+    div.style.cssText = 'background:rgba(0,0,0,0.5); border-left:3px solid #d4af37; margin:5px 0; padding:5px; border-radius:0 6px 6px 0;';
+    let textSpan = document.createElement('div');
+    textSpan.className = 'chronicle-text';
+    textSpan.innerHTML = `<strong>📜</strong> ${msg}`;
+    div.appendChild(textSpan);
+    if (buttons && buttons.length) {
+        let wrap = document.createElement('div');
+        wrap.style.marginTop = '6px';
+        wrap.style.display = 'flex';
+        wrap.style.gap = '6px';
+        buttons.forEach(b => {
+            let btn = document.createElement('button');
+            btn.innerText = b.label;
+            btn.style.background = '#d4af37';
             btn.style.border = 'none';
             btn.style.borderRadius = '20px';
-            btn.style.padding = '2px 12px';
+            btn.style.padding = '2px 10px';
             btn.style.cursor = 'pointer';
-            btn.style.fontSize = '11px';
-            btn.onclick = () => { b.action(); btnWrap.remove(); };
-            btnWrap.appendChild(btn);
-        }
-        msgDiv.appendChild(btnWrap);
+            btn.onclick = () => { b.action(); wrap.remove(); };
+            wrap.appendChild(btn);
+        });
+        div.appendChild(wrap);
     }
-    box.prepend(msgDiv);
-    while (box.children.length > 50) box.removeChild(box.lastChild);
+    let timeSpan = document.createElement('div');
+    timeSpan.className = 'chronicle-time';
+    if (window.gameTime) timeSpan.innerText = `${window.gameTime.year || 480} г. ${window.gameTime.era || 'пр.н.е.'}`;
+    else timeSpan.innerText = new Date().toLocaleTimeString();
+    div.appendChild(timeSpan);
+    container.prepend(div);
+    while (container.children.length > 50) container.removeChild(container.lastChild);
 };
 // ==================== ИНСПЕКЦИЯ НА ГЕРОЙ ====================
 window.inspectHeroProfile = function(clanKey) { 
