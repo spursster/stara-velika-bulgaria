@@ -1,12 +1,11 @@
 // ==================== CHARACTER EVOLUTION SYSTEM ====================
-// ВЕРСИЯ: 5.2 – САМО ЗА ТВОИТЕ ГЕРОИ
+// ВЕРСИЯ: 5.3 – ПРЕМАХНАТА ИНВЕСТИЦИОННА ВЪЗМОЖНОСТ
 // ===================================================================
 
 function randomItem(arr) {
     return arr[Math.floor(Math.random() * arr.length)];
 }
 
-// Помощна функция: проверява дали героят е твой (любим, избран или в соло режим)
 function isMyHero(hero) {
     if (!hero) return false;
     if (hero.isFavorite === true) return true;
@@ -15,7 +14,6 @@ function isMyHero(hero) {
     return false;
 }
 
-// Уверяваме се, че showAdvisorMsg съществува (ако не – създаваме)
 if (typeof window.showAdvisorMsg !== 'function') {
     window.showAdvisorMsg = function(msg) {
         console.log("📜 ЛЕТОПИС: " + msg);
@@ -93,13 +91,11 @@ window.assignPersonalityTraits = function(hero, count = 3) {
     const logMsg = `🎭 ${hero.name} получи личности: ${selected.map(p => p.name).join(', ')}.`;
     console.log(logMsg);
     if (window.addHeroLog) window.addHeroLog(hero, "🎭", logMsg);
-    // Показваме съобщение само за твоите герои
     if (isMyHero(hero) && window.showAdvisorMsg) {
         window.showAdvisorMsg(logMsg);
     }
 };
 
-// Генератори за ChronicleEvents (оставяме ги, те са само инструменти)
 window.ChronicleEvents = window.ChronicleEvents || {};
 
 window.ChronicleEvents.generateEconomicEvent = function(hero, eventData) {
@@ -146,27 +142,13 @@ window.ChronicleEvents.generateHeroOffer = function(candidate, cost) {
     };
 };
 
+// ========== ПРЕМАХНАТ ГЕНЕРАТОР ЗА ИНВЕСТИЦИОННА ВЪЗМОЖНОСТ ==========
+// за да спрат окончателно съобщенията за инвестиции
+/*
 window.ChronicleEvents.generateInvestmentOpportunity = function(hero, amount, profit, turns = 3) {
-    return {
-        message: `💎 Инвестиционна възможност: вложете ${amount} злато за ${turns} хода, ще получите ${profit} злато.`,
-        buttons: [
-            { label: `💸 Инвестирай ${amount}`, action: () => {
-                if (hero.gold >= amount) {
-                    hero.gold -= amount;
-                    setTimeout(() => {
-                        hero.gold += profit;
-                        window.showAdvisorMsg(`Инвестицията ви донесе ${profit} злато!`);
-                        if (window.updateCharacterUI) window.updateCharacterUI(hero);
-                    }, turns * 10000);
-                    window.showAdvisorMsg(`Инвестирахте ${amount} злато. Очаквайте печалба.`);
-                } else {
-                    window.showAdvisorMsg(`Нямате достатъчно злато за тази инвестиция.`);
-                }
-            }},
-            { label: '🚫 Отказ', action: () => window.showAdvisorMsg(`Отказахте инвестицията.`) }
-        ]
-    };
+    // ... премахнат ...
 };
+*/
 
 window.ChronicleEvents.generateArtifactFound = function(hero, artifact) {
     let bonusText = artifact.bonus ? `+${artifact.bonus.heroPower || 0} сила` : 'без бонус';
@@ -229,21 +211,6 @@ window.ChronicleEvents.generatePersonalityInfluence = function(hero, traitName, 
     };
 };
 
-window.getPersonalityDescription = function(hero) {
-    if (!hero || !hero.personality || hero.personality.length === 0) {
-        return `${hero.name} все още няма ясно изразен характер.`;
-    }
-    let desc = `${hero.name} е `;
-    const traits = hero.personality.map(t => t.name.toLowerCase());
-    desc += traits.join(', ');
-    desc += '. ';
-    if (hero.personality.some(p => p.categories.includes("agg"))) desc += "Предпочита силата пред преговорите. ";
-    if (hero.personality.some(p => p.categories.includes("dip"))) desc += "Умее да намира съюзници. ";
-    if (hero.personality.some(p => p.categories.includes("greedy"))) desc += "Цени богатството над всичко. ";
-    if (hero.personality.some(p => p.categories.includes("cautious"))) desc += "Никога не прави нищо необмислено. ";
-    return desc;
-};
-
 window.evolveHero = function(hero) {
     if (!hero) return;
     if (!hero.personality) {
@@ -255,7 +222,6 @@ window.evolveHero = function(hero) {
     const allTraits = window.getAllPersonalityTraits();
     if (allTraits.length === 0) return;
     
-    // Замяна на черта
     if (r < 0.4 && hero.personality.length > 0) {
         const removeIndex = Math.floor(Math.random() * hero.personality.length);
         const removedName = hero.personality[removeIndex].name;
@@ -281,7 +247,6 @@ window.evolveHero = function(hero) {
             }
         }
     }
-    // Добавяне на нова черта
     else if (r < 0.7 && hero.personality.length < 6) {
         const newTrait = randomItem(allTraits);
         if (!hero.personality.some(p => p.id === newTrait.id)) {
@@ -306,7 +271,6 @@ window.evolveHero = function(hero) {
             }
         }
     }
-    // Премахване на черта
     else if (r >= 0.7 && hero.personality.length > 1) {
         const removeIndex = Math.floor(Math.random() * hero.personality.length);
         const removedName = hero.personality[removeIndex].name;
@@ -323,7 +287,6 @@ window.evolveHero = function(hero) {
             }
         }
     }
-    // Усилване/отслабване на влияние на черта
     else if (hero.personality.length > 0) {
         const idx = Math.floor(Math.random() * hero.personality.length);
         const change = (Math.random() - 0.5) * 0.2;
@@ -345,7 +308,6 @@ window.evolveHero = function(hero) {
     }
 };
 
-// Синхронизация при старт
 setTimeout(() => {
     if (window.worldData && window.worldData.clans) {
         for (let key in window.worldData.clans) {
@@ -355,5 +317,5 @@ setTimeout(() => {
             }
         }
     }
-    console.log("✅ characterEvolution.js зареден – известия само за твоите герои");
+    console.log("✅ characterEvolution.js зареден – инвестиционните съобщения са премахнати");
 }, 1000);
