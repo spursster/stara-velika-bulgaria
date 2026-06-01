@@ -35,6 +35,32 @@ function flattenArray(arr) {
     return result;
 }
 
+window.investGold = function(hero, amount, turns = 5) {
+    if (!hero) return false;
+    if (amount <= 0 || amount > hero.gold) {
+        window.showAdvisorMsg("Невалидна сума за инвестиция!", [{ label: "OK", action: () => {} }]);
+        return false;
+    }
+    let expectedReturn = Math.floor(amount * (1 + window.economySettings.investmentReturnBase * (turns / 4)));
+    
+    if (window.ChronicleEvents && typeof window.ChronicleEvents.generateInvestmentOpportunity === 'function') {
+        const ev = window.ChronicleEvents.generateInvestmentOpportunity(hero, amount, expectedReturn, turns);
+        window.showAdvisorMsg(ev.message, ev.buttons);
+        return true;
+    }
+    
+    // Резервен вариант
+    hero.gold -= amount;
+    window.investments.push({
+        heroId: hero.id,
+        amount: amount,
+        turnsLeft: turns,
+        returnAmount: expectedReturn
+    });
+    showEconomyMessage("ИНВЕСТИЦИЯ", `✅ Инвестирахте ${amount} злато за ${turns} хода. Очаквана печалба: ${expectedReturn}.`, "success");
+    return true;
+};
+
 function showEconomyMessage(title, message, type = "info") {
     if (window.showAdvisorPopup) {
         window.showAdvisorPopup(title, message, type);
@@ -185,14 +211,48 @@ function triggerRandomEconomicEvent() {
     
     let eventData = {};
     switch(eventType) {
-        case 0: eventData = { title: "📈 ИКОНОМИЧЕСКИ БУМ", gain: 200 + Math.floor(Math.random() * 300), msg: "Търговията процъфтява!", type: "success" }; break;
-        case 1: eventData = { title: "📉 РЕЦЕСИЯ", loss: 100 + Math.floor(Math.random() * 200), msg: "Икономически спад!", type: "error" }; break;
-        case 2: eventData = { title: "🏛️ ДАНЪЧНА РЕФОРМА", gain: Math.floor(hero.gold * 0.05), msg: "Нови данъчни правила ви носят злато.", type: "success" }; break;
-        case 3: eventData = { title: "💰 КРАЖБА НА ХАЗНАТА", loss: Math.floor(hero.gold * 0.1) + 50, msg: "Крадци задигнаха част от златото!", type: "error" }; break;
-        case 4: eventData = { title: "🛒 НОВ ПАЗАР", gain: 150 + Math.floor(Math.random() * 250), msg: "Открит е нов търговски път!", type: "success" }; break;
+        case 0:
+            eventData = {
+                title: "📈 ИКОНОМИЧЕСКИ БУМ",
+                gain: 200 + Math.floor(Math.random() * 300),
+                msg: "Търговията процъфтява!",
+                type: "success"
+            };
+            break;
+        case 1:
+            eventData = {
+                title: "📉 РЕЦЕСИЯ",
+                loss: 100 + Math.floor(Math.random() * 200),
+                msg: "Икономически спад!",
+                type: "error"
+            };
+            break;
+        case 2:
+            eventData = {
+                title: "🏛️ ДАНЪЧНА РЕФОРМА",
+                gain: Math.floor(hero.gold * 0.05),
+                msg: "Нови данъчни правила ви носят злато.",
+                type: "success"
+            };
+            break;
+        case 3:
+            eventData = {
+                title: "💰 КРАЖБА НА ХАЗНАТА",
+                loss: Math.floor(hero.gold * 0.1) + 50,
+                msg: "Крадци задигнаха част от златото!",
+                type: "error"
+            };
+            break;
+        case 4:
+            eventData = {
+                title: "🛒 НОВ ПАЗАР",
+                gain: 150 + Math.floor(Math.random() * 250),
+                msg: "Открит е нов търговски път!",
+                type: "success"
+            };
+            break;
     }
     
-    // Използваме генератора, ако съществува
     if (window.ChronicleEvents && typeof window.ChronicleEvents.generateEconomicEvent === 'function') {
         const ev = window.ChronicleEvents.generateEconomicEvent(hero, eventData);
         if (window.showAdvisorMsg) {
