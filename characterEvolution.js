@@ -87,114 +87,110 @@ window.assignPersonalityTraits = function(hero, count = 3) {
     if (window.showAdvisorMsg) window.showAdvisorMsg(logMsg);
 };
 
-// Генератор за инвестиционна възможност
-window.ChronicleEvents.generateInvestmentOpportunity = function(hero, amount, expectedReturn, turns) {
-    return {
-        message: `💎 ${hero.name}, инвестиционна възможност: вложете ${amount} злато за ${turns} хода. Очаквана печалба: ${expectedReturn} злато.`,
-        buttons: [
-            { label: `💸 Инвестирай ${amount}`, action: () => {
-                if (hero.gold >= amount) {
-                    hero.gold -= amount;
-                    window.investments.push({
-                        heroId: hero.id,
-                        amount: amount,
-                        turnsLeft: turns,
-                        returnAmount: expectedReturn
-                    });
-                    if (window.updateCharacterUI) window.updateCharacterUI(hero);
-                    window.showAdvisorMsg(`✅ Инвестирахте ${amount} злато. Очаквайте печалба след ${turns} хода.`);
-                } else {
-                    window.showAdvisorMsg(`❌ Нямате достатъчно злато!`);
-                }
-            }},
-            { label: '🚫 Откажи', action: () => window.showAdvisorMsg(`Инвестицията беше отказана.`) }
-        ]
-    };
-};
-
 // Генератор за икономически събития
 window.ChronicleEvents.generateEconomicEvent = function(hero, eventData) {
-    let action = null;
-    if (eventData.gain) {
-        action = () => {
-            hero.gold += eventData.gain;
-            window.showAdvisorMsg(`✅ ${eventData.message} +${eventData.gain} злато.`);
-            if (window.updateCharacterUI) window.updateCharacterUI(hero);
-            if (window.updateStrongestHeroUI) window.updateStrongestHeroUI();
-        };
-    } else if (eventData.loss) {
-        action = () => {
-            hero.gold = Math.max(0, hero.gold - eventData.loss);
-            window.showAdvisorMsg(`⚠️ ${eventData.message} -${eventData.loss} злато.`);
-            if (window.updateCharacterUI) window.updateCharacterUI(hero);
-            if (window.updateStrongestHeroUI) window.updateStrongestHeroUI();
-        };
-    }
     return {
-        message: `${eventData.message} Какво ще правите?`,
+        message: `${eventData.title} ${eventData.msg}`,
         buttons: [
-            { label: '💰 Приеми ефекта', action: action },
+            { label: '💰 Приеми', action: () => {
+                if (eventData.gain) hero.gold += eventData.gain;
+                if (eventData.loss) hero.gold = Math.max(0, hero.gold - eventData.loss);
+                if (window.updateCharacterUI) window.updateCharacterUI(hero);
+                if (window.updateStrongestHeroUI) window.updateStrongestHeroUI();
+                window.showAdvisorMsg(`✅ Ефектът е приложен.`);
+            }},
             { label: '📜 Игнорирай', action: () => window.showAdvisorMsg(`Игнорирахте събитието.`) }
         ]
     };
 };
 
-// Генератор за предложение за съюз (между герои)
+// Генератор за оферта за герой
+window.ChronicleEvents.generateHeroOffer = function(candidate, cost) {
+    return {
+        message: `🏰 ${candidate.name} от род ${candidate.clan} желае да се присъедини срещу ${cost} злато.`,
+        buttons: [
+            { label: `✅ Наеми за ${cost}`, action: () => {
+                if (window.hireExistingHero) window.hireExistingHero(candidate.id, cost);
+                else window.showAdvisorMsg(`Функцията за наемане не е налична.`);
+            }},
+            { label: '❌ Откажи', action: () => window.showAdvisorMsg(`Отказахте предложението на ${candidate.name}.`) }
+        ]
+    };
+};
+
+// Генератор за инвестиционна възможност
+window.ChronicleEvents.generateInvestmentOpportunity = function(hero, amount, profit, turns = 3) {
+    return {
+        message: `💎 Инвестиционна възможност: вложете ${amount} злато за ${turns} хода, ще получите ${profit} злато.`,
+        buttons: [
+            { label: `💸 Инвестирай ${amount}`, action: () => {
+                if (hero.gold >= amount) {
+                    hero.gold -= amount;
+                    setTimeout(() => {
+                        hero.gold += profit;
+                        window.showAdvisorMsg(`Инвестицията ви донесе ${profit} злато!`);
+                        if (window.updateCharacterUI) window.updateCharacterUI(hero);
+                    }, turns * 10000);
+                    window.showAdvisorMsg(`Инвестирахте ${amount} злато. Очаквайте печалба.`);
+                } else {
+                    window.showAdvisorMsg(`Нямате достатъчно злато за тази инвестиция.`);
+                }
+            }},
+            { label: '🚫 Отказ', action: () => window.showAdvisorMsg(`Отказахте инвестицията.`) }
+        ]
+    };
+};
+
+// Генератор за намерен артефакт
+window.ChronicleEvents.generateArtifactFound = function(hero, artifact) {
+    let bonusText = artifact.bonus ? `+${artifact.bonus.heroPower || 0} сила` : 'без бонус';
+    return {
+        message: `🏺 ${hero.name} намери артефакт: ${artifact.name} (${bonusText})!`,
+        buttons: [
+            { label: '🎒 Екипирай', action: () => {
+                if (window.equipArtifact) window.equipArtifact(hero, artifact, 0);
+                else window.showAdvisorMsg(`Не може да се екипира автоматично.`);
+            }},
+            { label: '🔍 Инспекция', action: () => {
+                if (window.showAdvisorPopup) window.showAdvisorPopup('Артефакт', `${artifact.name}<br>${artifact.description || 'Няма описание.'}`, 'info');
+                else window.showAdvisorMsg(`${artifact.name}: ${artifact.description || 'Няма описание.'}`);
+            }}
+        ]
+    };
+};
+
+// Генератор за предложение за съюз
 window.ChronicleEvents.generateAllianceProposal = function(proposer, target) {
     return {
-        message: `🤝 ${proposer.name} от ${proposer.clan} предлага военен съюз на ${target.name} от ${target.clan}.`,
+        message: `🤝 ${proposer.name} предлага военен съюз на ${target.name}.`,
         buttons: [
-            { label: '✅ Приеми съюза', action: () => {
+            { label: '✅ Приеми', action: () => {
                 if (!proposer.allies) proposer.allies = [];
                 if (!target.allies) target.allies = [];
                 proposer.allies.push(target.name);
                 target.allies.push(proposer.name);
-                if (window.addHeroLog) {
-                    window.addHeroLog(proposer, "🤝", `Сключи съюз с ${target.name}.`);
-                    window.addHeroLog(target, "🤝", `Сключи съюз с ${proposer.name}.`);
-                }
                 window.showAdvisorMsg(`✅ ${proposer.name} и ${target.name} вече са съюзници!`);
-                if (window.updateCharacterUI) {
-                    window.updateCharacterUI(proposer);
-                    window.updateCharacterUI(target);
-                }
             }},
-            { label: '❌ Откажи', action: () => window.showAdvisorMsg(`${target.name} отказа съюза.`) }
+            { label: '❌ Откажи', action: () => window.showAdvisorMsg(`❌ ${target.name} отказа съюза.`) }
         ]
     };
 };
 
-// Генератор за предложение за брак с клан
-window.ChronicleEvents.generateMarriageProposal = function(hero, clan, cost, successChance) {
+// Генератор за промяна на личността
+window.ChronicleEvents.generatePersonalityChange = function(hero, oldTrait, newTrait) {
     return {
-        message: `💒 ${hero.name} предлага брак на знатен род от ${clan}. Изисква ${cost} злато. Шанс за успех: ${successChance}%.`,
+        message: `🎭 ${hero.name} промени личността си: загуби "${oldTrait}", придоби "${newTrait}".`,
         buttons: [
-            { label: `💍 Сключи брак (${cost} злато)`, action: () => {
-                if (hero.gold >= cost) {
-                    hero.gold -= cost;
-                    let roll = Math.random() * 100;
-                    if (roll < successChance) {
-                        window.clanRelations[clan] = 100;
-                        // ... останалата логика за успех (същата като в proposeMarriage)
-                        const dowryMap = { "Дуло": "Дардания", "Комитопули": "Пелагония", "Асеневци": "Илирия", "Тертер": "Галатия", "Даки": "Дакия", "Уния Траки": "Мизия", "Шишмановци": "Месопотамия", "Македони": "Македония", "Птоломеи": "Кипър", "Одриси": "Тракия", "Бесараб": "Добруджа", "Османци Дуло": "Витиния", "Скити": "Сарматия" };
-                        const region = dowryMap[clan] || "Мизия";
-                        if (!window.playerRegions.includes(region)) window.playerRegions.push(region);
-                        window.showAdvisorMsg(`✅ Бракът е успешен! Получихте регион ${region}.`, "success");
-                    } else {
-                        window.clanRelations[clan] = Math.max(10, (window.clanRelations[clan] || 40) - 10);
-                        window.showAdvisorMsg(`❌ Бракът се провали. Отношенията се влошиха.`, "error");
-                    }
-                    if (window.updateCharacterUI) window.updateCharacterUI(hero);
-                    if (window.updateStrongestHeroUI) window.updateStrongestHeroUI();
+            { label: '📜 Виж описанието', action: () => {
+                if (window.getPersonalityDescription) {
+                    window.showAdvisorMsg(window.getPersonalityDescription(hero));
                 } else {
-                    window.showAdvisorMsg(`❌ Нямате достатъчно злато за брак!`, "error");
+                    window.showAdvisorMsg(`Новата личност на ${hero.name} е ${newTrait}.`);
                 }
-            }},
-            { label: '🚫 Откажи', action: () => window.showAdvisorMsg(`Брачното предложение беше отказано.`) }
+            }}
         ]
     };
 };
-
 window.evolveHero = function(hero) {
     if (!hero) return;
     if (!hero.personality) {
