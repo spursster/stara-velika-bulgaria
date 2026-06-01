@@ -901,15 +901,13 @@ window.updateCharacterUI = function(hero) {
 
 // ========== ГЛАВНАТА ФУНКЦИЯ – РАБОТИ САМО С ОРИГИНАЛНИЯ ЛЕТОПИС ==========
 window.showAdvisorMsg = function(msg, buttons) {
-    // Намира оригиналния контейнер, който съдържа .chronicle-event
     let container = document.querySelector('.chronicle-event')?.parentNode;
     if (!container) {
-        console.error('Летописът не е намерен');
+        console.error("Оригиналният летопис не е намерен!");
         return;
     }
     let eventDiv = document.createElement('div');
     eventDiv.className = 'chronicle-event';
-    // Копира стилове от първото съществуващо събитие
     let existing = document.querySelector('.chronicle-event');
     if (existing) eventDiv.style.cssText = existing.style.cssText;
     else eventDiv.style.cssText = 'background:rgba(0,0,0,0.5);border-left:3px solid #d4af37;margin:5px 0;padding:5px;border-radius:0 6px 6px 0;';
