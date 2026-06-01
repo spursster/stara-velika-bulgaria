@@ -1,7 +1,7 @@
 /**
 ==========================================================================
 ПРОЕКТ: ВЕЛИКА БЪЛГАРИЯ
-ФАЙЛ: economy.js (ВЕРСИЯ 7.1 – С БУТОНИ В ЛЕТОПИСА)
+ФАЙЛ: economy.js (ВЕРСИЯ 7.2 – РЯДКА ИНВЕСТИЦИОННА ВЪЗМОЖНОСТ)
 ==========================================================================
 */
 
@@ -19,6 +19,11 @@ if (!window.economySettings) {
 if (!window.tradeRoutes) window.tradeRoutes = [];
 if (!window.investments) window.investments = [];
 if (!window.economyHistory) window.economyHistory = [];
+
+// Година на последната инвестиционна възможност (за рядкост)
+if (window.lastInvestmentOpportunityYear === undefined) {
+    window.lastInvestmentOpportunityYear = 0;
+}
 
 function flattenArray(arr) {
     if (!arr) return [];
@@ -162,7 +167,7 @@ function updateInflation() {
     window.economySettings.inflationRate = Math.min(0.05, Math.max(-0.02, window.economySettings.inflationRate));
 }
 
-// ==================== ИНТЕРАКТИВНИ ИКОНОМИЧЕСКИ СЪБИТИЯ ====================
+// ==================== СЛУЧАЙНИ ИКОНОМИЧЕСКИ СЪБИТИЯ (С БУТОНИ) ====================
 function triggerRandomEconomicEvent() {
     if (Math.random() > window.economySettings.randomEventChance) return;
     const eventType = Math.floor(Math.random() * 5);
@@ -182,14 +187,14 @@ function triggerRandomEconomicEvent() {
         const ev = window.ChronicleEvents.generateEconomicEvent(hero, eventData);
         window.showAdvisorMsg(ev.message, ev.buttons);
     } else {
-        // Резервен вариант (без бутони)
+        // резервен вариант
         if (eventData.gain) hero.gold += eventData.gain;
         if (eventData.loss) hero.gold = Math.max(0, hero.gold - eventData.loss);
         syncHeroGold(hero);
     }
 }
 
-// ==================== ИНВЕСТИЦИИ (С БУТОНИ) ====================
+// ==================== РЪЧНА ИНВЕСТИЦИЯ (ЧРЕЗ БУТОН) ====================
 window.investGold = function(hero, amount, turns = 5) {
     if (!hero) return false;
     if (amount <= 0 || amount > hero.gold) {
@@ -204,7 +209,7 @@ window.investGold = function(hero, amount, turns = 5) {
         return true;
     }
     
-    // Резервен вариант (директно)
+    // резервен вариант
     hero.gold -= amount;
     window.investments.push({ heroId: hero.id, amount: amount, turnsLeft: turns, returnAmount: expectedReturn });
     window.showAdvisorMsg(`✅ Инвестирахте ${amount} злато за ${turns} хода. Очаквана печалба: ${expectedReturn}.`);
@@ -264,6 +269,27 @@ window.calculateEconomy = function() {
     ensureArmyDetails(hero);
     
     updateInflation();
+    
+    // ========== РЯДКА ИНВЕСТИЦИОННА ВЪЗМОЖНОСТ (0.3% на всеки 5 години) ==========
+    if (window.gameTime && window.gameTime.year !== undefined) {
+        const currentYear = window.gameTime.year;
+        if (currentYear >= window.lastInvestmentOpportunityYear + 5) {
+            // Шанс 0.3% (0.003)
+            if (Math.random() < 0.003) {
+                const amount = 500 + Math.floor(Math.random() * 1000);
+                const profit = Math.floor(amount * (1.2 + Math.random() * 0.8));
+                const turns = 3 + Math.floor(Math.random() * 4);
+                if (window.ChronicleEvents && window.ChronicleEvents.generateInvestmentOpportunity) {
+                    const ev = window.ChronicleEvents.generateInvestmentOpportunity(hero, amount, profit, turns);
+                    window.showAdvisorMsg(ev.message, ev.buttons);
+                } else {
+                    window.showAdvisorMsg(`💎 Рядка инвестиционна възможност: вложете ${amount} злато за ${turns} хода, ще получите ${profit} злато.`);
+                }
+                window.lastInvestmentOpportunityYear = currentYear;
+            }
+        }
+    }
+    
     triggerRandomEconomicEvent();
     
     let finalProfit = window.recalculateIncome(hero);
@@ -276,12 +302,6 @@ window.calculateEconomy = function() {
     }
     
     // Автономна икономика за другите герои (без бутони)
-    let favoriteNames = new Set();
-    for (let key in window.worldData.clans) {
-        let h = window.worldData.clans[key];
-        if (h.isFavorite === true) favoriteNames.add(h.name || h.leaderName || key);
-    }
-    
     for (let key in window.worldData.clans) {
         let clan = window.worldData.clans[key];
         if (hero && key === hero.clan) continue;
@@ -331,9 +351,9 @@ window.calculateEconomy = function() {
     if (window.advanceExpeditionsTurn) window.advanceExpeditionsTurn();
 };
 
-// Експорт
+// Експорт на функциите
 window.syncHeroGold = syncHeroGold;
 window.establishTradeRoute = window.establishTradeRoute;
 window.investGold = window.investGold;
 
-console.log("✅ economy.js версия 7.1 зареден – с бутони в летописа");
+console.log("✅ economy.js версия 7.2 зареден – с рядка инвестиционна възможност (0.3% на 5 години)");
