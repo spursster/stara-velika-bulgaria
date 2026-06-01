@@ -37,25 +37,92 @@ window.getStrongestHero = function() {
     if (!strongest && window.currentHero) strongest = window.currentHero;
     return strongest;
 };
-
+// Показва хоризонтален списък с до 5 типа войски, сортирани по обща сила (брой * атака)
+function renderTopHeroTroops(hero) {
+    if (!hero || !hero.armyDetails) return '<div style="font-size:10px; color:#aa8866;">⚔️ Без войски</div>';
+    
+    // Събираме типовете, които имат бройка > 0
+    let troopList = [];
+    for (let [type, count] of Object.entries(hero.armyDetails)) {
+        if (count > 0) {
+            // Намираме дефиницията на войската от глобалния масив
+            let troopDef = window.ALL_TROOP_TYPES ? window.ALL_TROOP_TYPES.find(t => t.id === type) : null;
+            let attack = troopDef ? troopDef.attack : 10; // ако няма дефиниция, ползваме 10
+            let totalPower = count * attack;
+            let icon = troopDef ? troopDef.icon : '⚔️';
+            troopList.push({ type, count, icon, totalPower });
+        }
+    }
+    // Сортираме по обща сила (низходящо)
+    troopList.sort((a,b) => b.totalPower - a.totalPower);
+    let topTroops = troopList.slice(0,5);
+    
+    if (topTroops.length === 0) return '<div style="font-size:10px; color:#aa8866;">⚔️ Без войски</div>';
+    
+    // Генерираме HTML (адаптивен – на малки екрани се свива)
+    let html = '<div style="display: flex; flex-wrap: wrap; justify-content: space-around; gap: 6px; margin-top: 8px;">';
+    for (let t of topTroops) {
+        html += `
+            <div style="text-align: center; min-width: 40px; flex: 1;">
+                <div style="font-size: 1.3rem;">${t.icon}</div>
+                <div style="font-size: 10px; color: #ffdd99;">${t.count}</div>
+            </div>
+        `;
+    }
+    html += '</div>';
+    return html;
+}
 window.updateStrongestHeroUI = function() {
     const hero = window.getStrongestHero();
     if (!hero) return;
+    
+    // Обновяваме стандартните полета
     const goldSpan = document.getElementById('val-gold');
     if (goldSpan) goldSpan.innerText = hero.gold;
     const armySpan = document.getElementById('val-army');
     if (armySpan) armySpan.innerText = hero.armySize || 0;
     const powerSpan = document.getElementById('val-hero-power');
     if (powerSpan) powerSpan.innerText = hero.heroPower || 100;
-    if (typeof window.updateCharacterUI === 'function') {
-        window.updateCharacterUI(hero);
+    
+    // Обновяваме лявото меню (профил)
+    const profileBox = document.getElementById('active-character-profile');
+    if (profileBox) {
+        let petStatus = "Няма";
+        if (hero.pet && window.rpgDatabase?.petsDatabase?.[hero.pet]) {
+            const p = window.rpgDatabase.petsDatabase[hero.pet];
+            petStatus = p.icon + " " + p.name;
+        }
+        // Заглавие "Топ герой" вместо "Активен герой"
+        let topHeroTitle = '<div style="font-weight:bold; font-size:1rem; color:#ffd700;">🏆 Топ герой</div>';
+        let heroInfo = `
+            <div style="font-weight:bold;font-size:1.2rem;">${hero.name || "Неизвестен"}</div>
+            <div>Клан ${hero.clan || "Свободен"} | ${window.getClassIcon ? window.getClassIcon(hero.currentClass) : '⚔️'} Клас: ${hero.currentClass || "Багатур"}</div>
+            <div>Ниво: ${hero.level || 1}</div>
+            <div>Възраст: ${hero.age || 50} г.</div>
+            <div>Бойна Сила: ⚔️ ${hero.heroPower || 150}</div>
+            <div>Свободни точки: ${hero.skillPoints || 0}</div>
+            <div>Любимец: ${petStatus}</div>
+        `;
+        let troopsHtml = renderTopHeroTroops(hero);
+        profileBox.innerHTML = topHeroTitle + heroInfo + troopsHtml;
     }
-    const saveIndicator = document.getElementById('save-indicator');
-    if (saveIndicator) {
-        saveIndicator.innerText = `💾 Запазено: ${new Date().toLocaleTimeString('bg-BG', {hour:'2-digit', minute:'2-digit'})}`;
+    
+    // Ако има портрет, покажи го (кодът ви вече трябва да го прави)
+    if (hero.portrait) {
+        const profileBox = document.getElementById('active-character-profile');
+        if (profileBox) {
+            let existingImg = profileBox.querySelector('.hero-portrait-img');
+            if (!existingImg) {
+                const img = document.createElement('img');
+                img.className = 'hero-portrait-img';
+                img.style.cssText = 'width: 60px; height: 60px; border-radius: 50%; margin-bottom: 10px; border: 2px solid #d4af37; object-fit: cover;';
+                profileBox.insertBefore(img, profileBox.firstChild);
+                existingImg = img;
+            }
+            existingImg.src = hero.portrait;
+        }
     }
 };
-
 window.updateTimeUI = function() {
     if (!window.gameTime) return;
     const timeDisplay = document.getElementById('current-time-info');
