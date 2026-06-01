@@ -899,6 +899,7 @@
                 
                 totalDamage += finalDamage;
                 currentMonster.hp = Math.max(0, currentMonster.hp - finalDamage);
+                updateUI();  // обновява лентата на чудовището след всяка атака
                 addLog(`   ⚔️ ${hero.name} нанася ${finalDamage} щети${isCrit ? ' 💥 КРИТИЧЕН!' : ''}`);
                 animateHero(hero.id);
                 animateMonsterCard(finalDamage);
@@ -1056,6 +1057,7 @@ if (Math.random() < 0.2 && window.historicalArtifacts) {
             
             let damagePercent = damage / target.maxHp;
             target.hp = Math.max(0, target.hp - damage);
+            updateUI();  // обновява HP лентата на ударения герой
             applyArmyLossFromDamage(target, damagePercent);
             
             addLog(`━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`);
