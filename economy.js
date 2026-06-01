@@ -1,7 +1,7 @@
 /**
 ==========================================================================
 ПРОЕКТ: ВЕЛИКА БЪЛГАРИЯ
-ФАЙЛ: economy.js (ВЕРСИЯ 7.4 – РЯДКА ИНВЕСТИЦИОННА ВЪЗМОЖНОСТ)
+ФАЙЛ: economy.js (ВЕРСИЯ 7.5 – ОКОНЧАТЕЛНО РЕШЕНИЕ ЗА РЯДКИ ИНВЕСТИЦИИ)
 ==========================================================================
 */
 
@@ -20,10 +20,8 @@ if (!window.tradeRoutes) window.tradeRoutes = [];
 if (!window.investments) window.investments = [];
 if (!window.economyHistory) window.economyHistory = [];
 
-// Брояч на ходове от последната инвестиционна възможност
-if (window.turnsSinceLastInvestmentOpportunity === undefined) {
-    window.turnsSinceLastInvestmentOpportunity = 0;
-}
+// Брояч за ходове (използваме _invCooldown, за да избегнем конфликти)
+if (window._invCooldown === undefined) window._invCooldown = 0;
 
 function flattenArray(arr) {
     if (!arr) return [];
@@ -268,11 +266,12 @@ window.calculateEconomy = function() {
     
     updateInflation();
     
-    // ========== РЯДКА ИНВЕСТИЦИОННА ВЪЗМОЖНОСТ (0.3% на 5 години) ==========
-    window.turnsSinceLastInvestmentOpportunity = (window.turnsSinceLastInvestmentOpportunity || 0) + 1;
+    // ========== РЯДКА ИНВЕСТИЦИОННА ВЪЗМОЖНОСТ (КОЛДЪУН 20 хода, 0.3% шанс) ==========
+    if (window._invCooldown === undefined) window._invCooldown = 0;
+    window._invCooldown++;
     
-    if (window.turnsSinceLastInvestmentOpportunity >= 20) { // 20 хода = 5 години
-        if (Math.random() < 0.003) { // 0.3% шанс
+    if (window._invCooldown >= 20) {  // 20 хода = 5 години
+        if (Math.random() < 0.003) {  // 0.3% шанс
             const amount = 500 + Math.floor(Math.random() * 1000);
             const profit = Math.floor(amount * (1.2 + Math.random() * 0.8));
             const turns = 3 + Math.floor(Math.random() * 4);
@@ -283,8 +282,8 @@ window.calculateEconomy = function() {
                 window.showAdvisorMsg(`💎 Рядка инвестиционна възможност: вложете ${amount} злато за ${turns} хода, ще получите ${profit} злато.`);
             }
         }
-        // Нулираме брояча винаги след проверката, за да има нов шанс след следващите 20 хода
-        window.turnsSinceLastInvestmentOpportunity = 0;
+        // Нулираме брояча след проверката (независимо дали се е случило или не)
+        window._invCooldown = 0;
     }
     
     triggerRandomEconomicEvent();
@@ -353,4 +352,4 @@ window.syncHeroGold = syncHeroGold;
 window.establishTradeRoute = window.establishTradeRoute;
 window.investGold = window.investGold;
 
-console.log("✅ economy.js версия 7.4 зареден – инвестиционна възможност 0.3% на 5 години");
+console.log("✅ economy.js версия 7.5 зареден – инвестиционната възможност е наистина рядка (0.3% на 5 години)");
