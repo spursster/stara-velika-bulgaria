@@ -1,7 +1,7 @@
 /**
 ==========================================================================
 ПРОЕКТ: ВЕЛИКА БЪЛГАРИЯ
-ФАЙЛ: economy.js (ВЕРСИЯ 7.2 – РЯДКА ИНВЕСТИЦИОННА ВЪЗМОЖНОСТ)
+ФАЙЛ: economy.js (ВЕРСИЯ 7.4 – РЯДКА ИНВЕСТИЦИОННА ВЪЗМОЖНОСТ)
 ==========================================================================
 */
 
@@ -20,9 +20,9 @@ if (!window.tradeRoutes) window.tradeRoutes = [];
 if (!window.investments) window.investments = [];
 if (!window.economyHistory) window.economyHistory = [];
 
-// Година на последната инвестиционна възможност (за рядкост)
-if (window.lastInvestmentOpportunityYear === undefined) {
-    window.lastInvestmentOpportunityYear = 0;
+// Брояч на ходове от последната инвестиционна възможност
+if (window.turnsSinceLastInvestmentOpportunity === undefined) {
+    window.turnsSinceLastInvestmentOpportunity = 0;
 }
 
 function flattenArray(arr) {
@@ -167,7 +167,7 @@ function updateInflation() {
     window.economySettings.inflationRate = Math.min(0.05, Math.max(-0.02, window.economySettings.inflationRate));
 }
 
-// ==================== СЛУЧАЙНИ ИКОНОМИЧЕСКИ СЪБИТИЯ (С БУТОНИ) ====================
+// ==================== СЛУЧАЙНИ ИКОНОМИЧЕСКИ СЪБИТИЯ ====================
 function triggerRandomEconomicEvent() {
     if (Math.random() > window.economySettings.randomEventChance) return;
     const eventType = Math.floor(Math.random() * 5);
@@ -187,14 +187,13 @@ function triggerRandomEconomicEvent() {
         const ev = window.ChronicleEvents.generateEconomicEvent(hero, eventData);
         window.showAdvisorMsg(ev.message, ev.buttons);
     } else {
-        // резервен вариант
         if (eventData.gain) hero.gold += eventData.gain;
         if (eventData.loss) hero.gold = Math.max(0, hero.gold - eventData.loss);
         syncHeroGold(hero);
     }
 }
 
-// ==================== РЪЧНА ИНВЕСТИЦИЯ (ЧРЕЗ БУТОН) ====================
+// ==================== ИНВЕСТИЦИИ ====================
 window.investGold = function(hero, amount, turns = 5) {
     if (!hero) return false;
     if (amount <= 0 || amount > hero.gold) {
@@ -209,7 +208,6 @@ window.investGold = function(hero, amount, turns = 5) {
         return true;
     }
     
-    // резервен вариант
     hero.gold -= amount;
     window.investments.push({ heroId: hero.id, amount: amount, turnsLeft: turns, returnAmount: expectedReturn });
     window.showAdvisorMsg(`✅ Инвестирахте ${amount} злато за ${turns} хода. Очаквана печалба: ${expectedReturn}.`);
@@ -270,24 +268,23 @@ window.calculateEconomy = function() {
     
     updateInflation();
     
-    // ========== РЯДКА ИНВЕСТИЦИОННА ВЪЗМОЖНОСТ (0.3% на всеки 5 години) ==========
-    if (window.gameTime && window.gameTime.year !== undefined) {
-        const currentYear = window.gameTime.year;
-        if (currentYear >= window.lastInvestmentOpportunityYear + 5) {
-            // Шанс 0.3% (0.003)
-            if (Math.random() < 0.003) {
-                const amount = 500 + Math.floor(Math.random() * 1000);
-                const profit = Math.floor(amount * (1.2 + Math.random() * 0.8));
-                const turns = 3 + Math.floor(Math.random() * 4);
-                if (window.ChronicleEvents && window.ChronicleEvents.generateInvestmentOpportunity) {
-                    const ev = window.ChronicleEvents.generateInvestmentOpportunity(hero, amount, profit, turns);
-                    window.showAdvisorMsg(ev.message, ev.buttons);
-                } else {
-                    window.showAdvisorMsg(`💎 Рядка инвестиционна възможност: вложете ${amount} злато за ${turns} хода, ще получите ${profit} злато.`);
-                }
-                window.lastInvestmentOpportunityYear = currentYear;
+    // ========== РЯДКА ИНВЕСТИЦИОННА ВЪЗМОЖНОСТ (0.3% на 5 години) ==========
+    window.turnsSinceLastInvestmentOpportunity = (window.turnsSinceLastInvestmentOpportunity || 0) + 1;
+    
+    if (window.turnsSinceLastInvestmentOpportunity >= 20) { // 20 хода = 5 години
+        if (Math.random() < 0.003) { // 0.3% шанс
+            const amount = 500 + Math.floor(Math.random() * 1000);
+            const profit = Math.floor(amount * (1.2 + Math.random() * 0.8));
+            const turns = 3 + Math.floor(Math.random() * 4);
+            if (window.ChronicleEvents && window.ChronicleEvents.generateInvestmentOpportunity) {
+                const ev = window.ChronicleEvents.generateInvestmentOpportunity(hero, amount, profit, turns);
+                window.showAdvisorMsg(ev.message, ev.buttons);
+            } else {
+                window.showAdvisorMsg(`💎 Рядка инвестиционна възможност: вложете ${amount} злато за ${turns} хода, ще получите ${profit} злато.`);
             }
         }
+        // Нулираме брояча винаги след проверката, за да има нов шанс след следващите 20 хода
+        window.turnsSinceLastInvestmentOpportunity = 0;
     }
     
     triggerRandomEconomicEvent();
@@ -301,7 +298,7 @@ window.calculateEconomy = function() {
         window.worldData.clans[hero.clan].gold = hero.gold;
     }
     
-    // Автономна икономика за другите герои (без бутони)
+    // Автономна икономика за другите герои
     for (let key in window.worldData.clans) {
         let clan = window.worldData.clans[key];
         if (hero && key === hero.clan) continue;
@@ -356,4 +353,4 @@ window.syncHeroGold = syncHeroGold;
 window.establishTradeRoute = window.establishTradeRoute;
 window.investGold = window.investGold;
 
-console.log("✅ economy.js версия 7.2 зареден – с рядка инвестиционна възможност (0.3% на 5 години)");
+console.log("✅ economy.js версия 7.4 зареден – инвестиционна възможност 0.3% на 5 години");
