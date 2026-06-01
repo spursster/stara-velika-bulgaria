@@ -749,8 +749,10 @@ window.reviveFromAshes = function() {
     }
 };
 
+// ==================== ОФЕРТА ЗА ГЕРОЙ ПРИ ПЪЛНА СМЪРТ ====================
 window.showJoinOffer = function() {
-    if (window.hasAnyAliveHero()) return;
+    // Проверяваме дали има жив герой – ако да, няма оферта
+    if (window.hasAnyAliveHero && window.hasAnyAliveHero()) return;
     
     let candidate = window.getRandomUnhiredHero();
     if (!candidate) {
@@ -758,6 +760,7 @@ window.showJoinOffer = function() {
         return;
     }
     
+    // Изчисляваме цена според силата и личността
     let baseCost = 800;
     if (candidate.heroPower > 170) baseCost = 2000;
     else if (candidate.heroPower > 140) baseCost = 1200;
@@ -768,15 +771,22 @@ window.showJoinOffer = function() {
     if (greedy) baseCost = Math.floor(baseCost * 1.5);
     if (generous) baseCost = Math.floor(baseCost * 0.7);
     
-    // Събираме злато от всички наети герои (дори мъртвите)
+    // Използване на интерактивен летопис
+    if (window.ChronicleEvents && typeof window.ChronicleEvents.generateHeroOffer === 'function') {
+        const ev = window.ChronicleEvents.generateHeroOffer(candidate, baseCost);
+        if (window.showAdvisorMsg) {
+            window.showAdvisorMsg(ev.message, ev.buttons);
+            return;
+        }
+    }
+    
+    // Резервен вариант (модал)
     let playerGold = 0;
     for (let key in window.worldData.clans) {
         let h = window.worldData.clans[key];
-        if (h.isJoined && typeof h.gold === 'number') {
-            playerGold += h.gold;
-        }
+        if (h.isJoined && typeof h.gold === 'number') playerGold += h.gold;
     }
-    if (playerGold < baseCost) playerGold = baseCost; // условен заем
+    if (playerGold < baseCost) playerGold = baseCost;
     
     let offerModal = document.createElement('div');
     offerModal.id = 'join-offer-modal';
@@ -797,7 +807,6 @@ window.showJoinOffer = function() {
     
     const accept = () => {
         if (playerGold >= baseCost) {
-            // Намаляваме златото от първия намерен нает герой
             for (let key in window.worldData.clans) {
                 let h = window.worldData.clans[key];
                 if (h.isJoined && typeof h.gold === 'number') {
@@ -812,9 +821,8 @@ window.showJoinOffer = function() {
             if (window.initializeHeroRPGData) window.initializeHeroRPGData(candidate);
             if (typeof window.updateStrongestHeroUI === 'function') window.updateStrongestHeroUI();
             if (typeof window.renderFavoriteHeroesBar === 'function') window.renderFavoriteHeroesBar();
-            if (typeof window.updateAllUI === 'function') window.updateAllUI();
             if (window.showAdvisorPopup) {
-                window.showAdvisorPopup("ПРИСЪЕДИНЯВАНЕ", `${candidate.name} се присъедини към вас срещу ${baseCost} злато!`, "success");
+                window.showAdvisorPopup("ПРИСЪЕДИНЯВАНЕ", `${candidate.name} се присъедини към вас!`, "success");
             }
         } else {
             if (window.showAdvisorPopup) window.showAdvisorPopup("ГРЕШКА", "Нямате достатъчно злато!", "error");
@@ -823,7 +831,7 @@ window.showJoinOffer = function() {
     };
     
     const decline = () => {
-        if (window.showAdvisorPopup) window.showAdvisorPopup("ОТКАЗ", "Офертата е отхвърлена. Ще се появи друг герой след малко.", "info");
+        if (window.showAdvisorPopup) window.showAdvisorPopup("ОТКАЗ", "Офертата е отхвърлена.", "info");
         offerModal.remove();
         setTimeout(() => { if (!window.hasAnyAliveHero()) window.showJoinOffer(); }, 30000);
     };
@@ -831,7 +839,6 @@ window.showJoinOffer = function() {
     document.getElementById('accept-offer').onclick = accept;
     document.getElementById('decline-offer').onclick = decline;
 };
-
 // Мониторинг за живи герои (стартира веднъж след зареждане)
 function monitorHeroesAlive() {
     if (!window.hasAnyAliveHero()) {
