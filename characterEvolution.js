@@ -1,8 +1,18 @@
 // ==================== CHARACTER EVOLUTION SYSTEM ====================
-// ВЕРСИЯ: 5.1 – С ЛЕТОПИСНИ СЪОБЩЕНИЯ
+// ВЕРСИЯ: 5.2 – САМО ЗА ТВОИТЕ ГЕРОИ
 // ===================================================================
+
 function randomItem(arr) {
     return arr[Math.floor(Math.random() * arr.length)];
+}
+
+// Помощна функция: проверява дали героят е твой (любим, избран или в соло режим)
+function isMyHero(hero) {
+    if (!hero) return false;
+    if (hero.isFavorite === true) return true;
+    if (typeof window.getSelectedHero === 'function' && window.getSelectedHero() === hero) return true;
+    if (window.gameMode === 'solo' && window.currentHero === hero) return true;
+    return false;
 }
 
 // Уверяваме се, че showAdvisorMsg съществува (ако не – създаваме)
@@ -83,10 +93,15 @@ window.assignPersonalityTraits = function(hero, count = 3) {
     const logMsg = `🎭 ${hero.name} получи личности: ${selected.map(p => p.name).join(', ')}.`;
     console.log(logMsg);
     if (window.addHeroLog) window.addHeroLog(hero, "🎭", logMsg);
-    if (window.showAdvisorMsg) window.showAdvisorMsg(logMsg);
+    // Показваме съобщение само за твоите герои
+    if (isMyHero(hero) && window.showAdvisorMsg) {
+        window.showAdvisorMsg(logMsg);
+    }
 };
 
-// Генератор за икономически събития
+// Генератори за ChronicleEvents (оставяме ги, те са само инструменти)
+window.ChronicleEvents = window.ChronicleEvents || {};
+
 window.ChronicleEvents.generateEconomicEvent = function(hero, eventData) {
     return {
         message: `${eventData.title} ${eventData.msg}`,
@@ -103,7 +118,6 @@ window.ChronicleEvents.generateEconomicEvent = function(hero, eventData) {
     };
 };
 
-// Генератор за оферта за герой
 window.ChronicleEvents.generateHeroOffer = function(candidate, cost) {
     return {
         message: `🏰 ${candidate.name} от род ${candidate.clan} желае да се присъедини срещу ${cost} злато.`,
@@ -117,7 +131,6 @@ window.ChronicleEvents.generateHeroOffer = function(candidate, cost) {
     };
 };
 
-// Генератор за инвестиционна възможност
 window.ChronicleEvents.generateInvestmentOpportunity = function(hero, amount, profit, turns = 3) {
     return {
         message: `💎 Инвестиционна възможност: вложете ${amount} злато за ${turns} хода, ще получите ${profit} злато.`,
@@ -140,7 +153,6 @@ window.ChronicleEvents.generateInvestmentOpportunity = function(hero, amount, pr
     };
 };
 
-// Генератор за намерен артефакт
 window.ChronicleEvents.generateArtifactFound = function(hero, artifact) {
     let bonusText = artifact.bonus ? `+${artifact.bonus.heroPower || 0} сила` : 'без бонус';
     return {
@@ -158,7 +170,6 @@ window.ChronicleEvents.generateArtifactFound = function(hero, artifact) {
     };
 };
 
-// Генератор за предложение за съюз
 window.ChronicleEvents.generateAllianceProposal = function(proposer, target) {
     return {
         message: `🤝 ${proposer.name} предлага военен съюз на ${target.name}.`,
@@ -175,31 +186,34 @@ window.ChronicleEvents.generateAllianceProposal = function(proposer, target) {
     };
 };
 
-// Генератор за промяна на личността
 window.ChronicleEvents.generatePersonalityChange = function(hero, oldTrait, newTrait) {
     return {
         message: `🎭 ${hero.name} промени личността си: загуби "${oldTrait}", придоби "${newTrait}".`,
         buttons: [{ label: '📜 Виж характера', action: () => window.showAdvisorMsg(window.getPersonalityDescription(hero)) }]
     };
 };
+
 window.ChronicleEvents.generatePersonalityAdd = function(hero, newTrait) {
     return {
         message: `🎭 ${hero.name} придоби нова черта: "${newTrait}".`,
         buttons: [{ label: '📜 Подробности', action: () => window.showAdvisorMsg(window.getPersonalityDescription(hero)) }]
     };
 };
+
 window.ChronicleEvents.generatePersonalityRemove = function(hero, oldTrait) {
     return {
         message: `🎭 ${hero.name} загуби чертата: "${oldTrait}".`,
         buttons: [{ label: '📜 Актуални черти', action: () => window.showAdvisorMsg(window.getPersonalityDescription(hero)) }]
     };
 };
+
 window.ChronicleEvents.generatePersonalityInfluence = function(hero, traitName, oldVal, newVal) {
     return {
         message: `🎭 ${hero.name} промени силата на "${traitName}" от ${oldVal.toFixed(2)} на ${newVal.toFixed(2)}.`,
         buttons: [{ label: '📜 Какво означава?', action: () => window.showAdvisorMsg(`Силата на чертата влияе колко често героят действа според нея.`) }]
     };
 };
+
 window.evolveHero = function(hero) {
     if (!hero) return;
     if (!hero.personality) {
@@ -228,11 +242,13 @@ window.evolveHero = function(hero) {
         const logMsg = `🎭 ${hero.name} промени личност: загуби "${removedName}", придоби "${newTraitName}".`;
         console.log(logMsg);
         if (window.addHeroLog) window.addHeroLog(hero, "🎭", logMsg);
-        if (window.ChronicleEvents && typeof window.ChronicleEvents.generatePersonalityChange === 'function') {
-            const ev = window.ChronicleEvents.generatePersonalityChange(hero, removedName, newTraitName);
-            if (window.showAdvisorMsg) window.showAdvisorMsg(ev.message, ev.buttons);
-        } else {
-            if (window.showAdvisorMsg) window.showAdvisorMsg(logMsg);
+        if (isMyHero(hero)) {
+            if (window.ChronicleEvents && typeof window.ChronicleEvents.generatePersonalityChange === 'function') {
+                const ev = window.ChronicleEvents.generatePersonalityChange(hero, removedName, newTraitName);
+                if (window.showAdvisorMsg) window.showAdvisorMsg(ev.message, ev.buttons);
+            } else {
+                if (window.showAdvisorMsg) window.showAdvisorMsg(logMsg);
+            }
         }
     }
     // Добавяне на нова черта
@@ -250,11 +266,13 @@ window.evolveHero = function(hero) {
             const logMsg = `🎭 ${hero.name} придоби нова личностна черта: "${newTraitName}".`;
             console.log(logMsg);
             if (window.addHeroLog) window.addHeroLog(hero, "🎭", logMsg);
-            if (window.ChronicleEvents && typeof window.ChronicleEvents.generatePersonalityAdd === 'function') {
-                const ev = window.ChronicleEvents.generatePersonalityAdd(hero, newTraitName);
-                if (window.showAdvisorMsg) window.showAdvisorMsg(ev.message, ev.buttons);
-            } else {
-                if (window.showAdvisorMsg) window.showAdvisorMsg(logMsg);
+            if (isMyHero(hero)) {
+                if (window.ChronicleEvents && typeof window.ChronicleEvents.generatePersonalityAdd === 'function') {
+                    const ev = window.ChronicleEvents.generatePersonalityAdd(hero, newTraitName);
+                    if (window.showAdvisorMsg) window.showAdvisorMsg(ev.message, ev.buttons);
+                } else {
+                    if (window.showAdvisorMsg) window.showAdvisorMsg(logMsg);
+                }
             }
         }
     }
@@ -266,11 +284,13 @@ window.evolveHero = function(hero) {
         const logMsg = `🎭 ${hero.name} загуби личностната черта "${removedName}".`;
         console.log(logMsg);
         if (window.addHeroLog) window.addHeroLog(hero, "🎭", logMsg);
-        if (window.ChronicleEvents && typeof window.ChronicleEvents.generatePersonalityRemove === 'function') {
-            const ev = window.ChronicleEvents.generatePersonalityRemove(hero, removedName);
-            if (window.showAdvisorMsg) window.showAdvisorMsg(ev.message, ev.buttons);
-        } else {
-            if (window.showAdvisorMsg) window.showAdvisorMsg(logMsg);
+        if (isMyHero(hero)) {
+            if (window.ChronicleEvents && typeof window.ChronicleEvents.generatePersonalityRemove === 'function') {
+                const ev = window.ChronicleEvents.generatePersonalityRemove(hero, removedName);
+                if (window.showAdvisorMsg) window.showAdvisorMsg(ev.message, ev.buttons);
+            } else {
+                if (window.showAdvisorMsg) window.showAdvisorMsg(logMsg);
+            }
         }
     }
     // Усилване/отслабване на влияние на черта
@@ -284,11 +304,13 @@ window.evolveHero = function(hero) {
         const logMsg = `🎭 ${hero.name} промени силата на "${hero.personality[idx].name}" от ${oldInf.toFixed(2)} на ${newInf.toFixed(2)}.`;
         console.log(logMsg);
         if (window.addHeroLog) window.addHeroLog(hero, "🎭", logMsg);
-        if (window.ChronicleEvents && typeof window.ChronicleEvents.generatePersonalityInfluence === 'function') {
-            const ev = window.ChronicleEvents.generatePersonalityInfluence(hero, hero.personality[idx].name, oldInf, newInf);
-            if (window.showAdvisorMsg) window.showAdvisorMsg(ev.message, ev.buttons);
-        } else {
-            if (window.showAdvisorMsg) window.showAdvisorMsg(logMsg);
+        if (isMyHero(hero)) {
+            if (window.ChronicleEvents && typeof window.ChronicleEvents.generatePersonalityInfluence === 'function') {
+                const ev = window.ChronicleEvents.generatePersonalityInfluence(hero, hero.personality[idx].name, oldInf, newInf);
+                if (window.showAdvisorMsg) window.showAdvisorMsg(ev.message, ev.buttons);
+            } else {
+                if (window.showAdvisorMsg) window.showAdvisorMsg(logMsg);
+            }
         }
     }
 };
@@ -303,5 +325,5 @@ setTimeout(() => {
             }
         }
     }
-    console.log("✅ characterEvolution.js зареден (с летописни съобщения)");
+    console.log("✅ characterEvolution.js зареден – известия само за твоите герои");
 }, 1000);
