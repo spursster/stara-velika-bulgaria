@@ -1014,6 +1014,30 @@ gap: 4px;
   transform: none;
 }
 
+.top-hero-troops {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 8px;
+    margin-top: 12px;
+}
+.troop-type {
+    text-align: center;
+    width: 50px;
+}
+.troop-type img, .troop-type .icon {
+    width: 36px;
+    height: 36px;
+    font-size: 28px;
+}
+.troop-count {
+    font-size: 11px;
+    color: #ffdd99;
+}
+@media (max-width: 768px) {
+    .troop-type { width: 40px; }
+    .troop-type .icon { font-size: 24px; }
+}
 
 
 #save-indicator { background: transparent !important; border: none !important; }
