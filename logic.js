@@ -752,57 +752,22 @@ window.reviveFromAshes = function() {
 // ==================== ОФЕРТА ЗА ГЕРОЙ ПРИ ПЪЛНА СМЪРТ ====================
 window.showJoinOffer = function() {
     if (window.hasAnyAliveHero()) return;
-    
     let candidate = window.getRandomUnhiredHero();
-    if (!candidate) {
-        if (window.reviveFromAshes) window.reviveFromAshes();
-        return;
-    }
-    
+    if (!candidate) { if (window.reviveFromAshes) window.reviveFromAshes(); return; }
     let baseCost = 800;
     if (candidate.heroPower > 170) baseCost = 2000;
     else if (candidate.heroPower > 140) baseCost = 1200;
-    
     let personality = candidate.personality || [];
     let greedy = personality.some(p => p.categories && p.categories.includes("greedy"));
     let generous = personality.some(p => p.categories && p.categories.includes("dip"));
     if (greedy) baseCost = Math.floor(baseCost * 1.5);
     if (generous) baseCost = Math.floor(baseCost * 0.7);
-    
-    let playerGold = 0;
-    for (let key in window.worldData.clans) {
-        let h = window.worldData.clans[key];
-        if (h.isJoined && typeof h.gold === 'number') playerGold += h.gold;
-    }
-    if (playerGold < baseCost) playerGold = baseCost;
-    
-    if (window.ChronicleEvents && typeof window.ChronicleEvents.generateHeroOffer === 'function') {
-        const ev = window.ChronicleEvents.generateHeroOffer(candidate, baseCost);
+    if (window.ChronicleEvents && window.ChronicleEvents.generateHeroOffer) {
+        let ev = window.ChronicleEvents.generateHeroOffer(candidate, baseCost);
         window.showAdvisorMsg(ev.message, ev.buttons);
     } else {
-        // Резервен модал
-        let offerModal = document.createElement('div');
-        offerModal.id = 'join-offer-modal';
-        offerModal.style.cssText = 'position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.9); z-index:500000; display:flex; justify-content:center; align-items:center;';
-        offerModal.innerHTML = `
-            <div style="background:#1a1a2e; border:2px solid #c9a87b; border-radius:24px; padding:20px; max-width:350px; width:90%; text-align:center; color:#ffdd99;">
-                <h3>${candidate.name} от род ${candidate.clan}</h3>
-                <p>Иска ${baseCost} злато, за да се присъедини.</p>
-                <button id="accept-offer" style="background:#daa520; padding:8px; margin:5px;">✅ Приеми</button>
-                <button id="decline-offer" style="background:#5a2a2a; padding:8px;">❌ Откажи</button>
-            </div>
-        `;
-        document.body.appendChild(offerModal);
-        document.getElementById('accept-offer').onclick = () => {
-            candidate.isJoined = true;
-            candidate.isFavorite = true;
-            candidate.isAlive = true;
-            if (window.initializeHeroRPGData) window.initializeHeroRPGData(candidate);
-            window.updateStrongestHeroUI();
-            window.renderFavoriteHeroesBar();
-            offerModal.remove();
-        };
-        document.getElementById('decline-offer').onclick = () => offerModal.remove();
+        // стар модал (няма да се ползва)
+        alert("Оферта: " + candidate.name + " иска " + baseCost + " злато.");
     }
 };
 // Мониторинг за живи герои (стартира веднъж след зареждане)
