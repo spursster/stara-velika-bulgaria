@@ -29,9 +29,9 @@ window.ChronicleEvents.generateHeroOffer = function(candidate, cost) {
 };
 
 // Инвестиция
-window.ChronicleEvents.generateInvestmentOpportunity = function(hero, amount, profit, turns) {
+//window.ChronicleEvents.generateInvestmentOpportunity = function(hero, amount, profit, turns) {
     return {
-        message: `💎 Инвестирайте ${amount} злато за ${turns} хода, печалба ${profit}.`,
+        //message: `💎 Инвестирайте ${amount} злато за ${turns} хода, печалба ${profit}.`,
         buttons: [
             { label: `💸 Инвестирай`, action: () => {
                 if (hero.gold >= amount) {
