@@ -952,7 +952,7 @@
                     }
                 }
                 
-       if (Math.random() < 0.2 && window.historicalArtifacts) {
+   if (Math.random() < 0.2 && window.historicalArtifacts) {
     const artifactKeys = Object.keys(window.historicalArtifacts);
     const randomKey = artifactKeys[Math.floor(Math.random() * artifactKeys.length)];
     const newArtifact = { ...window.historicalArtifacts[randomKey] };
@@ -963,6 +963,16 @@
         if (window.addHeroLog) window.addHeroLog(randomHero.clanObj, "🏺", `Намери артефакт: ${newArtifact.name}`);
         addLog(`   🏺 ${randomHero.name} намери артефакт: ${newArtifact.name}!`);
         if (window.addWorldEvent) window.addWorldEvent(`🏺 НАМЕРЕН АРТЕФАКТ`, `${randomHero.name} намери ${newArtifact.name} след битката!`, "🏺");
+        
+        // Интерактивно съобщение в летописа
+        if (window.ChronicleEvents && typeof window.ChronicleEvents.generateArtifactFound === 'function') {
+            const ev = window.ChronicleEvents.generateArtifactFound(randomHero.clanObj, newArtifact);
+            if (window.showAdvisorMsg) {
+                window.showAdvisorMsg(ev.message, ev.buttons);
+            }
+        } else {
+            if (window.showAdvisorMsg) window.showAdvisorMsg(`🏺 ${randomHero.name} намери артефакт: ${newArtifact.name}!`);
+        }
     }
 }
                 
