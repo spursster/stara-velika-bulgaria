@@ -187,6 +187,22 @@ window.ChronicleEvents.generateArtifactFound = function(hero, artifact) {
     };
 };
 
+// Генератор за икономически събития (бум, рецесия и т.н.)
+window.ChronicleEvents.generateEconomicEvent = function(hero, eventData) {
+    return {
+        message: `${eventData.title} ${eventData.msg}`,
+        buttons: [
+            { label: '💰 Приеми ефекта', action: () => {
+                if (eventData.gain) { hero.gold += eventData.gain; window.showAdvisorMsg(`+${eventData.gain} злато`); }
+                if (eventData.loss) { hero.gold = Math.max(0, hero.gold - eventData.loss); window.showAdvisorMsg(`-${eventData.loss} злато`); }
+                if (window.updateCharacterUI) window.updateCharacterUI(hero);
+                if (window.updateStrongestHeroUI) window.updateStrongestHeroUI();
+            }},
+            { label: '📜 Игнорирай', action: () => window.showAdvisorMsg(`Игнорирахте събитието.`) }
+        ]
+    };
+};
+
 // 8. Куест завършен – избор на награда
 window.ChronicleEvents.generateQuestComplete = function(quest, rewards) {
     const goldReward = rewards.gold || 0;
