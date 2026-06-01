@@ -185,25 +185,27 @@ function triggerRandomEconomicEvent() {
     
     let eventData = {};
     switch(eventType) {
-        case 0: eventData = { title: "📈 ИКОНОМИЧЕСКИ БУМ", gain: 200 + Math.floor(Math.random() * 300), msg: "Търговията процъфтява!" }; break;
-        case 1: eventData = { title: "📉 РЕЦЕСИЯ", loss: 100 + Math.floor(Math.random() * 200), msg: "Икономически спад!" }; break;
-        case 2: eventData = { title: "🏛️ ДАНЪЧНА РЕФОРМА", gain: Math.floor(hero.gold * 0.05), msg: "Нови данъчни правила ви носят злато." }; break;
-        case 3: eventData = { title: "💰 КРАЖБА НА ХАЗНАТА", loss: Math.floor(hero.gold * 0.1) + 50, msg: "Крадци задигнаха част от златото!" }; break;
-        case 4: eventData = { title: "🛒 НОВ ПАЗАР", gain: 150 + Math.floor(Math.random() * 250), msg: "Открит е нов търговски път!" }; break;
+        case 0: eventData = { title: "📈 ИКОНОМИЧЕСКИ БУМ", gain: 200 + Math.floor(Math.random() * 300), msg: "Търговията процъфтява!", type: "success" }; break;
+        case 1: eventData = { title: "📉 РЕЦЕСИЯ", loss: 100 + Math.floor(Math.random() * 200), msg: "Икономически спад!", type: "error" }; break;
+        case 2: eventData = { title: "🏛️ ДАНЪЧНА РЕФОРМА", gain: Math.floor(hero.gold * 0.05), msg: "Нови данъчни правила ви носят злато.", type: "success" }; break;
+        case 3: eventData = { title: "💰 КРАЖБА НА ХАЗНАТА", loss: Math.floor(hero.gold * 0.1) + 50, msg: "Крадци задигнаха част от златото!", type: "error" }; break;
+        case 4: eventData = { title: "🛒 НОВ ПАЗАР", gain: 150 + Math.floor(Math.random() * 250), msg: "Открит е нов търговски път!", type: "success" }; break;
     }
     
-    window.showAdvisorMsg(
-        `${eventData.title} ${eventData.msg}`,
-        [
-            { label: '💰 Приеми ефекта', action: () => {
-                if (eventData.gain) { hero.gold += eventData.gain; window.showAdvisorMsg(`+${eventData.gain} злато`); }
-                if (eventData.loss) { hero.gold = Math.max(0, hero.gold - eventData.loss); window.showAdvisorMsg(`-${eventData.loss} злато`); }
-                if (window.updateCharacterUI) window.updateCharacterUI(hero);
-                if (window.updateStrongestHeroUI) window.updateStrongestHeroUI();
-            }},
-            { label: '📜 Игнорирай', action: () => window.showAdvisorMsg(`Игнорирахте събитието.`) }
-        ]
-    );
+    // Използваме генератора, ако съществува
+    if (window.ChronicleEvents && typeof window.ChronicleEvents.generateEconomicEvent === 'function') {
+        const ev = window.ChronicleEvents.generateEconomicEvent(hero, eventData);
+        if (window.showAdvisorMsg) {
+            window.showAdvisorMsg(ev.message, ev.buttons);
+            return;
+        }
+    }
+    
+    // Резервен вариант (ако няма генератор)
+    if (eventData.gain) hero.gold += eventData.gain;
+    if (eventData.loss) hero.gold = Math.max(0, hero.gold - eventData.loss);
+    showEconomyMessage(eventData.title, `${eventData.msg} ${eventData.gain ? '+' + eventData.gain : '-' + eventData.loss} злато.`, eventData.type);
+    syncHeroGold(hero);
 }
     
 // ========== ИНТЕРАКТИВЕН ЛЕТОПИС ==========
@@ -256,13 +258,11 @@ window.establishTradeRoute = function(hero, fromRegion, toRegion) {
     return true;
 };
 
-window.investGold = function(hero, amount, turns = 5) {
-    if (!hero) return false;
-    if (amount <= 0 || amount > hero.gold) {
-        showEconomyMessage("ГРЕШКА", "Невалидна сума!", "error");
-        return false;
-    }
-    let expectedReturn = Math.floor(amount * (1 + window.economySettings.investmentReturnBase * (turns / 4)));
+if (window.ChronicleEvents && typeof window.ChronicleEvents.generateInvestmentOpportunity === 'function') {
+    const ev = window.ChronicleEvents.generateInvestmentOpportunity(hero, amount, expectedReturn, turns);
+    window.showAdvisorMsg(ev.message, ev.buttons);
+    return true;
+}
     
     // ========== ИНТЕРАКТИВЕН ЛЕТОПИС ==========
     if (window.ChronicleEvents && typeof window.ChronicleEvents.generateInvestmentOpportunity === 'function') {
