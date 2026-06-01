@@ -206,25 +206,23 @@ function triggerRandomEconomicEvent() {
     );
 }
     
-    // ========== ИНТЕРАКТИВЕН ЛЕТОПИС ==========
-    if (window.ChronicleEvents && typeof window.ChronicleEvents.generateEconomicEvent === 'function') {
-        const ev = window.ChronicleEvents.generateEconomicEvent(hero, eventData);
-        if (window.showAdvisorMsg) {
-            window.showAdvisorMsg(ev.message, ev.buttons);
-            return;
-        }
+// ========== ИНТЕРАКТИВЕН ЛЕТОПИС ==========
+if (window.ChronicleEvents && typeof window.ChronicleEvents.generateEconomicEvent === 'function') {
+    const ev = window.ChronicleEvents.generateEconomicEvent(hero, eventData);
+    if (window.showAdvisorMsg) {
+        window.showAdvisorMsg(ev.message, ev.buttons);
+        return; // Спира по-нататъшното изпълнение, защото бутоните вече са показани
     }
-    
-    // Резервен вариант – директно прилагане на ефекта
-    if (eventData.gain) {
-        hero.gold += eventData.gain;
-        showEconomyMessage(eventData.title, `${eventData.message} +${eventData.gain} злато.`, eventData.type);
-    } else if (eventData.loss) {
-        hero.gold = Math.max(0, hero.gold - eventData.loss);
-        showEconomyMessage(eventData.title, `${eventData.message} -${eventData.loss} злато.`, eventData.type);
-    }
-    syncHeroGold(hero);
 }
+// Резервен вариант (ако няма ChronicleEvents) – директно прилагане на ефекта
+if (eventData.gain) {
+    hero.gold += eventData.gain;
+    showEconomyMessage(eventData.title, `${eventData.msg} +${eventData.gain} злато.`, eventData.type);
+} else if (eventData.loss) {
+    hero.gold = Math.max(0, hero.gold - eventData.loss);
+    showEconomyMessage(eventData.title, `${eventData.msg} -${eventData.loss} злато.`, eventData.type);
+}
+syncHeroGold(hero);
 
 // ==================== ТЪРГОВСКИ МАРШРУТИ ====================
 window.establishTradeRoute = function(hero, fromRegion, toRegion) {
