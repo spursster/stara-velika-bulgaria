@@ -477,7 +477,7 @@ window.saveGreatBulgariaGame = function() {
             saveData.currentHero = window.currentHero;
         }
         localStorage.setItem('GreatBulgaria_SaveGame', JSON.stringify(saveData));
-        console.log("💾 Прогресът запазен (вкл. портрети).");
+       // console.log("💾 Прогресът запазен (вкл. портрети).");
     } catch (e) {
         console.error(e);
     }
