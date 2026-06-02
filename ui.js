@@ -892,12 +892,7 @@ window.renderFavoriteHeroesBar = function() {
 window.updateCharacterUI = function(hero) {
     if (!hero) return;
     if (window.initializeHeroRPGData) window.initializeHeroRPGData(hero);
-    const goldDisplay = document.getElementById('val-gold');
-    if (goldDisplay) goldDisplay.innerText = hero.gold || 0;
-    const armyDisplay = document.getElementById('val-army');
-    if (armyDisplay) armyDisplay.innerText = hero.armySize || 0;
-    const powerDisplay = document.getElementById('val-hero-power');
-    if (powerDisplay) powerDisplay.innerText = hero.heroPower || 100;
+    
     const profileBox = document.getElementById('active-character-profile');
     if (profileBox) {
         let petStatus = "Няма";
