@@ -76,7 +76,7 @@ window.updateStrongestHeroUI = function() {
     const hero = window.getStrongestHero();
     if (!hero) return;
     
-    // Обновяваме стандартните полета
+    // Обновяваме стандартните полета (злато, армия, сила)
     const goldSpan = document.getElementById('val-gold');
     if (goldSpan) goldSpan.innerText = hero.gold;
     const armySpan = document.getElementById('val-army');
@@ -84,17 +84,16 @@ window.updateStrongestHeroUI = function() {
     const powerSpan = document.getElementById('val-hero-power');
     if (powerSpan) powerSpan.innerText = hero.heroPower || 100;
     
-    // Обновяваме лявото меню (профил)
-    const profileBox = document.getElementById('active-character-profile');
-    if (profileBox) {
+    // Хелпер за обновяване на произволен контейнер с профил
+    function updateProfileContainer(container) {
+        if (!container) return;
         let petStatus = "Няма";
         if (hero.pet && window.rpgDatabase?.petsDatabase?.[hero.pet]) {
             const p = window.rpgDatabase.petsDatabase[hero.pet];
             petStatus = p.icon + " " + p.name;
         }
-        // Заглавие "Топ герой" вместо "Активен герой"
-        let topHeroTitle = '<div style="font-weight:bold; font-size:1rem; color:#ffd700;">🏆 Топ герой</div>';
-        let heroInfo = `
+        const topHeroTitle = '<div style="font-weight:bold; font-size:1rem; color:#ffd700;">🏆 Топ герой</div>';
+        const heroInfo = `
             <div style="font-weight:bold;font-size:1.2rem;">${hero.name || "Неизвестен"}</div>
             <div>Клан ${hero.clan || "Свободен"} | ${window.getClassIcon ? window.getClassIcon(hero.currentClass) : '⚔️'} Клас: ${hero.currentClass || "Багатур"}</div>
             <div>Ниво: ${hero.level || 1}</div>
@@ -103,23 +102,44 @@ window.updateStrongestHeroUI = function() {
             <div>Свободни точки: ${hero.skillPoints || 0}</div>
             <div>Любимец: ${petStatus}</div>
         `;
-        let troopsHtml = renderTopHeroTroops(hero);
-        profileBox.innerHTML = topHeroTitle + heroInfo + troopsHtml;
-    }
-    
-    // Ако има портрет, покажи го (кодът ви вече трябва да го прави)
-    if (hero.portrait) {
-        const profileBox = document.getElementById('active-character-profile');
-        if (profileBox) {
-            let existingImg = profileBox.querySelector('.hero-portrait-img');
+        const troopsHtml = renderTopHeroTroops(hero);
+        container.innerHTML = topHeroTitle + heroInfo + troopsHtml;
+        
+        // Ако има портрет, добавяме го
+        if (hero.portrait) {
+            let existingImg = container.querySelector('.hero-portrait-img');
             if (!existingImg) {
                 const img = document.createElement('img');
                 img.className = 'hero-portrait-img';
                 img.style.cssText = 'width: 60px; height: 60px; border-radius: 50%; margin-bottom: 10px; border: 2px solid #d4af37; object-fit: cover;';
-                profileBox.insertBefore(img, profileBox.firstChild);
+                container.prepend(img);
                 existingImg = img;
             }
             existingImg.src = hero.portrait;
+        } else {
+            const oldImg = container.querySelector('.hero-portrait-img');
+            if (oldImg) oldImg.remove();
+        }
+    }
+    
+    // Обновяване на десктоп профила (лявата странична лента)
+    const desktopProfile = document.getElementById('active-character-profile');
+    updateProfileContainer(desktopProfile);
+    
+    // Обновяване на мобилния профил, ако съществува (за телефони)
+    const mobileSection = document.getElementById('mobile-profile-section');
+    if (mobileSection) {
+        const mobileProfileBox = mobileSection.querySelector('#active-character-profile');
+        if (mobileProfileBox) {
+            updateProfileContainer(mobileProfileBox);
+            // Възстановяваме функционалността на RPG бутона (ако има)
+            const rpgBtn = mobileProfileBox.querySelector('#open-rpg-modal-btn');
+            if (rpgBtn && !rpgBtn.hasAttribute('data-mobile-fixed')) {
+                rpgBtn.onclick = function() {
+                    if (window.openHeroRPGModal) window.openHeroRPGModal(hero.clan);
+                };
+                rpgBtn.setAttribute('data-mobile-fixed', 'true');
+            }
         }
     }
 };
