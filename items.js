@@ -49,6 +49,23 @@ window.getInventoryBonuses = function(hero) {
     return totalBonus;
 };
 
+window.checkSetCompletion = function(hero) {
+    if (!hero || !hero.inventory) return;
+    const setCounts = {};
+    for (let art of hero.inventory) {
+        if (art && art.set) setCounts[art.set] = (setCounts[art.set] || 0) + 1;
+    }
+    for (let setKey in setCounts) {
+        if (setCounts[setKey] >= 2 && !hero.activeSetBonuses?.[setKey]) {
+            // Запазваме висящо предложение
+            window.pendingSetBonuses[setKey] = hero.id;
+            // Генерираме съобщение в летописа
+            const ev = window.ChronicleEvents.generateSetBonusOffer(setKey, setCounts[setKey], hero);
+            if (window.showAdvisorMsg) window.showAdvisorMsg(ev.message, ev.buttons);
+        }
+    }
+};
+
 // ==================== АВТОМАТИЧНА ЕКИПИРОВКА ЗА ГЕРОИ В AUTO РЕЖИМ ====================
 function getArtifactScore(artifact, hero) {
     if (!artifact || !artifact.bonus) return 0;
