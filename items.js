@@ -4,6 +4,8 @@
 ФАЙЛ: items.js (ВЕРСИЯ 6.1 – БЕЗ currentHero, С ГЕТЪР ЗА ГЛАВЕН ГЕРОЙ)
 ==========================================================================
 */
+window.pendingSetBonuses = {};   // { setKey: heroId }
+window.artifactSalvageCurrency = 0; // "есенция на реликви"
 
 // Помощна функция за вземане на главния герой (без currentHero)
 function getMainHeroForItems() {
