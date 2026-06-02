@@ -72,56 +72,80 @@ function renderTopHeroTroops(hero) {
     html += '</div>';
     return html;
 }
+let updateStrongestHeroTimer = null;
 window.updateStrongestHeroUI = function() {
-    const hero = window.getStrongestHero();
-    if (!hero) return;
-    
-    // Обновяваме стандартните полета (злато, армия, сила)
-    const goldSpan = document.getElementById('val-gold');
-    if (goldSpan) goldSpan.innerText = hero.gold;
-    const armySpan = document.getElementById('val-army');
-    if (armySpan) armySpan.innerText = hero.armySize || 0;
-    const powerSpan = document.getElementById('val-hero-power');
-    if (powerSpan) powerSpan.innerText = hero.heroPower || 100;
-    
-    // Хелпер за обновяване на произволен контейнер с профил
-    function updateProfileContainer(container) {
-        if (!container) return;
-        let petStatus = "Няма";
-        if (hero.pet && window.rpgDatabase?.petsDatabase?.[hero.pet]) {
-            const p = window.rpgDatabase.petsDatabase[hero.pet];
-            petStatus = p.icon + " " + p.name;
-        }
-        const topHeroTitle = '<div style="font-weight:bold; font-size:1rem; color:#ffd700;">🏆 Топ герой</div>';
-        const heroInfo = `
-            <div style="font-weight:bold;font-size:1.2rem;">${hero.name || "Неизвестен"}</div>
-            <div>Клан ${hero.clan || "Свободен"} | ${window.getClassIcon ? window.getClassIcon(hero.currentClass) : '⚔️'} Клас: ${hero.currentClass || "Багатур"}</div>
-            <div>Ниво: ${hero.level || 1}</div>
-            <div>Възраст: ${hero.age || 50} г.</div>
-            <div>Бойна Сила: ⚔️ ${hero.heroPower || 150}</div>
-            <div>Свободни точки: ${hero.skillPoints || 0}</div>
-            <div>Любимец: ${petStatus}</div>
-        `;
-        const troopsHtml = renderTopHeroTroops(hero);
-        container.innerHTML = topHeroTitle + heroInfo + troopsHtml;
+    // Ако вече има планирано обновяване, го отлагаме
+    if (updateStrongestHeroTimer) clearTimeout(updateStrongestHeroTimer);
+    updateStrongestHeroTimer = setTimeout(() => {
+        updateStrongestHeroTimer = null;
+        // Реална работа – извличаме най-силния герой
+        const hero = window.getStrongestHero();
+        if (!hero) return;
         
-        // Ако има портрет, добавяме го
-        if (hero.portrait) {
-            let existingImg = container.querySelector('.hero-portrait-img');
-            if (!existingImg) {
-                const img = document.createElement('img');
-                img.className = 'hero-portrait-img';
-                img.style.cssText = 'width: 60px; height: 60px; border-radius: 50%; margin-bottom: 10px; border: 2px solid #d4af37; object-fit: cover;';
-                container.prepend(img);
-                existingImg = img;
+        // Обновяваме стандартните полета
+        const goldSpan = document.getElementById('val-gold');
+        if (goldSpan) goldSpan.innerText = hero.gold;
+        const armySpan = document.getElementById('val-army');
+        if (armySpan) armySpan.innerText = hero.armySize || 0;
+        const powerSpan = document.getElementById('val-hero-power');
+        if (powerSpan) powerSpan.innerText = hero.heroPower || 100;
+        
+        // Хелпер за обновяване на контейнер
+        function updateProfileContainer(container) {
+            if (!container) return;
+            let petStatus = "Няма";
+            if (hero.pet && window.rpgDatabase?.petsDatabase?.[hero.pet]) {
+                const p = window.rpgDatabase.petsDatabase[hero.pet];
+                petStatus = p.icon + " " + p.name;
             }
-            existingImg.src = hero.portrait;
-        } else {
-            const oldImg = container.querySelector('.hero-portrait-img');
-            if (oldImg) oldImg.remove();
+            const topHeroTitle = '<div style="font-weight:bold; font-size:1rem; color:#ffd700;">🏆 Топ герой</div>';
+            const heroInfo = `
+                <div style="font-weight:bold;font-size:1.2rem;">${hero.name || "Неизвестен"}</div>
+                <div>Клан ${hero.clan || "Свободен"} | ${window.getClassIcon ? window.getClassIcon(hero.currentClass) : '⚔️'} Клас: ${hero.currentClass || "Багатур"}</div>
+                <div>Ниво: ${hero.level || 1}</div>
+                <div>Възраст: ${hero.age || 50} г.</div>
+                <div>Бойна Сила: ⚔️ ${hero.heroPower || 150}</div>
+                <div>Свободни точки: ${hero.skillPoints || 0}</div>
+                <div>Любимец: ${petStatus}</div>
+            `;
+            const troopsHtml = renderTopHeroTroops(hero);
+            container.innerHTML = topHeroTitle + heroInfo + troopsHtml;
+            
+            if (hero.portrait) {
+                let existingImg = container.querySelector('.hero-portrait-img');
+                if (!existingImg) {
+                    const img = document.createElement('img');
+                    img.className = 'hero-portrait-img';
+                    img.style.cssText = 'width: 60px; height: 60px; border-radius: 50%; margin-bottom: 10px; border: 2px solid #d4af37; object-fit: cover;';
+                    container.prepend(img);
+                    existingImg = img;
+                }
+                existingImg.src = hero.portrait;
+            } else {
+                const oldImg = container.querySelector('.hero-portrait-img');
+                if (oldImg) oldImg.remove();
+            }
         }
-    }
-    
+        
+        const desktopProfile = document.getElementById('active-character-profile');
+        updateProfileContainer(desktopProfile);
+        
+        const mobileSection = document.getElementById('mobile-profile-section');
+        if (mobileSection) {
+            const mobileProfileBox = mobileSection.querySelector('#active-character-profile');
+            if (mobileProfileBox) {
+                updateProfileContainer(mobileProfileBox);
+                const rpgBtn = mobileProfileBox.querySelector('#open-rpg-modal-btn');
+                if (rpgBtn && !rpgBtn.hasAttribute('data-mobile-fixed')) {
+                    rpgBtn.onclick = function() {
+                        if (window.openHeroRPGModal) window.openHeroRPGModal(hero.clan);
+                    };
+                    rpgBtn.setAttribute('data-mobile-fixed', 'true');
+                }
+            }
+        }
+    }, 80); // 80ms забавяне – всички извиквания в рамките на 80ms се групират
+};
     // Обновяване на десктоп профила (лявата странична лента)
     const desktopProfile = document.getElementById('active-character-profile');
     updateProfileContainer(desktopProfile);
