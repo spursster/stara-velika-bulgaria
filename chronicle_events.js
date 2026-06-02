@@ -67,6 +67,34 @@ window.ChronicleEvents.generatePersonalityChange = function(hero, oldTrait, newT
     };
 };
 
+window.ChronicleEvents.generateSetBonusOffer = function(setKey, count) {
+    const setInfo = window.artifactSetBonuses[setKey];
+    return {
+        message: `🏺 Събрахте ${count} артефакта от сета "${setInfo.name}". Желаете ли да активирате сет бонуса?`,
+        buttons: [
+            { label: '✨ Активирай', action: () => {
+                const heroId = window.pendingSetBonuses[setKey];
+                const hero = window.worldData?.clans?.[heroId];
+                if (hero) {
+                    if (!hero.activeSetBonuses) hero.activeSetBonuses = {};
+                    hero.activeSetBonuses[setKey] = true;
+                    // Прилагаме бонусите
+                    for (let bonus in setInfo.bonus) {
+                        hero[bonus] = (hero[bonus] || 0) + setInfo.bonus[bonus];
+                    }
+                    window.showAdvisorMsg(`✅ Активиран е сет бонус: ${setInfo.name}!`);
+                    if (window.updateCharacterUI) window.updateCharacterUI(hero);
+                }
+                delete window.pendingSetBonuses[setKey];
+            }},
+            { label: '🗑️ Отхвърли', action: () => {
+                delete window.pendingSetBonuses[setKey];
+                window.showAdvisorMsg(`Отказахте активирането на сета.`);
+            }}
+        ]
+    };
+};
+
 // ========== ГЕНЕРАТОР ЗА НОВА ТОЧКА УМЕНИЕ ==========
 window.ChronicleEvents.generateSkillPointOffer = function(hero) {
     return {
