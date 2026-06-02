@@ -67,23 +67,23 @@ window.ChronicleEvents.generatePersonalityChange = function(hero, oldTrait, newT
     };
 };
 
-window.ChronicleEvents.generateSetBonusOffer = function(setKey, count) {
-    const setInfo = window.artifactSetBonuses[setKey];
+window.ChronicleEvents.generateSetBonusOffer = function(setKey, count, hero) {
+    const setInfo = window.artifactSetBonuses?.[setKey] || { name: setKey, bonus: {} };
     return {
         message: `🏺 Събрахте ${count} артефакта от сета "${setInfo.name}". Желаете ли да активирате сет бонуса?`,
         buttons: [
             { label: '✨ Активирай', action: () => {
                 const heroId = window.pendingSetBonuses[setKey];
-                const hero = window.worldData?.clans?.[heroId];
-                if (hero) {
-                    if (!hero.activeSetBonuses) hero.activeSetBonuses = {};
-                    hero.activeSetBonuses[setKey] = true;
-                    // Прилагаме бонусите
+                const targetHero = window.worldData?.clans?.[heroId];
+                if (targetHero) {
+                    if (!targetHero.activeSetBonuses) targetHero.activeSetBonuses = {};
+                    targetHero.activeSetBonuses[setKey] = true;
                     for (let bonus in setInfo.bonus) {
-                        hero[bonus] = (hero[bonus] || 0) + setInfo.bonus[bonus];
+                        targetHero[bonus] = (targetHero[bonus] || 0) + setInfo.bonus[bonus];
                     }
                     window.showAdvisorMsg(`✅ Активиран е сет бонус: ${setInfo.name}!`);
-                    if (window.updateCharacterUI) window.updateCharacterUI(hero);
+                    if (window.updateCharacterUI) window.updateCharacterUI(targetHero);
+                    if (window.updateStrongestHeroUI) window.updateStrongestHeroUI();
                 }
                 delete window.pendingSetBonuses[setKey];
             }},
