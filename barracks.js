@@ -119,7 +119,6 @@ window.renderBarracksLayout = function() {
     let allHeroes = getAllUnlockedHeroes();
     let favoriteHeroes = allHeroes.filter(h => h.isFavorite === true);
     
-    // Подреждаме любимите по ниво (низходящо) без активен герой
     favoriteHeroes.sort((a,b) => (b.level || 1) - (a.level || 1));
     
     window.barracksState.currentPage = 0;
@@ -199,9 +198,10 @@ window.renderBarracksLayout = function() {
         shopContent = fantasyTroops.map(id => renderTroopCard(allTroops[id])).join('');
     }
 
+    // ========== ПОПРАВЕНИ БУТОНИ С onclick ==========
     barracksContainer.innerHTML = `
         <div style="position: relative; width: 100%; max-width: 750px; max-height: 90vh; background: #111; border: 2px solid #d4af37; border-radius: 12px; padding: 50px 15px 15px 15px; box-sizing: border-box; display: flex; flex-direction: column; gap: 12px; overflow-y: auto; box-shadow: 0 0 40px rgba(0,0,0,0.9);">
-            <button id="close-barracks-x" style="position: absolute; top: 8px; left: 8px; width: 36px; height: 36px; background: rgba(255,80,80,0.2); border: none; color: #ff8888; border-radius: 50%; font-size: 18px; cursor: pointer;">✕</button>
+            <button id="close-barracks-x" onclick="window.closeBarracksUI()" style="position: absolute; top: 8px; left: 8px; width: 36px; height: 36px; background: rgba(255,80,80,0.2); border: none; color: #ff8888; border-radius: 50%; font-size: 18px; cursor: pointer;">✕</button>
 
             <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #333; padding-bottom: 8px; flex-wrap: wrap; gap: 8px;">
                 <h1 style="color: #ffd700; margin: 0; font-size: 18px;">ВОЕННИ КАЗАРМИ</h1>
@@ -230,11 +230,12 @@ window.renderBarracksLayout = function() {
             </div>
 
             <div style="text-align: center;">
-                <button id="close-barracks-footer" style="background: #222; border: 1px solid #444; color: #aaa; padding: 10px 30px; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 12px; width: 100%;">ИЗХОД ОТ КАЗАРМИТЕ</button>
+                <button id="close-barracks-footer" onclick="window.closeBarracksUI()" style="background: #222; border: 1px solid #444; color: #aaa; padding: 10px 30px; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 12px; width: 100%;">ИЗХОД ОТ КАЗАРМИТЕ</button>
             </div>
         </div>
     `;
 
+    // Обновяване на златото и силата (без промяна)
     const selectedHero = heroesForSelect.find(h => h.name === selectedHeroName);
     const goldSpan = document.getElementById('barracksGoldDisplay');
     if (goldSpan && selectedHero) goldSpan.innerText = selectedHero.gold || 0;
@@ -254,6 +255,7 @@ window.renderBarracksLayout = function() {
         });
     }
 
+    // Странициране (без промяна)
     document.querySelectorAll('.barracks-page-btn').forEach(btn => {
         btn.onclick = () => {
             if (btn.dataset.page === 'prev') window.barracksState.currentPage--;
@@ -278,13 +280,7 @@ window.renderBarracksLayout = function() {
             window.renderBarracksLayout();
         };
     });
-
-    const closeModal = () => barracksContainer.style.display = 'none';
-    document.getElementById('close-barracks-x')?.addEventListener('click', closeModal);
-    document.getElementById('close-barracks-footer')?.addEventListener('click', closeModal);
-    barracksContainer.addEventListener('click', (e) => { if (e.target === barracksContainer) closeModal(); });
 };
-
 function renderTroopCard(troop) {
     const heroName = document.getElementById('heroBuySelect')?.value;
     let hero = null;
