@@ -1,7 +1,7 @@
 /**
 ==========================================================================
 ПРОЕКТ: ВЕЛИКА БЪЛГАРИЯ
-ФАЙЛ: items.js (ВЕРСИЯ 6.1 – БЕЗ currentHero, С ГЕТЪР ЗА ГЛАВЕН ГЕРОЙ)
+ФАЙЛ: items.js (ВЕРСИЯ 6.2 – ДОБАВЕНО ПРЕТОПЯВАНЕ НА АРТЕФАКТИ)
 ==========================================================================
 */
 window.pendingSetBonuses = {};   // { setKey: heroId }
@@ -49,6 +49,29 @@ window.getInventoryBonuses = function(hero) {
     return totalBonus;
 };
 
+// ==================== ПРЕТОПЯВАНЕ НА АРТЕФАКТ ====================
+window.salvageArtifact = function(hero, artifactIndex) {
+    if (!hero || !hero.inventory) return false;
+    const artifact = hero.inventory[artifactIndex];
+    if (!artifact) return false;
+    
+    let essence = 5;
+    if (artifact.rarity) essence += artifact.rarity * 2;
+    if (artifact.bonus) essence += Object.keys(artifact.bonus).length * 3;
+    essence = Math.max(5, Math.min(100, essence));
+    
+    window.artifactSalvageCurrency = (window.artifactSalvageCurrency || 0) + essence;
+    hero.inventory.splice(artifactIndex, 1);
+    
+    if (window.showAdvisorMsg) {
+        window.showAdvisorMsg(`🔮 Претопихте "${artifact.name}" и получихте ${essence} есенция.`);
+    }
+    if (typeof window.updateCharacterUI === 'function') window.updateCharacterUI(hero);
+    if (typeof window.updateStrongestHeroUI === 'function') window.updateStrongestHeroUI();
+    return true;
+};
+
+// ==================== ПРОВЕРКА ЗА СЕТ БОНУСИ (С БУТОНИ В ЛЕТОПИСА) ====================
 window.checkSetCompletion = function(hero) {
     if (!hero || !hero.inventory) return;
     const setCounts = {};
@@ -57,11 +80,15 @@ window.checkSetCompletion = function(hero) {
     }
     for (let setKey in setCounts) {
         if (setCounts[setKey] >= 2 && !hero.activeSetBonuses?.[setKey]) {
-            // Запазваме висящо предложение
-            window.pendingSetBonuses[setKey] = hero.id;
-            // Генерираме съобщение в летописа
-            const ev = window.ChronicleEvents.generateSetBonusOffer(setKey, setCounts[setKey], hero);
-            if (window.showAdvisorMsg) window.showAdvisorMsg(ev.message, ev.buttons);
+            if (!window.pendingSetBonuses[setKey]) {
+                window.pendingSetBonuses[setKey] = hero.id;
+                if (window.ChronicleEvents && typeof window.ChronicleEvents.generateSetBonusOffer === 'function') {
+                    const ev = window.ChronicleEvents.generateSetBonusOffer(setKey, setCounts[setKey], hero);
+                    if (window.showAdvisorMsg) window.showAdvisorMsg(ev.message, ev.buttons);
+                } else {
+                    console.warn("⚠️ generateSetBonusOffer не е дефиниран в chronicle_events.js");
+                }
+            }
         }
     }
 };
@@ -206,67 +233,48 @@ window.openInventory = window.toggleTreasury;
 
 // ==================== 60 ИСТОРИЧЕСКИ АРТЕФАКТА ====================
 window.historicalArtifacts = {
-    // Тракийски артефакти
     "panagyurishte_treasure": { id: "panagyurishte_treasure", name: "Панагюрско съкровище", icon: "🏺", era: "Тракийски", bonus: { heroPower: 15, goldBonus: 10 }, set: "thracian_royal" },
     "rogosen_treasure": { id: "rogosen_treasure", name: "Рогозенско съкровище", icon: "🏺", era: "Тракийски", bonus: { heroPower: 12, goldBonus: 8 }, set: "thracian_royal" },
     "valchitran_treasure": { id: "valchitran_treasure", name: "Вълчитрънско съкровище", icon: "🏺", era: "Тракийски", bonus: { heroPower: 10, goldBonus: 12 }, set: "thracian_royal" },
     "golden_mask_tervel": { id: "golden_mask_tervel", name: "Златна маска на Терес", icon: "🎭", era: "Тракийски", bonus: { heroPower: 20 }, set: "thracian_kings" },
     "golden_ring_seuthes": { id: "golden_ring_seuthes", name: "Златен пръстен на Севт III", icon: "💍", era: "Тракийски", bonus: { goldBonus: 15 }, set: "thracian_kings" },
-    
-    // Римски артефакти
     "trajan_column_piece": { id: "trajan_column_piece", name: "Фрагмент от колоната на Траян", icon: "🏛️", era: "Римски", bonus: { heroPower: 18 }, set: "roman_imperial" },
     "constantine_sceptre": { id: "constantine_sceptre", name: "Скиптър на Константин Велики", icon: "🔱", era: "Римски", bonus: { heroPower: 22 }, set: "roman_imperial" },
     "roman_legion_standard": { id: "roman_legion_standard", name: "Легионен орел", icon: "🦅", era: "Римски", bonus: { heroPower: 14, armyBonus: 0.1 }, set: "roman_military" },
     "gladius_of_trajan": { id: "gladius_of_trajan", name: "Гладиус на Траян", icon: "⚔️", era: "Римски", bonus: { heroPower: 20 }, set: "roman_military" },
     "scutum_of_legion": { id: "scutum_of_legion", name: "Легионен щит", icon: "🛡️", era: "Римски", bonus: { defense: 15 }, set: "roman_military" },
-    
-    // Византийски артефакти
     "justinian_crown": { id: "justinian_crown", name: "Корона на Юстиниан Велики", icon: "👑", era: "Византийски", bonus: { heroPower: 25, goldBonus: 20 }, set: "byzantine_imperial" },
     "theodora_pendant": { id: "theodora_pendant", name: "Медальон на Теодора", icon: "📿", era: "Византийски", bonus: { heroPower: 15, diplomacyBonus: 0.1 }, set: "byzantine_imperial" },
     "hagia_sophia_cross": { id: "hagia_sophia_cross", name: "Кръст от Света София", icon: "✝️", era: "Византийски", bonus: { heroPower: 12, mysticismBonus: 0.15 }, set: "byzantine_holy" },
     "byzantine_icon": { id: "byzantine_icon", name: "Византийска икона", icon: "🖼️", era: "Византийски", bonus: { heroPower: 10, mysticismBonus: 0.1 }, set: "byzantine_holy" },
     "porphyrogennetos_seal": { id: "porphyrogennetos_seal", name: "Печат на Порфирогенит", icon: "🔏", era: "Византийски", bonus: { goldBonus: 25 }, set: "byzantine_administrative" },
-    
-    // Персийски артефакти
     "cyrus_cylinder": { id: "cyrus_cylinder", name: "Цилиндър на Кир Велики", icon: "📜", era: "Персийски", bonus: { heroPower: 20, diplomacyBonus: 0.15 }, set: "achaemenid_royal" },
     "darius_gold_plate": { id: "darius_gold_plate", name: "Златна плоча на Дарий I", icon: "🥏", era: "Персийски", bonus: { heroPower: 18, goldBonus: 15 }, set: "achaemenid_royal" },
     "persian_rhython": { id: "persian_rhython", name: "Персийски ритон", icon: "🍷", era: "Персийски", bonus: { goldBonus: 20 }, set: "achaemenid_court" },
     "xerxes_sword": { id: "xerxes_sword", name: "Меч на Ксеркс", icon: "⚔️", era: "Персийски", bonus: { heroPower: 22 }, set: "achaemenid_military" },
     "immortal_helmet": { id: "immortal_helmet", name: "Шлем на Безсмъртен войн", icon: "🪖", era: "Персийски", bonus: { defense: 18 }, set: "achaemenid_military" },
-    
-    // Скитски артефакти
     "scythian_gold_deer": { id: "scythian_gold_deer", name: "Скитски златен елен", icon: "🦌", era: "Скитски", bonus: { heroPower: 15, armyBonus: 0.1 }, set: "scythian_gold" },
     "scythian_animal_style_belt": { id: "scythian_animal_style_belt", name: "Скитски пояс", icon: "🔗", era: "Скитски", bonus: { defense: 12 }, set: "scythian_gold" },
     "scythian_akinakes_hist": { id: "scythian_akinakes_hist", name: "Скитски акинак", icon: "🗡️", era: "Скитски", bonus: { heroPower: 16 }, set: "scythian_warrior" },
     "scythian_gorytos": { id: "scythian_gorytos", name: "Скитски горит", icon: "🏹", era: "Скитски", bonus: { heroPower: 14 }, set: "scythian_warrior" },
     "scythian_cauldron": { id: "scythian_cauldron", name: "Скитски котел", icon: "🍲", era: "Скитски", bonus: { goldBonus: 15 }, set: "scythian_ritual" },
-    
-    // Келтски артефакти
     "celtic_torc": { id: "celtic_torc", name: "Келтска торква", icon: "📿", era: "Келтски", bonus: { heroPower: 12 }, set: "celtic_noble" },
     "celtic_shield": { id: "celtic_shield", name: "Келтски щит", icon: "🛡️", era: "Келтски", bonus: { defense: 15 }, set: "celtic_warrior" },
     "celtic_sword": { id: "celtic_sword", name: "Келтски дълъг меч", icon: "⚔️", era: "Келтски", bonus: { heroPower: 18 }, set: "celtic_warrior" },
     "celtic_helmet": { id: "celtic_helmet", name: "Келтски шлем", icon: "🪖", era: "Келтски", bonus: { defense: 12 }, set: "celtic_warrior" },
-    
-    // Готски артефакти
     "gothic_crown_of_theoderic": { id: "gothic_crown_of_theoderic", name: "Корона на Теодорих Велики", icon: "👑", era: "Готски", bonus: { heroPower: 20 }, set: "gothic_royal" },
     "gothic_silver_treasure": { id: "gothic_silver_treasure", name: "Готско сребърно съкровище", icon: "💰", era: "Готски", bonus: { goldBonus: 25 }, set: "gothic_royal" },
     "gothic_brooch": { id: "gothic_brooch", name: "Готска фибула", icon: "🔱", era: "Готски", bonus: { heroPower: 10 }, set: "gothic_art" },
     "gothic_belt_buckle": { id: "gothic_belt_buckle", name: "Готска катарама", icon: "🔗", era: "Готски", bonus: { defense: 10 }, set: "gothic_art" },
-    
-    // Български артефакти
     "sword_of_kubrat_hist": { id: "sword_of_kubrat_hist", name: "Мечът на Кубрат", icon: "⚔️", era: "Български", bonus: { heroPower: 25 }, set: "bulgarian_royal" },
     "ring_of_tervel": { id: "ring_of_tervel", name: "Пръстенът на Тервел", icon: "💍", era: "Български", bonus: { heroPower: 15, diplomacyBonus: 0.1 }, set: "bulgarian_royal" },
     "madara_horseman_relief": { id: "madara_horseman_relief", name: "Мадарски конник", icon: "🏇", era: "Български", bonus: { heroPower: 20, armyBonus: 0.1 }, set: "bulgarian_sacred" },
     "pliska_rosette": { id: "pliska_rosette", name: "Плисковска розета", icon: "⭐", era: "Български", bonus: { heroPower: 12, mysticismBonus: 0.1 }, set: "bulgarian_sacred" },
     "preslav_gold_treasure": { id: "preslav_gold_treasure", name: "Преславско златно съкровище", icon: "🏺", era: "Български", bonus: { goldBonus: 30 }, set: "bulgarian_imperial" },
     "khan_omurtag_column": { id: "khan_omurtag_column", name: "Колона на кан Омуртаг", icon: "🗿", era: "Български", bonus: { heroPower: 18 }, set: "bulgarian_imperial" },
-    
-    // Легендарни реликви
     "holy_lance_of_constantine": { id: "holy_lance_of_constantine", name: "Свещеното копие на Константин", icon: "🔱", era: "Легендарен", bonus: { heroPower: 30, armyBonus: 0.15 }, set: "holy_relics" },
     "true_cross_fragment": { id: "true_cross_fragment", name: "Фрагмент от Истинския кръст", icon: "✝️", era: "Легендарен", bonus: { heroPower: 25, mysticismBonus: 0.2 }, set: "holy_relics" },
     "ark_of_covenant_tablet": { id: "ark_of_covenant_tablet", name: "Таблет от Ковчега на Завета", icon: "📜", era: "Легендарен", bonus: { heroPower: 35 }, set: "holy_relics" },
-    
-    // Още артефакти до 60
     "golden_apple_of_discord": { id: "golden_apple_of_discord", name: "Златна ябълка на раздора", icon: "🍎", era: "Легендарен", bonus: { heroPower: 20, diplomacyBonus: -0.05 }, set: "mythical_artifacts" },
     "shield_of_achilles": { id: "shield_of_achilles", name: "Щитът на Ахил", icon: "🛡️", era: "Легендарен", bonus: { defense: 25 }, set: "mythical_artifacts" },
     "helmet_of_hades": { id: "helmet_of_hades", name: "Шлемът на Хадес", icon: "🪖", era: "Легендарен", bonus: { heroPower: 20, mysticismBonus: 0.15 }, set: "mythical_artifacts" },
@@ -411,7 +419,7 @@ window.grantDivinePet = function(hero, petId) {
     return true;
 };
 
-// Разширяване на глобалната функция за преизчисляване на мощта, за да включва бонуси от екипировъчни сетове
+// Разширяване на глобалната функция за преизчисляване на мощта
 if (typeof window.recalculateHeroPower === 'function') {
     const originalRecalc = window.recalculateHeroPower;
     window.recalculateHeroPower = function(hero) {
@@ -424,7 +432,7 @@ if (typeof window.recalculateHeroPower === 'function') {
     };
 }
 
-// ==================== ХУК ЗА АВТОМАТИЧНА ЕКИПИРОВКА ПРИ НИВАП ====================
+// Хук за автоматична екипировка при нивап
 if (typeof window.gainHeroXP === 'function') {
     const originalGainXP = window.gainHeroXP;
     window.gainHeroXP = function(hero, amount) {
@@ -463,7 +471,7 @@ if (typeof window.gainHeroXP === 'function') {
     };
 }
 
-// При инициализация, ако има герои в авто режим, правим еднократна автоматична екипировка
+// Инициализация: автоматична екипировка за авто герои
 setTimeout(() => {
     if (window.worldData && window.worldData.clans) {
         for (let key in window.worldData.clans) {
@@ -479,4 +487,4 @@ setTimeout(() => {
     }
 }, 1000);
 
-console.log("✅ items.js версия 6.1 зареден – без currentHero (използва getMainHeroForItems)");
+console.log("✅ items.js версия 6.2 зареден – добавено претопяване на артефакти");
