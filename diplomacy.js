@@ -1,6 +1,6 @@
 /**
 МОДУЛ: ДИПЛОМАЦИЯ И БРАК (ГРАНДИОЗНА ВЕРСИЯ + ХАРМОНИЗИРАНА)
-ВЕРСИЯ: 8.0 – БЕЗ currentHero, С updateStrongestHeroUI
+ВЕРСИЯ: 8.1 – ПОПРАВЕН СИНТАКСИС И ОТВАРЯНЕ НА БРАЧНИЯ ПРОЗОРЕЦ
 */
 // Гилдии и фракции
 window.guilds = {
@@ -12,7 +12,7 @@ window.factions = {
     duloSupporters: { name: "Поддръжници на Дуло", influence: 0, joined: false, benefits: { legitimacy: 0, cavalryBonus: 0 } },
     asenCouncil: { name: "Тайният съвет на Асеневци", influence: 0, joined: false, benefits: { defenseBonus: 0, resurrectionChance: 0 } }
 };
-window.guildQuests = []; // активни задачи за гилдии
+window.guildQuests = [];
 
 window.clanRelations = window.clanRelations || {};
 if (!window.prisoners) window.prisoners = [];
@@ -21,12 +21,19 @@ if (!window.prisoners) window.prisoners = [];
 window.offerGuildJoin = function(guildId) {
     const guild = window.guilds[guildId];
     if (!guild || guild.joined) return;
-    const ev = window.ChronicleEvents.generateGuildOffer(guildId);
-    window.showAdvisorMsg(ev.message, ev.buttons);
+    if (window.ChronicleEvents && typeof window.ChronicleEvents.generateGuildOffer === 'function') {
+        const ev = window.ChronicleEvents.generateGuildOffer(guildId);
+        window.showAdvisorMsg(ev.message, ev.buttons);
+    } else {
+        window.showAdvisorMsg(`🏛️ Можете да се присъедините към ${guild.name}. Тази функция ще бъде достъпна скоро.`);
+    }
 };
 
-// Изпълнение на задача за гилдия
-window.completeGuildQuest = function(guildId, questId) { ... };
+// Изпълнение на задача за гилдия (заглушка – попълнете по-късно)
+window.completeGuildQuest = function(guildId, questId) {
+    console.log(`completeGuildQuest: ${guildId}, ${questId} – все още не е имплементирано`);
+    window.showAdvisorMsg(`Задачата за гилдията ще бъде добавена в следващо обновление.`);
+};
 
 function flattenArray(arr) {
     if (!arr) return [];
@@ -192,6 +199,7 @@ window.marryPrisoner = function(index) {
     }
     if (window.openRegionsMap) window.openRegionsMap();
 };
+
 // ==================== ПРЕДЛОЖЕНИЕ ЗА СЪЮЗ МЕЖДУ ГЕРОИ ====================
 window.proposeAlliance = function(proposer, target) {
     if (!proposer || !target) {
@@ -228,7 +236,6 @@ window.proposeAlliance = function(proposer, target) {
 };
 
 window.proposeMarriage = function(clan, cost, successChance) {
-    // Взимаме главния герой (без currentHero)
     let hero = null;
     if (window.gameMode === 'solo') {
         hero = window.currentHero;
@@ -241,13 +248,11 @@ window.proposeMarriage = function(clan, cost, successChance) {
         return;
     }
     
-    // Проверка за злато
     if ((hero.gold || 0) < cost) {
         if (window.showAdvisorPopup) window.showAdvisorPopup("ГРЕШКА", "Нямате достатъчно злато!", "error");
         return;
     }
     
-    // Увери се, че clanRelations съществува
     if (!window.clanRelations) window.clanRelations = {};
     let currentRel = window.clanRelations[clan] || 40;
     let finalChance = Math.min(95, successChance + Math.floor((currentRel - 40) * 0.5));
@@ -283,13 +288,12 @@ window.proposeMarriage = function(clan, cost, successChance) {
         }
     }
     
-    // Обновяване на UI
     if (window.updateCharacterUI) window.updateCharacterUI(hero);
     if (typeof window.updateStrongestHeroUI === 'function') window.updateStrongestHeroUI();
 };
+
 // ==================== НОВ ГРАНДИОЗЕН БРАЧЕН ПРОЗОРЕЦ ====================
 window.openMarriageMenu = function() {
-    // Защита и инициализация на Diplomacy
     if (!window.clanRelations || Object.keys(window.clanRelations).length < 8) {
         console.warn("⚠️ clanRelations не е инициализиран! Инициализирам...");
         if (typeof window.initDiplomacy === 'function') {
@@ -316,7 +320,6 @@ window.openMarriageMenu = function() {
         return;
     }
 
-    // Добавяне на стилове (без промяна)
     if (!document.getElementById('wm-marriage-styles')) {
         const style = document.createElement('style');
         style.id = 'wm-marriage-styles';
@@ -412,7 +415,6 @@ window.openMarriageMenu = function() {
     `;
     document.body.appendChild(modal);
 
-    // Всички вътрешни функции, които използват getMainDiplomacyHero
     function getAllHeroes() {
         let heroes = [];
         if (window.worldData && window.worldData.clans) {
@@ -497,12 +499,8 @@ window.openMarriageMenu = function() {
     }
 
     function startConfetti() {
-        // Кратка confetti функция (без промяна)
         if (typeof window.confetti === 'function') window.confetti();
-        else {
-            // fallback
-            console.log("🎉 Confetti!");
-        }
+        else console.log("🎉 Confetti!");
     }
 
     function showResult(msg, isSuccess) {
@@ -533,7 +531,6 @@ window.openMarriageMenu = function() {
         let successChance = Math.min(95, affinity + potionBonus);
         let roll = Math.random() * 100;
         if (roll < successChance) {
-            // Успех – добавяме нов герой
             const newHeroName = `${hero1.name} & ${hero2.name}`;
             const newHeroId = "child_" + Date.now() + "_" + Math.floor(Math.random() * 10000);
             const newHero = {
@@ -569,7 +566,6 @@ window.openMarriageMenu = function() {
             window.worldData.clans[newHeroId] = newHero;
             if (!window.unlockedHeroes) window.unlockedHeroes = [];
             window.unlockedHeroes.push(newHero);
-            // Намаляваме ресурсите на главния герой (който плаща)
             let payingHero = getMainDiplomacyHero();
             if (payingHero) {
                 payingHero.gold -= goldCost;
@@ -595,7 +591,6 @@ window.openMarriageMenu = function() {
     function loadOldMarriageContent() {
         if (!oldContentDiv) return;
         let heroes = getAllHeroes();
-        let heroOptions = heroes.map(h => `<option value="${h.id}">${h.name} (Ниво ${h.level})</option>`).join('');
         let clansList = Object.keys(window.clanRelations).map(clan => {
             let rel = window.clanRelations[clan] || 40;
             let cost = 500 + Math.floor((100 - rel) * 3);
@@ -640,7 +635,6 @@ window.openMarriageMenu = function() {
         });
     }
 
-    // Свързване на DOM елементите
     let hero1Select = modal.querySelector('#wm-hero1');
     let hero2Select = modal.querySelector('#wm-hero2');
     let affinityFill = modal.querySelector('#wm-affinity-fill');
@@ -704,4 +698,4 @@ window.openMarriageMenu = function() {
     modal.classList.add('active');
 };
 
-console.log("✅ diplomacy.js версия 8.0 зареден – без currentHero, с updateStrongestHeroUI");
+console.log("✅ diplomacy.js версия 8.1 зареден – без currentHero, с updateStrongestHeroUI и оправен брачен прозорец");
