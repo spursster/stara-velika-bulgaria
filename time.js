@@ -1,7 +1,7 @@
 /**
  ==========================================================================
  МОДУЛ: ВРЕМЕ И ЛЕТОБРОЕНЕ - Велика България
- ВЕРСИЯ: 3.2 – БЕЗ currentHero, С ИЗВАДЕНА processWorldDynamics
+ ВЕРСИЯ: 3.3 – С ИНТЕГРАЦИЯ НА resolvePendingChoices (УМЕНИЯ И КЛАСОВЕ)
  ==========================================================================
  */
 
@@ -71,7 +71,6 @@ function applyAgeEffects(hero) {
     if (!hero) return;
     if (window.immortalHeroes) {
         // Безсмъртни герои – няма намаляване на силата, няма смърт от старост
-        // Възрастта се увеличава, но без ефект
         return;
     }
     // Алтернативен режим (ако някога се включи) – оставяме логиката, но тя не се използва
@@ -87,7 +86,6 @@ function applyAgeEffects(hero) {
             if (window.renderTop6HeroesUI) window.renderTop6HeroesUI();
         }
     }
-    // Премахната зависимост от window.currentHero – няма специално изключение за "активен герой"
     if (age >= 80) {
         let deathChance = Math.min(0.15, (age - 80) * 0.02);
         if (Math.random() < deathChance) {
@@ -110,41 +108,27 @@ function applyAgeEffects(hero) {
 window.processWorldDynamics = function() {
     if (!window.worldData || !window.worldData.clans) return;
     
-    // Вземаме всички кланове (герои) – без филтър за currentHero
     const clans = Object.values(window.worldData.clans);
-    
-    // Намираме "играча" – първия любим или най-силния, но не е задължително да има currentHero
     let playerHero = null;
     if (typeof window.getStrongestHero === 'function') {
         playerHero = window.getStrongestHero();
     }
-    if (!playerHero && window.currentHero) playerHero = window.currentHero; // резерв за соло режим
+    if (!playerHero && window.currentHero) playerHero = window.currentHero;
     
     clans.forEach(hero => {
-        // Пропускаме мъртвите герои
         if (hero.isAlive === false) return;
-        // Пропускаме героя на играча (ако е намерен)
         if (playerHero && hero.name === playerHero.name) return;
         
-        // 1. Агресивните герои стават активни
         if (hero.aggression > 0.5) {
-            // Шанс за NPC-срещу-NPC битка
             const randomTarget = clans[Math.floor(Math.random() * clans.length)];
-            
             if (randomTarget && randomTarget.name !== hero.name && randomTarget.isAlive !== false) {
-                // Избягваме да атакуваме играча (за да не се обърква)
                 if (playerHero && randomTarget.name === playerHero.name) return;
-                
-                // Имитация на битка/завладяване
                 window.addWorldEvent("⚔️ ВОЙНА", `${hero.name} атакува териториите на ${randomTarget.name}!`, "🔥", window.gameTime.year);
-                
-                // Тук викаш логиката за промяна на показателите (напр. отнемане на сила)
                 hero.heroPower = (hero.heroPower || 100) + 10;
                 randomTarget.heroPower = Math.max(0, (randomTarget.heroPower || 100) - 15);
             }
         }
         
-        // 2. Икономическа активност (за герои с висок Ambition)
         if (hero.traits && hero.traits.some(t => t.cat === 'amb')) {
             hero.gold = (hero.gold || 0) + 50;
         }
@@ -182,7 +166,6 @@ window.processTime = function() {
                 }
             }
         }
-        // Премахната зависимост от window.currentHero – вече не увеличаваме възрастта на несъществуващ обект
         
         checkHistoricalEvents();
         
@@ -200,6 +183,11 @@ window.processTime = function() {
     if (typeof window.triggerAutomatedHeroActions === 'function') window.triggerAutomatedHeroActions();
     if (typeof window.checkRandomAttack === 'function') window.checkRandomAttack();
     if (typeof window.processWorldDynamics === 'function') window.processWorldDynamics();
+    
+    // ========== АВТОМАТИЧНО РЕШАВАНЕ НА ВИСЯЩИ ПРЕДЛОЖЕНИЯ (УМЕНИЯ И КЛАСОВЕ) ==========
+    if (typeof window.resolvePendingChoices === 'function') {
+        window.resolvePendingChoices();
+    }
 };
 
 // Стартиране
@@ -218,4 +206,4 @@ if (document.readyState === 'loading') {
 window.applyAgeEffects = applyAgeEffects;
 window.checkHistoricalEvents = checkHistoricalEvents;
 
-console.log("✅ time.js версия 3.2 зареден – без currentHero, с извадена processWorldDynamics");
+console.log("✅ time.js версия 3.3 зареден – с поддръжка на resolvePendingChoices");
