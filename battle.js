@@ -1,12 +1,12 @@
 /**
 ==========================================================================
 ПРОЕКТ: ВЕЛИКА БЪЛГАРИЯ
-ФАЙЛ: battle.js (ВЕРСИЯ 8.5 – С ПОДКРЕПЛЕНИЯ ОТ НЕЛЮБИМИ ГЕРОИ)
+ФАЙЛ: battle.js (ВЕРСИЯ 8.6 – БУТОНЪТ ЗА БИТКА ВОДИ ДО СЛУЧАЕН НЕПРИЯТЕЛСКИ РЕГИОН)
 ==========================================================================
 */
 
 (function() {
-    // ==================== СТИЛОВЕ (актуализирани за множество врагове) ====================
+    // ==================== СТИЛОВЕ (същите като във версия 8.5) ====================
     if (!document.getElementById('battle-styles-v2')) {
         const style = document.createElement('style');
         style.id = 'battle-styles-v2';
@@ -322,7 +322,6 @@
     window._battleNarrative = [];
     function addNarrative(text, type = "info") {
         window._battleNarrative.push({ text, type, time: Date.now() });
-        // Ограничаваме дължината на наратива до 40 събития, за да не прекалява
         if (window._battleNarrative.length > 40) window._battleNarrative.shift();
     }
     function resetNarrative() {
@@ -596,15 +595,39 @@
         resetNarrative();
         console.log("⚔️ startBattle извикана с:", regionInput);
 
+        // ========== КОРЕКЦИЯ: АКО Е "МИЗИЯ", ИЗБИРАМЕ СЛУЧАЕН НЕПРИЯТЕЛСКИ РЕГИОН ==========
+        let finalRegionInput = regionInput;
+        if (regionInput === "Мизия") {
+            // Намираме всички региони, които не са владение на играча
+            let ownedRegions = [];
+            if (window.playerRegions) {
+                ownedRegions = Array.isArray(window.playerRegions) ? window.playerRegions.flat() : [window.playerRegions];
+            }
+            let availableRegions = [];
+            if (window.worldData && window.worldData.regions) {
+                for (let r in window.worldData.regions) {
+                    if (!ownedRegions.includes(r) && window.worldData.regions[r].armySize > 0) {
+                        availableRegions.push(r);
+                    }
+                }
+            }
+            if (availableRegions.length > 0) {
+                finalRegionInput = availableRegions[Math.floor(Math.random() * availableRegions.length)];
+                console.log(`Бутонът за битка избра случаен регион: ${finalRegionInput}`);
+            } else {
+                console.warn("Няма свободни вражески региони, остава Мизия");
+            }
+        }
+
         let regionName = "Регион";
         let enemyPower = 200;
         let enemyHp = 200;
         let regionObject = null;
 
-        if (typeof regionInput === 'string') {
-            regionName = regionInput;
-            if (window.worldData && window.worldData.regions && window.worldData.regions[regionInput]) {
-                regionObject = window.worldData.regions[regionInput];
+        if (typeof finalRegionInput === 'string') {
+            regionName = finalRegionInput;
+            if (window.worldData && window.worldData.regions && window.worldData.regions[finalRegionInput]) {
+                regionObject = window.worldData.regions[finalRegionInput];
                 let basePower = regionObject.armySize || 100;
                 let defenseBonus = (regionObject.defenseLevel || 1) * 10;
                 if (regionObject.buildings && regionObject.buildings.wall) {
@@ -612,13 +635,13 @@
                 }
                 enemyPower = Math.max(50, basePower + defenseBonus);
                 enemyHp = enemyPower;
-                regionName = regionObject.name || regionInput;
+                regionName = regionObject.name || finalRegionInput;
             }
-        } else if (regionInput && typeof regionInput === 'object') {
-            regionName = regionInput.name || regionInput.id || "Портал";
-            enemyPower = regionInput.armySize || regionInput.difficulty * 12 || 200;
+        } else if (finalRegionInput && typeof finalRegionInput === 'object') {
+            regionName = finalRegionInput.name || finalRegionInput.id || "Портал";
+            enemyPower = finalRegionInput.armySize || finalRegionInput.difficulty * 12 || 200;
             enemyHp = enemyPower;
-            regionObject = regionInput;
+            regionObject = finalRegionInput;
         }
 
         // Събираме героите на играча (любими + всички живи)
@@ -893,11 +916,9 @@
             let totalDamage = 0;
 
             for (let hero of aliveHeroes) {
-                // Избираме жив враг (първият с HP > 0)
                 let target = currentEnemies.find(e => e.hp > 0);
-                if (!target) break; // няма жив враг
+                if (!target) break;
 
-                // Изчисляване на щетите (същата логика като преди)
                 let baseDamage = Math.max(1, Math.floor(hero.power * (0.5 + Math.random() * 0.7)));
                 let troopEffects = hero.troopEffects || {};
                 let petEffects = getPetEffects(hero.clanObj);
@@ -978,10 +999,8 @@
             addLog(`📊 ОБЩО: ${totalDamage} щети`);
             if (totalDamage > 0) addNarrative(`📊 Общо нанесени щети: ${totalDamage}.`);
 
-            // Проверка за победа (всички врагове мъртви)
             const allEnemiesDead = currentEnemies.every(e => e.hp <= 0);
             if (allEnemiesDead) {
-                // Победа!
                 addLog(`━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`);
                 addLog(`🏆 ПОБЕДА! Всички врагове са победени! 🏆`);
                 let totalXP = 50 + Math.floor(Math.random() * 100);
@@ -997,7 +1016,6 @@
                     if (window.addHeroLog) window.addHeroLog(hero.clanObj, "⚔️", `Победи в битката за ${regionName}`);
                 });
                 
-                // Добавяне на регион (ако е регион)
                 if (typeof regionName === 'string' && regionName !== "Портал") {
                     if (typeof window.normalizePlayerRegions === 'function') window.normalizePlayerRegions();
                     else {
@@ -1019,7 +1037,6 @@
                     } else addLog(`   ℹ️ ${regionName} вече е ваш.`);
                 }
                 
-                // Артефакт
                 let newArtifact = null;
                 if (Math.random() < 0.2 && window.historicalArtifacts) {
                     const artifactKeys = Object.keys(window.historicalArtifacts);
@@ -1038,7 +1055,6 @@
                     }
                 }
                 
-                // Пленник
                 if (Math.random() < 0.15 && window.fantasyRaces && window.fantasyRaces.length > 0) {
                     const randomRace = window.fantasyRaces[Math.floor(Math.random() * window.fantasyRaces.length)];
                     const prisoner = { id: Date.now() + "_" + Math.random(), name: randomRace.name, raceId: randomRace.id, icon: randomRace.icon, desc: randomRace.desc, bonus: randomRace.bonus, capturedFrom: regionName };
@@ -1048,7 +1064,6 @@
                     if (window.addWorldEvent) window.addWorldEvent(`👸 ПЛЕННИК`, `След битката взехте ${prisoner.name} като пленник!`, "👸");
                 }
                 
-                // Портал бонус
                 if (regionInput && regionInput.isPortalWorld) {
                     const extraBonus = 50 + Math.floor(Math.random() * 100);
                     const randomHero = livingHeroes[Math.floor(Math.random() * livingHeroes.length)];
@@ -1060,14 +1075,12 @@
                 
                 if (window.addWorldEvent) window.addWorldEvent(`🏆 ПОБЕДА В БИТКА`, `${playerHeroes.map(h => h.name).join(', ')} победиха в ${regionName}!`, "🏆");
                 
-                // Прилагане на щети към оригиналните герои
                 for (let i = 0; i < currentHeroes.length; i++) {
                     let battleHero = currentHeroes[i];
                     let originalHero = battleHero.clanObj;
                     if (originalHero && battleHero.hp !== undefined) applyBattleOutcome(originalHero, battleHero);
                 }
                 
-                // Генериране на разказ
                 const rewards = { gold: totalGold, xp: totalXP, artifact: newArtifact || null };
                 const story = generateBattleStory(regionName, playerHeroes, currentEnemies, true, rewards);
                 if (window.showAdvisorMsg) window.showAdvisorMsg(story);
@@ -1087,7 +1100,6 @@
             return true;
         }
 
-        // Враговете атакуват (всеки жив враг атакува случаен герой)
         function enemiesAttack() {
             if (!battleActive) return false;
             const aliveHeroes = currentHeroes.filter(h => h.hp > 0);
@@ -1250,5 +1262,5 @@
     };
 
     window.refreshAllHeroUI = refreshAllHeroUI;
-    console.log("✅ battle.js зареден (версия 8.5 – с подкрепления от нелюбими герои)");
+    console.log("✅ battle.js зареден (версия 8.6 – бутонът за битка води до случаен враг)");
 })();
