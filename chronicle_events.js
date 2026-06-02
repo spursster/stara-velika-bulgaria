@@ -28,23 +28,6 @@ window.ChronicleEvents.generateHeroOffer = function(candidate, cost) {
     };
 };
 
-// Инвестиция
-//window.ChronicleEvents.generateInvestmentOpportunity = function(hero, amount, profit, turns) {
-    return {
-        //message: `💎 Инвестирайте ${amount} злато за ${turns} хода, печалба ${profit}.`,
-        buttons: [
-            { label: `💸 Инвестирай`, action: () => {
-                if (hero.gold >= amount) {
-                    hero.gold -= amount;
-                    setTimeout(() => { hero.gold += profit; window.showAdvisorMsg(`Инвестицията донесе ${profit} злато.`); }, 30000);
-                    window.showAdvisorMsg(`Инвестирахте ${amount} злато.`);
-                } else window.showAdvisorMsg(`Нямате достатъчно злато.`);
-            }},
-            { label: '🚫 Откажи', action: () => window.showAdvisorMsg(`Отказахте инвестицията.`) }
-        ]
-    };
-};
-
 // Артефакт
 window.ChronicleEvents.generateArtifactFound = function(hero, artifact) {
     let bonus = artifact.bonus ? `+${artifact.bonus.heroPower || 0} сила` : '';
@@ -84,4 +67,53 @@ window.ChronicleEvents.generatePersonalityChange = function(hero, oldTrait, newT
     };
 };
 
-console.log("✅ chronicle_events.js зареден – генераторите са готови");
+// ========== ГЕНЕРАТОР ЗА НОВА ТОЧКА УМЕНИЕ ==========
+window.ChronicleEvents.generateSkillPointOffer = function(hero) {
+    return {
+        message: `⭐ ${hero.name} получи точка умение! (Общо точки: ${hero.skillPoints})`,
+        buttons: [
+            { label: '📖 Отвори уменията', action: () => {
+                if (typeof window.openSkillsUI === 'function') window.openSkillsUI(hero);
+                else window.showAdvisorMsg(`Отворете дърветата с умения от профила на героя.`);
+            }},
+            { label: '🤖 Автоматично разпредели', action: () => {
+                if (typeof window.autoAssignSkillPoint === 'function') {
+                    window.autoAssignSkillPoint(hero);
+                    window.showAdvisorMsg(`✅ ${hero.name} автоматично научи умение.`);
+                    if (typeof window.updateCharacterUI === 'function') window.updateCharacterUI(hero);
+                    if (typeof window.updateStrongestHeroUI === 'function') window.updateStrongestHeroUI();
+                }
+            }},
+            { label: '⏳ Отложи', action: () => {
+                window.showAdvisorMsg(`Точката е запазена. На следващия ход ще се разпредели според личността на героя.`);
+            }}
+        ]
+    };
+};
+
+// ========== ГЕНЕРАТОР ЗА ЕВОЛЮЦИЯ НА КЛАС ==========
+window.ChronicleEvents.generateClassEvolutionOffer = function(hero, oldClass, newClass) {
+    return {
+        message: `🌟 ${hero.name} може да се издигне от "${oldClass}" до "${newClass}"! Желаете ли да приемете новия клас?`,
+        buttons: [
+            { label: '✅ Приеми', action: () => {
+                hero.currentClass = newClass;
+                if (typeof window.applyClassBonuses === 'function') window.applyClassBonuses(hero, newClass);
+                window.showAdvisorMsg(`🎉 ${hero.name} вече е ${newClass}!`);
+                if (typeof window.updateCharacterUI === 'function') window.updateCharacterUI(hero);
+                if (typeof window.updateStrongestHeroUI === 'function') window.updateStrongestHeroUI();
+                if (window._pendingClassEvolution && window._pendingClassEvolution[hero.id]) {
+                    delete window._pendingClassEvolution[hero.id];
+                }
+            }},
+            { label: '❌ Откажи', action: () => {
+                window.showAdvisorMsg(`Отказахте еволюцията на ${hero.name}. При следващо ниво ще може да опитате отново.`);
+                if (window._pendingClassEvolution && window._pendingClassEvolution[hero.id]) {
+                    delete window._pendingClassEvolution[hero.id];
+                }
+            }}
+        ]
+    };
+};
+
+console.log("✅ chronicle_events.js зареден – генераторите са готови (вкл. умения и класове)");
