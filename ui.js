@@ -74,23 +74,18 @@ function renderTopHeroTroops(hero) {
 }
 let updateStrongestHeroTimer = null;
 window.updateStrongestHeroUI = function() {
-    // Ако вече има планирано обновяване, го отлагаме
     if (updateStrongestHeroTimer) clearTimeout(updateStrongestHeroTimer);
     updateStrongestHeroTimer = setTimeout(() => {
-        updateStrongestHeroTimer = null;
-        // Реална работа – извличаме най-силния герой
         const hero = window.getStrongestHero();
         if (!hero) return;
-        
-        // Обновяваме стандартните полета
+
         const goldSpan = document.getElementById('val-gold');
         if (goldSpan) goldSpan.innerText = hero.gold;
         const armySpan = document.getElementById('val-army');
         if (armySpan) armySpan.innerText = hero.armySize || 0;
         const powerSpan = document.getElementById('val-hero-power');
         if (powerSpan) powerSpan.innerText = hero.heroPower || 100;
-        
-        // Хелпер за обновяване на контейнер
+
         function updateProfileContainer(container) {
             if (!container) return;
             let petStatus = "Няма";
@@ -110,7 +105,7 @@ window.updateStrongestHeroUI = function() {
             `;
             const troopsHtml = renderTopHeroTroops(hero);
             container.innerHTML = topHeroTitle + heroInfo + troopsHtml;
-            
+
             if (hero.portrait) {
                 let existingImg = container.querySelector('.hero-portrait-img');
                 if (!existingImg) {
@@ -118,18 +113,18 @@ window.updateStrongestHeroUI = function() {
                     img.className = 'hero-portrait-img';
                     img.style.cssText = 'width: 60px; height: 60px; border-radius: 50%; margin-bottom: 10px; border: 2px solid #d4af37; object-fit: cover;';
                     container.prepend(img);
-                    existingImg = img;
+                } else {
+                    existingImg.src = hero.portrait;
                 }
-                existingImg.src = hero.portrait;
             } else {
                 const oldImg = container.querySelector('.hero-portrait-img');
                 if (oldImg) oldImg.remove();
             }
         }
-        
+
         const desktopProfile = document.getElementById('active-character-profile');
         updateProfileContainer(desktopProfile);
-        
+
         const mobileSection = document.getElementById('mobile-profile-section');
         if (mobileSection) {
             const mobileProfileBox = mobileSection.querySelector('#active-character-profile');
@@ -144,28 +139,9 @@ window.updateStrongestHeroUI = function() {
                 }
             }
         }
-    }, 80); // 80ms забавяне – всички извиквания в рамките на 80ms се групират
-};
-    // Обновяване на десктоп профила (лявата странична лента)
-    const desktopProfile = document.getElementById('active-character-profile');
-    updateProfileContainer(desktopProfile);
-    
-    // Обновяване на мобилния профил, ако съществува (за телефони)
-    const mobileSection = document.getElementById('mobile-profile-section');
-    if (mobileSection) {
-        const mobileProfileBox = mobileSection.querySelector('#active-character-profile');
-        if (mobileProfileBox) {
-            updateProfileContainer(mobileProfileBox);
-            // Възстановяваме функционалността на RPG бутона (ако има)
-            const rpgBtn = mobileProfileBox.querySelector('#open-rpg-modal-btn');
-            if (rpgBtn && !rpgBtn.hasAttribute('data-mobile-fixed')) {
-                rpgBtn.onclick = function() {
-                    if (window.openHeroRPGModal) window.openHeroRPGModal(hero.clan);
-                };
-                rpgBtn.setAttribute('data-mobile-fixed', 'true');
-            }
-        }
-    }
+
+        updateStrongestHeroTimer = null;
+    }, 80);
 };
 window.updateTimeUI = function() {
     if (!window.gameTime) return;
