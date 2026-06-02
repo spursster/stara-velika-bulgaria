@@ -116,4 +116,24 @@ window.ChronicleEvents.generateClassEvolutionOffer = function(hero, oldClass, ne
     };
 };
 
+window.ChronicleEvents.generateGuildOffer = function(guildId) {
+    const guild = window.guilds[guildId];
+    return {
+        message: `🏛️ Достигнахте ниво 3! ${guild.name} ви кани да се присъедините.`,
+        buttons: [
+            { label: '✅ Присъедини се', action: () => {
+                guild.joined = true;
+                window.showAdvisorMsg(`Вие сте член на ${guild.name}!`);
+                // Даваме начален бонус
+                if (guildId === 'merchants') guild.benefits.goldBonus = 50;
+                else if (guildId === 'warriors') guild.benefits.attackBonus = 10;
+                else if (guildId === 'mages') guild.benefits.spellPower = 15;
+                // Запазване
+                if (window.saveGreatBulgariaGame) window.saveGreatBulgariaGame();
+            }},
+            { label: '❌ Откажи', action: () => window.showAdvisorMsg(`Отказахте поканата.`) }
+        ]
+    };
+};
+
 console.log("✅ chronicle_events.js зареден – генераторите са готови (вкл. умения и класове)");
