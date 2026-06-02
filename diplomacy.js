@@ -2,9 +2,31 @@
 МОДУЛ: ДИПЛОМАЦИЯ И БРАК (ГРАНДИОЗНА ВЕРСИЯ + ХАРМОНИЗИРАНА)
 ВЕРСИЯ: 8.0 – БЕЗ currentHero, С updateStrongestHeroUI
 */
+// Гилдии и фракции
+window.guilds = {
+    merchants: { name: "Търговска гилдия", influence: 0, joined: false, benefits: { goldBonus: 0, tradeDiscount: 0 } },
+    warriors: { name: "Гилдия на воините", influence: 0, joined: false, benefits: { attackBonus: 0, armyRecruitmentSpeed: 0 } },
+    mages: { name: "Магическа гилдия", influence: 0, joined: false, benefits: { spellPower: 0, artifactDiscovery: 0 } }
+};
+window.factions = {
+    duloSupporters: { name: "Поддръжници на Дуло", influence: 0, joined: false, benefits: { legitimacy: 0, cavalryBonus: 0 } },
+    asenCouncil: { name: "Тайният съвет на Асеневци", influence: 0, joined: false, benefits: { defenseBonus: 0, resurrectionChance: 0 } }
+};
+window.guildQuests = []; // активни задачи за гилдии
 
 window.clanRelations = window.clanRelations || {};
 if (!window.prisoners) window.prisoners = [];
+
+// Показва предложение за присъединяване към гилдия (в летописа)
+window.offerGuildJoin = function(guildId) {
+    const guild = window.guilds[guildId];
+    if (!guild || guild.joined) return;
+    const ev = window.ChronicleEvents.generateGuildOffer(guildId);
+    window.showAdvisorMsg(ev.message, ev.buttons);
+};
+
+// Изпълнение на задача за гилдия
+window.completeGuildQuest = function(guildId, questId) { ... };
 
 function flattenArray(arr) {
     if (!arr) return [];
