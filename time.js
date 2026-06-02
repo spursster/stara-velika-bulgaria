@@ -8,6 +8,37 @@
 // Настройка за безсмъртие (по подразбиране true)
 if (window.immortalHeroes === undefined) window.immortalHeroes = true;
 
+// След като съберете 2 или 3 артефакта от един сет, се показва бутон за активиране
+window.pendingSetBonuses = {}; // key: setKey, value: heroId
+window.artifactSalvageCurrency = 0; // "есенция на реликви"
+
+// Проверява дали героят има 2+ артефакта от един сет
+window.checkSetCompletion = function(hero) {
+    if (!hero.inventory) return;
+    const setCounts = {};
+    for (let art of hero.inventory) {
+        if (art && art.set) setCounts[art.set] = (setCounts[art.set] || 0) + 1;
+    }
+    for (let setKey in setCounts) {
+        if (setCounts[setKey] >= 2 && !hero.activeSetBonuses?.[setKey]) {
+            // Показваме интерактивно съобщение
+            const ev = window.ChronicleEvents.generateSetBonusOffer(setKey, setCounts[setKey]);
+            window.showAdvisorMsg(ev.message, ev.buttons);
+            window.pendingSetBonuses[setKey] = hero.id;
+        }
+    }
+};
+
+window.salvageArtifact = function(hero, artifactIndex) {
+    const artifact = hero.inventory[artifactIndex];
+    if (!artifact) return;
+    const essence = Math.floor(artifact.rarity * 10) || 10;
+    window.artifactSalvageCurrency = (window.artifactSalvageCurrency || 0) + essence;
+    hero.inventory.splice(artifactIndex, 1);
+    window.showAdvisorMsg(`🔮 Претопихте "${artifact.name}" и получихте ${essence} есенция на реликви.`);
+    // Може да добавим бутон за използване на есенцията за подобряване на друг артефакт
+};
+
 // Помощна функция за показване на съобщения
 function showTimeMessage(title, message, type = "info") {
     if (window.showAdvisorPopup) {
