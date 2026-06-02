@@ -75,52 +75,70 @@ function renderTopHeroTroops(hero) {
 let updateStrongestHeroTimer = null;
 // Нова функция: сумира злато, армия и сила на всички живи герои
 window.updateTotalStatsUI = function() {
-    let totalGold = 0;
-    let totalArmy = 0;
-    let totalPower = 0;
+    console.log("updateTotalStatsUI извикана"); // за дебъг
+    let totalGold = 0, totalArmy = 0, totalPower = 0;
     if (window.worldData && window.worldData.clans) {
         for (let key in window.worldData.clans) {
             let hero = window.worldData.clans[key];
-            if (hero.isJoined && hero.isAlive !== false) {
-                totalGold += hero.gold || 0;
-                totalArmy += hero.armySize || 0;
-                totalPower += hero.heroPower || 0;
+            // Внимавай: isJoined трябва да е true, isAlive да не е false
+            if (hero && hero.isJoined === true && hero.isAlive !== false) {
+                totalGold += (typeof hero.gold === 'number' ? hero.gold : 0);
+                totalArmy += (typeof hero.armySize === 'number' ? hero.armySize : 0);
+                totalPower += (typeof hero.heroPower === 'number' ? hero.heroPower : 0);
             }
         }
     }
+    // Обновяване на HTML
     const goldSpan = document.getElementById('val-gold');
-    if (goldSpan) goldSpan.innerText = totalGold;
     const armySpan = document.getElementById('val-army');
-    if (armySpan) armySpan.innerText = totalArmy;
     const powerSpan = document.getElementById('val-hero-power');
+    if (goldSpan) goldSpan.innerText = totalGold;
+    if (armySpan) armySpan.innerText = totalArmy;
     if (powerSpan) powerSpan.innerText = totalPower;
+    console.log("Сумарни стойности:", totalGold, totalArmy, totalPower);
     
-    // Обновяваме левия панел (Топ герой) – използваме getStrongestHero
+    // Ляв панел (Топ герой) – без да засягаме горните
     const strongest = window.getStrongestHero();
-    if (strongest && typeof window.updateCharacterUI === 'function') {
-        window.updateCharacterUI(strongest);
+    if (strongest) {
+        const profileBox = document.getElementById('active-character-profile');
+        if (profileBox) {
+            let petStatus = "Няма";
+            if (strongest.pet && window.rpgDatabase?.petsDatabase?.[strongest.pet]) {
+                const p = window.rpgDatabase.petsDatabase[strongest.pet];
+                petStatus = p.icon + " " + p.name;
+            }
+            const topHeroTitle = '<div style="font-weight:bold; font-size:1rem; color:#ffd700;">🏆 Топ герой</div>';
+            const heroInfo = `
+                <div style="font-weight:bold;font-size:1.2rem;">${strongest.name || "Неизвестен"}</div>
+                <div>Клан ${strongest.clan || "Свободен"} | ${window.getClassIcon ? window.getClassIcon(strongest.currentClass) : '⚔️'} Клас: ${strongest.currentClass || "Багатур"}</div>
+                <div>Ниво: ${strongest.level || 1}</div>
+                <div>Възраст: ${strongest.age || 50} г.</div>
+                <div>Бойна Сила: ⚔️ ${strongest.heroPower || 150}</div>
+                <div>Свободни точки: ${strongest.skillPoints || 0}</div>
+                <div>Любимец: ${petStatus}</div>
+            `;
+            const troopsHtml = (typeof renderTopHeroTroops === 'function') ? renderTopHeroTroops(strongest) : '';
+            profileBox.innerHTML = topHeroTitle + heroInfo + troopsHtml;
+        }
+        if (strongest.portrait) {
+            const profileBox = document.getElementById('active-character-profile');
+            if (profileBox) {
+                let existingImg = profileBox.querySelector('.hero-portrait-img');
+                if (!existingImg) {
+                    const img = document.createElement('img');
+                    img.className = 'hero-portrait-img';
+                    img.style.cssText = 'width: 60px; height: 60px; border-radius: 50%; margin-bottom: 10px; border: 2px solid #d4af37; object-fit: cover;';
+                    profileBox.prepend(img);
+                } else {
+                    existingImg.src = strongest.portrait;
+                }
+            }
+        }
     }
 };
 
-// За съвместимост – старата функция да сочи към новата (за да не се счупят други извиквания)
+// Алиас (важно!)
 window.updateStrongestHeroUI = window.updateTotalStatsUI;
-window.updateTimeUI = function() {
-    if (!window.gameTime) return;
-    const timeDisplay = document.getElementById('current-time-info');
-    const targetEl = timeDisplay || window.timeElement || document.querySelector('.stat-box:last-child');
-    if (!targetEl) {
-        console.warn("⚠️ updateTimeUI: Елемент за време не е намерен в DOM.");
-        return;
-    }
-    window.timeElement = targetEl;
-    const SVB_SEASONS = ["🌱 Пролет", "☀️ Лято", "🍂 Есен", "❄️ Зима"];
-    const safeIndex = Math.max(0, Math.min(3, window.gameTime.seasonIndex || 0));
-    const currentSeason = SVB_SEASONS[safeIndex] || "Сезон";
-    targetEl.innerHTML = `⏳ ${currentSeason} ${window.gameTime.year || 0} г. ${window.gameTime.era || ""}`;
-};
-
-window.eventHistory = []; 
-if (!window.autoLevelState) { window.autoLevelState = {}; }
 
 // ==================== ИКОНКА ЗА КЛАС ====================
 function getClassIcon(className) {
