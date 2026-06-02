@@ -1006,17 +1006,23 @@ window.showAdvisorMsg = function(msg, buttons) {
     
     if (buttons && buttons.length) {
         let wrap = document.createElement('div');
-        wrap.style.marginTop = '6px';
+        wrap.style.marginTop = '8px';          // отделя бутоните от текста
         wrap.style.display = 'flex';
+        wrap.style.flexWrap = 'wrap';
         wrap.style.gap = '6px';
+        wrap.style.justifyContent = 'flex-start';
         buttons.forEach(b => {
             let btn = document.createElement('button');
             btn.innerText = b.label;
             btn.style.background = '#d4af37';
             btn.style.border = 'none';
             btn.style.borderRadius = '20px';
-            btn.style.padding = '2px 10px';
+            btn.style.padding = '4px 12px';
+            btn.style.fontSize = '12px';
+            btn.style.fontWeight = 'bold';
             btn.style.cursor = 'pointer';
+            btn.style.color = '#000';
+            btn.style.whiteSpace = 'nowrap';
             btn.onclick = () => { b.action(); wrap.remove(); };
             wrap.appendChild(btn);
         });
@@ -1566,6 +1572,12 @@ if (typeof window.updateStrongestHeroUI === 'function') window.updateStrongestHe
             transition: 0.1s;
             white-space: nowrap;
         }
+        /* Осигуряваме, че бутоните са на нов ред и не залепват за текста */
+        .chronicle-event div[style*="display: flex"] {
+            flex-wrap: wrap !important;
+            gap: 6px !important;
+            margin-top: 8px !important;
+        }
         /* За мобилни устройства (ширина под 768px) */
         @media (max-width: 768px) {
             .chronicle-event button {
@@ -1574,6 +1586,10 @@ if (typeof window.updateStrongestHeroUI === 'function') window.updateStrongestHe
                 border-radius: 16px !important;
                 white-space: normal !important;
                 word-break: keep-all;
+            }
+            .chronicle-event div[style*="display: flex"] {
+                gap: 4px !important;
+                margin-top: 6px !important;
             }
             .chronicle-event {
                 padding: 4px !important;
@@ -1591,11 +1607,14 @@ if (typeof window.updateStrongestHeroUI === 'function') window.updateStrongestHe
                 padding: 2px 6px !important;
                 font-size: 8px !important;
             }
+            .chronicle-event div[style*="display: flex"] {
+                gap: 3px !important;
+                margin-top: 5px !important;
+            }
         }
     `;
     document.head.appendChild(style);
 })();
-
 // Перманентна синхронизация на HP след всяка битка
 if (typeof window.endGroupBattle === 'function') {
     const originalEndBattle = window.endGroupBattle;
