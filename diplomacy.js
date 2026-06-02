@@ -127,16 +127,23 @@ window.processClanDiplomacyAutomation = function() {
 
 window.marryPrisoner = function(index) {
     if (!window.prisoners || !window.prisoners[index]) {
-        showDiplomacyMessage("ГРЕШКА", "Пленницата не е намерена!", "error");
-        return;
-    }
-    const prisoner = window.prisoners[index];
-    const mainHero = getMainDiplomacyHero();
-    if (!mainHero) {
-        showDiplomacyMessage("ГРЕШКА", "Няма намерен герой за брак!", "error");
+        if (window.showAdvisorPopup) window.showAdvisorPopup("ГРЕШКА", "Пленницата не е намерена!", "error");
         return;
     }
     
+    let hero = null;
+    if (window.gameMode === 'solo') {
+        hero = window.currentHero;
+    } else {
+        if (typeof window.getSelectedHero === 'function') hero = window.getSelectedHero();
+        if (!hero && typeof window.getStrongestHero === 'function') hero = window.getStrongestHero();
+    }
+    if (!hero) {
+        if (window.showAdvisorPopup) window.showAdvisorPopup("ГРЕШКА", "Няма намерен герой за брак!", "error");
+        return;
+    }
+    
+    const prisoner = window.prisoners[index];
     const newHeroId = "wife_" + Date.now() + "_" + Math.floor(Math.random() * 10000);
     const wifeHero = {
         id: newHeroId,
@@ -173,16 +180,18 @@ window.marryPrisoner = function(index) {
     if (window.armyMarket && typeof window.armyMarket.sync === 'function') window.armyMarket.sync(wifeHero);
     window.prisoners.splice(index, 1);
     
-    if (window.updateCharacterUI) window.updateCharacterUI(mainHero);
+    if (window.updateCharacterUI) window.updateCharacterUI(hero);
     if (typeof window.renderSingleBar === 'function') window.renderSingleBar();
     if (typeof window.updateStrongestHeroUI === 'function') window.updateStrongestHeroUI();
     
     const bonusText = Object.entries(prisoner.bonus || {}).map(([k,v]) => `${k}+${v}`).join(', ');
-    showDiplomacyMessage("💍 БРАК", `${prisoner.name} се присъедини към вашия род! Бонуси: ${bonusText}`, "success");
+    if (window.showAdvisorPopup) {
+        window.showAdvisorPopup("💍 БРАК", `${prisoner.name} се присъедини към вашия род! Бонуси: ${bonusText}`, "success");
+    } else if (window.showAdvisorMsg) {
+        window.showAdvisorMsg(`💍 БРАК: ${prisoner.name} се присъедини към вашия род! Бонуси: ${bonusText}`);
+    }
     if (window.openRegionsMap) window.openRegionsMap();
 };
-
-
 // ==================== ПРЕДЛОЖЕНИЕ ЗА СЪЮЗ МЕЖДУ ГЕРОИ ====================
 window.proposeAlliance = function(proposer, target) {
     if (!proposer || !target) {
@@ -219,28 +228,33 @@ window.proposeAlliance = function(proposer, target) {
 };
 
 window.proposeMarriage = function(clan, cost, successChance) {
-    const hero = getMainDiplomacyHero();
-    if (!hero) return;
-    if ((hero.gold || 0) < cost) {
-        showDiplomacyMessage("ГРЕШКА", "Нямате достатъчно злато!", "error");
+    // Взимаме главния герой (без currentHero)
+    let hero = null;
+    if (window.gameMode === 'solo') {
+        hero = window.currentHero;
+    } else {
+        if (typeof window.getSelectedHero === 'function') hero = window.getSelectedHero();
+        if (!hero && typeof window.getStrongestHero === 'function') hero = window.getStrongestHero();
+    }
+    if (!hero) {
+        if (window.showAdvisorPopup) window.showAdvisorPopup("ГРЕШКА", "Няма намерен герой за брак!", "error");
         return;
     }
     
-    let currentRel = window.clanRelations[clan] || 40;
-    let finalChance = Math.min(95, successChance + Math.floor((currentRel - 40) * 0.5));
-    
-    // ========== ИНТЕРАКТИВЕН ЛЕТОПИС ==========
-    if (window.ChronicleEvents && typeof window.ChronicleEvents.generateMarriageProposal === 'function') {
-        const ev = window.ChronicleEvents.generateMarriageProposal(hero, clan, cost, finalChance);
-        if (window.showAdvisorMsg) {
-            window.showAdvisorMsg(ev.message, ev.buttons);
-            return;
-        }
+    // Проверка за злато
+    if ((hero.gold || 0) < cost) {
+        if (window.showAdvisorPopup) window.showAdvisorPopup("ГРЕШКА", "Нямате достатъчно злато!", "error");
+        return;
     }
     
-    // Резервен вариант – директно изпълнение (старият код)
-    hero.gold -= cost;
+    // Увери се, че clanRelations съществува
+    if (!window.clanRelations) window.clanRelations = {};
+    let currentRel = window.clanRelations[clan] || 40;
+    let finalChance = Math.min(95, successChance + Math.floor((currentRel - 40) * 0.5));
     let roll = Math.random() * 100;
+    
+    hero.gold -= cost;
+    
     if (roll < finalChance) {
         window.clanRelations[clan] = 100;
         const dowryMap = {
@@ -250,40 +264,29 @@ window.proposeMarriage = function(clan, cost, successChance) {
             "Одриси": "Тракия", "Бесараб": "Добруджа", "Османци Дуло": "Витиния", "Скити": "Сарматия"
         };
         const region = dowryMap[clan] || "Мизия";
-        window.currentSpouse = { name: `Княгиня от рода ${clan}`, clan: clan };
-        
         if (!window.playerRegions) window.playerRegions = [];
-        let normalized = [];
-        for (let item of window.playerRegions) {
-            if (Array.isArray(item)) {
-                for (let sub of item) {
-                    if (typeof sub === 'string') normalized.push(sub);
-                }
-            } else if (typeof item === 'string') {
-                normalized.push(item);
-            }
-        }
-        window.playerRegions = normalized;
-        
         if (!window.playerRegions.includes(region)) {
             window.playerRegions.push(region);
             if (window.worldData?.regions?.[region]) window.worldData.regions[region].armySize = 0;
-            showDiplomacyMessage("🏰 РЕГИОН", `Регионът "${region}" е добавен към вашите владения.`, "success");
-        } else {
-            showDiplomacyMessage("ℹ️ ИНФО", `Регионът "${region}" вече е ваш.`, "info");
         }
-        
-        showDiplomacyMessage("👑 ДИНАСТИЧЕН ТРИУМФ", `Сключихте брак с род ${clan}! Получихте регион "${region}".`, "success");
+        if (window.showAdvisorPopup) {
+            window.showAdvisorPopup("👑 ДИНАСТИЧЕН ТРИУМФ", `Сключихте брак с род ${clan}! Получихте регион "${region}".`, "success");
+        } else if (window.showAdvisorMsg) {
+            window.showAdvisorMsg(`👑 ДИНАСТИЧЕН ТРИУМФ: Сключихте брак с род ${clan}! Получихте регион "${region}".`);
+        }
     } else {
         window.clanRelations[clan] = Math.max(10, currentRel - 10);
-        showDiplomacyMessage("💔 ОТХВЪРЛЯНЕ", `Предложението за брак с род ${clan} беше отхвърлено.`, "error");
+        if (window.showAdvisorPopup) {
+            window.showAdvisorPopup("💔 ОТХВЪРЛЯНЕ", `Предложението за брак с род ${clan} беше отхвърлено.`, "error");
+        } else if (window.showAdvisorMsg) {
+            window.showAdvisorMsg(`💔 Предложението за брак с род ${clan} беше отхвърлено.`);
+        }
     }
+    
+    // Обновяване на UI
     if (window.updateCharacterUI) window.updateCharacterUI(hero);
-    if (window.armyMarket && typeof window.armyMarket.sync === 'function') window.armyMarket.sync(hero);
-    if (window.openRegionsMap) window.openRegionsMap();
     if (typeof window.updateStrongestHeroUI === 'function') window.updateStrongestHeroUI();
 };
-
 // ==================== НОВ ГРАНДИОЗЕН БРАЧЕН ПРОЗОРЕЦ ====================
 window.openMarriageMenu = function() {
     // Защита и инициализация на Diplomacy
