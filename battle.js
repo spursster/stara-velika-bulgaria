@@ -1,12 +1,12 @@
 /**
 ==========================================================================
 ПРОЕКТ: ВЕЛИКА БЪЛГАРИЯ
-ФАЙЛ: battle.js (ВЕРСИЯ 8.4 – С ЕПИЧЕН РАЗКАЗ ЗА БИТКАТА)
+ФАЙЛ: battle.js (ВЕРСИЯ 8.5 – С ПОДКРЕПЛЕНИЯ ОТ НЕЛЮБИМИ ГЕРОИ)
 ==========================================================================
 */
 
 (function() {
-    // ==================== СТИЛОВЕ (без промяна) ====================
+    // ==================== СТИЛОВЕ (актуализирани за множество врагове) ====================
     if (!document.getElementById('battle-styles-v2')) {
         const style = document.createElement('style');
         style.id = 'battle-styles-v2';
@@ -111,12 +111,14 @@
                 display: inline-block;
             }
 
+            /* Герои отляво (играч) */
             .heroes-grid {
-                display: grid;
-                grid-template-columns: repeat(5, 1fr);
+                display: flex;
+                flex-wrap: wrap;
+                justify-content: center;
                 gap: 10px;
+                margin-bottom: 20px;
             }
-
             .hero-card {
                 background: linear-gradient(145deg, rgba(30,25,20,0.9), rgba(20,15,10,0.95));
                 border-radius: 14px;
@@ -125,11 +127,50 @@
                 border: 1px solid rgba(201,168,123,0.4);
                 transition: transform 0.1s ease, box-shadow 0.1s ease;
                 position: relative;
+                flex: 0 0 auto;
+                width: calc(20% - 10px);
+                min-width: 85px;
+                max-width: 110px;
             }
-
             .hero-card.attack-animation {
                 transform: scale(0.95);
                 filter: brightness(1.2);
+            }
+
+            /* Врагове отдясно (чудовище + подкрепления) */
+            .enemies-grid {
+                display: flex;
+                flex-wrap: wrap;
+                justify-content: center;
+                gap: 10px;
+                margin: 15px 0;
+            }
+            .enemy-card {
+                background: linear-gradient(145deg, rgba(50,20,20,0.95), rgba(30,10,10,0.98));
+                border-radius: 20px;
+                padding: 8px;
+                text-align: center;
+                flex: 0 0 auto;
+                width: 140px;
+                min-width: 100px;
+                border: 2px solid #ff4444;
+                transition: transform 0.1s ease;
+                position: relative;
+            }
+            .enemy-card.attack-animation {
+                transform: scale(0.97);
+            }
+            .enemy-icon {
+                font-size: 32px;
+            }
+            .enemy-name {
+                font-size: 12px;
+                font-weight: bold;
+                color: #ff6666;
+            }
+            .enemy-power {
+                font-size: 10px;
+                color: #cc8888;
             }
 
             .hero-portrait {
@@ -177,12 +218,6 @@
             .hero-hp-text {
                 font-size: 9px;
                 color: #ffaa66;
-            }
-
-            .hero-power {
-                font-size: 8px;
-                color: #aa8866;
-                margin-top: 3px;
             }
 
             .damage-number {
@@ -234,45 +269,6 @@
                 border-bottom-color: #cc5533;
             }
 
-            .vs-section {
-                display: flex;
-                justify-content: center;
-                align-items: center;
-                padding: 10px 15px;
-                flex-shrink: 0;
-            }
-
-            .monster-card {
-                background: linear-gradient(145deg, rgba(50,20,20,0.95), rgba(30,10,10,0.98));
-                border-radius: 20px;
-                padding: 15px;
-                text-align: center;
-                flex: 1;
-                max-width: 300px;
-                margin: 0 auto;
-                border: 2px solid #ff4444;
-                transition: transform 0.1s ease;
-            }
-
-            .monster-card.attack-animation {
-                transform: scale(0.97);
-            }
-
-            .monster-icon {
-                font-size: 40px;
-            }
-
-            .monster-name {
-                font-size: 16px;
-                font-weight: bold;
-                color: #ff6666;
-            }
-
-            .monster-power {
-                font-size: 11px;
-                color: #cc8888;
-            }
-
             .battle-log-section {
                 padding: 12px 15px;
                 background: rgba(0,0,0,0.4);
@@ -307,35 +303,16 @@
             }
 
             @media (max-width: 700px) {
-                .ultimate-battle { padding: 2px; }
-                .battle-container { border-radius: 12px; }
-                .battle-header { padding: 4px; }
-                .battle-header h1 { font-size: 0.8rem; }
-                .vs-section { padding: 2px 4px; }
-                .monster-card { padding: 6px; }
-                .monster-name { font-size: 12px; }
-                .battle-controls-container { padding: 4px; gap: 4px; }
-                .action-buttons { width: 100%; flex-direction: row; flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; }
-                .action-buttons::-webkit-scrollbar { display: none; }
+                .hero-card { width: calc(33% - 8px); min-width: 70px; }
+                .enemy-card { width: 110px; }
                 .battle-btn { padding: 4px 10px; font-size: 0.65rem; min-width: 70px; }
-                .battle-log-section { min-height: 80px; }
-                .battle-log { font-size: 10px; }
-                .heroes-grid { gap: 2px; }
                 .hero-portrait { width: 28px; height: 28px; }
-                .hero-card { padding: 2px; }
                 .hero-name { font-size: 7px; }
-                .close-battle-btn { width: 22px; height: 22px; font-size: 10px; top: 2px; left: 2px; }
             }
 
             @media (max-width: 480px) {
-                .heroes-grid { grid-template-columns: repeat(5, 1fr); gap: 4px; }
-                .hero-card { padding: 4px; }
-                .hero-portrait { width: 32px; height: 32px; }
-                .hero-icon { font-size: 16px; }
-                .hero-name { font-size: 7px; }
-                .battle-btn { padding: 5px 8px; font-size: 0.65rem; min-width: 65px; }
-                .monster-card { padding: 10px; }
-                .monster-icon { font-size: 24px; }
+                .hero-card { width: calc(50% - 6px); }
+                .enemy-card { width: 90px; }
             }
         `;
         document.head.appendChild(style);
@@ -351,7 +328,7 @@
     function resetNarrative() {
         window._battleNarrative = [];
     }
-    function generateBattleStory(regionName, heroes, monster, isVictory, rewards) {
+    function generateBattleStory(regionName, heroes, enemies, isVictory, rewards) {
         if (!window._battleNarrative || window._battleNarrative.length === 0) {
             return isVictory 
                 ? `⚔️ Сражението за ${regionName} приключи с победа! Врагът е разпръснат.`
@@ -562,34 +539,89 @@
         setTimeout(() => cardElement.classList.remove('attack-animation'), 150);
     }
 
+    // ==================== НОВА ФУНКЦИЯ ЗА ПОДКРЕПЛЕНИЯ ====================
+    function getReinforcements(region, playerHeroes) {
+        if (!window.worldData || !window.worldData.clans) return [];
+        
+        let available = [];
+        let playerHeroNames = new Set(playerHeroes.map(h => h.name));
+        for (let key in window.worldData.clans) {
+            let hero = window.worldData.clans[key];
+            if (hero.isJoined && hero.isAlive !== false && !hero.isFavorite && !playerHeroNames.has(hero.name)) {
+                available.push(hero);
+            }
+        }
+        if (available.length === 0) return [];
+        
+        let difficultyFactor = (region.difficulty || 50) / 100;
+        let playerPower = playerHeroes.reduce((sum, h) => sum + (h.power || 100), 0);
+        let powerFactor = Math.min(1.0, playerPower / 1000);
+        let relationBonus = 0;
+        if (region.nativeClans && region.nativeClans.length > 0) {
+            let clan = region.nativeClans[0];
+            let relation = window.clanRelations?.[clan] || 50;
+            relationBonus = (100 - relation) / 100;
+        }
+        let baseChance = 0.2 + difficultyFactor * 0.3 + powerFactor * 0.2 + relationBonus * 0.2;
+        baseChance = Math.min(0.85, baseChance);
+        
+        if (Math.random() > baseChance) return [];
+        
+        let maxReinforce = Math.min(4, available.length);
+        let count = 1 + Math.floor(Math.random() * maxReinforce);
+        
+        for (let h of available) {
+            let relation = window.clanRelations?.[h.clan] || 50;
+            h._dangerScore = (h.heroPower || 100) * 0.6 + (100 - relation) * 0.4;
+        }
+        available.sort((a,b) => b._dangerScore - a._dangerScore);
+        let selected = available.slice(0, count);
+        
+        return selected.map(hero => ({
+            id: hero.id,
+            name: hero.name,
+            clan: hero.clan,
+            power: hero.heroPower || 100,
+            hp: hero.maxHp || 100,
+            maxHp: hero.maxHp || 100,
+            icon: "⚔️",
+            isHero: true,
+            heroObj: hero,
+            startingHp: hero.hp || hero.maxHp || 100
+        }));
+    }
+
     // ==================== ОСНОВНА ФУНКЦИЯ ====================
     window.startBattle = function(regionInput) {
-        resetNarrative();  // ⭐ Нулираме наратива за новата битка
+        resetNarrative();
         console.log("⚔️ startBattle извикана с:", regionInput);
 
         let regionName = "Регион";
         let enemyPower = 200;
         let enemyHp = 200;
+        let regionObject = null;
 
         if (typeof regionInput === 'string') {
             regionName = regionInput;
             if (window.worldData && window.worldData.regions && window.worldData.regions[regionInput]) {
-                const reg = window.worldData.regions[regionInput];
-                let basePower = reg.armySize || 100;
-                let defenseBonus = (reg.defenseLevel || 1) * 10;
-                if (reg.buildings && reg.buildings.wall) {
-                    defenseBonus += reg.buildings.wall * 2;
+                regionObject = window.worldData.regions[regionInput];
+                let basePower = regionObject.armySize || 100;
+                let defenseBonus = (regionObject.defenseLevel || 1) * 10;
+                if (regionObject.buildings && regionObject.buildings.wall) {
+                    defenseBonus += regionObject.buildings.wall * 2;
                 }
                 enemyPower = Math.max(50, basePower + defenseBonus);
                 enemyHp = enemyPower;
-                regionName = reg.name || regionInput;
+                regionName = regionObject.name || regionInput;
             }
         } else if (regionInput && typeof regionInput === 'object') {
             regionName = regionInput.name || regionInput.id || "Портал";
             enemyPower = regionInput.armySize || regionInput.difficulty * 12 || 200;
             enemyHp = enemyPower;
+            regionObject = regionInput;
         }
 
+        // Събираме героите на играча (любими + всички живи)
         let heroes = [];
         if (window.worldData && window.worldData.clans) {
             for (let key in window.worldData.clans) {
@@ -625,9 +657,7 @@
 
         if (heroes.length === 0) {
             let fallbackHero = null;
-            if (typeof window.getStrongestHero === 'function') {
-                fallbackHero = window.getStrongestHero();
-            }
+            if (typeof window.getStrongestHero === 'function') fallbackHero = window.getStrongestHero();
             if (fallbackHero && fallbackHero.isAlive !== false) {
                 let heroPower = fallbackHero.heroPower || 100;
                 let armySize = fallbackHero.armySize || 300;
@@ -646,23 +676,39 @@
             }
         }
 
-        const battleHeroes = heroes.slice(0, 5);
-        if (battleHeroes.length === 0) {
+        // Ограничаваме героите на играча до първите 5 (любимите са първи, но може да са повече)
+        let playerHeroes = heroes.slice(0, 5);
+        if (playerHeroes.length === 0) {
             if (window.showAdvisorMsg) window.showAdvisorMsg("Нямате живи герои за битка!");
             return;
         }
 
-        window._lastBattleHeroes = battleHeroes;
-        window.currentBattleState = { group: battleHeroes, monster: null };
-
-        const monster = {
+        // Създаваме основния враг (чудовище)
+        const mainEnemy = {
+            id: "monster",
             name: regionName,
             power: enemyPower,
             hp: enemyHp,
             maxHp: enemyHp,
-            icon: "👹"
+            icon: "👹",
+            isMonster: true
         };
-        if (window.currentBattleState) window.currentBattleState.monster = monster;
+
+        // Вземаме подкрепления (нелюбими герои)
+        let reinforcements = [];
+        if (regionObject) {
+            reinforcements = getReinforcements(regionObject, playerHeroes);
+        }
+        let enemies = [mainEnemy, ...reinforcements];
+        
+        if (reinforcements.length > 0) {
+            addLog(`⚠️ Вражески подкрепления! Към ${mainEnemy.name} се присъединяват: ${reinforcements.map(r => r.name).join(', ')}`);
+            addNarrative(`⚠️ На бойното поле пристигат подкрепления: ${reinforcements.map(r => r.name).join(', ')}.`);
+        }
+
+        // Запазваме за глобално състояние
+        window._lastBattleHeroes = playerHeroes;
+        window.currentBattleState = { group: playerHeroes, enemies: enemies };
 
         const oldScreen = document.getElementById('ultimate-battle-screen');
         if (oldScreen) oldScreen.remove();
@@ -671,46 +717,53 @@
         battleScreen.id = 'ultimate-battle-screen';
         battleScreen.className = 'ultimate-battle';
 
+        // Генериране на HTML за героите на играча
         let heroesHtml = '';
-        for (let i = 0; i < 5; i++) {
-            let hero = battleHeroes[i];
-            if (hero) {
-                const portraitUrl = hero.clanObj?.portrait || hero.portrait || '';
-                const portraitHtml = portraitUrl ? `
-                    <div style="position: relative; min-height: 60px;">
-                        <img src="${portraitUrl}" class="hero-portrait" onerror="this.style.display='none'; this.parentElement.querySelector('.hero-icon-fallback').style.display='block';">
-                        <div class="hero-icon hero-icon-fallback" style="display: none; font-size: 28px;">${hero.icon}</div>
+        for (let i = 0; i < playerHeroes.length; i++) {
+            let hero = playerHeroes[i];
+            const portraitUrl = hero.clanObj?.portrait || hero.portrait || '';
+            const portraitHtml = portraitUrl ? `
+                <div style="position: relative; min-height: 60px;">
+                    <img src="${portraitUrl}" class="hero-portrait" onerror="this.style.display='none'; this.parentElement.querySelector('.hero-icon-fallback').style.display='block';">
+                    <div class="hero-icon hero-icon-fallback" style="display: none; font-size: 28px;">${hero.icon}</div>
+                </div>
+            ` : `<div class="hero-icon" style="font-size:28px;">${hero.icon}</div>`;
+            heroesHtml += `
+                <div class="hero-card" data-id="${hero.id}">
+                    ${portraitHtml}
+                    <div class="flex flex-col items-center">
+                        <h3 class="font-bold text-sm text-[#ffdd99] truncate w-full px-1">${hero.name.substring(0, 12)}</h3>
+                        <span class="text-[10px] text-[#ccaa77]">${hero.className}</span>
+                    </div>                
+                    <div class="w-full bg-[#2a1a0a] h-2 rounded-full my-2 overflow-hidden border border-[#5a4a3a]">
+                        <div class="h-full bg-gradient-to-r from-red-700 to-red-500 transition-all duration-300" id="hp-${hero.id}" style="width: ${(hero.hp/hero.maxHp)*100}%"></div>
                     </div>
-                ` : `<div class="hero-icon" style="font-size:28px;">${hero.icon}</div>`;
-                heroesHtml += `
-                    <div class="hero-card" data-id="${hero.id}">
-                        ${portraitHtml}
-                        <div class="flex flex-col items-center">
-                            <h3 class="font-bold text-sm text-[#ffdd99] truncate w-full px-1">${hero.name.substring(0, 12)}</h3>
-                            <span class="text-[10px] text-[#ccaa77]">${hero.className}</span>
-                        </div>                
-                        <div class="w-full bg-[#2a1a0a] h-2 rounded-full my-2 overflow-hidden border border-[#5a4a3a]">
-                            <div class="h-full bg-gradient-to-r from-red-700 to-red-500 transition-all duration-300" id="hp-${hero.id}" style="width: ${(hero.hp/hero.maxHp)*100}%"></div>
-                        </div>
-                        <div class="flex justify-between w-full text-[9px] text-[#ffaa66]">
-                            <span id="hp-text-${hero.id}">❤️ ${hero.hp}/${hero.maxHp}</span>
-                            <span>⚔️ ${hero.power}</span>
-                        </div>
+                    <div class="flex justify-between w-full text-[9px] text-[#ffaa66]">
+                        <span id="hp-text-${hero.id}">❤️ ${hero.hp}/${hero.maxHp}</span>
+                        <span>⚔️ ${hero.power}</span>
                     </div>
-                `;
-            } else {
-                heroesHtml += `
-                    <div class="hero-card" style="opacity: 0.5;">
-                        <div class="hero-icon">❓</div>
-                        <div class="hero-name">Празен слот</div>
-                        <div class="hero-class">---</div>
-                        <div class="hp-bar-bg"><div class="hp-bar-fill" style="width: 0%"></div></div>
-                        <div class="hero-hp-text">❤️ 0/0</div>
-                        <div class="hero-power">⚔️ 0</div>
-                    </div>
-                `;
-            }
+                </div>
+            `;
         }
+
+        // Генериране на HTML за враговете (чудовище + подкрепления)
+        let enemiesHtml = '';
+        enemies.forEach((enemy, idx) => {
+            const enemyId = enemy.id || (enemy.isMonster ? "monster" : "enemy_"+idx);
+            const enemyIcon = enemy.icon || (enemy.isMonster ? "👹" : "⚔️");
+            const enemyName = enemy.name;
+            const enemyPowerVal = enemy.power;
+            const hpPercent = (enemy.hp / enemy.maxHp) * 100;
+            enemiesHtml += `
+                <div class="enemy-card" data-id="${enemyId}">
+                    <div class="enemy-icon">${enemyIcon}</div>
+                    <div class="enemy-name">${enemyName}</div>
+                    <div class="enemy-power">⚔️ ${enemyPowerVal}</div>
+                    <div class="hp-bar-bg"><div class="hp-bar-fill" id="hp-enemy-${enemyId}" style="width: ${hpPercent}%;"></div></div>
+                    <div class="hero-hp-text" id="hp-text-enemy-${enemyId}">❤️ ${enemy.hp}/${enemy.maxHp}</div>
+                </div>
+            `;
+        });
 
         battleScreen.innerHTML = `
             <div class="battle-container">
@@ -719,19 +772,10 @@
                     <h1 class="font-bold">⚔️ БИТКА ⚔️</h1>
                 </div>
                 <div class="heroes-section">
+                    <div class="heroes-title">🏰 Вашите герои</div>
                     <div class="heroes-grid" id="heroes-grid">${heroesHtml}</div>
-                </div>
-                <div class="vs-section">
-                    <div class="monster-card p-3 border-2 border-red-600 rounded-xl bg-black/80 flex items-center justify-between gap-3 shadow-lg" id="monster-card">
-                        <div class="monster-icon text-3xl">${monster.icon}</div>
-                        <div class="flex-1">
-                            <h2 class="monster-name text-sm font-bold text-red-400">${monster.name}</h2>
-                            <div class="w-full bg-[#2a0a0a] h-3 rounded-full mt-1 overflow-hidden border border-red-900 shadow-inner">
-                                <div class="h-full bg-gradient-to-r from-red-600 to-red-400" id="monster-hp-fill" style="width: 100%;"></div>
-                            </div>
-                        </div>
-                        <div class="hero-hp-text text-xs text-red-200" id="monster-hp-text">❤️ ${monster.hp}/${monster.maxHp}</div>
-                    </div>
+                    <div class="heroes-title" style="margin-top:10px;">👹 Врагове</div>
+                    <div class="enemies-grid" id="enemies-grid">${enemiesHtml}</div>
                 </div>
                 <div class="battle-controls-container flex flex-col gap-2 p-2" id="battle-controls-container">
                     <div class="battle-log-section p-2 bg-black/60 rounded-lg border border-stone-800 flex-1 min-h-[120px] max-h-[150px]">
@@ -749,13 +793,14 @@
         document.body.appendChild(battleScreen);
         document.getElementById('close-battle-btn').onclick = () => battleScreen.remove();
 
-        let currentHeroes = battleHeroes.map(h => ({ ...h, startingHp: h.hp }));
-        let currentMonster = { ...monster };
+        let currentHeroes = playerHeroes.map(h => ({ ...h, startingHp: h.hp }));
+        let currentEnemies = enemies.map(e => ({ ...e, startingHp: e.hp }));
         let battleActive = true;
         let currentRound = 1;
         let invincibleUsed = {};
 
         function updateUI() {
+            // Обновяване на героите
             currentHeroes.forEach(hero => {
                 const fillEl = document.getElementById(`hp-${hero.id}`);
                 const textEl = document.getElementById(`hp-text-${hero.id}`);
@@ -766,22 +811,22 @@
                     else if (percent < 70) fillEl.style.background = "#ff9800";
                     else fillEl.style.background = "#4caf50";
                 }
-                if (textEl) {
-                    textEl.innerHTML = `❤️ ${Math.max(0, hero.hp)}/${hero.maxHp}`;
-                }
+                if (textEl) textEl.innerHTML = `❤️ ${Math.max(0, hero.hp)}/${hero.maxHp}`;
             });
-            const monsterFill = document.getElementById('monster-hp-fill');
-            const monsterText = document.getElementById('monster-hp-text');
-            if (monsterFill) {
-                const percent = (currentMonster.hp / currentMonster.maxHp) * 100;
-                monsterFill.style.width = `${Math.max(0, percent)}%`;
-                if (percent < 30) monsterFill.style.background = "#ff4444";
-                else if (percent < 70) monsterFill.style.background = "#ffaa44";
-                else monsterFill.style.background = "#ff8888";
-            }
-            if (monsterText) {
-                monsterText.innerHTML = `❤️ ${Math.max(0, currentMonster.hp)}/${currentMonster.maxHp}`;
-            }
+            // Обновяване на враговете
+            currentEnemies.forEach(enemy => {
+                const enemyId = enemy.id || (enemy.isMonster ? "monster" : "temp");
+                const fillEl = document.getElementById(`hp-enemy-${enemyId}`);
+                const textEl = document.getElementById(`hp-text-enemy-${enemyId}`);
+                if (fillEl) {
+                    const percent = (enemy.hp / enemy.maxHp) * 100;
+                    fillEl.style.width = `${Math.max(0, percent)}%`;
+                    if (percent < 30) fillEl.style.background = "#ff4444";
+                    else if (percent < 70) fillEl.style.background = "#ffaa44";
+                    else fillEl.style.background = "#ff8888";
+                }
+                if (textEl) textEl.innerHTML = `❤️ ${Math.max(0, enemy.hp)}/${enemy.maxHp}`;
+            });
         }
 
         function addLog(message, isError = false) {
@@ -814,8 +859,8 @@
             }
         }
 
-        function animateMonsterCard(damage = null, isHeal = false) {
-            const card = document.querySelector('.monster-card');
+        function animateEnemy(enemyId, damage = null, isHeal = false) {
+            const card = document.querySelector(`.enemy-card[data-id="${enemyId}"]`);
             if (card) {
                 animateCard(card);
                 if (damage !== null) showFloatingNumber(card, damage, isHeal);
@@ -834,9 +879,9 @@
             addLog(`   📉 ${hero.name} загуби ${Math.floor(armyLossPercent * 100)}% от армията си! Остава: ${newArmy} войници.`);
         }
 
+        // Героите атакуват (избират първия жив враг)
         function heroesAttack() {
             if (!battleActive) return false;
-            let totalDamage = 0;
             const aliveHeroes = currentHeroes.filter(h => h.hp > 0);
             updateUI();
             if (aliveHeroes.length === 0) return false;
@@ -845,11 +890,15 @@
             addLog(`🏹 РУНД ${currentRound} - ГЕРОИТЕ АТАКУВАТ!`);
 
             let isNight = (window.gameTime && window.gameTime.seasonIndex === 3);
+            let totalDamage = 0;
 
-            aliveHeroes.forEach(hero => {
-                if (currentMonster.hp <= 0) return;
+            for (let hero of aliveHeroes) {
+                // Избираме жив враг (първият с HP > 0)
+                let target = currentEnemies.find(e => e.hp > 0);
+                if (!target) break; // няма жив враг
+
+                // Изчисляване на щетите (същата логика като преди)
                 let baseDamage = Math.max(1, Math.floor(hero.power * (0.5 + Math.random() * 0.7)));
-                
                 let troopEffects = hero.troopEffects || {};
                 let petEffects = getPetEffects(hero.clanObj);
                 let skillBonuses = getAdvancedSkillCombatBonuses(hero.clanObj);
@@ -878,25 +927,17 @@
                     addLog(`   🐾 ${hero.name} получава бонус щети от любимеца!`);
                     addNarrative(`${hero.name} получава бонус щети от любимец (${Math.floor(petEffects.damageBonus*100)}%).`);
                 }
-                if (skillBonuses.damageBonus) {
-                    damageMultiplier += skillBonuses.damageBonus;
-                    addLog(`   ✨ ${hero.name} получава бонус щети от умения!`);
-                }
-                if (skillBonuses.attackBonus) {
-                    baseDamage += skillBonuses.attackBonus;
-                    addLog(`   📈 ${hero.name} получава +${skillBonuses.attackBonus} атака от умения!`);
-                }
+                if (skillBonuses.damageBonus) damageMultiplier += skillBonuses.damageBonus;
+                if (skillBonuses.attackBonus) baseDamage += skillBonuses.attackBonus;
                 if (troopEffects.critChanceBonus) critChance += troopEffects.critChanceBonus;
                 if (petEffects.critChanceBonus) critChance += petEffects.critChanceBonus;
                 if (skillBonuses.critChance) critChance += skillBonuses.critChance;
-                
                 if (petEffects.fireDamage) {
                     let fireBonus = petEffects.fireDamage;
-                    addLog(`   🔥 ${hero.name} добавя ${fireBonus} огнени щети от любимеца!`);
                     baseDamage += fireBonus;
+                    addLog(`   🔥 ${hero.name} добавя ${fireBonus} огнени щети от любимеца!`);
                     addNarrative(`🔥 ${hero.name} изгаря врага с ${fireBonus} огнени щети (любимец).`);
                 }
-                
                 if (skillBonuses.lowHpBonus && hero.hp < hero.maxHp * 0.3) {
                     let lowBonus = 1 + (hero.maxHp - hero.hp) / hero.maxHp * skillBonuses.lowHpBonus;
                     damageMultiplier += lowBonus - 1;
@@ -913,40 +954,36 @@
                 }
                 
                 let totalLifeSteal = troopEffects.lifeSteal + petEffects.lifeSteal;
+                let healAmount = 0;
                 if (totalLifeSteal > 0) {
-                    let healAmount = Math.floor(finalDamage * totalLifeSteal);
+                    healAmount = Math.floor(finalDamage * totalLifeSteal);
                     if (healAmount > 0) {
                         hero.hp = Math.min(hero.maxHp, hero.hp + healAmount);
                         addLog(`   💚 ${hero.name} възстановява ${healAmount} живот (Кръвопиец/Любимец)!`);
                         animateHero(hero.id, healAmount, true);
-                        addNarrative(`💚 ${hero.name} възстановява ${healAmount} живот благодарение на Кръвопиец/Любимец.`);
+                        addNarrative(`💚 ${hero.name} възстановява ${healAmount} живот.`);
                     }
                 }
                 
+                target.hp = Math.max(0, target.hp - finalDamage);
                 totalDamage += finalDamage;
-                currentMonster.hp = Math.max(0, currentMonster.hp - finalDamage);
                 updateUI();
-                addLog(`   ⚔️ ${hero.name} нанася ${finalDamage} щети${isCrit ? ' 💥 КРИТИЧЕН!' : ''}`);
+                addLog(`   ⚔️ ${hero.name} нанася ${finalDamage} щети на ${target.name}${isCrit ? ' 💥 КРИТИЧЕН!' : ''}`);
                 animateHero(hero.id);
-                animateMonsterCard(finalDamage);
-                
-                // Добавяме в наратива
-                let critText = isCrit ? " (критичен удар!)" : "";
-                addNarrative(`⚔️ ${hero.name} нанася ${finalDamage} щети${critText} на ${monster.name}.`);
-                if (totalLifeSteal > 0 && healAmount > 0) {
-                    addNarrative(`💚 ${hero.name} възстановява ${healAmount} живот.`);
-                }
-            });
-
-            addLog(`📊 ОБЩО: ${totalDamage} щети`);
-            if (totalDamage > 0) {
-                addNarrative(`📊 Общо нанесени щети: ${totalDamage}.`);
+                let enemyId = target.id || (target.isMonster ? "monster" : `enemy_${currentEnemies.indexOf(target)}`);
+                animateEnemy(enemyId, finalDamage);
+                addNarrative(`⚔️ ${hero.name} нанася ${finalDamage} щети${isCrit ? " (критичен удар!)" : ""} на ${target.name}.`);
             }
 
-            if (currentMonster.hp <= 0) {
+            addLog(`📊 ОБЩО: ${totalDamage} щети`);
+            if (totalDamage > 0) addNarrative(`📊 Общо нанесени щети: ${totalDamage}.`);
+
+            // Проверка за победа (всички врагове мъртви)
+            const allEnemiesDead = currentEnemies.every(e => e.hp <= 0);
+            if (allEnemiesDead) {
+                // Победа!
                 addLog(`━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`);
-                addLog(`🏆 ПОБЕДА! ${monster.name} е победен! 🏆`);
-                
+                addLog(`🏆 ПОБЕДА! Всички врагове са победени! 🏆`);
                 let totalXP = 50 + Math.floor(Math.random() * 100);
                 let totalGold = 100 + Math.floor(Math.random() * 200);
                 const livingHeroes = currentHeroes.filter(h => h.hp > 0);
@@ -957,26 +994,21 @@
                     else hero.clanObj.xp = (hero.clanObj.xp || 0) + heroXP;
                     hero.clanObj.gold = (hero.clanObj.gold || 0) + heroGold;
                     addLog(`   🎁 ${hero.name} получава +${heroXP} XP и +${heroGold} злато!`);
-                    if (window.addHeroLog) window.addHeroLog(hero.clanObj, "⚔️", `Победи ${monster.name} в ${regionName}`);
+                    if (window.addHeroLog) window.addHeroLog(hero.clanObj, "⚔️", `Победи в битката за ${regionName}`);
                 });
                 
-                // ========== ДОБАВЯНЕ НА РЕГИОН ==========
+                // Добавяне на регион (ако е регион)
                 if (typeof regionName === 'string' && regionName !== "Портал") {
-                    if (typeof window.normalizePlayerRegions === 'function') {
-                        window.normalizePlayerRegions();
-                    } else {
+                    if (typeof window.normalizePlayerRegions === 'function') window.normalizePlayerRegions();
+                    else {
                         if (!window.playerRegions) window.playerRegions = [];
                         let flat = [];
                         for (let item of window.playerRegions) {
-                            if (Array.isArray(item)) {
-                                for (let sub of item) flat.push(sub);
-                            } else if (typeof item === 'string') {
-                                flat.push(item);
-                            }
+                            if (Array.isArray(item)) for (let sub of item) flat.push(sub);
+                            else if (typeof item === 'string') flat.push(item);
                         }
                         window.playerRegions = [...new Set(flat)];
                     }
-                    
                     if (!window.playerRegions.includes(regionName)) {
                         window.playerRegions.push(regionName);
                         addLog(`   🏰 ${regionName} е добавен към вашите владения!`);
@@ -984,11 +1016,10 @@
                         if (window.worldData && window.worldData.regions && window.worldData.regions[regionName]) {
                             window.worldData.regions[regionName].armySize = 0;
                         }
-                    } else {
-                        addLog(`   ℹ️ ${regionName} вече е ваш.`);
-                    }
+                    } else addLog(`   ℹ️ ${regionName} вече е ваш.`);
                 }
                 
+                // Артефакт
                 let newArtifact = null;
                 if (Math.random() < 0.2 && window.historicalArtifacts) {
                     const artifactKeys = Object.keys(window.historicalArtifacts);
@@ -1003,63 +1034,45 @@
                         if (window.ChronicleEvents && window.ChronicleEvents.generateArtifactFound) {
                             let ev = window.ChronicleEvents.generateArtifactFound(randomHero.clanObj, newArtifact);
                             window.showAdvisorMsg(ev.message, ev.buttons);
-                        } else {
-                            window.showAdvisorMsg(`🏺 ${randomHero.name} намери артефакт: ${newArtifact.name}`);
-                        }
+                        } else window.showAdvisorMsg(`🏺 ${randomHero.name} намери артефакт: ${newArtifact.name}`);
                     }
                 }
                 
+                // Пленник
                 if (Math.random() < 0.15 && window.fantasyRaces && window.fantasyRaces.length > 0) {
                     const randomRace = window.fantasyRaces[Math.floor(Math.random() * window.fantasyRaces.length)];
-                    const prisoner = {
-                        id: Date.now() + "_" + Math.random(),
-                        name: randomRace.name,
-                        raceId: randomRace.id,
-                        icon: randomRace.icon,
-                        desc: randomRace.desc,
-                        bonus: randomRace.bonus,
-                        capturedFrom: monster.name
-                    };
+                    const prisoner = { id: Date.now() + "_" + Math.random(), name: randomRace.name, raceId: randomRace.id, icon: randomRace.icon, desc: randomRace.desc, bonus: randomRace.bonus, capturedFrom: regionName };
                     if (!window.prisoners) window.prisoners = [];
                     window.prisoners.push(prisoner);
                     addLog(`   👸 Взехте пленник: ${prisoner.name}! Може да се ожените в дипломацията.`);
-                    if (window.addWorldEvent) window.addWorldEvent(`👸 ПЛЕННИК`, `След битката с ${monster.name}, взехте ${prisoner.name} като пленник!`, "👸");
+                    if (window.addWorldEvent) window.addWorldEvent(`👸 ПЛЕННИК`, `След битката взехте ${prisoner.name} като пленник!`, "👸");
                 }
                 
+                // Портал бонус
                 if (regionInput && regionInput.isPortalWorld) {
                     const extraBonus = 50 + Math.floor(Math.random() * 100);
                     const randomHero = livingHeroes[Math.floor(Math.random() * livingHeroes.length)];
                     if (randomHero) {
                         randomHero.clanObj.gold += extraBonus;
-                        addLog(`   🌌 ПОРТАЛЕН БОНУС: ${randomHero.name} получава +${extraBonus} злато от мистичния свят!`);
+                        addLog(`   🌌 ПОРТАЛЕН БОНУС: ${randomHero.name} получава +${extraBonus} злато!`);
                     }
                 }
                 
-                if (window.addWorldEvent) window.addWorldEvent(`🏆 ПОБЕДА В БИТКА`, `${battleHeroes.map(h => h.name).join(', ')} победиха ${monster.name}!`, "🏆");
+                if (window.addWorldEvent) window.addWorldEvent(`🏆 ПОБЕДА В БИТКА`, `${playerHeroes.map(h => h.name).join(', ')} победиха в ${regionName}!`, "🏆");
                 
-                // Прилагаме реалните щети към оригиналните герои
+                // Прилагане на щети към оригиналните герои
                 for (let i = 0; i < currentHeroes.length; i++) {
                     let battleHero = currentHeroes[i];
                     let originalHero = battleHero.clanObj;
-                    if (originalHero && battleHero.hp !== undefined) {
-                        applyBattleOutcome(originalHero, battleHero);
-                    }
+                    if (originalHero && battleHero.hp !== undefined) applyBattleOutcome(originalHero, battleHero);
                 }
                 
-                // ========== ГЕНЕРИРАНЕ НА ЕПИЧЕН РАЗКАЗ ==========
-                const rewards = {
-                    gold: totalGold,
-                    xp: totalXP,
-                    artifact: newArtifact || null
-                };
-                const story = generateBattleStory(regionName, battleHeroes, monster, true, rewards);
-                if (window.showAdvisorMsg) {
-                    window.showAdvisorMsg(story);
-                }
+                // Генериране на разказ
+                const rewards = { gold: totalGold, xp: totalXP, artifact: newArtifact || null };
+                const story = generateBattleStory(regionName, playerHeroes, currentEnemies, true, rewards);
+                if (window.showAdvisorMsg) window.showAdvisorMsg(story);
                 
-                // Обновяваме всички UI компоненти
                 refreshAllHeroUI();
-                
                 battleActive = false;
                 const attackBtn = document.getElementById('battle-attack');
                 if (attackBtn) attackBtn.disabled = true;
@@ -1074,88 +1087,79 @@
             return true;
         }
 
-        function monsterAttack() {
+        // Враговете атакуват (всеки жив враг атакува случаен герой)
+        function enemiesAttack() {
             if (!battleActive) return false;
             const aliveHeroes = currentHeroes.filter(h => h.hp > 0);
             if (aliveHeroes.length === 0) return false;
             
-            const target = aliveHeroes[Math.floor(Math.random() * aliveHeroes.length)];
-            let damage = Math.floor(currentMonster.power * (0.35 + Math.random() * 0.55));
-            damage = Math.max(1, damage);
-            
-            let troopEffects = target.troopEffects || {};
-            let petEffects = getPetEffects(target.clanObj);
-            let skillBonuses = getAdvancedSkillCombatBonuses(target.clanObj);
-            
-            let damageReduction = 0;
-            if (troopEffects.damageReduction) damageReduction += troopEffects.damageReduction;
-            if (petEffects.damageReduction) damageReduction += petEffects.damageReduction;
-            if (skillBonuses.damageReduction) damageReduction += skillBonuses.damageReduction;
-            if (damageReduction > 0) {
-                let reduced = Math.floor(damage * (1 - Math.min(0.9, damageReduction)));
-                addLog(`   🛡️ ${target.name} намалява щетите с ${Math.floor(damageReduction*100)}% (Каменна кожа/умения)!`);
-                damage = reduced;
-                addNarrative(`${target.name} намалява щетите с ${Math.floor(damageReduction*100)}% (защита/умения).`);
-            }
-            
-            if (troopEffects.hasInvincibleOnce && !invincibleUsed[target.id]) {
-                invincibleUsed[target.id] = true;
-                damage = 0;
-                addLog(`   ✨ ${target.name} става непробиваем този рунд (Каменен трол)!`);
-                addNarrative(`✨ ${target.name} става непробиваем благодарение на Каменния трол.`);
-            }
-            
-            let damagePercent = damage / target.maxHp;
-            target.hp = Math.max(0, target.hp - damage);
-            updateUI();
-            applyArmyLossFromDamage(target, damagePercent);
-            
-            addLog(`━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`);
-            addLog(`👹 ЧУДОВИЩЕТО АТАКУВА ${target.name.toUpperCase()}!`);
-            addLog(`   💔 Нанася ${damage} щети (${Math.floor(damagePercent * 100)}% от живота)`);
-            animateMonsterCard();
-            screenShake();
-            animateHero(target.id, damage);
-            
-            addNarrative(`👹 ${monster.name} нанася ${damage} щети на ${target.name} (${Math.floor(damagePercent*100)}% от здравето му).`);
-            
-            if (target.hp <= 0) {
-                let reviveChance = petEffects.reviveChance || skillBonuses.reviveChance || 0;
-                if (reviveChance > 0 && Math.random() < reviveChance) {
-                    target.hp = Math.floor(target.maxHp * 0.3);
-                    addLog(`   🔥 ${target.name} се възкресява от любимец/умения! (${target.hp} HP)`);
-                    addNarrative(`🔥 ${target.name} се възкресява от любимец/умения!`);
-                } else {
-                    addLog(`   💀 ${target.name} е нокаутиран! 💀`, true);
-                    applyArmyLossFromDamage(target, 0.5);
-                    addNarrative(`💀 ${target.name} пада в битката!`);
+            for (let enemy of currentEnemies) {
+                if (enemy.hp <= 0) continue;
+                const target = aliveHeroes[Math.floor(Math.random() * aliveHeroes.length)];
+                let damage = Math.floor(enemy.power * (0.35 + Math.random() * 0.55));
+                damage = Math.max(1, damage);
+                
+                let troopEffects = target.troopEffects || {};
+                let petEffects = getPetEffects(target.clanObj);
+                let skillBonuses = getAdvancedSkillCombatBonuses(target.clanObj);
+                let damageReduction = 0;
+                if (troopEffects.damageReduction) damageReduction += troopEffects.damageReduction;
+                if (petEffects.damageReduction) damageReduction += petEffects.damageReduction;
+                if (skillBonuses.damageReduction) damageReduction += skillBonuses.damageReduction;
+                if (damageReduction > 0) {
+                    let reduced = Math.floor(damage * (1 - Math.min(0.9, damageReduction)));
+                    addLog(`   🛡️ ${target.name} намалява щетите с ${Math.floor(damageReduction*100)}%!`);
+                    damage = reduced;
+                    addNarrative(`${target.name} намалява щетите с ${Math.floor(damageReduction*100)}%.`);
+                }
+                if (troopEffects.hasInvincibleOnce && !invincibleUsed[target.id]) {
+                    invincibleUsed[target.id] = true;
+                    damage = 0;
+                    addLog(`   ✨ ${target.name} става непробиваем този рунд!`);
+                    addNarrative(`✨ ${target.name} става непробиваем.`);
+                }
+                
+                let damagePercent = damage / target.maxHp;
+                target.hp = Math.max(0, target.hp - damage);
+                updateUI();
+                applyArmyLossFromDamage(target, damagePercent);
+                
+                addLog(`━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`);
+                addLog(`👹 ${enemy.name} атакува ${target.name.toUpperCase()}!`);
+                addLog(`   💔 Нанася ${damage} щети (${Math.floor(damagePercent * 100)}% от живота)`);
+                screenShake();
+                let enemyId = enemy.id || (enemy.isMonster ? "monster" : `enemy_${currentEnemies.indexOf(enemy)}`);
+                animateEnemy(enemyId);
+                animateHero(target.id, damage);
+                addNarrative(`👹 ${enemy.name} нанася ${damage} щети на ${target.name} (${Math.floor(damagePercent*100)}% от здравето му).`);
+                
+                if (target.hp <= 0) {
+                    let reviveChance = petEffects.reviveChance || skillBonuses.reviveChance || 0;
+                    if (reviveChance > 0 && Math.random() < reviveChance) {
+                        target.hp = Math.floor(target.maxHp * 0.3);
+                        addLog(`   🔥 ${target.name} се възкресява от любимец/умения! (${target.hp} HP)`);
+                        addNarrative(`🔥 ${target.name} се възкресява!`);
+                    } else {
+                        addLog(`   💀 ${target.name} е нокаутиран! 💀`, true);
+                        applyArmyLossFromDamage(target, 0.5);
+                        addNarrative(`💀 ${target.name} пада в битката!`);
+                    }
                 }
             }
             
             updateUI();
-            
             const stillAlive = currentHeroes.some(h => h.hp > 0);
             if (!stillAlive) {
                 addLog(`━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`);
                 addLog(`💀 ЗАГУБА! Всички герои са победени! 💀`, true);
-                
                 for (let i = 0; i < currentHeroes.length; i++) {
                     let battleHero = currentHeroes[i];
                     let originalHero = battleHero.clanObj;
-                    if (originalHero && battleHero.hp !== undefined) {
-                        applyBattleOutcome(originalHero, battleHero);
-                    }
+                    if (originalHero && battleHero.hp !== undefined) applyBattleOutcome(originalHero, battleHero);
                 }
-                
-                // ========== ГЕНЕРИРАНЕ НА ЕПИЧЕН РАЗКАЗ ПРИ ЗАГУБА ==========
-                const story = generateBattleStory(regionName, battleHeroes, monster, false, {});
-                if (window.showAdvisorMsg) {
-                    window.showAdvisorMsg(story);
-                }
-                
-                // Обновяваме всички UI компоненти
+                const story = generateBattleStory(regionName, playerHeroes, currentEnemies, false, {});
+                if (window.showAdvisorMsg) window.showAdvisorMsg(story);
                 refreshAllHeroUI();
-                
                 battleActive = false;
                 const attackBtn = document.getElementById('battle-attack');
                 if (attackBtn) attackBtn.disabled = true;
@@ -1174,9 +1178,9 @@
                 return;
             }
             heroesAttack();
-            if (currentMonster.hp <= 0) return;
+            if (currentEnemies.every(e => e.hp <= 0)) return;
             await new Promise(r => setTimeout(r, 250));
-            monsterAttack();
+            enemiesAttack();
             currentRound++;
             updateUI();
         }
@@ -1187,21 +1191,13 @@
             currentHeroes.forEach(hero => {
                 if (hero.hp > 0) applyArmyLossFromDamage(hero, 0.2);
             });
-            
             for (let i = 0; i < currentHeroes.length; i++) {
                 let battleHero = currentHeroes[i];
                 let originalHero = battleHero.clanObj;
-                if (originalHero && battleHero.hp !== undefined) {
-                    applyBattleOutcome(originalHero, battleHero);
-                }
+                if (originalHero && battleHero.hp !== undefined) applyBattleOutcome(originalHero, battleHero);
             }
-            
-            // ========== ГЕНЕРИРАНЕ НА РАЗКАЗ ПРИ ОТСТЪПЛЕНИЕ ==========
-            const story = generateBattleStory(regionName, battleHeroes, monster, false, {});
-            if (window.showAdvisorMsg) {
-                window.showAdvisorMsg(story);
-            }
-            
+            const story = generateBattleStory(regionName, playerHeroes, currentEnemies, false, {});
+            if (window.showAdvisorMsg) window.showAdvisorMsg(story);
             refreshAllHeroUI();
             battleActive = false;
             const attackBtn = document.getElementById('battle-attack');
@@ -1213,8 +1209,8 @@
         }
 
         function resetBattle() {
-            currentHeroes = battleHeroes.map(h => ({ ...h, hp: h.maxHp, armySize: h.armySize }));
-            currentMonster = { ...monster };
+            currentHeroes = playerHeroes.map(h => ({ ...h, hp: h.maxHp, armySize: h.armySize }));
+            currentEnemies = enemies.map(e => ({ ...e, hp: e.maxHp }));
             battleActive = true;
             currentRound = 1;
             invincibleUsed = {};
@@ -1223,7 +1219,7 @@
             if (logDiv) logDiv.innerHTML = '';
             addLog(`━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`);
             addLog(`✨ БИТКАТА ЗАПОЧВА ОТНОВО! ✨`);
-            addLog(`🏰 ${battleHeroes.length} войни срещу ${monster.name}!`);
+            addLog(`🏰 ${playerHeroes.length} герои срещу ${currentEnemies.length} врага!`);
             const attackBtn = document.getElementById('battle-attack');
             if (attackBtn) attackBtn.disabled = false;
         }
@@ -1234,40 +1230,25 @@
 
         addLog(`━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`);
         addLog(`⚔️ БИТКАТА ЗАПОЧВА! ⚔️`);
-        addLog(`🏰 ${battleHeroes.length} войни срещу ${monster.name}!`);
+        addLog(`🏰 ${playerHeroes.length} герои срещу ${currentEnemies.length} врага!`);
         addLog(`📌 Натисни "АТАКА" за рунд!`);
         addLog(`⚠️ ВНИМАНИЕ: Загубата на живот намалява армията ви!`);
         updateUI();
-        console.log("✅ Битката е готова (с портрети, анимации и числови ефекти)!");
+        console.log("✅ Битката е готова (с подкрепления от нелюбими герои)!");
     };
 
     // ==================== ГЛОБАЛНА ФУНКЦИЯ ЗА КРАЙ НА ГРУПОВА БИТКА ====================
     window.endGroupBattle = function(isVictory, reason, regionName) {
         console.log(`🏁 Битката приключи. Победа: ${isVictory}, Причина: ${reason}, Регион: ${regionName || 'неизвестен'}`);
-        
         let questHero = null;
-        if (typeof window.getStrongestHero === 'function') {
-            questHero = window.getStrongestHero();
-        }
-        if (window.checkAllQuestsProgress && questHero) {
-            window.checkAllQuestsProgress(questHero, regionName || window.currentRegion, "battle");
-        }
-        
-        if (typeof window.handleBattleEnd === 'function') {
-            window.handleBattleEnd(isVictory, reason);
-        }
-        
+        if (typeof window.getStrongestHero === 'function') questHero = window.getStrongestHero();
+        if (window.checkAllQuestsProgress && questHero) window.checkAllQuestsProgress(questHero, regionName || window.currentRegion, "battle");
+        if (typeof window.handleBattleEnd === 'function') window.handleBattleEnd(isVictory, reason);
         refreshAllHeroUI();
-        
-        if (typeof window.updateStrongestHeroUI === 'function') {
-            window.updateStrongestHeroUI();
-        }
-        
-        if (typeof window.saveGreatBulgariaGame === 'function') {
-            window.saveGreatBulgariaGame();
-        }
+        if (typeof window.updateStrongestHeroUI === 'function') window.updateStrongestHeroUI();
+        if (typeof window.saveGreatBulgariaGame === 'function') window.saveGreatBulgariaGame();
     };
 
     window.refreshAllHeroUI = refreshAllHeroUI;
-    console.log("✅ battle.js зареден (версия 8.4 – с епичен разказ за битката)");
+    console.log("✅ battle.js зареден (версия 8.5 – с подкрепления от нелюбими герои)");
 })();
