@@ -795,7 +795,7 @@ window.renderFavoriteHeroesBar = function() {
             }
         }
     }
-    // Сортираме по ниво (високо -> ниско)
+    // Сортираме по ниво (от най-високо към най-ниско)
     favoriteHeroesList.sort(function(a, b) { return (b.level || 1) - (a.level || 1); });
     var top5 = favoriteHeroesList.slice(0, 5);
 
@@ -808,7 +808,7 @@ window.renderFavoriteHeroesBar = function() {
         slot.className = 'favorite-slot';
 
         if (hero) {
-            // ⭐ ВИНАГИ ВЗИМАМЕ АКТУАЛНОТО HP И XP
+            // ⭐ Винаги четем актуалните стойности от обекта hero (hp, maxHp, xp, gold, armySize)
             var hpPercent = (hero.hp / hero.maxHp) * 100;
             var hpColor = hpPercent > 70 ? '#4caf50' : (hpPercent > 30 ? '#ff9800' : '#f44336');
             var needXP = (window.rpgDatabase && window.rpgDatabase.getXPRequiredForLevel) ? window.rpgDatabase.getXPRequiredForLevel(hero.level || 1) : 150;
@@ -834,7 +834,7 @@ window.renderFavoriteHeroesBar = function() {
                 '</div>' +
                 '<div class="auto-badge">' + (hero.isAuto ? '🤖 AUTO' : '👤 MANUAL') + '</div>';
 
-            // Сърце за премахване/добавяне на любим
+            // Бутон за премахване/добавяне на любим (сърце)
             var heartBtn = document.createElement('button');
             heartBtn.innerHTML = '❤️';
             heartBtn.style.cssText = 'position:absolute; top:4px; right:4px; background:none; border:none; font-size:12px; cursor:pointer; color:#ff4466;';
@@ -871,6 +871,7 @@ window.renderFavoriteHeroesBar = function() {
             })(hero);
             slot.appendChild(autoToggle);
 
+            // Клик върху слота – показва профила на героя
             slot.onclick = (function(h) {
                 return function() {
                     window.setSelectedHero(h);
@@ -878,22 +879,22 @@ window.renderFavoriteHeroesBar = function() {
                 };
             })(hero);
         } else {
-            // Празен слот
+            // Празен слот – добавяне на герой
             slot.classList.add('empty');
             slot.innerHTML = '<div style="font-size:28px;">➕</div><div style="font-size:10px;">Добави герой</div>';
             slot.onclick = function() {
                 if (favoriteHeroesList.length >= 5) {
-                    window.showAdvisorPopup("ВНИМАНИЕ", "Максимум 5 любими героя!", "warning");
+                    if (window.showAdvisorPopup) window.showAdvisorPopup("ВНИМАНИЕ", "Максимум 5 любими героя!", "warning");
+                    else alert("Максимум 5 любими героя!");
                     return;
                 }
                 if (window.showHeroSelectionModal) window.showHeroSelectionModal();
-                else window.showAdvisorPopup("ИНФО", "Можете да добавите любими от казармите (🏹).", "info");
+                else if (window.showAdvisorPopup) window.showAdvisorPopup("ИНФО", "Можете да добавите любими от казармите (🏹).", "info");
             };
         }
         container.appendChild(slot);
     }
 };
-
 // ==================== ОСНОВНО ОБНОВЯВАНЕ НА ЛЕВИЯ ПАНЕЛ ====================
 window.updateCharacterUI = function(hero) {
     if (!hero) return;
