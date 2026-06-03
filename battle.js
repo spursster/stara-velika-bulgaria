@@ -646,38 +646,41 @@
         }
 
         // Събираме героите на играча (всички живи)
-        let heroes = [];
-        if (window.worldData && window.worldData.clans) {
-            for (let key in window.worldData.clans) {
-                let clan = window.worldData.clans[key];
-                if (clan.isJoined === true && clan.isAlive !== false) {
-                    if (window.ensureCompleteArmyDetails) window.ensureCompleteArmyDetails(clan);
-                    let calculatedPower = clan.heroPower || 100;
-                    if (window.recalculateHeroPower) calculatedPower = window.recalculateHeroPower(clan);
-                    let classBonus = 1.0;
-                    if (clan.classBonuses && clan.currentClass) {
-                        const classData = window.hybridClasses?.find(c => c.name === clan.currentClass);
-                        if (classData?.bonuses?.heroPower) calculatedPower += classData.bonuses.heroPower;
-                        if (classData?.bonuses?.armyBonus) classBonus += classData.bonuses.armyBonus;
-                    }
-                    let armySize = clan.armySize || clan.currentArmy || 300;
-                    let finalPower = Math.floor(calculatedPower * classBonus * (armySize / 300));
-                    finalPower = Math.max(50, finalPower);
-                    heroes.push({
-                        id: key,
-                        name: clan.leaderName || clan.name || key,
-                        className: clan.currentClass || "Воевода",
-                        power: finalPower,
-                        hp: clan.hp || clan.maxHp || 100,
-                        maxHp: clan.maxHp || 100,
-                        icon: "⚔️",
-                        armySize: armySize,
-                        clanObj: clan,
-                        troopEffects: getTroopSpecialEffects(clan)
-                    });
-                }
+  let heroes = [];
+if (window.worldData && window.worldData.clans) {
+    for (let key in window.worldData.clans) {
+        let clan = window.worldData.clans[key];
+        // ⭐ НОВ РЕД: В класически режим пропускаме нелюбимите герои
+        if (window.gameMode !== 'solo' && !clan.isFavorite) continue;
+        
+        if (clan.isJoined === true && clan.isAlive !== false) {
+            if (window.ensureCompleteArmyDetails) window.ensureCompleteArmyDetails(clan);
+            let calculatedPower = clan.heroPower || 100;
+            if (window.recalculateHeroPower) calculatedPower = window.recalculateHeroPower(clan);
+            let classBonus = 1.0;
+            if (clan.classBonuses && clan.currentClass) {
+                const classData = window.hybridClasses?.find(c => c.name === clan.currentClass);
+                if (classData?.bonuses?.heroPower) calculatedPower += classData.bonuses.heroPower;
+                if (classData?.bonuses?.armyBonus) classBonus += classData.bonuses.armyBonus;
             }
+            let armySize = clan.armySize || clan.currentArmy || 300;
+            let finalPower = Math.floor(calculatedPower * classBonus * (armySize / 300));
+            finalPower = Math.max(50, finalPower);
+            heroes.push({
+                id: key,
+                name: clan.leaderName || clan.name || key,
+                className: clan.currentClass || "Воевода",
+                power: finalPower,
+                hp: clan.hp || clan.maxHp || 100,
+                maxHp: clan.maxHp || 100,
+                icon: "⚔️",
+                armySize: armySize,
+                clanObj: clan,
+                troopEffects: getTroopSpecialEffects(clan)
+            });
         }
+    }
+}
 
         if (heroes.length === 0) {
             let fallbackHero = null;
