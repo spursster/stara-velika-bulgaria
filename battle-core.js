@@ -99,6 +99,10 @@
             ? `Силите ви сразяват врага в ${regionName}. Победата е ваша!`
             : `Войските ви отстъпват от ${regionName}. Поражението е горчиво.`;
         if (window.addWorldEvent) window.addWorldEvent("⚔️ БИТКА", shortMsg, isVictory ? "🏆" : "💀");
+            // Добавяне на разказа в летописа (като събитие)
+    if (window.addWorldEvent) {
+        window.addWorldEvent("📜 ЕПИЧЕН РАЗКАЗ", story, isVictory ? "🏆" : "💀");
+    }
         return shortMsg;
     }
 
