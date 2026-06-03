@@ -4,6 +4,7 @@
  * Версия: 1.0
  * ========================================================================
  */
+window.heroesInBattle = window.heroesInBattle || new Set();
 
 (function() {
     // ========== СИСТЕМА ЗА ЕПИЧЕН РАЗКАЗ ==========
@@ -215,17 +216,25 @@
     }
 
     // ========== ПОДКРЕПЛЕНИЯ ==========
+        // ==================== НОВА ФУНКЦИЯ ЗА ПОДКРЕПЛЕНИЯ ====================
     function getReinforcements(region, playerHeroes) {
         if (!window.worldData || !window.worldData.clans) return [];
+        
         let available = [];
         let playerHeroNames = new Set(playerHeroes.map(h => h.name));
+        
+        // ⭐ КОРИГИРАНО: Взимаме само герои, които са наети (isJoined === true), живи и не са любими
         for (let key in window.worldData.clans) {
             let hero = window.worldData.clans[key];
-            if (hero && hero.isAlive !== false && !hero.isFavorite && !playerHeroNames.has(hero.name)) {
+            // Трябва да е нает, жив, да не е любим и да не е в отряда на играча
+            if (hero && hero.isJoined === true && hero.isAlive !== false && !hero.isFavorite && !playerHeroNames.has(hero.name)) {
                 available.push(hero);
             }
         }
+        
+        console.log("🔍 Налични нелюбими герои за подкрепления (наети):", available.map(h => h.name));
         if (available.length === 0) return [];
+        
         let difficultyFactor = (region.difficulty || 50) / 100;
         let playerPower = playerHeroes.reduce((sum, h) => sum + (h.power || 100), 0);
         let powerFactor = Math.min(1.0, playerPower / 1000);
@@ -237,15 +246,25 @@
         }
         let baseChance = 0.2 + difficultyFactor * 0.3 + powerFactor * 0.2 + relationBonus * 0.2;
         baseChance = Math.min(0.85, baseChance);
+        
+        console.log(`Шанс за подкрепления: ${(baseChance*100).toFixed(1)}%`);
         if (Math.random() > baseChance) return [];
+        
         let maxReinforce = Math.min(4, available.length);
         let count = 1 + Math.floor(Math.random() * maxReinforce);
+        console.log(`Брой подкрепления: ${count}`);
+        
+        // ⭐ ДОПЪЛНИТЕЛНО: Премахваме временния _dangerScore след сортиране
         for (let h of available) {
             let relation = window.clanRelations?.[h.clan] || 50;
             h._dangerScore = (h.heroPower || 100) * 0.6 + (100 - relation) * 0.4;
         }
         available.sort((a,b) => b._dangerScore - a._dangerScore);
         let selected = available.slice(0, count);
+        
+        // Почистваме временния ключ
+        selected.forEach(h => delete h._dangerScore);
+        
         return selected.map(hero => ({
             id: hero.id,
             name: hero.name,
@@ -259,7 +278,6 @@
             startingHp: hero.hp || hero.maxHp || 100
         }));
     }
-
     // ========== АРМИЯ ЗАГУБИ ==========
     function applyArmyLossFromDamage(hero, damagePercent, addLogFn) {
         if (!hero.clanObj) return;
