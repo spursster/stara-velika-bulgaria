@@ -1,29 +1,11 @@
 /**
  * ========================================================================
  * ВЕЛИКА БЪЛГАРИЯ – БИТКА: ОСНОВНА ЛОГИКА (battle-core.js)
- * Версия: 2.0 – с конфигурация и оправен бъг в reinforcements
+ * Версия: 2.1 – ФИНАЛНА, РАБОТЕЩА В КЛАСИЧЕСКИ РЕЖИМ
  * ========================================================================
  */
 
 (function() {
-    // Локални зависимости (попълват се чрез configure)
-    let _ALL_TROOP_TYPES = null;
-    let _divinePets = null;
-    let _rpgDatabase = null;
-    let _getAdvancedSkillBonuses = null;
-    let _clanRelations = null;
-    let _gameMode = null;
-    let _worldData = null;
-    let _addWorldEvent = null;
-    let _showAdvisorMsg = null;
-    let _gainHeroXP = null;
-    let _addHeroLog = null;
-    let _ensureCompleteArmyDetails = null;
-    let _recalculateHeroPower = null;
-    let _hybridClasses = null;
-    let _fantasyRaces = null;
-    let _historicalArtifacts = null;
-
     // ========== СИСТЕМА ЗА ЕПИЧЕН РАЗКАЗ ==========
     let _battleNarrative = [];
     function addNarrative(text, type = "info") {
@@ -54,7 +36,7 @@
 
     // ========== ПОМОЩНИ ФУНКЦИИ ЗА БОНУСИ ==========
     function getTroopSpecialEffects(hero) {
-        if (!hero || !hero.armyDetails || !_ALL_TROOP_TYPES) return {};
+        if (!hero || !hero.armyDetails || !window.ALL_TROOP_TYPES) return {};
         let effects = {
             lifeSteal: 0,
             critChanceBonus: 0,
@@ -67,7 +49,7 @@
             hasTimeSkip: false,
             hasArmyShrink: false
         };
-        for (let troop of _ALL_TROOP_TYPES) {
+        for (let troop of window.ALL_TROOP_TYPES) {
             let count = hero.armyDetails[troop.id] || 0;
             if (count > 0 && troop.special) {
                 let parts = troop.special.split(':');
@@ -105,8 +87,8 @@
             coldDamage: 0,
             healAllies: 0
         };
-        if (_divinePets && _divinePets[petId]) {
-            let pet = _divinePets[petId];
+        if (window.divinePets && window.divinePets[petId]) {
+            let pet = window.divinePets[petId];
             if (pet.bonus) {
                 if (pet.bonus.reviveChance) effects.reviveChance = pet.bonus.reviveChance;
                 if (pet.bonus.extraTurn) effects.extraTurnChance = pet.bonus.extraTurn;
@@ -118,8 +100,8 @@
                 if (pet.bonus.goldBonus) effects.goldBonus = pet.bonus.goldBonus;
                 if (pet.bonus.healAllies) effects.healAllies = pet.bonus.healAllies;
             }
-        } else if (_rpgDatabase && _rpgDatabase.petsDatabase && _rpgDatabase.petsDatabase[petId]) {
-            let pet = _rpgDatabase.petsDatabase[petId];
+        } else if (window.rpgDatabase && window.rpgDatabase.petsDatabase && window.rpgDatabase.petsDatabase[petId]) {
+            let pet = window.rpgDatabase.petsDatabase[petId];
             let petName = (pet.name || "").toLowerCase();
             if (petName === "родов сокол") effects.damageBonus = 0.15;
             else if (petName === "вълк единак") effects.critChanceBonus = 0.10;
@@ -129,8 +111,8 @@
     }
 
     function getAdvancedSkillCombatBonuses(hero) {
-        if (!hero || !_getAdvancedSkillBonuses) return {};
-        const bonuses = _getAdvancedSkillBonuses(hero);
+        if (!hero || typeof window.getAdvancedSkillBonuses !== 'function') return {};
+        const bonuses = window.getAdvancedSkillBonuses(hero);
         return {
             critChance: bonuses.critChance || 0,
             firstStrikeBonus: bonuses.firstStrikeBonus || 0,
@@ -186,12 +168,10 @@
                     originalHero.isAlive = false;
                     originalHero.isJoined = false;
                     originalHero.isFavorite = false;
-                    if (_addWorldEvent) {
-                        _addWorldEvent("💀 ПЕРМАНЕНТНА СМЪРТ", `${originalHero.name} загина завинаги в битка!`, "💀");
-                    }
+                    if (window.addWorldEvent) window.addWorldEvent("💀 ПЕРМАНЕНТНА СМЪРТ", `${originalHero.name} загина завинаги в битка!`, "💀");
                 } else {
                     originalHero.hp = 1;
-                    if (_addWorldEvent) _addWorldEvent("⚡ ЕДВА ОЦЕЛЯВАНЕ", `${originalHero.name} беше на ръба на смъртта, но оживя!`, "⚡");
+                    if (window.addWorldEvent) window.addWorldEvent("⚡ ЕДВА ОЦЕЛЯВАНЕ", `${originalHero.name} беше на ръба на смъртта, но оживя!`, "⚡");
                 }
             }
         }
@@ -230,12 +210,11 @@
 
     // ========== ПОДКРЕПЛЕНИЯ (ОПРАВЕН БЪГ) ==========
     function getReinforcements(region, playerHeroes) {
-        if (!_worldData || !_worldData.clans) return [];
+        if (!window.worldData || !window.worldData.clans) return [];
         let available = [];
         let playerHeroNames = new Set(playerHeroes.map(h => h.name));
-        for (let key in _worldData.clans) {
-            let hero = _worldData.clans[key];
-            // ФИКС: добавяме проверка hero.isJoined === true
+        for (let key in window.worldData.clans) {
+            let hero = window.worldData.clans[key];
             if (hero && hero.isAlive !== false && hero.isJoined === true && !hero.isFavorite && !playerHeroNames.has(hero.name)) {
                 available.push(hero);
             }
@@ -247,7 +226,7 @@
         let relationBonus = 0;
         if (region.nativeClans && region.nativeClans.length > 0) {
             let clan = region.nativeClans[0];
-            let relation = _clanRelations?.[clan] || 50;
+            let relation = window.clanRelations?.[clan] || 50;
             relationBonus = (100 - relation) / 100;
         }
         let baseChance = 0.2 + difficultyFactor * 0.3 + powerFactor * 0.2 + relationBonus * 0.2;
@@ -256,7 +235,7 @@
         let maxReinforce = Math.min(4, available.length);
         let count = 1 + Math.floor(Math.random() * maxReinforce);
         for (let h of available) {
-            let relation = _clanRelations?.[h.clan] || 50;
+            let relation = window.clanRelations?.[h.clan] || 50;
             h._dangerScore = (h.heroPower || 100) * 0.6 + (100 - relation) * 0.4;
         }
         available.sort((a,b) => b._dangerScore - a._dangerScore);
@@ -284,64 +263,56 @@
         hero.clanObj.armySize = newArmy;
         hero.clanObj.currentArmy = newArmy;
         hero.armySize = newArmy;
-        if (_ensureCompleteArmyDetails) _ensureCompleteArmyDetails(hero.clanObj);
+        if (window.ensureCompleteArmyDetails) window.ensureCompleteArmyDetails(hero.clanObj);
         if (addLogFn) addLogFn(`   📉 ${hero.name} загуби ${Math.floor(armyLossPercent * 100)}% от армията си! Остава: ${newArmy} войници.`);
     }
 
-    // ========== СЪБИРАНЕ НА ГЕРОИТЕ НА ИГРАЧА ==========
-   function collectPlayerHeroes() {
-    let heroes = [];
-    if (!_worldData || !_worldData.clans) return heroes;
-    
-    for (let key in _worldData.clans) {
-        let clan = _worldData.clans[key];
-        try {
-            // Филтър: в класически режим само любими
-            if (_gameMode !== 'solo' && !clan.isFavorite) continue;
-            
-            // Основно условие: нает и жив
-            if (clan.isJoined !== true || clan.isAlive === false) continue;
-            
-            // Осигуряване на детайли за армията
-            if (_ensureCompleteArmyDetails) _ensureCompleteArmyDetails(clan);
-            
-            // Изчисляване на базовата мощ
-            let calculatedPower = clan.heroPower || 100;
-            if (_recalculateHeroPower) calculatedPower = _recalculateHeroPower(clan);
-            
-            // Бонус от клас
-            let classBonus = 1.0;
-            if (clan.classBonuses && clan.currentClass) {
-                const classData = _hybridClasses?.find(c => c.name === clan.currentClass);
-                if (classData?.bonuses?.heroPower) calculatedPower += classData.bonuses.heroPower;
-                if (classData?.bonuses?.armyBonus) classBonus += classData.bonuses.armyBonus;
+    // ========== СЪБИРАНЕ НА ГЕРОИТЕ НА ИГРАЧА (ФИНАЛНА ВЕРСИЯ) ==========
+    function collectPlayerHeroes() {
+        let heroes = [];
+        // Взимаме актуалните данни директно от window
+        const gameMode = window.gameMode;
+        const worldData = window.worldData;
+        if (!worldData || !worldData.clans) return heroes;
+        
+        for (let key in worldData.clans) {
+            let clan = worldData.clans[key];
+            try {
+                // В класически режим взимаме само любимите герои
+                if (gameMode !== 'solo' && !clan.isFavorite) continue;
+                if (clan.isJoined === true && clan.isAlive !== false) {
+                    if (window.ensureCompleteArmyDetails) window.ensureCompleteArmyDetails(clan);
+                    let calculatedPower = clan.heroPower || 100;
+                    if (window.recalculateHeroPower) calculatedPower = window.recalculateHeroPower(clan);
+                    let classBonus = 1.0;
+                    if (clan.classBonuses && clan.currentClass) {
+                        const classData = window.hybridClasses?.find(c => c.name === clan.currentClass);
+                        if (classData?.bonuses?.heroPower) calculatedPower += classData.bonuses.heroPower;
+                        if (classData?.bonuses?.armyBonus) classBonus += classData.bonuses.armyBonus;
+                    }
+                    let armySize = clan.armySize || clan.currentArmy || 300;
+                    let finalPower = Math.floor(calculatedPower * classBonus * (armySize / 300));
+                    finalPower = Math.max(50, finalPower);
+                    heroes.push({
+                        id: key,
+                        name: clan.leaderName || clan.name || key,
+                        className: clan.currentClass || "Воевода",
+                        power: finalPower,
+                        hp: clan.hp || clan.maxHp || 100,
+                        maxHp: clan.maxHp || 100,
+                        icon: "⚔️",
+                        armySize: armySize,
+                        clanObj: clan,
+                        troopEffects: getTroopSpecialEffects(clan)
+                    });
+                }
+            } catch(err) {
+                console.error(`Грешка при добавяне на ${clan.name}:`, err);
             }
-            
-            // Крайна мощ, базирана на армията
-            let armySize = clan.armySize || clan.currentArmy || 300;
-            let finalPower = Math.floor(calculatedPower * classBonus * (armySize / 300));
-            finalPower = Math.max(50, finalPower);
-            
-            heroes.push({
-                id: key,
-                name: clan.leaderName || clan.name || key,
-                className: clan.currentClass || "Воевода",
-                power: finalPower,
-                hp: clan.hp || clan.maxHp || 100,
-                maxHp: clan.maxHp || 100,
-                icon: "⚔️",
-                armySize: armySize,
-                clanObj: clan,
-                troopEffects: getTroopSpecialEffects(clan)
-            });
-        } catch (err) {
-            // Само логваме грешката, без да спираме цикъла
-            console.error(`Грешка при добавяне на ${clan.name}:`, err);
         }
+        return heroes.slice(0, 5);
     }
-    
-    return heroes.slice(0, 5);
-}
+
     // ========== ИЗЧИСЛЕНИЯ НА АТАКИТЕ ==========
     function calculateHeroDamage(hero, target, currentRound, addLogFn, addNarrativeFn, animateHeroFn, animateEnemyFn, updateUIFn) {
         let baseDamage = Math.max(1, Math.floor(hero.power * (0.5 + Math.random() * 0.7)));
@@ -352,8 +323,7 @@
         let damageMultiplier = 1.0;
         let critChance = 0.15;
         let isFirstStrike = (currentRound === 1);
-        let isNight = false; // ще се подава отвън, но засега остава така
-        if (window.gameTime && window.gameTime.seasonIndex === 3) isNight = true;
+        let isNight = (window.gameTime && window.gameTime.seasonIndex === 3);
         
         if (troopEffects.firstStrikeBonus && isFirstStrike) {
             damageMultiplier += troopEffects.firstStrikeBonus;
@@ -461,24 +431,6 @@
 
     // ========== ПУБЛИЧНО API ==========
     window.BattleCore = {
-        configure: function(deps) {
-            _ALL_TROOP_TYPES = deps.ALL_TROOP_TYPES;
-            _divinePets = deps.divinePets;
-            _rpgDatabase = deps.rpgDatabase;
-            _getAdvancedSkillBonuses = deps.getAdvancedSkillBonuses;
-            _clanRelations = deps.clanRelations;
-            _gameMode = deps.gameMode;
-            _worldData = deps.worldData;
-            _addWorldEvent = deps.addWorldEvent;
-            _showAdvisorMsg = deps.showAdvisorMsg;
-            _gainHeroXP = deps.gainHeroXP;
-            _addHeroLog = deps.addHeroLog;
-            _ensureCompleteArmyDetails = deps.ensureCompleteArmyDetails;
-            _recalculateHeroPower = deps.recalculateHeroPower;
-            _hybridClasses = deps.hybridClasses;
-            _fantasyRaces = deps.fantasyRaces;
-            _historicalArtifacts = deps.historicalArtifacts;
-        },
         addNarrative: addNarrative,
         resetNarrative: resetNarrative,
         getNarrative: getNarrative,
@@ -498,5 +450,5 @@
         calculateEnemyDamage: calculateEnemyDamage
     };
     
-    console.log("✅ battle-core.js зареден – версия 2.0 (с configure и оправен бъг в reinforcements)");
+    console.log("✅ battle-core.js зареден – ФИНАЛНА ВЕРСИЯ, работи в класически режим");
 })();
