@@ -341,6 +341,15 @@
 
         if (typeof window.saveGreatBulgariaGame === 'function') window.saveGreatBulgariaGame();
 
+     // Инициализация на ancientOwner за всички региони
+if (window.worldData && window.worldData.regions) {
+    for (let name in window.worldData.regions) {
+        if (window.worldData.regions[name].ancientOwner === undefined) {
+            window.worldData.regions[name].ancientOwner = null;
+        }
+    }
+}
+
         console.log("✅ startFreshGameLogic завърши. Начален герой: " + startingHero.name);
     }
 
@@ -430,6 +439,14 @@
             if (typeof window.ensureHeroesHavePortraits === 'function') window.ensureHeroesHavePortraits();
             if (typeof window.showAdvisorMsg === 'function') window.showAdvisorMsg("👑 Добре дошъл обратно, Воеводо!");
             if (typeof window.saveGreatBulgariaGame === 'function') window.saveGreatBulgariaGame();
+         // Инициализация на ancientOwner за всички региони
+if (window.worldData && window.worldData.regions) {
+    for (let name in window.worldData.regions) {
+        if (window.worldData.regions[name].ancientOwner === undefined) {
+            window.worldData.regions[name].ancientOwner = null;
+        }
+    }
+}
             return true;
         } catch (e) {
             console.error("Грешка при зареждане:", e);
