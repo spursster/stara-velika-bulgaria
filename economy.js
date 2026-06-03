@@ -198,7 +198,7 @@ window.investGold = function(hero, amount, turns = 5) {
     
     hero.gold -= amount;
     window.investments.push({ heroId: hero.id, amount: amount, turnsLeft: turns, returnAmount: expectedReturn });
-    if (window.showAdvisorMsg) window.showAdvisorMsg(`✅ Инвестирахте ${amount} злато за ${turns} хода. Очаквана печалба: ${expectedReturn}.`);
+    //if (window.showAdvisorMsg) window.showAdvisorMsg(`✅ Инвестирахте ${amount} злато за ${turns} хода. Очаквана печалба: ${expectedReturn}.`);
     return true;
 };
 
