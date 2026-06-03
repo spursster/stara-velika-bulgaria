@@ -289,62 +289,59 @@
     }
 
     // ========== СЪБИРАНЕ НА ГЕРОИТЕ НА ИГРАЧА ==========
-    function collectPlayerHeroes() {
-        let heroes = [];
-        if (!_worldData || !_worldData.clans) return heroes;
-        for (let key in _worldData.clans) {
-            let clan = _worldData.clans[key];
+   function collectPlayerHeroes() {
+    let heroes = [];
+    if (!_worldData || !_worldData.clans) return heroes;
+    
+    for (let key in _worldData.clans) {
+        let clan = _worldData.clans[key];
+        try {
+            // Филтър: в класически режим само любими
             if (_gameMode !== 'solo' && !clan.isFavorite) continue;
-            if (clan.isJoined === true && clan.isAlive !== false) {
-                if (_ensureCompleteArmyDetails) _ensureCompleteArmyDetails(clan);
-                let calculatedPower = clan.heroPower || 100;
-                if (_recalculateHeroPower) calculatedPower = _recalculateHeroPower(clan);
-                let classBonus = 1.0;
-                if (clan.classBonuses && clan.currentClass) {
-                    const classData = _hybridClasses?.find(c => c.name === clan.currentClass);
-                    if (classData?.bonuses?.heroPower) calculatedPower += classData.bonuses.heroPower;
-                    if (classData?.bonuses?.armyBonus) classBonus += classData.bonuses.armyBonus;
-                }
-                let armySize = clan.armySize || clan.currentArmy || 300;
-                let finalPower = Math.floor(calculatedPower * classBonus * (armySize / 300));
-                finalPower = Math.max(50, finalPower);
-                heroes.push({
-                    id: key,
-                    name: clan.leaderName || clan.name || key,
-                    className: clan.currentClass || "Воевода",
-                    power: finalPower,
-                    hp: clan.hp || clan.maxHp || 100,
-                    maxHp: clan.maxHp || 100,
-                    icon: "⚔️",
-                    armySize: armySize,
-                    clanObj: clan,
-                    troopEffects: getTroopSpecialEffects(clan)
-                });
+            
+            // Основно условие: нает и жив
+            if (clan.isJoined !== true || clan.isAlive === false) continue;
+            
+            // Осигуряване на детайли за армията
+            if (_ensureCompleteArmyDetails) _ensureCompleteArmyDetails(clan);
+            
+            // Изчисляване на базовата мощ
+            let calculatedPower = clan.heroPower || 100;
+            if (_recalculateHeroPower) calculatedPower = _recalculateHeroPower(clan);
+            
+            // Бонус от клас
+            let classBonus = 1.0;
+            if (clan.classBonuses && clan.currentClass) {
+                const classData = _hybridClasses?.find(c => c.name === clan.currentClass);
+                if (classData?.bonuses?.heroPower) calculatedPower += classData.bonuses.heroPower;
+                if (classData?.bonuses?.armyBonus) classBonus += classData.bonuses.armyBonus;
             }
+            
+            // Крайна мощ, базирана на армията
+            let armySize = clan.armySize || clan.currentArmy || 300;
+            let finalPower = Math.floor(calculatedPower * classBonus * (armySize / 300));
+            finalPower = Math.max(50, finalPower);
+            
+            heroes.push({
+                id: key,
+                name: clan.leaderName || clan.name || key,
+                className: clan.currentClass || "Воевода",
+                power: finalPower,
+                hp: clan.hp || clan.maxHp || 100,
+                maxHp: clan.maxHp || 100,
+                icon: "⚔️",
+                armySize: armySize,
+                clanObj: clan,
+                troopEffects: getTroopSpecialEffects(clan)
+            });
+        } catch (err) {
+            // Само логваме грешката, без да спираме цикъла
+            console.error(`Грешка при добавяне на ${clan.name}:`, err);
         }
-        if (heroes.length === 0) {
-            let fallbackHero = null;
-            if (typeof window.getStrongestHero === 'function') fallbackHero = window.getStrongestHero();
-            if (fallbackHero && fallbackHero.isAlive !== false) {
-                let heroPower = fallbackHero.heroPower || 100;
-                let armySize = fallbackHero.armySize || 300;
-                heroes.push({
-                    id: fallbackHero.clan || "hero",
-                    name: fallbackHero.name || "Воевода",
-                    className: fallbackHero.currentClass || "Багатур",
-                    power: Math.max(50, heroPower),
-                    hp: fallbackHero.hp || fallbackHero.maxHp || 100,
-                    maxHp: fallbackHero.maxHp || 100,
-                    icon: "⚔️",
-                    armySize: armySize,
-                    clanObj: fallbackHero,
-                    troopEffects: getTroopSpecialEffects(fallbackHero)
-                });
-            }
-        }
-        return heroes.slice(0, 5);
     }
-
+    
+    return heroes.slice(0, 5);
+}
     // ========== ИЗЧИСЛЕНИЯ НА АТАКИТЕ ==========
     function calculateHeroDamage(hero, target, currentRound, addLogFn, addNarrativeFn, animateHeroFn, animateEnemyFn, updateUIFn) {
         let baseDamage = Math.max(1, Math.floor(hero.power * (0.5 + Math.random() * 0.7)));
