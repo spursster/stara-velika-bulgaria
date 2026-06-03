@@ -784,7 +784,8 @@ function showHeroProfile(hero) {
 window.renderFavoriteHeroesBar = function() {
     var container = document.getElementById('favorite-heroes-bar');
     if (!container) return;
-    
+
+    // Събираме живите любими герои
     var favoriteHeroesList = [];
     if (window.worldData && window.worldData.clans) {
         for (var key in window.worldData.clans) {
@@ -794,30 +795,33 @@ window.renderFavoriteHeroesBar = function() {
             }
         }
     }
+    // Сортираме по ниво (високо -> ниско)
     favoriteHeroesList.sort(function(a, b) { return (b.level || 1) - (a.level || 1); });
     var top5 = favoriteHeroesList.slice(0, 5);
-    
+
+    // Изчистваме контейнера
     container.innerHTML = '';
-    
+
     for (var i = 0; i < 5; i++) {
         var hero = top5[i];
         var slot = document.createElement('div');
         slot.className = 'favorite-slot';
-        
+
         if (hero) {
+            // ⭐ ВИНАГИ ВЗИМАМЕ АКТУАЛНОТО HP И XP
             var hpPercent = (hero.hp / hero.maxHp) * 100;
             var hpColor = hpPercent > 70 ? '#4caf50' : (hpPercent > 30 ? '#ff9800' : '#f44336');
             var needXP = (window.rpgDatabase && window.rpgDatabase.getXPRequiredForLevel) ? window.rpgDatabase.getXPRequiredForLevel(hero.level || 1) : 150;
             var currentXP = hero.isAuto ? (hero.xp || 0) : (hero.storedXP || 0);
             var xpPercent = Math.min(100, (currentXP / needXP) * 100);
-            
+
             var portraitHtml = '';
             if (hero.portrait) {
                 portraitHtml = '<img src="' + hero.portrait + '" class="hero-portrait-img" onerror="this.style.display=\'none\'; this.parentElement.querySelector(\'.hero-icon\').style.display=\'block\';">';
             }
             var classIcon = window.getClassIcon ? window.getClassIcon(hero.currentClass) : '⚔️';
             var iconHtml = '<div class="hero-icon" style="' + (hero.portrait ? 'display:none;' : '') + '">' + classIcon + '</div>';
-            
+
             slot.innerHTML = portraitHtml + iconHtml +
                 '<div class="hero-name" title="' + hero.name + '">' + hero.name.substring(0, 12) + '</div>' +
                 '<div class="hero-level-power">Ниво ' + hero.level + ' | 💪 ' + (hero.heroPower || 100) + '</div>' +
@@ -829,14 +833,8 @@ window.renderFavoriteHeroesBar = function() {
                     '<span>⚔️ ' + (hero.armySize || 0) + '</span>' +
                 '</div>' +
                 '<div class="auto-badge">' + (hero.isAuto ? '🤖 AUTO' : '👤 MANUAL') + '</div>';
-            
-            slot.onclick = function(h) {
-                return function() {
-                    window.setSelectedHero(h);
-                    if (typeof window.showHeroProfile === 'function') window.showHeroProfile(h);
-                };
-            }(hero);
-            
+
+            // Сърце за премахване/добавяне на любим
             var heartBtn = document.createElement('button');
             heartBtn.innerHTML = '❤️';
             heartBtn.style.cssText = 'position:absolute; top:4px; right:4px; background:none; border:none; font-size:12px; cursor:pointer; color:#ff4466;';
@@ -845,12 +843,13 @@ window.renderFavoriteHeroesBar = function() {
                     e.stopPropagation();
                     h.isFavorite = !h.isFavorite;
                     if (typeof window.saveGreatBulgariaGame === 'function') window.saveGreatBulgariaGame();
-                    window.updateAllUI();
+                    window.renderFavoriteHeroesBar(); // обновява лентата
                     if (typeof window.renderSingleBar === 'function') window.renderSingleBar();
                 };
             })(hero);
             slot.appendChild(heartBtn);
-            
+
+            // Бутон за AUTO/MANUAL
             var autoToggle = document.createElement('button');
             autoToggle.innerText = hero.isAuto ? 'AUTO' : 'MAN';
             autoToggle.style.cssText = 'position:absolute; bottom:4px; left:4px; font-size:8px; background:#2c1a0c; border:1px solid #d4af37; border-radius:4px; padding:1px 3px; cursor:pointer; color:#ffd700;';
@@ -867,12 +866,19 @@ window.renderFavoriteHeroesBar = function() {
                         if (window.gainHeroXP) window.gainHeroXP(h, amount);
                     }
                     if (window.updateCharacterUI) window.updateCharacterUI(h);
-                    window.updateAllUI();
+                    window.renderFavoriteHeroesBar(); // обновява лентата
                 };
             })(hero);
             slot.appendChild(autoToggle);
-            
+
+            slot.onclick = (function(h) {
+                return function() {
+                    window.setSelectedHero(h);
+                    if (typeof window.showHeroProfile === 'function') window.showHeroProfile(h);
+                };
+            })(hero);
         } else {
+            // Празен слот
             slot.classList.add('empty');
             slot.innerHTML = '<div style="font-size:28px;">➕</div><div style="font-size:10px;">Добави герой</div>';
             slot.onclick = function() {
