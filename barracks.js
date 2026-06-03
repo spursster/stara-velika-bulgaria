@@ -1,18 +1,16 @@
 /**
 ==========================================================================
 ПРОЕКТ: ВЕЛИКА БЪЛГАРИЯ
-ФАЙЛ: barracks.js (ВЕРСИЯ 6.2 – ГАРАНТИРАНО ЗАТВАРЯНЕ)
+ФАЙЛ: barracks.js (ВЕРСИЯ 7.0 – ГАРАНТИРАНО ЗАТВАРЯНЕ)
 ==========================================================================
 */
 
-// ==================== ГЛОБАЛНИ НАСТРОЙКИ ====================
 window.barracksState = window.barracksState || {
     currentTab: 'basic',
     currentPage: 0,
     perPage: 5
 };
 
-// ==================== ЗАПАЗВАНЕ НА ЛЮБИМИТЕ ====================
 function saveFavoriteHeroes() {
     try {
         let favorites = [];
@@ -46,7 +44,6 @@ function loadFavoriteHeroes() {
     } catch(e) {}
 }
 
-// ==================== HELPER ФУНКЦИИ ====================
 function getAllUnlockedHeroes() {
     let heroes = [];
     if (window.worldData && window.worldData.clans) {
@@ -98,39 +95,40 @@ function calculateArmyPower(hero) {
     return total;
 }
 
-// ==================== ЗАТВАРЯНЕ ====================
+// ========== ЗАТВАРЯНЕ (ПРЕМАХВА ВИДИМИЯ МОДАЛ) ==========
 window.closeBarracksUI = function() {
-    var screen = document.getElementById('barracks-screen');
-    if (screen) {
-        screen.style.display = 'none';
-    }
+    // Премахва всички възможни модали на казармите – както скритите, така и видимите
+    var allModals = document.querySelectorAll('#barracks-screen, div[style*="max-width: 750px"][style*="background: #111"]');
+    allModals.forEach(function(modal) {
+        if (modal && modal.parentNode) modal.remove();
+    });
+    // Допълнително – ако има останал контейнер, скриваме го
+    var container = document.getElementById('barracks-screen');
+    if (container) container.remove();
 };
 
-// ==================== ОТВАРЯНЕ ====================
+// ========== ОТВАРЯНЕ (ПЪЛНО ИЗТРИВАНЕ ПРЕДИ ДА СЪЗДАДЕ НОВ) ==========
 window.openBarracksUI = function() {
-    let barracksContainer = document.getElementById('barracks-screen');
-    if (!barracksContainer) {
-        barracksContainer = document.createElement('div');
-        barracksContainer.id = 'barracks-screen';
-        barracksContainer.style.cssText = 'position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); backdrop-filter: blur(8px); z-index: 9999; display: flex; align-items: center; justify-content: center; padding: 10px; box-sizing: border-box;';
-        document.body.appendChild(barracksContainer);
-    }
-    barracksContainer.style.display = 'flex';
+    // Първо изтриваме всички остатъчни модали
+    window.closeBarracksUI();
+    
+    // Създаваме нов контейнер
+    let barracksContainer = document.createElement('div');
+    barracksContainer.id = 'barracks-screen';
+    barracksContainer.style.cssText = 'position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); backdrop-filter: blur(8px); z-index: 9999; display: flex; align-items: center; justify-content: center; padding: 10px; box-sizing: border-box;';
+    document.body.appendChild(barracksContainer);
     window.renderBarracksLayout();
 };
 
-// ==================== ОСНОВНО РЕНДИРАНЕ ====================
 window.renderBarracksLayout = function() {
     const barracksContainer = document.getElementById('barracks-screen');
     if (!barracksContainer) return;
 
     let allHeroes = getAllUnlockedHeroes();
     let favoriteHeroes = allHeroes.filter(h => h.isFavorite === true);
-    
     favoriteHeroes.sort((a,b) => (b.level || 1) - (a.level || 1));
     
     window.barracksState.currentPage = 0;
-    
     const maxPerPage = window.barracksState.perPage;
     let totalPages = Math.ceil(favoriteHeroes.length / maxPerPage);
     let currentPage = Math.min(window.barracksState.currentPage, totalPages - 1);
@@ -288,22 +286,11 @@ window.renderBarracksLayout = function() {
         };
     });
 
-    // ⭐⭐⭐ ГАРАНТИРАНО ЗАТВАРЯНЕ – закачаме събитията след рендиране ⭐⭐⭐
-    var closeBtnX = document.getElementById('close-barracks-x');
-    var closeBtnFooter = document.getElementById('close-barracks-footer');
-    var closeModal = function() {
-        var sc = document.getElementById('barracks-screen');
-        if (sc) sc.style.display = 'none';
-    };
-    if (closeBtnX) closeBtnX.onclick = closeModal;
-    if (closeBtnFooter) closeBtnFooter.onclick = closeModal;
-    
-    // Затваряне при клик върху фона
-    barracksContainer.onclick = function(e) {
-        if (e.target === barracksContainer) {
-            closeModal();
-        }
-    };
+    // ⭐ ЗАКАЧВАНЕ НА ЗАТВАРЯЩИТЕ БУТОНИ ВЪВ ВИДИМИЯ МОДАЛ
+    var closeX = document.getElementById('close-barracks-x');
+    var closeFooter = document.getElementById('close-barracks-footer');
+    if (closeX) closeX.onclick = function(e) { e.stopPropagation(); window.closeBarracksUI(); };
+    if (closeFooter) closeFooter.onclick = function(e) { e.stopPropagation(); window.closeBarracksUI(); };
 };
 
 function renderTroopCard(troop) {
@@ -352,8 +339,7 @@ function buyTroops(troopId, quantity) {
         return;
     }
     if (window.armyMarket && typeof window.armyMarket.buy === 'function') {
-        const result = window.armyMarket.buy(troopId, quantity, hero);
-        if (result === false) return;
+        window.armyMarket.buy(troopId, quantity, hero);
     } else {
         hero.gold -= totalCost;
         if (!hero.armyDetails) hero.armyDetails = {};
@@ -367,7 +353,6 @@ function buyTroops(troopId, quantity) {
             window.worldData.clans[hero.clan].armyDetails = hero.armyDetails;
             window.worldData.clans[hero.clan].armySize = hero.armySize;
         }
-        if (window.armyMarket && typeof window.armyMarket.sync === 'function') window.armyMarket.sync(hero);
     }
     window.renderBarracksLayout();
     if (window.updateCharacterUI) window.updateCharacterUI(hero);
@@ -398,13 +383,6 @@ document.addEventListener('click', function(e) {
         const troop = troops[troopId];
         const maxQty = Math.floor(hero.gold / troop.basePrice);
         if (maxQty > 0) buyTroops(troopId, maxQty);
-        else {
-            if (window.showAdvisorPopup) {
-                window.showAdvisorPopup("ГРЕШКА", "Няма достатъчно злато дори за 1 брой!", "error");
-            } else {
-                alert(`❌ Няма достатъчно злато дори за 1 брой!`);
-            }
-        }
     }
 });
 
@@ -457,11 +435,7 @@ window.showHeroSelectionModal = function() {
             if (hero) {
                 let currentFavs = allHeroes.filter(h => h.isFavorite === true).length;
                 if (currentFavs >= 5) {
-                    if (window.showAdvisorPopup) {
-                        window.showAdvisorPopup("ВНИМАНИЕ", "Можеш да имаш максимум 5 избрани героя в отряда!", "warning");
-                    } else {
-                        alert("Можеш да имаш максимум 5 избрани героя в отряда!");
-                    }
+                    if (window.showAdvisorPopup) window.showAdvisorPopup("ВНИМАНИЕ", "Максимум 5 избрани героя в отряда!", "warning");
                     return;
                 }
                 hero.isFavorite = true;
@@ -469,9 +443,7 @@ window.showHeroSelectionModal = function() {
                 modal.remove();
                 window.barracksState.currentPage = 0;
                 window.renderBarracksLayout();
-                if (typeof window.renderFavoriteHeroesBar === 'function') {
-                    window.renderFavoriteHeroesBar();
-                }
+                if (typeof window.renderFavoriteHeroesBar === 'function') window.renderFavoriteHeroesBar();
             }
         };
     });
@@ -485,11 +457,7 @@ window.selectHeroAsFavorite = function(heroName) {
     if (hero) {
         let currentFavs = allHeroes.filter(h => h.isFavorite === true).length;
         if (currentFavs >= 5) {
-            if (window.showAdvisorPopup) {
-                window.showAdvisorPopup("ВНИМАНИЕ", "Максимум 5 героя в отряда!", "warning");
-            } else {
-                alert("Максимум 5 героя в отряда!");
-            }
+            if (window.showAdvisorPopup) window.showAdvisorPopup("ВНИМАНИЕ", "Максимум 5 героя в отряда!", "warning");
             return;
         }
         hero.isFavorite = true;
@@ -498,9 +466,7 @@ window.selectHeroAsFavorite = function(heroName) {
         if (modal) modal.remove();
         window.barracksState.currentPage = 0;
         window.renderBarracksLayout();
-        if (typeof window.renderFavoriteHeroesBar === 'function') {
-            window.renderFavoriteHeroesBar();
-        }
+        if (typeof window.renderFavoriteHeroesBar === 'function') window.renderFavoriteHeroesBar();
     }
 };
 
@@ -510,24 +476,9 @@ window.toggleHeroFavoriteInBarracks = function(heroName) {
     if (hero) {
         hero.isFavorite = !hero.isFavorite;
         saveFavoriteHeroes();
-        if (typeof window.renderFavoriteHeroesBar === 'function') {
-            window.renderFavoriteHeroesBar();
-        }
-        if (typeof window.renderBarracksLayout === 'function') {
-            window.renderBarracksLayout();
-        }
+        if (typeof window.renderFavoriteHeroesBar === 'function') window.renderFavoriteHeroesBar();
+        if (typeof window.renderBarracksLayout === 'function') window.renderBarracksLayout();
     }
 };
 
-// Затваряне при клик извън модала (ако не е уловено от другия метод)
-document.addEventListener('click', function(e) {
-    var screen = document.getElementById('barracks-screen');
-    if (screen && screen.style.display === 'flex') {
-        if (!screen.contains(e.target)) {
-            screen.style.display = 'none';
-        }
-    }
-});
-
-// Зареждане на любимите при стартиране
 loadFavoriteHeroes();
