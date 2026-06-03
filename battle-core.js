@@ -269,50 +269,47 @@
 
     // ========== СЪБИРАНЕ НА ГЕРОИТЕ НА ИГРАЧА (ФИНАЛНА ВЕРСИЯ) ==========
     function collectPlayerHeroes() {
-        let heroes = [];
-        // Взимаме актуалните данни директно от window
-        const gameMode = window.gameMode;
-        const worldData = window.worldData;
-        if (!worldData || !worldData.clans) return heroes;
-        
-        for (let key in worldData.clans) {
-            let clan = worldData.clans[key];
-            try {
-                // В класически режим взимаме само любимите герои
-                if (gameMode !== 'solo' && !clan.isFavorite) continue;
-                if (clan.isJoined === true && clan.isAlive !== false) {
-                    if (window.ensureCompleteArmyDetails) window.ensureCompleteArmyDetails(clan);
-                    let calculatedPower = clan.heroPower || 100;
-                    if (window.recalculateHeroPower) calculatedPower = window.recalculateHeroPower(clan);
-                    let classBonus = 1.0;
-                    if (clan.classBonuses && clan.currentClass) {
-                        const classData = window.hybridClasses?.find(c => c.name === clan.currentClass);
-                        if (classData?.bonuses?.heroPower) calculatedPower += classData.bonuses.heroPower;
-                        if (classData?.bonuses?.armyBonus) classBonus += classData.bonuses.armyBonus;
-                    }
-                    let armySize = clan.armySize || clan.currentArmy || 300;
-                    let finalPower = Math.floor(calculatedPower * classBonus * (armySize / 300));
-                    finalPower = Math.max(50, finalPower);
-                    heroes.push({
-                        id: key,
-                        name: clan.leaderName || clan.name || key,
-                        className: clan.currentClass || "Воевода",
-                        power: finalPower,
-                        hp: clan.hp || clan.maxHp || 100,
-                        maxHp: clan.maxHp || 100,
-                        icon: "⚔️",
-                        armySize: armySize,
-                        clanObj: clan,
-                        troopEffects: getTroopSpecialEffects(clan)
-                    });
+    let heroes = [];
+    const worldData = window.worldData;
+    if (!worldData || !worldData.clans) return heroes;
+    
+    for (let key in worldData.clans) {
+        let clan = worldData.clans[key];
+        try {
+            // БЕЗ ПРОВЕРКА ЗА РЕЖИМ, БЕЗ ПРОВЕРКА ЗА isFavorite
+            // Взимаме всички живи и наети герои
+            if (clan.isJoined === true && clan.isAlive !== false) {
+                if (window.ensureCompleteArmyDetails) window.ensureCompleteArmyDetails(clan);
+                let calculatedPower = clan.heroPower || 100;
+                if (window.recalculateHeroPower) calculatedPower = window.recalculateHeroPower(clan);
+                let classBonus = 1.0;
+                if (clan.classBonuses && clan.currentClass) {
+                    const classData = window.hybridClasses?.find(c => c.name === clan.currentClass);
+                    if (classData?.bonuses?.heroPower) calculatedPower += classData.bonuses.heroPower;
+                    if (classData?.bonuses?.armyBonus) classBonus += classData.bonuses.armyBonus;
                 }
-            } catch(err) {
-                console.error(`Грешка при добавяне на ${clan.name}:`, err);
+                let armySize = clan.armySize || clan.currentArmy || 300;
+                let finalPower = Math.floor(calculatedPower * classBonus * (armySize / 300));
+                finalPower = Math.max(50, finalPower);
+                heroes.push({
+                    id: key,
+                    name: clan.leaderName || clan.name || key,
+                    className: clan.currentClass || "Воевода",
+                    power: finalPower,
+                    hp: clan.hp || clan.maxHp || 100,
+                    maxHp: clan.maxHp || 100,
+                    icon: "⚔️",
+                    armySize: armySize,
+                    clanObj: clan,
+                    troopEffects: getTroopSpecialEffects(clan)
+                });
             }
+        } catch(err) {
+            console.error(`Грешка при добавяне на ${clan.name}:`, err);
         }
-        return heroes.slice(0, 5);
     }
-
+    return heroes.slice(0, 5);
+}
     // ========== ИЗЧИСЛЕНИЯ НА АТАКИТЕ ==========
     function calculateHeroDamage(hero, target, currentRound, addLogFn, addNarrativeFn, animateHeroFn, animateEnemyFn, updateUIFn) {
         let baseDamage = Math.max(1, Math.floor(hero.power * (0.5 + Math.random() * 0.7)));
