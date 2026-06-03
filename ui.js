@@ -994,32 +994,67 @@ window.updateCharacterUI = function(hero) {
 
 // ========== ГЛАВНАТА ФУНКЦИЯ – РАБОТИ САМО С ОРИГИНАЛНИЯ ЛЕТОПИС ==========
 window.showAdvisorMsg = function(msg, buttons) {
-    let container = document.querySelector('.chronicle-event')?.parentNode;
+    // Намираме контейнера за летопис (оригиналния, а не модал)
+    let container = document.querySelector('#unifiedChronicle .events-container') || 
+                    document.getElementById('eventsListContainer') ||
+                    document.querySelector('#unifiedChronicle');
     if (!container) {
-        console.error("Оригиналният летопис не е намерен!");
+        console.error("Летописът не е намерен!");
         return;
     }
+
+    // Създаваме основния елемент за събитие
     let eventDiv = document.createElement('div');
-    eventDiv.className = 'chronicle-event';
-    let existing = document.querySelector('.chronicle-event');
-    if (existing) eventDiv.style.cssText = existing.style.cssText;
-    else eventDiv.style.cssText = 'background:rgba(0,0,0,0.5);border-left:3px solid #d4af37;margin:5px 0;padding:5px;border-radius:0 6px 6px 0;';
-    
+    eventDiv.className = 'chronicle-event interactive-event';
+
+    // Определяме иконка според съдържанието на съобщението
+    let icon = '📜';
+    if (msg.includes('💰') || msg.includes('злато')) icon = '💰';
+    else if (msg.includes('💒') || msg.includes('брак')) icon = '💒';
+    else if (msg.includes('🦠') || msg.includes('чума')) icon = '🦠';
+    else if (msg.includes('🗺️') || msg.includes('карта') || msg.includes('съкровище')) icon = '🗺️';
+    else if (msg.includes('🌾') || msg.includes('бунт')) icon = '🌾';
+    else if (msg.includes('🏆') || msg.includes('побед')) icon = '🏆';
+    else if (msg.includes('⚔️') || msg.includes('битка')) icon = '⚔️';
+    else if (msg.includes('⭐') || msg.includes('умение')) icon = '⭐';
+    else if (msg.includes('🌟') || msg.includes('клас')) icon = '🌟';
+    else if (msg.includes('🏺')) icon = '🏺';
+
+    // Добавяме иконка и текст
     let textSpan = document.createElement('div');
     textSpan.className = 'chronicle-text';
-    textSpan.innerHTML = `<strong>📜</strong> ${msg}`;
+    textSpan.innerHTML = `<strong>${icon}</strong> ${msg}`;
     eventDiv.appendChild(textSpan);
-    
+
+    // Добавяме време (ако има)
+    let timeSpan = document.createElement('div');
+    timeSpan.className = 'chronicle-time';
+    if (window.gameTime) {
+        let season = '';
+        if (window.gameTime.seasonIndex === 0) season = '🌱 Пролет ';
+        else if (window.gameTime.seasonIndex === 1) season = '☀️ Лято ';
+        else if (window.gameTime.seasonIndex === 2) season = '🍂 Есен ';
+        else season = '❄️ Зима ';
+        timeSpan.innerText = `${season}${window.gameTime.year} г. ${window.gameTime.era}`;
+    } else {
+        timeSpan.innerText = new Date().toLocaleTimeString();
+    }
+    eventDiv.appendChild(timeSpan);
+
+    // Ако има бутони, ги добавяме
     if (buttons && buttons.length) {
-        let wrap = document.createElement('div');
-        wrap.style.marginTop = '8px';          // отделя бутоните от текста
-        wrap.style.display = 'flex';
-        wrap.style.flexWrap = 'wrap';
-        wrap.style.gap = '6px';
-        wrap.style.justifyContent = 'flex-start';
+        let btnWrap = document.createElement('div');
+        btnWrap.className = 'chronicle-buttons';
+        btnWrap.style.display = 'flex';
+        btnWrap.style.flexWrap = 'wrap';
+        btnWrap.style.gap = '8px';
+        btnWrap.style.marginTop = '8px';
+        btnWrap.style.justifyContent = 'flex-start';
+
         buttons.forEach(b => {
             let btn = document.createElement('button');
             btn.innerText = b.label;
+            btn.className = 'chronicle-btn';
             btn.style.background = '#d4af37';
             btn.style.border = 'none';
             btn.style.borderRadius = '20px';
@@ -1028,21 +1063,30 @@ window.showAdvisorMsg = function(msg, buttons) {
             btn.style.fontWeight = 'bold';
             btn.style.cursor = 'pointer';
             btn.style.color = '#000';
-            btn.style.whiteSpace = 'nowrap';
-            btn.onclick = () => { b.action(); wrap.remove(); };
-            wrap.appendChild(btn);
+            btn.style.transition = '0.1s';
+            btn.onmouseover = () => { btn.style.background = '#ffaa44'; };
+            btn.onmouseout = () => { btn.style.background = '#d4af37'; };
+            btn.onclick = (e) => {
+                e.stopPropagation();
+                b.action();          // изпълнява действието на бутона
+                eventDiv.remove();   // премахва съобщението от летописа
+            };
+            btnWrap.appendChild(btn);
         });
-        eventDiv.appendChild(wrap);
+        eventDiv.appendChild(btnWrap);
     }
-    
-    let timeSpan = document.createElement('div');
-    timeSpan.className = 'chronicle-time';
-    if (window.gameTime) timeSpan.innerText = `${window.gameTime.year || 480} г. ${window.gameTime.era || 'пр.н.е.'}`;
-    else timeSpan.innerText = new Date().toLocaleTimeString();
-    eventDiv.appendChild(timeSpan);
-    
-    container.prepend(eventDiv);
-    while (container.children.length > 50) container.removeChild(container.lastChild);
+
+    // Добавяме събитието най-отгоре в летописа
+    if (container.children.length > 0) {
+        container.insertBefore(eventDiv, container.firstChild);
+    } else {
+        container.appendChild(eventDiv);
+    }
+
+    // Ограничаваме броя на събитията в летописа до 50
+    while (container.children.length > 50) {
+        container.removeChild(container.lastChild);
+    }
 };
 // ==================== ИНСПЕКЦИЯ НА ГЕРОЙ ====================
 window.inspectHeroProfile = function(clanKey) { 
