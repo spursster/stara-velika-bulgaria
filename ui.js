@@ -781,6 +781,10 @@ function showHeroProfile(hero) {
 }
 
 // ==================== ЛЕНТА С ЛЮБИМИ ГЕРОИ (5 СЛОТА, XP, HP, AUTO/РЪЧЕН) ====================
+/**
+ * Рендира лентата с любими герои (5 слота) с цветове според класа на героя.
+ * Използва getClassBorderColor(className) от classes.js.
+ */
 window.renderFavoriteHeroesBar = function() {
     var container = document.getElementById('favorite-heroes-bar');
     if (!container) return;
@@ -808,7 +812,26 @@ window.renderFavoriteHeroesBar = function() {
         slot.className = 'favorite-slot';
 
         if (hero) {
-            // ⭐ Винаги четем актуалните стойности от обекта hero (hp, maxHp, xp, gold, armySize)
+            // ⭐ Определяме цвят според класа на героя
+            var classColor = '#1e3a5f'; // цвят по подразбиране (син)
+            if (window.getClassBorderColor && typeof window.getClassBorderColor === 'function') {
+                classColor = window.getClassBorderColor(hero.currentClass || hero.className);
+            } else {
+                // Резервно mapping, ако функцията липсва
+                var className = (hero.currentClass || hero.className || '').toLowerCase();
+                if (className.includes('берсерк')) classColor = '#ff6347';
+                else if (className.includes('паладин')) classColor = '#87ceeb';
+                else if (className.includes('маг')) classColor = '#7b68ee';
+                else if (className.includes('стрелец')) classColor = '#228b22';
+                else if (className.includes('воевод')) classColor = '#b8860b';
+                else if (className.includes('сенчест')) classColor = '#4a4a4a';
+                else classColor = '#c9a87b';
+            }
+            // Добавяме фон с лека прозрачност и цветна рамка
+            slot.style.backgroundColor = classColor + '40'; // 25% прозрачност
+            slot.style.border = '2px solid ' + classColor;
+
+            // Актуални стойности
             var hpPercent = (hero.hp / hero.maxHp) * 100;
             var hpColor = hpPercent > 70 ? '#4caf50' : (hpPercent > 30 ? '#ff9800' : '#f44336');
             var needXP = (window.rpgDatabase && window.rpgDatabase.getXPRequiredForLevel) ? window.rpgDatabase.getXPRequiredForLevel(hero.level || 1) : 150;
@@ -843,7 +866,7 @@ window.renderFavoriteHeroesBar = function() {
                     e.stopPropagation();
                     h.isFavorite = !h.isFavorite;
                     if (typeof window.saveGreatBulgariaGame === 'function') window.saveGreatBulgariaGame();
-                    window.renderFavoriteHeroesBar(); // обновява лентата
+                    window.renderFavoriteHeroesBar();
                     if (typeof window.renderSingleBar === 'function') window.renderSingleBar();
                 };
             })(hero);
@@ -866,7 +889,7 @@ window.renderFavoriteHeroesBar = function() {
                         if (window.gainHeroXP) window.gainHeroXP(h, amount);
                     }
                     if (window.updateCharacterUI) window.updateCharacterUI(h);
-                    window.renderFavoriteHeroesBar(); // обновява лентата
+                    window.renderFavoriteHeroesBar();
                 };
             })(hero);
             slot.appendChild(autoToggle);
@@ -882,6 +905,8 @@ window.renderFavoriteHeroesBar = function() {
             // Празен слот – добавяне на герой
             slot.classList.add('empty');
             slot.innerHTML = '<div style="font-size:28px;">➕</div><div style="font-size:10px;">Добави герой</div>';
+            slot.style.backgroundColor = 'rgba(255,255,255,0.03)';
+            slot.style.border = '1px dashed #aaa';
             slot.onclick = function() {
                 if (favoriteHeroesList.length >= 5) {
                     if (window.showAdvisorPopup) window.showAdvisorPopup("ВНИМАНИЕ", "Максимум 5 любими героя!", "warning");
