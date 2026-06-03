@@ -1,4 +1,4 @@
-// ==================== chronicle_events.js – ПЕРМАНЕНТНА ВЕРСИЯ ====================
+// ==================== chronicle_events.js – ПЕРМАНЕНТНА ВЕРСИЯ + НОВИ ИНТЕРАКТИВНИ СЪБИТИЯ ====================
 window.ChronicleEvents = window.ChronicleEvents || {};
 
 // Икономическо събитие
@@ -15,42 +15,6 @@ window.ChronicleEvents.generateEconomicEvent = function(hero, eventData) {
             { label: '📜 Игнорирай', action: () => window.showAdvisorMsg('Игнорирахте събитието.') }
         ]
     };
-};
-
-window.triggerRandomChronicleEvent = function() {
-    const hero = window.getMainEconomicHero(); // или getStrongestHero
-    if (!hero) return;
-    const eventTypes = [
-        'tradeCaravan',
-        'diplomaticMarriage',
-        'plague',
-        'treasure',
-        'peasantRevolt'
-    ];
-    const type = eventTypes[Math.floor(Math.random() * eventTypes.length)];
-    let eventData = null;
-    switch(type) {
-        case 'tradeCaravan':
-            eventData = window.ChronicleEvents.generateTradeCaravanEvent(hero);
-            break;
-        case 'diplomaticMarriage':
-            const otherClan = Object.keys(window.clanRelations || {})[Math.floor(Math.random() * Object.keys(window.clanRelations || {}).length)] || "Съседен клан";
-            eventData = window.ChronicleEvents.generateDiplomaticMarriageEvent(hero, otherClan);
-            break;
-        case 'plague':
-            eventData = window.ChronicleEvents.generatePlagueEvent(hero);
-            break;
-        case 'treasure':
-            eventData = window.ChronicleEvents.generateTreasureEvent(hero);
-            break;
-        case 'peasantRevolt':
-            eventData = window.ChronicleEvents.generatePeasantRevoltEvent(hero);
-            break;
-        default: return;
-    }
-    if (eventData) {
-        window.showAdvisorMsg(eventData.message, eventData.buttons);
-    }
 };
 
 // Оферта за герой
@@ -179,9 +143,28 @@ window.ChronicleEvents.generateClassEvolutionOffer = function(hero, oldClass, ne
         ]
     };
 };
+
+window.ChronicleEvents.generateGuildOffer = function(guildId) {
+    const guild = window.guilds[guildId];
+    return {
+        message: `🏛️ Достигнахте ниво 3! ${guild.name} ви кани да се присъедините.`,
+        buttons: [
+            { label: '✅ Присъедини се', action: () => {
+                guild.joined = true;
+                window.showAdvisorMsg(`Вие сте член на ${guild.name}!`);
+                if (guildId === 'merchants') guild.benefits.goldBonus = 50;
+                else if (guildId === 'warriors') guild.benefits.attackBonus = 10;
+                else if (guildId === 'mages') guild.benefits.spellPower = 15;
+                if (window.saveGreatBulgariaGame) window.saveGreatBulgariaGame();
+            }},
+            { label: '❌ Откажи', action: () => window.showAdvisorMsg(`Отказахте поканата.`) }
+        ]
+    };
+};
+
 // ==================== НОВИ ИНТЕРАКТИВНИ СЪБИТИЯ ====================
 
-// 1. Търговски керван (избор: данък, защита, пропускане)
+// 1. Търговски керван
 window.ChronicleEvents.generateTradeCaravanEvent = function(hero) {
     const goldOffer = 200 + Math.floor(Math.random() * 300);
     return {
@@ -214,7 +197,7 @@ window.ChronicleEvents.generateTradeCaravanEvent = function(hero) {
     };
 };
 
-// 2. Дипломатически брак (избор: приеми, откажи, искай зестра)
+// 2. Дипломатически брак
 window.ChronicleEvents.generateDiplomaticMarriageEvent = function(hero, otherClan) {
     const relationGain = 20;
     const goldCost = 500;
@@ -248,7 +231,7 @@ window.ChronicleEvents.generateDiplomaticMarriageEvent = function(hero, otherCla
     };
 };
 
-// 3. Епидемия (избор: лечение, карантина, бездействие)
+// 3. Епидемия
 window.ChronicleEvents.generatePlagueEvent = function(hero) {
     const costHeal = 300;
     const armyLoss = 100;
@@ -283,7 +266,7 @@ window.ChronicleEvents.generatePlagueEvent = function(hero) {
     };
 };
 
-// 4. Съкровище в планините (избор: рискова експедиция, продажба на карта, игнориране)
+// 4. Съкровище в планините
 window.ChronicleEvents.generateTreasureEvent = function(hero) {
     const riskGold = 200;
     const rewardGold = 800;
@@ -322,7 +305,7 @@ window.ChronicleEvents.generateTreasureEvent = function(hero) {
     };
 };
 
-// 5. Бунт на селяните (избор: преговори, сила, отстъпки)
+// 5. Бунт на селяните
 window.ChronicleEvents.generatePeasantRevoltEvent = function(hero) {
     const costNegotiate = 150;
     const armyLoss = 80;
@@ -343,7 +326,7 @@ window.ChronicleEvents.generatePeasantRevoltEvent = function(hero) {
             }},
             { label: `⚔️ Сила ( -${armyLoss} войници )`, action: () => {
                 hero.armySize = Math.max(0, (hero.armySize || 200) - armyLoss);
-                hero.gold += 100; // конфискувано от бунтовниците
+                hero.gold += 100;
                 window.addWorldEvent("⚔️ ПОДАВЯНЕ НА БУНТ", `Подавихте бунта със сила, но загубихте ${armyLoss} войници.`, "⚔️");
                 if (window.updateCharacterUI) window.updateCharacterUI(hero);
                 if (window.updateStrongestHeroUI) window.updateStrongestHeroUI();
@@ -358,24 +341,44 @@ window.ChronicleEvents.generatePeasantRevoltEvent = function(hero) {
         ]
     };
 };
-window.ChronicleEvents.generateGuildOffer = function(guildId) {
-    const guild = window.guilds[guildId];
-    return {
-        message: `🏛️ Достигнахте ниво 3! ${guild.name} ви кани да се присъедините.`,
-        buttons: [
-            { label: '✅ Присъедини се', action: () => {
-                guild.joined = true;
-                window.showAdvisorMsg(`Вие сте член на ${guild.name}!`);
-                // Даваме начален бонус
-                if (guildId === 'merchants') guild.benefits.goldBonus = 50;
-                else if (guildId === 'warriors') guild.benefits.attackBonus = 10;
-                else if (guildId === 'mages') guild.benefits.spellPower = 15;
-                // Запазване
-                if (window.saveGreatBulgariaGame) window.saveGreatBulgariaGame();
-            }},
-            { label: '❌ Откажи', action: () => window.showAdvisorMsg(`Отказахте поканата.`) }
-        ]
-    };
+
+// ==================== СЛУЧАЙЕН ИЗБОР НА СЪБИТИЕ ====================
+window.triggerRandomChronicleEvent = function() {
+    const hero = (function getMainHero() {
+        if (window.gameMode === 'solo') return window.currentHero;
+        if (typeof window.getStrongestHero === 'function') return window.getStrongestHero();
+        if (typeof window.getSelectedHero === 'function') return window.getSelectedHero();
+        return null;
+    })();
+    if (!hero) return;
+    
+    const eventTypes = ['tradeCaravan', 'diplomaticMarriage', 'plague', 'treasure', 'peasantRevolt'];
+    const type = eventTypes[Math.floor(Math.random() * eventTypes.length)];
+    let eventData = null;
+    
+    switch(type) {
+        case 'tradeCaravan':
+            eventData = window.ChronicleEvents.generateTradeCaravanEvent(hero);
+            break;
+        case 'diplomaticMarriage':
+            const clans = Object.keys(window.clanRelations || {});
+            const otherClan = clans.length ? clans[Math.floor(Math.random() * clans.length)] : "Съседен клан";
+            eventData = window.ChronicleEvents.generateDiplomaticMarriageEvent(hero, otherClan);
+            break;
+        case 'plague':
+            eventData = window.ChronicleEvents.generatePlagueEvent(hero);
+            break;
+        case 'treasure':
+            eventData = window.ChronicleEvents.generateTreasureEvent(hero);
+            break;
+        case 'peasantRevolt':
+            eventData = window.ChronicleEvents.generatePeasantRevoltEvent(hero);
+            break;
+        default: return;
+    }
+    if (eventData) {
+        window.showAdvisorMsg(eventData.message, eventData.buttons);
+    }
 };
 
-console.log("✅ chronicle_events.js зареден – генераторите са готови (вкл. умения и класове)");
+console.log("✅ chronicle_events.js зареден – генераторите са готови (вкл. нови интерактивни събития)");
