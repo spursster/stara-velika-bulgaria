@@ -17,6 +17,42 @@ window.ChronicleEvents.generateEconomicEvent = function(hero, eventData) {
     };
 };
 
+window.triggerRandomChronicleEvent = function() {
+    const hero = window.getMainEconomicHero(); // или getStrongestHero
+    if (!hero) return;
+    const eventTypes = [
+        'tradeCaravan',
+        'diplomaticMarriage',
+        'plague',
+        'treasure',
+        'peasantRevolt'
+    ];
+    const type = eventTypes[Math.floor(Math.random() * eventTypes.length)];
+    let eventData = null;
+    switch(type) {
+        case 'tradeCaravan':
+            eventData = window.ChronicleEvents.generateTradeCaravanEvent(hero);
+            break;
+        case 'diplomaticMarriage':
+            const otherClan = Object.keys(window.clanRelations || {})[Math.floor(Math.random() * Object.keys(window.clanRelations || {}).length)] || "Съседен клан";
+            eventData = window.ChronicleEvents.generateDiplomaticMarriageEvent(hero, otherClan);
+            break;
+        case 'plague':
+            eventData = window.ChronicleEvents.generatePlagueEvent(hero);
+            break;
+        case 'treasure':
+            eventData = window.ChronicleEvents.generateTreasureEvent(hero);
+            break;
+        case 'peasantRevolt':
+            eventData = window.ChronicleEvents.generatePeasantRevoltEvent(hero);
+            break;
+        default: return;
+    }
+    if (eventData) {
+        window.showAdvisorMsg(eventData.message, eventData.buttons);
+    }
+};
+
 // Оферта за герой
 window.ChronicleEvents.generateHeroOffer = function(candidate, cost) {
     return {
