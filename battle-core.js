@@ -209,51 +209,42 @@
     }
 
     // ========== ПОДКРЕПЛЕНИЯ (ОПРАВЕН БЪГ) ==========
-    function getReinforcements(region, playerHeroes) {
-        if (!window.worldData || !window.worldData.clans) return [];
-        let available = [];
-        let playerHeroNames = new Set(playerHeroes.map(h => h.name));
-        for (let key in window.worldData.clans) {
-            let hero = window.worldData.clans[key];
-            if (hero && hero.isAlive !== false && hero.isJoined === true && !hero.isFavorite && !playerHeroNames.has(hero.name)) {
-                available.push(hero);
-            }
+   function getReinforcements(region, playerHeroes) {
+    if (!window.worldData || !window.worldData.clans) return [];
+    let available = [];
+    let playerHeroNames = new Set(playerHeroes.map(h => h.name));
+    for (let key in window.worldData.clans) {
+        let hero = window.worldData.clans[key];
+        // Всички живи нелюбими герои (без значение isJoined)
+        if (hero && hero.isAlive !== false && !hero.isFavorite && !playerHeroNames.has(hero.name)) {
+            available.push(hero);
         }
-        if (available.length === 0) return [];
-        let difficultyFactor = (region.difficulty || 50) / 100;
-        let playerPower = playerHeroes.reduce((sum, h) => sum + (h.power || 100), 0);
-        let powerFactor = Math.min(1.0, playerPower / 1000);
-        let relationBonus = 0;
-        if (region.nativeClans && region.nativeClans.length > 0) {
-            let clan = region.nativeClans[0];
-            let relation = window.clanRelations?.[clan] || 50;
-            relationBonus = (100 - relation) / 100;
-        }
-        let baseChance = 0.2 + difficultyFactor * 0.3 + powerFactor * 0.2 + relationBonus * 0.2;
-        baseChance = Math.min(0.85, baseChance);
-        if (Math.random() > baseChance) return [];
-        let maxReinforce = Math.min(4, available.length);
-        let count = 1 + Math.floor(Math.random() * maxReinforce);
-        for (let h of available) {
-            let relation = window.clanRelations?.[h.clan] || 50;
-            h._dangerScore = (h.heroPower || 100) * 0.6 + (100 - relation) * 0.4;
-        }
-        available.sort((a,b) => b._dangerScore - a._dangerScore);
-        let selected = available.slice(0, count);
-        return selected.map(hero => ({
-            id: hero.id,
-            name: hero.name,
-            clan: hero.clan,
-            power: hero.heroPower || 100,
-            hp: hero.maxHp || 100,
-            maxHp: hero.maxHp || 100,
-            icon: "⚔️",
-            isHero: true,
-            heroObj: hero,
-            startingHp: hero.hp || hero.maxHp || 100
-        }));
     }
-
+    console.log("Налични нелюбими за подкрепления:", available.length);
+    if (available.length === 0) return [];
+    
+    // ⭐ ПРЕМАХВАМЕ ШАНСА – ВИНАГИ ДОБАВЯМЕ ПОДКРЕПЛЕНИЯ
+    let count = Math.min(2, available.length); // 1-2 подкрепления
+    // Избираме най-опасните (по сила)
+    for (let h of available) {
+        let relation = window.clanRelations?.[h.clan] || 50;
+        h._dangerScore = (h.heroPower || 100) * 0.6 + (100 - relation) * 0.4;
+    }
+    available.sort((a,b) => b._dangerScore - a._dangerScore);
+    let selected = available.slice(0, count);
+    return selected.map(hero => ({
+        id: hero.id,
+        name: hero.name,
+        clan: hero.clan,
+        power: hero.heroPower || 100,
+        hp: hero.maxHp || 100,
+        maxHp: hero.maxHp || 100,
+        icon: "⚔️",
+        isHero: true,
+        heroObj: hero,
+        startingHp: hero.hp || hero.maxHp || 100
+    }));
+}
     // ========== АРМИЯ ЗАГУБИ ==========
     function applyArmyLossFromDamage(hero, damagePercent, addLogFn) {
         if (!hero.clanObj) return;
