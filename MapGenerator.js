@@ -1,20 +1,10 @@
 /**
  * mapGenerator.js – ЛЕКА АВТОМАТИЧНА КАРТА ЗА ВЕЛИКА БЪЛГАРИЯ
- * Версия: 1.0
- * 
- * Използва HTML5 Canvas за визуализация на регионите като цветни клетки.
- * Няма външни изображения, работи напълно процедурно.
- * Картата се генерира от worldData.regions и playerRegions.
+ * Версия: 1.1 – с поддръжка на ancientOwner
  */
 
-// Глобална променлива за запазване на текущия canvas контейнер
 window.currentMapCanvas = null;
 
-/**
- * Генерира карта в даден контейнер
- * @param {string} containerId - ID на HTML елемента (div), в който да се постави картата
- * @param {string} seed - Произволен низ за стабилност на подредбата (по подразбиране - името на героя)
- */
 window.generateMapCanvas = function(containerId, seed = "default") {
     const container = document.getElementById(containerId);
     if (!container) {
@@ -27,28 +17,23 @@ window.generateMapCanvas = function(containerId, seed = "default") {
         return;
     }
 
-    // Определяне на размерите на картата (можете да ги промените според UI)
     const mapWidth = 800;
     const mapHeight = 600;
-    const tileMargin = 2; // разстояние между клетките
+    const tileMargin = 2;
 
-    // Вземаме всички региони като масив
     let regions = Object.values(window.worldData.regions);
     if (regions.length === 0) {
         container.innerHTML = '<div style="color:#ffaa66;">Няма региони за показване.</div>';
         return;
     }
 
-    // Сортираме регионите по име за стабилна позиция (независимо от реда в обекта)
     regions.sort((a, b) => a.name.localeCompare(b.name));
 
-    // Изчисляваме оптимален брой колони и редове (квадратна мрежа)
     const cols = Math.ceil(Math.sqrt(regions.length));
     const rows = Math.ceil(regions.length / cols);
     const tileWidth = (mapWidth - (cols - 1) * tileMargin) / cols;
     const tileHeight = (mapHeight - (rows - 1) * tileMargin) / rows;
 
-    // Създаваме canvas елемент
     const canvas = document.createElement('canvas');
     canvas.width = mapWidth;
     canvas.height = mapHeight;
@@ -57,23 +42,19 @@ window.generateMapCanvas = function(containerId, seed = "default") {
     canvas.style.cursor = 'pointer';
     canvas.style.backgroundColor = '#1a1a2e';
     
-    // Изчистваме контейнера и добавяме canvas
     container.innerHTML = '';
     container.appendChild(canvas);
     window.currentMapCanvas = canvas;
 
     const ctx = canvas.getContext('2d');
 
-    // Определяне на притежаваните региони (флатен масив)
     let ownedRegions = [];
     if (window.playerRegions) {
         ownedRegions = window.playerRegions.flat ? window.playerRegions.flat() : window.playerRegions;
     }
 
-    // Запазваме координатите на всеки регион за кликване
     const regionRects = [];
 
-    // Рисуване на картата
     for (let i = 0; i < regions.length; i++) {
         const region = regions[i];
         const row = Math.floor(i / cols);
@@ -83,24 +64,25 @@ window.generateMapCanvas = function(containerId, seed = "default") {
         const width = tileWidth;
         const height = tileHeight;
 
-        // Определяме цвета според притежанието
+        // ⭐ НОВА ЛОГИКА ЗА ЦВЕТА
         let bgColor = '#5a5a5a'; // неутрален
         if (ownedRegions.includes(region.name)) {
             bgColor = '#2c5a2a'; // зелен – ваш
+        } else if (region.ancientOwner) {
+            // Завзет от древна цивилизация – лилав
+            bgColor = '#8a2be2'; // лилав
         } else if (region.nativeClans && region.nativeClans.length > 0) {
             bgColor = '#8b3a3a'; // червеникав – враг
         } else {
             bgColor = '#4a4a4a'; // тъмно сив – независим
         }
 
-        // Рисуваме заоблен правоъгълник
         ctx.fillStyle = bgColor;
         ctx.shadowBlur = 0;
         ctx.fillRect(x, y, width, height);
         ctx.strokeStyle = '#d4af37';
         ctx.strokeRect(x, y, width, height);
 
-        // Име на региона (съкратено, ако е дълго)
         let shortName = region.name.length > 10 ? region.name.substring(0, 8) + '..' : region.name;
         ctx.fillStyle = '#ffdd99';
         ctx.font = `${Math.min(12, Math.floor(height / 4))}px Cinzel, serif`;
@@ -108,14 +90,12 @@ window.generateMapCanvas = function(containerId, seed = "default") {
         ctx.textBaseline = 'middle';
         ctx.fillText(shortName, x + width / 2, y + height / 2);
 
-        // Запазваме координатите за клик
         regionRects.push({
             region: region,
             x: x, y: y, w: width, h: height
         });
     }
 
-    // Обработка на клик върху картата
     canvas.addEventListener('click', (e) => {
         const rect = canvas.getBoundingClientRect();
         const scaleX = canvas.width / rect.width;
@@ -123,7 +103,6 @@ window.generateMapCanvas = function(containerId, seed = "default") {
         const mouseX = (e.clientX - rect.left) * scaleX;
         const mouseY = (e.clientY - rect.top) * scaleY;
 
-        // Намираме кой регион е кликнат
         const hit = regionRects.find(r => 
             mouseX >= r.x && mouseX <= r.x + r.w &&
             mouseY >= r.y && mouseY <= r.y + r.h
@@ -131,12 +110,10 @@ window.generateMapCanvas = function(containerId, seed = "default") {
         if (hit && typeof window.inspectRegion === 'function') {
             window.inspectRegion(hit.region.name);
         } else if (hit) {
-            console.log(`Кликнат регион: ${hit.region.name}`);
             alert(`Регион: ${hit.region.name}\nТерен: ${hit.region.terrain}\nРесурс: ${hit.region.resource}`);
         }
     });
 
-    // Добавяне на подсказка при движение на мишката (hover)
     canvas.addEventListener('mousemove', (e) => {
         const rect = canvas.getBoundingClientRect();
         const scaleX = canvas.width / rect.width;
@@ -157,10 +134,6 @@ window.generateMapCanvas = function(containerId, seed = "default") {
     });
 };
 
-/**
- * Обновява картата (прерисува я, като запазва същия контейнер)
- * @param {string} containerId - ID на контейнера (ако е празно, използва последния)
- */
 window.refreshMap = function(containerId) {
     if (containerId) {
         window.generateMapCanvas(containerId);
@@ -176,16 +149,10 @@ window.refreshMap = function(containerId) {
     }
 };
 
-/**
- * Отваря картата в модален прозорец (замества старата списъчна карта)
- * Може да се извика от бутона "Карта" в играта.
- */
 window.openInteractiveMap = function() {
-    // Премахваме стар модал, ако има
     const oldModal = document.getElementById('interactive-map-modal');
     if (oldModal) oldModal.remove();
 
-    // Създаваме модал
     const modal = document.createElement('div');
     modal.id = 'interactive-map-modal';
     modal.style.cssText = `
@@ -223,8 +190,4 @@ window.openInteractiveMap = function() {
     modal.addEventListener('click', (e) => { if (e.target === modal) modal.remove(); });
 };
 
-// Ако искате да замените съществуващата функция openRegionsMap, можете да направите:
-// window.openRegionsMap = window.openInteractiveMap;
-// Но за да не счупим нищо, оставяме новата функция отделно.
-
-console.log("✅ mapGenerator.js зареден – интерактивна карта, напълно автоматична и лека.");
+console.log("✅ mapGenerator.js зареден – с поддръжка на ancientOwner (лилави региони при инвазия)");
