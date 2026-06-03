@@ -1,7 +1,7 @@
 /**
 ==========================================================================
 ПРОЕКТ: ВЕЛИКА БЪЛГАРИЯ
-ФАЙЛ: battle.js (ВЕРСИЯ 8.7 – ПЪЛНА, НЕСЪКРАТЕНА)
+ФАЙЛ: battle.js (ВЕРСИЯ 8.8 – МОДУЛНА, БЕЗ ГЛОБАЛНО ЗАМЪРСЯВАНЕ)
 ==========================================================================
 */
 
@@ -317,22 +317,22 @@
     }
 
     // ==================== СИСТЕМА ЗА ЕПИЧЕН РАЗКАЗ ====================
-    window._battleNarrative = [];
+    let _battleNarrative = [];
     function addNarrative(text, type = "info") {
-        window._battleNarrative.push({ text, type, time: Date.now() });
-        if (window._battleNarrative.length > 40) window._battleNarrative.shift();
+        _battleNarrative.push({ text, type, time: Date.now() });
+        if (_battleNarrative.length > 40) _battleNarrative.shift();
     }
     function resetNarrative() {
-        window._battleNarrative = [];
+        _battleNarrative = [];
     }
     function generateBattleStory(regionName, heroes, enemies, isVictory, rewards) {
-        if (!window._battleNarrative || window._battleNarrative.length === 0) {
+        if (!_battleNarrative || _battleNarrative.length === 0) {
             return isVictory 
                 ? `⚔️ Сражението за ${regionName} приключи с победа! Врагът е разпръснат.`
                 : `💀 Битката за ${regionName} завърши с поражение. Войските се оттеглиха.`;
         }
         let story = `🏰 **Битката за ${regionName}**\n\n`;
-        let importantEvents = window._battleNarrative.slice(0, 12);
+        let importantEvents = _battleNarrative.slice(0, 12);
         for (let ev of importantEvents) {
             story += `▸ ${ev.text}\n`;
         }
@@ -593,7 +593,7 @@
     }
 
     // ==================== ОСНОВНА ФУНКЦИЯ ====================
-    window.startBattle = function(regionInput) {
+    function startBattle(regionInput) {
         resetNarrative();
         console.log("⚔️ startBattle извикана с:", regionInput);
 
@@ -646,41 +646,41 @@
         }
 
         // Събираме героите на играча (всички живи)
-  let heroes = [];
-if (window.worldData && window.worldData.clans) {
-    for (let key in window.worldData.clans) {
-        let clan = window.worldData.clans[key];
-        // ⭐ НОВ РЕД: В класически режим пропускаме нелюбимите герои
-        if (window.gameMode !== 'solo' && !clan.isFavorite) continue;
-        
-        if (clan.isJoined === true && clan.isAlive !== false) {
-            if (window.ensureCompleteArmyDetails) window.ensureCompleteArmyDetails(clan);
-            let calculatedPower = clan.heroPower || 100;
-            if (window.recalculateHeroPower) calculatedPower = window.recalculateHeroPower(clan);
-            let classBonus = 1.0;
-            if (clan.classBonuses && clan.currentClass) {
-                const classData = window.hybridClasses?.find(c => c.name === clan.currentClass);
-                if (classData?.bonuses?.heroPower) calculatedPower += classData.bonuses.heroPower;
-                if (classData?.bonuses?.armyBonus) classBonus += classData.bonuses.armyBonus;
+        let heroes = [];
+        if (window.worldData && window.worldData.clans) {
+            for (let key in window.worldData.clans) {
+                let clan = window.worldData.clans[key];
+                // В класически режим пропускаме нелюбимите герои
+                if (window.gameMode !== 'solo' && !clan.isFavorite) continue;
+                
+                if (clan.isJoined === true && clan.isAlive !== false) {
+                    if (window.ensureCompleteArmyDetails) window.ensureCompleteArmyDetails(clan);
+                    let calculatedPower = clan.heroPower || 100;
+                    if (window.recalculateHeroPower) calculatedPower = window.recalculateHeroPower(clan);
+                    let classBonus = 1.0;
+                    if (clan.classBonuses && clan.currentClass) {
+                        const classData = window.hybridClasses?.find(c => c.name === clan.currentClass);
+                        if (classData?.bonuses?.heroPower) calculatedPower += classData.bonuses.heroPower;
+                        if (classData?.bonuses?.armyBonus) classBonus += classData.bonuses.armyBonus;
+                    }
+                    let armySize = clan.armySize || clan.currentArmy || 300;
+                    let finalPower = Math.floor(calculatedPower * classBonus * (armySize / 300));
+                    finalPower = Math.max(50, finalPower);
+                    heroes.push({
+                        id: key,
+                        name: clan.leaderName || clan.name || key,
+                        className: clan.currentClass || "Воевода",
+                        power: finalPower,
+                        hp: clan.hp || clan.maxHp || 100,
+                        maxHp: clan.maxHp || 100,
+                        icon: "⚔️",
+                        armySize: armySize,
+                        clanObj: clan,
+                        troopEffects: getTroopSpecialEffects(clan)
+                    });
+                }
             }
-            let armySize = clan.armySize || clan.currentArmy || 300;
-            let finalPower = Math.floor(calculatedPower * classBonus * (armySize / 300));
-            finalPower = Math.max(50, finalPower);
-            heroes.push({
-                id: key,
-                name: clan.leaderName || clan.name || key,
-                className: clan.currentClass || "Воевода",
-                power: finalPower,
-                hp: clan.hp || clan.maxHp || 100,
-                maxHp: clan.maxHp || 100,
-                icon: "⚔️",
-                armySize: armySize,
-                clanObj: clan,
-                troopEffects: getTroopSpecialEffects(clan)
-            });
         }
-    }
-}
 
         if (heroes.length === 0) {
             let fallbackHero = null;
@@ -1244,10 +1244,10 @@ if (window.worldData && window.worldData.clans) {
         addLog(`⚠️ ВНИМАНИЕ: Загубата на живот намалява армията ви!`);
         updateUI();
         console.log("✅ Битката е готова (с подкрепления от нелюбими герои)!");
-    };
+    }
 
     // ==================== ГЛОБАЛНА ФУНКЦИЯ ЗА КРАЙ НА ГРУПОВА БИТКА ====================
-    window.endGroupBattle = function(isVictory, reason, regionName) {
+    function endGroupBattle(isVictory, reason, regionName) {
         console.log(`🏁 Битката приключи. Победа: ${isVictory}, Причина: ${reason}, Регион: ${regionName || 'неизвестен'}`);
         let questHero = null;
         if (typeof window.getStrongestHero === 'function') questHero = window.getStrongestHero();
@@ -1256,8 +1256,21 @@ if (window.worldData && window.worldData.clans) {
         refreshAllHeroUI();
         if (typeof window.updateStrongestHeroUI === 'function') window.updateStrongestHeroUI();
         if (typeof window.saveGreatBulgariaGame === 'function') window.saveGreatBulgariaGame();
+    }
+
+    // ==================== ПУБЛИЧНО API ====================
+    window.Battle = {
+        start: startBattle,
+        end: endGroupBattle,
+        refreshUI: refreshAllHeroUI,
+        getReinforcements: getReinforcements
     };
 
-    window.refreshAllHeroUI = refreshAllHeroUI;
-    console.log("✅ battle.js зареден (версия 8.7 – пълна, несъкратена)");
+    // Запазваме старите глобални имена за обратна съвместимост
+    window.startBattle = window.Battle.start;
+    window.endGroupBattle = window.Battle.end;
+    window.refreshAllHeroUI = window.Battle.refreshUI;
+    window.getReinforcements = window.Battle.getReinforcements;
+
+    console.log("✅ battle.js зареден (модулна версия 8.8 – само window.Battle и алиаси)");
 })();
