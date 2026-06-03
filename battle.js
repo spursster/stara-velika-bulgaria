@@ -316,7 +316,30 @@
         document.head.appendChild(style);
     }
 
-    // Вземаме методите от BattleCore
+    // Конфигуриране на BattleCore
+    if (window.BattleCore && typeof window.BattleCore.configure === 'function') {
+        window.BattleCore.configure({
+            ALL_TROOP_TYPES: window.ALL_TROOP_TYPES,
+            divinePets: window.divinePets,
+            rpgDatabase: window.rpgDatabase,
+            getAdvancedSkillBonuses: window.getAdvancedSkillBonuses,
+            clanRelations: window.clanRelations,
+            gameMode: window.gameMode,
+            worldData: window.worldData,
+            addWorldEvent: window.addWorldEvent,
+            showAdvisorMsg: window.showAdvisorMsg,
+            gainHeroXP: window.gainHeroXP,
+            addHeroLog: window.addHeroLog,
+            ensureCompleteArmyDetails: window.ensureCompleteArmyDetails,
+            recalculateHeroPower: window.recalculateHeroPower,
+            hybridClasses: window.hybridClasses,
+            fantasyRaces: window.fantasyRaces,
+            historicalArtifacts: window.historicalArtifacts
+        });
+    } else {
+        console.error("❌ BattleCore не е зареден или няма метод configure");
+    }
+
     const core = window.BattleCore;
     if (!core) {
         console.error("❌ battle-core.js не е зареден!");
@@ -399,7 +422,6 @@
         core.resetNarrative();
         console.log("⚔️ startBattle извикана с:", regionInput);
 
-        // Корекция за бутона "Битка" – избираме случаен вражески регион
         let finalRegionInput = regionInput;
         if (regionInput === "Мизия") {
             let ownedRegions = [];
