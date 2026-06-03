@@ -1,50 +1,93 @@
 /**
  =========================================================================
- МОДУЛ: ДРЕВНИ ЦИВИЛИЗАЦИИ – 100% СЛУЧАЙНИ ДЕЙСТВИЯ (БЕЗ currentHero)
+ МОДУЛ: ДРЕВНИ ЦИВИЛИЗАЦИИ – ИНВАЗИИ И ЗАВЛАДЯВАНЕ НА РЕГИОНИ
+ ВЕРСИЯ: 2.0 – С ПЪЛНА КАРТА И ЦВЕТОВЕ
  =========================================================================
  */
 
 (function() {
-    // Списък на всички цивилизации
+    // Списък на всички цивилизации с цветове за картата
     const allCivilizations = [
-        { id: "elven_kingdom", name: "Елфийско кралство", icon: "🧝", action: "giveBoost" },
-        { id: "fairy_court", name: "Двор на феите", icon: "🧚", action: "giveGoldArtifact" },
-        { id: "celestial_empire", name: "Небесна империя", icon: "☁️", action: "healHeroes" },
-        { id: "orc_horde", name: "Оркска орда", icon: "👹", action: "attackRegion" },
-        { id: "demon_legions", name: "Демонични легиони", icon: "😈", action: "destroyArmy" },
-        { id: "shadow_realm", name: "Царство на сенките", icon: "🌑", action: "stealArtifact" },
-        { id: "dragon_lords", name: "Драконови лордове", icon: "🐉", action: "burnRegion" },
-        { id: "undead_legion", name: "Легион на мъртвите", icon: "💀", action: "curseRegion" },
-        { id: "atlantean_dominion", name: "Атлантидско владение", icon: "🌊", action: "portalOrSkill" },
-        { id: "dwarf_holds", name: "Джуджешки подземия", icon: "⛏️", action: "giveArtifact" },
-        { id: "mongol_empire", name: "Монголска империя", icon: "🏹", action: "attackRegion" },
-        { id: "ottoman_empire", name: "Османска империя", icon: "☪️", action: "destroyArmy" },
-        { id: "viking_kingdoms", name: "Викингски кралства", icon: "⚔️", action: "attackRegion" },
-        { id: "khazar_khanate", name: "Хазарски каганат", icon: "🏇", action: "attackRegion" },
-        { id: "abbasid_caliphate", name: "Абасидски халифат", icon: "🕌", action: "giveGoldArtifact" },
+        { id: "elven_kingdom", name: "Елфийско кралство", icon: "🧝", action: "giveBoost", color: "#5a8c5a" },
+        { id: "fairy_court", name: "Двор на феите", icon: "🧚", action: "giveGoldArtifact", color: "#8a6e4a" },
+        { id: "celestial_empire", name: "Небесна империя", icon: "☁️", action: "healHeroes", color: "#6a8fbf" },
+        { id: "orc_horde", name: "Оркска орда", icon: "👹", action: "invadeRegion", color: "#8b5a2b" },
+        { id: "demon_legions", name: "Демонични легиони", icon: "😈", action: "invadeRegion", color: "#6a1a1a" },
+        { id: "shadow_realm", name: "Царство на сенките", icon: "🌑", action: "stealArtifact", color: "#3a3a5a" },
+        { id: "dragon_lords", name: "Драконови лордове", icon: "🐉", action: "burnRegion", color: "#b8860b" },
+        { id: "undead_legion", name: "Легион на мъртвите", icon: "💀", action: "curseRegion", color: "#5a5a5a" },
+        { id: "atlantean_dominion", name: "Атлантидско владение", icon: "🌊", action: "portalOrSkill", color: "#4a8a9a" },
+        { id: "dwarf_holds", name: "Джуджешки подземия", icon: "⛏️", action: "giveArtifact", color: "#b85c1a" },
+        { id: "mongol_empire", name: "Монголска империя", icon: "🏹", action: "invadeRegion", color: "#8a6e3a" },
+        { id: "ottoman_empire", name: "Османска империя", icon: "☪️", action: "invadeRegion", color: "#6a5a3a" },
+        { id: "viking_kingdoms", name: "Викингски кралства", icon: "⚔️", action: "invadeRegion", color: "#5a7a8a" },
+        { id: "khazar_khanate", name: "Хазарски каганат", icon: "🏇", action: "invadeRegion", color: "#8a6a4a" },
+        { id: "abbasid_caliphate", name: "Абасидски халифат", icon: "🕌", action: "giveGoldArtifact", color: "#6a8a5a" },
     ];
+
+    // Карта за лесен достъп до цвета на цивилизация
+    window.ancientCivColors = {};
+    allCivilizations.forEach(civ => { window.ancientCivColors[civ.id] = civ.color; });
 
     function addLog(title, message, icon) {
         if (window.addWorldEvent) window.addWorldEvent(title, message, icon);
         else console.log(icon, title, message);
     }
 
-    // Помощна функция за вземане на "главния герой" (в класически режим – най-силния, в соло – currentHero)
     function getMainHero() {
-        if (window.gameMode === 'solo') {
-            return window.currentHero || null;
-        } else {
-            if (typeof window.getStrongestHero === 'function') {
-                return window.getStrongestHero();
-            }
-            if (typeof window.getSelectedHero === 'function') {
-                return window.getSelectedHero();
-            }
-            return null;
-        }
+        if (window.gameMode === 'solo') return window.currentHero || null;
+        if (typeof window.getStrongestHero === 'function') return window.getStrongestHero();
+        if (typeof window.getSelectedHero === 'function') return window.getSelectedHero();
+        return null;
     }
 
-    // ========== ВСИЧКИ ВЪЗМОЖНИ ДЕЙСТВИЯ (СЛУЧАЙНИ) ==========
+    // Нова функция: инвазия – цивилизация атакува регион (свой, на играча или независим)
+    function invadeRegion(civ) {
+        if (!window.worldData || !window.worldData.regions) return;
+        
+        // Избираме регион – предпочитаме граничещи с вече завладени от същата цивилизация,
+        // но за простота ще изберем случаен регион, който не е на играча (или може и на играча)
+        let allRegions = Object.values(window.worldData.regions);
+        let target = null;
+        // Опитваме да намерим регион, който не е собственост на играча (за да не го дразним прекалено)
+        let candidates = allRegions.filter(r => !window.playerRegions.includes(r.name));
+        if (candidates.length === 0) candidates = allRegions;
+        target = candidates[Math.floor(Math.random() * candidates.length)];
+        if (!target) return;
+        
+        let defenderPower = target.armySize || 100;
+        let attackerPower = 200 + Math.floor(Math.random() * 150); // базови войски на цивилизацията
+        
+        let winChance = attackerPower / (attackerPower + defenderPower);
+        let isVictory = Math.random() < winChance;
+        
+        if (isVictory) {
+            // Успешна инвазия – регионът преминава под контрола на цивилизацията
+            let oldOwner = target.ancientOwner || "независим";
+            target.ancientOwner = civ.id;
+            // Намаляваме армията на региона (цивилизацията оставя гарнизон)
+            target.armySize = Math.max(50, Math.floor(defenderPower * 0.3));
+            addLog(`🏰 ЗАВЛАДЯВАНЕ`, `${civ.name} завладя ${target.name} (беше под ${oldOwner}).`, civ.icon);
+            
+            // Ако регионът беше на играча, го премахваме от playerRegions
+            if (window.playerRegions.includes(target.name)) {
+                window.playerRegions = window.playerRegions.filter(r => r !== target.name);
+                addLog(`⚠️ ЗАГУБА НА РЕГИОН`, `Загубихте ${target.name} от ${civ.name}!`, "⚠️");
+                if (window.updateStrongestHeroUI) window.updateStrongestHeroUI();
+            }
+        } else {
+            // Неуспешна инвазия – регионът отблъсква атаката, но губи част от армията
+            let loss = Math.floor(defenderPower * 0.2);
+            target.armySize = Math.max(10, defenderPower - loss);
+            addLog(`🛡️ ОТБИТА АТАКА`, `${civ.name} атакува ${target.name}, но бе отблъснат. Загуби: ${loss} войници.`, civ.icon);
+        }
+        
+        // Обновяване на картата, ако е отворена
+        if (typeof window.refreshMap === 'function') window.refreshMap();
+        if (typeof window.refreshRegionsMap === 'function') window.refreshRegionsMap();
+    }
+
+    // Старите функции (giveBoost и т.н.) остават, но action за някои цивилизации ще бъде "invadeRegion"
     function giveBoost(civ) {
         let hero = getMainHero();
         if (!hero) return;
@@ -80,21 +123,6 @@
         if (window.updateCharacterUI) window.updateCharacterUI(hero);
     }
 
-    function attackRegion(civ) {
-        if (!window.playerRegions || window.playerRegions.length === 0) return;
-        let regionName = window.playerRegions[Math.floor(Math.random() * window.playerRegions.length)];
-        let region = window.worldData?.regions?.[regionName];
-        if (region) {
-            let damage = Math.floor((region.armySize || 200) * 0.3);
-            region.armySize = Math.max(0, (region.armySize || 200) - damage);
-            addLog(`⚔️ Нападение от ${civ.name}`, `${civ.name} атакува ${regionName}! Армията намалява с ${damage}.`, civ.icon);
-            if (region.armySize <= 0) {
-                addLog(`🏚️ Загуба на регион`, `${regionName} попада под контрола на ${civ.name}.`, "🏚️");
-                window.playerRegions = window.playerRegions.filter(r => r !== regionName);
-            }
-        }
-    }
-
     function destroyArmy(civ) {
         let hero = getMainHero();
         if (!hero) return;
@@ -124,6 +152,7 @@
             let oldInfra = region.infrastructureLevel || 1;
             region.infrastructureLevel = Math.max(1, oldInfra - 2);
             addLog(`🐉 Огнено наказание`, `${civ.name} изгаря ${regionName}! Инфраструктурата пада от ниво ${oldInfra} на ${region.infrastructureLevel}.`, civ.icon);
+            if (typeof window.refreshMap === 'function') window.refreshMap();
         }
     }
 
@@ -131,6 +160,7 @@
         if (!window.playerRegions || window.playerRegions.length === 0) return;
         let regionName = window.playerRegions[Math.floor(Math.random() * window.playerRegions.length)];
         addLog(`💀 Проклятие от ${civ.name}`, `${civ.name} проклина ${regionName} – приходите са намалени за 3 хода.`, civ.icon);
+        // Може да добавим временен дебаф в региона (но за момента само съобщение)
     }
 
     function portalOrSkill(civ) {
@@ -175,28 +205,28 @@
 
     // ========== ОСНОВНА ФУНКЦИЯ – ВИНАГИ ИЗБИРА СЛУЧАЙНА ЦИВИЛИЗАЦИЯ И ДЕЙСТВИЕ ==========
     window.processAncientCivilizations = function() {
-        if (!window.worldData || !window.worldData.factions) return;
-        // Избираме напълно случайна цивилизация от списъка
+        if (!window.worldData || !window.worldData.regions) return;
         let civ = allCivilizations[Math.floor(Math.random() * allCivilizations.length)];
         if (!civ) return;
-        // Изпълняваме нейното действие
+        
+        // Според дефинираното действие
         switch(civ.action) {
+            case "invadeRegion": invadeRegion(civ); break;
             case "giveBoost": giveBoost(civ); break;
             case "giveGoldArtifact": giveGoldArtifact(civ); break;
             case "healHeroes": healHeroes(civ); break;
-            case "attackRegion": attackRegion(civ); break;
             case "destroyArmy": destroyArmy(civ); break;
             case "stealArtifact": stealArtifact(civ); break;
             case "burnRegion": burnRegion(civ); break;
             case "curseRegion": curseRegion(civ); break;
             case "portalOrSkill": portalOrSkill(civ); break;
             case "giveArtifact": giveArtifact(civ); break;
-            default: giveBoost(civ);
+            default: invadeRegion(civ);
         }
-        // Обновяване на интерфейса
+        
         if (window.refreshAllHeroUI) window.refreshAllHeroUI();
         if (window.saveGreatBulgariaGame) window.saveGreatBulgariaGame();
     };
 
-    console.log("✅ Древните цивилизации са активни – на всеки ход се случва случайно събитие (без currentHero).");
+    console.log("✅ Древните цивилизации вече завладяват региони и променят цветовете на картата.");
 })();
