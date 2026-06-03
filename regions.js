@@ -41,20 +41,23 @@ window.openRegionsMap = function() {
     }
 
     function getRegionColor(region) {
-        if (ownedRegions.includes(region.name)) return "#2c5a2a"; // Player - Green
-
+        // 1. Ваш регион (зелен)
+        if (ownedRegions.includes(region.name)) return "#2c5a2a";
+        
+        // 2. ⭐ Регион, завзет от древна цивилизация (лилав)
+        if (region.ancientOwner) return "#8a2be2";
+        
+        // 3. Регион с nativeClans
         if (region.nativeClans && region.nativeClans.length > 0) {
             let ownerClan = region.nativeClans[0];
             let clanData = window.worldData && window.worldData.clans ? window.worldData.clans[ownerClan] : null;
-            
             if (clanData) {
-                // If it is a favorite hero, use a distinct color.
-                if (clanData.isFavorite === true) return "#1a5a8a"; // Blue for favorite heroes
-                return "#5a1a1a"; // Red for other heroes/non-favorite
+                if (clanData.isFavorite === true) return "#1a5a8a"; // син за любими
+                return "#5a1a1a"; // червен за други герои
             }
         }
-
-        // Default difficulty-based fallback
+        
+        // 4. Трудност
         if (region.difficulty > 70) return "#5a1a1a";
         if (region.difficulty > 40) return "#4a2a1a";
         return "#2a2a3a";
