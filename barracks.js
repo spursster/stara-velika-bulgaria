@@ -208,9 +208,10 @@ window.renderBarracksLayout = function() {
         shopContent = fantasyTroops.map(id => renderTroopCard(allTroops[id])).join('');
     }
 
+    // ⭐ Генерираме HTML без onclick атрибути за затваряне – ще ги закачим после с JS
     barracksContainer.innerHTML = `
         <div style="position: relative; width: 100%; max-width: 750px; max-height: 90vh; background: #111; border: 2px solid #d4af37; border-radius: 12px; padding: 50px 15px 15px 15px; box-sizing: border-box; display: flex; flex-direction: column; gap: 12px; overflow-y: auto; box-shadow: 0 0 40px rgba(0,0,0,0.9);">
-            <button id="close-barracks-x" onclick="window.closeBarracksUI()" style="position: absolute; top: 8px; left: 8px; width: 36px; height: 36px; background: rgba(255,80,80,0.2); border: none; color: #ff8888; border-radius: 50%; font-size: 18px; cursor: pointer;">✕</button>
+            <button id="close-barracks-x" style="position: absolute; top: 8px; left: 8px; width: 36px; height: 36px; background: rgba(255,80,80,0.2); border: none; color: #ff8888; border-radius: 50%; font-size: 18px; cursor: pointer;">✕</button>
 
             <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #333; padding-bottom: 8px; flex-wrap: wrap; gap: 8px;">
                 <h1 style="color: #ffd700; margin: 0; font-size: 18px;">ВОЕННИ КАЗАРМИ</h1>
@@ -239,10 +240,21 @@ window.renderBarracksLayout = function() {
             </div>
 
             <div style="text-align: center;">
-                <button id="close-barracks-footer" onclick="window.closeBarracksUI()" style="background: #222; border: 1px solid #444; color: #aaa; padding: 10px 30px; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 12px; width: 100%;">ИЗХОД ОТ КАЗАРМИТЕ</button>
+                <button id="close-barracks-footer" style="background: #222; border: 1px solid #444; color: #aaa; padding: 10px 30px; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 12px; width: 100%;">ИЗХОД ОТ КАЗАРМИТЕ</button>
             </div>
         </div>
     `;
+
+    // ⭐⭐ ЗАКАЧВАНЕ НА EVENT LISTENERS ЗА ЗАТВАРЯНЕ ⭐⭐
+    const closeBtnX = document.getElementById('close-barracks-x');
+    const closeBtnFooter = document.getElementById('close-barracks-footer');
+    const closeHandler = function() {
+        console.log("Затваряне на казармите...");
+        const screen = document.getElementById('barracks-screen');
+        if (screen) screen.style.display = 'none';
+    };
+    if (closeBtnX) closeBtnX.onclick = closeHandler;
+    if (closeBtnFooter) closeBtnFooter.onclick = closeHandler;
 
     // Обновяване на златото и силата
     const selectedHero = heroesForSelect.find(h => h.name === selectedHeroName);
