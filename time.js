@@ -218,6 +218,8 @@ window.processTime = function() {
     // ========== АВТОМАТИЧНО РЕШАВАНЕ НА ВИСЯЩИ ПРЕДЛОЖЕНИЯ (УМЕНИЯ И КЛАСОВЕ) ==========
     if (typeof window.resolvePendingChoices === 'function') {
         window.resolvePendingChoices();
+     if (Math.random() < 0.2) { // 20% шанс на ход
+    window.triggerRandomChronicleEvent();
     }
 };
 
