@@ -1051,6 +1051,77 @@ gap: 4px;
     }
 }
 
+/* ==================== ИНТЕРАКТИВЕН ЛЕТОПИС ==================== */
+.chronicle-event.interactive-event {
+    background: rgba(0, 0, 0, 0.65);
+    border-left: 4px solid #ffaa44;
+    margin-bottom: 10px;
+    padding: 8px 12px;
+    border-radius: 0 12px 12px 0;
+    transition: all 0.2s ease-in-out;
+    backdrop-filter: blur(2px);
+}
+
+.chronicle-event.interactive-event:hover {
+    transform: translateX(4px);
+    background: rgba(0, 0, 0, 0.85);
+    border-left-width: 6px;
+}
+
+.chronicle-buttons {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 10px;
+    justify-content: flex-start;
+}
+
+.chronicle-btn {
+    background: #d4af37;
+    border: none;
+    border-radius: 30px;
+    padding: 5px 14px;
+    font-size: 12px;
+    font-weight: bold;
+    color: #000;
+    cursor: pointer;
+    transition: all 0.15s linear;
+    font-family: 'Cinzel', 'Montserrat', sans-serif;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.2);
+}
+
+.chronicle-btn:hover {
+    background: #ffaa44 !important;
+    transform: scale(1.02);
+    box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+}
+
+.chronicle-btn:active {
+    transform: scale(0.98);
+}
+
+/* Адаптивност за мобилни устройства */
+@media (max-width: 768px) {
+    .chronicle-event.interactive-event {
+        padding: 6px 8px;
+        margin-bottom: 6px;
+    }
+    .chronicle-btn {
+        padding: 3px 10px;
+        font-size: 10px;
+    }
+    .chronicle-buttons {
+        gap: 5px;
+        margin-top: 6px;
+    }
+}
+
+@media (max-width: 480px) {
+    .chronicle-btn {
+        padding: 2px 8px;
+        font-size: 9px;
+    }
+}
 
 #save-indicator { background: transparent !important; border: none !important; }
 
