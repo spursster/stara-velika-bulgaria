@@ -1,20 +1,27 @@
 /**
  * ========================================================================
  * ВЕЛИКА БЪЛГАРИЯ – БИТКА: ОСНОВНА ЛОГИКА (battle-core.js)
- * Версия: 3.0 – ГРАНДИОЗНА, С ЕПИЧНИ РАЗКАЗИ
+ * Версия: 3.1 – MVP СИСТЕМА + ЕПИЧНИ РАЗКАЗИ
  * ========================================================================
  */
 
 (function() {
     // ========== СИСТЕМА ЗА ЕПИЧЕН РАЗКАЗ ==========
     let _battleNarrative = [];
+    let _damageDealt = {};   // съхранява сумарни щети на герой (id -> totalDamage)
+    
     function addNarrative(text, type = "info") {
         _battleNarrative.push({ text, type, time: Date.now() });
         if (_battleNarrative.length > 40) _battleNarrative.shift();
     }
-    function resetNarrative() { _battleNarrative = []; }
+    
+    function resetNarrative() { 
+        _battleNarrative = [];
+        _damageDealt = {};
+    }
+    
     function getNarrative() { return [..._battleNarrative]; }
-
+    
     // Помощна функция за разнообразни теренни описания
     function getTerrainIntro(terrain) {
         const terrains = {
@@ -85,7 +92,7 @@
         return " с непоколебима воля, вдъхновяваща всички около себе си";
     }
 
-    // Основната функция за генериране на епичен разказ
+    // Основната функция за генериране на епичен разказ (С MVP)
     function generateBattleStory(regionName, heroes, enemies, isVictory, rewards) {
         if (!_battleNarrative || _battleNarrative.length === 0) {
             return isVictory 
@@ -93,6 +100,42 @@
                 : `Войските ви отстъпват от ${regionName}. Поражението е горчиво.`;
         }
 
+        // ---- MVP: кой герой нанесе най-много щети? ----
+        let mvpHero = null;
+        let maxDamage = 0;
+        for (let id in _damageDealt) {
+            if (_damageDealt[id] > maxDamage) {
+                maxDamage = _damageDealt[id];
+                // Намираме съответния hero обект от heroes
+                mvpHero = heroes.find(h => h.id === id);
+            }
+        }
+        
+        // Ако няма mvp (напр. няма щети), опитваме първия жив герой
+        if (!mvpHero && heroes.length) mvpHero = heroes.find(h => h.hp > 0) || heroes[0];
+        
+        // Записваме MVP в глобална статистика (за постижения)
+        if (mvpHero && mvpHero.clanObj) {
+            if (!window.mvpHistory) window.mvpHistory = [];
+            window.mvpHistory.unshift({
+                heroName: mvpHero.name,
+                damage: maxDamage,
+                region: regionName,
+                timestamp: Date.now()
+            });
+            if (window.mvpHistory.length > 20) window.mvpHistory.pop();
+            
+            // Даваме малък бонус на MVP (опит + морал)
+            const heroObj = mvpHero.clanObj;
+            if (heroObj) {
+                const mvpXp = 5;
+                const mvpMorale = 5;
+                if (window.gainHeroXP) window.gainHeroXP(heroObj, mvpXp);
+                else heroObj.xp = (heroObj.xp || 0) + mvpXp;
+                heroObj.morale = Math.min(100, (heroObj.morale || 50) + mvpMorale);
+            }
+        }
+        
         // ---- 1. Интро според терена (с разнообразие) ----
         const region = window.worldData?.regions?.[regionName];
         let terrainIntro = "";
@@ -106,7 +149,6 @@
         const maxEvents = 6;
         let importantEvents = _battleNarrative.slice(0, maxEvents);
         if (importantEvents.length > 3 && Math.random() > 0.7) {
-            // Понякога добавяме и по-старо събитие за драматизъм
             const older = _battleNarrative[maxEvents];
             if (older) importantEvents.push(older);
         }
@@ -122,7 +164,6 @@
         if (isVictory) {
             const strongestHero = heroes.reduce((a, b) => (a.power > b.power ? a : b), heroes[0]);
             const classSuffix = getClassClimax(strongestHero);
-            // Случайни епични обрати
             const epicTurns = [
                 `Тогава ${strongestHero.name}${classSuffix} нанесе решителния удар.`,
                 `Изведнъж небето се разцепи и ${strongestHero.name}${classSuffix} удари безмилостно.`,
@@ -137,8 +178,6 @@
                 " Славата на победителите ще се помни с векове."
             ];
             climax = epicLine + ending[Math.floor(Math.random() * ending.length)];
-
-            // Бонуси за избора (по-големи при епични победи)
             if (rewards.gold) bonusGold = Math.floor(rewards.gold * 0.2);
             if (rewards.xp) bonusXP = Math.floor(rewards.xp * 0.2);
             bonusMorale = 15;
@@ -161,26 +200,39 @@
             climax += `\nЛично ${firstHero.name} събра трофеите и вдигна знамето на победата.`;
         }
 
-        // ---- 5. Формираме пълния разказ ----
+        // ---- 5. Секция за MVP (само ако има такъв и щети > 0) ----
+        let mvpSection = "";
+        if (mvpHero && maxDamage > 0) {
+            const dmgPercent = ((maxDamage / (rewards?.totalDamage || maxDamage)) * 100).toFixed(0);
+            mvpSection = `\n🌟 **MVP на битката: ${mvpHero.name}** с ${maxDamage} щети (${dmgPercent}% от общите)! 🌟\n`;
+            // Добавяме бонус към наградите в разказа
+            if (isVictory) {
+                mvpSection += `🏅 За героизма си ${mvpHero.name} получава +5 опит и +5 морал.\n`;
+            }
+        }
+        
+        // ---- 6. Формираме пълния разказ ----
         let story = `🏰 **Епичната битка за ${regionName}**\n\n` +
                     `${terrainIntro}\n${battleFlow}\n` +
-                    `---\n✨ **${isVictory ? "ПОБЕДА" : "ПОРАЖЕНИЕ"}** ✨\n${climax}\n`;
+                    `---\n✨ **${isVictory ? "ПОБЕДА" : "ПОРАЖЕНИЕ"}** ✨\n${climax}\n` +
+                    mvpSection;
 
         if (rewards.gold) story += `💰 Намерено злато: ${rewards.gold}\n`;
         if (rewards.xp) story += `📚 Придобит опит: ${rewards.xp}\n`;
         if (rewards.artifact) story += `🏺 Открит артефакт: "${rewards.artifact.name}"\n`;
 
-        // ---- 6. Записваме разказа в глобалния масив за хроники (ако съществува) ----
+        // ---- 7. Записваме разказа в глобалния масив за хроники (ако съществува) ----
         if (!window.epicChronicles) window.epicChronicles = [];
         window.epicChronicles.unshift({
             title: `Битката за ${regionName} (${window.gameTime ? window.gameTime.year + " г." : "н.е."})`,
             story: story,
             timestamp: Date.now(),
-            isVictory: isVictory
+            isVictory: isVictory,
+            mvp: mvpHero ? mvpHero.name : null
         });
         if (window.epicChronicles.length > 20) window.epicChronicles.pop();
 
-        // ---- 7. При победа – показваме бутони за избор на играча ----
+        // ---- 8. При победа – показваме бутони за избор на играча ----
         if (isVictory && typeof window.showAdvisorMsg === 'function') {
             const buttons = [
                 {
@@ -225,7 +277,6 @@
             ];
             window.showAdvisorMsg(story, buttons);
         } else if (!isVictory && typeof window.showAdvisorMsg === 'function') {
-            // При загуба – показваме само разказ, но можем да добавим бутон за утеха
             const buttons = [
                 {
                     label: `📖 Прочети хрониката`,
@@ -236,7 +287,6 @@
             ];
             window.showAdvisorMsg(story, buttons);
         } else {
-            // Ако няма showAdvisorMsg (рядко), просто връщаме текст
             console.log(story);
         }
 
@@ -504,7 +554,7 @@
         return heroes.slice(0, 5);
     }
 
-    // ========== ИЗЧИСЛЕНИЯ НА АТАКИТЕ ==========
+    // ========== ИЗЧИСЛЕНИЯ НА АТАКИТЕ (С MVP ТРАКИНГ) ==========
     function calculateHeroDamage(hero, target, currentRound, addLogFn, addNarrativeFn, animateHeroFn, animateEnemyFn, updateUIFn) {
         let baseDamage = Math.max(1, Math.floor(hero.power * (0.5 + Math.random() * 0.7)));
         let troopEffects = hero.troopEffects || {};
@@ -581,6 +631,10 @@
         if (animateEnemyFn) animateEnemyFn(target.id || (target.isMonster ? "monster" : null), finalDamage);
         if (addNarrativeFn) addNarrativeFn(`⚔️ ${hero.name} нанася ${finalDamage} щети${isCrit ? " (критичен удар!)" : ""} на ${target.name}.`);
         
+        // *** MVP ТРАКИНГ: добавяме нанесените щети към този герой ***
+        if (!_damageDealt[hero.id]) _damageDealt[hero.id] = 0;
+        _damageDealt[hero.id] += finalDamage;
+        
         return finalDamage;
     }
 
@@ -641,5 +695,5 @@
         calculateEnemyDamage: calculateEnemyDamage
     };
     
-    console.log("✅ battle-core.js зареден – ГРАНДИОЗНА ВЕРСИЯ 3.0 с епични разкази и разнообразие");
+    console.log("✅ battle-core.js зареден – MVP ВЕРСИЯ 3.1 с епични разкази и MVP система");
 })();
