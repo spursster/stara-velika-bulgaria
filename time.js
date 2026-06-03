@@ -1,7 +1,7 @@
 /**
  ==========================================================================
  МОДУЛ: ВРЕМЕ И ЛЕТОБРОЕНЕ - Велика България
- ВЕРСИЯ: 3.3 – С ИНТЕГРАЦИЯ НА resolvePendingChoices (УМЕНИЯ И КЛАСОВЕ)
+ ВЕРСИЯ: 3.4 – С АВТОМАТИЧНИ ИНТЕРАКТИВНИ СЪБИТИЯ
  ==========================================================================
  */
 
@@ -209,17 +209,25 @@ window.processTime = function() {
     
     window.updateTimeUI();
     
+    // Световна динамика (региони, атаки и т.н.)
     if (window.advanceExpeditionsTurn) window.advanceExpeditionsTurn();
     if (typeof window.autonomousRegionConquest === 'function') window.autonomousRegionConquest();
     if (typeof window.triggerAutomatedHeroActions === 'function') window.triggerAutomatedHeroActions();
     if (typeof window.checkRandomAttack === 'function') window.checkRandomAttack();
     if (typeof window.processWorldDynamics === 'function') window.processWorldDynamics();
     
-    // ========== АВТОМАТИЧНО РЕШАВАНЕ НА ВИСЯЩИ ПРЕДЛОЖЕНИЯ (УМЕНИЯ И КЛАСОВЕ) ==========
+    // Автоматично решаване на висящи предложения за умения и класове
     if (typeof window.resolvePendingChoices === 'function') {
         window.resolvePendingChoices();
-     if (Math.random() < 0.2) { // 20% шанс на ход
-    window.triggerRandomChronicleEvent();
+    }
+    
+    // ----- НОВО: Случайни интерактивни събития (20% шанс на ход) -----
+    if (typeof window.triggerRandomChronicleEvent === 'function' && Math.random() < 0.2) {
+        // Избягваме да задействаме събитие, ако има отворена битка (за да не пречи)
+        const isBattleOpen = document.getElementById('ultimate-battle-screen') !== null;
+        if (!isBattleOpen) {
+            window.triggerRandomChronicleEvent();
+        }
     }
 };
 
@@ -239,4 +247,4 @@ if (document.readyState === 'loading') {
 window.applyAgeEffects = applyAgeEffects;
 window.checkHistoricalEvents = checkHistoricalEvents;
 
-console.log("✅ time.js версия 3.3 зареден – с поддръжка на resolvePendingChoices");
+console.log("✅ time.js версия 3.4 зареден – с автоматични интерактивни събития (20% шанс на ход)");
