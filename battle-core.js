@@ -1,7 +1,7 @@
 /**
  * ========================================================================
  * ВЕЛИКА БЪЛГАРИЯ – БИТКА: ОСНОВНА ЛОГИКА (battle-core.js)
- * Версия: 2.1 – ФИНАЛНА, РАБОТЕЩА В КЛАСИЧЕСКИ РЕЖИМ
+ * Версия: 3.0 – ГРАНДИОЗНА, С ЕПИЧНИ РАЗКАЗИ
  * ========================================================================
  */
 
@@ -14,23 +14,232 @@
     }
     function resetNarrative() { _battleNarrative = []; }
     function getNarrative() { return [..._battleNarrative]; }
+
+    // Помощна функция за разнообразни теренни описания
+    function getTerrainIntro(terrain) {
+        const terrains = {
+            "Планинска": [
+                "Високите планини отекваха от бойни викове.",
+                "Снежните върхове станаха свидетели на кръвопролитие.",
+                "Скалите се разтърсиха от сблъсъка на армиите."
+            ],
+            "Гора": [
+                "Гъстата гора криеше смъртоносни засади.",
+                "Дърветата горяха, осветявайки бойното поле.",
+                "Сенките на дърветата танцуваха с ножовете на убийците."
+            ],
+            "Речен": [
+                "Реката се оцвети в червено.",
+                "Водите отнесоха телата на падналите.",
+                "Мостът беше залят с кръв и стомана."
+            ],
+            "Пустинна": [
+                "Жегата и пясъкът бяха също толкова опасни, колкото и врага.",
+                "Пустинята погълна стотици жертви.",
+                "Слънцето огряваше клането без милост."
+            ],
+            "Блато": [
+                "Калта и мъглата превръщаха битката в кошмар.",
+                "Всяка крачка беше борба за оцеляване.",
+                "Отровните изпарения се смесиха с миризмата на кръв."
+            ],
+            "Равнина": [
+                "Откритата равнина позволи на конницата да бушува.",
+                "Вятърът носеше виковете на ранените.",
+                "Земята беше накъсана от копита и мечове."
+            ],
+            "Крайбрежна": [
+                "Морските вълни се разбиваха върху телата на падналите.",
+                "Соленият вятър смеси аромата на кръв и водорасли.",
+                "Корабите на хоризонта донесоха подкрепления в последния момент."
+            ],
+            "Вулканична": [
+                "Земята трепереше под краката на воините.",
+                "Пепелта заслепяваше очите, а лавата озаряваше нощта.",
+                "Сяра и огън – адът беше на Земята."
+            ],
+            "Магическа": [
+                "Магическите енергии нарушаваха законите на физиката.",
+                "Портали се отваряха и затваряха в хаос.",
+                "Заклинания разкъсваха въздуха, а призраци се носеха над бойното поле."
+            ]
+        };
+        let list = terrains[terrain] || ["Битката беше жестока и безмилостна."];
+        return list[Math.floor(Math.random() * list.length)];
+    }
+
+    // Помощна функция за финал според клас
+    function getClassClimax(hero) {
+        const className = hero.className || "войн";
+        const lowerName = className.toLowerCase();
+        if (lowerName.includes("маг") || lowerName.includes("wizard")) return " с магическа сила, която разкъса небето";
+        if (lowerName.includes("паладин") || lowerName.includes("paladin")) return " със светлина в очите, която изгори нечестивите";
+        if (lowerName.includes("берсерк") || lowerName.includes("berserker")) return " в кървава ярост, разкъсвайки враговете с голи ръце";
+        if (lowerName.includes("воевод") || lowerName.includes("voivode")) return " със студен ум, предвиждайки всяка крачка на врага";
+        if (lowerName.includes("стрелец") || lowerName.includes("archer")) return " с точен мерник, сразяващ враговете от разстояние";
+        if (lowerName.includes("асаксин") || lowerName.includes("сенчест")) return " от сенките, нанасяйки смъртоносен удар в гръб";
+        if (lowerName.includes("кръстоносец")) return " с кръст и меч, изгарящ неверниците";
+        if (lowerName.includes("некромант")) return " призовавайки мъртвите да се бият на негова страна";
+        if (lowerName.includes("друид")) return " със силата на природата, опустошаваща редиците на врага";
+        if (lowerName.includes("рицар")) return " на кон, препускащ през огън и дим";
+        return " с непоколебима воля, вдъхновяваща всички около себе си";
+    }
+
+    // Основната функция за генериране на епичен разказ
     function generateBattleStory(regionName, heroes, enemies, isVictory, rewards) {
-        if (_battleNarrative.length === 0) {
+        if (!_battleNarrative || _battleNarrative.length === 0) {
             return isVictory 
-                ? `⚔️ Сражението за ${regionName} приключи с победа! Врагът е разпръснат.`
-                : `💀 Битката за ${regionName} завърши с поражение. Войските се оттеглиха.`;
+                ? `Силите ви сразяват врага в ${regionName}. Победата е ваша!`
+                : `Войските ви отстъпват от ${regionName}. Поражението е горчиво.`;
         }
-        let story = `🏰 **Битката за ${regionName}**\n\n`;
-        let importantEvents = _battleNarrative.slice(0, 12);
-        for (let ev of importantEvents) story += `▸ ${ev.text}\n`;
-        if (isVictory) {
-            story += `\n✨ **ПОБЕДА!** ✨\n`;
-            if (rewards.gold) story += `💰 Намерено злато: ${rewards.gold}\n`;
-            if (rewards.xp) story += `📚 Придобит опит: ${rewards.xp}\n`;
-            if (rewards.artifact) story += `🏺 Открит артефакт: "${rewards.artifact.name}"\n`;
+
+        // ---- 1. Интро според терена (с разнообразие) ----
+        const region = window.worldData?.regions?.[regionName];
+        let terrainIntro = "";
+        if (region) {
+            terrainIntro = getTerrainIntro(region.terrain);
         } else {
-            story += `\n💀 **ПОРАЖЕНИЕ** 💀\n`;
+            terrainIntro = `В ${regionName} се разрази яростна битка.`;
         }
+
+        // ---- 2. Събираме най-важните моменти (до 6, с малко случайност) ----
+        const maxEvents = 6;
+        let importantEvents = _battleNarrative.slice(0, maxEvents);
+        if (importantEvents.length > 3 && Math.random() > 0.7) {
+            // Понякога добавяме и по-старо събитие за драматизъм
+            const older = _battleNarrative[maxEvents];
+            if (older) importantEvents.push(older);
+        }
+        let battleFlow = "";
+        for (let ev of importantEvents) {
+            battleFlow += ` ▸ ${ev.text}\n`;
+        }
+
+        // ---- 3. Кулминация и край според изхода, с допълнителни случайни ефекти ----
+        let climax = "";
+        let bonusGold = 0, bonusXP = 0, bonusMorale = 0;
+
+        if (isVictory) {
+            const strongestHero = heroes.reduce((a, b) => (a.power > b.power ? a : b), heroes[0]);
+            const classSuffix = getClassClimax(strongestHero);
+            // Случайни епични обрати
+            const epicTurns = [
+                `Тогава ${strongestHero.name}${classSuffix} нанесе решителния удар.`,
+                `Изведнъж небето се разцепи и ${strongestHero.name}${classSuffix} удари безмилостно.`,
+                `Когато всички изглеждаше загубено, ${strongestHero.name}${classSuffix} възкръсна и сразява врага.`,
+                `Земята потрепери под краката на ${strongestHero.name}${classSuffix}.`
+            ];
+            let epicLine = epicTurns[Math.floor(Math.random() * epicTurns.length)];
+            const ending = [
+                " Врагът потрепери и побягна.",
+                " Оцелелите се разпръснаха в паника.",
+                " Бойното поле остана покрито с трупове на противника.",
+                " Славата на победителите ще се помни с векове."
+            ];
+            climax = epicLine + ending[Math.floor(Math.random() * ending.length)];
+
+            // Бонуси за избора (по-големи при епични победи)
+            if (rewards.gold) bonusGold = Math.floor(rewards.gold * 0.2);
+            if (rewards.xp) bonusXP = Math.floor(rewards.xp * 0.2);
+            bonusMorale = 15;
+        } else {
+            const randomHero = heroes[Math.floor(Math.random() * heroes.length)];
+            const defeatMessages = [
+                `Въпреки смелостта на ${randomHero.name}, силите ви не стигнаха. Отстъплението беше неизбежно.`,
+                `Предателство в собствените редици доведе до разгром.`,
+                `Вражеският командир се оказа по-хитър. Загубите са тежки.`,
+                `Съдбата се обърна срещу вас в последния миг.`
+            ];
+            climax = defeatMessages[Math.floor(Math.random() * defeatMessages.length)];
+            if (rewards.gold) bonusGold = -Math.floor(rewards.gold * 0.1);
+            bonusMorale = -15;
+        }
+
+        // ---- 4. Добавяме ефект от първия жив герой (ако има) за по-голямо разнообразие ----
+        const firstHero = heroes.find(h => h.hp > 0);
+        if (firstHero && isVictory && Math.random() > 0.6) {
+            climax += `\nЛично ${firstHero.name} събра трофеите и вдигна знамето на победата.`;
+        }
+
+        // ---- 5. Формираме пълния разказ ----
+        let story = `🏰 **Епичната битка за ${regionName}**\n\n` +
+                    `${terrainIntro}\n${battleFlow}\n` +
+                    `---\n✨ **${isVictory ? "ПОБЕДА" : "ПОРАЖЕНИЕ"}** ✨\n${climax}\n`;
+
+        if (rewards.gold) story += `💰 Намерено злато: ${rewards.gold}\n`;
+        if (rewards.xp) story += `📚 Придобит опит: ${rewards.xp}\n`;
+        if (rewards.artifact) story += `🏺 Открит артефакт: "${rewards.artifact.name}"\n`;
+
+        // ---- 6. Записваме разказа в глобалния масив за хроники (ако съществува) ----
+        if (!window.epicChronicles) window.epicChronicles = [];
+        window.epicChronicles.unshift({
+            title: `Битката за ${regionName} (${window.gameTime ? window.gameTime.year + " г." : "н.е."})`,
+            story: story,
+            timestamp: Date.now(),
+            isVictory: isVictory
+        });
+        if (window.epicChronicles.length > 20) window.epicChronicles.pop();
+
+        // ---- 7. При победа – показваме бутони за избор на играча ----
+        if (isVictory && typeof window.showAdvisorMsg === 'function') {
+            const buttons = [
+                {
+                    label: `🏛️ Издигни паметник (+${bonusXP} опит, +10 морал)`,
+                    action: () => {
+                        if (bonusXP > 0) {
+                            const livingHeroes = heroes.filter(h => h.hp > 0);
+                            const xpPerHero = Math.floor(bonusXP / livingHeroes.length);
+                            for (let h of livingHeroes) {
+                                const heroObj = h.heroObj || h.clanObj;
+                                if (window.gainHeroXP) window.gainHeroXP(heroObj, xpPerHero);
+                                else heroObj.xp = (heroObj.xp || 0) + xpPerHero;
+                            }
+                        }
+                        for (let h of heroes) {
+                            const heroObj = h.heroObj || h.clanObj;
+                            heroObj.morale = Math.min(100, (heroObj.morale || 50) + 10);
+                        }
+                        if (window.addWorldEvent) window.addWorldEvent("🏛️ ПАМЕТНИК", `${heroes[0]?.name || "Героите"} издигнаха паметник в чест на победата.`, "🏛️");
+                        if (window.updateAllUI) window.updateAllUI();
+                    }
+                },
+                {
+                    label: `💰 Разграби лагера (+${bonusGold} злато)`,
+                    action: () => {
+                        if (bonusGold > 0) {
+                            const livingHeroes = heroes.filter(h => h.hp > 0);
+                            const randomHero = livingHeroes[Math.floor(Math.random() * livingHeroes.length)];
+                            const heroObj = randomHero.heroObj || randomHero.clanObj;
+                            heroObj.gold += bonusGold;
+                            if (window.addWorldEvent) window.addWorldEvent("💰 ПЛЯЧКОС", `${heroObj.name} намери ${bonusGold} злато в лагера на врага.`, "💰");
+                        }
+                        if (window.updateAllUI) window.updateAllUI();
+                    }
+                },
+                {
+                    label: `📜 Запиши хроника (без бонус)`,
+                    action: () => {
+                        if (window.addWorldEvent) window.addWorldEvent("📜 ХРОНИКА", `Битката при ${regionName} ще се помни вечно.`, "📜");
+                    }
+                }
+            ];
+            window.showAdvisorMsg(story, buttons);
+        } else if (!isVictory && typeof window.showAdvisorMsg === 'function') {
+            // При загуба – показваме само разказ, но можем да добавим бутон за утеха
+            const buttons = [
+                {
+                    label: `📖 Прочети хрониката`,
+                    action: () => {
+                        if (window.addWorldEvent) window.addWorldEvent("📜 ПРОЧЕТЕНО", `${heroes[0]?.name || "Вие"} прочетохте за поражението и си взехте поука.`, "📜");
+                    }
+                }
+            ];
+            window.showAdvisorMsg(story, buttons);
+        } else {
+            // Ако няма showAdvisorMsg (рядко), просто връщаме текст
+            console.log(story);
+        }
+
         return story;
     }
 
@@ -208,43 +417,39 @@
         setTimeout(() => container.style.transform = 'translateX(0)', 150);
     }
 
-    // ========== ПОДКРЕПЛЕНИЯ (ОПРАВЕН БЪГ) ==========
-   function getReinforcements(region, playerHeroes) {
-    if (!window.worldData || !window.worldData.clans) return [];
-    let available = [];
-    let playerHeroNames = new Set(playerHeroes.map(h => h.name));
-    for (let key in window.worldData.clans) {
-        let hero = window.worldData.clans[key];
-        // Всички живи нелюбими герои (без значение isJoined)
-        if (hero && hero.isAlive !== false && !hero.isFavorite && !playerHeroNames.has(hero.name)) {
-            available.push(hero);
+    // ========== ПОДКРЕПЛЕНИЯ ==========
+    function getReinforcements(region, playerHeroes) {
+        if (!window.worldData || !window.worldData.clans) return [];
+        let available = [];
+        let playerHeroNames = new Set(playerHeroes.map(h => h.name));
+        for (let key in window.worldData.clans) {
+            let hero = window.worldData.clans[key];
+            if (hero && hero.isAlive !== false && !hero.isFavorite && !playerHeroNames.has(hero.name)) {
+                available.push(hero);
+            }
         }
+        if (available.length === 0) return [];
+        let count = Math.min(2, available.length);
+        for (let h of available) {
+            let relation = window.clanRelations?.[h.clan] || 50;
+            h._dangerScore = (h.heroPower || 100) * 0.6 + (100 - relation) * 0.4;
+        }
+        available.sort((a,b) => b._dangerScore - a._dangerScore);
+        let selected = available.slice(0, count);
+        return selected.map(hero => ({
+            id: hero.id,
+            name: hero.name,
+            clan: hero.clan,
+            power: hero.heroPower || 100,
+            hp: hero.maxHp || 100,
+            maxHp: hero.maxHp || 100,
+            icon: "⚔️",
+            isHero: true,
+            heroObj: hero,
+            startingHp: hero.hp || hero.maxHp || 100
+        }));
     }
-    console.log("Налични нелюбими за подкрепления:", available.length);
-    if (available.length === 0) return [];
-    
-    // ⭐ ПРЕМАХВАМЕ ШАНСА – ВИНАГИ ДОБАВЯМЕ ПОДКРЕПЛЕНИЯ
-    let count = Math.min(2, available.length); // 1-2 подкрепления
-    // Избираме най-опасните (по сила)
-    for (let h of available) {
-        let relation = window.clanRelations?.[h.clan] || 50;
-        h._dangerScore = (h.heroPower || 100) * 0.6 + (100 - relation) * 0.4;
-    }
-    available.sort((a,b) => b._dangerScore - a._dangerScore);
-    let selected = available.slice(0, count);
-    return selected.map(hero => ({
-        id: hero.id,
-        name: hero.name,
-        clan: hero.clan,
-        power: hero.heroPower || 100,
-        hp: hero.maxHp || 100,
-        maxHp: hero.maxHp || 100,
-        icon: "⚔️",
-        isHero: true,
-        heroObj: hero,
-        startingHp: hero.hp || hero.maxHp || 100
-    }));
-}
+
     // ========== АРМИЯ ЗАГУБИ ==========
     function applyArmyLossFromDamage(hero, damagePercent, addLogFn) {
         if (!hero.clanObj) return;
@@ -258,49 +463,47 @@
         if (addLogFn) addLogFn(`   📉 ${hero.name} загуби ${Math.floor(armyLossPercent * 100)}% от армията си! Остава: ${newArmy} войници.`);
     }
 
-    // ========== СЪБИРАНЕ НА ГЕРОИТЕ НА ИГРАЧА (ФИНАЛНА ВЕРСИЯ) ==========
+    // ========== СЪБИРАНЕ НА ГЕРОИТЕ НА ИГРАЧА ==========
     function collectPlayerHeroes() {
-    let heroes = [];
-    const worldData = window.worldData;
-    if (!worldData || !worldData.clans) return heroes;
-    
-    for (let key in worldData.clans) {
-        let clan = worldData.clans[key];
-        try {
-            // БЕЗ ПРОВЕРКА ЗА РЕЖИМ, БЕЗ ПРОВЕРКА ЗА isFavorite
-            // Взимаме всички живи и наети герои
-            if (clan.isJoined === true && clan.isAlive !== false) {
-                if (window.ensureCompleteArmyDetails) window.ensureCompleteArmyDetails(clan);
-                let calculatedPower = clan.heroPower || 100;
-                if (window.recalculateHeroPower) calculatedPower = window.recalculateHeroPower(clan);
-                let classBonus = 1.0;
-                if (clan.classBonuses && clan.currentClass) {
-                    const classData = window.hybridClasses?.find(c => c.name === clan.currentClass);
-                    if (classData?.bonuses?.heroPower) calculatedPower += classData.bonuses.heroPower;
-                    if (classData?.bonuses?.armyBonus) classBonus += classData.bonuses.armyBonus;
+        let heroes = [];
+        const worldData = window.worldData;
+        if (!worldData || !worldData.clans) return heroes;
+        for (let key in worldData.clans) {
+            let clan = worldData.clans[key];
+            try {
+                if (clan.isJoined === true && clan.isAlive !== false) {
+                    if (window.ensureCompleteArmyDetails) window.ensureCompleteArmyDetails(clan);
+                    let calculatedPower = clan.heroPower || 100;
+                    if (window.recalculateHeroPower) calculatedPower = window.recalculateHeroPower(clan);
+                    let classBonus = 1.0;
+                    if (clan.classBonuses && clan.currentClass) {
+                        const classData = window.hybridClasses?.find(c => c.name === clan.currentClass);
+                        if (classData?.bonuses?.heroPower) calculatedPower += classData.bonuses.heroPower;
+                        if (classData?.bonuses?.armyBonus) classBonus += classData.bonuses.armyBonus;
+                    }
+                    let armySize = clan.armySize || clan.currentArmy || 300;
+                    let finalPower = Math.floor(calculatedPower * classBonus * (armySize / 300));
+                    finalPower = Math.max(50, finalPower);
+                    heroes.push({
+                        id: key,
+                        name: clan.leaderName || clan.name || key,
+                        className: clan.currentClass || "Воевода",
+                        power: finalPower,
+                        hp: clan.hp || clan.maxHp || 100,
+                        maxHp: clan.maxHp || 100,
+                        icon: "⚔️",
+                        armySize: armySize,
+                        clanObj: clan,
+                        troopEffects: getTroopSpecialEffects(clan)
+                    });
                 }
-                let armySize = clan.armySize || clan.currentArmy || 300;
-                let finalPower = Math.floor(calculatedPower * classBonus * (armySize / 300));
-                finalPower = Math.max(50, finalPower);
-                heroes.push({
-                    id: key,
-                    name: clan.leaderName || clan.name || key,
-                    className: clan.currentClass || "Воевода",
-                    power: finalPower,
-                    hp: clan.hp || clan.maxHp || 100,
-                    maxHp: clan.maxHp || 100,
-                    icon: "⚔️",
-                    armySize: armySize,
-                    clanObj: clan,
-                    troopEffects: getTroopSpecialEffects(clan)
-                });
+            } catch(err) {
+                console.error(`Грешка при добавяне на ${clan.name}:`, err);
             }
-        } catch(err) {
-            console.error(`Грешка при добавяне на ${clan.name}:`, err);
         }
+        return heroes.slice(0, 5);
     }
-    return heroes.slice(0, 5);
-}
+
     // ========== ИЗЧИСЛЕНИЯ НА АТАКИТЕ ==========
     function calculateHeroDamage(hero, target, currentRound, addLogFn, addNarrativeFn, animateHeroFn, animateEnemyFn, updateUIFn) {
         let baseDamage = Math.max(1, Math.floor(hero.power * (0.5 + Math.random() * 0.7)));
@@ -438,5 +641,5 @@
         calculateEnemyDamage: calculateEnemyDamage
     };
     
-    console.log("✅ battle-core.js зареден – ФИНАЛНА ВЕРСИЯ, работи в класически режим");
+    console.log("✅ battle-core.js зареден – ГРАНДИОЗНА ВЕРСИЯ 3.0 с епични разкази и разнообразие");
 })();
