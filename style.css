@@ -243,6 +243,7 @@ html, body {
 }
 
 .favorite-slot {
+    position: relative;          /* <-- КЛЮЧОВО за бутона ❤️ */
     background: #1e3a5f !important;
     backdrop-filter: none !important;
     border: 1px solid #d4af37;
