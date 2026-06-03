@@ -1,7 +1,7 @@
 /**
 ==========================================================================
 ПРОЕКТ: ВЕЛИКА БЪЛГАРИЯ
-ФАЙЛ: barracks.js (ВЕРСИЯ 6.0 – БЕЗ currentHero, С updateStrongestHeroUI)
+ФАЙЛ: barracks.js (ВЕРСИЯ 6.1 – ОПРАВЕНО ЗАТВАРЯНЕ)
 ==========================================================================
 */
 
@@ -111,6 +111,16 @@ window.openBarracksUI = function() {
     window.renderBarracksLayout();
 };
 
+// ==================== ЗАТВАРЯНЕ НА КАЗАРМИТЕ ====================
+window.closeBarracksUI = function() {
+    const screen = document.getElementById('barracks-screen');
+    if (screen) {
+        screen.style.display = 'none';
+        // Допълнително: премахваме фокуса върху елементи вътре, за да няма остатъчни събития
+        if (screen.parentNode) screen.parentNode.focus();
+    }
+};
+
 // ==================== ОСНОВНО РЕНДИРАНЕ ====================
 window.renderBarracksLayout = function() {
     const barracksContainer = document.getElementById('barracks-screen');
@@ -198,7 +208,6 @@ window.renderBarracksLayout = function() {
         shopContent = fantasyTroops.map(id => renderTroopCard(allTroops[id])).join('');
     }
 
-    // ========== ПОПРАВЕНИ БУТОНИ С onclick ==========
     barracksContainer.innerHTML = `
         <div style="position: relative; width: 100%; max-width: 750px; max-height: 90vh; background: #111; border: 2px solid #d4af37; border-radius: 12px; padding: 50px 15px 15px 15px; box-sizing: border-box; display: flex; flex-direction: column; gap: 12px; overflow-y: auto; box-shadow: 0 0 40px rgba(0,0,0,0.9);">
             <button id="close-barracks-x" onclick="window.closeBarracksUI()" style="position: absolute; top: 8px; left: 8px; width: 36px; height: 36px; background: rgba(255,80,80,0.2); border: none; color: #ff8888; border-radius: 50%; font-size: 18px; cursor: pointer;">✕</button>
@@ -235,7 +244,7 @@ window.renderBarracksLayout = function() {
         </div>
     `;
 
-    // Обновяване на златото и силата (без промяна)
+    // Обновяване на златото и силата
     const selectedHero = heroesForSelect.find(h => h.name === selectedHeroName);
     const goldSpan = document.getElementById('barracksGoldDisplay');
     if (goldSpan && selectedHero) goldSpan.innerText = selectedHero.gold || 0;
@@ -255,7 +264,7 @@ window.renderBarracksLayout = function() {
         });
     }
 
-    // Странициране (без промяна)
+    // Странициране
     document.querySelectorAll('.barracks-page-btn').forEach(btn => {
         btn.onclick = () => {
             if (btn.dataset.page === 'prev') window.barracksState.currentPage--;
@@ -281,6 +290,7 @@ window.renderBarracksLayout = function() {
         };
     });
 };
+
 function renderTroopCard(troop) {
     const heroName = document.getElementById('heroBuySelect')?.value;
     let hero = null;
@@ -494,10 +504,8 @@ window.toggleHeroFavoriteInBarracks = function(heroName) {
     }
 };
 
-window.closeBarracksUI = function() {
-    const screen = document.getElementById('barracks-screen');
-    if (screen) screen.style.display = 'none';
-};
+// Функцията closeBarracksUI вече е дефинирана по-горе (преместена)
+// Повтаряме дефиницията за всеки случай, но няма да дублираме.
 
 (function addCoinAnimationStyle() {
     if (document.getElementById('coin-animation-style')) return;
