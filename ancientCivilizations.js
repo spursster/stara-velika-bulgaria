@@ -111,15 +111,14 @@
    function stealArtifact(civ) {
     let hero = getMainHero();
     if (!hero || !hero.inventory || hero.inventory.length === 0) return;
-    // Филтрираме само съществуващи артефакти (без null)
-    let validIndices = [];
+    let validArtifacts = [];
     for (let i = 0; i < hero.inventory.length; i++) {
-        if (hero.inventory[i] !== null && hero.inventory[i] !== undefined) validIndices.push(i);
+        let art = hero.inventory[i];
+        if (art && art.name) validArtifacts.push(i);
     }
-    if (validIndices.length === 0) return;
-    let randomIndex = validIndices[Math.floor(Math.random() * validIndices.length)];
+    if (validArtifacts.length === 0) return;
+    let randomIndex = validArtifacts[Math.floor(Math.random() * validArtifacts.length)];
     let stolen = hero.inventory[randomIndex];
-    if (!stolen || !stolen.name) return;
     hero.inventory.splice(randomIndex, 1);
     addLog(`🌑 Кражба от ${civ.name}`, `${civ.name} открадна от ${hero.name} артефакта "${stolen.name}".`, civ.icon);
     if (window.updateCharacterUI) window.updateCharacterUI(hero);
