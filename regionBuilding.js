@@ -1,7 +1,6 @@
 // ==================== СТРОИТЕЛСТВО В РЕГИОНИТЕ ====================
-// Версия 1.1 (без currentHero)
+// Версия 1.2 – с проверка за съществуване на region.buildings
 
-// База данни за сгради
 window.buildingsDB = {
     barracks: {
         name: "Казарма",
@@ -50,7 +49,6 @@ window.buildingsDB = {
     }
 };
 
-// Помощна функция за вземане на "главния герой" (без currentHero)
 function getMainHeroForBuilding() {
     if (window.gameMode === 'solo') return window.currentHero || null;
     if (typeof window.getStrongestHero === 'function') return window.getStrongestHero();
@@ -58,7 +56,6 @@ function getMainHeroForBuilding() {
     return null;
 }
 
-// Инициализация на сградите за региони (ако липсват)
 function initRegionBuildings() {
     if (!window.worldData || !window.worldData.regions) return;
     for (let regionName in window.worldData.regions) {
@@ -83,10 +80,17 @@ function initRegionBuildings() {
     }
 }
 
-// Функция за строителство/надграждане
 window.buildInRegion = function(regionName, buildingId, hero) {
     const region = window.worldData?.regions?.[regionName];
     if (!region) return { success: false, msg: "Регионът не съществува." };
+    
+    // Гарантираме, че region.buildings съществува
+    if (!region.buildings) {
+        region.buildings = {
+            barracks: 0, market: 0, temple: 0, wall: 0, harbor: 0
+        };
+    }
+    
     if (!hero) hero = getMainHeroForBuilding();
     if (!hero) return { success: false, msg: "Няма намерен герой за строителство." };
 
@@ -107,7 +111,7 @@ window.buildInRegion = function(regionName, buildingId, hero) {
     const stoneCost = (buildingId === 'wall' ? 30 : buildingId === 'temple' ? 15 : 0) * (currentLevel + 1);
     const ironCost = (buildingId === 'barracks' ? 10 : 0) * (currentLevel + 1);
 
-    if (region.resources.wood < woodCost || region.resources.stone < stoneCost || region.resources.iron < ironCost) {
+    if ((region.resources?.wood || 0) < woodCost || (region.resources?.stone || 0) < stoneCost || (region.resources?.iron || 0) < ironCost) {
         return { success: false, msg: `Недостатъчно ресурси в региона! Нужни: дърво ${woodCost}, камък ${stoneCost}, желязо ${ironCost}.` };
     }
 
@@ -137,61 +141,68 @@ window.buildInRegion = function(regionName, buildingId, hero) {
     return { success: true, msg: `Успешно построихте ниво ${region.buildings[buildingId]} на ${building.name} в ${regionName}!` };
 };
 
-// Показване на бутони за строителство в инспекцията на региона
+// Пачваме inspectRegion, за да показва бутони за строителство
 const originalInspectRegion = window.inspectRegion;
-window.inspectRegion = function(regionName) {
-    if (originalInspectRegion) originalInspectRegion(regionName);
-    setTimeout(() => {
-        const modal = document.getElementById('region-inspect-overlay');
-        if (!modal) return;
-        const actionDiv = modal.querySelector('#action-div');
-        if (!actionDiv) return;
+if (originalInspectRegion) {
+    window.inspectRegion = function(regionName) {
+        originalInspectRegion(regionName);
+        setTimeout(() => {
+            const modal = document.getElementById('region-inspect-overlay');
+            if (!modal) return;
+            const actionDiv = modal.querySelector('#action-div');
+            if (!actionDiv) return;
+            if (document.getElementById('buildings-container')) return;
 
-        if (document.getElementById('buildings-container')) return;
-
-        const region = window.worldData?.regions[regionName];
-        if (!region) return;
-
-        const hero = getMainHeroForBuilding();
-        if (!hero) return;
-
-        const buildingsContainer = document.createElement('div');
-        buildingsContainer.id = 'buildings-container';
-        buildingsContainer.style.cssText = 'margin-top: 15px; border-top: 1px solid #d4af37; padding-top: 10px;';
-        buildingsContainer.innerHTML = '<h4 style="color:#ffdd99;">🏰 Сгради в региона</h4>';
-
-        for (let [bid, bdata] of Object.entries(window.buildingsDB)) {
-            const level = region.buildings[bid] || 0;
-            const price = Math.floor(bdata.basePrice * Math.pow(bdata.priceMultiplier, level));
-            const canBuild = (level < bdata.maxLevel) && (hero.gold >= price);
-            const woodCost = (bid === 'barracks' ? 20 : bid === 'harbor' ? 30 : 0) * (level + 1);
-            const stoneCost = (bid === 'wall' ? 30 : bid === 'temple' ? 15 : 0) * (level + 1);
-            const ironCost = (bid === 'barracks' ? 10 : 0) * (level + 1);
-            const resourcesOk = (region.resources.wood >= woodCost && region.resources.stone >= stoneCost && region.resources.iron >= ironCost);
-            const btn = document.createElement('button');
-            btn.style.cssText = 'display: block; width: 100%; margin-bottom: 8px; padding: 6px; border-radius: 20px; background: #2c1a0c; border: 1px solid #d4af37; color: #ffdd99; cursor: pointer;';
-            btn.innerHTML = `${bdata.icon} ${bdata.name} Ниво ${level}/${bdata.maxLevel} (💰${price})`;
-            if (canBuild && resourcesOk) {
-                btn.onclick = async () => {
-                    const result = await window.buildInRegion(regionName, bid, hero);
-                    if (result.success) {
-                        if (window.showAdvisorPopup) window.showAdvisorPopup("УСПЕХ", result.msg, "success");
-                        modal.remove();
-                    } else {
-                        if (window.showAdvisorPopup) window.showAdvisorPopup("ГРЕШКА", result.msg, "error");
-                    }
-                };
-            } else {
-                btn.disabled = true;
-                btn.style.opacity = '0.5';
-                btn.title = `Недостатъчно ресурси или злато`;
+            const region = window.worldData?.regions[regionName];
+            if (!region) return;
+            
+            // Инициализираме сградите, ако липсват
+            if (!region.buildings) {
+                region.buildings = { barracks: 0, market: 0, temple: 0, wall: 0, harbor: 0 };
             }
-            buildingsContainer.appendChild(btn);
-        }
-        actionDiv.appendChild(buildingsContainer);
-    }, 100);
-};
+            
+            const hero = getMainHeroForBuilding();
+            if (!hero) return;
 
+            const buildingsContainer = document.createElement('div');
+            buildingsContainer.id = 'buildings-container';
+            buildingsContainer.style.cssText = 'margin-top: 15px; border-top: 1px solid #d4af37; padding-top: 10px;';
+            buildingsContainer.innerHTML = '<h4 style="color:#ffdd99;">🏰 Сгради в региона</h4>';
+
+            for (let [bid, bdata] of Object.entries(window.buildingsDB)) {
+                const level = region.buildings[bid] || 0;
+                const price = Math.floor(bdata.basePrice * Math.pow(bdata.priceMultiplier, level));
+                const canBuild = (level < bdata.maxLevel) && (hero.gold >= price);
+                const woodCost = (bid === 'barracks' ? 20 : bid === 'harbor' ? 30 : 0) * (level + 1);
+                const stoneCost = (bid === 'wall' ? 30 : bid === 'temple' ? 15 : 0) * (level + 1);
+                const ironCost = (bid === 'barracks' ? 10 : 0) * (level + 1);
+                const resourcesOk = (region.resources?.wood || 0) >= woodCost && (region.resources?.stone || 0) >= stoneCost && (region.resources?.iron || 0) >= ironCost;
+                const btn = document.createElement('button');
+                btn.style.cssText = 'display: block; width: 100%; margin-bottom: 8px; padding: 6px; border-radius: 20px; background: #2c1a0c; border: 1px solid #d4af37; color: #ffdd99; cursor: pointer;';
+                btn.innerHTML = `${bdata.icon} ${bdata.name} Ниво ${level}/${bdata.maxLevel} (💰${price})`;
+                if (canBuild && resourcesOk) {
+                    btn.onclick = async () => {
+                        const result = await window.buildInRegion(regionName, bid, hero);
+                        if (result.success) {
+                            if (window.showAdvisorPopup) window.showAdvisorPopup("УСПЕХ", result.msg, "success");
+                            modal.remove();
+                        } else {
+                            if (window.showAdvisorPopup) window.showAdvisorPopup("ГРЕШКА", result.msg, "error");
+                        }
+                    };
+                } else {
+                    btn.disabled = true;
+                    btn.style.opacity = '0.5';
+                    btn.title = `Недостатъчно ресурси или злато`;
+                }
+                buildingsContainer.appendChild(btn);
+            }
+            actionDiv.appendChild(buildingsContainer);
+        }, 100);
+    };
+}
+
+// Инициализация при старт
 if (typeof window.startFreshGameLogic === 'function') {
     const originalStart = window.startFreshGameLogic;
     window.startFreshGameLogic = function() {
@@ -208,4 +219,4 @@ if (typeof window.loadGreatBulgariaGame === 'function') {
     };
 }
 
-console.log("✅ regionBuilding.js зареден – строителство в регионите (без currentHero)");
+console.log("✅ regionBuilding.js зареден – строителство в регионите (с проверка за съществуване на buildings)");
