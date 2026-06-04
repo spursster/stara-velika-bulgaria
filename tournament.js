@@ -1,5 +1,5 @@
 /**
- * tournament.js – Елиминационен турнир на всички герои + цивилизации
+ * tournament.js – Елиминационен турнир на всички живи герои (финална версия)
  * Автоматично стартира на 5-тия ход при нова игра.
  */
 
@@ -13,50 +13,50 @@ window.tournament = (function() {
     let currentDay = 0;
     let totalRounds = 0;
     let lastTournamentYear = null;
-    let _autoStartCounter = 0;       // брояч за автоматично стартиране
-    let _autoStartEnabled = true;    // дали очакваме автоматично стартиране
+    let autoStartCounter = 0;
+    let autoStartEnabled = true;
 
     try {
         let saved = localStorage.getItem('tournament_last_year');
         if (saved) lastTournamentYear = parseInt(saved);
-        // Ако има запазена година, значи турнир е провеждан – изключваме автоматичното стартиране
-        if (lastTournamentYear !== null) _autoStartEnabled = false;
+        if (lastTournamentYear !== null) autoStartEnabled = false;
     } catch(e) {}
 
     function saveLastTournamentYear() {
         if (window.gameTime) {
             lastTournamentYear = window.gameTime.year;
             localStorage.setItem('tournament_last_year', lastTournamentYear);
-            _autoStartEnabled = false;   // вече не очакваме автоматично стартиране
-            _autoStartCounter = 0;
+            autoStartEnabled = false;
+            autoStartCounter = 0;
         }
     }
 
     function canStartTournament() {
         if (!window.gameTime) return false;
-        if (lastTournamentYear === null) return true;   // никога не е провеждан
+        if (lastTournamentYear === null) return true;
         return (window.gameTime.year - lastTournamentYear) >= MIN_YEARS_BETWEEN_TOURNAMENTS;
     }
 
-    // Всички живи герои на играча
-   function getPlayerHeroes() {
-    let heroes = [];
-    if (window.worldData && window.worldData.clans) {
-        for (let key in window.worldData.clans) {
-            let h = window.worldData.clans[key];
-            if (h.isAlive !== false) {   // <-- без проверка за isJoined
-                heroes.push({
-                    id: key,
-                    name: h.name || h.leaderName,
-                    heroObj: h,
-                    power: h.heroPower || 100,
-                    isPlayer: true
-                });
+    // Всички живи герои (без значение дали са наети)
+    function getAllLivingHeroes() {
+        let heroes = [];
+        if (window.worldData && window.worldData.clans) {
+            for (let key in window.worldData.clans) {
+                let h = window.worldData.clans[key];
+                if (h.isAlive !== false) {
+                    heroes.push({
+                        id: key,
+                        name: h.name || h.leaderName,
+                        heroObj: h,
+                        power: h.heroPower || 100,
+                        isPlayer: true
+                    });
+                }
             }
         }
+        return heroes;
     }
-    return heroes;
-}
+
     function getAllCivilizations() {
         return [
             "Елфийско кралство", "Двор на феите", "Небесна империя", "Оркска орда",
@@ -123,13 +123,19 @@ window.tournament = (function() {
 
     function logMatch(match, winner, loser, roundNumber, isSemifinal, isFinal, matchIndex) {
         let narrative = generateNarrative(match, winner, loser, roundNumber, isSemifinal, isFinal, matchIndex);
-        if (window.addWorldEvent) window.addWorldEvent("🏆 ТУРНИРЕН МАЧ", narrative, "⚔️");
-        else console.log(narrative);
+        if (window.addWorldEvent) {
+            window.addWorldEvent("🏆 ТУРНИРЕН МАЧ", narrative, "⚔️");
+        } else {
+            console.log(narrative);
+        }
     }
 
     function log(message, icon = "🏆") {
-        if (window.addWorldEvent) window.addWorldEvent("ТУРНИР", message, icon);
-        else console.log(icon, message);
+        if (window.addWorldEvent) {
+            window.addWorldEvent("ТУРНИР", message, icon);
+        } else {
+            console.log(icon, message);
+        }
     }
 
     function nextDay() {
@@ -185,6 +191,7 @@ window.tournament = (function() {
         }
         log(`--- РУНД ${currentRound} ---`, "⚔️");
     }
+
     function createMatches(participants) {
         let matches = [];
         for (let i = 0; i < participants.length; i += 2) {
@@ -198,13 +205,6 @@ window.tournament = (function() {
     }
 
     function prepareTournament() {
-        console.log("prepareTournament: започва");
-let players = getPlayerHeroes();
-console.log("Брой играчи:", players.length);
-let civs = getCivilizationChampions();
-console.log("Брой цивилизации:", civs.length);
-let participants = [...players, ...civs];
-console.log("Общо участници преди допълване:", participants.length);
         if (!canStartTournament()) {
             let yearsLeft = MIN_YEARS_BETWEEN_TOURNAMENTS - (window.gameTime.year - lastTournamentYear);
             log(`Турнирът може да се проведе след ${yearsLeft} години.`, "⏳");
@@ -215,11 +215,10 @@ console.log("Общо участници преди допълване:", partic
             return false;
         }
 
-        let players = getPlayerHeroes();
+        let players = getAllLivingHeroes();
         let civs = getCivilizationChampions();
         let participants = [...players, ...civs];
-        let originalCount = participants.length;
-        log(`📋 Събрани ${originalCount} участници (${players.length} герои на играча + ${civs.length} цивилизации).`);
+        log(`📋 Събрани ${participants.length} участници (${players.length} герои + ${civs.length} цивилизации).`);
 
         let targetCount = 1;
         while (targetCount < participants.length) targetCount *= 2;
@@ -252,33 +251,29 @@ console.log("Общо участници преди допълване:", partic
                 tournamentActive = false;
                 log("Не може да се стартира турнир - няма мачове.", "❌");
             } else {
-                // Ако стартира ръчно, спираме автоматичното броене
-                _autoStartEnabled = false;
-                _autoStartCounter = 0;
+                autoStartEnabled = false;
+                autoStartCounter = 0;
             }
         }
     }
 
     function advanceTournament() {
-        if (tournamentActive) {
-            nextDay();
-        }
+        if (tournamentActive) nextDay();
     }
 
-    // Автоматично стартиране на 5-тия ход след нова игра
     function checkAutoStart() {
-        if (!_autoStartEnabled) return;
+        if (!autoStartEnabled) return;
         if (tournamentActive) return;
         if (lastTournamentYear !== null) {
-            _autoStartEnabled = false;
+            autoStartEnabled = false;
             return;
         }
-        _autoStartCounter++;
-        if (_autoStartCounter >= 5) {
+        autoStartCounter++;
+        if (autoStartCounter >= 5) {
             log("Автоматично стартиране на първия турнир (5-ти ход).", "🏆");
             startTournament();
-            _autoStartEnabled = false;
-            _autoStartCounter = 0;
+            autoStartEnabled = false;
+            autoStartCounter = 0;
         }
     }
 
@@ -291,15 +286,15 @@ console.log("Общо участници преди допълване:", partic
         advance: advanceTournament,
         canStart: canStart,
         isActive: function() { return tournamentActive; },
-        checkAutoStart: checkAutoStart   // за външно извикване от processTurn
+        checkAutoStart: checkAutoStart
     };
 })();
 
-// Интеграция с processTurn – добавяме автоматичното засичане
+// Автоматично задвижване от processTurn
 if (typeof window.processTurn === 'function') {
-    const originalProcessTurn = window.processTurn;
+    const original = window.processTurn;
     window.processTurn = function() {
-        originalProcessTurn();
+        original();
         if (window.tournament) {
             if (window.tournament.isActive()) {
                 window.tournament.advance();
