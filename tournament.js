@@ -1,28 +1,27 @@
 /**
- * tournament.js – Елиминационен турнир на героите
+ * tournament.js – Елиминационен турнир на героите (с епични разкази)
  * Зависи: gameTime, worldData.clans, ancientCivilizations, BattleCore
  */
 
 window.tournament = (function() {
     // ==================== НАСТРОЙКИ ====================
-    const MIN_YEARS_BETWEEN_TOURNAMENTS = 20;  // изчакване в години
+    const MIN_YEARS_BETWEEN_TOURNAMENTS = 20;
     let tournamentActive = false;
     let currentRound = 0;
-    let roundMatches = [];      // мачове за текущия рунд: [{heroA, heroB, dayIndex}]
-    let remainingHeroes = [];   // живи участници след рунд
+    let roundMatches = [];
+    let remainingHeroes = [];
     let winner = null;
-    let currentDay = 0;         // кой ден от рунда се провежда
-    let tournamentHeroes = [];   // всички участници в началото
+    let currentDay = 0;
+    let tournamentHeroes = [];
     let tournamentInterval = null;
-    let lastTournamentYear = null; // последна година на финал
+    let lastTournamentYear = null;
+    let totalRounds = 0;      // общ брой рундове (за определяне на полуфинал/финал)
 
-    // Зареждаме запаметената година (от localStorage)
     try {
         let saved = localStorage.getItem('tournament_last_year');
         if (saved) lastTournamentYear = parseInt(saved);
     } catch(e) {}
 
-    // ==================== ПОМОЩНИ ФУНКЦИИ ====================
     function saveLastTournamentYear() {
         if (window.gameTime) {
             lastTournamentYear = window.gameTime.year;
@@ -33,11 +32,10 @@ window.tournament = (function() {
     function canStartTournament() {
         if (!window.gameTime) return false;
         let currentYear = window.gameTime.year;
-        if (lastTournamentYear === null) return true; // никога не е провеждан
+        if (lastTournamentYear === null) return true;
         return (currentYear - lastTournamentYear) >= MIN_YEARS_BETWEEN_TOURNAMENTS;
     }
 
-    // Взема всички живи герои на играча (isJoined && isAlive !== false)
     function getPlayerHeroes() {
         let heroes = [];
         if (window.worldData && window.worldData.clans) {
@@ -57,18 +55,11 @@ window.tournament = (function() {
         return heroes;
     }
 
-    // Взема по един представител от всяка древна цивилизация (allCivilizations)
     function getCivilizationChampions() {
-        if (!window.ancientCivilizations) return [];
-        // В древните цивилизации нямаме преки герои, затова създаваме временни "шампиони"
-        // Ще използваме allCivilizations масива (който е вътре в ancientCivilizations.js, но не е глобален)
-        // Вместо това ще вземем от window.worldData.factions? Не. Ще дефинираме списък ръчно.
-        // Най-безопасно: използваме списъка от ancientCivilizations.js, ако е достъпен.
         let civs = [];
         if (window._ancientCivsList) {
             civs = window._ancientCivsList;
         } else {
-            // Резервен списък (същият като в ancientCivilizations.js)
             civs = [
                 "Елфийско кралство", "Двор на феите", "Небесна империя", "Оркска орда",
                 "Демонични легиони", "Царство на сенките", "Драконови лордове", "Легион на мъртвите",
@@ -80,13 +71,12 @@ window.tournament = (function() {
             id: `civ_${idx}`,
             name: `${civName} шампион`,
             heroObj: null,
-            power: 100 + Math.floor(Math.random() * 150), // случайна сила
+            power: 100 + Math.floor(Math.random() * 150),
             isPlayer: false,
             isCivilization: true
         }));
     }
 
-    // Генерира автоматичен герой за запълване (тъмен конник)
     function generateDarkHorse(index) {
         const names = ["Тъмен конник", "Мистериозен странник", "Безличен воин", "Сянка", "Призрачен боец"];
         return {
@@ -99,36 +89,54 @@ window.tournament = (function() {
         };
     }
 
-    // Симулира битка 1vs1 (без да отваря UI, използва BattleCore изчисления)
     function simulateBattle(heroA, heroB) {
-        // Създаваме временни hero обекти за BattleCore (ако няма clanObj)
-        let fakeHeroA = heroA.heroObj ? heroA.heroObj : {
-            name: heroA.name,
-            heroPower: heroA.power,
-            hp: 200,
-            maxHp: 200,
-            armySize: 200,
-            currentArmy: 200,
-            isAlive: true
-        };
-        let fakeHeroB = heroB.heroObj ? heroB.heroObj : {
-            name: heroB.name,
-            heroPower: heroB.power,
-            hp: 200,
-            maxHp: 200,
-            armySize: 200,
-            currentArmy: 200,
-            isAlive: true
-        };
-        // Опростена симулация – сравняваме мощ + случайност
-        let powerA = (fakeHeroA.heroPower || 100) * (0.8 + Math.random() * 0.6);
-        let powerB = (fakeHeroB.heroPower || 100) * (0.8 + Math.random() * 0.6);
+        let powerA = (heroA.power || 100) * (0.8 + Math.random() * 0.6);
+        let powerB = (heroB.power || 100) * (0.8 + Math.random() * 0.6);
         let winner = powerA >= powerB ? heroA : heroB;
         let loser = winner === heroA ? heroB : heroA;
         return { winner, loser };
     }
 
-    // Добавя събитие в летописа
+    // ========== ЕПИЧЕН РАЗКАЗ ЗА МАЧ ==========
+    function generateNarrative(heroA, heroB, winner, loser, roundNumber, isSemifinal, isFinal, matchNumber) {
+        let heroAName = heroA.name;
+        let heroBName = heroB.name;
+        let winnerName = winner.name;
+        let loserName = loser.name;
+        
+        let intro = `🏟️ Мач ${matchNumber} от Рунд ${roundNumber}: ${heroAName} срещу ${heroBName}.`;
+        let fight = `Битката беше жестока. ${winnerName} надделя с мъка над ${loserName}.`;
+        
+        if (isFinal) {
+            intro = `🏆 **ФИНАЛ** 🏆\n${heroAName} и ${heroBName} се изправят един срещу друг за титлата!`;
+            fight = `В епичен сблъсък, ${winnerName} нанесе решителния удар и стана ШАМПИОН на турнира!`;
+        } else if (isSemifinal) {
+            intro = `🌠 **ПОЛУФИНАЛ** 🌠\n${heroAName} и ${heroBName} се бият за място на финала.`;
+            fight = `След изтощителна битка, ${winnerName} победи ${loserName} и продължава напред.`;
+        }
+        
+        // Добавяне на детайли според класа (ако има)
+        if (winner.heroObj && winner.heroObj.currentClass) {
+            let classLower = winner.heroObj.currentClass.toLowerCase();
+            if (classLower.includes("маг")) fight += ` Магическите заклинания на ${winnerName} решиха изхода.`;
+            else if (classLower.includes("берсерк")) fight += ` В пристъп на ярост, ${winnerName} разкъса противника.`;
+            else if (classLower.includes("паладин")) fight += ` Светлината беше с ${winnerName} в този ден.`;
+            else if (classLower.includes("стрелец")) fight += ` Точният мерник на ${winnerName} донесе победата.`;
+        }
+        
+        let message = `${intro}\n${fight}`;
+        return message;
+    }
+
+    function logMatch(match, winner, loser, roundNumber, isSemifinal, isFinal, matchIndex) {
+        let narrative = generateNarrative(match.heroA, match.heroB, winner, loser, roundNumber, isSemifinal, isFinal, matchIndex);
+        if (window.addWorldEvent) {
+            window.addWorldEvent("🏆 ТУРНИРЕН МАЧ", narrative, "⚔️");
+        } else {
+            console.log(narrative);
+        }
+    }
+
     function log(message, icon = "🏆") {
         if (window.addWorldEvent) {
             window.addWorldEvent("ТУРНИР", message, icon);
@@ -137,58 +145,70 @@ window.tournament = (function() {
         }
     }
 
-    // Започва следващия ден от рунда (извиква се при натискане на "Ход")
     function nextDay() {
         if (!tournamentActive) return;
         if (!roundMatches.length || currentDay >= roundMatches.length) {
-            // Край на рунда, обработваме победителите
             finishRound();
             return;
         }
         let match = roundMatches[currentDay];
         if (!match) return;
+        
+        // Проверка за автоматичен бай
+        if (match.heroB && match.heroB.isBye) {
+            log(`🏅 Ден ${currentDay+1}: ${match.heroA.name} преминава автоматично (почивка).`, "⏭️");
+            remainingHeroes.push(match.heroA);
+            currentDay++;
+            return;
+        }
+        
         log(`🏅 Ден ${currentDay+1}: ${match.heroA.name} срещу ${match.heroB.name}`, "⚔️");
         let result = simulateBattle(match.heroA, match.heroB);
-        log(`${result.winner.name} побеждава!`, "🏅");
-        remainingHeroes.push(result.winner);
+        let winner = result.winner;
+        let loser = result.loser;
+        
+        // Определяме дали е полуфинал или финал
+        let isSemifinal = (totalRounds - currentRound === 1 && remainingHeroes.length <= 4);
+        let isFinal = (totalRounds - currentRound === 0 && remainingHeroes.length <= 2);
+        if (currentRound === totalRounds && remainingHeroes.length === 1) isFinal = true; // корекция за финал
+        
+        logMatch(match, winner, loser, currentRound, isSemifinal, isFinal, currentDay+1);
+        log(`${winner.name} побеждава!`, "🏅");
+        remainingHeroes.push(winner);
         currentDay++;
     }
 
     function finishRound() {
         if (!tournamentActive) return;
         if (remainingHeroes.length === 1) {
-            // Край на турнира
             winner = remainingHeroes[0];
-            log(`🏆 ПОБЕДИТЕЛ В ТУРНИРА: ${winner.name} 🏆`, "🏆");
-            // Награждаване с божествен питомец, ако е герой на играча
+            let finalNarrative = `🏆 **ГРАНД ФИНАЛ** 🏆\nСлед дълга и зрелищна надпревара, ${winner.name} беше коронован за ШАМПИОН на турнира!`;
             if (winner.isPlayer && winner.heroObj) {
                 let petIds = Object.keys(window.divinePets || {});
                 if (petIds.length) {
                     let randomPet = petIds[Math.floor(Math.random() * petIds.length)];
                     winner.heroObj.pet = randomPet;
-                    log(`${winner.name} получава божествен питомец: ${window.divinePets[randomPet].name}!`, "🐉");
+                    finalNarrative += ` Като награда, ${winner.name} получава божествен питомец: ${window.divinePets[randomPet].name}! 🐉`;
                 } else {
-                    log(`${winner.name} не можа да получи питомец (няма дефинирани божествени питомци).`, "⚠️");
+                    finalNarrative += ` Но за съжаление нямаше награден питомец.`;
                 }
             }
+            log(finalNarrative, "🏆");
             tournamentActive = false;
             saveLastTournamentYear();
             if (tournamentInterval) clearInterval(tournamentInterval);
             tournamentInterval = null;
             return;
         }
-        // Преминаваме към следващ рунд
         currentRound++;
         roundMatches = createMatches(remainingHeroes);
         remainingHeroes = [];
         currentDay = 0;
         if (roundMatches.length === 0) {
-            // Нещо се обърка – край
             tournamentActive = false;
             return;
         }
         log(`--- РУНД ${currentRound} ---`, "⚔️");
-        // Стартираме следващия ден (ще се задейства при следващ ход)
     }
 
     function createMatches(participants) {
@@ -197,7 +217,6 @@ window.tournament = (function() {
             if (i+1 < participants.length) {
                 matches.push({ heroA: participants[i], heroB: participants[i+1] });
             } else {
-                // Автоматичен бай (не трябва да се случва, защото допълваме до степен 2)
                 matches.push({ heroA: participants[i], heroB: { name: "Почивка", power: 0, isPlayer: false, isBye: true } });
             }
         }
@@ -206,52 +225,47 @@ window.tournament = (function() {
 
     function prepareTournament() {
         if (!canStartTournament()) {
-            log(`Турнирът може да се проведе след ${MIN_YEARS_BETWEEN_TOURNAMENTS - (window.gameTime.year - lastTournamentYear)} години.`, "⏳");
+            let yearsLeft = MIN_YEARS_BETWEEN_TOURNAMENTS - (window.gameTime.year - lastTournamentYear);
+            log(`Турнирът може да се проведе след ${yearsLeft} години.`, "⏳");
             return false;
         }
         if (tournamentActive) {
-            log("Турнир вече е активен! Завършете текущия или изчакайте.", "⚠️");
+            log("Турнир вече е активен!", "⚠️");
             return false;
         }
-        // Събираме участници
         let players = getPlayerHeroes();
         let civs = getCivilizationChampions();
         let participants = [...players, ...civs];
-        // Броят участници трябва да е степен на 2
         let targetCount = 1;
         while (targetCount < participants.length) targetCount *= 2;
         while (participants.length < targetCount) {
             participants.push(generateDarkHorse(participants.length));
         }
-        // Разбъркваме (но запазваме правилото героите на играча да не са в един мач в първи рунд)
+        totalRounds = Math.log2(participants.length);
+        
+        // Разбъркваме, но героите на играча да са срещу различни противници в първия рунд
         let playerHeroes = participants.filter(p => p.isPlayer);
         let others = participants.filter(p => !p.isPlayer);
-        // Разбъркваме останалите
         for (let i = others.length - 1; i > 0; i--) {
             let j = Math.floor(Math.random() * (i + 1));
             [others[i], others[j]] = [others[j], others[i]];
         }
-        // Създаваме мачове в първия рунд така, че всеки герой на играча да е срещу различен противник и в различен ден
         let matches = [];
         for (let i = 0; i < playerHeroes.length; i++) {
             if (others.length) {
                 matches.push({ heroA: playerHeroes[i], heroB: others.shift(), dayIndex: i });
             } else {
-                // Ако няма достатъчно други, добавяме тъмен конник
                 matches.push({ heroA: playerHeroes[i], heroB: generateDarkHorse(i+100), dayIndex: i });
             }
         }
-        // Останалите други (civilizations и dark horses) се сдвояват помежду си
         while (others.length >= 2) {
             let a = others.shift();
             let b = others.shift();
             matches.push({ heroA: a, heroB: b, dayIndex: matches.length });
         }
         if (others.length === 1) {
-            // Бай (автоматично преминаване)
             matches.push({ heroA: others[0], heroB: { name: "Почивка", power: 0, isPlayer: false, isBye: true }, dayIndex: matches.length });
         }
-        // Сортираме мачовете по dayIndex, за да са в правилния ред на дните
         matches.sort((a,b) => a.dayIndex - b.dayIndex);
         
         tournamentHeroes = participants;
@@ -262,21 +276,12 @@ window.tournament = (function() {
         tournamentActive = true;
         
         log(`🏆 ЗАПОЧВА ТУРНИР! Участници: ${participants.length}`, "🏆");
-        log(`Първи рунд. Мачове: ${roundMatches.length}`, "📋");
+        log(`Общо рундове: ${totalRounds}. Първи рунд.`, "📋");
         return true;
     }
 
-    // Публична функция за придвижване на турнира (да се извиква от processTurn)
-    function advanceTournament() {
-        if (tournamentActive) {
-            nextDay();
-        }
-    }
-
-    // Стартиране на турнира (от бутон)
     function startTournament() {
         if (prepareTournament()) {
-            // Ако има нула мачове или нещо нередно, прекратяваме
             if (!roundMatches.length) {
                 tournamentActive = false;
                 log("Не може да се стартира турнир - няма мачове.", "❌");
@@ -284,7 +289,12 @@ window.tournament = (function() {
         }
     }
 
-    // Проверка дали може да се стартира (за бутон)
+    function advanceTournament() {
+        if (tournamentActive) {
+            nextDay();
+        }
+    }
+
     function canStart() {
         return canStartTournament() && !tournamentActive;
     }
@@ -297,7 +307,7 @@ window.tournament = (function() {
     };
 })();
 
-// Интеграция с хода на играта (ако съществува window.processTurn)
+// Интеграция с хода на играта
 if (typeof window.processTurn === 'function') {
     const originalProcessTurn = window.processTurn;
     window.processTurn = function() {
