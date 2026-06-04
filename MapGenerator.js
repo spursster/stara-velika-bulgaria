@@ -1,156 +1,23 @@
 /**
- * mapGenerator.js – ЛЕКА АВТОМАТИЧНА КАРТА ЗА ВЕЛИКА БЪЛГАРИЯ
- * Версия: 1.1 – с поддръжка на ancientOwner
+ * mapGenerator.js – ИНТЕРАКТИВНА КАРТА С LEAFLET (заменя Canvas версията)
+ * Версия: 2.0 – с поддръжка на ancientOwner и адаптивен дизайн
  */
 
-window.currentMapCanvas = null;
+// Глобална променлива за запазване на текущата карта (ако е необходимо)
+window.currentMap = null;
 
-window.generateMapCanvas = function(containerId, seed = "default") {
-    const container = document.getElementById(containerId);
-    if (!container) {
-        console.error(`Контейнерът #${containerId} не съществува!`);
-        return;
-    }
-
-    if (!window.worldData || !window.worldData.regions) {
-        container.innerHTML = '<div style="color:#ffaa66;">Няма заредени региони.</div>';
-        return;
-    }
-
-    const mapWidth = 800;
-    const mapHeight = 600;
-    const tileMargin = 2;
-
-    let regions = Object.values(window.worldData.regions);
-    if (regions.length === 0) {
-        container.innerHTML = '<div style="color:#ffaa66;">Няма региони за показване.</div>';
-        return;
-    }
-
-    regions.sort((a, b) => a.name.localeCompare(b.name));
-
-    const cols = Math.ceil(Math.sqrt(regions.length));
-    const rows = Math.ceil(regions.length / cols);
-    const tileWidth = (mapWidth - (cols - 1) * tileMargin) / cols;
-    const tileHeight = (mapHeight - (rows - 1) * tileMargin) / rows;
-
-    const canvas = document.createElement('canvas');
-    canvas.width = mapWidth;
-    canvas.height = mapHeight;
-    canvas.style.border = '2px solid #d4af37';
-    canvas.style.borderRadius = '8px';
-    canvas.style.cursor = 'pointer';
-    canvas.style.backgroundColor = '#1a1a2e';
-    
-    container.innerHTML = '';
-    container.appendChild(canvas);
-    window.currentMapCanvas = canvas;
-
-    const ctx = canvas.getContext('2d');
-
-    let ownedRegions = [];
-    if (window.playerRegions) {
-        ownedRegions = window.playerRegions.flat ? window.playerRegions.flat() : window.playerRegions;
-    }
-
-    const regionRects = [];
-
-    for (let i = 0; i < regions.length; i++) {
-        const region = regions[i];
-        const row = Math.floor(i / cols);
-        const col = i % cols;
-        const x = col * (tileWidth + tileMargin);
-        const y = row * (tileHeight + tileMargin);
-        const width = tileWidth;
-        const height = tileHeight;
-
-        // ⭐ НОВА ЛОГИКА ЗА ЦВЕТА
-            let bgColor = '#5a5a5a'; // неутрален
-        if (ownedRegions.includes(region.name)) {
-            bgColor = '#2c5a2a'; // зелен – ваш
-        } else if (region.ancientOwner) {
-            bgColor = '#8a2be2'; // лилав – завзет от древна цивилизация
-        } else if (region.nativeClans && region.nativeClans.length > 0) {
-            bgColor = '#8b3a3a'; // червеникав – враг
-        } else {
-            bgColor = '#4a4a4a'; // тъмно сив – независим
-        }
-        ctx.fillStyle = bgColor;
-        ctx.shadowBlur = 0;
-        ctx.fillRect(x, y, width, height);
-        ctx.strokeStyle = '#d4af37';
-        ctx.strokeRect(x, y, width, height);
-
-        let shortName = region.name.length > 10 ? region.name.substring(0, 8) + '..' : region.name;
-        ctx.fillStyle = '#ffdd99';
-        ctx.font = `${Math.min(12, Math.floor(height / 4))}px Cinzel, serif`;
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'middle';
-        ctx.fillText(shortName, x + width / 2, y + height / 2);
-
-        regionRects.push({
-            region: region,
-            x: x, y: y, w: width, h: height
-        });
-    }
-
-    canvas.addEventListener('click', (e) => {
-        const rect = canvas.getBoundingClientRect();
-        const scaleX = canvas.width / rect.width;
-        const scaleY = canvas.height / rect.height;
-        const mouseX = (e.clientX - rect.left) * scaleX;
-        const mouseY = (e.clientY - rect.top) * scaleY;
-
-        const hit = regionRects.find(r => 
-            mouseX >= r.x && mouseX <= r.x + r.w &&
-            mouseY >= r.y && mouseY <= r.y + r.h
-        );
-        if (hit && typeof window.inspectRegion === 'function') {
-            window.inspectRegion(hit.region.name);
-        } else if (hit) {
-            alert(`Регион: ${hit.region.name}\nТерен: ${hit.region.terrain}\nРесурс: ${hit.region.resource}`);
-        }
-    });
-
-    canvas.addEventListener('mousemove', (e) => {
-        const rect = canvas.getBoundingClientRect();
-        const scaleX = canvas.width / rect.width;
-        const scaleY = canvas.height / rect.height;
-        const mouseX = (e.clientX - rect.left) * scaleX;
-        const mouseY = (e.clientY - rect.top) * scaleY;
-
-        const hit = regionRects.find(r => 
-            mouseX >= r.x && mouseX <= r.x + r.w &&
-            mouseY >= r.y && mouseY <= r.y + r.h
-        );
-        canvas.style.cursor = hit ? 'pointer' : 'default';
-        if (hit) {
-            canvas.title = `${hit.region.name} (Сила: ${hit.region.armySize}, Защита: ${hit.region.defenseLevel})`;
-        } else {
-            canvas.title = '';
-        }
-    });
-};
-
-window.refreshMap = function(containerId) {
-    if (containerId) {
-        window.generateMapCanvas(containerId);
-    } else if (window.currentMapCanvas && window.currentMapCanvas.parentElement) {
-        const container = window.currentMapCanvas.parentElement;
-        if (container && container.id) {
-            window.generateMapCanvas(container.id);
-        } else {
-            console.warn("Няма контейнер за опресняване на картата.");
-        }
-    } else {
-        console.warn("Няма активна карта за опресняване.");
-    }
+window.generateMapCanvas = function(containerId) {
+    // Тази функция вече не е нужна за Canvas, но я оставяме за съвместимост
+    // Вместо това използваме openInteractiveMap
+    console.warn("generateMapCanvas е остаряла. Използвайте openInteractiveMap().");
 };
 
 window.openInteractiveMap = function() {
+    // Премахваме стар модал, ако има
     const oldModal = document.getElementById('interactive-map-modal');
     if (oldModal) oldModal.remove();
 
+    // Създаваме модал за картата
     const modal = document.createElement('div');
     modal.id = 'interactive-map-modal';
     modal.style.cssText = `
@@ -159,33 +26,116 @@ window.openInteractiveMap = function() {
         left: 0;
         width: 100%;
         height: 100%;
-        background: rgba(0, 0, 0, 0.85);
-        backdrop-filter: blur(8px);
-        z-index: 200000;
+        background: rgba(0, 0, 0, 0.9);
+        backdrop-filter: blur(6px);
+        z-index: 300000;
         display: flex;
         align-items: center;
         justify-content: center;
-        font-family: 'Cinzel', serif;
-        padding: 20px;
+        padding: 15px;
         box-sizing: border-box;
     `;
 
     modal.innerHTML = `
-        <div style="background: #0a0a1a; border: 2px solid #d4af37; border-radius: 24px; padding: 20px; max-width: 90vw; max-height: 90vh; overflow: auto; text-align: center;">
-            <h2 style="color:#ffd700; margin-top:0;">🗺️ ИНТЕРАКТИВНА КАРТА</h2>
-            <div id="map-container-modal" style="margin: 10px 0;"></div>
-            <button id="close-map-modal" style="background:#2c1a0c; border:1px solid #d4af37; border-radius:30px; padding:8px 20px; color:#ffdd99; cursor:pointer; margin-top:15px;">Затвори</button>
+        <div style="background: #0a0a1a; border: 2px solid #d4af37; border-radius: 24px; width: 100%; max-width: 1200px; height: 80vh; display: flex; flex-direction: column; overflow: hidden;">
+            <div style="padding: 10px; background: #1a1a2e; border-bottom: 2px solid #d4af37; display: flex; justify-content: space-between; align-items: center;">
+                <h2 style="color: #ffd700; margin: 0;">🗺️ Световна карта</h2>
+                <button id="closeMapBtn" style="background: #2c1a0c; border: 1px solid #ff8888; border-radius: 50%; width: 32px; height: 32px; color: #ff8888; cursor: pointer; font-size: 18px;">✕</button>
+            </div>
+            <div id="leaflet-map-container" style="flex: 1; background: #000;"></div>
+            <div style="padding: 8px; background: #1a1a2e; border-top: 1px solid #d4af37; font-size: 12px; color: #ccc; text-align: center;">
+                Кликнете върху маркер за информация
+            </div>
         </div>
     `;
 
     document.body.appendChild(modal);
 
-    const mapContainer = modal.querySelector('#map-container-modal');
-    window.generateMapCanvas('map-container-modal');
+    const mapContainer = document.getElementById('leaflet-map-container');
+    if (!mapContainer) return;
 
-    const closeBtn = modal.querySelector('#close-map-modal');
-    closeBtn.onclick = () => modal.remove();
+    // Инициализация на картата (център върху България)
+    const map = L.map(mapContainer).setView([42.5, 25.5], 6);
+    window.currentMap = map;
+
+    // Добавяне на фон (OpenStreetMap с по-тъмен стил, за да пасва на играта)
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OSM</a> contributors &copy; CartoDB',
+        subdomains: 'abcd',
+        maxZoom: 8,
+        minZoom: 4
+    }).addTo(map);
+
+    // Взимаме регионите
+    const regions = Object.values(window.worldData.regions);
+    const ownedRegions = (window.playerRegions && window.playerRegions.flat) ? window.playerRegions.flat() : [];
+
+    // Функция за цвят според притежател
+    function getRegionColor(region) {
+        if (ownedRegions.includes(region.name)) return '#2c5a2a';      // зелен – ваш
+        if (region.ancientOwner) return '#8a2be2';                    // лилав – древна цивилизация
+        if (region.nativeClans && region.nativeClans.length > 0) return '#8b3a3a'; // червен – вражески клан
+        return '#4a4a4a';                                            // сив – независим
+    }
+
+    // Тъй като нямаме географски координати, разпределяме регионите в кръг около центъра
+    // В бъдеще можете да замените с реални lat/lon, като ги добавите в worldData.regions
+    const angleStep = (2 * Math.PI) / regions.length;
+    const centerLat = 42.5, centerLng = 25.5;
+    const radius = 2.5; // градуси
+
+    regions.forEach((region, idx) => {
+        const angle = idx * angleStep;
+        const lat = centerLat + radius * Math.cos(angle);
+        const lng = centerLng + radius * Math.sin(angle);
+        const color = getRegionColor(region);
+
+        // Добавяме кръгъл маркер (circleMarker) – по-издържлив и лесен за стилизиране
+        const marker = L.circleMarker([lat, lng], {
+            radius: 12,
+            fillColor: color,
+            color: '#d4af37',
+            weight: 1.5,
+            opacity: 0.8,
+            fillOpacity: 0.75
+        }).addTo(map);
+
+        // Показване на името при задържане на мишката
+        marker.bindTooltip(region.name, { sticky: true, className: 'region-tooltip' });
+
+        // Клик върху маркер – извиква инспекция на региона
+        marker.on('click', () => {
+            if (typeof window.inspectRegion === 'function') {
+                window.inspectRegion(region.name);
+            } else {
+                alert(`${region.name}\nВойски: ${region.armySize}\nЗащита: ${region.defenseLevel}\nРесурс: ${region.resource || 'неизвестен'}`);
+            }
+        });
+    });
+
+    // Затваряне на модала
+    const closeBtn = modal.querySelector('#closeMapBtn');
+    if (closeBtn) closeBtn.onclick = () => modal.remove();
     modal.addEventListener('click', (e) => { if (e.target === modal) modal.remove(); });
 };
 
-console.log("✅ mapGenerator.js зареден – с поддръжка на ancientOwner (лилави региони при инвазия)");
+window.refreshMap = function() {
+    // Ако картата е отворена, я затваряме и отваряме наново (опресняване)
+    const modal = document.getElementById('interactive-map-modal');
+    if (modal) {
+        modal.remove();
+        window.openInteractiveMap();
+    } else {
+        console.warn("Картата не е отворена, няма какво да се опресни.");
+    }
+};
+
+// За да не се чупи код, който използва старата функция openRegionsMap, я пренасочваме
+if (typeof window.openRegionsMap === 'function') {
+    const oldOpenRegions = window.openRegionsMap;
+    window.openRegionsMap = function() {
+        window.openInteractiveMap();
+    };
+}
+
+console.log("✅ mapGenerator.js зареден – LEАFLET карта, интерактивна, с цветове за ancientOwner");
