@@ -1150,6 +1150,175 @@ gap: 4px;
     }
 }
 
+/* ==================== СТИЛЕН И АДАПТИВЕН БИТКА ЕКРАН ==================== */
+
+/* Основен контейнер */
+.ultimate-battle {
+    background: radial-gradient(circle at 20% 30%, #0f0f1f, #03030f);
+    font-family: 'Cinzel', 'Montserrat', sans-serif;
+}
+
+/* Битка контейнер (стъклен панел) */
+.battle-container {
+    background: rgba(10, 20, 30, 0.65) !important;
+    backdrop-filter: blur(12px) brightness(0.9);
+    border: 2px solid rgba(212, 175, 55, 0.7) !important;
+    border-radius: 32px !important;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(212, 175, 55, 0.3) inset !important;
+}
+
+/* Заглавие */
+.battle-header h1 {
+    font-size: 1.6rem;
+    text-shadow: 0 0 6px #ffaa33;
+    letter-spacing: 3px;
+}
+
+/* Герои и врагове – адаптивни карти */
+.heroes-grid, .enemies-grid {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 12px;
+    margin: 15px 0;
+}
+
+.hero-card, .enemy-card {
+    background: linear-gradient(145deg, rgba(30, 25, 40, 0.9), rgba(15, 10, 20, 0.95));
+    border-radius: 24px;
+    padding: 12px 8px;
+    width: 160px;
+    transition: transform 0.2s, box-shadow 0.2s;
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.4);
+    border: 1px solid rgba(212, 175, 55, 0.5);
+}
+
+.hero-card:hover, .enemy-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 12px 20px rgba(0, 0, 0, 0.5);
+    border-color: #ffd966;
+}
+
+/* Портрет */
+.hero-portrait {
+    width: 70px;
+    height: 70px;
+    border: 3px solid #ffd700;
+    box-shadow: 0 0 12px rgba(0,0,0,0.5);
+}
+
+.hero-icon {
+    font-size: 48px;
+}
+
+/* Име и клас */
+.hero-name, .enemy-name {
+    font-size: 1rem;
+    font-weight: bold;
+    color: #ffdd99;
+    text-shadow: 0 1px 2px black;
+}
+
+/* Ленти за живот */
+.hp-bar-bg, .hp-bar {
+    background: #2a1a0a;
+    height: 10px;
+    border-radius: 6px;
+    overflow: hidden;
+    margin: 8px 0;
+}
+
+.hp-bar-fill, .hp-fill {
+    background: linear-gradient(90deg, #dc143c, #ff6666);
+    height: 100%;
+    border-radius: 6px;
+    transition: width 0.2s ease;
+}
+
+/* Текст за живот */
+.hero-hp-text, .hero-stats span:first-child {
+    font-size: 11px;
+    font-weight: bold;
+    color: #ffaa77;
+}
+
+/* Бутони за действие */
+.action-buttons {
+    background: rgba(0, 0, 0, 0.5);
+    border-radius: 60px;
+    padding: 12px;
+    margin-top: 10px;
+}
+
+.battle-btn {
+    background: linear-gradient(135deg, #2c1a0c, #1f1207);
+    border: 1px solid #d4af37;
+    border-radius: 40px;
+    padding: 8px 20px;
+    font-size: 1rem;
+    color: #ffdd99;
+    transition: 0.1s;
+}
+
+.battle-btn:active {
+    transform: scale(0.96);
+}
+
+.attack-btn {
+    background: linear-gradient(135deg, #7a2e1a, #5a1e0a);
+    border-color: #ffaa44;
+    box-shadow: 0 0 10px rgba(255, 68, 0, 0.5);
+}
+
+/* Лог за битката */
+.battle-log {
+    background: rgba(0, 0, 0, 0.7);
+    border-radius: 20px;
+    font-size: 12px;
+    font-family: monospace;
+    max-height: 150px;
+    overflow-y: auto;
+}
+
+/* Адаптивност */
+@media (max-width: 768px) {
+    .hero-card, .enemy-card {
+        width: 130px;
+        padding: 8px 4px;
+    }
+    .hero-portrait {
+        width: 50px;
+        height: 50px;
+    }
+    .hero-icon {
+        font-size: 36px;
+    }
+    .battle-btn {
+        padding: 5px 12px;
+        font-size: 0.75rem;
+    }
+    .hero-name, .enemy-name {
+        font-size: 0.8rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .hero-card, .enemy-card {
+        width: calc(50% - 8px);
+        min-width: 100px;
+    }
+    .heroes-grid, .enemies-grid {
+        gap: 6px;
+    }
+    .battle-btn {
+        padding: 4px 8px;
+        font-size: 0.65rem;
+    }
+    .action-buttons {
+        gap: 6px;
+    }
+} 
+
 #save-indicator { background: transparent !important; border: none !important; }
 
 body.season-spring { background: linear-gradient(180deg, #0a2a4a 0%, #1a4a3a 100%); }
