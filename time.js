@@ -242,6 +242,14 @@ if (document.readyState === 'loading') {
     setTimeout(() => {
         if (typeof window.processTime === 'function') window.processTime();
     }, 600);
+
+ if (window.tournament) {
+    if (window.tournament.isActive()) {
+        window.tournament.advance();
+    } else {
+        window.tournament.checkAutoStart();
+    }
+}
 }
 
 window.applyAgeEffects = applyAgeEffects;
