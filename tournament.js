@@ -290,17 +290,24 @@ window.tournament = (function() {
     };
 })();
 
-// Автоматично задвижване от processTurn
-if (typeof window.processTurn === 'function') {
-    const original = window.processTurn;
-    window.processTurn = function() {
-        original();
-        if (window.tournament) {
-            if (window.tournament.isActive()) {
-                window.tournament.advance();
-            } else {
-                window.tournament.checkAutoStart();
-            }
+// Автоматично задвижване от processTurn (след като processTurn е дефиниран)
+(function() {
+    function hookProcessTurn() {
+        if (typeof window.processTurn === 'function') {
+            const original = window.processTurn;
+            window.processTurn = function() {
+                original();
+                if (window.tournament) {
+                    if (window.tournament.isActive()) {
+                        window.tournament.advance();
+                    } else {
+                        window.tournament.checkAutoStart();
+                    }
+                }
+            };
+        } else {
+            setTimeout(hookProcessTurn, 500);
         }
-    };
-}
+    }
+    hookProcessTurn();
+})();
