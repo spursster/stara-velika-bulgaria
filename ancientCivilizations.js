@@ -108,16 +108,22 @@
         if (window.updateCharacterUI) window.updateCharacterUI(hero);
     }
 
-    function stealArtifact(civ) {
-        let hero = getMainHero();
-        if (!hero || !hero.inventory || hero.inventory.length === 0) return;
-        let randomIndex = Math.floor(Math.random() * hero.inventory.length);
-        let stolen = hero.inventory[randomIndex];
-        hero.inventory.splice(randomIndex, 1);
-        addLog(`🌑 Кражба от ${civ.name}`, `${civ.name} открадна от ${hero.name} артефакта "${stolen.name}".`, civ.icon);
-        if (window.updateCharacterUI) window.updateCharacterUI(hero);
+   function stealArtifact(civ) {
+    let hero = getMainHero();
+    if (!hero || !hero.inventory || hero.inventory.length === 0) return;
+    // Филтрираме само съществуващи артефакти (без null)
+    let validIndices = [];
+    for (let i = 0; i < hero.inventory.length; i++) {
+        if (hero.inventory[i] !== null && hero.inventory[i] !== undefined) validIndices.push(i);
     }
-
+    if (validIndices.length === 0) return;
+    let randomIndex = validIndices[Math.floor(Math.random() * validIndices.length)];
+    let stolen = hero.inventory[randomIndex];
+    if (!stolen || !stolen.name) return;
+    hero.inventory.splice(randomIndex, 1);
+    addLog(`🌑 Кражба от ${civ.name}`, `${civ.name} открадна от ${hero.name} артефакта "${stolen.name}".`, civ.icon);
+    if (window.updateCharacterUI) window.updateCharacterUI(hero);
+}
     function burnRegion(civ) {
         if (!window.playerRegions || window.playerRegions.length === 0) return;
         let regionName = window.playerRegions[Math.floor(Math.random() * window.playerRegions.length)];
