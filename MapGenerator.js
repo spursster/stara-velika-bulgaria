@@ -65,18 +65,16 @@ window.generateMapCanvas = function(containerId, seed = "default") {
         const height = tileHeight;
 
         // ⭐ НОВА ЛОГИКА ЗА ЦВЕТА
-        let bgColor = '#5a5a5a'; // неутрален
+            let bgColor = '#5a5a5a'; // неутрален
         if (ownedRegions.includes(region.name)) {
             bgColor = '#2c5a2a'; // зелен – ваш
         } else if (region.ancientOwner) {
-            // Завзет от древна цивилизация – лилав
-            bgColor = '#8a2be2'; // лилав
+            bgColor = '#8a2be2'; // лилав – завзет от древна цивилизация
         } else if (region.nativeClans && region.nativeClans.length > 0) {
             bgColor = '#8b3a3a'; // червеникав – враг
         } else {
             bgColor = '#4a4a4a'; // тъмно сив – независим
         }
-
         ctx.fillStyle = bgColor;
         ctx.shadowBlur = 0;
         ctx.fillRect(x, y, width, height);
