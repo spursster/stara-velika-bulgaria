@@ -1,7 +1,7 @@
 /**
 ==========================================================================
 ПРОЕКТ: ВЕЛИКА БЪЛГАРИЯ
-ФАЙЛ: items.js (ВЕРСИЯ 6.2 – ДОБАВЕНО ПРЕТОПЯВАНЕ НА АРТЕФАКТИ)
+ФАЙЛ: items.js (ВЕРСИЯ 6.3 – ПРЕМАХНАТ КОНФЛИКТИРАЩИЯ OVERRIDE)
 ==========================================================================
 */
 window.pendingSetBonuses = {};   // { setKey: heroId }
@@ -432,44 +432,7 @@ if (typeof window.recalculateHeroPower === 'function') {
     };
 }
 
-// Хук за автоматична екипировка при нивап
-if (typeof window.gainHeroXP === 'function') {
-    const originalGainXP = window.gainHeroXP;
-    window.gainHeroXP = function(hero, amount) {
-        const oldLevel = hero.level || 1;
-        originalGainXP(hero, amount);
-        const newLevel = hero.level || 1;
-        if (newLevel > oldLevel && hero.isAuto) {
-            setTimeout(() => window.autoEquipHero(hero), 100);
-        }
-    };
-} else {
-    window.gainHeroXP = function(hero, amount) {
-        if (!hero) return;
-        hero.xp = (hero.xp || 0) + amount;
-        const oldLevel = hero.level || 1;
-        let requiredXP = (hero.level || 1) * 150;
-        while (hero.xp >= requiredXP && hero.level < 100) {
-            hero.xp -= requiredXP;
-            hero.level++;
-            hero.skillPoints = (hero.skillPoints || 0) + 1;
-            hero.heroPower = (hero.heroPower || 100) + 25;
-            requiredXP = (hero.level) * 150;
-            if (window.showAdvisorPopup) {
-                window.showAdvisorPopup("НИВО НАГОРЕ", `🆙 ${hero.name} достигна Ниво ${hero.level}!`, "success");
-            } else if (window.showAdvisorMsg) {
-                window.showAdvisorMsg(`🆙 ${hero.name} достигна Ниво ${hero.level}!`);
-            }
-        }
-        if ((hero.level || 1) > oldLevel && hero.isAuto) {
-            setTimeout(() => window.autoEquipHero(hero), 100);
-        }
-        if (window.updateCharacterUI) window.updateCharacterUI(hero);
-        if (typeof window.updateStrongestHeroUI === 'function') {
-            window.updateStrongestHeroUI();
-        }
-    };
-}
+// ⭐ ПРЕМАХНАТ Е КОНФЛИКТИРАЩИЯТ OVERRIDE НА gainHeroXP (вече е в rpg_system.js)
 
 // Инициализация: автоматична екипировка за авто герои
 setTimeout(() => {
@@ -487,4 +450,4 @@ setTimeout(() => {
     }
 }, 1000);
 
-console.log("✅ items.js версия 6.2 зареден – добавено претопяване на артефакти");
+console.log("✅ items.js версия 6.3 зареден – премахнат конфликтиращия override, автоматичната екипировка идва от rpg_system.js");
