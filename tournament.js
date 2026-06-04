@@ -44,7 +44,7 @@ window.tournament = (function() {
         if (window.worldData && window.worldData.clans) {
             for (let key in window.worldData.clans) {
                 let h = window.worldData.clans[key];
-                if (h.isJoined === true && h.isAlive !== false) {
+                if (h.isAlive !== false) {
                     heroes.push({
                         id: key,
                         name: h.name || h.leaderName,
