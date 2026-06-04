@@ -39,25 +39,24 @@ window.tournament = (function() {
     }
 
     // Всички живи герои на играча
-    function getPlayerHeroes() {
-        let heroes = [];
-        if (window.worldData && window.worldData.clans) {
-            for (let key in window.worldData.clans) {
-                let h = window.worldData.clans[key];
-                if (h.isAlive !== false) {
-                    heroes.push({
-                        id: key,
-                        name: h.name || h.leaderName,
-                        heroObj: h,
-                        power: h.heroPower || 100,
-                        isPlayer: true
-                    });
-                }
+   function getPlayerHeroes() {
+    let heroes = [];
+    if (window.worldData && window.worldData.clans) {
+        for (let key in window.worldData.clans) {
+            let h = window.worldData.clans[key];
+            if (h.isAlive !== false) {   // <-- без проверка за isJoined
+                heroes.push({
+                    id: key,
+                    name: h.name || h.leaderName,
+                    heroObj: h,
+                    power: h.heroPower || 100,
+                    isPlayer: true
+                });
             }
         }
-        return heroes;
     }
-
+    return heroes;
+}
     function getAllCivilizations() {
         return [
             "Елфийско кралство", "Двор на феите", "Небесна империя", "Оркска орда",
@@ -186,7 +185,6 @@ window.tournament = (function() {
         }
         log(`--- РУНД ${currentRound} ---`, "⚔️");
     }
-
     function createMatches(participants) {
         let matches = [];
         for (let i = 0; i < participants.length; i += 2) {
@@ -200,6 +198,13 @@ window.tournament = (function() {
     }
 
     function prepareTournament() {
+        console.log("prepareTournament: започва");
+let players = getPlayerHeroes();
+console.log("Брой играчи:", players.length);
+let civs = getCivilizationChampions();
+console.log("Брой цивилизации:", civs.length);
+let participants = [...players, ...civs];
+console.log("Общо участници преди допълване:", participants.length);
         if (!canStartTournament()) {
             let yearsLeft = MIN_YEARS_BETWEEN_TOURNAMENTS - (window.gameTime.year - lastTournamentYear);
             log(`Турнирът може да се проведе след ${yearsLeft} години.`, "⏳");
