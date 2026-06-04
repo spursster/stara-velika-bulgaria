@@ -1426,7 +1426,136 @@ gap: 4px;
         left: 5px !important;
     }
 }
+/* ========== БИТКА – ОПТИМИЗИРАНА ЗА ТЕЛЕФОНИ (компактни слотове, едър текст) ========== */
+@media (max-width: 768px) {
+    /* Контейнерът на битката да не излиза извън екрана */
+    .ultimate-battle {
+        padding: 6px !important;
+        align-items: flex-start !important;
+        overflow-y: auto !important;
+    }
 
+    .battle-container {
+        background: #0a0a1a !important;
+        width: 100% !important;
+        max-width: none !important;
+        border-radius: 20px !important;
+        padding: 8px !important;
+    }
+
+    /* Мрежа за герои и врагове – 2 на ред (по-широки, но по-ниски) */
+    .heroes-grid, .enemies-grid {
+        display: grid !important;
+        grid-template-columns: repeat(2, 1fr) !important;
+        gap: 8px !important;
+        margin: 8px 0 !important;
+    }
+
+    /* Карта на герой – по-компактна */
+    .hero-card, .enemy-card {
+        background: rgba(0, 0, 0, 0.7) !important;
+        border: 1px solid #d4af37 !important;
+        border-radius: 16px !important;
+        padding: 6px 4px !important;
+        width: auto !important;
+        min-width: 0 !important;
+        display: flex !important;
+        flex-direction: column !important;
+        align-items: center !important;
+    }
+
+    /* Портрет или иконка – малки */
+    .hero-portrait {
+        width: 36px !important;
+        height: 36px !important;
+        margin-bottom: 2px !important;
+    }
+    .hero-icon {
+        font-size: 28px !important;
+        margin-bottom: 2px !important;
+    }
+
+    /* Име на героя – едро и четливо */
+    .hero-name, .enemy-name {
+        font-size: 12px !important;
+        font-weight: bold !important;
+        color: #ffdd99 !important;
+        text-align: center !important;
+        white-space: normal !important;
+        word-break: keep-all !important;
+        margin: 2px 0 !important;
+    }
+
+    /* Клас и ниво – малък шрифт */
+    .hero-class, .hero-level-power {
+        font-size: 8px !important;
+        color: #ccaa77 !important;
+    }
+
+    /* Ленти за живот и опит – по-тънки */
+    .hp-bar-bg, .xp-bar {
+        height: 5px !important;
+        margin: 3px 0 !important;
+    }
+
+    /* Текст за статистики (❤️, ⚔️, 💰) – по-едър */
+    .hero-stats {
+        display: flex !important;
+        justify-content: space-between !important;
+        width: 100% !important;
+        gap: 6px !important;
+        font-size: 10px !important;
+        font-weight: bold !important;
+        margin-top: 4px !important;
+    }
+    .hero-stats span {
+        font-size: 10px !important;
+    }
+
+    /* Бутони за действие – видими и големи */
+    .action-buttons {
+        display: flex !important;
+        flex-wrap: wrap !important;
+        justify-content: center !important;
+        gap: 8px !important;
+        background: #000000cc !important;
+        border-radius: 60px !important;
+        padding: 8px !important;
+        margin-top: 12px !important;
+    }
+    .battle-btn {
+        background: #daa520 !important;
+        border: 1px solid white !important;
+        border-radius: 40px !important;
+        color: black !important;
+        font-weight: bold !important;
+        font-size: 12px !important;
+        padding: 5px 12px !important;
+        min-width: 70px !important;
+    }
+    .attack-btn {
+        background: #ff6600 !important;
+        color: white !important;
+    }
+
+    /* Лог за битката – да не заема много място */
+    .battle-log {
+        max-height: 100px !important;
+        font-size: 10px !important;
+        padding: 4px !important;
+    }
+
+    /* Бутон за затваряне – да се вижда */
+    .close-battle-btn {
+        width: 28px !important;
+        height: 28px !important;
+        font-size: 14px !important;
+        top: 4px !important;
+        left: 4px !important;
+        background: rgba(0,0,0,0.7) !important;
+        border: 1px solid #ff8888 !important;
+    }
+}
 #save-indicator { background: transparent !important; border: none !important; }
 
 body.season-spring { background: linear-gradient(180deg, #0a2a4a 0%, #1a4a3a 100%); }
