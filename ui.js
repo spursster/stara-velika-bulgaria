@@ -75,7 +75,7 @@ function renderTopHeroTroops(hero) {
 let updateStrongestHeroTimer = null;
 // Нова функция: сумира злато, армия и сила на всички живи герои
 window.updateTotalStatsUI = function() {
-    console.log("updateTotalStatsUI извикана"); // за дебъг
+    //console.log("updateTotalStatsUI извикана"); // за дебъг
     let totalGold = 0, totalArmy = 0, totalPower = 0;
     if (window.worldData && window.worldData.clans) {
         for (let key in window.worldData.clans) {
@@ -95,7 +95,7 @@ window.updateTotalStatsUI = function() {
     if (goldSpan) goldSpan.innerText = totalGold;
     if (armySpan) armySpan.innerText = totalArmy;
     if (powerSpan) powerSpan.innerText = totalPower;
-    console.log("Сумарни стойности:", totalGold, totalArmy, totalPower);
+    //console.log("Сумарни стойности:", totalGold, totalArmy, totalPower);
     
     // Ляв панел (Топ герой) – без да засягаме горните
     const strongest = window.getStrongestHero();
