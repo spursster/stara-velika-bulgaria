@@ -9,6 +9,7 @@
     // ========== СИСТЕМА ЗА ЕПИЧЕН РАЗКАЗ ==========
     let _battleNarrative = [];
     let _damageDealt = {};   // съхранява сумарни щети на герой (id -> totalDamage)
+    let _lastStoryHash = null;
     
     function addNarrative(text, type = "info") {
         _battleNarrative.push({ text, type, time: Date.now() });
@@ -95,7 +96,13 @@
     // Основната функция за генериране на епичен разказ (С MVP)
   function generateBattleStory(regionName, heroes, enemies, isVictory, rewards) {
     if (!_battleNarrative || _battleNarrative.length === 0) {
-        let shortMsg = isVictory 
+        let shortMsg = isVictory
+                // Предотвратява дублиране на един и същ разказ
+    const storyHash = regionName + (isVictory ? "win" : "loss") + (_battleNarrative.length || 0);
+    if (_lastStoryHash === storyHash) {
+        return ""; // вече показан този разказ
+    }
+    _lastStoryHash = storyHash;
             ? `Силите ви сразяват врага в ${regionName}. Победата е ваша!`
             : `Войските ви отстъпват от ${regionName}. Поражението е горчиво.`;
         if (window.addWorldEvent) window.addWorldEvent("⚔️ БИТКА", shortMsg, isVictory ? "🏆" : "💀");
