@@ -1,6 +1,6 @@
 /**
- * tournament.js – Елиминационен турнир на всички живи герои (финална версия)
- * Автоматично стартира на 5-тия ход при нова игра.
+ * tournament.js – Елиминационен турнир на всички живи герои
+ * Автоматично стартиране на 5-тия ход. Показва мачове само с герои на играча + полуфинали/финал.
  */
 
 window.tournament = (function() {
@@ -37,7 +37,6 @@ window.tournament = (function() {
         return (window.gameTime.year - lastTournamentYear) >= MIN_YEARS_BETWEEN_TOURNAMENTS;
     }
 
-    // Всички живи герои (без значение дали са наети)
     function getAllLivingHeroes() {
         let heroes = [];
         if (window.worldData && window.worldData.clans) {
@@ -98,6 +97,14 @@ window.tournament = (function() {
         return { winner, loser };
     }
 
+    function shouldLogMatch(match, roundNumber, totalRounds) {
+        // Проверка дали мачът трябва да се покаже в летописа
+        if (match.heroA.isPlayer || match.heroB.isPlayer) return true;
+        if (roundNumber === totalRounds) return true; // финал
+        if (roundNumber === totalRounds - 1) return true; // полуфинал
+        return false;
+    }
+
     function generateNarrative(match, winner, loser, roundNumber, isSemifinal, isFinal, matchNumber) {
         let heroAName = match.heroA.name;
         let heroBName = match.heroB.name;
@@ -121,8 +128,8 @@ window.tournament = (function() {
         return `${intro}\n${fight}`;
     }
 
-    function logMatch(match, winner, loser, roundNumber, isSemifinal, isFinal, matchIndex) {
-        let narrative = generateNarrative(match, winner, loser, roundNumber, isSemifinal, isFinal, matchIndex);
+    function logMatch(match, winner, loser, roundNumber, isSemifinal, isFinal, matchNumber) {
+        let narrative = generateNarrative(match, winner, loser, roundNumber, isSemifinal, isFinal, matchNumber);
         if (window.addWorldEvent) {
             window.addWorldEvent("🏆 ТУРНИРЕН МАЧ", narrative, "⚔️");
         } else {
@@ -147,18 +154,28 @@ window.tournament = (function() {
         let match = roundMatches[currentDay];
         if (!match) return;
         if (match.heroB && match.heroB.isBye) {
-            log(`⏭️ Ден ${currentDay+1}: ${match.heroA.name} преминава автоматично (почивка).`);
+            // Почивка – не показваме нищо, освен ако не е играч
+            if (match.heroA.isPlayer) {
+                log(`⏭️ Ден ${currentDay+1}: ${match.heroA.name} преминава автоматично (почивка).`);
+            }
             remainingHeroes.push(match.heroA);
             currentDay++;
             return;
         }
-        log(`⚔️ Ден ${currentDay+1}: ${match.heroA.name} срещу ${match.heroB.name}`);
+
+        // Решаваме дали да покажем този мач
+        let showMatch = shouldLogMatch(match, currentRound, totalRounds);
+        if (showMatch) {
+            log(`⚔️ Ден ${currentDay+1}: ${match.heroA.name} срещу ${match.heroB.name}`);
+        }
         let result = simulateBattle(match.heroA, match.heroB);
         let isSemifinal = (totalRounds - currentRound === 1 && remainingHeroes.length <= 4);
         let isFinal = (totalRounds - currentRound === 0 && remainingHeroes.length <= 2);
         if (currentRound === totalRounds && remainingHeroes.length === 1) isFinal = true;
-        logMatch(match, result.winner, result.loser, currentRound, isSemifinal, isFinal, currentDay+1);
-        log(`🏅 ${result.winner.name} побеждава!`);
+        if (showMatch) {
+            logMatch(match, result.winner, result.loser, currentRound, isSemifinal, isFinal, currentDay+1);
+            log(`🏅 ${result.winner.name} побеждава!`);
+        }
         remainingHeroes.push(result.winner);
         currentDay++;
     }
@@ -189,7 +206,11 @@ window.tournament = (function() {
             tournamentActive = false;
             return;
         }
-        log(`--- РУНД ${currentRound} ---`, "⚔️");
+        // Показваме начало на рунд, само ако има интересни мачове в него (проверяваме)
+        let hasInteresting = roundMatches.some(m => shouldLogMatch(m, currentRound, totalRounds));
+        if (hasInteresting) {
+            log(`--- РУНД ${currentRound} ---`, "⚔️");
+        }
     }
 
     function createMatches(participants) {
@@ -218,7 +239,8 @@ window.tournament = (function() {
         let players = getAllLivingHeroes();
         let civs = getCivilizationChampions();
         let participants = [...players, ...civs];
-        log(`📋 Събрани ${participants.length} участници (${players.length} герои + ${civs.length} цивилизации).`);
+        let originalCount = participants.length;
+        log(`📋 Събрани ${originalCount} участници (${players.length} герои + ${civs.length} цивилизации).`);
 
         let targetCount = 1;
         while (targetCount < participants.length) targetCount *= 2;
@@ -290,24 +312,30 @@ window.tournament = (function() {
     };
 })();
 
-// Автоматично задвижване от processTurn (след като processTurn е дефиниран)
-(function() {
-    function hookProcessTurn() {
-        if (typeof window.processTurn === 'function') {
-            const original = window.processTurn;
-            window.processTurn = function() {
-                original();
-                if (window.tournament) {
-                    if (window.tournament.isActive()) {
-                        window.tournament.advance();
-                    } else {
-                        window.tournament.checkAutoStart();
-                    }
+// Осигуряване на автоматично задвижване от processTurn
+(function ensureProcessTurnIntegration() {
+    const originalProcessTurn = window.processTurn;
+    if (typeof originalProcessTurn === 'function') {
+        window.processTurn = function() {
+            originalProcessTurn();
+            if (window.tournament) {
+                if (window.tournament.isActive()) {
+                    window.tournament.advance();
+                } else {
+                    window.tournament.checkAutoStart();
                 }
-            };
-        } else {
-            setTimeout(hookProcessTurn, 500);
-        }
+            }
+        };
+    } else {
+        // Ако няма processTurn, създаваме временна, която да вика само турнира (но това не би трябвало да се случва)
+        window.processTurn = function() {
+            if (window.tournament) {
+                if (window.tournament.isActive()) {
+                    window.tournament.advance();
+                } else {
+                    window.tournament.checkAutoStart();
+                }
+            }
+        };
     }
-    hookProcessTurn();
 })();
