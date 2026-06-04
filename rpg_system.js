@@ -1,5 +1,5 @@
 // =========================================================================
-// ВЕЛИКА БЪЛГАРИЯ - rpg_system.js (ВЕРСИЯ 8.0 – ИНТЕРАКТИВНИ БУТОНИ ЗА УМЕНИЯ И КЛАСОВЕ)
+// ВЕЛИКА БЪЛГАРИЯ - rpg_system.js (ВЕРСИЯ 8.1 – С АВТОМАТИЧНА ЕКИПИРОВКА)
 // =========================================================================
 
 window.rpgDatabase = window.rpgDatabase || {};
@@ -103,7 +103,7 @@ window.consumeStoredXPForHero = function(hero) {
     return false;
 };
 
-// ==================== ОПИТ И НИВА (ОСНОВНА ФУНКЦИЯ) – С БУТОНИ ЗА ТОЧКИ УМЕНИЯ ====================
+// ==================== ОПИТ И НИВА (ОСНОВНА ФУНКЦИЯ) ====================
 window.gainHeroXP = function(hero, amount) {
     if (!hero) return;
     window.initializeHeroRPGData(hero);
@@ -130,7 +130,11 @@ window.gainHeroXP = function(hero, amount) {
             if (window.addHeroLog) window.addHeroLog(hero, "⬆️", `Достигна ниво ${hero.level}`);
             if (window.checkArcheAgeClass) window.checkArcheAgeClass(hero);
             
-            // Показваме бутони за точка умение (само за твоите герои)
+            // ⭐ АВТОМАТИЧНА ЕКИПИРОВКА ПРИ НИВЕЛИРАНЕ
+            if (hero.isAuto && typeof window.autoEquipHero === 'function') {
+                window.autoEquipHero(hero);
+            }
+            
             if (typeof isMyHero === 'function' && isMyHero(hero) && hero.skillPoints > 0) {
                 window._pendingSkillPoints[hero.id] = hero.skillPoints;
                 if (window.ChronicleEvents && typeof window.ChronicleEvents.generateSkillPointOffer === 'function') {
@@ -140,7 +144,6 @@ window.gainHeroXP = function(hero, amount) {
                     window.showAdvisorMsg(`⭐ ${hero.name} получи точка умение!`);
                 }
             } else if (!(typeof isMyHero === 'function' && isMyHero(hero)) && hero.isAuto && hero.skillPoints > 0) {
-                // За чужди авто герои – автоматично разпределение
                 if (typeof window.autoAssignSkillPoint === 'function') window.autoAssignSkillPoint(hero);
             }
         }
@@ -166,6 +169,11 @@ window.gainHeroXP = function(hero, amount) {
             if (hero.hp > hero.maxHp) hero.hp = hero.maxHp;
             if (window.addHeroLog) window.addHeroLog(hero, "⬆️", `Достигна ниво ${hero.level}`);
             if (window.checkArcheAgeClass) window.checkArcheAgeClass(hero);
+            
+            // ⭐ АВТОМАТИЧНА ЕКИПИРОВКА ПРИ НИВЕЛИРАНЕ (manual режим)
+            if (hero.isAuto && typeof window.autoEquipHero === 'function') {
+                window.autoEquipHero(hero);
+            }
             
             if (typeof isMyHero === 'function' && isMyHero(hero) && hero.skillPoints > 0) {
                 window._pendingSkillPoints[hero.id] = hero.skillPoints;
@@ -452,4 +460,4 @@ setTimeout(() => {
     }
 }, 1500);
 
-console.log("✅ rpg_system.js версия 8.0 зареден – с интерактивни бутони за умения и класове");
+console.log("✅ rpg_system.js версия 8.1 зареден – с автоматична екипировка при нивелиране");
