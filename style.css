@@ -1319,6 +1319,114 @@ gap: 4px;
     }
 } 
 
+/* ========== БИТКА – СПЕЦИАЛНО ЗА ТЕЛЕФОНИ ========== */
+@media (max-width: 768px) {
+    /* Контейнерът на битката да не излиза извън екрана */
+    .ultimate-battle {
+        padding: 5px !important;
+        align-items: flex-start !important;
+        overflow-y: auto !important;
+    }
+
+    /* Контейнерът на битката да има бял/светъл фон за контраст */
+    .battle-container {
+        background: #0a0a1a !important;
+        width: 100% !important;
+        max-width: none !important;
+        border-radius: 16px !important;
+        padding: 10px !important;
+    }
+
+    /* Лента с бутоните – задължително да е видима и да не препокрива */
+    .action-buttons {
+        display: flex !important;
+        flex-wrap: wrap !important;
+        justify-content: center !important;
+        gap: 8px !important;
+        background: #000000aa !important;
+        border-radius: 40px !important;
+        padding: 8px !important;
+        margin-top: 15px !important;
+        position: relative !important;
+        z-index: 300001 !important;
+    }
+
+    /* Всеки бутон в битката – задължително видим и кликабилен */
+    .battle-btn {
+        background: #daa520 !important;
+        border: 2px solid #ffffff !important;
+        border-radius: 40px !important;
+        color: #000000 !important;
+        font-weight: bold !important;
+        font-size: 0.75rem !important;
+        padding: 6px 12px !important;
+        min-width: 70px !important;
+        text-shadow: none !important;
+        box-shadow: 0 2px 6px black !important;
+        flex-shrink: 0 !important;
+    }
+
+    /* Специално за бутона "АТАКА" – още по-ярък */
+    .attack-btn {
+        background: #ff6600 !important;
+        color: white !important;
+        border-color: yellow !important;
+    }
+
+    /* Героите да се подреждат в два реда */
+    .heroes-grid, .enemies-grid {
+        display: grid !important;
+        grid-template-columns: repeat(2, 1fr) !important;
+        gap: 8px !important;
+        padding: 5px !important;
+    }
+
+    /* Карта на герой – да не е твърде широка */
+    .hero-card, .enemy-card {
+        width: auto !important;
+        min-width: 0 !important;
+        padding: 6px !important;
+        margin: 0 !important;
+    }
+
+    /* Портретите да са малки, за да има място */
+    .hero-portrait {
+        width: 40px !important;
+        height: 40px !important;
+    }
+
+    .hero-icon {
+        font-size: 28px !important;
+    }
+
+    /* Име и текст – да не преливат */
+    .hero-name, .enemy-name {
+        font-size: 10px !important;
+        white-space: normal !important;
+        word-break: break-word !important;
+    }
+
+    /* Лента за живот – по-тънка */
+    .hp-bar-bg {
+        height: 6px !important;
+    }
+
+    /* Логът да се свива */
+    .battle-log {
+        max-height: 80px !important;
+        font-size: 9px !important;
+    }
+
+    /* Затварящият бутон (X) да е по-голям */
+    .close-battle-btn {
+        width: 32px !important;
+        height: 32px !important;
+        font-size: 16px !important;
+        top: 5px !important;
+        left: 5px !important;
+    }
+}
+
 #save-indicator { background: transparent !important; border: none !important; }
 
 body.season-spring { background: linear-gradient(180deg, #0a2a4a 0%, #1a4a3a 100%); }
