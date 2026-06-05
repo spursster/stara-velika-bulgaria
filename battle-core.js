@@ -411,23 +411,22 @@
 
     // ========== СЪБИРАНЕ НА ГЕРОИТЕ НА ИГРАЧА (ДОБАВЕНА) ==========
     function collectPlayerHeroes() {
-        // Ако има турнирен двубой с конкретен герой, връщаме само него
+        // ⭐ Ако има турнирен двубой, връщаме САМО този герой, без промени
         if (window._tournamentForcedHero) {
             const forced = window._tournamentForcedHero;
-            if (forced.clanObj) {
-                if (!forced.hp || forced.hp <= 0) forced.hp = forced.clanObj.hp || forced.clanObj.maxHp;
-                if (!forced.maxHp) forced.maxHp = forced.clanObj.maxHp || 100;
-                if (!forced.power) forced.power = forced.clanObj.heroPower;
-                if (!forced.className) forced.className = forced.clanObj.currentClass || "Воевода";
-                if (!forced.troopEffects) forced.troopEffects = getTroopSpecialEffects(forced.clanObj);
-                if (!forced.armySize) forced.armySize = forced.clanObj.armySize || 200;
-            }
-            forced.hp = forced.hp || forced.maxHp || 100;
-            forced.maxHp = forced.maxHp || 100;
-            forced.power = forced.power || 100;
+            console.log(`🏟️ Battle-core: турнирен герой форсиран: ${forced.name} (${forced.id})`);
+            // Уверяваме се, че обектът има минимални полета за битката
+            if (!forced.hp) forced.hp = forced.maxHp || 100;
+            if (!forced.maxHp) forced.maxHp = 100;
+            if (!forced.power) forced.power = forced.heroPower || 100;
+            if (!forced.className) forced.className = forced.currentClass || "Воевода";
+            if (!forced.armySize) forced.armySize = 200;
+            if (!forced.icon) forced.icon = "⚔️";
+            // Връщаме масив с един елемент – този герой
             return [forced];
         }
         
+        // --- ОРИГИНАЛНА ЛОГИКА ЗА СЪБИРАНЕ НА ВСИЧКИ ГЕРОИ ---
         let heroes = [];
         const worldData = window.worldData;
         if (!worldData || !worldData.clans) return heroes;
