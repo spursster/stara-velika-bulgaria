@@ -955,5 +955,32 @@
     // ... аналогично за другите генератори (но те са рядко използвани, ще се заредят при нужда).
 })();
 </script>
+
+    (function moveNewGameButtonToBottomOnMobile() {
+    function moveButton() {
+        const isMobile = window.innerWidth <= 768;
+        const newGameContainer = document.querySelector('.top-bar-controls .new-game-menu-container');
+        const bottomBar = document.getElementById('bottom-controls');
+        const topBarControls = document.querySelector('.top-bar-controls');
+        
+        if (!newGameContainer || !bottomBar || !topBarControls) return;
+        
+        if (isMobile) {
+            // Ако вече е в долния панел, не прави нищо
+            if (newGameContainer.parentElement === bottomBar) return;
+            // Преместваме в началото на долния панел (преди другите бутони)
+            bottomBar.insertBefore(newGameContainer, bottomBar.firstChild);
+        } else {
+            // Връщаме обратно в горния панел
+            if (newGameContainer.parentElement === topBarControls) return;
+            topBarControls.insertBefore(newGameContainer, topBarControls.firstChild);
+        }
+    }
+    
+    // Изпълняваме при зареждане
+    moveButton();
+    // И при промяна на размера на екрана
+    window.addEventListener('resize', moveButton);
+})();
 </body>
 </html>
