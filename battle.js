@@ -1,7 +1,7 @@
 /**
 ==========================================================================
 ПРОЕКТ: ВЕЛИКА БЪЛГАРИЯ
-ФАЙЛ: battle.js (ВЕРСИЯ 9.1 – премахнато дублиране на разказа)
+ФАЙЛ: battle.js (ВЕРСИЯ 9.2 – КЕШИРАНИ DOM ЕЛЕМЕНТИ)
 ==========================================================================
 */
 
@@ -14,24 +14,26 @@
         document.head.appendChild(style);
     }
 
-
-
     const core = window.BattleCore;
     if (!core) {
         console.error("❌ battle-core.js не е зареден!");
         return;
     }
 
-    // ==================== ПОМОЩНИ ФУНКЦИИ ЗА UI ====================
+    // ==================== ПОМОЩНИ ФУНКЦИИ С КЕШ ====================
+    let heroElementsCache = null;
+    let enemyElementsCache = null;
+    let battleLogCache = null;
+
     function addLog(message, isError = false) {
-        const logDiv = document.getElementById('battle-log');
-        if (logDiv) {
+        if (!battleLogCache) battleLogCache = document.getElementById('battle-log');
+        if (battleLogCache) {
             const p = document.createElement('p');
             p.innerHTML = message;
             if (isError) p.style.color = '#ff8888';
-            logDiv.appendChild(p);
-            logDiv.scrollTop = logDiv.scrollHeight;
-            while (logDiv.children.length > 15) logDiv.removeChild(logDiv.firstChild);
+            battleLogCache.appendChild(p);
+            battleLogCache.scrollTop = battleLogCache.scrollHeight;
+            while (battleLogCache.children.length > 15) battleLogCache.removeChild(battleLogCache.firstChild);
         }
     }
 
@@ -63,7 +65,7 @@
     }
 
     function animateHero(heroId, damage = null, isHeal = false) {
-        const card = document.querySelector(`.hero-card[data-id="${heroId}"]`);
+        const card = heroElementsCache?.get(heroId);
         if (card) {
             core.animateCard(card);
             if (damage !== null) core.showFloatingNumber(card, damage, isHeal);
@@ -71,7 +73,7 @@
     }
 
     function animateEnemy(enemyId, damage = null, isHeal = false) {
-        const card = document.querySelector(`.enemy-card[data-id="${enemyId}"]`);
+        const card = enemyElementsCache?.get(enemyId);
         if (card) {
             core.animateCard(card);
             if (damage !== null) core.showFloatingNumber(card, damage, isHeal);
@@ -254,6 +256,20 @@
         `;
 
         document.body.appendChild(battleScreen);
+
+        // ⭐ КЕШИРАНЕ НА DOM ЕЛЕМЕНТИТЕ СЛЕД ДОБАВЯНЕ В DOM
+        heroElementsCache = new Map();
+        document.querySelectorAll('.hero-card').forEach(card => {
+            const id = card.getAttribute('data-id');
+            if (id) heroElementsCache.set(id, card);
+        });
+        enemyElementsCache = new Map();
+        document.querySelectorAll('.enemy-card').forEach(card => {
+            const id = card.getAttribute('data-id');
+            if (id) enemyElementsCache.set(id, card);
+        });
+        battleLogCache = document.getElementById('battle-log');
+
         document.getElementById('close-battle-btn').onclick = () => battleScreen.remove();
 
         let currentHeroes = playerHeroes.map(h => ({ ...h, startingHp: h.hp }));
@@ -343,158 +359,157 @@
         }
 
         function handleVictory(currentHeroes, regionName, playerHeroes, currentEnemies, battleScreen) {
-    addLog(`━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`);
-    addLog(`🏆 ПОБЕДА! Всички врагове са победени! 🏆`);
-    let totalXP = 50 + Math.floor(Math.random() * 100);
-    let totalGold = 100 + Math.floor(Math.random() * 200);
-    const livingHeroes = currentHeroes.filter(h => h.hp > 0);
-    livingHeroes.forEach(hero => {
-        let heroXP = Math.floor(totalXP / livingHeroes.length);
-        let heroGold = Math.floor(totalGold / livingHeroes.length);
-        if (window.gainHeroXP) window.gainHeroXP(hero.clanObj, heroXP);
-        else hero.clanObj.xp = (hero.clanObj.xp || 0) + heroXP;
-        hero.clanObj.gold = (hero.clanObj.gold || 0) + heroGold;
-        addLog(`   🎁 ${hero.name} получава +${heroXP} XP и +${heroGold} злато!`);
-        if (window.addHeroLog) window.addHeroLog(hero.clanObj, "⚔️", `Победи в битката за ${regionName}`);
-    });
-    
-    if (typeof regionName === 'string' && regionName !== "Портал") {
-        if (typeof window.normalizePlayerRegions === 'function') window.normalizePlayerRegions();
-        else {
-            if (!window.playerRegions) window.playerRegions = [];
-            let flat = [];
-            for (let item of window.playerRegions) {
-                if (Array.isArray(item)) for (let sub of item) flat.push(sub);
-                else if (typeof item === 'string') flat.push(item);
+            addLog(`━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`);
+            addLog(`🏆 ПОБЕДА! Всички врагове са победени! 🏆`);
+            let totalXP = 50 + Math.floor(Math.random() * 100);
+            let totalGold = 100 + Math.floor(Math.random() * 200);
+            const livingHeroes = currentHeroes.filter(h => h.hp > 0);
+            livingHeroes.forEach(hero => {
+                let heroXP = Math.floor(totalXP / livingHeroes.length);
+                let heroGold = Math.floor(totalGold / livingHeroes.length);
+                if (window.gainHeroXP) window.gainHeroXP(hero.clanObj, heroXP);
+                else hero.clanObj.xp = (hero.clanObj.xp || 0) + heroXP;
+                hero.clanObj.gold = (hero.clanObj.gold || 0) + heroGold;
+                addLog(`   🎁 ${hero.name} получава +${heroXP} XP и +${heroGold} злато!`);
+                if (window.addHeroLog) window.addHeroLog(hero.clanObj, "⚔️", `Победи в битката за ${regionName}`);
+            });
+            
+            if (typeof regionName === 'string' && regionName !== "Портал") {
+                if (typeof window.normalizePlayerRegions === 'function') window.normalizePlayerRegions();
+                else {
+                    if (!window.playerRegions) window.playerRegions = [];
+                    let flat = [];
+                    for (let item of window.playerRegions) {
+                        if (Array.isArray(item)) for (let sub of item) flat.push(sub);
+                        else if (typeof item === 'string') flat.push(item);
+                    }
+                    window.playerRegions = [...new Set(flat)];
+                }
+                if (!window.playerRegions.includes(regionName)) {
+                    window.playerRegions.push(regionName);
+                    addLog(`   🏰 ${regionName} е добавен към вашите владения!`);
+                    if (window.addWorldEvent) window.addWorldEvent(`🏰 ЗАВЛАДЯВАНЕ`, `Вие завладяхте ${regionName}!`, "🏰");
+                    if (window.worldData && window.worldData.regions && window.worldData.regions[regionName]) {
+                        window.worldData.regions[regionName].armySize = 0;
+                    }
+                } else addLog(`   ℹ️ ${regionName} вече е ваш.`);
             }
-            window.playerRegions = [...new Set(flat)];
-        }
-        if (!window.playerRegions.includes(regionName)) {
-            window.playerRegions.push(regionName);
-            addLog(`   🏰 ${regionName} е добавен към вашите владения!`);
-            if (window.addWorldEvent) window.addWorldEvent(`🏰 ЗАВЛАДЯВАНЕ`, `Вие завладяхте ${regionName}!`, "🏰");
-            if (window.worldData && window.worldData.regions && window.worldData.regions[regionName]) {
-                window.worldData.regions[regionName].armySize = 0;
+            
+            let newArtifact = null;
+            if (Math.random() < 0.2 && window.historicalArtifacts) {
+                const artifactKeys = Object.keys(window.historicalArtifacts);
+                const randomKey = artifactKeys[Math.floor(Math.random() * artifactKeys.length)];
+                newArtifact = { ...window.historicalArtifacts[randomKey] };
+                const randomHero = livingHeroes[Math.floor(Math.random() * livingHeroes.length)];
+                if (randomHero && randomHero.clanObj) {
+                    if (!randomHero.clanObj.inventory) randomHero.clanObj.inventory = [];
+                    randomHero.clanObj.inventory.push(newArtifact);
+                    if (window.addHeroLog) window.addHeroLog(randomHero.clanObj, "🏺", `Намери артефакт: ${newArtifact.name}`);
+                    addLog(`   🏺 ${randomHero.name} намери артефакт: ${newArtifact.name}!`);
+                    if (window.ChronicleEvents && window.ChronicleEvents.generateArtifactFound) {
+                        let ev = window.ChronicleEvents.generateArtifactFound(randomHero.clanObj, newArtifact);
+                        window.showAdvisorMsg(ev.message, ev.buttons);
+                    } else window.showAdvisorMsg(`🏺 ${randomHero.name} намери артефакт: ${newArtifact.name}`);
+                }
             }
-        } else addLog(`   ℹ️ ${regionName} вече е ваш.`);
-    }
-    
-    let newArtifact = null;
-    if (Math.random() < 0.2 && window.historicalArtifacts) {
-        const artifactKeys = Object.keys(window.historicalArtifacts);
-        const randomKey = artifactKeys[Math.floor(Math.random() * artifactKeys.length)];
-        newArtifact = { ...window.historicalArtifacts[randomKey] };
-        const randomHero = livingHeroes[Math.floor(Math.random() * livingHeroes.length)];
-        if (randomHero && randomHero.clanObj) {
-            if (!randomHero.clanObj.inventory) randomHero.clanObj.inventory = [];
-            randomHero.clanObj.inventory.push(newArtifact);
-            if (window.addHeroLog) window.addHeroLog(randomHero.clanObj, "🏺", `Намери артефакт: ${newArtifact.name}`);
-            addLog(`   🏺 ${randomHero.name} намери артефакт: ${newArtifact.name}!`);
-            if (window.ChronicleEvents && window.ChronicleEvents.generateArtifactFound) {
-                let ev = window.ChronicleEvents.generateArtifactFound(randomHero.clanObj, newArtifact);
-                window.showAdvisorMsg(ev.message, ev.buttons);
-            } else window.showAdvisorMsg(`🏺 ${randomHero.name} намери артефакт: ${newArtifact.name}`);
+            
+            if (Math.random() < 0.15 && window.fantasyRaces && window.fantasyRaces.length > 0) {
+                const randomRace = window.fantasyRaces[Math.floor(Math.random() * window.fantasyRaces.length)];
+                const prisoner = { id: Date.now() + "_" + Math.random(), name: randomRace.name, raceId: randomRace.id, icon: randomRace.icon, desc: randomRace.desc, bonus: randomRace.bonus, capturedFrom: regionName };
+                if (!window.prisoners) window.prisoners = [];
+                window.prisoners.push(prisoner);
+                addLog(`   👸 Взехте пленник: ${prisoner.name}! Може да се ожените в дипломацията.`);
+                if (window.addWorldEvent) window.addWorldEvent(`👸 ПЛЕННИК`, `След битката взехте ${prisoner.name} като пленник!`, "👸");
+            }
+            
+            if (regionInput && regionInput.isPortalWorld) {
+                const extraBonus = 50 + Math.floor(Math.random() * 100);
+                const randomHero = livingHeroes[Math.floor(Math.random() * livingHeroes.length)];
+                if (randomHero) {
+                    randomHero.clanObj.gold += extraBonus;
+                    addLog(`   🌌 ПОРТАЛЕН БОНУС: ${randomHero.name} получава +${extraBonus} злато!`);
+                }
+            }
+            
+            if (window.addWorldEvent) window.addWorldEvent(`🏆 ПОБЕДА В БИТКА`, `${playerHeroes.map(h => h.name).join(', ')} победиха в ${regionName}!`, "🏆");
+            
+            for (let i = 0; i < currentHeroes.length; i++) {
+                let battleHero = currentHeroes[i];
+                let originalHero = battleHero.clanObj;
+                if (originalHero && battleHero.hp !== undefined) core.applyBattleOutcome(originalHero, battleHero);
+            }
+            
+            for (let i = 0; i < currentHeroes.length; i++) {
+                let heroObj = currentHeroes[i].clanObj;
+                if (heroObj && heroObj.isAuto && typeof window.autoEquipHero === 'function') {
+                    window.autoEquipHero(heroObj);
+                }
+            }
+            
+            const rewards = { gold: totalGold, xp: totalXP, artifact: newArtifact || null };
+            core.generateBattleStory(regionName, playerHeroes, currentEnemies, true, rewards);
+            
+            refreshAllHeroUI();
+            
+            if (typeof window.renderFavoriteHeroesBar === 'function') {
+                window.renderFavoriteHeroesBar();
+                var bar = document.getElementById('favorite-heroes-bar');
+                if (bar) {
+                    bar.style.display = 'none';
+                    bar.offsetHeight;
+                    bar.style.display = '';
+                }
+            }
+            
+            battleActive = false;
+            const attackBtn = document.getElementById('battle-attack');
+            if (attackBtn) attackBtn.disabled = true;
+            if (typeof window.renderSingleBar === 'function') window.renderSingleBar();
+            if (typeof window.endGroupBattle === 'function') window.endGroupBattle(true, 'victory', regionName);
+            window.currentBattleState = null;
+            window._lastBattleHeroes = null;
+            setTimeout(() => battleScreen.remove(), 1500);
         }
-    }
-    
-    if (Math.random() < 0.15 && window.fantasyRaces && window.fantasyRaces.length > 0) {
-        const randomRace = window.fantasyRaces[Math.floor(Math.random() * window.fantasyRaces.length)];
-        const prisoner = { id: Date.now() + "_" + Math.random(), name: randomRace.name, raceId: randomRace.id, icon: randomRace.icon, desc: randomRace.desc, bonus: randomRace.bonus, capturedFrom: regionName };
-        if (!window.prisoners) window.prisoners = [];
-        window.prisoners.push(prisoner);
-        addLog(`   👸 Взехте пленник: ${prisoner.name}! Може да се ожените в дипломацията.`);
-        if (window.addWorldEvent) window.addWorldEvent(`👸 ПЛЕННИК`, `След битката взехте ${prisoner.name} като пленник!`, "👸");
-    }
-    
-    if (regionInput && regionInput.isPortalWorld) {
-        const extraBonus = 50 + Math.floor(Math.random() * 100);
-        const randomHero = livingHeroes[Math.floor(Math.random() * livingHeroes.length)];
-        if (randomHero) {
-            randomHero.clanObj.gold += extraBonus;
-            addLog(`   🌌 ПОРТАЛЕН БОНУС: ${randomHero.name} получава +${extraBonus} злато!`);
-        }
-    }
-    
-    if (window.addWorldEvent) window.addWorldEvent(`🏆 ПОБЕДА В БИТКА`, `${playerHeroes.map(h => h.name).join(', ')} победиха в ${regionName}!`, "🏆");
-    
-    for (let i = 0; i < currentHeroes.length; i++) {
-        let battleHero = currentHeroes[i];
-        let originalHero = battleHero.clanObj;
-        if (originalHero && battleHero.hp !== undefined) core.applyBattleOutcome(originalHero, battleHero);
-    }
-    
-    // ⭐ АВТОМАТИЧНА ЕКИПИРОВКА СЛЕД БИТКА
-    for (let i = 0; i < currentHeroes.length; i++) {
-        let heroObj = currentHeroes[i].clanObj;
-        if (heroObj && heroObj.isAuto && typeof window.autoEquipHero === 'function') {
-            window.autoEquipHero(heroObj);
-        }
-    }
-    
-    const rewards = { gold: totalGold, xp: totalXP, artifact: newArtifact || null };
-    core.generateBattleStory(regionName, playerHeroes, currentEnemies, true, rewards);
-    
-    refreshAllHeroUI();
-    
-    if (typeof window.renderFavoriteHeroesBar === 'function') {
-        window.renderFavoriteHeroesBar();
-        var bar = document.getElementById('favorite-heroes-bar');
-        if (bar) {
-            bar.style.display = 'none';
-            bar.offsetHeight;
-            bar.style.display = '';
-        }
-    }
-    
-    battleActive = false;
-    const attackBtn = document.getElementById('battle-attack');
-    if (attackBtn) attackBtn.disabled = true;
-    if (typeof window.renderSingleBar === 'function') window.renderSingleBar();
-    if (typeof window.endGroupBattle === 'function') window.endGroupBattle(true, 'victory', regionName);
-    window.currentBattleState = null;
-    window._lastBattleHeroes = null;
-    setTimeout(() => battleScreen.remove(), 1500);
-}
 
-       function handleDefeat(currentHeroes, regionName, playerHeroes, currentEnemies, battleScreen) {
-    addLog(`━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`);
-    addLog(`💀 ЗАГУБА! Всички герои са победени! 💀`, true);
-    for (let i = 0; i < currentHeroes.length; i++) {
-        let battleHero = currentHeroes[i];
-        let originalHero = battleHero.clanObj;
-        if (originalHero && battleHero.hp !== undefined) core.applyBattleOutcome(originalHero, battleHero);
-    }
-    
-    // ⭐ АВТОМАТИЧНА ЕКИПИРОВКА СЛЕД БИТКА (дори при загуба)
-    for (let i = 0; i < currentHeroes.length; i++) {
-        let heroObj = currentHeroes[i].clanObj;
-        if (heroObj && heroObj.isAuto && typeof window.autoEquipHero === 'function') {
-            window.autoEquipHero(heroObj);
+        function handleDefeat(currentHeroes, regionName, playerHeroes, currentEnemies, battleScreen) {
+            addLog(`━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`);
+            addLog(`💀 ЗАГУБА! Всички герои са победени! 💀`, true);
+            for (let i = 0; i < currentHeroes.length; i++) {
+                let battleHero = currentHeroes[i];
+                let originalHero = battleHero.clanObj;
+                if (originalHero && battleHero.hp !== undefined) core.applyBattleOutcome(originalHero, battleHero);
+            }
+            
+            for (let i = 0; i < currentHeroes.length; i++) {
+                let heroObj = currentHeroes[i].clanObj;
+                if (heroObj && heroObj.isAuto && typeof window.autoEquipHero === 'function') {
+                    window.autoEquipHero(heroObj);
+                }
+            }
+            
+            core.generateBattleStory(regionName, playerHeroes, currentEnemies, false, {});
+            
+            refreshAllHeroUI();
+            
+            if (typeof window.renderFavoriteHeroesBar === 'function') {
+                window.renderFavoriteHeroesBar();
+                var bar = document.getElementById('favorite-heroes-bar');
+                if (bar) {
+                    bar.style.display = 'none';
+                    bar.offsetHeight;
+                    bar.style.display = '';
+                }
+            }
+            
+            battleActive = false;
+            const attackBtn = document.getElementById('battle-attack');
+            if (attackBtn) attackBtn.disabled = true;
+            if (typeof window.endGroupBattle === 'function') window.endGroupBattle(false, 'defeat');
+            window.currentBattleState = null;
+            window._lastBattleHeroes = null;
+            setTimeout(() => battleScreen.remove(), 1500);
         }
-    }
-    
-    core.generateBattleStory(regionName, playerHeroes, currentEnemies, false, {});
-    
-    refreshAllHeroUI();
-    
-    if (typeof window.renderFavoriteHeroesBar === 'function') {
-        window.renderFavoriteHeroesBar();
-        var bar = document.getElementById('favorite-heroes-bar');
-        if (bar) {
-            bar.style.display = 'none';
-            bar.offsetHeight;
-            bar.style.display = '';
-        }
-    }
-    
-    battleActive = false;
-    const attackBtn = document.getElementById('battle-attack');
-    if (attackBtn) attackBtn.disabled = true;
-    if (typeof window.endGroupBattle === 'function') window.endGroupBattle(false, 'defeat');
-    window.currentBattleState = null;
-    window._lastBattleHeroes = null;
-    setTimeout(() => battleScreen.remove(), 1500);
-}
+
         async function battleTurn() {
             if (!battleActive) {
                 addLog(`Битката е приключила! Натисни "НОВА БИТКА".`);
@@ -519,7 +534,6 @@
                 let originalHero = battleHero.clanObj;
                 if (originalHero && battleHero.hp !== undefined) core.applyBattleOutcome(originalHero, battleHero);
             }
-            // ⭐ ПРЕМАХНАХМЕ ВТОРОТО ИЗВИКВАНЕ
             core.generateBattleStory(regionName, playerHeroes, currentEnemies, false, {});
             refreshAllHeroUI();
             battleActive = false;
@@ -583,5 +597,5 @@
     window.endGroupBattle = window.Battle.end;
     window.refreshAllHeroUI = window.Battle.refreshUI;
 
-    console.log("✅ battle.js зареден (версия 9.1 – без дублиране на разказа)");
+    console.log("✅ battle.js зареден (версия 9.2 – кеширани DOM елементи)");
 })();
