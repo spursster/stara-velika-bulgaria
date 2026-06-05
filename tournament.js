@@ -1,11 +1,11 @@
 /**
  * tournament.js – Елиминационен турнир на всички живи герои
- * Версия: 4.2 – ДИАГНОСТИЧНА (с подробни логове)
+ * Версия: 5.0 – ОКОНЧАТЕЛНА (работи без логове)
  */
 
 window.tournament = (function() {
     const MIN_YEARS_BETWEEN_TOURNAMENTS = 20;
-    const MATCHES_PER_TURN = 10;
+    const MATCHES_PER_TURN = 5;  // 5 мача на ход – баланс между скорост и забава
 
     let tournamentActive = false;
     let currentRound = 0;
@@ -17,6 +17,13 @@ window.tournament = (function() {
     let lastTournamentYear = null;
     let autoStartCounter = 0;
     let autoStartEnabled = true;
+
+    function resetLastYear() {
+        lastTournamentYear = null;
+        autoStartEnabled = true;
+        autoStartCounter = 0;
+        localStorage.removeItem('tournament_last_year');
+    }
 
     try {
         let saved = localStorage.getItem('tournament_last_year');
@@ -55,7 +62,6 @@ window.tournament = (function() {
                 }
             }
         }
-        console.log("🔍 getAllLivingHeroes: намерени", heroes.length, "герои");
         return heroes;
     }
 
@@ -129,43 +135,28 @@ window.tournament = (function() {
         let narrative = generateNarrative(match, winner, loser, roundNumber, isSemifinal, isFinal, matchNumber);
         if (window.addWorldEvent) {
             window.addWorldEvent("🏆 ТУРНИРЕН МАЧ", narrative, "⚔️");
-        } else {
-            console.log(narrative);
         }
     }
 
     function log(message, icon = "🏆") {
         if (window.addWorldEvent) {
             window.addWorldEvent("ТУРНИР", message, icon);
-        } else {
-            console.log(icon, message);
         }
     }
 
     function advanceMultipleMatches() {
-        if (!tournamentActive) {
-            console.log("Турнирът не е активен, advanceMultipleMatches пропуска.");
-            return false;
-        }
-        if (!roundMatches.length) {
-            console.log("roundMatches е празен, но турнирът е активен. Опитвам finishRound...");
-            finishRound();
-            return true;
-        }
-        if (currentMatchIndex >= roundMatches.length) {
-            console.log("currentMatchIndex надхвърля дължината на roundMatches, опитвам finishRound...");
+        if (!tournamentActive) return false;
+        if (!roundMatches.length || currentMatchIndex >= roundMatches.length) {
             finishRound();
             return true;
         }
 
         let matchesPlayed = 0;
-        console.log(`advanceMultipleMatches: започвам с currentMatchIndex=${currentMatchIndex}, общо мачове=${roundMatches.length}`);
         while (matchesPlayed < MATCHES_PER_TURN && currentMatchIndex < roundMatches.length) {
             let match = roundMatches[currentMatchIndex];
             if (!match) break;
 
             if (match.heroB && match.heroB.isBye) {
-                log(`⏭️ Мач ${currentMatchIndex+1}: ${match.heroA.name} преминава автоматично (почивка).`);
                 remainingHeroes.push(match.heroA);
                 currentMatchIndex++;
                 matchesPlayed++;
@@ -178,15 +169,12 @@ window.tournament = (function() {
 
             let result = simulateBattle(match.heroA, match.heroB);
             logMatch(match, result.winner, result.loser, currentRound, isSemifinal, isFinal, currentMatchIndex+1);
-            log(`🏅 ${result.winner.name} побеждава!`);
             remainingHeroes.push(result.winner);
             currentMatchIndex++;
             matchesPlayed++;
         }
 
-        console.log(`След итерация: изиграни ${matchesPlayed} мача, currentMatchIndex=${currentMatchIndex}`);
         if (currentMatchIndex >= roundMatches.length) {
-            console.log("Рундът завърши, извиквам finishRound");
             finishRound();
         }
         return true;
@@ -194,7 +182,6 @@ window.tournament = (function() {
 
     function finishRound() {
         if (!tournamentActive) return;
-        console.log(`finishRound: remainingHeroes.length=${remainingHeroes.length}, currentRound=${currentRound}, totalRounds=${totalRounds}`);
         if (remainingHeroes.length === 1) {
             winner = remainingHeroes[0];
             let finalMsg = `🏆 **ГРАНД ФИНАЛ** 🏆\nСлед дълга надпревара, ${winner.name} беше коронован за ШАМПИОН на турнира!`;
@@ -218,10 +205,8 @@ window.tournament = (function() {
         currentMatchIndex = 0;
         if (roundMatches.length === 0) {
             tournamentActive = false;
-            log("Грешка: няма мачове за следващия рунд. Турнирът приключва преждевременно.", "❌");
             return;
         }
-        log(`--- РУНД ${currentRound} ---`, "⚔️");
     }
 
     function createMatches(participants) {
@@ -233,15 +218,13 @@ window.tournament = (function() {
                 matches.push({ heroA: participants[i], heroB: { name: "Почивка", power: 0, isPlayer: false, isBye: true } });
             }
         }
-        console.log(`🎲 Създадени ${matches.length} мача за рунд от ${participants.length} участници.`);
         return matches;
     }
 
     function prepareTournament() {
-        console.log("prepareTournament започна");
         if (!canStartTournament()) {
             let yearsLeft = MIN_YEARS_BETWEEN_TOURNAMENTS - (window.gameTime.year - lastTournamentYear);
-            log(`Турнирът може да се проведе след ${yearsLeft} години.`, "⏳");
+            if (yearsLeft > 0) log(`Турнирът може да се проведе след ${yearsLeft} години.`, "⏳");
             return false;
         }
         if (tournamentActive) {
@@ -252,7 +235,7 @@ window.tournament = (function() {
         let players = getAllLivingHeroes();
         let civs = getCivilizationChampions();
         let participants = [...players, ...civs];
-        log(`📋 Събрани ${participants.length} участници (${players.length} герои + ${civs.length} цивилизации).`);
+        log(`📋 Събрани ${participants.length} участници.`);
 
         let targetCount = 1;
         while (targetCount < participants.length) targetCount *= 2;
@@ -265,7 +248,6 @@ window.tournament = (function() {
         }
 
         totalRounds = Math.log2(targetCount);
-        // Разбъркваме
         for (let i = participants.length - 1; i > 0; i--) {
             let j = Math.floor(Math.random() * (i + 1));
             [participants[i], participants[j]] = [participants[j], participants[i]];
@@ -277,14 +259,10 @@ window.tournament = (function() {
         currentMatchIndex = 0;
         tournamentActive = true;
         log(`🏆 ЗАПОЧВА ТУРНИР! Участници: ${participants.length} (${totalRounds} рунда).`, "🏆");
-        console.log("Първи рунд мачове:", roundMatches.length);
-        // След като турнирът е активен, изпълняваме първата група мачове веднага
-        advanceMultipleMatches();
         return true;
     }
 
     function startTournament() {
-        console.log("startTournament извикана");
         if (prepareTournament()) {
             if (!roundMatches.length) {
                 tournamentActive = false;
@@ -297,10 +275,7 @@ window.tournament = (function() {
     }
 
     function advanceTournament() {
-        console.log("advanceTournament извикана, tournamentActive=", tournamentActive);
-        if (tournamentActive) {
-            advanceMultipleMatches();
-        }
+        if (tournamentActive) advanceMultipleMatches();
     }
 
     function checkAutoStart() {
@@ -312,7 +287,6 @@ window.tournament = (function() {
         }
         autoStartCounter++;
         if (autoStartCounter >= 5) {
-            log("Автоматично стартиране на първия турнир (5-ти ход).", "🏆");
             startTournament();
             autoStartEnabled = false;
             autoStartCounter = 0;
@@ -328,7 +302,8 @@ window.tournament = (function() {
         advance: advanceTournament,
         canStart: canStart,
         isActive: function() { return tournamentActive; },
-        checkAutoStart: checkAutoStart
+        checkAutoStart: checkAutoStart,
+        resetLastYear: resetLastYear
     };
 })();
 
