@@ -191,35 +191,50 @@ window.addHeroLog = function(hero, icon, message) {
 };
 
 // ==================== ГЕНЕРИРАНЕ НА ПОРТРЕТ С POLLINATIONS.AI ====================
+// ==================== ГЕНЕРИРАНЕ НА ПОРТРЕТ С POLLINATIONS.AI (подобрена версия) ====================
 window.generateHeroPortrait = async function(hero, retries = 2) {
-    if (!hero) return;
+    if (!hero) return null;
     if (hero.portrait) return hero.portrait;
+
     const prompt = `fantasy rpg character portrait of ${hero.name} the ${hero.currentClass || hero.className || "warrior"}, digital painting, D&D style, face front, detailed, cinematic lighting, high quality, 512x512`;
-    const url = `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}?width=256&height=256&seed=${Math.floor(Math.random()*10000)}`;
+    const seed = Math.floor(Math.random() * 10000);
+    const url = `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}?width=256&height=256&seed=${seed}`;
+
     const attempt = async (remaining) => {
         return new Promise((resolve, reject) => {
             const img = new Image();
+            img.crossOrigin = "Anonymous"; // за fallback canvas, ако решиш
             img.onload = () => {
                 hero.portrait = url;
+                // Запазване и обновяване на UI
                 if (typeof window.saveGreatBulgariaGame === 'function') window.saveGreatBulgariaGame();
-                if (typeof window.renderSingleBar === 'function') window.renderSingleBar();
-                if (typeof window.renderFavoriteHeroesBar === 'function') window.updateAllUI();
-                if (typeof window.updateStrongestHeroUI === 'function') {
-                    window.updateStrongestHeroUI();
-                }
+                if (typeof window.updateAllUI === 'function') window.updateAllUI();
+                console.log(`✅ Портрет за ${hero.name} зареден от ${url}`);
                 resolve(url);
             };
-            img.onerror = () => {
+            img.onerror = async () => {
                 if (remaining > 0) {
-                    console.log(`⚠️ Портрет за ${hero.name} не успя, опитвам отново след 1.5 сек... (остават ${remaining} опита)`);
-                    setTimeout(() => attempt(remaining - 1).then(resolve).catch(reject), 1500);
+                    console.warn(`⚠️ Портрет за ${hero.name} не успя, опит ${4 - remaining}/${retries}...`);
+                    await new Promise(r => setTimeout(r, 1500));
+                    attempt(remaining - 1).then(resolve).catch(reject);
                 } else {
-                    reject(new Error(`Грешка при зареждане на портрет за ${hero.name} след няколко опита`));
+                    console.error(`❌ Неуспех за ${hero.name} след ${retries} опита.`);
+                    // fallback – генериране на canvas аватар
+                    try {
+                        const fallbackUrl = await generateFallbackAvatar(hero);
+                        hero.portrait = fallbackUrl;
+                        if (typeof window.saveGreatBulgariaGame === 'function') window.saveGreatBulgariaGame();
+                        if (typeof window.updateAllUI === 'function') window.updateAllUI();
+                        resolve(fallbackUrl);
+                    } catch (fbErr) {
+                        reject(new Error(`Грешка при зареждане на портрет и fallback за ${hero.name}`));
+                    }
                 }
             };
             img.src = url;
         });
     };
+
     try {
         return await attempt(retries);
     } catch(e) {
@@ -227,6 +242,46 @@ window.generateHeroPortrait = async function(hero, retries = 2) {
         return null;
     }
 };
+
+// Помощна функция за генериране на canvas аватар (инициали, букви)
+function generateFallbackAvatar(hero) {
+    return new Promise((resolve) => {
+        const canvas = document.createElement('canvas');
+        canvas.width = 256;
+        canvas.height = 256;
+        const ctx = canvas.getContext('2d');
+        
+        // Фон – градиент според класа
+        const grad = ctx.createLinearGradient(0, 0, canvas.width, canvas.height);
+        grad.addColorStop(0, '#2c1a0c');
+        grad.addColorStop(1, '#4a2a1a');
+        ctx.fillStyle = grad;
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        
+        // Рамка
+        ctx.strokeStyle = '#d4af37';
+        ctx.lineWidth = 4;
+        ctx.strokeRect(5, 5, canvas.width - 10, canvas.height - 10);
+        
+        // Иконка на клас или първа буква
+        const classIcon = window.getClassIcon ? window.getClassIcon(hero.currentClass) : '⚔️';
+        ctx.font = `bold ${canvas.width * 0.4}px "Cinzel", serif`;
+        ctx.fillStyle = '#ffdd99';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(classIcon, canvas.width/2, canvas.height/2);
+        
+        // Име под иконката
+        ctx.font = `18px "Cinzel", serif`;
+        ctx.fillStyle = '#ffaa66';
+        ctx.fillText(hero.name.substring(0, 12), canvas.width/2, canvas.height - 30);
+        
+        canvas.toBlob(blob => {
+            const url = URL.createObjectURL(blob);
+            resolve(url);
+        }, 'image/png');
+    });
+}
 
 // ==================== ПРЕВКЛЮЧВАНЕ НА ЦЯЛ ЕКРАН ====================
 window.toggleGameFullScreen = function() { 
