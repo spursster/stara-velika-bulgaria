@@ -1,11 +1,11 @@
 /**
  * tournament.js – Елиминационен турнир на всички живи герои
- * Версия: 4.1 – фикс за липсващи мачове
+ * Версия: 4.2 – ДИАГНОСТИЧНА (с подробни логове)
  */
 
 window.tournament = (function() {
     const MIN_YEARS_BETWEEN_TOURNAMENTS = 20;
-    const MATCHES_PER_TURN = 10;   // Колко мача на ход (10 е баланс за 256 участника → 255 мача → ~26 хода)
+    const MATCHES_PER_TURN = 10;
 
     let tournamentActive = false;
     let currentRound = 0;
@@ -55,6 +55,7 @@ window.tournament = (function() {
                 }
             }
         }
+        console.log("🔍 getAllLivingHeroes: намерени", heroes.length, "герои");
         return heroes;
     }
 
@@ -142,15 +143,23 @@ window.tournament = (function() {
     }
 
     function advanceMultipleMatches() {
-        if (!tournamentActive) return false;
-
-        // Ако няма мачове за текущия рунд, но турнирът е активен, това означава, че сме между рундове
-        if (!roundMatches.length || currentMatchIndex >= roundMatches.length) {
+        if (!tournamentActive) {
+            console.log("Турнирът не е активен, advanceMultipleMatches пропуска.");
+            return false;
+        }
+        if (!roundMatches.length) {
+            console.log("roundMatches е празен, но турнирът е активен. Опитвам finishRound...");
+            finishRound();
+            return true;
+        }
+        if (currentMatchIndex >= roundMatches.length) {
+            console.log("currentMatchIndex надхвърля дължината на roundMatches, опитвам finishRound...");
             finishRound();
             return true;
         }
 
         let matchesPlayed = 0;
+        console.log(`advanceMultipleMatches: започвам с currentMatchIndex=${currentMatchIndex}, общо мачове=${roundMatches.length}`);
         while (matchesPlayed < MATCHES_PER_TURN && currentMatchIndex < roundMatches.length) {
             let match = roundMatches[currentMatchIndex];
             if (!match) break;
@@ -175,7 +184,9 @@ window.tournament = (function() {
             matchesPlayed++;
         }
 
+        console.log(`След итерация: изиграни ${matchesPlayed} мача, currentMatchIndex=${currentMatchIndex}`);
         if (currentMatchIndex >= roundMatches.length) {
+            console.log("Рундът завърши, извиквам finishRound");
             finishRound();
         }
         return true;
@@ -183,6 +194,7 @@ window.tournament = (function() {
 
     function finishRound() {
         if (!tournamentActive) return;
+        console.log(`finishRound: remainingHeroes.length=${remainingHeroes.length}, currentRound=${currentRound}, totalRounds=${totalRounds}`);
         if (remainingHeroes.length === 1) {
             winner = remainingHeroes[0];
             let finalMsg = `🏆 **ГРАНД ФИНАЛ** 🏆\nСлед дълга надпревара, ${winner.name} беше коронован за ШАМПИОН на турнира!`;
@@ -226,6 +238,7 @@ window.tournament = (function() {
     }
 
     function prepareTournament() {
+        console.log("prepareTournament започна");
         if (!canStartTournament()) {
             let yearsLeft = MIN_YEARS_BETWEEN_TOURNAMENTS - (window.gameTime.year - lastTournamentYear);
             log(`Турнирът може да се проведе след ${yearsLeft} години.`, "⏳");
@@ -252,6 +265,7 @@ window.tournament = (function() {
         }
 
         totalRounds = Math.log2(targetCount);
+        // Разбъркваме
         for (let i = participants.length - 1; i > 0; i--) {
             let j = Math.floor(Math.random() * (i + 1));
             [participants[i], participants[j]] = [participants[j], participants[i]];
@@ -264,10 +278,13 @@ window.tournament = (function() {
         tournamentActive = true;
         log(`🏆 ЗАПОЧВА ТУРНИР! Участници: ${participants.length} (${totalRounds} рунда).`, "🏆");
         console.log("Първи рунд мачове:", roundMatches.length);
+        // След като турнирът е активен, изпълняваме първата група мачове веднага
+        advanceMultipleMatches();
         return true;
     }
 
     function startTournament() {
+        console.log("startTournament извикана");
         if (prepareTournament()) {
             if (!roundMatches.length) {
                 tournamentActive = false;
@@ -280,6 +297,7 @@ window.tournament = (function() {
     }
 
     function advanceTournament() {
+        console.log("advanceTournament извикана, tournamentActive=", tournamentActive);
         if (tournamentActive) {
             advanceMultipleMatches();
         }
