@@ -1693,16 +1693,7 @@ gap: 4px;
         font-size: 14px !important;
         padding: 4px 12px !important;
     }
-    /* Скриваме някои по-рядко използвани бутони на малки екрани, за да не претрупваме */
-    .icon-btn[title="Експедиции"],
-    .icon-btn[title="Класации"],
-    .icon-btn[title="Дипломация"] {
-        display: none !important;
-    }
-    /* Бутонът "Брак" е отделен <button> без клас – скриваме го също */
-    #bottom-controls button:not(.icon-btn):not(.next-turn-btn) {
-        display: none !important;
-    }
+  
 }
 
 /* Летопис – по-четим на телефон */
