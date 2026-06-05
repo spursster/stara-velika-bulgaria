@@ -617,16 +617,36 @@
         console.log("✅ Битката е готова (с подкрепления от нелюбими герои)!");
     }
 
-    function endGroupBattle(isVictory, reason, regionName) {
-        console.log(`🏁 Битката приключи. Победа: ${isVictory}, Причина: ${reason}, Регион: ${regionName || 'неизвестен'}`);
-        let questHero = null;
-        if (typeof window.getStrongestHero === 'function') questHero = window.getStrongestHero();
-        if (window.checkAllQuestsProgress && questHero) window.checkAllQuestsProgress(questHero, regionName || window.currentRegion, "battle");
-        if (typeof window.handleBattleEnd === 'function') window.handleBattleEnd(isVictory, reason);
-        refreshAllHeroUI();
-        if (typeof window.updateStrongestHeroUI === 'function') window.updateStrongestHeroUI();
-        if (typeof window.saveGreatBulgariaGame === 'function') window.saveGreatBulgariaGame();
+   function endGroupBattle(isVictory, reason, regionName) {
+    console.log(`🏁 Битката приключи. Победа: ${isVictory}`);
+
+    // === ОСВОБОЖДАВАНЕ НА ТУРНИРА ===
+    if (window._pendingTournamentMatch) {
+        if (typeof window._resolveTournamentMatch === 'function') {
+            window._resolveTournamentMatch(isVictory, null, null, regionName || "Турнирен двубой");
+        }
+        window._pendingTournamentMatch = null;
     }
+
+    window._tournamentForcedHero = null;
+
+    // === ОСВОБОЖДАВАНЕ НА БУТОНА ЗА ХОД ===
+    const turnBtn = document.querySelector('.next-turn-btn');
+    if (turnBtn) turnBtn.disabled = false;
+
+    // === ОБНОВЯВАНЕ НА ИГРАТА ===
+    if (typeof window.updateAllUI === 'function') window.updateAllUI();
+    if (typeof window.renderFavoriteHeroesBar === 'function') window.renderFavoriteHeroesBar();
+    if (typeof window.saveGreatBulgariaGame === 'function') window.saveGreatBulgariaGame();
+
+    // Съобщение в летописа
+    if (window.addWorldEvent) {
+        const result = isVictory ? "Победа!" : "Поражение...";
+        window.addWorldEvent("⚔️ Турнирен двубой", result, isVictory ? "🏆" : "💀");
+    }
+
+    console.log("✅ Турнирът е отключен и продължава");
+}
 
     // ==================== ПУБЛИЧНО API ====================
     window.Battle = {
