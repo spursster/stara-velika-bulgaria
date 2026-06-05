@@ -46,7 +46,7 @@ window.tournament = (function() {
         return (window.gameTime.year - lastTournamentYear) >= MIN_YEARS_BETWEEN_TOURNAMENTS;
     }
 
- function getAllLivingHeroes() {
+function getAllLivingHeroes() {
     let heroes = [];
     
     if (!window.worldData || !window.worldData.clans) {
@@ -58,27 +58,26 @@ window.tournament = (function() {
         let h = window.worldData.clans[key];
         if (!h || h.isAlive === false) continue;
 
-        // Само героите, които са в лентата с любими (твоите герои)
+        // Само героите от лентата с любими
         const isMyHero = 
             h.isFavorite === true || 
-            h.isJoined === true || 
-            (window.favoriteHeroes && window.favoriteHeroes.has && window.favoriteHeroes.has(key)) ||
-            (window.favoriteHeroes && window.favoriteHeroes.has && window.favoriteHeroes.has(h.name));
+            h.isJoined === true ||
+            (window.favoriteHeroes && window.favoriteHeroes.has(key)) ||
+            (window.favoriteHeroes && window.favoriteHeroes.has(h.name));
 
         if (isMyHero) {
             heroes.push({
                 id: key,
-                name: h.name || key,           // ← Само name
-                heroObj: h,                    // ← heroObj
+                name: h.name || key,
+                heroObj: h,
                 power: h.heroPower || h.power || 100,
                 level: h.level || 1,
-                isPlayer: true,
-                clan: h.clan || "Неизвестен"
+                isPlayer: true
             });
         }
     }
 
-    console.log(`🏆 Турнир: ${heroes.length} твои героя от лентата с любими`);
+    console.log(`🏆 Турнир: ${heroes.length} твои героя от лентата`);
     return heroes;
 }
     function getAllCivilizations() {
