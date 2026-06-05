@@ -7,43 +7,106 @@
 
 (function() {
     // ==================== GAME SAVE SYSTEM ====================
-    window.GameSave = window.GameSave || {};
-
-    window.GameSave.save = function() {
-        try {
-            const saveData = {
-                version: "2.0.0",
-                timestamp: Date.now(),
-                worldData: window.worldData,
-                currentTurn: window.currentTurn || 1,
-            };
-            localStorage.setItem('GreatBulgaria_SaveGame', JSON.stringify(saveData));
-            console.log("💾 Играта е запазена успешно");
-            return true;
-        } catch (e) {
-            console.error("❌ Грешка при запис:", e);
-            return false;
+   window.GameSave.save = function() {
+    try {
+        // Използваме същата структура като saveGreatBulgariaGame
+        const saveData = {
+            version: "2.0.0",
+            timestamp: Date.now(),
+            worldData: window.worldData,
+            gameTime: window.gameTime || { seasonIndex: 0, year: 480, era: "пр.н.е." },
+            gameMode: window.gameMode,
+            currentRegion: window.currentRegion,
+            companions: window.companions || [],
+            activeQuests: window.activeQuests || [],
+            completedQuests: window.completedQuests || [],
+            playerRegions: window.playerRegions || []
+        };
+        if (window.gameMode === 'solo' && window.currentHero) {
+            saveData.currentHero = window.currentHero;
         }
-    };
-
-    window.GameSave.load = function() {
-        try {
-            const saved = localStorage.getItem('GreatBulgaria_SaveGame');
-            if (!saved) return false;
-            const data = JSON.parse(saved);
-            if (data.worldData) {
-                window.worldData = data.worldData;
+        localStorage.setItem('GreatBulgaria_SaveGame', JSON.stringify(saveData));
+        console.log("💾 Играта е запазена успешно (пълно запазване)");
+        return true;
+    } catch (e) {
+        console.error("❌ Грешка при запис:", e);
+        return false;
+    }
+};
+   window.GameSave.load = function() {
+    try {
+        const saved = localStorage.getItem('GreatBulgaria_SaveGame');
+        if (!saved) return false;
+        const data = JSON.parse(saved);
+        
+        // Възстановяване на всички данни
+        if (data.worldData) window.worldData = data.worldData;
+        if (data.gameTime) window.gameTime = data.gameTime;
+        if (data.gameMode) window.gameMode = data.gameMode;
+        if (data.currentRegion) window.currentRegion = data.currentRegion;
+        if (data.companions) window.companions = data.companions;
+        if (data.activeQuests) window.activeQuests = data.activeQuests;
+        if (data.completedQuests) window.completedQuests = data.completedQuests;
+        if (data.currentTurn) window.currentTurn = data.currentTurn;
+        
+        // Нормализиране на playerRegions
+        if (data.playerRegions) {
+            let rawRegions = data.playerRegions;
+            if (Array.isArray(rawRegions)) {
+                let normalized = [];
+                for (let item of rawRegions) {
+                    if (Array.isArray(item)) {
+                        for (let sub of item) normalized.push(sub);
+                    } else if (typeof item === 'string') normalized.push(item);
+                }
+                window.playerRegions = normalized;
+            } else {
+                window.playerRegions = [];
             }
-            if (data.currentTurn) window.currentTurn = data.currentTurn;
-            console.log("✅ Играта е заредена успешно (версия " + (data.version || "неизвестна") + ")");
-            return true;
-        } catch (e) {
-            console.error("💥 Save файлът е повреден!", e);
-            alert("Save файлът е повреден. Ще започнеш нова игра.");
-            localStorage.removeItem('GreatBulgaria_SaveGame');
-            return false;
+        } else {
+            window.playerRegions = [];
         }
-    };
+        if (window.playerRegions.length === 0 && window.currentRegion) {
+            window.playerRegions.push(window.currentRegion);
+        }
+        
+        // Възстановяване на currentHero за соло режим
+        if (window.gameMode === 'solo' && data.currentHero) {
+            window.currentHero = data.currentHero;
+        } else if (window.currentHero) {
+            delete window.currentHero;
+        }
+        
+        // Възстановяване на HP за героите и спътниците
+        if (window.worldData && window.worldData.clans) {
+            for (let key in window.worldData.clans) {
+                let hero = window.worldData.clans[key];
+                if (hero && hero.isJoined === true) {
+                    let endurance = (hero.skills && hero.skills.endurance) || 0;
+                    hero.maxHp = 100 + (hero.level - 1) * 20 + endurance * 15;
+                    if (!hero.hp || isNaN(hero.hp) || hero.hp > hero.maxHp) hero.hp = hero.maxHp;
+                    if (typeof hero.isAlive === 'undefined') hero.isAlive = true;
+                }
+            }
+        }
+        if (window.companions) {
+            window.companions.forEach(comp => {
+                let endurance = (comp.skills && comp.skills.endurance) || 0;
+                comp.maxHp = 100 + (comp.level - 1) * 20 + endurance * 15;
+                if (!comp.hp || isNaN(comp.hp) || comp.hp > comp.maxHp) comp.hp = comp.maxHp;
+                comp.isAlive = true;
+            });
+        }
+        
+        console.log("✅ Играта е заредена успешно (версия " + (data.version || "неизвестна") + ")");
+        return true;
+    } catch (e) {
+        console.error("💥 Save файлът е повреден!", e);
+        alert("Save файлът е повреден. Ще започнеш нова игра.");
+        localStorage.removeItem('GreatBulgaria_SaveGame');
+        return false;
+    }
+};
 
     window.GameSave.startAutoSave = function() {
         setInterval(() => {
@@ -350,28 +413,9 @@
     console.log("✅ startFreshGameLogic завърши. Начален герой: " + startingHero.name);
 }
     // ========== ЗАПАЗВАНЕ ==========
-    function saveGreatBulgariaGame() {
-        try {
-            const saveData = {
-                version: "2.0.0",
-                worldData: window.worldData,
-                gameTime: window.gameTime || { seasonIndex: 0, year: 480, era: "пр.н.е." },
-                gameMode: window.gameMode,
-                currentRegion: window.currentRegion,
-                companions: window.companions || [],
-                activeQuests: window.activeQuests || [],
-                completedQuests: window.completedQuests || [],
-                playerRegions: window.playerRegions || []
-            };
-            if (window.gameMode === 'solo' && window.currentHero) {
-                saveData.currentHero = window.currentHero;
-            }
-            localStorage.setItem('GreatBulgaria_SaveGame', JSON.stringify(saveData));
-        } catch (e) {
-            console.error(e);
-        }
-    }
-
+   function saveGreatBulgariaGame() {
+    return window.GameSave.save();
+}
     // ========== ЗАРЕЖДАНЕ ==========
     function loadGreatBulgariaGame() {
         const saved = localStorage.getItem('GreatBulgaria_SaveGame');
