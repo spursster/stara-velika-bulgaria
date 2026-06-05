@@ -170,23 +170,22 @@ window.tournament = (function() {
         if (turnBtn) turnBtn.disabled = true;
     }
 
-    // Стартира битката за турнирния двубой
-    function startTournamentBattle(pending) {
-        const match = pending.match;
-        const playerHeroObj = (match.heroA.isPlayer ? match.heroA.heroObj : match.heroB.heroObj);
-        const opponentHero = (match.heroA.isPlayer ? match.heroB : match.heroA);
-        
-        // ⭐ Задаваме глобален флаг, който battle-core.js ще използва
+        // Директно използваме оригиналния герой, но добавяме нужните полета
         window._tournamentForcedHero = {
+            ...playerHeroObj,   // копираме всички съществуващи полета
+            // Гарантираме, че задължителните полета съществуват
             id: playerHeroObj.id,
-            name: playerHeroObj.name,
-            className: playerHeroObj.currentClass,
+            name: playerHeroObj.name || playerHeroObj.leaderName,
+            className: playerHeroObj.currentClass || "Воевода",
             power: playerHeroObj.heroPower,
             hp: playerHeroObj.hp,
             maxHp: playerHeroObj.maxHp,
             icon: '⚔️',
             clanObj: playerHeroObj,
-            troopEffects: window.BattleCore.getTroopSpecialEffects(playerHeroObj)
+            troopEffects: window.BattleCore.getTroopSpecialEffects(playerHeroObj),
+            armySize: playerHeroObj.armySize || 200,
+            // Флаг за идентификация
+            _isTournamentForced: true
         };
 
         // Създаваме противника като "регион" за битката
