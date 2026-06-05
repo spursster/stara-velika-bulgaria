@@ -1685,39 +1685,6 @@ if (typeof window.endGroupBattle === 'function') {
     console.log("✅ Перманентна поправка за HP инсталирана");
 }
 
-// ⚠️ ВАЖНО: Постави своя API ключ от ModelScope тук
-const API_KEY = '929f05eb-b86c-447b-8405-2b4b9ac9888b'; 
 
-window.generateHeroPortrait = async function(hero, retries = 2) {
-    if (!hero) return null;
-    if (hero.portrait) return hero.portrait;
-
-    const prompt = `fantasy rpg character portrait of ${hero.name} the ${hero.currentClass || hero.className || "warrior"}, digital painting, D&D style, face front, detailed, cinematic lighting, high quality`;
-    const url = 'https://api.modelscope.cn/v1/services/aigc/multimodal-generation/generation';
-
-    for (let attempt = 0; attempt < retries; attempt++) {
-        try {
-            const response = await fetch(url, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${API_KEY}` },
-                body: JSON.stringify({ model: "Z-Image-Turbo", input: { messages: [{ role: "user", content: [{ text: prompt }] }] }, parameters: { size: "512*512" } })
-            });
-            if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-            const data = await response.json();
-            const imageUrl = data.output?.choices?.[0]?.message?.content?.[0]?.image;
-            if (imageUrl) {
-                hero.portrait = imageUrl;
-                if (typeof window.saveGreatBulgariaGame === 'function') window.saveGreatBulgariaGame();
-                if (typeof window.updateAllUI === 'function') window.updateAllUI();
-                return imageUrl;
-            }
-            throw new Error('Не е намерен URL на изображение');
-        } catch (error) {
-            console.warn(`Опит ${attempt + 1} неуспешен за ${hero.name}:`, error);
-            if (attempt === retries - 1) return null;
-            await new Promise(resolve => setTimeout(resolve, 1500));
-        }
-    }
-};
 // ==================== КРАЙ НА ui.js ====================
 console.log("✅ ui.js зареден успешно - версия без toast");
