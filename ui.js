@@ -243,44 +243,40 @@ window.generateHeroPortrait = async function(hero, retries = 2) {
     }
 };
 
-// Помощна функция за генериране на canvas аватар (инициали, букви)
+// Помощна функция за генериране на canvas аватар (data URL – без blob грешки)
 function generateFallbackAvatar(hero) {
-    return new Promise((resolve) => {
-        const canvas = document.createElement('canvas');
-        canvas.width = 256;
-        canvas.height = 256;
-        const ctx = canvas.getContext('2d');
-        
-        // Фон – градиент според класа
-        const grad = ctx.createLinearGradient(0, 0, canvas.width, canvas.height);
-        grad.addColorStop(0, '#2c1a0c');
-        grad.addColorStop(1, '#4a2a1a');
-        ctx.fillStyle = grad;
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
-        
-        // Рамка
-        ctx.strokeStyle = '#d4af37';
-        ctx.lineWidth = 4;
-        ctx.strokeRect(5, 5, canvas.width - 10, canvas.height - 10);
-        
-        // Иконка на клас или първа буква
-        const classIcon = window.getClassIcon ? window.getClassIcon(hero.currentClass) : '⚔️';
-        ctx.font = `bold ${canvas.width * 0.4}px "Cinzel", serif`;
-        ctx.fillStyle = '#ffdd99';
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'middle';
-        ctx.fillText(classIcon, canvas.width/2, canvas.height/2);
-        
-        // Име под иконката
-        ctx.font = `18px "Cinzel", serif`;
-        ctx.fillStyle = '#ffaa66';
-        ctx.fillText(hero.name.substring(0, 12), canvas.width/2, canvas.height - 30);
-        
-        canvas.toBlob(blob => {
-            const url = URL.createObjectURL(blob);
-            resolve(url);
-        }, 'image/png');
-    });
+    const canvas = document.createElement('canvas');
+    canvas.width = 256;
+    canvas.height = 256;
+    const ctx = canvas.getContext('2d');
+    
+    // Фон – градиент според класа
+    const grad = ctx.createLinearGradient(0, 0, canvas.width, canvas.height);
+    grad.addColorStop(0, '#2c1a0c');
+    grad.addColorStop(1, '#4a2a1a');
+    ctx.fillStyle = grad;
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    
+    // Рамка
+    ctx.strokeStyle = '#d4af37';
+    ctx.lineWidth = 4;
+    ctx.strokeRect(5, 5, canvas.width - 10, canvas.height - 10);
+    
+    // Иконка на клас или първа буква
+    const classIcon = window.getClassIcon ? window.getClassIcon(hero.currentClass) : '⚔️';
+    ctx.font = `bold ${canvas.width * 0.4}px "Cinzel", serif`;
+    ctx.fillStyle = '#ffdd99';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(classIcon, canvas.width/2, canvas.height/2);
+    
+    // Име под иконката
+    ctx.font = `18px "Cinzel", serif`;
+    ctx.fillStyle = '#ffaa66';
+    ctx.fillText(hero.name.substring(0, 12), canvas.width/2, canvas.height - 30);
+    
+    // Връщаме data URL (без blob, без ERR_FILE_NOT_FOUND)
+    return canvas.toDataURL('image/png');
 }
 
 // ==================== ПРЕВКЛЮЧВАНЕ НА ЦЯЛ ЕКРАН ====================
@@ -893,10 +889,13 @@ window.renderFavoriteHeroesBar = function() {
             var currentXP = hero.isAuto ? (hero.xp || 0) : (hero.storedXP || 0);
             var xpPercent = Math.min(100, (currentXP / needXP) * 100);
 
-            var portraitHtml = '';
-            if (hero.portrait) {
-                portraitHtml = '<img src="' + hero.portrait + '" class="hero-portrait-img" onerror="this.style.display=\'none\'; this.parentElement.querySelector(\'.hero-icon\').style.display=\'block\';">';
-            }
+           var portraitHtml = '';
+if (hero.portrait && hero.portrait.startsWith('data:image') || hero.portrait.startsWith('http')) {
+    portraitHtml = '<img src="' + hero.portrait + '" class="hero-portrait-img" onerror="this.style.display=\'none\'; this.parentElement.querySelector(\'.hero-icon\').style.display=\'flex\';">';
+} else {
+    // fallback: показваме веднага иконката, ако няма валиден портрет
+    portraitHtml = '';
+}
             var classIcon = window.getClassIcon ? window.getClassIcon(hero.currentClass) : '⚔️';
             var iconHtml = '<div class="hero-icon" style="' + (hero.portrait ? 'display:none;' : '') + '">' + classIcon + '</div>';
 
