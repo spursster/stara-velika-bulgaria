@@ -1556,6 +1556,191 @@ gap: 4px;
         border: 1px solid #ff8888 !important;
     }
 }
+/* ============================================================
+   МОБИЛНА ОПТИМИЗАЦИЯ – ФОКУС ВЪРХУ ЛЕНТАТА С ГЕРОИ (5 СЛОТА)
+   ============================================================ */
+
+@media (max-width: 768px) {
+    /* Контейнерът на лентата с любими – да заема цялата ширина */
+    .favorite-bar {
+        display: flex !important;
+        flex-direction: row !important;
+        justify-content: space-around !important;
+        gap: 6px !important;
+        padding: 8px 4px !important;
+        overflow-x: visible !important;  /* няма нужда от скрол, защото са точно 5 */
+        flex-wrap: nowrap !important;
+    }
+
+    /* Всеки слот – да тежи еднакво и да има достатъчно място */
+    .favorite-slot {
+        flex: 1 !important;
+        min-width: 0 !important;        /* позволява свиване */
+        max-width: none !important;
+        min-height: auto !important;
+        padding: 6px 2px !important;
+        border-radius: 12px !important;
+    }
+
+    /* Иконка на героя (или портрет) */
+    .favorite-slot .hero-icon {
+        font-size: 24px !important;
+        margin-bottom: 2px !important;
+    }
+
+    /* Изображение на портрет */
+    .favorite-slot img {
+        width: 40px !important;
+        height: 40px !important;
+        border-radius: 50% !important;
+        margin-bottom: 2px !important;
+    }
+
+    /* Име на героя – да се пренася на нов ред, ако е дълго */
+    .favorite-slot .hero-name {
+        font-size: 10px !important;
+        white-space: normal !important;
+        word-break: break-word !important;
+        line-height: 1.2 !important;
+        max-width: 100% !important;
+        overflow: visible !important;
+        text-overflow: clip !important;
+    }
+
+    /* Допълнителна информация (ниво, сила) */
+    .favorite-slot .hero-level-power {
+        font-size: 8px !important;
+        white-space: nowrap !important;
+        overflow-x: hidden !important;
+        text-overflow: ellipsis !important;
+        max-width: 100% !important;
+    }
+
+    /* Статистики (❤️, 💰, ⚔️) */
+    .favorite-slot .hero-stats {
+        display: flex !important;
+        justify-content: center !important;
+        gap: 4px !important;
+        font-size: 8px !important;
+        margin-top: 2px !important;
+    }
+    .favorite-slot .hero-stats span {
+        font-size: 8px !important;
+    }
+
+    /* Ленти за живот и опит */
+    .favorite-slot .hp-bar, .favorite-slot .xp-bar {
+        height: 4px !important;
+        margin: 2px 0 !important;
+    }
+
+    /* Бутон за AUTO/MANUAL – да е по-малък */
+    .favorite-slot .auto-badge {
+        font-size: 7px !important;
+        padding: 1px 4px !important;
+    }
+
+    /* Сърце (премахване от любими) – по-малко */
+    .favorite-slot button:first-of-type {
+        font-size: 10px !important;
+        top: 2px !important;
+        right: 2px !important;
+    }
+
+    /* Празен слот */
+    .favorite-slot.empty {
+        font-size: 14px !important;
+        justify-content: center !important;
+        align-items: center !important;
+    }
+}
+
+/* Още по-малки телефони (под 480px) – още по-компактно */
+@media (max-width: 480px) {
+    .favorite-slot {
+        padding: 4px 1px !important;
+    }
+    .favorite-slot .hero-icon {
+        font-size: 20px !important;
+    }
+    .favorite-slot img {
+        width: 32px !important;
+        height: 32px !important;
+    }
+    .favorite-slot .hero-name {
+        font-size: 9px !important;
+    }
+    .favorite-slot .hero-level-power {
+        font-size: 7px !important;
+    }
+    .favorite-slot .hero-stats span {
+        font-size: 7px !important;
+    }
+}
+
+/* Долен панел с бутони – подобрен скрол и по-големи зони за натискане */
+@media (max-width: 768px) {
+    #bottom-controls {
+        padding: 6px 8px !important;
+        gap: 6px !important;
+    }
+    .icon-btn, .next-turn-btn {
+        font-size: 22px !important;
+        padding: 4px 10px !important;
+        margin-right: 0 !important;
+    }
+    .next-turn-btn {
+        font-size: 14px !important;
+        padding: 4px 12px !important;
+    }
+    /* Скриваме някои по-рядко използвани бутони на малки екрани, за да не претрупваме */
+    .icon-btn[title="Експедиции"],
+    .icon-btn[title="Класации"],
+    .icon-btn[title="Дипломация"] {
+        display: none !important;
+    }
+    /* Бутонът "Брак" е отделен <button> без клас – скриваме го също */
+    #bottom-controls button:not(.icon-btn):not(.next-turn-btn) {
+        display: none !important;
+    }
+}
+
+/* Летопис – по-четим на телефон */
+@media (max-width: 768px) {
+    .chronicle-event {
+        flex-wrap: wrap !important;
+        gap: 4px !important;
+    }
+    .chronicle-text {
+        font-size: 11px !important;
+        line-height: 1.3 !important;
+    }
+    .chronicle-time {
+        font-size: 9px !important;
+        white-space: normal !important;
+    }
+    .chronicle-buttons {
+        justify-content: center !important;
+    }
+    .chronicle-btn {
+        padding: 4px 8px !important;
+        font-size: 10px !important;
+    }
+}
+
+/* Ляв панел (профил на героя) на телефон – да не е твърде голям */
+@media (max-width: 768px) {
+    #active-character-profile {
+        font-size: 12px !important;
+    }
+    #active-character-profile div {
+        margin-bottom: 4px !important;
+    }
+    .hero-portrait-img {
+        width: 50px !important;
+        height: 50px !important;
+    }
+}
 #save-indicator { background: transparent !important; border: none !important; }
 
 body.season-spring { background: linear-gradient(180deg, #0a2a4a 0%, #1a4a3a 100%); }
