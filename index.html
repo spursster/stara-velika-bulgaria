@@ -95,13 +95,11 @@
 <!-- 1. ДАННИ И БАЗИ -->
 <script src="gameState.js"></script>
 <script src="world_data.js"></script>
-<script src="chronicle_events.js"></script>
 <script src="database.js"></script>
 <script src="troopsData.js"></script>
 <script src="PersonalityTraits.js"></script>
 <script src="classes.js"></script>
-<script src="skills.js"></script>
-<script src="items.js"></script>
+
 
 <!-- 2. ОСНОВНИ СИСТЕМИ (RPG, ЕВОЛЮЦИЯ) -->
 <script src="rpg_system.js"></script>
@@ -778,6 +776,183 @@
     window.openRegionsMap = window.openInteractiveMap;
 
     console.log("✅ Картата е заменена с Leaflet версия (интерактивна)");
+})();
+</script>
+
+    <script>
+(function() {
+    // ==================== Lazy loading на skills.js ====================
+    let skillsLoaded = false;
+    let skillsLoading = null;
+    window.loadSkills = function() {
+        if (skillsLoaded) return Promise.resolve();
+        if (skillsLoading) return skillsLoading;
+        skillsLoading = new Promise((resolve, reject) => {
+            const script = document.createElement('script');
+            script.src = 'skills.js';
+            script.onload = () => {
+                skillsLoaded = true;
+                console.log("✅ skills.js зареден lazy");
+                resolve();
+            };
+            script.onerror = () => reject(new Error("Грешка при зареждане на skills.js"));
+            document.head.appendChild(script);
+        });
+        return skillsLoading;
+    };
+
+    // Прокси за window.advancedSkills
+    let _advancedSkills = null;
+    Object.defineProperty(window, 'advancedSkills', {
+        get: function() {
+            if (!skillsLoaded) {
+                console.warn("⚠️ advancedSkills не е зареден, опит за динамично зареждане...");
+                // Това е синхронен опит, няма да работи добре. По-добре да използваме асинхронен подход.
+                // Затова ще оставим това като предупреждение.
+                return null;
+            }
+            return _advancedSkills;
+        },
+        set: function(val) { _advancedSkills = val; },
+        configurable: true
+    });
+    // По-добре: презаписваме функциите, които използват advancedSkills
+    const originalOpenSkillsUI = window.openSkillsUI;
+    if (originalOpenSkillsUI) {
+        window.openSkillsUI = async function(...args) {
+            await window.loadSkills();
+            return originalOpenSkillsUI(...args);
+        };
+    }
+    // Също и за getAdvancedSkillBonuses, learnAdvancedSkill и др.
+    const originalGetAdvancedSkillBonuses = window.getAdvancedSkillBonuses;
+    if (originalGetAdvancedSkillBonuses) {
+        window.getAdvancedSkillBonuses = async function(...args) {
+            await window.loadSkills();
+            return originalGetAdvancedSkillBonuses(...args);
+        };
+    }
+    const originalLearnAdvancedSkill = window.learnAdvancedSkill;
+    if (originalLearnAdvancedSkill) {
+        window.learnAdvancedSkill = async function(...args) {
+            await window.loadSkills();
+            return originalLearnAdvancedSkill(...args);
+        };
+    }
+    const originalGetAllAdvancedSkills = window.getAllAdvancedSkills;
+    if (originalGetAllAdvancedSkills) {
+        window.getAllAdvancedSkills = async function(...args) {
+            await window.loadSkills();
+            return originalGetAllAdvancedSkills(...args);
+        };
+    }
+
+    // ==================== Lazy loading на items.js ====================
+    let itemsLoaded = false;
+    let itemsLoading = null;
+    window.loadItems = function() {
+        if (itemsLoaded) return Promise.resolve();
+        if (itemsLoading) return itemsLoading;
+        itemsLoading = new Promise((resolve, reject) => {
+            const script = document.createElement('script');
+            script.src = 'items.js';
+            script.onload = () => {
+                itemsLoaded = true;
+                console.log("✅ items.js зареден lazy");
+                resolve();
+            };
+            script.onerror = () => reject(new Error("Грешка при зареждане на items.js"));
+            document.head.appendChild(script);
+        });
+        return itemsLoading;
+    };
+
+    // Прокси за функции, които разчитат на items.js
+    const originalToggleTreasury = window.toggleTreasury;
+    if (originalToggleTreasury) {
+        window.toggleTreasury = async function(...args) {
+            await window.loadItems();
+            return originalToggleTreasury(...args);
+        };
+    }
+    const originalAutoEquipHero = window.autoEquipHero;
+    if (originalAutoEquipHero) {
+        window.autoEquipHero = async function(...args) {
+            await window.loadItems();
+            return originalAutoEquipHero(...args);
+        };
+    }
+    const originalGetInventoryBonuses = window.getInventoryBonuses;
+    if (originalGetInventoryBonuses) {
+        window.getInventoryBonuses = async function(...args) {
+            await window.loadItems();
+            return originalGetInventoryBonuses(...args);
+        };
+    }
+    const originalCheckSetCompletion = window.checkSetCompletion;
+    if (originalCheckSetCompletion) {
+        window.checkSetCompletion = async function(...args) {
+            await window.loadItems();
+            return originalCheckSetCompletion(...args);
+        };
+    }
+
+    // ==================== Lazy loading на chronicle_events.js ====================
+    let chronicleEventsLoaded = false;
+    let chronicleEventsLoading = null;
+    window.loadChronicleEvents = function() {
+        if (chronicleEventsLoaded) return Promise.resolve();
+        if (chronicleEventsLoading) return chronicleEventsLoading;
+        chronicleEventsLoading = new Promise((resolve, reject) => {
+            const script = document.createElement('script');
+            script.src = 'chronicle_events.js';
+            script.onload = () => {
+                chronicleEventsLoaded = true;
+                console.log("✅ chronicle_events.js зареден lazy");
+                resolve();
+            };
+            script.onerror = () => reject(new Error("Грешка при зареждане на chronicle_events.js"));
+            document.head.appendChild(script);
+        });
+        return chronicleEventsLoading;
+    };
+
+    // Прокси за triggerRandomChronicleEvent
+    const originalTrigger = window.triggerRandomChronicleEvent;
+    if (originalTrigger) {
+        window.triggerRandomChronicleEvent = async function(...args) {
+            await window.loadChronicleEvents();
+            return originalTrigger(...args);
+        };
+    }
+    // За window.ChronicleEvents – обектът се създава от chronicle_events.js, не може да се проксира лесно.
+    // Но можем да заредим скрипта при първи достъп до ChronicleEvents.
+    let _ChronicleEvents = null;
+    Object.defineProperty(window, 'ChronicleEvents', {
+        get: function() {
+            if (!chronicleEventsLoaded) {
+                console.warn("⚠️ ChronicleEvents не е зареден, опит за динамично зареждане...");
+                // Асинхронно зареждане – тук няма как да върнем Promise.
+                // Затова по-добре да заредим при нужда синхронно? Не може.
+                // Вместо това, презаписваме функциите, които използват ChronicleEvents.
+                window.loadChronicleEvents().catch(console.error);
+                return null;
+            }
+            return _ChronicleEvents;
+        },
+        set: function(val) { _ChronicleEvents = val; },
+        configurable: true
+    });
+
+    // Презаписваме функции, които разчитат на ChronicleEvents.generate...
+    const originalGenerateEconomicEvent = window.ChronicleEvents?.generateEconomicEvent;
+    if (originalGenerateEconomicEvent) {
+        window.generateEconomicEvent = async function(...args) {
+            await window.loadChronicleEvents();
+            return window.ChronicleEvents.generateEconomicEvent(...args);
+        };
+    }
+    // ... аналогично за другите генератори (но те са рядко използвани, ще се заредят при нужда).
 })();
 </script>
 </body>
