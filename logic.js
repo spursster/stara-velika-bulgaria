@@ -1,112 +1,110 @@
 /**
  ========================================================================
  ПРОЕКТ: ВЕЛИКА БЪЛГАРИЯ
- ФАЙЛ: logic.js (ВЕРСИЯ 8.0 – МОДУЛНА, БЕЗ ГЛОБАЛНО ЗАМЪРСЯВАНЕ)
+ ФАЙЛ: logic.js (ВЕРСИЯ 8.1 – ОПРАВЕНО ЗАПАЗВАНЕ)
  ========================================================================
  */
 
 (function() {
     // ==================== GAME SAVE SYSTEM ====================
-   window.GameSave.save = function() {
-    try {
-        // Използваме същата структура като saveGreatBulgariaGame
-        const saveData = {
-            version: "2.0.0",
-            timestamp: Date.now(),
-            worldData: window.worldData,
-            gameTime: window.gameTime || { seasonIndex: 0, year: 480, era: "пр.н.е." },
-            gameMode: window.gameMode,
-            currentRegion: window.currentRegion,
-            companions: window.companions || [],
-            activeQuests: window.activeQuests || [],
-            completedQuests: window.completedQuests || [],
-            playerRegions: window.playerRegions || []
-        };
-        if (window.gameMode === 'solo' && window.currentHero) {
-            saveData.currentHero = window.currentHero;
+    window.GameSave = window.GameSave || {};
+
+    window.GameSave.save = function() {
+        try {
+            const saveData = {
+                version: "2.0.0",
+                timestamp: Date.now(),
+                worldData: window.worldData,
+                gameTime: window.gameTime || { seasonIndex: 0, year: 480, era: "пр.н.е." },
+                gameMode: window.gameMode,
+                currentRegion: window.currentRegion,
+                companions: window.companions || [],
+                activeQuests: window.activeQuests || [],
+                completedQuests: window.completedQuests || [],
+                playerRegions: window.playerRegions || []
+            };
+            if (window.gameMode === 'solo' && window.currentHero) {
+                saveData.currentHero = window.currentHero;
+            }
+            localStorage.setItem('GreatBulgaria_SaveGame', JSON.stringify(saveData));
+            console.log("💾 Играта е запазена успешно (пълно запазване)");
+            return true;
+        } catch (e) {
+            console.error("❌ Грешка при запис:", e);
+            return false;
         }
-        localStorage.setItem('GreatBulgaria_SaveGame', JSON.stringify(saveData));
-        console.log("💾 Играта е запазена успешно (пълно запазване)");
-        return true;
-    } catch (e) {
-        console.error("❌ Грешка при запис:", e);
-        return false;
-    }
-};
-   window.GameSave.load = function() {
-    try {
-        const saved = localStorage.getItem('GreatBulgaria_SaveGame');
-        if (!saved) return false;
-        const data = JSON.parse(saved);
-        
-        // Възстановяване на всички данни
-        if (data.worldData) window.worldData = data.worldData;
-        if (data.gameTime) window.gameTime = data.gameTime;
-        if (data.gameMode) window.gameMode = data.gameMode;
-        if (data.currentRegion) window.currentRegion = data.currentRegion;
-        if (data.companions) window.companions = data.companions;
-        if (data.activeQuests) window.activeQuests = data.activeQuests;
-        if (data.completedQuests) window.completedQuests = data.completedQuests;
-        if (data.currentTurn) window.currentTurn = data.currentTurn;
-        
-        // Нормализиране на playerRegions
-        if (data.playerRegions) {
-            let rawRegions = data.playerRegions;
-            if (Array.isArray(rawRegions)) {
-                let normalized = [];
-                for (let item of rawRegions) {
-                    if (Array.isArray(item)) {
-                        for (let sub of item) normalized.push(sub);
-                    } else if (typeof item === 'string') normalized.push(item);
+    };
+
+    window.GameSave.load = function() {
+        try {
+            const saved = localStorage.getItem('GreatBulgaria_SaveGame');
+            if (!saved) return false;
+            const data = JSON.parse(saved);
+            
+            if (data.worldData) window.worldData = data.worldData;
+            if (data.gameTime) window.gameTime = data.gameTime;
+            if (data.gameMode) window.gameMode = data.gameMode;
+            if (data.currentRegion) window.currentRegion = data.currentRegion;
+            if (data.companions) window.companions = data.companions;
+            if (data.activeQuests) window.activeQuests = data.activeQuests;
+            if (data.completedQuests) window.completedQuests = data.completedQuests;
+            if (data.currentTurn) window.currentTurn = data.currentTurn;
+            
+            if (data.playerRegions) {
+                let rawRegions = data.playerRegions;
+                if (Array.isArray(rawRegions)) {
+                    let normalized = [];
+                    for (let item of rawRegions) {
+                        if (Array.isArray(item)) {
+                            for (let sub of item) normalized.push(sub);
+                        } else if (typeof item === 'string') normalized.push(item);
+                    }
+                    window.playerRegions = normalized;
+                } else {
+                    window.playerRegions = [];
                 }
-                window.playerRegions = normalized;
             } else {
                 window.playerRegions = [];
             }
-        } else {
-            window.playerRegions = [];
-        }
-        if (window.playerRegions.length === 0 && window.currentRegion) {
-            window.playerRegions.push(window.currentRegion);
-        }
-        
-        // Възстановяване на currentHero за соло режим
-        if (window.gameMode === 'solo' && data.currentHero) {
-            window.currentHero = data.currentHero;
-        } else if (window.currentHero) {
-            delete window.currentHero;
-        }
-        
-        // Възстановяване на HP за героите и спътниците
-        if (window.worldData && window.worldData.clans) {
-            for (let key in window.worldData.clans) {
-                let hero = window.worldData.clans[key];
-                if (hero && hero.isJoined === true) {
-                    let endurance = (hero.skills && hero.skills.endurance) || 0;
-                    hero.maxHp = 100 + (hero.level - 1) * 20 + endurance * 15;
-                    if (!hero.hp || isNaN(hero.hp) || hero.hp > hero.maxHp) hero.hp = hero.maxHp;
-                    if (typeof hero.isAlive === 'undefined') hero.isAlive = true;
+            if (window.playerRegions.length === 0 && window.currentRegion) {
+                window.playerRegions.push(window.currentRegion);
+            }
+            
+            if (window.gameMode === 'solo' && data.currentHero) {
+                window.currentHero = data.currentHero;
+            } else if (window.currentHero) {
+                delete window.currentHero;
+            }
+            
+            if (window.worldData && window.worldData.clans) {
+                for (let key in window.worldData.clans) {
+                    let hero = window.worldData.clans[key];
+                    if (hero && hero.isJoined === true) {
+                        let endurance = (hero.skills && hero.skills.endurance) || 0;
+                        hero.maxHp = 100 + (hero.level - 1) * 20 + endurance * 15;
+                        if (!hero.hp || isNaN(hero.hp) || hero.hp > hero.maxHp) hero.hp = hero.maxHp;
+                        if (typeof hero.isAlive === 'undefined') hero.isAlive = true;
+                    }
                 }
             }
+            if (window.companions) {
+                window.companions.forEach(comp => {
+                    let endurance = (comp.skills && comp.skills.endurance) || 0;
+                    comp.maxHp = 100 + (comp.level - 1) * 20 + endurance * 15;
+                    if (!comp.hp || isNaN(comp.hp) || comp.hp > comp.maxHp) comp.hp = comp.maxHp;
+                    comp.isAlive = true;
+                });
+            }
+            
+            console.log("✅ Играта е заредена успешно (версия " + (data.version || "неизвестна") + ")");
+            return true;
+        } catch (e) {
+            console.error("💥 Save файлът е повреден!", e);
+            alert("Save файлът е повреден. Ще започнеш нова игра.");
+            localStorage.removeItem('GreatBulgaria_SaveGame');
+            return false;
         }
-        if (window.companions) {
-            window.companions.forEach(comp => {
-                let endurance = (comp.skills && comp.skills.endurance) || 0;
-                comp.maxHp = 100 + (comp.level - 1) * 20 + endurance * 15;
-                if (!comp.hp || isNaN(comp.hp) || comp.hp > comp.maxHp) comp.hp = comp.maxHp;
-                comp.isAlive = true;
-            });
-        }
-        
-        console.log("✅ Играта е заредена успешно (версия " + (data.version || "неизвестна") + ")");
-        return true;
-    } catch (e) {
-        console.error("💥 Save файлът е повреден!", e);
-        alert("Save файлът е повреден. Ще започнеш нова игра.");
-        localStorage.removeItem('GreatBulgaria_SaveGame');
-        return false;
-    }
-};
+    };
 
     window.GameSave.startAutoSave = function() {
         setInterval(() => {
@@ -276,146 +274,147 @@
 
     // ========== НОВА ИГРА ==========
     function startFreshGameLogic() {
-    console.log("🔄 startFreshGameLogic извикана");
+        console.log("🔄 startFreshGameLogic извикана");
 
-    if (!window.worldData) window.worldData = {};
-    window.worldData.clans = {};
+        if (!window.worldData) window.worldData = {};
+        window.worldData.clans = {};
 
-    initializeAllHeroesFromDatabase();
+        initializeAllHeroesFromDatabase();
 
-    let heroData = getRandomHeroFromDatabase();
-    let selectedId = heroData.id;
-    let selectedName = heroData.name;
-    let selectedClan = heroData.clan;
+        let heroData = getRandomHeroFromDatabase();
+        let selectedId = heroData.id;
+        let selectedName = heroData.name;
+        let selectedClan = heroData.clan;
 
-    let existingHero = null;
-    for (let key in window.worldData.clans) {
-        let h = window.worldData.clans[key];
-        if (h.id === selectedId || (h.name === selectedName && h.clan === selectedClan)) {
-            existingHero = h;
-            break;
+        let existingHero = null;
+        for (let key in window.worldData.clans) {
+            let h = window.worldData.clans[key];
+            if (h.id === selectedId || (h.name === selectedName && h.clan === selectedClan)) {
+                existingHero = h;
+                break;
+            }
         }
-    }
 
-    function setHeroHP(hero) {
-        if (!hero) return;
-        let endurance = (hero.skills && hero.skills.endurance) || 0;
-        hero.maxHp = 100 + (hero.level - 1) * 20 + endurance * 15;
-        hero.hp = hero.maxHp;
-        hero.isAlive = true;
-    }
-
-    let startingHero = null;
-    if (existingHero) {
-        existingHero.isJoined = true;
-        existingHero.isFavorite = true;
-        existingHero.gold = heroData.gold;
-        existingHero.armySize = heroData.armySize;
-        existingHero.currentArmy = heroData.armySize;
-        existingHero.heroPower = heroData.power;
-        existingHero.power = heroData.power;
-        startingHero = existingHero;
-        setHeroHP(startingHero);
-    } else {
-        startingHero = createHeroObject(selectedName, selectedClan, {
-            isJoined: true,
-            isFavorite: true,
-            gold: heroData.gold,
-            armySize: heroData.armySize,
-            currentArmy: heroData.armySize,
-            heroPower: heroData.power,
-            power: heroData.power,
-            className: heroData.className,
-            currentClass: heroData.className
-        });
-        setHeroHP(startingHero);
-        window.worldData.clans[selectedId] = startingHero;
-    }
-
-    if (typeof window.generateHeroPortrait === 'function') {
-        window.generateHeroPortrait(startingHero).catch(e => console.warn(e));
-    }
-
-    if (window.gameMode === 'solo') {
-        window.currentHero = startingHero;
-    } else {
-        if (typeof window.getStrongestHero !== 'function') {
-            window.getStrongestHero = function() { return startingHero; };
+        function setHeroHP(hero) {
+            if (!hero) return;
+            let endurance = (hero.skills && hero.skills.endurance) || 0;
+            hero.maxHp = 100 + (hero.level - 1) * 20 + endurance * 15;
+            hero.hp = hero.maxHp;
+            hero.isAlive = true;
         }
-        if (typeof window.updateStrongestHeroUI === 'function') {
-            window.updateStrongestHeroUI();
+
+        let startingHero = null;
+        if (existingHero) {
+            existingHero.isJoined = true;
+            existingHero.isFavorite = true;
+            existingHero.gold = heroData.gold;
+            existingHero.armySize = heroData.armySize;
+            existingHero.currentArmy = heroData.armySize;
+            existingHero.heroPower = heroData.power;
+            existingHero.power = heroData.power;
+            startingHero = existingHero;
+            setHeroHP(startingHero);
+        } else {
+            startingHero = createHeroObject(selectedName, selectedClan, {
+                isJoined: true,
+                isFavorite: true,
+                gold: heroData.gold,
+                armySize: heroData.armySize,
+                currentArmy: heroData.armySize,
+                heroPower: heroData.power,
+                power: heroData.power,
+                className: heroData.className,
+                currentClass: heroData.className
+            });
+            setHeroHP(startingHero);
+            window.worldData.clans[selectedId] = startingHero;
         }
-    }
 
-    for (let key in window.worldData.clans) {
-        let hero = window.worldData.clans[key];
-        if (hero !== startingHero) {
-            hero.isJoined = false;
-            hero.isFavorite = false;
+        if (typeof window.generateHeroPortrait === 'function') {
+            window.generateHeroPortrait(startingHero).catch(e => console.warn(e));
         }
-    }
 
-    window.unlockedHeroes = [startingHero];
-    if (window.gameMode === 'solo') {
-        localStorage.setItem('barracksFavorites', JSON.stringify([startingHero.name]));
-    } else {
-        localStorage.setItem('barracksFavorites', JSON.stringify([]));
-    }
-    localStorage.removeItem('favoriteHeroesFinal');
-    localStorage.removeItem('heroAutoState');
-    localStorage.removeItem('barracksFavorites');
-    // ⭐ НОВ РЕД: изтриваме старата година на турнира при нова игра
-    localStorage.removeItem('tournament_last_year');
-     if (window.tournament && typeof window.tournament.resetLastYear === 'function') {
-    window.tournament.resetLastYear();
-}
-
-    window.gameTime = { seasonIndex: 0, year: 480, era: "пр.н.е." };
-
-    if (typeof window.generateProceduralRegions === 'function') {
-        window.generateProceduralRegions(30, true);
-    } else {
-        console.warn("generateProceduralRegions не е дефинирана");
-    }
-
-    if (typeof window.buildRegionConnections === 'function') {
-        window.buildRegionConnections();
-    }
-
-    window.playerRegions = ["Плиска"];
-    window.currentRegion = "Плиска";
-
-    if (!window.gameMode) window.gameMode = 'classic';
-
-    if (window.gameMode === 'solo') {
-        console.log("🌍 Старт в СОЛО РЕЖИМ: " + startingHero.name);
-        if (typeof window.showAdvisorMsg === 'function') {
-            window.showAdvisorMsg("🌍 Добре дошли, " + startingHero.name + " от рода " + startingHero.clan + "!");
+        if (window.gameMode === 'solo') {
+            window.currentHero = startingHero;
+        } else {
+            if (typeof window.getStrongestHero !== 'function') {
+                window.getStrongestHero = function() { return startingHero; };
+            }
+            if (typeof window.updateStrongestHeroUI === 'function') {
+                window.updateStrongestHeroUI();
+            }
         }
-        if (typeof window.initSoloMode === 'function') {
-            window.initSoloMode();
+
+        for (let key in window.worldData.clans) {
+            let hero = window.worldData.clans[key];
+            if (hero !== startingHero) {
+                hero.isJoined = false;
+                hero.isFavorite = false;
+            }
         }
-    } else {
-        console.log("🏰 Старт в КЛАСИЧЕСКИ РЕЖИМ");
-        if (typeof window.showAdvisorMsg === 'function') {
-            window.showAdvisorMsg("🏰 Вие сте " + startingHero.name + " от могъщия род " + startingHero.clan + ".");
+
+        window.unlockedHeroes = [startingHero];
+        if (window.gameMode === 'solo') {
+            localStorage.setItem('barracksFavorites', JSON.stringify([startingHero.name]));
+        } else {
+            localStorage.setItem('barracksFavorites', JSON.stringify([]));
         }
+        localStorage.removeItem('favoriteHeroesFinal');
+        localStorage.removeItem('heroAutoState');
+        localStorage.removeItem('barracksFavorites');
+        localStorage.removeItem('tournament_last_year');
+        if (window.tournament && typeof window.tournament.resetLastYear === 'function') {
+            window.tournament.resetLastYear();
+        }
+
+        window.gameTime = { seasonIndex: 0, year: 480, era: "пр.н.е." };
+
+        if (typeof window.generateProceduralRegions === 'function') {
+            window.generateProceduralRegions(30, true);
+        } else {
+            console.warn("generateProceduralRegions не е дефинирана");
+        }
+
+        if (typeof window.buildRegionConnections === 'function') {
+            window.buildRegionConnections();
+        }
+
+        window.playerRegions = ["Плиска"];
+        window.currentRegion = "Плиска";
+
+        if (!window.gameMode) window.gameMode = 'classic';
+
+        if (window.gameMode === 'solo') {
+            console.log("🌍 Старт в СОЛО РЕЖИМ: " + startingHero.name);
+            if (typeof window.showAdvisorMsg === 'function') {
+                window.showAdvisorMsg("🌍 Добре дошли, " + startingHero.name + " от рода " + startingHero.clan + "!");
+            }
+            if (typeof window.initSoloMode === 'function') {
+                window.initSoloMode();
+            }
+        } else {
+            console.log("🏰 Старт в КЛАСИЧЕСКИ РЕЖИМ");
+            if (typeof window.showAdvisorMsg === 'function') {
+                window.showAdvisorMsg("🏰 Вие сте " + startingHero.name + " от могъщия род " + startingHero.clan + ".");
+            }
+        }
+
+        if (typeof window.updateStrongestHeroUI === 'function') window.updateStrongestHeroUI();
+        if (window.renderTop6HeroesUI) window.renderTop6HeroesUI();
+        if (typeof window.renderSingleBar === 'function') window.renderSingleBar();
+        if (window.updateTimeUI) window.updateTimeUI();
+        if (window.updatePortalContainerUI) window.updatePortalContainerUI();
+
+        if (typeof window.saveGreatBulgariaGame === 'function') window.saveGreatBulgariaGame();
+
+        console.log("✅ startFreshGameLogic завърши. Начален герой: " + startingHero.name);
     }
 
-    if (typeof window.updateStrongestHeroUI === 'function') window.updateStrongestHeroUI();
-    if (window.renderTop6HeroesUI) window.renderTop6HeroesUI();
-    if (typeof window.renderSingleBar === 'function') window.renderSingleBar();
-    if (window.updateTimeUI) window.updateTimeUI();
-    if (window.updatePortalContainerUI) window.updatePortalContainerUI();
-
-    if (typeof window.saveGreatBulgariaGame === 'function') window.saveGreatBulgariaGame();
-
-    console.log("✅ startFreshGameLogic завърши. Начален герой: " + startingHero.name);
-}
     // ========== ЗАПАЗВАНЕ ==========
-   function saveGreatBulgariaGame() {
-    return window.GameSave.save();
-}
+    function saveGreatBulgariaGame() {
+        return window.GameSave.save();
+    }
+
     // ========== ЗАРЕЖДАНЕ ==========
     function loadGreatBulgariaGame() {
         const saved = localStorage.getItem('GreatBulgaria_SaveGame');
@@ -479,14 +478,14 @@
             if (typeof window.ensureHeroesHavePortraits === 'function') window.ensureHeroesHavePortraits();
             if (typeof window.showAdvisorMsg === 'function') window.showAdvisorMsg("👑 Добре дошъл обратно, Воеводо!");
             if (typeof window.saveGreatBulgariaGame === 'function') window.saveGreatBulgariaGame();
-         // Инициализация на ancientOwner за всички региони
-if (window.worldData && window.worldData.regions) {
-    for (let name in window.worldData.regions) {
-        if (window.worldData.regions[name].ancientOwner === undefined) {
-            window.worldData.regions[name].ancientOwner = null;
-        }
-    }
-}
+
+            if (window.worldData && window.worldData.regions) {
+                for (let name in window.worldData.regions) {
+                    if (window.worldData.regions[name].ancientOwner === undefined) {
+                        window.worldData.regions[name].ancientOwner = null;
+                    }
+                }
+            }
             return true;
         } catch (e) {
             console.error("Грешка при зареждане:", e);
@@ -632,7 +631,6 @@ if (window.worldData && window.worldData.regions) {
         monitorHeroes: monitorHeroesAlive
     };
 
-    // Запазваме старите глобални имена за обратна съвместимост
     window.createHeroObject = window.GameLogic.createHeroObject;
     window.startFreshGameLogic = window.GameLogic.startFreshGame;
     window.saveGreatBulgariaGame = window.GameLogic.saveGame;
@@ -647,7 +645,6 @@ if (window.worldData && window.worldData.regions) {
     window.reviveFromAshes = window.GameLogic.revive;
     window.showJoinOffer = window.GameLogic.showJoinOffer;
 
-    // Обвивки за автоматична нормализация
     const originalLoad = window.loadGreatBulgariaGame;
     window.loadGreatBulgariaGame = function() {
         let result = originalLoad();
@@ -660,10 +657,8 @@ if (window.worldData && window.worldData.regions) {
         normalizePlayerRegions();
     };
 
-    // ==================== DOM INIT ====================
     document.addEventListener('DOMContentLoaded', function() {
         console.log("🏛️ DOM готов...");
-
         setTimeout(() => {
             const loaded = window.GameSave.load();
             if (!loaded) {
@@ -677,5 +672,5 @@ if (window.worldData && window.worldData.regions) {
         }, 150);
     });
 
-    console.log("✅ logic.js версия 8.0 – модулна, без глобално замърсяване");
+    console.log("✅ logic.js версия 8.1 – оправено запазване");
 })();
