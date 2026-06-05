@@ -167,26 +167,23 @@ window.tournament = (function() {
         if (turnBtn) turnBtn.disabled = true;
     }
 
-    function startTournamentBattle(pending) {
+      function startTournamentBattle(pending) {
         const match = pending.match;
         const playerHeroObj = (match.heroA.isPlayer ? match.heroA.heroObj : match.heroB.heroObj);
         const opponentHero = (match.heroA.isPlayer ? match.heroB : match.heroA);
         
-        window._tournamentForcedHero = {
-            ...playerHeroObj,
-            id: playerHeroObj.id,
-            name: playerHeroObj.name || playerHeroObj.leaderName,
-            className: playerHeroObj.currentClass || "Воевода",
-            power: playerHeroObj.heroPower,
-            hp: playerHeroObj.hp,
-            maxHp: playerHeroObj.maxHp,
-            icon: '⚔️',
-            clanObj: playerHeroObj,
-            troopEffects: window.BattleCore.getTroopSpecialEffects(playerHeroObj),
-            armySize: playerHeroObj.armySize || 200,
-            _isTournamentForced: true
-        };
-
+        if (!playerHeroObj) {
+            console.error("❌ Турнир: Няма герой на играча за този двубой!");
+            return;
+        }
+        
+        // ⭐ Директно задаваме референция към ОРИГИНАЛНИЯ герой на играча
+        window._tournamentForcedHero = playerHeroObj;
+        // Маркираме го за дебъг
+        window._tournamentForcedHero._isTournamentForced = true;
+        
+        console.log(`🏆 Турнирен двубой: играчът изпраща герой: ${playerHeroObj.name} (id: ${playerHeroObj.id})`);
+        
         const tournamentEnemy = {
             name: opponentHero.name,
             armySize: opponentHero.power,
@@ -194,13 +191,13 @@ window.tournament = (function() {
             isTournamentDuel: true,
             tournamentOpponent: opponentHero
         };
-
+        
         window._pendingTournamentMatch = {
             pending: pending,
             playerHeroObj: playerHeroObj,
             opponentHero: opponentHero
         };
-
+        
         window.startBattle(tournamentEnemy);
     }
 
