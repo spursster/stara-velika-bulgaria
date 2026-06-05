@@ -193,12 +193,13 @@ window.tournament = (function() {
             }];
         };
 
-        // Създаваме противника като "регион" за битката
+               // Създаваме противника като "регион" за битката, но с флаг за турнирен двубой
         const tournamentEnemy = {
             name: opponentHero.name,
             armySize: opponentHero.power,
             defenseLevel: 1,
-            isTournamentEnemy: true
+            isTournamentDuel: true,   // ⭐ КЛЮЧОВО: указва, че е 1v1 без подкрепления
+            tournamentOpponent: opponentHero  // предаваме и целия обект за врага
         };
 
         // Задаваме глобална променлива, която battle.js да използва, за да разбере, че това е турнирен двубой
