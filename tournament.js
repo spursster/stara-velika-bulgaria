@@ -1,6 +1,6 @@
 /**
  * tournament.js – Турнир на шампионите (с интерактивни двубои)
- * Версия: 6.0 – с пауза и бутон за битка
+ * Версия: 6.1 – оправена структура и функции
  */
 window.tournament = (function() {
     const MIN_YEARS_BETWEEN_TOURNAMENTS = 20;
@@ -15,8 +15,7 @@ window.tournament = (function() {
     let autoStartCounter = 0;
     let autoStartEnabled = true;
 
-    // Състояние за изчакване на играч
-    let pendingMatch = null;          // { match, round, matchNumber, isSemifinal, isFinal }
+    let pendingMatch = null;
     let tournamentPaused = false;
 
     function resetLastYear() {
@@ -138,7 +137,6 @@ window.tournament = (function() {
         console.log(fullMessage);
     }
 
-    // Показва бутон за битка
     function showTournamentBattleButton(pending) {
         const match = pending.match;
         const heroA = match.heroA;
@@ -165,15 +163,17 @@ window.tournament = (function() {
             startTournamentBattle(pending);
         };
 
-        // Блокираме бутона "Ход"
         const turnBtn = document.querySelector('.next-turn-btn');
         if (turnBtn) turnBtn.disabled = true;
     }
 
-        // Директно използваме оригиналния герой, но добавяме нужните полета
+    function startTournamentBattle(pending) {
+        const match = pending.match;
+        const playerHeroObj = (match.heroA.isPlayer ? match.heroA.heroObj : match.heroB.heroObj);
+        const opponentHero = (match.heroA.isPlayer ? match.heroB : match.heroA);
+        
         window._tournamentForcedHero = {
-            ...playerHeroObj,   // копираме всички съществуващи полета
-            // Гарантираме, че задължителните полета съществуват
+            ...playerHeroObj,
             id: playerHeroObj.id,
             name: playerHeroObj.name || playerHeroObj.leaderName,
             className: playerHeroObj.currentClass || "Воевода",
@@ -184,11 +184,9 @@ window.tournament = (function() {
             clanObj: playerHeroObj,
             troopEffects: window.BattleCore.getTroopSpecialEffects(playerHeroObj),
             armySize: playerHeroObj.armySize || 200,
-            // Флаг за идентификация
             _isTournamentForced: true
         };
 
-        // Създаваме противника като "регион" за битката
         const tournamentEnemy = {
             name: opponentHero.name,
             armySize: opponentHero.power,
@@ -206,7 +204,7 @@ window.tournament = (function() {
         window.startBattle(tournamentEnemy);
     }
 
-        window._resolveTournamentMatch = function(isVictory, battleHeroes, enemies, regionName) {
+    window._resolveTournamentMatch = function(isVictory, battleHeroes, enemies, regionName) {
         if (!window._pendingTournamentMatch) return;
         const pending = window._pendingTournamentMatch.pending;
         const match = pending.match;
@@ -220,8 +218,6 @@ window.tournament = (function() {
         
         remainingHeroes.push(winnerHero);
         window._pendingTournamentMatch = null;
-        
-        // ⭐ Изчистваме глобалния флаг
         window._tournamentForcedHero = null;
         
         const turnBtn = document.querySelector('.next-turn-btn');
@@ -235,7 +231,6 @@ window.tournament = (function() {
         }
     };
 
-    // Нова версия на advanceTournament, която спира при двубой с играч
     function advanceTournament() {
         if (!tournamentActive) return;
         if (tournamentPaused) return;
@@ -244,7 +239,6 @@ window.tournament = (function() {
             return;
         }
         
-        // Преминаваме през всички двубои в рунда
         for (let i = 0; i < roundMatches.length; i++) {
             let match = roundMatches[i];
             if (!match) continue;
@@ -253,10 +247,8 @@ window.tournament = (function() {
                 continue;
             }
             
-            // Проверка дали това е двубой с герой на играча
             const isPlayerMatch = (match.heroA.isPlayer === true) || (match.heroB.isPlayer === true);
             if (isPlayerMatch && !pendingMatch) {
-                // Спираме турнира и запазваме този двубой
                 pendingMatch = {
                     match: match,
                     round: currentRound,
@@ -266,10 +258,9 @@ window.tournament = (function() {
                 };
                 tournamentPaused = true;
                 showTournamentBattleButton(pendingMatch);
-                return;   // спираме изпълнението – чакаме играча
+                return;
             }
             
-            // Иначе симулираме битката
             let isSemifinal = (totalRounds - currentRound === 1 && remainingHeroes.length <= 4);
             let isFinal = (totalRounds - currentRound === 0 && remainingHeroes.length <= 2);
             if (currentRound === totalRounds && remainingHeroes.length === 1) isFinal = true;
@@ -279,7 +270,6 @@ window.tournament = (function() {
             remainingHeroes.push(result.winner);
         }
         
-        // Ако сме стигнали дотук, значи всички двубои от рунда са обработени (няма pending)
         finishRound();
     }
     
@@ -355,7 +345,6 @@ window.tournament = (function() {
         }
 
         totalRounds = Math.log2(targetCount);
-        // Разбъркване
         for (let i = participants.length - 1; i > 0; i--) {
             let j = Math.floor(Math.random() * (i + 1));
             [participants[i], participants[j]] = [participants[j], participants[i]];
@@ -413,7 +402,6 @@ window.tournament = (function() {
     };
 })();
 
-// Презаписваме processTurn, за да сме сигурни, че турнирът напредва всеки ход
 const originalProcessTurn = window.processTurn;
 window.processTurn = function() {
     if (originalProcessTurn) originalProcessTurn();
