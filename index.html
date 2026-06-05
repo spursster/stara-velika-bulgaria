@@ -54,6 +54,9 @@
 <!-- НОВ ОБВИВАЩ КОНТЕЙНЕР за двете ленти -->
 <div class="bottom-fixed-wrapper">
     <div id="bottom-controls">
+        <div class="new-game-menu-container bottom-mobile-only" id="mobileNewGameContainer">
+    <button class="glass-btn" id="mobileNewGameBtn">🎮 Нова игра</button>
+</div>
         <div class="new-game-menu-container bottom-menu">
             <button class="glass-btn" id="newGameBtn">🎮 Нова игра / Продължи</button>
             <div class="new-game-dropdown bottom-dropdown" id="newGameDropdown">
@@ -956,31 +959,16 @@
 })();
 </script>
 
-    (function moveNewGameButtonToBottomOnMobile() {
-    function moveButton() {
-        const isMobile = window.innerWidth <= 768;
-        const newGameContainer = document.querySelector('.top-bar-controls .new-game-menu-container');
-        const bottomBar = document.getElementById('bottom-controls');
-        const topBarControls = document.querySelector('.top-bar-controls');
-        
-        if (!newGameContainer || !bottomBar || !topBarControls) return;
-        
-        if (isMobile) {
-            // Ако вече е в долния панел, не прави нищо
-            if (newGameContainer.parentElement === bottomBar) return;
-            // Преместваме в началото на долния панел (преди другите бутони)
-            bottomBar.insertBefore(newGameContainer, bottomBar.firstChild);
-        } else {
-            // Връщаме обратно в горния панел
-            if (newGameContainer.parentElement === topBarControls) return;
-            topBarControls.insertBefore(newGameContainer, topBarControls.firstChild);
-        }
+   <script>
+(function() {
+    var mobileBtn = document.getElementById('mobileNewGameBtn');
+    if (mobileBtn && typeof window.showGameModeModal === 'function') {
+        mobileBtn.onclick = function(e) {
+            e.stopPropagation();
+            window.showGameModeModal();
+        };
     }
-    
-    // Изпълняваме при зареждане
-    moveButton();
-    // И при промяна на размера на екрана
-    window.addEventListener('resize', moveButton);
 })();
+</script>
 </body>
 </html>
