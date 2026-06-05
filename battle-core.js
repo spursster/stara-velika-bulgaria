@@ -503,49 +503,45 @@
         if (addLogFn) addLogFn(`   📉 ${hero.name} загуби ${Math.floor(armyLossPercent * 100)}% от армията си! Остава: ${newArmy} войници.`);
     }
 
-    function collectPlayerHeroes() {
-        // Ако има турнирен двубой с конкретен герой, връщаме само него
-        if (window._tournamentForcedHero) {
-            return [window._tournamentForcedHero];
-        }
+       // Стартира битката за турнирния двубой
+    function startTournamentBattle(pending) {
+        const match = pending.match;
+        const playerHeroObj = (match.heroA.isPlayer ? match.heroA.heroObj : match.heroB.heroObj);
+        const opponentHero = (match.heroA.isPlayer ? match.heroB : match.heroA);
         
-        let heroes = [];
-        const worldData = window.worldData;
-        if (!worldData || !worldData.clans) return heroes;
-        for (let key in worldData.clans) {
-            let clan = worldData.clans[key];
-            try {
-                if (clan.isJoined === true && clan.isAlive !== false) {
-                    if (window.ensureCompleteArmyDetails) window.ensureCompleteArmyDetails(clan);
-                    let calculatedPower = clan.heroPower || 100;
-                    if (window.recalculateHeroPower) calculatedPower = window.recalculateHeroPower(clan);
-                    let classBonus = 1.0;
-                    if (clan.classBonuses && clan.currentClass) {
-                        const classData = window.hybridClasses?.find(c => c.name === clan.currentClass);
-                        if (classData?.bonuses?.heroPower) calculatedPower += classData.bonuses.heroPower;
-                        if (classData?.bonuses?.armyBonus) classBonus += classData.bonuses.armyBonus;
-                    }
-                    let armySize = clan.armySize || clan.currentArmy || 300;
-                    let finalPower = Math.floor(calculatedPower * classBonus * (armySize / 300));
-                    finalPower = Math.max(50, finalPower);
-                    heroes.push({
-                        id: key,
-                        name: clan.leaderName || clan.name || key,
-                        className: clan.currentClass || "Воевода",
-                        power: finalPower,
-                        hp: clan.hp || clan.maxHp || 100,
-                        maxHp: clan.maxHp || 100,
-                        icon: "⚔️",
-                        armySize: armySize,
-                        clanObj: clan,
-                        troopEffects: getTroopSpecialEffects(clan)
-                    });
-                }
-            } catch(err) {
-                console.error(`Грешка при добавяне на ${clan.name}:`, err);
-            }
-        }
-        return heroes.slice(0, 5);
+        // ⭐ Директно използваме оригиналния герой, но добавяме нужните полета
+        window._tournamentForcedHero = {
+            ...playerHeroObj,   // копираме всички съществуващи полета
+            // Гарантираме, че задължителните полета съществуват
+            id: playerHeroObj.id,
+            name: playerHeroObj.name || playerHeroObj.leaderName,
+            className: playerHeroObj.currentClass || "Воевода",
+            power: playerHeroObj.heroPower,
+            hp: playerHeroObj.hp,
+            maxHp: playerHeroObj.maxHp,
+            icon: '⚔️',
+            clanObj: playerHeroObj,
+            troopEffects: window.BattleCore.getTroopSpecialEffects(playerHeroObj),
+            armySize: playerHeroObj.armySize || 200,
+            _isTournamentForced: true
+        };
+
+        // Създаваме противника като "регион" за битката
+        const tournamentEnemy = {
+            name: opponentHero.name,
+            armySize: opponentHero.power,
+            defenseLevel: 1,
+            isTournamentDuel: true,
+            tournamentOpponent: opponentHero
+        };
+
+        window._pendingTournamentMatch = {
+            pending: pending,
+            playerHeroObj: playerHeroObj,
+            opponentHero: opponentHero
+        };
+
+        window.startBattle(tournamentEnemy);
     }
 
     // ========== ИЗЧИСЛЕНИЯ НА АТАКИТЕ (С MVP ТРАКИНГ) ==========
