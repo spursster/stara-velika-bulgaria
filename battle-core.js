@@ -503,8 +503,12 @@
         if (addLogFn) addLogFn(`   📉 ${hero.name} загуби ${Math.floor(armyLossPercent * 100)}% от армията си! Остава: ${newArmy} войници.`);
     }
 
-    // ========== СЪБИРАНЕ НА ГЕРОИТЕ НА ИГРАЧА ==========
     function collectPlayerHeroes() {
+        // Ако има турнирен двубой с конкретен герой, връщаме само него
+        if (window._tournamentForcedHero) {
+            return [window._tournamentForcedHero];
+        }
+        
         let heroes = [];
         const worldData = window.worldData;
         if (!worldData || !worldData.clans) return heroes;
