@@ -1,11 +1,9 @@
 /**
- * tournament.js – Елиминационен турнир на всички живи герои
- * Версия: 5.0 – ОКОНЧАТЕЛНА (работи без логове)
+ * tournament.js – Елиминационен турнир (само важни логове + обобщения след рунд)
  */
-
 window.tournament = (function() {
     const MIN_YEARS_BETWEEN_TOURNAMENTS = 20;
-    const MATCHES_PER_TURN = 5;  // 5 мача на ход – баланс между скорост и забава
+    const MATCHES_PER_TURN = 5;
 
     let tournamentActive = false;
     let currentRound = 0;
@@ -106,33 +104,20 @@ window.tournament = (function() {
         return { winner, loser };
     }
 
-    function generateNarrative(match, winner, loser, roundNumber, isSemifinal, isFinal, matchNumber) {
+    function logMatch(match, winner, loser, roundNumber, isSemifinal, isFinal, matchNumber) {
+        // Показваме само мачове, в които участва герой на играча, полуфинали и финал
+        const isPlayerMatch = (match.heroA.isPlayer === true) || (match.heroB.isPlayer === true);
+        if (!isFinal && !isSemifinal && !isPlayerMatch) return;
+
         let heroAName = match.heroA.name;
         let heroBName = match.heroB.name;
         let winnerName = winner.name;
-        let loserName = loser.name;
-        let intro = `🏟️ Мач ${matchNumber} от Рунд ${roundNumber}: ${heroAName} срещу ${heroBName}.`;
-        let fight = `Битката беше жестока. ${winnerName} надделя над ${loserName}.`;
+        let narrative = `🏟️ Рунд ${roundNumber}, мач ${matchNumber}: ${heroAName} срещу ${heroBName}. Победител: ${winnerName}.`;
         if (isFinal) {
-            intro = `🏆 **ФИНАЛ** 🏆\n${heroAName} и ${heroBName} се изправят един срещу друг за титлата!`;
-            fight = `След епична битка, ${winnerName} нанесе решителния удар и стана ШАМПИОН на турнира!`;
+            narrative = `🏆 **ФИНАЛ** 🏆\n${heroAName} срещу ${heroBName}. ${winnerName} става ШАМПИОН на турнира!`;
         } else if (isSemifinal) {
-            intro = `🌠 **ПОЛУФИНАЛ** 🌠\n${heroAName} и ${heroBName} се бият за място на финала.`;
-            fight = `След изтощителна битка, ${winnerName} победи ${loserName} и продължава напред.`;
+            narrative = `🌠 **ПОЛУФИНАЛ** 🌠\n${heroAName} срещу ${heroBName}. ${winnerName} победи.`;
         }
-        if (winner.heroObj && winner.heroObj.currentClass) {
-            let cls = winner.heroObj.currentClass.toLowerCase();
-            if (cls.includes("маг")) fight += ` Магията на ${winnerName} беше решаваща.`;
-            else if (cls.includes("берсерк")) fight += ` В пристъп на ярост, ${winnerName} разкъса противника.`;
-            else if (cls.includes("паладин")) fight += ` Светлината в очите на ${winnerName} донесе победата.`;
-        }
-        return `${intro}\n${fight}`;
-    }
-
-    function logMatch(match, winner, loser, roundNumber, isSemifinal, isFinal, matchNumber) {
-        const isPlayerMatch = (match.heroA.isPlayer === true) || (match.heroB.isPlayer === true);
-        if (!isFinal && !isSemifinal && !isPlayerMatch) return;
-        let narrative = generateNarrative(match, winner, loser, roundNumber, isSemifinal, isFinal, matchNumber);
         if (window.addWorldEvent) {
             window.addWorldEvent("🏆 ТУРНИРЕН МАЧ", narrative, "⚔️");
         }
@@ -184,13 +169,13 @@ window.tournament = (function() {
         if (!tournamentActive) return;
         if (remainingHeroes.length === 1) {
             winner = remainingHeroes[0];
-            let finalMsg = `🏆 **ГРАНД ФИНАЛ** 🏆\nСлед дълга надпревара, ${winner.name} беше коронован за ШАМПИОН на турнира!`;
+            let finalMsg = `🏆 **Шампион** 🏆\n${winner.name} спечели турнира!`;
             if (winner.isPlayer && winner.heroObj) {
                 let petIds = Object.keys(window.divinePets || {});
                 if (petIds.length) {
                     let randomPet = petIds[Math.floor(Math.random() * petIds.length)];
                     winner.heroObj.pet = randomPet;
-                    finalMsg += ` Като награда, ${winner.name} получава божествен питомец: ${window.divinePets[randomPet].name}! 🐉`;
+                    finalMsg += ` Награда: ${winner.name} получава ${window.divinePets[randomPet].name}! 🐉`;
                 }
             }
             log(finalMsg, "🏆");
@@ -199,6 +184,8 @@ window.tournament = (function() {
             return;
         }
 
+        // Обобщение след рунд
+        log(`🎯 Рунд ${currentRound} завърши. Остават ${remainingHeroes.length} участници.`, "📊");
         currentRound++;
         roundMatches = createMatches(remainingHeroes);
         remainingHeroes = [];
@@ -207,6 +194,7 @@ window.tournament = (function() {
             tournamentActive = false;
             return;
         }
+        log(`🏁 Започва Рунд ${currentRound} (${roundMatches.length} мача).`, "🏁");
     }
 
     function createMatches(participants) {
@@ -244,7 +232,7 @@ window.tournament = (function() {
             participants.push(generateDarkHorse(participants.length));
         }
         if (darkHorsesNeeded > 0) {
-            log(`➕ Добавени ${darkHorsesNeeded} тъмни конника за достигане на ${targetCount} участници.`);
+            log(`➕ Добавени ${darkHorsesNeeded} тъмни конника.`);
         }
 
         totalRounds = Math.log2(targetCount);
@@ -258,7 +246,7 @@ window.tournament = (function() {
         currentRound = 1;
         currentMatchIndex = 0;
         tournamentActive = true;
-        log(`🏆 ЗАПОЧВА ТУРНИР! Участници: ${participants.length} (${totalRounds} рунда).`, "🏆");
+        log(`🏆 ЗАПОЧВА ТУРНИР! ${participants.length} участници, ${totalRounds} рунда.`, "🏆");
         return true;
     }
 
@@ -266,7 +254,7 @@ window.tournament = (function() {
         if (prepareTournament()) {
             if (!roundMatches.length) {
                 tournamentActive = false;
-                log("Не може да се стартира турнир - няма мачове.", "❌");
+                log("Не може да се стартира - няма мачове.", "❌");
             } else {
                 autoStartEnabled = false;
                 autoStartCounter = 0;
