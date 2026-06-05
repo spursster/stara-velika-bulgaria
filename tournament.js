@@ -47,24 +47,43 @@ window.tournament = (function() {
     }
 
     function getAllLivingHeroes() {
-        let heroes = [];
-        if (window.worldData && window.worldData.clans) {
-            for (let key in window.worldData.clans) {
-                let h = window.worldData.clans[key];
-                if (h.isAlive !== false) {
-                    heroes.push({
-                        id: key,
-                        name: h.name || h.leaderName,
-                        heroObj: h,
-                        power: h.heroPower || 100,
-                        isPlayer: true
-                    });
-                }
-            }
-        }
+    let heroes = [];
+    
+    if (!window.worldData || !window.worldData.clans) {
+        console.warn("⚠️ worldData.clans не е зареден");
         return heroes;
     }
 
+    // Вземаме само героите, които са в лентата с любими (твоите герои)
+    for (let key in window.worldData.clans) {
+        let h = window.worldData.clans[key];
+        
+        if (!h || h.isAlive === false) continue;
+
+        // Проверка дали героят е в лентата с любими
+        const isInFavoriteBar = 
+            h.isFavorite === true || 
+            h.isJoined === true || 
+            (window.favoriteHeroes && window.favoriteHeroes.has && window.favoriteHeroes.has(key)) ||
+            (window.favoriteHeroes && window.favoriteHeroes.has && window.favoriteHeroes.has(h.name));
+
+        if (isInFavoriteBar) {
+            heroes.push({
+                id: key,
+                name: h.name || h.leaderName || key,
+                heroObj: h,
+                power: h.heroPower || h.power || 100,
+                level: h.level || 1,
+                isPlayer: true,           // Всички в лентата са твои
+                clan: h.clan || "Неизвестен"
+            });
+        }
+    }
+
+    console.log(`🏆 Турнир: Намерени ${heroes.length} твои героя от лентата с любими`);
+
+    return heroes;
+}
     function getAllCivilizations() {
         return [
             "Елфийско кралство", "Двор на феите", "Небесна империя", "Оркска орда",
