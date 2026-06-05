@@ -190,7 +190,9 @@ window.addHeroLog = function(hero, icon, message) {
     }
 };
 
-// ==================== ГЕНЕРИРАНЕ НА ПОРТРЕТ С POLLINATIONS.AI ====================
+// ⭐ Кеш за fallback аватари (генерира се веднъж на герой)
+const fallbackAvatarCache = new Map();
+
 // ==================== ГЕНЕРИРАНЕ НА ПОРТРЕТ С POLLINATIONS.AI (подобрена версия) ====================
 window.generateHeroPortrait = async function(hero, retries = 2) {
     if (!hero) return null;
@@ -223,6 +225,7 @@ window.generateHeroPortrait = async function(hero, retries = 2) {
                     try {
                         const fallbackUrl = await generateFallbackAvatar(hero);
                         hero.portrait = fallbackUrl;
+                        if (!fallbackAvatarCache.has(hero.id)) fallbackAvatarCache.set(hero.id, fallbackUrl);
                         if (typeof window.saveGreatBulgariaGame === 'function') window.saveGreatBulgariaGame();
                         if (typeof window.updateAllUI === 'function') window.updateAllUI();
                         resolve(fallbackUrl);
@@ -243,26 +246,26 @@ window.generateHeroPortrait = async function(hero, retries = 2) {
     }
 };
 
-// Помощна функция за генериране на canvas аватар (data URL – без blob грешки)
+// Помощна функция за генериране на canvas аватар (кеширана)
 function generateFallbackAvatar(hero) {
+    // Връщаме кеширания аватар, ако има
+    if (fallbackAvatarCache.has(hero.id)) return fallbackAvatarCache.get(hero.id);
+    
     const canvas = document.createElement('canvas');
-    canvas.width = 256;
-    canvas.height = 256;
+    canvas.width = 128;
+    canvas.height = 128;
     const ctx = canvas.getContext('2d');
     
-    // Фон – градиент според класа
     const grad = ctx.createLinearGradient(0, 0, canvas.width, canvas.height);
     grad.addColorStop(0, '#2c1a0c');
     grad.addColorStop(1, '#4a2a1a');
     ctx.fillStyle = grad;
     ctx.fillRect(0, 0, canvas.width, canvas.height);
     
-    // Рамка
     ctx.strokeStyle = '#d4af37';
-    ctx.lineWidth = 4;
-    ctx.strokeRect(5, 5, canvas.width - 10, canvas.height - 10);
+    ctx.lineWidth = 3;
+    ctx.strokeRect(4, 4, canvas.width - 8, canvas.height - 8);
     
-    // Иконка на клас или първа буква
     const classIcon = window.getClassIcon ? window.getClassIcon(hero.currentClass) : '⚔️';
     ctx.font = `bold ${canvas.width * 0.4}px "Cinzel", serif`;
     ctx.fillStyle = '#ffdd99';
@@ -270,15 +273,14 @@ function generateFallbackAvatar(hero) {
     ctx.textBaseline = 'middle';
     ctx.fillText(classIcon, canvas.width/2, canvas.height/2);
     
-    // Име под иконката
-    ctx.font = `18px "Cinzel", serif`;
+    ctx.font = `14px "Cinzel", serif`;
     ctx.fillStyle = '#ffaa66';
-    ctx.fillText(hero.name.substring(0, 12), canvas.width/2, canvas.height - 30);
+    ctx.fillText(hero.name.substring(0, 10), canvas.width/2, canvas.height - 20);
     
-    // Връщаме data URL (без blob, без ERR_FILE_NOT_FOUND)
-    return canvas.toDataURL('image/png');
+    const dataUrl = canvas.toDataURL('image/png');
+    fallbackAvatarCache.set(hero.id, dataUrl);
+    return dataUrl;
 }
-
 // ==================== ПРЕВКЛЮЧВАНЕ НА ЦЯЛ ЕКРАН ====================
 window.toggleGameFullScreen = function() { 
     if (!document.fullscreenElement && !document.mozFullScreenElement && !document.webkitFullscreenElement && !document.msFullscreenElement) { 
@@ -470,10 +472,10 @@ window.hireNewHero = function() {
     if (window.gameMode === 'solo' && !window.currentHero) window.currentHero = newHero;
     
     if (typeof window.renderFavoriteHeroesBar === 'function') {
-        var container = document.getElementById('favorite-heroes-bar');
-        if (container) container.innerHTML = '';
-        window.renderFavoriteHeroesBar();
-    }
+    window.renderFavoriteHeroesBar(); // без изтриване на innerHTML (функцията го прави сама)
+}
+if (typeof window.renderSingleBar === 'function') window.renderSingleBar();
+if (typeof window.updateStrongestHeroUI === 'function') window.updateStrongestHeroUI();
     if (typeof window.renderSingleBar === 'function') window.renderSingleBar();
     if (typeof window.updateStrongestHeroUI === 'function') window.updateStrongestHeroUI();
     
@@ -889,13 +891,12 @@ window.renderFavoriteHeroesBar = function() {
             var currentXP = hero.isAuto ? (hero.xp || 0) : (hero.storedXP || 0);
             var xpPercent = Math.min(100, (currentXP / needXP) * 100);
 
-           var portraitHtml = '';
-if (hero.portrait && hero.portrait.startsWith('data:image') || hero.portrait.startsWith('http')) {
+            var portraitHtml = '';
+var hasValidPortrait = hero.portrait && (hero.portrait.startsWith('data:image') || hero.portrait.startsWith('http'));
+if (hasValidPortrait) {
     portraitHtml = '<img src="' + hero.portrait + '" class="hero-portrait-img" onerror="this.style.display=\'none\'; this.parentElement.querySelector(\'.hero-icon\').style.display=\'flex\';">';
-} else {
-    // fallback: показваме веднага иконката, ако няма валиден портрет
-    portraitHtml = '';
 }
+// Ако няма портрет – показваме иконката (тя вече ще се покаже от iconHtml)
             var classIcon = window.getClassIcon ? window.getClassIcon(hero.currentClass) : '⚔️';
             var iconHtml = '<div class="hero-icon" style="' + (hero.portrait ? 'display:none;' : '') + '">' + classIcon + '</div>';
 
