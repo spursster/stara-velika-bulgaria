@@ -1,7 +1,7 @@
 /**
 ==========================================================================
 ПРОЕКТ: ВЕЛИКА БЪЛГАРИЯ
-ФАЙЛ: battle.js (ВЕРСИЯ 9.3 – С ПОДДРЪЖКА ЗА ТУРНИРНИ ДВУБОИ)
+ФАЙЛ: battle.js (ВЕРСИЯ 9.4 – ПОДДРЪЖКА ЗА ТУРНИРНИ ДВУБОИ 1v1)
 ==========================================================================
 */
 
@@ -126,8 +126,18 @@
         let enemyPower = 200;
         let enemyHp = 200;
         let regionObject = null;
+        let isTournamentDuel = false;
+        let tournamentOpponent = null;
 
-        if (typeof finalRegionInput === 'string') {
+        // ПРОВЕРКА ЗА ТУРНИРЕН ДВУБОЙ
+        if (typeof finalRegionInput === 'object' && finalRegionInput.isTournamentDuel === true) {
+            isTournamentDuel = true;
+            tournamentOpponent = finalRegionInput.tournamentOpponent;
+            regionName = finalRegionInput.name;
+            enemyPower = finalRegionInput.armySize;
+            enemyHp = enemyPower;
+            regionObject = finalRegionInput;
+        } else if (typeof finalRegionInput === 'string') {
             regionName = finalRegionInput;
             if (window.worldData && window.worldData.regions && window.worldData.regions[finalRegionInput]) {
                 regionObject = window.worldData.regions[finalRegionInput];
@@ -153,25 +163,40 @@
             return;
         }
 
-        const mainEnemy = {
-            id: "monster",
-            name: regionName,
-            power: enemyPower,
-            hp: enemyHp,
-            maxHp: enemyHp,
-            icon: "👹",
-            isMonster: true
-        };
-
-        let reinforcements = [];
-        if (regionObject) {
-            reinforcements = core.getReinforcements(regionObject, playerHeroes);
-        }
-        let enemies = [mainEnemy, ...reinforcements];
-        
-        if (reinforcements.length > 0) {
-            addLog(`⚠️ Вражески подкрепления! Към ${mainEnemy.name} се присъединяват: ${reinforcements.map(r => r.name).join(', ')}`);
-            core.addNarrative(`⚠️ На бойното поле пристигат подкрепления: ${reinforcements.map(r => r.name).join(', ')}.`);
+        let enemies = [];
+        if (isTournamentDuel && tournamentOpponent) {
+            // ТУРНИРЕН ДВУБОЙ: само един противник, без подкрепления
+            enemies = [{
+                id: tournamentOpponent.id || 'tournament_enemy',
+                name: tournamentOpponent.name,
+                power: tournamentOpponent.power,
+                hp: tournamentOpponent.hp || tournamentOpponent.maxHp || 200,
+                maxHp: tournamentOpponent.hp || tournamentOpponent.maxHp || 200,
+                icon: "⚔️",
+                isMonster: false,
+                isTournamentEnemy: true,
+                heroObj: tournamentOpponent.heroObj
+            }];
+        } else {
+            // ОБИКНОВЕНА БИТКА: създаваме основен враг и подкрепления
+            const mainEnemy = {
+                id: "monster",
+                name: regionName,
+                power: enemyPower,
+                hp: enemyHp,
+                maxHp: enemyHp,
+                icon: "👹",
+                isMonster: true
+            };
+            let reinforcements = [];
+            if (regionObject && !isTournamentDuel) {
+                reinforcements = core.getReinforcements(regionObject, playerHeroes);
+            }
+            enemies = [mainEnemy, ...reinforcements];
+            if (reinforcements.length > 0) {
+                addLog(`⚠️ Вражески подкрепления! Към ${mainEnemy.name} се присъединяват: ${reinforcements.map(r => r.name).join(', ')}`);
+                core.addNarrative(`⚠️ На бойното поле пристигат подкрепления: ${reinforcements.map(r => r.name).join(', ')}.`);
+            }
         }
 
         window._lastBattleHeroes = playerHeroes;
@@ -374,7 +399,7 @@
                 if (window.addHeroLog) window.addHeroLog(hero.clanObj, "⚔️", `Победи в битката за ${regionName}`);
             });
             
-            if (typeof regionName === 'string' && regionName !== "Портал") {
+            if (!isTournamentDuel && typeof regionName === 'string' && regionName !== "Портал") {
                 if (typeof window.normalizePlayerRegions === 'function') window.normalizePlayerRegions();
                 else {
                     if (!window.playerRegions) window.playerRegions = [];
@@ -396,7 +421,7 @@
             }
             
             let newArtifact = null;
-            if (Math.random() < 0.2 && window.historicalArtifacts) {
+            if (!isTournamentDuel && Math.random() < 0.2 && window.historicalArtifacts) {
                 const artifactKeys = Object.keys(window.historicalArtifacts);
                 const randomKey = artifactKeys[Math.floor(Math.random() * artifactKeys.length)];
                 newArtifact = { ...window.historicalArtifacts[randomKey] };
@@ -413,7 +438,7 @@
                 }
             }
             
-            if (Math.random() < 0.15 && window.fantasyRaces && window.fantasyRaces.length > 0) {
+            if (!isTournamentDuel && Math.random() < 0.15 && window.fantasyRaces && window.fantasyRaces.length > 0) {
                 const randomRace = window.fantasyRaces[Math.floor(Math.random() * window.fantasyRaces.length)];
                 const prisoner = { id: Date.now() + "_" + Math.random(), name: randomRace.name, raceId: randomRace.id, icon: randomRace.icon, desc: randomRace.desc, bonus: randomRace.bonus, capturedFrom: regionName };
                 if (!window.prisoners) window.prisoners = [];
@@ -422,7 +447,7 @@
                 if (window.addWorldEvent) window.addWorldEvent(`👸 ПЛЕННИК`, `След битката взехте ${prisoner.name} като пленник!`, "👸");
             }
             
-            if (regionInput && regionInput.isPortalWorld) {
+            if (regionInput && regionInput.isPortalWorld && !isTournamentDuel) {
                 const extraBonus = 50 + Math.floor(Math.random() * 100);
                 const randomHero = livingHeroes[Math.floor(Math.random() * livingHeroes.length)];
                 if (randomHero) {
@@ -431,7 +456,7 @@
                 }
             }
             
-            if (window.addWorldEvent) window.addWorldEvent(`🏆 ПОБЕДА В БИТКА`, `${playerHeroes.map(h => h.name).join(', ')} победиха в ${regionName}!`, "🏆");
+            if (!isTournamentDuel && window.addWorldEvent) window.addWorldEvent(`🏆 ПОБЕДА В БИТКА`, `${playerHeroes.map(h => h.name).join(', ')} победиха в ${regionName}!`, "🏆");
             
             for (let i = 0; i < currentHeroes.length; i++) {
                 let battleHero = currentHeroes[i];
@@ -615,5 +640,5 @@
     window.endGroupBattle = window.Battle.end;
     window.refreshAllHeroUI = window.Battle.refreshUI;
 
-    console.log("✅ battle.js зареден (версия 9.3 – с поддръжка за турнирни двубои)");
+    console.log("✅ battle.js зареден (версия 9.4 – поддръжка за турнирни двубои 1v1)");
 })();
