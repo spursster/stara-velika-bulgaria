@@ -137,17 +137,14 @@ window.tournament = (function() {
         }
     }
 
-    function log(message, icon = "🏆") {
+function log(message, icon = "🏆") {
     var fullMessage = icon + " " + message;
-    // Опитваме първо с addWorldEvent
-    if (window.addWorldEvent) {
-        window.addWorldEvent("ТУРНИР", message, icon);
-    } 
-    // Резервен вариант – директно в летописа
-    else if (window.showAdvisorMsg) {
+    // Директно използваме showAdvisorMsg, който гарантирано добавя в летописа
+    if (window.showAdvisorMsg) {
         window.showAdvisorMsg(fullMessage);
+    } else if (window.addWorldEvent) {
+        window.addWorldEvent("ТУРНИР", message, icon);
     }
-    // За дебъг в конзолата, за да виждаме, че нещо се случва
     console.log(fullMessage);
 }
 
@@ -155,6 +152,10 @@ window.tournament = (function() {
         if (!tournamentActive) return false;
         if (!roundMatches.length || currentMatchIndex >= roundMatches.length) {
             finishRound();
+                    // След като изиграем мачовете, проверяваме дали сме приключили рунда
+        if (currentMatchIndex >= roundMatches.length) {
+            finishRound();
+        }
             return true;
         }
 
@@ -209,7 +210,7 @@ window.tournament = (function() {
             return;
         }
 
-        // Обобщение след рунд (винаги се показва)
+        // Обобщение след рунд
         log(`🎯 Рунд ${currentRound} завърши. Остават ${remainingHeroes.length} участници.`, "📊");
         
         currentRound++;
@@ -221,8 +222,16 @@ window.tournament = (function() {
             return;
         }
         log(`🏁 Започва Рунд ${currentRound} (${roundMatches.length} мача).`, "🏁");
+        
+        // Ако няма мачове с важни участници, пак да виждаме, че турнирът продължава
+        if (roundMatches.length > 0) {
+            // Проверяваме дали в този рунд има мач с играч, полуфинал или финал – ако няма, пак даваме кратко съобщение
+            let hasImportantMatch = roundMatches.some(m => (m.heroA.isPlayer || m.heroB.isPlayer) || (currentRound === totalRounds - 1) || (currentRound === totalRounds));
+            if (!hasImportantMatch) {
+                log(`Турнирът продължава с ${roundMatches.length} мача в рунд ${currentRound}. Очаквайте екшън!`, "⚔️");
+            }
+        }
     }
-
     function createMatches(participants) {
         let matches = [];
         for (let i = 0; i < participants.length; i += 2) {
@@ -302,6 +311,7 @@ window.tournament = (function() {
         }
         autoStartCounter++;
         if (autoStartCounter >= 5) {
+            log("Автоматично стартиране на турнира след 5 хода.", "⏰");
             startTournament();
             autoStartEnabled = false;
             autoStartCounter = 0;
