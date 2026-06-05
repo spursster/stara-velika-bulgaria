@@ -1686,7 +1686,7 @@ if (typeof window.endGroupBattle === 'function') {
 }
 
 // ⚠️ ВАЖНО: Постави своя API ключ от ModelScope тук
-const API_KEY = 'ms-929f05eb-b86c-447b-8405-2b4b9ac9888b'; 
+const API_KEY = '929f05eb-b86c-447b-8405-2b4b9ac9888b'; 
 
 window.generateHeroPortrait = async function(hero, retries = 2) {
     if (!hero) return null;
