@@ -138,10 +138,18 @@ window.tournament = (function() {
     }
 
     function log(message, icon = "🏆") {
-        if (window.addWorldEvent) {
-            window.addWorldEvent("ТУРНИР", message, icon);
-        }
+    var fullMessage = icon + " " + message;
+    // Опитваме първо с addWorldEvent
+    if (window.addWorldEvent) {
+        window.addWorldEvent("ТУРНИР", message, icon);
+    } 
+    // Резервен вариант – директно в летописа
+    else if (window.showAdvisorMsg) {
+        window.showAdvisorMsg(fullMessage);
     }
+    // За дебъг в конзолата, за да виждаме, че нещо се случва
+    console.log(fullMessage);
+}
 
     function advanceMultipleMatches() {
         if (!tournamentActive) return false;
