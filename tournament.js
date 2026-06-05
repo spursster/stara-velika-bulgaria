@@ -1,18 +1,18 @@
 /**
  * tournament.js – Елиминационен турнир на всички живи герои
- * Версия: 4.0 – няколко мача на ход, разкази само за герои на играча + финали
+ * Версия: 4.1 – фикс за липсващи мачове
  */
 
 window.tournament = (function() {
     const MIN_YEARS_BETWEEN_TOURNAMENTS = 20;
-    const MATCHES_PER_TURN = 5;   // Колко мача да се провеждат на един ход (5 е баланс)
-    
+    const MATCHES_PER_TURN = 10;   // Колко мача на ход (10 е баланс за 256 участника → 255 мача → ~26 хода)
+
     let tournamentActive = false;
     let currentRound = 0;
     let roundMatches = [];
     let remainingHeroes = [];
     let winner = null;
-    let currentMatchIndex = 0;     // кой мач от рунда сме стигнали
+    let currentMatchIndex = 0;
     let totalRounds = 0;
     let lastTournamentYear = null;
     let autoStartCounter = 0;
@@ -123,12 +123,8 @@ window.tournament = (function() {
     }
 
     function logMatch(match, winner, loser, roundNumber, isSemifinal, isFinal, matchNumber) {
-        // Показваме само ако:
-        // 1. Е полуфинал или финал, ИЛИ
-        // 2. Някой от участниците е герой на играча
         const isPlayerMatch = (match.heroA.isPlayer === true) || (match.heroB.isPlayer === true);
         if (!isFinal && !isSemifinal && !isPlayerMatch) return;
-
         let narrative = generateNarrative(match, winner, loser, roundNumber, isSemifinal, isFinal, matchNumber);
         if (window.addWorldEvent) {
             window.addWorldEvent("🏆 ТУРНИРЕН МАЧ", narrative, "⚔️");
@@ -145,20 +141,20 @@ window.tournament = (function() {
         }
     }
 
-    // Провежда следващите няколко мача (до MATCHES_PER_TURN)
     function advanceMultipleMatches() {
         if (!tournamentActive) return false;
-        if (currentMatchIndex >= roundMatches.length) {
+
+        // Ако няма мачове за текущия рунд, но турнирът е активен, това означава, че сме между рундове
+        if (!roundMatches.length || currentMatchIndex >= roundMatches.length) {
             finishRound();
-            return true; // рундът приключи, чакаме следващ ход за новия рунд
+            return true;
         }
-        
+
         let matchesPlayed = 0;
         while (matchesPlayed < MATCHES_PER_TURN && currentMatchIndex < roundMatches.length) {
             let match = roundMatches[currentMatchIndex];
             if (!match) break;
-            
-            // Пропускаме "почивка"
+
             if (match.heroB && match.heroB.isBye) {
                 log(`⏭️ Мач ${currentMatchIndex+1}: ${match.heroA.name} преминава автоматично (почивка).`);
                 remainingHeroes.push(match.heroA);
@@ -166,25 +162,19 @@ window.tournament = (function() {
                 matchesPlayed++;
                 continue;
             }
-            
-            // Определяме дали е полуфинал или финал за целите на разказа
+
             let isSemifinal = (totalRounds - currentRound === 1 && remainingHeroes.length <= 4);
             let isFinal = (totalRounds - currentRound === 0 && remainingHeroes.length <= 2);
             if (currentRound === totalRounds && remainingHeroes.length === 1) isFinal = true;
-            
-            // Симулираме битка
+
             let result = simulateBattle(match.heroA, match.heroB);
-            
-            // Показваме разказ (ако трябва)
             logMatch(match, result.winner, result.loser, currentRound, isSemifinal, isFinal, currentMatchIndex+1);
             log(`🏅 ${result.winner.name} побеждава!`);
-            
             remainingHeroes.push(result.winner);
             currentMatchIndex++;
             matchesPlayed++;
         }
-        
-        // Ако сме изиграли всички мачове от рунда, го финализираме
+
         if (currentMatchIndex >= roundMatches.length) {
             finishRound();
         }
@@ -209,14 +199,14 @@ window.tournament = (function() {
             saveLastTournamentYear();
             return;
         }
-        
-        // Преминаваме към следващия рунд
+
         currentRound++;
         roundMatches = createMatches(remainingHeroes);
         remainingHeroes = [];
         currentMatchIndex = 0;
         if (roundMatches.length === 0) {
             tournamentActive = false;
+            log("Грешка: няма мачове за следващия рунд. Турнирът приключва преждевременно.", "❌");
             return;
         }
         log(`--- РУНД ${currentRound} ---`, "⚔️");
@@ -231,6 +221,7 @@ window.tournament = (function() {
                 matches.push({ heroA: participants[i], heroB: { name: "Почивка", power: 0, isPlayer: false, isBye: true } });
             }
         }
+        console.log(`🎲 Създадени ${matches.length} мача за рунд от ${participants.length} участници.`);
         return matches;
     }
 
@@ -261,7 +252,6 @@ window.tournament = (function() {
         }
 
         totalRounds = Math.log2(targetCount);
-        // Разбъркваме участниците
         for (let i = participants.length - 1; i > 0; i--) {
             let j = Math.floor(Math.random() * (i + 1));
             [participants[i], participants[j]] = [participants[j], participants[i]];
@@ -273,6 +263,7 @@ window.tournament = (function() {
         currentMatchIndex = 0;
         tournamentActive = true;
         log(`🏆 ЗАПОЧВА ТУРНИР! Участници: ${participants.length} (${totalRounds} рунда).`, "🏆");
+        console.log("Първи рунд мачове:", roundMatches.length);
         return true;
     }
 
