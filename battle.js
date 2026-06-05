@@ -1,7 +1,7 @@
 /**
 ==========================================================================
 ПРОЕКТ: ВЕЛИКА БЪЛГАРИЯ
-ФАЙЛ: battle.js (ВЕРСИЯ 9.2 – КЕШИРАНИ DOM ЕЛЕМЕНТИ)
+ФАЙЛ: battle.js (ВЕРСИЯ 9.3 – С ПОДДРЪЖКА ЗА ТУРНИРНИ ДВУБОИ)
 ==========================================================================
 */
 
@@ -468,6 +468,12 @@
             if (typeof window.endGroupBattle === 'function') window.endGroupBattle(true, 'victory', regionName);
             window.currentBattleState = null;
             window._lastBattleHeroes = null;
+            
+            // ⭐ Уведомяваме турнира за резултата (ако има pending турнирен двубой)
+            if (window._pendingTournamentMatch && typeof window._resolveTournamentMatch === 'function') {
+                window._resolveTournamentMatch(true, currentHeroes, currentEnemies, regionName);
+            }
+            
             setTimeout(() => battleScreen.remove(), 1500);
         }
 
@@ -507,6 +513,12 @@
             if (typeof window.endGroupBattle === 'function') window.endGroupBattle(false, 'defeat');
             window.currentBattleState = null;
             window._lastBattleHeroes = null;
+            
+            // ⭐ Уведомяваме турнира за резултата (ако има pending турнирен двубой)
+            if (window._pendingTournamentMatch && typeof window._resolveTournamentMatch === 'function') {
+                window._resolveTournamentMatch(false, currentHeroes, currentEnemies, regionName);
+            }
+            
             setTimeout(() => battleScreen.remove(), 1500);
         }
 
@@ -542,6 +554,12 @@
             if (typeof window.endGroupBattle === 'function') window.endGroupBattle(false, 'retreat');
             window.currentBattleState = null;
             window._lastBattleHeroes = null;
+            
+            // ⭐ При отстъпление също уведомяваме турнира (загуба)
+            if (window._pendingTournamentMatch && typeof window._resolveTournamentMatch === 'function') {
+                window._resolveTournamentMatch(false, currentHeroes, currentEnemies, regionName);
+            }
+            
             setTimeout(() => battleScreen.remove(), 1500);
         }
 
@@ -597,5 +615,5 @@
     window.endGroupBattle = window.Battle.end;
     window.refreshAllHeroUI = window.Battle.refreshUI;
 
-    console.log("✅ battle.js зареден (версия 9.2 – кеширани DOM елементи)");
+    console.log("✅ battle.js зареден (версия 9.3 – с поддръжка за турнирни двубои)");
 })();
