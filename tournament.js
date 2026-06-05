@@ -1,17 +1,15 @@
 /**
- * tournament.js – Елиминационен турнир (само важни логове + обобщения след рунд)
- * Версия: 5.2 – само мачове с герои на играча + полуфинали + финал
+ * tournament.js – Елиминационен турнир (оправена логика на рундове)
+ * Версия: 5.3 – премахнат лимит MATCHES_PER_TURN за тест
  */
 window.tournament = (function() {
     const MIN_YEARS_BETWEEN_TOURNAMENTS = 20;
-    const MATCHES_PER_TURN = 5;
 
     let tournamentActive = false;
     let currentRound = 0;
     let roundMatches = [];
     let remainingHeroes = [];
     let winner = null;
-    let currentMatchIndex = 0;
     let totalRounds = 0;
     let lastTournamentYear = null;
     let autoStartCounter = 0;
@@ -56,7 +54,7 @@ window.tournament = (function() {
                         name: h.name || h.leaderName,
                         heroObj: h,
                         power: h.heroPower || 100,
-                        isPlayer: true   // всички герои от worldData.clans са на играча
+                        isPlayer: true
                     });
                 }
             }
@@ -64,7 +62,7 @@ window.tournament = (function() {
         return heroes;
     }
 
-    function getAllCivilizations() {
+    function getAllCivilizations() { /* същото като преди */ 
         return [
             "Елфийско кралство", "Двор на феите", "Небесна империя", "Оркска орда",
             "Демонични легиони", "Царство на сенките", "Драконови лордове", "Легион на мъртвите",
@@ -101,11 +99,9 @@ window.tournament = (function() {
         let powerA = (heroA.power || 100) * (0.7 + Math.random() * 0.7);
         let powerB = (heroB.power || 100) * (0.7 + Math.random() * 0.7);
         let winner = powerA >= powerB ? heroA : heroB;
-        let loser = winner === heroA ? heroB : heroA;
-        return { winner, loser };
+        return { winner, loser: winner === heroA ? heroB : heroA };
     }
 
-    // ⭐ Епически разказ само за важни мачове
     function logMatch(match, winner, loser, roundNumber, isSemifinal, isFinal, matchNumber) {
         const isPlayerMatch = (match.heroA.isPlayer === true) || (match.heroB.isPlayer === true);
         if (!isFinal && !isSemifinal && !isPlayerMatch) return;
@@ -116,80 +112,59 @@ window.tournament = (function() {
         let loserName = loser.name;
         
         let narrative = `🏟️ Рунд ${roundNumber}, мач ${matchNumber}: ${heroAName} срещу ${heroBName}. Победител: ${winnerName}.`;
-        
-        // Епически разказ за финал
         if (isFinal) {
-            narrative = `🏆 **ГРАНД ФИНАЛ** 🏆\nВ епична битка ${heroAName} и ${heroBName} се изправиха един срещу друг. След много кръв, пот и сълзи, ${winnerName} нанесе решителния удар и бе коронован за ШАМПИОН на турнира! 🎉`;
-        } 
-        // За полуфинал
-        else if (isSemifinal) {
-            narrative = `🌠 **ПОЛУФИНАЛ** 🌠\n${heroAName} срещу ${heroBName}. ${winnerName} показа невероятен героизъм и се класира за финала!`;
+            narrative = `🏆 **ГРАНД ФИНАЛ** 🏆\n${heroAName} срещу ${heroBName}. ${winnerName} става ШАМПИОН! 🎉`;
+        } else if (isSemifinal) {
+            narrative = `🌠 **ПОЛУФИНАЛ** 🌠\n${heroAName} срещу ${heroBName}. ${winnerName} победи.`;
+        } else if (isPlayerMatch) {
+            narrative = `⚔️ **ВАЖЕН МАЧ** ⚔️\n${heroAName} срещу ${heroBName}. ${winnerName} надделя!`;
         }
-        // За мач с герой на играча – добавяме жанрови детайли
-        else if (isPlayerMatch) {
-            let winnerClass = winner.heroObj?.currentClass || "воин";
-            let loserClass = loser.heroObj?.currentClass || "воин";
-            narrative = `⚔️ **ВАЖЕН МАЧ** ⚔️\n${heroAName} (${winner === heroA ? winnerClass : loserClass}) и ${heroBName} (${winner === heroB ? winnerClass : loserClass}) се сражаваха яростно. ${winnerName} надделя с мъдрост и сила, пращайки ${loserName} в нокаут!`;
-        }
-        
         if (window.addWorldEvent) {
             window.addWorldEvent("🏆 ТУРНИРЕН МАЧ", narrative, "⚔️");
         }
     }
 
-function log(message, icon = "🏆") {
-    var fullMessage = icon + " " + message;
-    // Директно използваме showAdvisorMsg, който гарантирано добавя в летописа
-    if (window.showAdvisorMsg) {
-        window.showAdvisorMsg(fullMessage);
-    } else if (window.addWorldEvent) {
-        window.addWorldEvent("ТУРНИР", message, icon);
+    function log(message, icon = "🏆") {
+        let fullMessage = icon + " " + message;
+        if (window.showAdvisorMsg) {
+            window.showAdvisorMsg(fullMessage);
+        } else if (window.addWorldEvent) {
+            window.addWorldEvent("ТУРНИР", message, icon);
+        }
+        console.log(fullMessage);
     }
-    console.log(fullMessage);
-}
 
-    function advanceMultipleMatches() {
-        if (!tournamentActive) return false;
-        if (!roundMatches.length || currentMatchIndex >= roundMatches.length) {
+    // ОСНОВНА ПРОМЯНА: Изиграваме ВСИЧКИ мачове от рунда наведнъж
+    function advanceTournament() {
+        if (!tournamentActive) return;
+        
+        // Ако няма текущи мачове, опитай да финишираш рунда (това може да стане само при победа)
+        if (!roundMatches.length) {
             finishRound();
-                    // След като изиграем мачовете, проверяваме дали сме приключили рунда
-        if (currentMatchIndex >= roundMatches.length) {
-            finishRound();
+            return;
         }
-            return true;
-        }
-
-        let matchesPlayed = 0;
-        while (matchesPlayed < MATCHES_PER_TURN && currentMatchIndex < roundMatches.length) {
-            let match = roundMatches[currentMatchIndex];
-            if (!match) break;
-
+        
+        // Изиграваме всички мачове от текущия рунд
+        for (let i = 0; i < roundMatches.length; i++) {
+            let match = roundMatches[i];
+            if (!match) continue;
             if (match.heroB && match.heroB.isBye) {
                 remainingHeroes.push(match.heroA);
-                currentMatchIndex++;
-                matchesPlayed++;
                 continue;
             }
-
             let isSemifinal = (totalRounds - currentRound === 1 && remainingHeroes.length <= 4);
             let isFinal = (totalRounds - currentRound === 0 && remainingHeroes.length <= 2);
             if (currentRound === totalRounds && remainingHeroes.length === 1) isFinal = true;
-
-            let result = simulateBattle(match.heroA, match.heroB);
-            // Записваме само ако трябва
-            logMatch(match, result.winner, result.loser, currentRound, isSemifinal, isFinal, currentMatchIndex+1);
             
+            let result = simulateBattle(match.heroA, match.heroB);
+            logMatch(match, result.winner, result.loser, currentRound, isSemifinal, isFinal, i+1);
             remainingHeroes.push(result.winner);
-            currentMatchIndex++;
-            matchesPlayed++;
         }
-
-        if (currentMatchIndex >= roundMatches.length) {
-            finishRound();
-        }
-        return true;
+        
+        // Рундът приключи – извикваме finishRound
+        finishRound();
     }
-
+    
     function finishRound() {
         if (!tournamentActive) return;
         
@@ -209,29 +184,20 @@ function log(message, icon = "🏆") {
             saveLastTournamentYear();
             return;
         }
-
-        // Обобщение след рунд
+        
         log(`🎯 Рунд ${currentRound} завърши. Остават ${remainingHeroes.length} участници.`, "📊");
         
         currentRound++;
         roundMatches = createMatches(remainingHeroes);
         remainingHeroes = [];
-        currentMatchIndex = 0;
+        
         if (roundMatches.length === 0) {
             tournamentActive = false;
             return;
         }
         log(`🏁 Започва Рунд ${currentRound} (${roundMatches.length} мача).`, "🏁");
-        
-        // Ако няма мачове с важни участници, пак да виждаме, че турнирът продължава
-        if (roundMatches.length > 0) {
-            // Проверяваме дали в този рунд има мач с играч, полуфинал или финал – ако няма, пак даваме кратко съобщение
-            let hasImportantMatch = roundMatches.some(m => (m.heroA.isPlayer || m.heroB.isPlayer) || (currentRound === totalRounds - 1) || (currentRound === totalRounds));
-            if (!hasImportantMatch) {
-                log(`Турнирът продължава с ${roundMatches.length} мача в рунд ${currentRound}. Очаквайте екшън!`, "⚔️");
-            }
-        }
     }
+
     function createMatches(participants) {
         let matches = [];
         for (let i = 0; i < participants.length; i += 2) {
@@ -271,7 +237,7 @@ function log(message, icon = "🏆") {
         }
 
         totalRounds = Math.log2(targetCount);
-        // Разбъркваме
+        // Разбъркване
         for (let i = participants.length - 1; i > 0; i--) {
             let j = Math.floor(Math.random() * (i + 1));
             [participants[i], participants[j]] = [participants[j], participants[i]];
@@ -280,7 +246,6 @@ function log(message, icon = "🏆") {
         roundMatches = createMatches(participants);
         remainingHeroes = [];
         currentRound = 1;
-        currentMatchIndex = 0;
         tournamentActive = true;
         log(`🏆 ЗАПОЧВА ТУРНИР! ${participants.length} участници, ${totalRounds} рунда.`, "🏆");
         return true;
@@ -296,10 +261,6 @@ function log(message, icon = "🏆") {
                 autoStartCounter = 0;
             }
         }
-    }
-
-    function advanceTournament() {
-        if (tournamentActive) advanceMultipleMatches();
     }
 
     function checkAutoStart() {
@@ -332,16 +293,15 @@ function log(message, icon = "🏆") {
     };
 })();
 
-if (typeof window.processTurn === 'function') {
-    const original = window.processTurn;
-    window.processTurn = function() {
-        original();
-        if (window.tournament) {
-            if (window.tournament.isActive()) {
-                window.tournament.advance();
-            } else {
-                window.tournament.checkAutoStart();
-            }
+// Презаписваме processTurn, за да сме сигурни, че турнирът напредва всеки ход
+const originalProcessTurn = window.processTurn;
+window.processTurn = function() {
+    if (originalProcessTurn) originalProcessTurn();
+    if (window.tournament) {
+        if (window.tournament.isActive()) {
+            window.tournament.advance();
+        } else {
+            window.tournament.checkAutoStart();
         }
-    };
-}
+    }
+};
