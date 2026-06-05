@@ -403,6 +403,13 @@
     window.updateTimeUI();
     
     window.processTurn = function() {
+        if (window.tournament) {
+    if (window.tournament.isActive && window.tournament.isActive()) {
+        window.tournament.advance();
+    } else {
+        window.tournament.checkAutoStart();
+    }
+}
         if (typeof window.processAncientCivilizations === 'function') window.processAncientCivilizations();
         if (!window.gameTime) {
             window.gameTime = { seasonIndex: 0, year: 480, era: "пр.н.е." };
