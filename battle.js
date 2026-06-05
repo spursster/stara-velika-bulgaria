@@ -617,11 +617,13 @@
         console.log("✅ Битката е готова (с подкрепления от нелюбими герои)!");
     }
 
-   function endGroupBattle(isVictory, reason, regionName) {
-    console.log(`🏁 Битката приключи. Победа: ${isVictory}`);
+  // === КРАЙ НА БИТКАТА - ГЛОБАЛНО РЕШЕНИЕ ЗА ТУРНИРА ===
+window.endGroupBattle = function(isVictory, reason = "", regionName = "") {
+    console.log(`🏁 endGroupBattle извикана | Победа: ${isVictory} | Турнир: ${!!window._pendingTournamentMatch}`);
 
-    // === ОСВОБОЖДАВАНЕ НА ТУРНИРА ===
+    // === 1. ОСВОБОЖДАВАНЕ НА ТУРНИРА (най-важното) ===
     if (window._pendingTournamentMatch) {
+        console.log("🔓 Изпълняваме _resolveTournamentMatch...");
         if (typeof window._resolveTournamentMatch === 'function') {
             window._resolveTournamentMatch(isVictory, null, null, regionName || "Турнирен двубой");
         }
@@ -630,35 +632,25 @@
 
     window._tournamentForcedHero = null;
 
-    // === ОСВОБОЖДАВАНЕ НА БУТОНА ЗА ХОД ===
+    // === 2. ОСВОБОЖДАВАНЕ НА ИГРАТА ===
     const turnBtn = document.querySelector('.next-turn-btn');
-    if (turnBtn) turnBtn.disabled = false;
-
-    // === ОБНОВЯВАНЕ НА ИГРАТА ===
-    if (typeof window.updateAllUI === 'function') window.updateAllUI();
-    if (typeof window.renderFavoriteHeroesBar === 'function') window.renderFavoriteHeroesBar();
-    if (typeof window.saveGreatBulgariaGame === 'function') window.saveGreatBulgariaGame();
-
-    // Съобщение в летописа
-    if (window.addWorldEvent) {
-        const result = isVictory ? "Победа!" : "Поражение...";
-        window.addWorldEvent("⚔️ Турнирен двубой", result, isVictory ? "🏆" : "💀");
+    if (turnBtn) {
+        turnBtn.disabled = false;
+        turnBtn.style.opacity = "1";
     }
 
-    console.log("✅ Турнирът е отключен и продължава");
-}
+    // === 3. ОБНОВЯВАНЕ ===
+    if (typeof window.updateAllUI === 'function') window.updateAllUI();
+    if (typeof window.renderFavoriteHeroesBar === 'function') window.renderFavoriteHeroesBar();
+    if (typeof window.refreshAllHeroUI === 'function') window.refreshAllHeroUI();
 
-    // ==================== ПУБЛИЧНО API ====================
-    window.Battle = {
-        start: startBattle,
-        end: endGroupBattle,
-        refreshUI: refreshAllHeroUI,
-        getReinforcements: core.getReinforcements
-    };
+    // === 4. Летопис ===
+    if (window.addWorldEvent) {
+        const result = isVictory ? "Победа в турнирен двубой!" : "Поражение в турнирен двубой...";
+        window.addWorldEvent("🏆 Турнир на шампионите", result, isVictory ? "🏆" : "💀");
+    }
 
-    window.startBattle = window.Battle.start;
-    window.endGroupBattle = window.Battle.end;
-    window.refreshAllHeroUI = window.Battle.refreshUI;
+    console.log("✅ Турнирът е напълно отключен");
+};
 
-    console.log("✅ battle.js зареден (версия 9.4 – поддръжка за турнирни двубои 1v1)");
-})();
+ })();
