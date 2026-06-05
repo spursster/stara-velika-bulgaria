@@ -33,45 +33,41 @@ window.startGameCore = function() {
     }
 };
 // ==================== ОПРАВЯНЕ НА TURN PROCESS ЗА ТУРНИРА ====================
-if (typeof window.processTurn !== 'function') {
-    console.warn("⚠️ processTurn не е дефиниран, създавам основна версия");
-    window.processTurn = function() {
-        console.log("🔄 Ход (основен)");
-        if (window.gameTime) {
-            window.gameTime.seasonIndex++;
-            if (window.gameTime.seasonIndex > 3) {
-                window.gameTime.seasonIndex = 0;
-                if (window.gameTime.era === "пр.н.е." && window.gameTime.year > 0) {
-                    window.gameTime.year--;
-                    if (window.gameTime.year === 0) {
-                        window.gameTime.year = 1;
-                        window.gameTime.era = "от н.е.";
-                    }
-                } else {
-                    window.gameTime.year++;
-                }
-            }
-            if (typeof window.updateTimeUI === 'function') window.updateTimeUI();
-        }
-        if (typeof window.calculateEconomy === 'function') window.calculateEconomy();
-        if (typeof window.autonomousRegionConquest === 'function') window.autonomousRegionConquest();
-        if (typeof window.saveGreatBulgariaGame === 'function') window.saveGreatBulgariaGame();
-    };
-}
-
-// Опаковаме съществуващия processTurn, за да добавим турнирната логика
-const originalProcessTurn = window.processTurn;
+// Създаваме processTurn от нулата, като включваме цялата необходима логика (време, икономика, региони, турнир)
 window.processTurn = function() {
-    // Извикваме оригиналната логика
-    originalProcessTurn();
+    // 1. Време и сезони
+    if (window.gameTime) {
+        window.gameTime.seasonIndex++;
+        if (window.gameTime.seasonIndex > 3) {
+            window.gameTime.seasonIndex = 0;
+            if (window.gameTime.era === "пр.н.е." && window.gameTime.year > 0) {
+                window.gameTime.year--;
+                if (window.gameTime.year === 0) {
+                    window.gameTime.year = 1;
+                    window.gameTime.era = "от н.е.";
+                }
+            } else {
+                window.gameTime.year++;
+            }
+        }
+        if (typeof window.updateTimeUI === 'function') window.updateTimeUI();
+    }
+    // 2. Икономика и региони
+    if (typeof window.calculateEconomy === 'function') window.calculateEconomy();
+    if (typeof window.autonomousRegionConquest === 'function') window.autonomousRegionConquest();
+    if (typeof window.saveGreatBulgariaGame === 'function') window.saveGreatBulgariaGame();
     
-    // Добавяме турнирна логика
+    // 3. Турнирна логика (директно извикване на tournament методите)
     if (window.tournament) {
-        if (window.tournament.isActive()) {
-            window.tournament.advance();
+        if (window.tournament.isActive && window.tournament.isActive()) {
+            if (typeof window.tournament.advance === 'function') {
+                window.tournament.advance();
+            }
         } else {
-            window.tournament.checkAutoStart();
+            if (typeof window.tournament.checkAutoStart === 'function') {
+                window.tournament.checkAutoStart();
+            }
         }
     }
 };
-console.log("✅ processTurn обновен – турнирът ще напредва всеки ход");
+console.log("✅ processTurn дефиниран – с поддръжка на турнир");
