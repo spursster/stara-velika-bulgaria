@@ -303,6 +303,9 @@
     localStorage.removeItem('barracksFavorites');
     // ⭐ НОВ РЕД: изтриваме старата година на турнира при нова игра
     localStorage.removeItem('tournament_last_year');
+     if (window.tournament && typeof window.tournament.resetLastYear === 'function') {
+    window.tournament.resetLastYear();
+}
 
     window.gameTime = { seasonIndex: 0, year: 480, era: "пр.н.е." };
 
