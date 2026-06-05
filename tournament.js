@@ -1,5 +1,6 @@
 /**
  * tournament.js – Елиминационен турнир (само важни логове + обобщения след рунд)
+ * Версия: 5.2 – само мачове с герои на играча + полуфинали + финал
  */
 window.tournament = (function() {
     const MIN_YEARS_BETWEEN_TOURNAMENTS = 20;
@@ -55,7 +56,7 @@ window.tournament = (function() {
                         name: h.name || h.leaderName,
                         heroObj: h,
                         power: h.heroPower || 100,
-                        isPlayer: true
+                        isPlayer: true   // всички герои от worldData.clans са на играча
                     });
                 }
             }
@@ -104,20 +105,33 @@ window.tournament = (function() {
         return { winner, loser };
     }
 
+    // ⭐ Епически разказ само за важни мачове
     function logMatch(match, winner, loser, roundNumber, isSemifinal, isFinal, matchNumber) {
-        // Показваме само мачове, в които участва герой на играча, полуфинали и финал
         const isPlayerMatch = (match.heroA.isPlayer === true) || (match.heroB.isPlayer === true);
         if (!isFinal && !isSemifinal && !isPlayerMatch) return;
 
         let heroAName = match.heroA.name;
         let heroBName = match.heroB.name;
         let winnerName = winner.name;
+        let loserName = loser.name;
+        
         let narrative = `🏟️ Рунд ${roundNumber}, мач ${matchNumber}: ${heroAName} срещу ${heroBName}. Победител: ${winnerName}.`;
+        
+        // Епически разказ за финал
         if (isFinal) {
-            narrative = `🏆 **ФИНАЛ** 🏆\n${heroAName} срещу ${heroBName}. ${winnerName} става ШАМПИОН на турнира!`;
-        } else if (isSemifinal) {
-            narrative = `🌠 **ПОЛУФИНАЛ** 🌠\n${heroAName} срещу ${heroBName}. ${winnerName} победи.`;
+            narrative = `🏆 **ГРАНД ФИНАЛ** 🏆\nВ епична битка ${heroAName} и ${heroBName} се изправиха един срещу друг. След много кръв, пот и сълзи, ${winnerName} нанесе решителния удар и бе коронован за ШАМПИОН на турнира! 🎉`;
+        } 
+        // За полуфинал
+        else if (isSemifinal) {
+            narrative = `🌠 **ПОЛУФИНАЛ** 🌠\n${heroAName} срещу ${heroBName}. ${winnerName} показа невероятен героизъм и се класира за финала!`;
         }
+        // За мач с герой на играча – добавяме жанрови детайли
+        else if (isPlayerMatch) {
+            let winnerClass = winner.heroObj?.currentClass || "воин";
+            let loserClass = loser.heroObj?.currentClass || "воин";
+            narrative = `⚔️ **ВАЖЕН МАЧ** ⚔️\n${heroAName} (${winner === heroA ? winnerClass : loserClass}) и ${heroBName} (${winner === heroB ? winnerClass : loserClass}) се сражаваха яростно. ${winnerName} надделя с мъдрост и сила, пращайки ${loserName} в нокаут!`;
+        }
+        
         if (window.addWorldEvent) {
             window.addWorldEvent("🏆 ТУРНИРЕН МАЧ", narrative, "⚔️");
         }
@@ -153,7 +167,9 @@ window.tournament = (function() {
             if (currentRound === totalRounds && remainingHeroes.length === 1) isFinal = true;
 
             let result = simulateBattle(match.heroA, match.heroB);
+            // Записваме само ако трябва
             logMatch(match, result.winner, result.loser, currentRound, isSemifinal, isFinal, currentMatchIndex+1);
+            
             remainingHeroes.push(result.winner);
             currentMatchIndex++;
             matchesPlayed++;
@@ -167,6 +183,7 @@ window.tournament = (function() {
 
     function finishRound() {
         if (!tournamentActive) return;
+        
         if (remainingHeroes.length === 1) {
             winner = remainingHeroes[0];
             let finalMsg = `🏆 **Шампион** 🏆\n${winner.name} спечели турнира!`;
@@ -184,8 +201,9 @@ window.tournament = (function() {
             return;
         }
 
-        // Обобщение след рунд
+        // Обобщение след рунд (винаги се показва)
         log(`🎯 Рунд ${currentRound} завърши. Остават ${remainingHeroes.length} участници.`, "📊");
+        
         currentRound++;
         roundMatches = createMatches(remainingHeroes);
         remainingHeroes = [];
@@ -236,6 +254,7 @@ window.tournament = (function() {
         }
 
         totalRounds = Math.log2(targetCount);
+        // Разбъркваме
         for (let i = participants.length - 1; i > 0; i--) {
             let j = Math.floor(Math.random() * (i + 1));
             [participants[i], participants[j]] = [participants[j], participants[i]];
