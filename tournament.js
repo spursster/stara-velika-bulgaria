@@ -1,6 +1,8 @@
 /**
- * tournament.js – Турнир на шампионите (окончателно оправен)
- * Версия: 7.7 – гарантирано продължаване след двубой с нает герой
+ * tournament.js – Турнир на шампионите (окончателна версия 8.0)
+ * - Всички живи герои участват.
+ * - Само наетите (isHired) спират турнира за битка.
+ * - След битка турнирът продължава автоматично.
  */
 window.tournament = (function() {
     const MIN_YEARS_BETWEEN_TOURNAMENTS = 20;
@@ -48,6 +50,7 @@ window.tournament = (function() {
         return (window.gameTime.year - lastTournamentYear) >= MIN_YEARS_BETWEEN_TOURNAMENTS;
     }
 
+    // Всички живи герои (без филтър по isJoined), добавяме isHired
     function getAllLivingHeroes() {
         let heroes = [];
         if (window.worldData && window.worldData.clans) {
@@ -162,6 +165,7 @@ window.tournament = (function() {
             btnContainer.remove();
             startTournamentBattle(pending);
         };
+        // Блокираме бутона "Ход", за да не може играчът да прескочи битката
         const turnBtn = document.querySelector('.next-turn-btn');
         if (turnBtn) turnBtn.disabled = true;
     }
@@ -210,6 +214,7 @@ window.tournament = (function() {
         window.startBattle(tournamentEnemy);
     }
 
+    // ⭐ ТАЗИ ФУНКЦИЯ СЕ ИЗВИКВА ОТ battle.js СЛЕД КРАЙ НА БИТКАТА
     window._resolveTournamentMatch = function(isVictory, battleHeroes, enemies, regionName) {
         if (!window._pendingTournamentMatch) return;
         const pending = window._pendingTournamentMatch.pending;
@@ -226,6 +231,7 @@ window.tournament = (function() {
         window._pendingTournamentMatch = null;
         window._tournamentForcedHero = null;
         
+        // Освобождаваме бутона "Ход"
         const turnBtn = document.querySelector('.next-turn-btn');
         if (turnBtn) turnBtn.disabled = false;
         
@@ -236,19 +242,23 @@ window.tournament = (function() {
         
         console.log(`🔓 Мач завърши. currentMatchIndex = ${currentMatchIndex}, roundMatches.length = ${roundMatches.length}`);
         
-        if (currentMatchIndex >= roundMatches.length) {
-            finishRound();
+        // Автоматично продължаваме с останалите мачове в рунда
+        if (currentMatchIndex < roundMatches.length) {
+            // Продължаваме със следващия мач, без да чакаме "Ход"
+            setTimeout(() => {
+                if (window.tournament && window.tournament.isActive()) {
+                    window.tournament.advance();
+                }
+            }, 100);
         } else {
-            // Продължаваме със следващия мач в същия рунд
-            if (window.tournament.isActive()) {
-                window.tournament.advance();
-            }
+            // Рундът е завършил – преминаваме към следващия рунд
+            finishRound();
         }
     };
 
     function advanceTournament() {
         if (!tournamentActive) return;
-        if (tournamentPaused) return;
+        if (tournamentPaused) return;   // чакаме играч да изиграе битка
         if (!roundMatches.length) {
             finishRound();
             return;
@@ -264,7 +274,8 @@ window.tournament = (function() {
         if (match.heroB && match.heroB.isBye) {
             remainingHeroes.push(match.heroA);
             currentMatchIndex++;
-            advanceTournament();
+            // Продължаваме със следващия мач
+            setTimeout(() => advanceTournament(), 50);
             return;
         }
         
@@ -279,9 +290,10 @@ window.tournament = (function() {
             };
             tournamentPaused = true;
             showTournamentBattleButton(pendingMatch);
-            return;
+            return;   // чакаме играча
         }
         
+        // Симулираме битка между NPC
         let isSemifinal = (totalRounds - currentRound === 1 && remainingHeroes.length <= 4);
         let isFinal = (totalRounds - currentRound === 0 && remainingHeroes.length <= 2);
         if (currentRound === totalRounds && remainingHeroes.length === 1) isFinal = true;
@@ -294,6 +306,9 @@ window.tournament = (function() {
         
         if (currentMatchIndex >= roundMatches.length) {
             finishRound();
+        } else {
+            // Продължаваме със следващия мач (без да чакаме "Ход")
+            setTimeout(() => advanceTournament(), 50);
         }
     }
     
@@ -329,6 +344,9 @@ window.tournament = (function() {
             return;
         }
         log(`🏁 Започва Рунд ${currentRound} (${roundMatches.length} двубоя).`, "🏁");
+        
+        // Автоматично стартираме първия мач в новия рунд
+        setTimeout(() => advanceTournament(), 100);
     }
 
     function createMatches(participants) {
@@ -394,12 +412,13 @@ window.tournament = (function() {
             } else {
                 autoStartEnabled = false;
                 autoStartCounter = 0;
+                // Стартираме автоматично първия мач
+                setTimeout(() => advanceTournament(), 100);
             }
         }
     }
 
     function checkAutoStart() {
-        console.log(`🔍 checkAutoStart: autoStartEnabled=${autoStartEnabled}, lastTournamentYear=${lastTournamentYear}, counter=${autoStartCounter}`);
         if (!autoStartEnabled) return;
         if (tournamentActive) return;
         if (lastTournamentYear !== null) {
@@ -429,14 +448,16 @@ window.tournament = (function() {
     };
 })();
 
+// Презаписваме processTurn – но турнирът вече не зависи от "Ход" за напредване,
+// освен за автоматичното стартиране след 5 хода.
 const originalProcessTurn = window.processTurn;
 window.processTurn = function() {
     if (originalProcessTurn) originalProcessTurn();
     if (window.tournament) {
-        if (window.tournament.isActive()) {
-            window.tournament.advance();
-        } else {
+        if (!window.tournament.isActive()) {
             window.tournament.checkAutoStart();
         }
+        // Ако турнирът е активен, той сам си напредва (чрез setTimeout).
+        // Не извикваме advance() тук, за да не влизаме в конфликт.
     }
 };
