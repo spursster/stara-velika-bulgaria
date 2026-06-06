@@ -203,7 +203,7 @@ if (!hero) return;
         position: fixed; top: 0; left: 0; width: 100%; height: 100%;
         background: rgba(0,0,0,0.85); backdrop-filter: blur(6px);
         display: flex; justify-content: center; align-items: center;
-        z-index: 50001; font-family: 'Cinzel', serif; padding: 15px;
+        z-index: 400000; font-family: 'Cinzel', serif; padding: 15px;
         box-sizing: border-box;
     `;
 
