@@ -305,7 +305,11 @@ window.resolvePendingChoices = function() {
     
     for (let key in window.worldData.clans) {
         let hero = window.worldData.clans[key];
-        if (!hero.isJoined) continue;
+        if (!hero) continue;
+        
+        // ─────────────────────────────────────────────────────
+        // 1) Герои на играча (с бутони и отложени решения)
+        // ─────────────────────────────────────────────────────
         if (typeof isMyHero === 'function' && isMyHero(hero)) {
             // Точки умения
             if (window._pendingSkillPoints && window._pendingSkillPoints[hero.id] > 0 && hero.skillPoints > 0) {
@@ -325,6 +329,25 @@ window.resolvePendingChoices = function() {
                     if (window.showAdvisorMsg) window.showAdvisorMsg(`🤖 ${hero.name} автоматично прие клас "${newClassName}".`);
                     if (window.updateCharacterUI) window.updateCharacterUI(hero);
                     if (window.updateStrongestHeroUI) window.updateStrongestHeroUI();
+                }
+                delete window._pendingClassEvolution[hero.id];
+            }
+        } 
+        // ─────────────────────────────────────────────────────
+        // 2) Всички останали герои (включително ненаети) – автоматично
+        // ─────────────────────────────────────────────────────
+        else {
+            // Автоматично разпределяне на висящи точки
+            if (hero.skillPoints > 0 && typeof window.autoAssignSkillPoint === 'function') {
+                window.autoAssignSkillPoint(hero);
+            }
+            // Автоматично приемане на еволюция на клас
+            if (window._pendingClassEvolution && window._pendingClassEvolution[hero.id]) {
+                let newClassName = window._pendingClassEvolution[hero.id];
+                if (newClassName && hero.currentClass !== newClassName) {
+                    hero.currentClass = newClassName;
+                    if (window.applyClassBonuses) window.applyClassBonuses(hero, newClassName);
+                    if (window.addHeroLog) window.addHeroLog(hero, "🌟", `Автоматично прие клас "${newClassName}".`);
                 }
                 delete window._pendingClassEvolution[hero.id];
             }
