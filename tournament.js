@@ -1,6 +1,6 @@
 /**
- * tournament.js – Турнир на шампионите (с двубои)
- * Версия: 7.5 – с правилните имена и термини
+ * tournament.js – Турнир на шампионите (коригиран – всички герои участват, само наетите спират)
+ * Версия: 7.6 – базирана на работещата 7.3, но с включени всички живи герои
  */
 window.tournament = (function() {
     const MIN_YEARS_BETWEEN_TOURNAMENTS = 20;
@@ -48,6 +48,7 @@ window.tournament = (function() {
         return (window.gameTime.year - lastTournamentYear) >= MIN_YEARS_BETWEEN_TOURNAMENTS;
     }
 
+    // ⭐ ВСИЧКИ ЖИВИ ГЕРОИ (без isJoined филтър) – добавяме isHired
     function getAllLivingHeroes() {
         let heroes = [];
         if (window.worldData && window.worldData.clans) {
@@ -59,8 +60,8 @@ window.tournament = (function() {
                         name: h.name || h.leaderName,
                         heroObj: h,
                         power: h.heroPower || 100,
-                        isPlayer: true,
-                        isHired: h.isJoined === true
+                        isPlayer: true,               // за логове (всички са "играчи")
+                        isHired: h.isJoined === true  // ⭐ само наетите ще спират турнира
                     });
                 }
             }
@@ -109,8 +110,9 @@ window.tournament = (function() {
     }
 
     function logMatch(match, winner, loser, roundNumber, isSemifinal, isFinal, matchNumber) {
-        const isPlayerMatch = (match.heroA.isHired === true) || (match.heroB.isHired === true);
-        if (!isFinal && !isSemifinal && !isPlayerMatch) return;
+        // Важен е само ако участва нает герой
+        const isImportant = (match.heroA.isHired === true) || (match.heroB.isHired === true);
+        if (!isFinal && !isSemifinal && !isImportant) return;
 
         let heroAName = match.heroA.name;
         let heroBName = match.heroB.name;
@@ -121,7 +123,7 @@ window.tournament = (function() {
             narrative = `🏆 **ГРАНД ФИНАЛ** 🏆\n${heroAName} срещу ${heroBName}. ${winnerName} става ШАМПИОН на Турнира на шампионите! 🎉`;
         } else if (isSemifinal) {
             narrative = `🌠 **ПОЛУФИНАЛ** 🌠\n${heroAName} срещу ${heroBName}. ${winnerName} победи.`;
-        } else if (isPlayerMatch) {
+        } else if (isImportant) {
             narrative = `⚔️ **ВАЖЕН ДВУБОЙ** ⚔️\n${heroAName} срещу ${heroBName}. ${winnerName} надделя!`;
         }
         if (window.addWorldEvent) {
@@ -265,6 +267,7 @@ window.tournament = (function() {
             return;
         }
         
+        // ⭐ Проверка дали в мача участва нает герой (isHired)
         const hasHired = (match.heroA.isHired === true) || (match.heroB.isHired === true);
         if (hasHired && !pendingMatch) {
             pendingMatch = {
