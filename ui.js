@@ -1740,6 +1740,179 @@ if (typeof window.endGroupBattle === 'function') {
     console.log("✅ Перманентна поправка за HP инсталирана");
 }
 
+// ==================== ПОЛИТИЧЕСКА СИСТЕМА – UI ЗА СЪВЕТНИЦИ ====================
+function addCouncilButton() {
+    const bottomControls = document.getElementById('bottom-controls');
+    if (!bottomControls) return;
+    if (document.getElementById('council-btn')) return;
+    const councilBtn = document.createElement('button');
+    councilBtn.id = 'council-btn';
+    councilBtn.className = 'icon-btn';
+    councilBtn.innerHTML = '🏛️';
+    councilBtn.title = 'Управление на съветниците';
+    councilBtn.onclick = () => window.openCouncilUI();
+    // Вмъкваме преди бутона за класации или най-отзад
+    const leaderboardBtn = document.getElementById('leaderboard-btn');
+    if (leaderboardBtn) {
+        bottomControls.insertBefore(councilBtn, leaderboardBtn);
+    } else {
+        bottomControls.appendChild(councilBtn);
+    }
+}
+
+window.openCouncilUI = function() {
+    // Намираме главния герой (най-силния или селектирания)
+    let mainHero = null;
+    if (window.gameMode === 'solo' && window.currentHero) {
+        mainHero = window.currentHero;
+    } else {
+        mainHero = window.getSelectedHero ? window.getSelectedHero() : (window.getStrongestHero ? window.getStrongestHero() : null);
+    }
+    if (!mainHero || !mainHero.clan) {
+        if (window.showAdvisorPopup) window.showAdvisorPopup("ГРЕШКА", "Няма активен клан за управление на съветници!", "error");
+        return;
+    }
+    const clanName = mainHero.clan;
+    if (!window.clanCouncil) window.clanCouncil = {};
+    const council = window.clanCouncil[clanName] || {};
+    
+    // Събираме всички живи наети герои от този клан
+    const clanHeroes = [];
+    if (window.worldData && window.worldData.clans) {
+        for (let key in window.worldData.clans) {
+            let h = window.worldData.clans[key];
+            if (h.clan === clanName && h.isJoined === true && h.isAlive !== false) {
+                clanHeroes.push(h);
+            }
+        }
+    }
+    if (clanHeroes.length === 0) {
+        if (window.showAdvisorPopup) window.showAdvisorPopup("ГРЕШКА", "Няма други герои от този клан, които да назначите!", "error");
+        return;
+    }
+    
+    // Дефиниции на позициите
+    const positions = [
+        { id: "chancellor", name: "Канцлер", desc: "Увеличава дипломатическите бонуси" },
+        { id: "marshal", name: "Маршал", desc: "Увеличава военната мощ на армията" },
+        { id: "steward", name: "Стюард", desc: "Увеличава икономическите бонуси" },
+        { id: "spymaster", name: "Шпионски майстор", desc: "Подобрява защитата срещу шпионаж" },
+        { id: "chaplain", name: "Свещеник", desc: "Увеличава мистичните бонуси" }
+    ];
+    
+    // Генерираме HTML
+    let html = `
+        <div style="background: #0a0a2a; border: 2px solid #d4af37; border-radius: 24px; padding: 20px; max-width: 600px; width: 90%; text-align: center;">
+            <h2 style="color: #ffd700; margin: 0 0 10px 0;">🏛️ Държавен съвет на клан ${clanName}</h2>
+            <p style="color: #ccc; font-size: 12px;">Назначавайте герои от вашия клан на ключови позиции, за да получавате бонуси.</p>
+            <div style="max-height: 60vh; overflow-y: auto; margin: 15px 0;">
+                <table style="width: 100%; border-collapse: collapse; color: #eee;">
+                    <thead>
+                        <tr><th style="padding: 8px; text-align: left;">Позиция</th><th style="padding: 8px; text-align: left;">Назначен герой</th><th style="padding: 8px;">Действие</th></tr>
+                    </thead>
+                    <tbody>
+    `;
+    
+    for (let pos of positions) {
+        const currentHeroId = council[pos.id];
+        let currentHeroName = "Свободна";
+        let currentHeroObj = null;
+        if (currentHeroId) {
+            currentHeroObj = clanHeroes.find(h => h.id === currentHeroId || h.name === currentHeroId);
+            if (currentHeroObj) currentHeroName = currentHeroObj.name;
+            else currentHeroName = "Неизвестен";
+        }
+        
+        // Опции за падащо меню
+        let optionsHtml = `<option value="">-- Избери герой --</option>`;
+        for (let h of clanHeroes) {
+            let selected = (currentHeroObj && h.id === currentHeroObj.id) ? 'selected' : '';
+            optionsHtml += `<option value="${h.id}" ${selected}>${h.name} (Ниво ${h.level}, Сила ${h.heroPower})</option>`;
+        }
+        
+        html += `
+            <tr style="border-bottom: 1px solid #3a2a1a;">
+                <td style="padding: 8px;"><strong>${pos.name}</strong><br><span style="font-size: 10px; color: #aaa;">${pos.desc}</span></td>
+                <td style="padding: 8px;">
+                    <select id="council-select-${pos.id}" style="background: #1a1a2e; color: #ffdd99; border: 1px solid #d4af37; border-radius: 20px; padding: 4px 8px;">${optionsHtml}</select>
+                </td>
+                <td style="padding: 8px; text-align: center;">
+                    <button data-position="${pos.id}" class="appoint-council-btn" style="background: #2c5a2a; border: none; border-radius: 20px; padding: 4px 12px; color: white; cursor: pointer;">📌 Назначи</button>
+                    <button data-position="${pos.id}" class="dismiss-council-btn" style="background: #5a2a2a; border: none; border-radius: 20px; padding: 4px 12px; color: white; cursor: pointer; margin-left: 5px;">🗑️ Освободи</button>
+                </td>
+            </tr>
+        `;
+    }
+    
+    html += `
+                    </tbody>
+                </table>
+            </div>
+            <div style="margin-top: 15px; display: flex; gap: 10px; justify-content: center;">
+                <button id="close-council-modal" style="background: #2c1a0c; border: 1px solid #d4af37; border-radius: 30px; padding: 8px 20px; color: #ffdd99; cursor: pointer;">Затвори</button>
+            </div>
+        </div>
+    `;
+    
+    const modal = document.createElement('div');
+    modal.id = 'council-modal';
+    modal.style.cssText = `
+        position: fixed; top:0; left:0; width:100%; height:100%;
+        background: rgba(0,0,0,0.85); backdrop-filter: blur(8px);
+        z-index: 400000; display: flex; align-items: center; justify-content: center;
+        font-family: 'Cinzel', serif;
+    `;
+    modal.innerHTML = html;
+    document.body.appendChild(modal);
+    
+    // Обработка на бутоните
+    modal.querySelectorAll('.appoint-council-btn').forEach(btn => {
+        btn.onclick = () => {
+            const position = btn.getAttribute('data-position');
+            const select = modal.querySelector(`#council-select-${position}`);
+            const heroId = select.value;
+            if (!heroId) {
+                if (window.showAdvisorMsg) window.showAdvisorMsg("❌ Моля, изберете герой от списъка.");
+                return;
+            }
+            const hero = clanHeroes.find(h => h.id === heroId);
+            if (!hero) return;
+            if (typeof window.appointCouncilor === 'function') {
+                window.appointCouncilor(clanName, position, hero.id);
+                if (window.showAdvisorMsg) window.showAdvisorMsg(`✅ ${hero.name} беше назначен за ${window.getPositionName(position)}.`);
+                modal.remove();
+                window.openCouncilUI(); // опресняване
+            } else {
+                if (window.showAdvisorMsg) window.showAdvisorMsg("❌ Системата за съветници не е заредена (diplomacy.js).");
+            }
+        };
+    });
+    
+    modal.querySelectorAll('.dismiss-council-btn').forEach(btn => {
+        btn.onclick = () => {
+            const position = btn.getAttribute('data-position');
+            if (typeof window.dismissCouncilor === 'function') {
+                window.dismissCouncilor(clanName, position);
+                if (window.showAdvisorMsg) window.showAdvisorMsg(`✅ Позицията ${window.getPositionName(position)} освободена.`);
+                modal.remove();
+                window.openCouncilUI();
+            } else {
+                if (window.showAdvisorMsg) window.showAdvisorMsg("❌ Системата за съветници не е заредена.");
+            }
+        };
+    });
+    
+    const closeBtn = modal.querySelector('#close-council-modal');
+    if (closeBtn) closeBtn.onclick = () => modal.remove();
+    modal.onclick = (e) => { if (e.target === modal) modal.remove(); };
+};
+
+// Добавяме бутон след зареждане на DOM
+setTimeout(() => {
+    addCouncilButton();
+}, 1000);
+
+console.log("✅ ui.js – добавен UI за съветници (политическа система)");
 
 // ==================== КРАЙ НА ui.js ====================
 console.log("✅ ui.js зареден успешно - версия без toast");
