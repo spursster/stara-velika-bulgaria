@@ -474,87 +474,93 @@
 
     // ========== ИЗЧИСЛЕНИЯ НА АТАКИТЕ ==========
     function calculateHeroDamage(hero, target, currentRound, addLogFn, addNarrativeFn, animateHeroFn, animateEnemyFn, updateUIFn) {
-        let baseDamage = Math.max(1, Math.floor(hero.power * (0.5 + Math.random() * 0.7)));
-        let troopEffects = hero.troopEffects || {};
-        let petEffects = getPetEffects(hero.clanObj);
-        let skillBonuses = getAdvancedSkillCombatBonuses(hero.clanObj);
-        
-        let damageMultiplier = 1.0;
-        let critChance = 0.15;
-        let isFirstStrike = (currentRound === 1);
-        let isNight = (window.gameTime && window.gameTime.seasonIndex === 3);
-        
-        if (troopEffects.firstStrikeBonus && isFirstStrike) {
-            damageMultiplier += troopEffects.firstStrikeBonus;
-            if (addLogFn) addLogFn(`   ⚡ ${hero.name} използва Пикиране от войски (първи удар)!`);
-            if (addNarrativeFn) addNarrativeFn(`${hero.name} атакува пръв с Пикиране (+${Math.floor(troopEffects.firstStrikeBonus*100)}% щети).`);
-        }
-        if (skillBonuses.firstStrikeBonus && isFirstStrike) {
-            damageMultiplier += skillBonuses.firstStrikeBonus;
-            if (addLogFn) addLogFn(`   ⚡ ${hero.name} използва Първи удар от умения!`);
-            if (addNarrativeFn) addNarrativeFn(`${hero.name} нанася първи удар (умения: +${Math.floor(skillBonuses.firstStrikeBonus*100)}% щети).`);
-        }
-        if (troopEffects.nightFuryBonus && isNight) {
-            damageMultiplier += troopEffects.nightFuryBonus;
-            if (addLogFn) addLogFn(`   🌙 ${hero.name} активира Нощна ярост от войски!`);
-            if (addNarrativeFn) addNarrativeFn(`🌙 ${hero.name} активира Нощна ярост (+${Math.floor(troopEffects.nightFuryBonus*100)}% щети).`);
-        }
-        if (petEffects.damageBonus) {
-            damageMultiplier += petEffects.damageBonus;
-            if (addLogFn) addLogFn(`   🐾 ${hero.name} получава бонус щети от любимеца!`);
-            if (addNarrativeFn) addNarrativeFn(`${hero.name} получава бонус щети от любимец (${Math.floor(petEffects.damageBonus*100)}%).`);
-        }
-        if (skillBonuses.damageBonus) damageMultiplier += skillBonuses.damageBonus;
-        if (skillBonuses.attackBonus) baseDamage += skillBonuses.attackBonus;
-        if (troopEffects.critChanceBonus) critChance += troopEffects.critChanceBonus;
-        if (petEffects.critChanceBonus) critChance += petEffects.critChanceBonus;
-        if (skillBonuses.critChance) critChance += skillBonuses.critChance;
-        if (petEffects.fireDamage) {
-            let fireBonus = petEffects.fireDamage;
-            baseDamage += fireBonus;
-            if (addLogFn) addLogFn(`   🔥 ${hero.name} добавя ${fireBonus} огнени щети от любимеца!`);
-            if (addNarrativeFn) addNarrativeFn(`🔥 ${hero.name} изгаря врага с ${fireBonus} огнени щети (любимец).`);
-        }
-        if (skillBonuses.lowHpBonus && hero.hp < hero.maxHp * 0.3) {
-            let lowBonus = 1 + (hero.maxHp - hero.hp) / hero.maxHp * skillBonuses.lowHpBonus;
-            damageMultiplier += lowBonus - 1;
-            if (addLogFn) addLogFn(`   😡 ${hero.name} активира Берсерк (ниско здраве)!`);
-            if (addNarrativeFn) addNarrativeFn(`😡 ${hero.name} изпада в Берсерк и увеличава щетите!`);
-        }
-        
-        let finalDamage = Math.floor(baseDamage * damageMultiplier);
-        let isCrit = Math.random() < critChance;
-        if (isCrit) {
-            let critMultiplier = 1.8;
-            if (skillBonuses.critDamage) critMultiplier += skillBonuses.critDamage;
-            finalDamage = Math.floor(finalDamage * critMultiplier);
-        }
-        
-        let totalLifeSteal = troopEffects.lifeSteal + petEffects.lifeSteal;
-        let healAmount = 0;
-        if (totalLifeSteal > 0) {
-            healAmount = Math.floor(finalDamage * totalLifeSteal);
-            if (healAmount > 0) {
-                hero.hp = Math.min(hero.maxHp, hero.hp + healAmount);
-                if (addLogFn) addLogFn(`   💚 ${hero.name} възстановява ${healAmount} живот (Кръвопиец/Любимец)!`);
-                if (animateHeroFn) animateHeroFn(hero.id, healAmount, true);
-                if (addNarrativeFn) addNarrativeFn(`💚 ${hero.name} възстановява ${healAmount} живот.`);
-            }
-        }
-        
-        target.hp = Math.max(0, target.hp - finalDamage);
-        if (updateUIFn) updateUIFn();
-        if (addLogFn) addLogFn(`   ⚔️ ${hero.name} нанася ${finalDamage} щети на ${target.name}${isCrit ? ' 💥 КРИТИЧЕН!' : ''}`);
-        if (animateHeroFn) animateHeroFn(hero.id);
-        if (animateEnemyFn) animateEnemyFn(target.id || (target.isMonster ? "monster" : null), finalDamage);
-        if (addNarrativeFn) addNarrativeFn(`⚔️ ${hero.name} нанася ${finalDamage} щети${isCrit ? " (критичен удар!)" : ""} на ${target.name}.`);
-        
-        if (!_damageDealt[hero.id]) _damageDealt[hero.id] = 0;
-        _damageDealt[hero.id] += finalDamage;
-        
-        return finalDamage;
+    let baseDamage = Math.max(1, Math.floor(hero.power * (0.5 + Math.random() * 0.7)));
+    let troopEffects = hero.troopEffects || {};
+    let petEffects = getPetEffects(hero.clanObj);
+    let skillBonuses = getAdvancedSkillCombatBonuses(hero.clanObj);
+    // ========== ДОБАВЕНИ РЕДОВЕ ЗА ХАРАКТЕР ==========
+    let personalityBonuses = window.getPersonalityBonuses ? window.getPersonalityBonuses(hero.clanObj) : {};
+    // =================================================
+    
+    let damageMultiplier = 1.0;
+    let critChance = 0.15;
+    let isFirstStrike = (currentRound === 1);
+    let isNight = (window.gameTime && window.gameTime.seasonIndex === 3);
+    
+    if (troopEffects.firstStrikeBonus && isFirstStrike) {
+        damageMultiplier += troopEffects.firstStrikeBonus;
+        if (addLogFn) addLogFn(`   ⚡ ${hero.name} използва Пикиране от войски (първи удар)!`);
+        if (addNarrativeFn) addNarrativeFn(`${hero.name} атакува пръв с Пикиране (+${Math.floor(troopEffects.firstStrikeBonus*100)}% щети).`);
     }
-
+    if (skillBonuses.firstStrikeBonus && isFirstStrike) {
+        damageMultiplier += skillBonuses.firstStrikeBonus;
+        if (addLogFn) addLogFn(`   ⚡ ${hero.name} използва Първи удар от умения!`);
+        if (addNarrativeFn) addNarrativeFn(`${hero.name} нанася първи удар (умения: +${Math.floor(skillBonuses.firstStrikeBonus*100)}% щети).`);
+    }
+    if (troopEffects.nightFuryBonus && isNight) {
+        damageMultiplier += troopEffects.nightFuryBonus;
+        if (addLogFn) addLogFn(`   🌙 ${hero.name} активира Нощна ярост от войски!`);
+        if (addNarrativeFn) addNarrativeFn(`🌙 ${hero.name} активира Нощна ярост (+${Math.floor(troopEffects.nightFuryBonus*100)}% щети).`);
+    }
+    if (petEffects.damageBonus) {
+        damageMultiplier += petEffects.damageBonus;
+        if (addLogFn) addLogFn(`   🐾 ${hero.name} получава бонус щети от любимеца!`);
+        if (addNarrativeFn) addNarrativeFn(`${hero.name} получава бонус щети от любимец (${Math.floor(petEffects.damageBonus*100)}%).`);
+    }
+    if (skillBonuses.damageBonus) damageMultiplier += skillBonuses.damageBonus;
+    if (skillBonuses.attackBonus) baseDamage += skillBonuses.attackBonus;
+    if (troopEffects.critChanceBonus) critChance += troopEffects.critChanceBonus;
+    if (petEffects.critChanceBonus) critChance += petEffects.critChanceBonus;
+    if (skillBonuses.critChance) critChance += skillBonuses.critChance;
+    // ========== ДОБАВЕНИ БОНУСИ ОТ ХАРАКТЕР ==========
+    if (personalityBonuses.attackBonus) damageMultiplier += personalityBonuses.attackBonus;
+    if (personalityBonuses.critChanceBonus) critChance += personalityBonuses.critChanceBonus;
+    // =================================================
+    if (petEffects.fireDamage) {
+        let fireBonus = petEffects.fireDamage;
+        baseDamage += fireBonus;
+        if (addLogFn) addLogFn(`   🔥 ${hero.name} добавя ${fireBonus} огнени щети от любимеца!`);
+        if (addNarrativeFn) addNarrativeFn(`🔥 ${hero.name} изгаря врага с ${fireBonus} огнени щети (любимец).`);
+    }
+    if (skillBonuses.lowHpBonus && hero.hp < hero.maxHp * 0.3) {
+        let lowBonus = 1 + (hero.maxHp - hero.hp) / hero.maxHp * skillBonuses.lowHpBonus;
+        damageMultiplier += lowBonus - 1;
+        if (addLogFn) addLogFn(`   😡 ${hero.name} активира Берсерк (ниско здраве)!`);
+        if (addNarrativeFn) addNarrativeFn(`😡 ${hero.name} изпада в Берсерк и увеличава щетите!`);
+    }
+    
+    let finalDamage = Math.floor(baseDamage * damageMultiplier);
+    let isCrit = Math.random() < critChance;
+    if (isCrit) {
+        let critMultiplier = 1.8;
+        if (skillBonuses.critDamage) critMultiplier += skillBonuses.critDamage;
+        finalDamage = Math.floor(finalDamage * critMultiplier);
+    }
+    
+    let totalLifeSteal = troopEffects.lifeSteal + petEffects.lifeSteal;
+    let healAmount = 0;
+    if (totalLifeSteal > 0) {
+        healAmount = Math.floor(finalDamage * totalLifeSteal);
+        if (healAmount > 0) {
+            hero.hp = Math.min(hero.maxHp, hero.hp + healAmount);
+            if (addLogFn) addLogFn(`   💚 ${hero.name} възстановява ${healAmount} живот (Кръвопиец/Любимец)!`);
+            if (animateHeroFn) animateHeroFn(hero.id, healAmount, true);
+            if (addNarrativeFn) addNarrativeFn(`💚 ${hero.name} възстановява ${healAmount} живот.`);
+        }
+    }
+    
+    target.hp = Math.max(0, target.hp - finalDamage);
+    if (updateUIFn) updateUIFn();
+    if (addLogFn) addLogFn(`   ⚔️ ${hero.name} нанася ${finalDamage} щети на ${target.name}${isCrit ? ' 💥 КРИТИЧЕН!' : ''}`);
+    if (animateHeroFn) animateHeroFn(hero.id);
+    if (animateEnemyFn) animateEnemyFn(target.id || (target.isMonster ? "monster" : null), finalDamage);
+    if (addNarrativeFn) addNarrativeFn(`⚔️ ${hero.name} нанася ${finalDamage} щети${isCrit ? " (критичен удар!)" : ""} на ${target.name}.`);
+    
+    if (!_damageDealt[hero.id]) _damageDealt[hero.id] = 0;
+    _damageDealt[hero.id] += finalDamage;
+    
+    return finalDamage;
+}
     function calculateEnemyDamage(enemy, target, addLogFn, addNarrativeFn, animateEnemyFn, animateHeroFn, updateUIFn, shakeFn) {
         let damage = Math.floor(enemy.power * (0.35 + Math.random() * 0.55));
         damage = Math.max(1, damage);
