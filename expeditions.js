@@ -55,7 +55,9 @@ window.addPortalToRegion = function(regionName, world, enemyLevel) {
         enemyLevel: enemyLevel,
         explorationProgress: 0
     });
-    if (typeof window.refreshMap === 'function') window.refreshMap();
+  if (document.getElementById('interactive-map-modal') && typeof window.refreshMap === 'function') {
+    window.refreshMap();
+}
     return true;
 };
 
@@ -63,7 +65,9 @@ window.removePortalFromRegion = function(regionName) {
     const index = window.activePortals.findIndex(p => p.regionName === regionName);
     if (index !== -1) {
         window.activePortals.splice(index, 1);
-        if (typeof window.refreshMap === 'function') window.refreshMap();
+       if (document.getElementById('interactive-map-modal') && typeof window.refreshMap === 'function') {
+    window.refreshMap();
+}
         return true;
     }
     return false;
@@ -277,7 +281,9 @@ window.enterMysticPortal = function(regionName) {
                     if (window.showAdvisorMsg) window.showAdvisorMsg(`🌀 Порталът в ${regionName} се затвори след пълно проучване!`);
                 } else {
                     window.updatePortalContainerUI();
-                    if (typeof window.refreshMap === 'function') window.refreshMap();
+                   if (document.getElementById('interactive-map-modal') && typeof window.refreshMap === 'function') {
+    window.refreshMap();
+}
                 }
             } else {
                 if (window.showAdvisorMsg) window.showAdvisorMsg(`💔 Загубихте битката. Порталът в ${regionName} остава отворен.`);
