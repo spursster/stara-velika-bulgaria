@@ -1,6 +1,6 @@
 /**
- * tournament.js – Елиминационен турнир (с летопис и автоматично стартиране)
- * Версия: 7.3 – съобщенията отиват в летописа, дебъг логове
+ * tournament.js – Турнир на шампионите (с двубои)
+ * Версия: 7.5 – с правилните имена и термини
  */
 window.tournament = (function() {
     const MIN_YEARS_BETWEEN_TOURNAMENTS = 20;
@@ -24,7 +24,7 @@ window.tournament = (function() {
         autoStartEnabled = true;
         autoStartCounter = 0;
         localStorage.removeItem('tournament_last_year');
-        console.log("🔁 tournament.resetLastYear() извикана – таймерът е нулиран");
+        console.log("🔁 tournament.resetLastYear() извикана");
     }
 
     try {
@@ -53,13 +53,14 @@ window.tournament = (function() {
         if (window.worldData && window.worldData.clans) {
             for (let key in window.worldData.clans) {
                 let h = window.worldData.clans[key];
-                if (h.isJoined === true && h.isAlive !== false) {
+                if (h.isAlive !== false) {
                     heroes.push({
                         id: key,
                         name: h.name || h.leaderName,
                         heroObj: h,
                         power: h.heroPower || 100,
-                        isPlayer: true
+                        isPlayer: true,
+                        isHired: h.isJoined === true
                     });
                 }
             }
@@ -84,7 +85,7 @@ window.tournament = (function() {
             heroObj: null,
             power: 80 + Math.floor(Math.random() * 120),
             isPlayer: false,
-            isCivilization: true
+            isHired: false
         }));
     }
 
@@ -96,7 +97,7 @@ window.tournament = (function() {
             heroObj: null,
             power: 60 + Math.floor(Math.random() * 80),
             isPlayer: false,
-            isDarkHorse: true
+            isHired: false
         };
     }
 
@@ -108,31 +109,29 @@ window.tournament = (function() {
     }
 
     function logMatch(match, winner, loser, roundNumber, isSemifinal, isFinal, matchNumber) {
-        const isPlayerMatch = (match.heroA.isPlayer === true) || (match.heroB.isPlayer === true);
+        const isPlayerMatch = (match.heroA.isHired === true) || (match.heroB.isHired === true);
         if (!isFinal && !isSemifinal && !isPlayerMatch) return;
 
         let heroAName = match.heroA.name;
         let heroBName = match.heroB.name;
         let winnerName = winner.name;
-        let loserName = loser.name;
         
-        let narrative = `🏟️ Рунд ${roundNumber}, мач ${matchNumber}: ${heroAName} срещу ${heroBName}. Победител: ${winnerName}.`;
+        let narrative = `🏟️ Рунд ${roundNumber}, двубой ${matchNumber}: ${heroAName} срещу ${heroBName}. Победител: ${winnerName}.`;
         if (isFinal) {
-            narrative = `🏆 **ГРАНД ФИНАЛ** 🏆\n${heroAName} срещу ${heroBName}. ${winnerName} става ШАМПИОН! 🎉`;
+            narrative = `🏆 **ГРАНД ФИНАЛ** 🏆\n${heroAName} срещу ${heroBName}. ${winnerName} става ШАМПИОН на Турнира на шампионите! 🎉`;
         } else if (isSemifinal) {
             narrative = `🌠 **ПОЛУФИНАЛ** 🌠\n${heroAName} срещу ${heroBName}. ${winnerName} победи.`;
         } else if (isPlayerMatch) {
-            narrative = `⚔️ **ВАЖЕН МАЧ** ⚔️\n${heroAName} срещу ${heroBName}. ${winnerName} надделя!`;
+            narrative = `⚔️ **ВАЖЕН ДВУБОЙ** ⚔️\n${heroAName} срещу ${heroBName}. ${winnerName} надделя!`;
         }
         if (window.addWorldEvent) {
-            window.addWorldEvent("🏆 ТУРНИРЕН МАЧ", narrative, "⚔️");
+            window.addWorldEvent("🏆 ТУРНИР НА ШАМПИОНИТЕ", narrative, "⚔️");
         }
     }
 
-    // ⭐ НОВА ВЕРСИЯ НА log – директно добавя в летописа
     function log(message, icon = "🏆") {
         if (window.addWorldEvent) {
-            window.addWorldEvent("ТУРНИР", message, icon);
+            window.addWorldEvent("ТУРНИР НА ШАМПИОНИТЕ", message, icon);
         } else {
             console.log(`${icon} ${message}`);
         }
@@ -142,8 +141,8 @@ window.tournament = (function() {
         const match = pending.match;
         const heroA = match.heroA;
         const heroB = match.heroB;
-        const playerHero = heroA.isPlayer ? heroA : (heroB.isPlayer ? heroB : null);
-        const opponent = heroA.isPlayer ? heroB : heroA;
+        const playerHero = heroA.isHired ? heroA : (heroB.isHired ? heroB : null);
+        const opponent = heroA.isHired ? heroB : heroA;
         if (!playerHero) return;
 
         let btnContainer = document.getElementById('tournament-battle-container');
@@ -169,8 +168,8 @@ window.tournament = (function() {
 
     function startTournamentBattle(pending) {
         const match = pending.match;
-        const playerHero = match.heroA.isPlayer ? match.heroA : match.heroB;
-        const opponentHero = match.heroA.isPlayer ? match.heroB : match.heroA;
+        const playerHero = match.heroA.isHired ? match.heroA : match.heroB;
+        const opponentHero = match.heroA.isHired ? match.heroB : match.heroA;
         
         if (!playerHero || !playerHero.heroObj) {
             console.error("❌ Турнир: Няма герой на играча за този двубой!");
@@ -218,9 +217,9 @@ window.tournament = (function() {
         
         let winnerHero;
         if (isVictory) {
-            winnerHero = match.heroA.isPlayer ? match.heroA : match.heroB;
+            winnerHero = match.heroA.isHired ? match.heroA : match.heroB;
         } else {
-            winnerHero = match.heroA.isPlayer ? match.heroB : match.heroA;
+            winnerHero = match.heroA.isHired ? match.heroB : match.heroA;
         }
         
         remainingHeroes.push(winnerHero);
@@ -266,8 +265,8 @@ window.tournament = (function() {
             return;
         }
         
-        const isPlayerMatch = (match.heroA.isPlayer === true) || (match.heroB.isPlayer === true);
-        if (isPlayerMatch && !pendingMatch) {
+        const hasHired = (match.heroA.isHired === true) || (match.heroB.isHired === true);
+        if (hasHired && !pendingMatch) {
             pendingMatch = {
                 match: match,
                 round: currentRound,
@@ -300,8 +299,8 @@ window.tournament = (function() {
         
         if (remainingHeroes.length === 1) {
             winner = remainingHeroes[0];
-            let finalMsg = `🏆 **Шампион** 🏆\n${winner.name} спечели турнира!`;
-            if (winner.isPlayer && winner.heroObj) {
+            let finalMsg = `🏆 **Шампион на Турнира на шампионите** 🏆\n${winner.name} спечели турнира!`;
+            if (winner.isHired && winner.heroObj) {
                 let petIds = Object.keys(window.divinePets || {});
                 if (petIds.length) {
                     let randomPet = petIds[Math.floor(Math.random() * petIds.length)];
@@ -326,7 +325,7 @@ window.tournament = (function() {
             tournamentActive = false;
             return;
         }
-        log(`🏁 Започва Рунд ${currentRound} (${roundMatches.length} мача).`, "🏁");
+        log(`🏁 Започва Рунд ${currentRound} (${roundMatches.length} двубоя).`, "🏁");
     }
 
     function createMatches(participants) {
@@ -335,7 +334,7 @@ window.tournament = (function() {
             if (i+1 < participants.length) {
                 matches.push({ heroA: participants[i], heroB: participants[i+1] });
             } else {
-                matches.push({ heroA: participants[i], heroB: { name: "Почивка", power: 0, isPlayer: false, isBye: true } });
+                matches.push({ heroA: participants[i], heroB: { name: "Почивка", power: 0, isPlayer: false, isHired: false, isBye: true } });
             }
         }
         return matches;
@@ -380,7 +379,7 @@ window.tournament = (function() {
         tournamentActive = true;
         pendingMatch = null;
         tournamentPaused = false;
-        log(`🏆 ЗАПОЧВА ТУРНИР! ${participants.length} участници, ${totalRounds} рунда.`, "🏆");
+        log(`🏆 ЗАПОЧВА ТУРНИР НА ШАМПИОНИТЕ! ${participants.length} участници, ${totalRounds} рунда.`, "🏆");
         return true;
     }
 
@@ -388,7 +387,7 @@ window.tournament = (function() {
         if (prepareTournament()) {
             if (!roundMatches.length) {
                 tournamentActive = false;
-                log("Не може да се стартира - няма мачове.", "❌");
+                log("Не може да се стартира - няма двубои.", "❌");
             } else {
                 autoStartEnabled = false;
                 autoStartCounter = 0;
@@ -406,7 +405,7 @@ window.tournament = (function() {
         }
         autoStartCounter++;
         if (autoStartCounter >= 5) {
-            log("Автоматично стартиране на турнира след 5 хода.", "⏰");
+            log("Автоматично стартиране на Турнира на шампионите след 5 хода.", "⏰");
             startTournament();
             autoStartEnabled = false;
             autoStartCounter = 0;
