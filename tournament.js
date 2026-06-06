@@ -322,14 +322,18 @@ window.tournament = (function() {
         if (remainingHeroes.length === 1) {
             winner = remainingHeroes[0];
             let finalMsg = `🏆 **Шампион на Турнира на шампионите** 🏆\n${winner.name} спечели турнира!`;
-            if (winner.isHired && winner.heroObj) {
-                let petIds = Object.keys(window.divinePets || {});
-                if (petIds.length) {
-                    let randomPet = petIds[Math.floor(Math.random() * petIds.length)];
-                    winner.heroObj.pet = randomPet;
-                    finalMsg += ` Награда: ${winner.name} получава ${window.divinePets[randomPet].name}! 🐉`;
-                }
-            }
+           if (winner.isHired && winner.heroObj) {
+    let petIds = Object.keys(window.divinePets || {});
+    if (petIds.length) {
+        let randomPet = petIds[Math.floor(Math.random() * petIds.length)];
+        winner.heroObj.pet = randomPet;
+        // Автоматично екипиране (преизчисляване на силата)
+        if (winner.heroObj.isAuto && typeof window.autoEquipHero === 'function') {
+            window.autoEquipHero(winner.heroObj);
+        }
+        finalMsg += ` Награда: ${winner.name} получава ${window.divinePets[randomPet].name}! 🐉`;
+    }
+}
             log(finalMsg, "🏆");
             tournamentActive = false;
             saveLastTournamentYear();
