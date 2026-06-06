@@ -255,7 +255,13 @@ window.proposeMarriage = function(clan, cost, successChance) {
     
     if (!window.clanRelations) window.clanRelations = {};
     let currentRel = window.clanRelations[clan] || 40;
-    let finalChance = Math.min(95, successChance + Math.floor((currentRel - 40) * 0.5));
+    
+    // ========== ДОБАВЕНИ БОНУСИ ОТ ХАРАКТЕР ==========
+    let personalityBonuses = window.getPersonalityBonuses ? window.getPersonalityBonuses(hero) : {};
+    let diplomacyMod = (personalityBonuses.diplomacyBonus || 0) * 10; // +10% за всяка 0.1 бонус
+    let finalChance = Math.min(95, successChance + Math.floor((currentRel - 40) * 0.5) + diplomacyMod);
+    // =================================================
+    
     let roll = Math.random() * 100;
     
     hero.gold -= cost;
