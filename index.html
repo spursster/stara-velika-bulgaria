@@ -520,31 +520,7 @@
 </script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 
-<script>
-(function() {
-    const originalInspect = window.inspectRegion;
-    if (originalInspect) {
-        window.inspectRegion = function(regionName) {
-            originalInspect(regionName);
-            setTimeout(() => {
-                const modal = document.getElementById('region-inspect-overlay');
-                if (modal) modal.style.zIndex = '300000';
-            }, 50);
-        };
-    }
 
-
-<script>
-(function enableTouchScroll() {
-    const el = document.getElementById('bottom-controls');
-    if (!el) return;
-    el.addEventListener('touchmove', function(e) {
-        e.stopPropagation();
-    }, { passive: false });
-    el.style.touchAction = 'pan-x pan-y';
-    console.log('✅ Хоризонталното плъзгане за долната лента е активирано.');
-})();
-</script>
 
 
     <script>
