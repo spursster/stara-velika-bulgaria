@@ -4,6 +4,23 @@
  * - Линиите се генерират автоматично между близки региони (разстояние < 2.5 градуса)
  * - Запазва zoom, pan, клъстери, цветове според притежател
  */
+// Най-отгоре във файла:
+let blockAutoMap = false;
+
+window.openInteractiveMap = function(force = false) {
+    if (!force && blockAutoMap) {
+        console.log("Картата е блокирана за автоматично отваряне.");
+        return;
+    }
+    console.trace("openInteractiveMap called from:");
+    // ... останалият код ...
+};
+
+// Тази функция да се вика само от бутона
+window.userRequestMap = function() {
+    blockAutoMap = false;
+    window.openInteractiveMap(true);
+};
 
 window.openInteractiveMap = function() {
     // Проверка за Leaflet
