@@ -363,10 +363,13 @@ window.tournament = (function() {
             saveLastTournamentYear();
             // Записваме победителя в класацията
 if (winner && winner.heroObj && window.gameTime) {
-    let power = winner.heroObj.heroPower || winner.power || 100;
-    let className = winner.heroObj.currentClass || winner.className || "Воевода";
-    let petName = winner.heroObj.pet ? (window.divinePets?.[winner.heroObj.pet]?.name || winner.heroObj.pet) : null;
-    addTournamentWinner(winner.heroObj, window.gameTime.year, power, className, petName);
+    window.addTournamentWinner(
+        winner.heroObj,
+        window.gameTime.year,
+        winner.heroObj.heroPower || winner.power || 100,
+        winner.heroObj.currentClass,
+        winner.heroObj.pet ? (window.divinePets?.[winner.heroObj.pet]?.name || winner.heroObj.pet) : null
+    );
 }
             return;
         }
