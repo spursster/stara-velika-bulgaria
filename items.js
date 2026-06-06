@@ -5,6 +5,9 @@
 ==========================================================================
 */
 window.pendingSetBonuses = {};
+function isTournamentActive() {
+    return window.tournament && typeof window.tournament.isActive === 'function' && window.tournament.isActive();
+}
 window.artifactSalvageCurrency = 0;
 
 function getMainHeroForItems() {
@@ -71,7 +74,13 @@ window.checkSetCompletion = function(hero) {
     }
     for (let setKey in setCounts) {
         if (setCounts[setKey] >= 2 && !hero.activeSetBonuses?.[setKey]) {
-            if (!window.pendingSetBonuses[setKey]) {
+            if (isTournamentActive()) {
+                // По време на турнир – автоматично активиране на сета
+                if (!hero.activeSetBonuses) hero.activeSetBonuses = {};
+                hero.activeSetBonuses[setKey] = true;
+                if (window.recalculateHeroPower) window.recalculateHeroPower(hero);
+                if (window.showAdvisorMsg) window.showAdvisorMsg(`✨ Автоматично активиран сет "${setKey}" (по време на турнир).`);
+            } else if (!window.pendingSetBonuses[setKey]) {
                 window.pendingSetBonuses[setKey] = hero.id;
                 if (window.ChronicleEvents && typeof window.ChronicleEvents.generateSetBonusOffer === 'function') {
                     const ev = window.ChronicleEvents.generateSetBonusOffer(setKey, setCounts[setKey], hero);
