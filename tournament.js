@@ -175,22 +175,27 @@ window.tournament = (function() {
     // ⭐ НОВА ФУНКЦИЯ: стартира битка за турнирния двубой (използва се само при мач с играч)
     function startTournamentBattle(pending) {
         const match = pending.match;
-        const playerHeroObj = (match.heroA.isPlayer ? match.heroA.heroObj : match.heroB.heroObj);
-        const opponentHero = (match.heroA.isPlayer ? match.heroB : match.heroA);
+        const playerHero = match.heroA.isPlayer ? match.heroA : match.heroB;
+        const opponentHero = match.heroA.isPlayer ? match.heroB : match.heroA;
         
-        if (!playerHeroObj) {
+        if (!playerHero || !playerHero.heroObj) {
             console.error("❌ Турнир: Няма герой на играча за този двубой!");
             return;
         }
         
-        // Задаваме глобалния флаг, който battle-core.js ще използва
-        window._tournamentForcedHero = playerHeroObj;
-        window._tournamentForcedHero._isTournamentForced = true;
+        const playerHeroObj = playerHero.heroObj;
         
-        console.log(`🏆 Турнирен двубой: играчът изпраща герой: ${playerHeroObj.name} (id: ${playerHeroObj.id})`);
+        // ⭐ Създаваме обект за принудително форсиране – добавяме id от участника
+        window._tournamentForcedHero = {
+            ...playerHeroObj,
+            id: playerHero.id,                // ⬅️ това решава проблема с undefined
+            _isTournamentForced: true
+        };
+        
+        console.log(`🏆 Турнирен двубой: играчът изпраща герой: ${playerHero.name} (id: ${playerHero.id})`);
         
         const tournamentEnemy = {
-            name: opponentHero.name,
+            name: opponentHero.name,          // opponentHero.name трябва да е стринг
             armySize: opponentHero.power,
             defenseLevel: 1,
             isTournamentDuel: true,
@@ -202,6 +207,14 @@ window.tournament = (function() {
             playerHeroObj: playerHeroObj,
             opponentHero: opponentHero
         };
+        
+        // Проверка дали startBattle съществува
+        if (typeof window.startBattle !== 'function') {
+            console.error("❌ window.startBattle не е функция! battle.js не е зареден правилно.");
+            // Може да покажем съобщение на играча
+            if (window.showAdvisorMsg) window.showAdvisorMsg("Грешка: Бойната система не е заредена. Опитайте да презаредите играта.");
+            return;
+        }
         
         window.startBattle(tournamentEnemy);
     }
