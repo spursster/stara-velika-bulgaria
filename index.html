@@ -344,21 +344,7 @@
         window.openRegionsMap = function() {};
     }
 
-    // Заглушка за startBattle (ако липсва)
-    if (typeof window.startBattle !== 'function') {
-        window.startBattle = function(region) {
-            console.log(`Битка в ${region} (симулация)`);
-            let hero = null;
-            if (window.gameMode === 'solo') hero = window.currentHero;
-            else if (typeof window.getStrongestHero === 'function') hero = window.getStrongestHero();
-            if (hero && window.gainHeroXP) {
-                let xp = 50 + Math.floor(Math.random() * 80);
-                window.gainHeroXP(hero, xp);
-                if (window.addWorldEvent) window.addWorldEvent(`⚔️ Битка в ${region}`, `${hero.name} победи! +${xp} XP`, "⚔️");
-                else alert(`Победа! +${xp} XP`);
-            } else alert("Не може да се получи XP");
-        };
-    }
+   
 
     // Инициализация на летописа (worldEvents)
     if (!window.worldEvents) window.worldEvents = [];
