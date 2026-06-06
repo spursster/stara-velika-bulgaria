@@ -1,6 +1,6 @@
 /**
- * tournament.js – Елиминационен турнир (оправена логика на рундове)
- * Версия: 5.3 – премахнат лимит MATCHES_PER_TURN за тест
+ * tournament.js – Елиминационен турнир (поетапно, с пауза при играч)
+ * Версия: 7.2 – само наети герои, един мач на ход, поддръжка на пауза
  */
 window.tournament = (function() {
     const MIN_YEARS_BETWEEN_TOURNAMENTS = 20;
@@ -14,6 +14,11 @@ window.tournament = (function() {
     let lastTournamentYear = null;
     let autoStartCounter = 0;
     let autoStartEnabled = true;
+
+    // Нови променливи за поетапно изпълнение
+    let currentMatchIndex = 0;      // кой мач от roundMatches се изпълнява в момента
+    let pendingMatch = null;         // { match, round, matchNumber, isSemifinal, isFinal }
+    let tournamentPaused = false;    // дали чакаме играч да изиграе битка
 
     function resetLastYear() {
         lastTournamentYear = null;
@@ -43,12 +48,13 @@ window.tournament = (function() {
         return (window.gameTime.year - lastTournamentYear) >= MIN_YEARS_BETWEEN_TOURNAMENTS;
     }
 
+    // ⭐ ПРОМЕНЕНО: Взимаме само наетите герои (isJoined === true)
     function getAllLivingHeroes() {
         let heroes = [];
         if (window.worldData && window.worldData.clans) {
             for (let key in window.worldData.clans) {
                 let h = window.worldData.clans[key];
-                if (h.isAlive !== false) {
+                if (h.isJoined === true && h.isAlive !== false) {
                     heroes.push({
                         id: key,
                         name: h.name || h.leaderName,
@@ -62,7 +68,7 @@ window.tournament = (function() {
         return heroes;
     }
 
-    function getAllCivilizations() { /* същото като преди */ 
+    function getAllCivilizations() {
         return [
             "Елфийско кралство", "Двор на феите", "Небесна империя", "Оркска орда",
             "Демонични легиони", "Царство на сенките", "Драконови лордове", "Легион на мъртвите",
@@ -134,9 +140,120 @@ window.tournament = (function() {
         console.log(fullMessage);
     }
 
-    // ОСНОВНА ПРОМЯНА: Изиграваме ВСИЧКИ мачове от рунда наведнъж
+    // ⭐ НОВА ФУНКЦИЯ: показва бутон за битка и спира турнира
+    function showTournamentBattleButton(pending) {
+        const match = pending.match;
+        const heroA = match.heroA;
+        const heroB = match.heroB;
+        const playerHero = heroA.isPlayer ? heroA : (heroB.isPlayer ? heroB : null);
+        const opponent = heroA.isPlayer ? heroB : heroA;
+        if (!playerHero) return;
+
+        let btnContainer = document.getElementById('tournament-battle-container');
+        if (!btnContainer) {
+            btnContainer = document.createElement('div');
+            btnContainer.id = 'tournament-battle-container';
+            btnContainer.style.cssText = 'position:fixed; bottom:80px; left:50%; transform:translateX(-50%); z-index:10000; background:rgba(0,0,0,0.85); padding:8px 16px; border-radius:40px; border:2px solid #d4af37; backdrop-filter:blur(4px);';
+            document.body.appendChild(btnContainer);
+        }
+        btnContainer.innerHTML = `
+            <button id="fight-tournament-btn" style="background:#ff6600; border:none; border-radius:40px; padding:8px 20px; color:white; font-weight:bold; cursor:pointer; font-size:14px;">
+                ⚔️ ДВУБОЙ: ${playerHero.name} срещу ${opponent.name} ⚔️
+            </button>
+        `;
+        const fightBtn = document.getElementById('fight-tournament-btn');
+        fightBtn.onclick = () => {
+            btnContainer.remove();
+            startTournamentBattle(pending);
+        };
+
+        // Блокираме бутона "Ход"
+        const turnBtn = document.querySelector('.next-turn-btn');
+        if (turnBtn) turnBtn.disabled = true;
+    }
+
+    // ⭐ НОВА ФУНКЦИЯ: стартира битка за турнирния двубой (използва се само при мач с играч)
+    function startTournamentBattle(pending) {
+        const match = pending.match;
+        const playerHeroObj = (match.heroA.isPlayer ? match.heroA.heroObj : match.heroB.heroObj);
+        const opponentHero = (match.heroA.isPlayer ? match.heroB : match.heroA);
+        
+        if (!playerHeroObj) {
+            console.error("❌ Турнир: Няма герой на играча за този двубой!");
+            return;
+        }
+        
+        // Задаваме глобалния флаг, който battle-core.js ще използва
+        window._tournamentForcedHero = playerHeroObj;
+        window._tournamentForcedHero._isTournamentForced = true;
+        
+        console.log(`🏆 Турнирен двубой: играчът изпраща герой: ${playerHeroObj.name} (id: ${playerHeroObj.id})`);
+        
+        const tournamentEnemy = {
+            name: opponentHero.name,
+            armySize: opponentHero.power,
+            defenseLevel: 1,
+            isTournamentDuel: true,
+            tournamentOpponent: opponentHero
+        };
+        
+        window._pendingTournamentMatch = {
+            pending: pending,
+            playerHeroObj: playerHeroObj,
+            opponentHero: opponentHero
+        };
+        
+        window.startBattle(tournamentEnemy);
+    }
+
+    // ⭐ ТАЗИ ФУНКЦИЯ СЕ ИЗВИКВА ОТ battle.js (чрез endGroupBattle) СЛЕД ПРИКЛЮЧВАНЕ НА БИТКАТА
+    window._resolveTournamentMatch = function(isVictory, battleHeroes, enemies, regionName) {
+        if (!window._pendingTournamentMatch) return;
+        const pending = window._pendingTournamentMatch.pending;
+        const match = pending.match;
+        
+        // Определяме победител
+        let winnerHero;
+        if (isVictory) {
+            winnerHero = match.heroA.isPlayer ? match.heroA : match.heroB;
+        } else {
+            winnerHero = match.heroA.isPlayer ? match.heroB : match.heroA;
+        }
+        
+        // Добавяме победителя в списъка за следващия рунд
+        remainingHeroes.push(winnerHero);
+        
+        // Изчистваме глобалните флагове
+        window._pendingTournamentMatch = null;
+        window._tournamentForcedHero = null;
+        
+        // Освобождаваме бутона "Ход"
+        const turnBtn = document.querySelector('.next-turn-btn');
+        if (turnBtn) turnBtn.disabled = false;
+        
+        // Премахваме pending мача и паузата
+        pendingMatch = null;
+        tournamentPaused = false;
+        
+        // Увеличаваме индекса на мачовете (този мач е изигран)
+        currentMatchIndex++;
+        
+        // Ако сме стигнали края на рунда, го финализираме
+        if (currentMatchIndex >= roundMatches.length) {
+            finishRound();
+        } else {
+            // Иначе продължаваме със следващия мач в същия рунд
+            // Но трябва да извикаме advance отново, за да обработи следващия мач
+            if (window.tournament.isActive()) {
+                window.tournament.advance();
+            }
+        }
+    };
+
+    // ⭐ НОВА ВЕРСИЯ НА advanceTournament – изпълнява само един мач на ход (или на извикване)
     function advanceTournament() {
         if (!tournamentActive) return;
+        if (tournamentPaused) return;  // чакаме играч да изиграе битка
         
         // Ако няма текущи мачове, опитай да финишираш рунда (това може да стане само при победа)
         if (!roundMatches.length) {
@@ -144,25 +261,57 @@ window.tournament = (function() {
             return;
         }
         
-        // Изиграваме всички мачове от текущия рунд
-        for (let i = 0; i < roundMatches.length; i++) {
-            let match = roundMatches[i];
-            if (!match) continue;
-            if (match.heroB && match.heroB.isBye) {
-                remainingHeroes.push(match.heroA);
-                continue;
-            }
-            let isSemifinal = (totalRounds - currentRound === 1 && remainingHeroes.length <= 4);
-            let isFinal = (totalRounds - currentRound === 0 && remainingHeroes.length <= 2);
-            if (currentRound === totalRounds && remainingHeroes.length === 1) isFinal = true;
-            
-            let result = simulateBattle(match.heroA, match.heroB);
-            logMatch(match, result.winner, result.loser, currentRound, isSemifinal, isFinal, i+1);
-            remainingHeroes.push(result.winner);
+        // Ако сме изиграли всички мачове в рунда, финишираме
+        if (currentMatchIndex >= roundMatches.length) {
+            finishRound();
+            return;
         }
         
-        // Рундът приключи – извикваме finishRound
-        finishRound();
+        // Вземаме следващия мач
+        let match = roundMatches[currentMatchIndex];
+        if (!match) return;
+        
+        // Проверка за "почивка" (bye)
+        if (match.heroB && match.heroB.isBye) {
+            remainingHeroes.push(match.heroA);
+            currentMatchIndex++;
+            // След като обработим byе, продължаваме със следващия мач (рекурсивно, но без риск от безкраен цикъл)
+            advanceTournament();
+            return;
+        }
+        
+        // Проверка дали това е мач с герой на играча
+        const isPlayerMatch = (match.heroA.isPlayer === true) || (match.heroB.isPlayer === true);
+        if (isPlayerMatch && !pendingMatch) {
+            // Спираме турнира и запазваме този мач
+            pendingMatch = {
+                match: match,
+                round: currentRound,
+                matchNumber: currentMatchIndex + 1,
+                isSemifinal: (totalRounds - currentRound === 1 && remainingHeroes.length <= 4),
+                isFinal: (totalRounds - currentRound === 0 && remainingHeroes.length <= 2)
+            };
+            tournamentPaused = true;
+            showTournamentBattleButton(pendingMatch);
+            return;   // спираме – чакаме играча
+        }
+        
+        // Иначе – симулираме битката между двама NPC (или NPC с тъмен конник и т.н.)
+        let isSemifinal = (totalRounds - currentRound === 1 && remainingHeroes.length <= 4);
+        let isFinal = (totalRounds - currentRound === 0 && remainingHeroes.length <= 2);
+        if (currentRound === totalRounds && remainingHeroes.length === 1) isFinal = true;
+        
+        let result = simulateBattle(match.heroA, match.heroB);
+        logMatch(match, result.winner, result.loser, currentRound, isSemifinal, isFinal, currentMatchIndex + 1);
+        remainingHeroes.push(result.winner);
+        
+        currentMatchIndex++;
+        
+        // Ако сме изиграли всички мачове, финишираме рунда
+        if (currentMatchIndex >= roundMatches.length) {
+            finishRound();
+        }
+        // Няма нужда да извикваме advance рекурсивно – играчът ще натисне "Ход" отново
     }
     
     function finishRound() {
@@ -190,6 +339,7 @@ window.tournament = (function() {
         currentRound++;
         roundMatches = createMatches(remainingHeroes);
         remainingHeroes = [];
+        currentMatchIndex = 0;   // нулираме индекса за новия рунд
         
         if (roundMatches.length === 0) {
             tournamentActive = false;
@@ -246,7 +396,10 @@ window.tournament = (function() {
         roundMatches = createMatches(participants);
         remainingHeroes = [];
         currentRound = 1;
+        currentMatchIndex = 0;   // започваме от първия мач
         tournamentActive = true;
+        pendingMatch = null;
+        tournamentPaused = false;
         log(`🏆 ЗАПОЧВА ТУРНИР! ${participants.length} участници, ${totalRounds} рунда.`, "🏆");
         return true;
     }
