@@ -62,100 +62,104 @@
     }
 
     // ==================== ОСНОВЕН ДОХОД ====================
-    function recalculateIncome(hero) {
-        if (!hero) hero = getMainEconomicHero();
-        if (!hero) return 0;
-        
-        if (window.initializeHeroRPGData) window.initializeHeroRPGData(hero);
-        
-        let skills = hero.skills || {};
-        let inventoryBonuses = window.getInventoryBonuses ? window.getInventoryBonuses(hero) : { goldBonus: 0 };
-        let advancedBonuses = window.getAdvancedSkillBonuses ? window.getAdvancedSkillBonuses(hero) : {};
-        
-        let baseIncome = 200 + (hero.level || 1) * 10;
-        if ((skills.goldRush || 0) > 0) baseIncome += (skills.goldRush * 25);
-        if ((skills.bazaars || 0) > 0) baseIncome += (skills.bazaars * 15);
-        
-        let artifactBonusPercent = (inventoryBonuses.goldBonus || 0);
-        let skillBonusPercent = (advancedBonuses.taxBonus || 0) + (advancedBonuses.goldDropBonus || 0);
-
-        if (window.playerRegions) {
-            let totalMarketBonus = 0;
-            for (let r of window.playerRegions.flat()) {
-                const region = window.worldData.regions[r];
-                if (region && region.buildings) {
-                    totalMarketBonus += (region.buildings.market || 0) * 30;
-                }
-            }
-            baseIncome += totalMarketBonus;
-        }
-        
-        let regionIncome = 0;
-        if (window.playerRegions && window.worldData && window.worldData.regions) {
-            const ownedRegionsFlat = flattenArray(window.playerRegions);
-            ownedRegionsFlat.forEach(regionName => {
-                const regData = window.worldData.regions[regionName];
-                if (regData) {
-                    let infraLvl = regData.infrastructureLevel || 1;
-                    regionIncome += (infraLvl * 50);
-                    if (regData.resource === "Злато") regionIncome += 30;
-                    else if (regData.resource === "Сребро") regionIncome += 20;
-                    else if (regData.resource === "Желязо") regionIncome += 15;
-                }
-            });
-        }
-        
-        if ((skills.economy || 0) > 0) {
-            regionIncome = Math.floor(regionIncome * (1 + (skills.economy * 0.10)));
-        }
-        if ((advancedBonuses.conqueredIncomeBonus || 0) > 0) {
-            regionIncome = Math.floor(regionIncome * (1 + advancedBonuses.conqueredIncomeBonus));
-        }
-        
-        let tradeIncome = 0;
-        if (window.tradeRoutes && hero.id) {
-            window.tradeRoutes.forEach(route => {
-                if (route.heroId === hero.id) {
-                    let fromRegion = window.worldData.regions[route.from];
-                    let toRegion = window.worldData.regions[route.to];
-                    if (fromRegion && toRegion) {
-                        let fromInfra = fromRegion.infrastructureLevel || 1;
-                        let toInfra = toRegion.infrastructureLevel || 1;
-                        let routeIncome = window.economySettings.tradeRouteBaseIncome * (fromInfra + toInfra) / 2;
-                        tradeIncome += Math.floor(routeIncome);
-                    } else {
-                        tradeIncome += window.economySettings.tradeRouteBaseIncome;
-                    }
-                }
-            });
-        }
-        
-        let investmentIncome = 0;
-        if (window.investments && hero.id) {
-            for (let i = window.investments.length-1; i >= 0; i--) {
-                let inv = window.investments[i];
-                if (inv.heroId === hero.id) {
-                    inv.turnsLeft--;
-                    if (inv.turnsLeft <= 0) {
-                        investmentIncome += inv.returnAmount;
-                        window.investments.splice(i,1);
-                    }
-                }
+   function recalculateIncome(hero) {
+    if (!hero) hero = getMainEconomicHero();
+    if (!hero) return 0;
+    
+    if (window.initializeHeroRPGData) window.initializeHeroRPGData(hero);
+    
+    let skills = hero.skills || {};
+    let inventoryBonuses = window.getInventoryBonuses ? window.getInventoryBonuses(hero) : { goldBonus: 0 };
+    let advancedBonuses = window.getAdvancedSkillBonuses ? window.getAdvancedSkillBonuses(hero) : {};
+    // ========== ДОБАВЕНИ БОНУСИ ОТ ХАРАКТЕР ==========
+    let personalityBonuses = window.getPersonalityBonuses ? window.getPersonalityBonuses(hero) : {};
+    // =================================================
+    
+    let baseIncome = 200 + (hero.level || 1) * 10;
+    if ((skills.goldRush || 0) > 0) baseIncome += (skills.goldRush * 25);
+    if ((skills.bazaars || 0) > 0) baseIncome += (skills.bazaars * 15);
+    
+    let artifactBonusPercent = (inventoryBonuses.goldBonus || 0);
+    let skillBonusPercent = (advancedBonuses.taxBonus || 0) + (advancedBonuses.goldDropBonus || 0);
+    
+    if (window.playerRegions) {
+        let totalMarketBonus = 0;
+        for (let r of window.playerRegions.flat()) {
+            const region = window.worldData.regions[r];
+            if (region && region.buildings) {
+                totalMarketBonus += (region.buildings.market || 0) * 30;
             }
         }
-        
-        let totalIncome = baseIncome + regionIncome + tradeIncome + investmentIncome;
-        let percentBonus = 1 + (artifactBonusPercent / 100) + skillBonusPercent + (window.economySettings.inflationRate || 0);
-        totalIncome = Math.floor(totalIncome * percentBonus);
-        
-        let armySize = hero.armySize || 0;
-        let baseMaintenanceCost = Math.floor(armySize * 0.05);
-        let logisticsDiscount = Math.min(0.50, (skills.logistics || 0) * 0.05);
-        let armyMaintenance = Math.floor(baseMaintenanceCost * (1 - logisticsDiscount));
-        
-        return totalIncome - armyMaintenance;
+        baseIncome += totalMarketBonus;
     }
-
+    
+    let regionIncome = 0;
+    if (window.playerRegions && window.worldData && window.worldData.regions) {
+        const ownedRegionsFlat = flattenArray(window.playerRegions);
+        ownedRegionsFlat.forEach(regionName => {
+            const regData = window.worldData.regions[regionName];
+            if (regData) {
+                let infraLvl = regData.infrastructureLevel || 1;
+                regionIncome += (infraLvl * 50);
+                if (regData.resource === "Злато") regionIncome += 30;
+                else if (regData.resource === "Сребро") regionIncome += 20;
+                else if (regData.resource === "Желязо") regionIncome += 15;
+            }
+        });
+    }
+    
+    if ((skills.economy || 0) > 0) {
+        regionIncome = Math.floor(regionIncome * (1 + (skills.economy * 0.10)));
+    }
+    if ((advancedBonuses.conqueredIncomeBonus || 0) > 0) {
+        regionIncome = Math.floor(regionIncome * (1 + advancedBonuses.conqueredIncomeBonus));
+    }
+    
+    let tradeIncome = 0;
+    if (window.tradeRoutes && hero.id) {
+        window.tradeRoutes.forEach(route => {
+            if (route.heroId === hero.id) {
+                let fromRegion = window.worldData.regions[route.from];
+                let toRegion = window.worldData.regions[route.to];
+                if (fromRegion && toRegion) {
+                    let fromInfra = fromRegion.infrastructureLevel || 1;
+                    let toInfra = toRegion.infrastructureLevel || 1;
+                    let routeIncome = window.economySettings.tradeRouteBaseIncome * (fromInfra + toInfra) / 2;
+                    tradeIncome += Math.floor(routeIncome);
+                } else {
+                    tradeIncome += window.economySettings.tradeRouteBaseIncome;
+                }
+            }
+        });
+    }
+    
+    let investmentIncome = 0;
+    if (window.investments && hero.id) {
+        for (let i = window.investments.length-1; i >= 0; i--) {
+            let inv = window.investments[i];
+            if (inv.heroId === hero.id) {
+                inv.turnsLeft--;
+                if (inv.turnsLeft <= 0) {
+                    investmentIncome += inv.returnAmount;
+                    window.investments.splice(i,1);
+                }
+            }
+        }
+    }
+    
+    let totalIncome = baseIncome + regionIncome + tradeIncome + investmentIncome;
+    // ========== ДОБАВЕНИ ПЕРСОНАЛНИ БОНУСИ ==========
+    let percentBonus = 1 + (artifactBonusPercent / 100) + skillBonusPercent + (window.economySettings.inflationRate || 0)
+                        + (personalityBonuses.goldBonus || 0) + (personalityBonuses.economyBonus || 0);
+    totalIncome = Math.floor(totalIncome * percentBonus);
+    
+    let armySize = hero.armySize || 0;
+    let baseMaintenanceCost = Math.floor(armySize * 0.05);
+    let logisticsDiscount = Math.min(0.50, (skills.logistics || 0) * 0.05);
+    let armyMaintenance = Math.floor(baseMaintenanceCost * (1 - logisticsDiscount));
+    
+    return totalIncome - armyMaintenance;
+}
     // ==================== ИНФЛАЦИЯ ====================
     function updateInflation() {
         let delta = (Math.random() - 0.6) * 0.02;
