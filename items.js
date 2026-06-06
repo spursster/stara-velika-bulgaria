@@ -1,13 +1,12 @@
 /**
 ==========================================================================
 ПРОЕКТ: ВЕЛИКА БЪЛГАРИЯ
-ФАЙЛ: items.js (ВЕРСИЯ 6.3 – ПРЕМАХНАТ КОНФЛИКТИРАЩИЯ OVERRIDE)
+ФАЙЛ: items.js (ВЕРСИЯ 7.0 – ДОБАВЕНИ НАЧАЛНИ АРТЕФАКТИ И АВТОЕКИПИРОВКА)
 ==========================================================================
 */
-window.pendingSetBonuses = {};   // { setKey: heroId }
-window.artifactSalvageCurrency = 0; // "есенция на реликви"
+window.pendingSetBonuses = {};
+window.artifactSalvageCurrency = 0;
 
-// Помощна функция за вземане на главния герой (без currentHero)
 function getMainHeroForItems() {
     if (window.gameMode === 'solo') return window.currentHero || null;
     if (typeof window.getStrongestHero === 'function') return window.getStrongestHero();
@@ -31,7 +30,6 @@ window.artifactsDatabase = {
     "osmanci_saber": { id: "osmanci_saber", name: "Сабята на Османци Дуло", icon: "⚔️", bonus: { heroPower: 40 }, clan: "Османци Дуло" }
 };
 
-// ==================== ИЗЧИСЛЯВАНЕ НА БОНУСИ ОТ ИНВЕНТАРА ====================
 window.getInventoryBonuses = function(hero) {
     let totalBonus = { heroPower: 0, goldBonus: 0 };
     if (!hero || !hero.inventory || !Array.isArray(hero.inventory)) return totalBonus;
@@ -49,29 +47,22 @@ window.getInventoryBonuses = function(hero) {
     return totalBonus;
 };
 
-// ==================== ПРЕТОПЯВАНЕ НА АРТЕФАКТ ====================
 window.salvageArtifact = function(hero, artifactIndex) {
     if (!hero || !hero.inventory) return false;
     const artifact = hero.inventory[artifactIndex];
     if (!artifact) return false;
-    
     let essence = 5;
     if (artifact.rarity) essence += artifact.rarity * 2;
     if (artifact.bonus) essence += Object.keys(artifact.bonus).length * 3;
     essence = Math.max(5, Math.min(100, essence));
-    
     window.artifactSalvageCurrency = (window.artifactSalvageCurrency || 0) + essence;
     hero.inventory.splice(artifactIndex, 1);
-    
-    if (window.showAdvisorMsg) {
-        window.showAdvisorMsg(`🔮 Претопихте "${artifact.name}" и получихте ${essence} есенция.`);
-    }
+    if (window.showAdvisorMsg) window.showAdvisorMsg(`🔮 Претопихте "${artifact.name}" и получихте ${essence} есенция.`);
     if (typeof window.updateCharacterUI === 'function') window.updateCharacterUI(hero);
     if (typeof window.updateStrongestHeroUI === 'function') window.updateStrongestHeroUI();
     return true;
 };
 
-// ==================== ПРОВЕРКА ЗА СЕТ БОНУСИ (С БУТОНИ В ЛЕТОПИСА) ====================
 window.checkSetCompletion = function(hero) {
     if (!hero || !hero.inventory) return;
     const setCounts = {};
@@ -93,7 +84,6 @@ window.checkSetCompletion = function(hero) {
     }
 };
 
-// ==================== АВТОМАТИЧНА ЕКИПИРОВКА ЗА ГЕРОИ В AUTO РЕЖИМ ====================
 function getArtifactScore(artifact, hero) {
     if (!artifact || !artifact.bonus) return 0;
     let score = 0;
@@ -120,10 +110,8 @@ window.autoEquipHero = function(hero) {
     if (!hero) return false;
     if (!hero.isAuto) return false;
     if (!hero.inventory || hero.inventory.length === 0) return false;
-    
     const best = getBestArtifacts(hero, 12);
     if (best.length === 0) return false;
-    
     let equippedChanged = false;
     for (let i = 0; i < Math.min(12, best.length); i++) {
         if (hero.equipment[i] !== best[i]) {
@@ -137,43 +125,70 @@ window.autoEquipHero = function(hero) {
             equippedChanged = true;
         }
     }
-    
     if (equippedChanged && window.recalculateHeroPower) {
         window.recalculateHeroPower(hero);
         if (window.updateCharacterUI) window.updateCharacterUI(hero);
-        if (typeof window.updateStrongestHeroUI === 'function') {
-            window.updateStrongestHeroUI();
-        }
+        if (typeof window.updateStrongestHeroUI === 'function') window.updateStrongestHeroUI();
     }
     return equippedChanged;
 };
 
 window.attemptAutoEquip = function(hero) {
-    if (hero && hero.isAuto) {
-        window.autoEquipHero(hero);
-    }
+    if (hero && hero.isAuto) window.autoEquipHero(hero);
 };
 
-// ==================== СЪКРОВИЩНИЦА (КОРИГИРАНА – БЕЗ currentHero) ====================
+// ==================== ДОБАВЯНЕ НА НАЧАЛНИ АРТЕФАКТИ ЗА ВСИЧКИ ГЕРОИ ====================
+window.giveStarterArtifacts = function(hero) {
+    if (!hero || hero.hasStarterArtifacts) return;
+    if (!window.historicalArtifacts) return;
+    const artifactKeys = Object.keys(window.historicalArtifacts);
+    if (artifactKeys.length === 0) return;
+    const shuffled = [...artifactKeys];
+    for (let i = shuffled.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+    }
+    const selected = shuffled.slice(0, 3);
+    if (!hero.inventory) hero.inventory = [];
+    for (let key of selected) {
+        let artifact = { ...window.historicalArtifacts[key] };
+        hero.inventory.push(artifact);
+    }
+    hero.hasStarterArtifacts = true;
+    if (hero.isAuto) {
+        window.autoEquipHero(hero);
+    }
+    console.log(`🎁 Дадени начални артефакти на ${hero.name}`);
+};
+
+// Автоматично даване на начални артефакти на всички герои (наети и ненаети)
+setTimeout(() => {
+    if (window.worldData && window.worldData.clans) {
+        for (let key in window.worldData.clans) {
+            let hero = window.worldData.clans[key];
+            if (hero && !hero.hasStarterArtifacts) {
+                window.giveStarterArtifacts(hero);
+            }
+        }
+    }
+}, 1000);
+
+// ==================== СЪКРОВИЩНИЦА ====================
 window.toggleTreasury = function() {
     let treasuryOverlay = document.getElementById('treasury-overlay');
     if (treasuryOverlay) {
         treasuryOverlay.remove();
         const hero = getMainHeroForItems();
-        if (hero && hero.isAuto) {
-            window.autoEquipHero(hero);
-        }
+        if (hero && hero.isAuto) window.autoEquipHero(hero);
         return;
     }
     const hero = getMainHeroForItems();
     if (!hero) return;
     if (!hero.inventory) hero.inventory = [];
     const validInventory = hero.inventory.filter(item => item !== null && item !== undefined);
-    
     treasuryOverlay = document.createElement('div');
     treasuryOverlay.id = 'treasury-overlay';
     treasuryOverlay.style.cssText = `position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.85); backdrop-filter: blur(8px); display: flex; align-items: center; justify-content: center; z-index: 200000;`;
-    
     let gridHTML = "";
     if (validInventory.length === 0) {
         gridHTML = `<div style="grid-column: 1 / -1; text-align: center; color: #555; padding: 40px 10px; font-style: italic;">Съкровищницата е празна.</div>`;
@@ -187,48 +202,38 @@ window.toggleTreasury = function() {
             let currentGold = dbItem.bonus?.goldBonus ? Math.floor(dbItem.bonus.goldBonus * mysticismMultiplier) : 0;
             let bonusText = currentPower ? `+${currentPower} Бойна Мощ` : `+${currentGold} Златен Добив`;
             let itemClan = dbItem.clan ? `Род ${dbItem.clan}` : "Свещен Артефакт";
-            gridHTML += `
-                <div style="background: rgba(255,255,255,0.02); border: 1px solid #333; border-radius: 6px; padding: 12px; text-align: center;">
-                    <div style="font-size: 24px; margin-bottom: 5px;">${dbItem.icon || "🏺"}</div>
-                    <div style="font-size: 12px; font-weight: bold; color: #ffd700; margin-bottom: 3px;">${dbItem.name}</div>
-                    <div style="font-size: 10px; color: #00ffcc;">${bonusText}</div>
-                    <div style="font-size: 9px; color: #666;">${itemClan}</div>
-                </div>
-            `;
+            gridHTML += `<div style="background: rgba(255,255,255,0.02); border: 1px solid #333; border-radius: 6px; padding: 12px; text-align: center;">
+                <div style="font-size: 24px; margin-bottom: 5px;">${dbItem.icon || "🏺"}</div>
+                <div style="font-size: 12px; font-weight: bold; color: #ffd700; margin-bottom: 3px;">${dbItem.name}</div>
+                <div style="font-size: 10px; color: #00ffcc;">${bonusText}</div>
+                <div style="font-size: 9px; color: #666;">${itemClan}</div>
+            </div>`;
         });
     }
-    
     let invBonuses = window.getInventoryBonuses(hero);
-    treasuryOverlay.innerHTML = `
-        <div style="background: #0a0a0a; border: 2px solid #d4af37; padding: 25px; color: white; border-radius: 8px; max-width: 500px; width: 92%; box-sizing: border-box; position: relative;">
-            <button id="close-treasury-x" style="position: absolute; top: 10px; left: 10px; background: rgba(255,80,80,0.2); border: none; color: #ff8888; font-size: 18px; width: 32px; height: 32px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center;">✕</button>
-            <h3 style="margin-top: 0; color: #ffd700; text-transform: uppercase; border-bottom: 1px solid #222; padding-bottom: 12px; text-align: center;">👑 РОДОВА СЪКРОВИЩНИЦА</h3>
-            <p style="font-size: 12px; color: #aaa; text-align: center; margin-bottom: 15px;">Реликви и артефакти, придобити от славни походи.</p>
-            <div style="display: flex; gap: 10px; justify-content: center; background: rgba(0,0,0,0.4); border: 1px solid #222; padding: 8px; border-radius: 4px; font-size: 11px; margin-bottom: 15px;">
-                <div>⚔️ Обща мощ: <strong style="color: #00ffcc;">+${invBonuses.heroPower}</strong></div>
-                <div>|</div>
-                <div>💰 Златен бонус: <strong style="color: #ffd700;">+${invBonuses.goldBonus}%</strong></div>
-            </div>
-            <div id="treasury-grid-container" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 10px; max-height: 260px; overflow-y: auto; padding-right: 5px; margin-bottom: 15px;">
-                ${gridHTML}
-            </div>
-            <button id="close-treasury-footer" class="menu-btn" style="width: 100%; margin: 0;">ЗАТВОРИ СЪКРОВИЩНИЦАТА</button>
+    treasuryOverlay.innerHTML = `<div style="background: #0a0a0a; border: 2px solid #d4af37; padding: 25px; color: white; border-radius: 8px; max-width: 500px; width: 92%; box-sizing: border-box; position: relative;">
+        <button id="close-treasury-x" style="position: absolute; top: 10px; left: 10px; background: rgba(255,80,80,0.2); border: none; color: #ff8888; font-size: 18px; width: 32px; height: 32px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center;">✕</button>
+        <h3 style="margin-top: 0; color: #ffd700; text-transform: uppercase; border-bottom: 1px solid #222; padding-bottom: 12px; text-align: center;">👑 РОДОВА СЪКРОВИЩНИЦА</h3>
+        <p style="font-size: 12px; color: #aaa; text-align: center; margin-bottom: 15px;">Реликви и артефакти, придобити от славни походи.</p>
+        <div style="display: flex; gap: 10px; justify-content: center; background: rgba(0,0,0,0.4); border: 1px solid #222; padding: 8px; border-radius: 4px; font-size: 11px; margin-bottom: 15px;">
+            <div>⚔️ Обща мощ: <strong style="color: #00ffcc;">+${invBonuses.heroPower}</strong></div>
+            <div>|</div>
+            <div>💰 Златен бонус: <strong style="color: #ffd700;">+${invBonuses.goldBonus}%</strong></div>
         </div>
-    `;
+        <div id="treasury-grid-container" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 10px; max-height: 260px; overflow-y: auto; padding-right: 5px; margin-bottom: 15px;">${gridHTML}</div>
+        <button id="close-treasury-footer" class="menu-btn" style="width: 100%; margin: 0;">ЗАТВОРИ СЪКРОВИЩНИЦАТА</button>
+    </div>`;
     document.body.appendChild(treasuryOverlay);
     const close = () => {
         treasuryOverlay.remove();
         const heroAfter = getMainHeroForItems();
-        if (heroAfter && heroAfter.isAuto) {
-            window.autoEquipHero(heroAfter);
-        }
+        if (heroAfter && heroAfter.isAuto) window.autoEquipHero(heroAfter);
     };
     treasuryOverlay.querySelector('#close-treasury-x')?.addEventListener('click', close);
     treasuryOverlay.querySelector('#close-treasury-footer')?.addEventListener('click', close);
     treasuryOverlay.addEventListener('click', (e) => { if (e.target === treasuryOverlay) close(); });
     if (window.updateCharacterUI) window.updateCharacterUI(hero);
 };
-
 window.openInventory = window.toggleTreasury;
 
 // ==================== 60 ИСТОРИЧЕСКИ АРТЕФАКТА ====================
@@ -311,7 +316,7 @@ window.artifactSetBonuses = {
     "mythical_artifacts": { name: "Легендарни артефакти", bonus: { heroPower: 60, goldBonus: 50 }, pieces: 4 }
 };
 
-// ==================== 20 СТАНДАРТНИ ЕКИПИРОВЪЧНИ СЕТА ====================
+// ==================== СТАНДАРТНИ И ЛЕГЕНДАРНИ ЕКИПИРОВЪЧНИ СЕТОВЕ ====================
 window.standardEquipmentSets = {
     "iron_legion": { name: "Железният легион", pieces: { helmet: "Шлем на легионера", chest: "Нагръдник на легионера", gloves: "Ръкавици на легионера", boots: "Ботуши на легионера", weapon: "Гладиус на легионера", shield: "Скутум на легионера" }, bonus: { heroPower: 40, defense: 25, armyBonus: 0.15 }, rarity: "standard", requiredPieces: 4 },
     "hunter_wind": { name: "Ловец на вятъра", pieces: { helmet: "Кожена качулка", chest: "Лек кожен нагръдник", gloves: "Ръкавици за стрелба", boots: "Мокасини", weapon: "Дълъг лък" }, bonus: { heroPower: 30, critChance: 0.15, speed: 10 }, rarity: "standard", requiredPieces: 4 },
@@ -335,7 +340,6 @@ window.standardEquipmentSets = {
     "holy_crusader": { name: "Свещен кръстоносец", pieces: { helmet: "Свещен шлем", chest: "Рицарска броня", gloves: "Свещени ръкавици", boots: "Рицарски ботуши", weapon: "Свещен меч", shield: "Свещен щит" }, bonus: { heroPower: 65, holyDamage: 25, enemyUndead: 0.3 }, rarity: "standard", requiredPieces: 5 }
 };
 
-// ==================== 20 ЛЕГЕНДАРНИ/ЕЛИТНИ ЕКИПИРОВЪЧНИ СЕТА ====================
 window.legendaryEquipmentSets = {
     "dragon_emperor": { name: "Драконов император", pieces: { helmet: "Корона на дракона", chest: "Драконова люспеста броня", gloves: "Драконови нокти", boots: "Драконови крила", weapon: "Драконов меч на властта", shield: "Драконов щит на вечността" }, bonus: { heroPower: 120, allResist: 0.5, dragonForm: 0.2 }, rarity: "legendary", requiredPieces: 6 },
     "thunder_god": { name: "Бог на гръмотевиците", pieces: { helmet: "Шлем на Тор", chest: "Нагръдник на бурята", gloves: "Ръкавици на мълнията", boots: "Ботуши на вихъра", weapon: "Мълниеносен чук" }, bonus: { heroPower: 110, lightningChain: 0.3, attackSpeed: 0.35 }, rarity: "legendary", requiredPieces: 5 },
@@ -373,7 +377,6 @@ window.divinePets = {
     "void_hound": { name: "Празничен хрътка", icon: "🐕🌌", desc: "Космическо създание", bonus: { heroPower: 110, portalChance: 0.15, enemyConfuse: 0.3, extraTurn: 0.1 } }
 };
 
-// ==================== БОНУСИ ОТ ЕКИПИРОВЪЧНИ СЕТОВЕ ====================
 window.calculateEquipmentSetBonuses = function(hero) {
     if (!hero || !hero.equipment || !Array.isArray(hero.equipment)) return {};
     const equippedNames = hero.equipment.filter(item => item !== null).map(item => item.name);
@@ -416,10 +419,12 @@ window.grantDivinePet = function(hero, petId) {
     } else if (window.showAdvisorMsg) {
         window.showAdvisorMsg(`🐉 БОЖЕСТВЕН ПИТОМЕЦ: ${hero.name} получи ${window.divinePets[petId].name}!`);
     }
+    if (hero.isAuto && typeof window.autoEquipHero === 'function') {
+        window.autoEquipHero(hero); // преизчислява силата след получаване на питомец
+    }
     return true;
 };
 
-// Разширяване на глобалната функция за преизчисляване на мощта
 if (typeof window.recalculateHeroPower === 'function') {
     const originalRecalc = window.recalculateHeroPower;
     window.recalculateHeroPower = function(hero) {
@@ -432,22 +437,16 @@ if (typeof window.recalculateHeroPower === 'function') {
     };
 }
 
-// ⭐ ПРЕМАХНАТ Е КОНФЛИКТИРАЩИЯТ OVERRIDE НА gainHeroXP (вече е в rpg_system.js)
-
-// Инициализация: автоматична екипировка за авто герои
+// Инициализация: даване на начални артефакти и автоматична екипировка
 setTimeout(() => {
     if (window.worldData && window.worldData.clans) {
         for (let key in window.worldData.clans) {
             let hero = window.worldData.clans[key];
-            if (hero.isJoined && hero.isAuto && hero.inventory && hero.inventory.length > 0) {
-                window.autoEquipHero(hero);
+            if (hero && !hero.hasStarterArtifacts) {
+                window.giveStarterArtifacts(hero);
             }
         }
     }
-    const mainHero = getMainHeroForItems();
-    if (mainHero && mainHero.isAuto) {
-        window.autoEquipHero(mainHero);
-    }
 }, 1000);
 
-console.log("✅ items.js версия 6.3 зареден – премахнат конфликтиращия override, автоматичната екипировка идва от rpg_system.js");
+console.log("✅ items.js версия 7.0 зареден – с начални артефакти и автоматична екипировка");
