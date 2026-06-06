@@ -106,11 +106,23 @@ window.tournament = (function() {
     }
 
     function simulateBattle(heroA, heroB) {
-        let powerA = (heroA.power || 100) * (0.7 + Math.random() * 0.7);
-        let powerB = (heroB.power || 100) * (0.7 + Math.random() * 0.7);
-        let winner = powerA >= powerB ? heroA : heroB;
-        return { winner, loser: winner === heroA ? heroB : heroA };
+    let powerA = (heroA.power || 100) * (0.7 + Math.random() * 0.7);
+    let powerB = (heroB.power || 100) * (0.7 + Math.random() * 0.7);
+    let winner = powerA >= powerB ? heroA : heroB;
+    let loser = winner === heroA ? heroB : heroA;
+    
+    // ⭐ Даваме XP и на двамата (дори на загубилия)
+    if (winner.heroObj && typeof window.gainHeroXP === 'function') {
+        let xpGain = Math.floor(10 + Math.random() * 15);   // победител: 10–25 XP
+        window.gainHeroXP(winner.heroObj, xpGain);
     }
+    if (loser.heroObj && typeof window.gainHeroXP === 'function') {
+        let xpGain = Math.floor(5 + Math.random() * 10);    // загубил: 5–15 XP
+        window.gainHeroXP(loser.heroObj, xpGain);
+    }
+    
+    return { winner, loser };
+}
 
     function logMatch(match, winner, loser, roundNumber, isSemifinal, isFinal, matchNumber) {
         const isImportant = (match.heroA.isHired === true) || (match.heroB.isHired === true);
@@ -214,43 +226,55 @@ window.tournament = (function() {
         window.startBattle(tournamentEnemy);
     }
 
-    window._resolveTournamentMatch = function(isVictory, battleHeroes, enemies, regionName) {
-        if (!window._pendingTournamentMatch) return;
-        const pending = window._pendingTournamentMatch.pending;
-        const match = pending.match;
-        
-        let winnerHero;
-        if (isVictory) {
-            winnerHero = match.heroA.isHired ? match.heroA : match.heroB;
-        } else {
-            winnerHero = match.heroA.isHired ? match.heroB : match.heroA;
-        }
-        
-        remainingHeroes.push(winnerHero);
-        window._pendingTournamentMatch = null;
-        window._tournamentForcedHero = null;
-        
-        const turnBtn = document.querySelector('.next-turn-btn');
-        if (turnBtn) turnBtn.disabled = false;
-        
-        pendingMatch = null;
-        tournamentPaused = false;
-        
-        currentMatchIndex++;
-        
-        console.log(`🔓 Мач завърши. currentMatchIndex = ${currentMatchIndex}, roundMatches.length = ${roundMatches.length}`);
-        
-        // Автоматично продължаваме с останалите мачове в рунда
-        if (currentMatchIndex < roundMatches.length) {
-            setTimeout(() => {
-                if (window.tournament && window.tournament.isActive()) {
-                    window.tournament.advance();
-                }
-            }, 100);
-        } else {
-            finishRound();
-        }
-    };
+  window._resolveTournamentMatch = function(isVictory, battleHeroes, enemies, regionName) {
+    if (!window._pendingTournamentMatch) return;
+    const pending = window._pendingTournamentMatch.pending;
+    const match = pending.match;
+    
+    let winnerHero;
+    if (isVictory) {
+        winnerHero = match.heroA.isHired ? match.heroA : match.heroB;
+    } else {
+        winnerHero = match.heroA.isHired ? match.heroB : match.heroA;
+    }
+    let opponentHero = (match.heroA === winnerHero) ? match.heroB : match.heroA;
+    
+    // ⭐ Даваме XP на противника (независимо от изхода на битката)
+    if (opponentHero && opponentHero.heroObj && typeof window.gainHeroXP === 'function') {
+        let xpGain = Math.floor(5 + Math.random() * 10);
+        window.gainHeroXP(opponentHero.heroObj, xpGain);
+    }
+    // ⭐ Бонус XP за победителя (в допълнение към това, което battle.js вече даде)
+    if (winnerHero && winnerHero.heroObj && typeof window.gainHeroXP === 'function') {
+        let bonusXp = Math.floor(5 + Math.random() * 10);
+        window.gainHeroXP(winnerHero.heroObj, bonusXp);
+    }
+    
+    remainingHeroes.push(winnerHero);
+    window._pendingTournamentMatch = null;
+    window._tournamentForcedHero = null;
+    
+    const turnBtn = document.querySelector('.next-turn-btn');
+    if (turnBtn) turnBtn.disabled = false;
+    
+    pendingMatch = null;
+    tournamentPaused = false;
+    
+    currentMatchIndex++;
+    
+    console.log(`🔓 Мач завърши. currentMatchIndex = ${currentMatchIndex}, roundMatches.length = ${roundMatches.length}`);
+    
+    // Автоматично продължаваме с останалите мачове в рунда
+    if (currentMatchIndex < roundMatches.length) {
+        setTimeout(() => {
+            if (window.tournament && window.tournament.isActive()) {
+                window.tournament.advance();
+            }
+        }, 100);
+    } else {
+        finishRound();
+    }
+};
 
     // ⭐ ПРОМЕНЕНА ФУНКЦИЯ – изиграва до MATCHES_PER_TURN мача на ход
     function advanceTournament() {
