@@ -27,7 +27,7 @@
                 saveData.currentHero = window.currentHero;
             }
             localStorage.setItem('GreatBulgaria_SaveGame', JSON.stringify(saveData));
-            console.log("💾 Играта е запазена успешно (пълно запазване)");
+            //console.log("💾 Играта е запазена успешно (пълно запазване)");
             return true;
         } catch (e) {
             console.error("❌ Грешка при запис:", e);
