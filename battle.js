@@ -1,7 +1,7 @@
 /**
 ==========================================================================
 ПРОЕКТ: ВЕЛИКА БЪЛГАРИЯ
-ФАЙЛ: battle.js (ВЕРСИЯ 9.4 – ПОДДРЪЖКА ЗА ТУРНИРНИ ДВУБОИ 1v1)
+ФАЙЛ: battle.js (ВЕРСИЯ 9.5 – ОПРАВЕНА БИТКА ЗА ТУРНИР)
 ==========================================================================
 */
 
@@ -129,7 +129,6 @@
         let isTournamentDuel = false;
         let tournamentOpponent = null;
 
-        // ПРОВЕРКА ЗА ТУРНИРЕН ДВУБОЙ
         if (typeof finalRegionInput === 'object' && finalRegionInput.isTournamentDuel === true) {
             isTournamentDuel = true;
             tournamentOpponent = finalRegionInput.tournamentOpponent;
@@ -165,7 +164,6 @@
 
         let enemies = [];
         if (isTournamentDuel && tournamentOpponent) {
-            // ТУРНИРЕН ДВУБОЙ: само един противник, без подкрепления
             enemies = [{
                 id: tournamentOpponent.id || 'tournament_enemy',
                 name: tournamentOpponent.name,
@@ -178,7 +176,6 @@
                 heroObj: tournamentOpponent.heroObj
             }];
         } else {
-            // ОБИКНОВЕНА БИТКА: създаваме основен враг и подкрепления
             const mainEnemy = {
                 id: "monster",
                 name: regionName,
@@ -281,8 +278,6 @@
         `;
 
         document.body.appendChild(battleScreen);
-
-        // ⭐ КЕШИРАНЕ НА DOM ЕЛЕМЕНТИТЕ СЛЕД ДОБАВЯНЕ В DOM
         heroElementsCache = new Map();
         document.querySelectorAll('.hero-card').forEach(card => {
             const id = card.getAttribute('data-id');
@@ -294,7 +289,6 @@
             if (id) enemyElementsCache.set(id, card);
         });
         battleLogCache = document.getElementById('battle-log');
-
         document.getElementById('close-battle-btn').onclick = () => battleScreen.remove();
 
         let currentHeroes = playerHeroes.map(h => ({ ...h, startingHp: h.hp }));
@@ -313,26 +307,17 @@
             const aliveHeroes = currentHeroes.filter(h => h.hp > 0);
             updateUI();
             if (aliveHeroes.length === 0) return false;
-
             addLog(`━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`);
             addLog(`🏹 РУНД ${currentRound} - ГЕРОИТЕ АТАКУВАТ!`);
             let totalDamage = 0;
-
             for (let hero of aliveHeroes) {
                 let target = currentEnemies.find(e => e.hp > 0);
                 if (!target) break;
-
-                let damage = core.calculateHeroDamage(
-                    hero, target, currentRound,
-                    addLog, core.addNarrative,
-                    animateHero, animateEnemy, updateUI
-                );
+                let damage = core.calculateHeroDamage(hero, target, currentRound, addLog, core.addNarrative, animateHero, animateEnemy, updateUI);
                 totalDamage += damage;
             }
-
             addLog(`📊 ОБЩО: ${totalDamage} щети`);
             if (totalDamage > 0) core.addNarrative(`📊 Общо нанесени щети: ${totalDamage}.`);
-
             const allEnemiesDead = currentEnemies.every(e => e.hp <= 0);
             if (allEnemiesDead) {
                 handleVictory(currentHeroes, regionName, playerHeroes, currentEnemies, battleScreen);
@@ -347,16 +332,10 @@
             if (!battleActive) return false;
             const aliveHeroes = currentHeroes.filter(h => h.hp > 0);
             if (aliveHeroes.length === 0) return false;
-            
             for (let enemy of currentEnemies) {
                 if (enemy.hp <= 0) continue;
                 const target = aliveHeroes[Math.floor(Math.random() * aliveHeroes.length)];
-                let damage = core.calculateEnemyDamage(
-                    enemy, target,
-                    addLog, core.addNarrative,
-                    animateEnemy, animateHero, updateUI, core.screenShake
-                );
-                
+                let damage = core.calculateEnemyDamage(enemy, target, addLog, core.addNarrative, animateEnemy, animateHero, updateUI, core.screenShake);
                 if (target.hp <= 0) {
                     let petEffects = core.getPetEffects(target.clanObj);
                     let skillBonuses = core.getAdvancedSkillCombatBonuses(target.clanObj);
@@ -372,7 +351,6 @@
                     }
                 }
             }
-            
             updateUI();
             const stillAlive = currentHeroes.some(h => h.hp > 0);
             if (!stillAlive) {
@@ -398,7 +376,6 @@
                 addLog(`   🎁 ${hero.name} получава +${heroXP} XP и +${heroGold} злато!`);
                 if (window.addHeroLog) window.addHeroLog(hero.clanObj, "⚔️", `Победи в битката за ${regionName}`);
             });
-            
             if (!isTournamentDuel && typeof regionName === 'string' && regionName !== "Портал") {
                 if (typeof window.normalizePlayerRegions === 'function') window.normalizePlayerRegions();
                 else {
@@ -419,7 +396,6 @@
                     }
                 } else addLog(`   ℹ️ ${regionName} вече е ваш.`);
             }
-            
             let newArtifact = null;
             if (!isTournamentDuel && Math.random() < 0.2 && window.historicalArtifacts) {
                 const artifactKeys = Object.keys(window.historicalArtifacts);
@@ -437,7 +413,6 @@
                     } else window.showAdvisorMsg(`🏺 ${randomHero.name} намери артефакт: ${newArtifact.name}`);
                 }
             }
-            
             if (!isTournamentDuel && Math.random() < 0.15 && window.fantasyRaces && window.fantasyRaces.length > 0) {
                 const randomRace = window.fantasyRaces[Math.floor(Math.random() * window.fantasyRaces.length)];
                 const prisoner = { id: Date.now() + "_" + Math.random(), name: randomRace.name, raceId: randomRace.id, icon: randomRace.icon, desc: randomRace.desc, bonus: randomRace.bonus, capturedFrom: regionName };
@@ -446,7 +421,6 @@
                 addLog(`   👸 Взехте пленник: ${prisoner.name}! Може да се ожените в дипломацията.`);
                 if (window.addWorldEvent) window.addWorldEvent(`👸 ПЛЕННИК`, `След битката взехте ${prisoner.name} като пленник!`, "👸");
             }
-            
             if (regionInput && regionInput.isPortalWorld && !isTournamentDuel) {
                 const extraBonus = 50 + Math.floor(Math.random() * 100);
                 const randomHero = livingHeroes[Math.floor(Math.random() * livingHeroes.length)];
@@ -455,27 +429,21 @@
                     addLog(`   🌌 ПОРТАЛЕН БОНУС: ${randomHero.name} получава +${extraBonus} злато!`);
                 }
             }
-            
             if (!isTournamentDuel && window.addWorldEvent) window.addWorldEvent(`🏆 ПОБЕДА В БИТКА`, `${playerHeroes.map(h => h.name).join(', ')} победиха в ${regionName}!`, "🏆");
-            
             for (let i = 0; i < currentHeroes.length; i++) {
                 let battleHero = currentHeroes[i];
                 let originalHero = battleHero.clanObj;
                 if (originalHero && battleHero.hp !== undefined) core.applyBattleOutcome(originalHero, battleHero);
             }
-            
             for (let i = 0; i < currentHeroes.length; i++) {
                 let heroObj = currentHeroes[i].clanObj;
                 if (heroObj && heroObj.isAuto && typeof window.autoEquipHero === 'function') {
                     window.autoEquipHero(heroObj);
                 }
             }
-            
             const rewards = { gold: totalGold, xp: totalXP, artifact: newArtifact || null };
             core.generateBattleStory(regionName, playerHeroes, currentEnemies, true, rewards);
-            
             refreshAllHeroUI();
-            
             if (typeof window.renderFavoriteHeroesBar === 'function') {
                 window.renderFavoriteHeroesBar();
                 var bar = document.getElementById('favorite-heroes-bar');
@@ -485,20 +453,17 @@
                     bar.style.display = '';
                 }
             }
-            
             battleActive = false;
             const attackBtn = document.getElementById('battle-attack');
             if (attackBtn) attackBtn.disabled = true;
             if (typeof window.renderSingleBar === 'function') window.renderSingleBar();
-            if (typeof window.endGroupBattle === 'function') window.endGroupBattle(true, 'victory', regionName);
-            window.currentBattleState = null;
-            window._lastBattleHeroes = null;
-            
             // ⭐ Уведомяваме турнира за резултата (ако има pending турнирен двубой)
             if (window._pendingTournamentMatch && typeof window._resolveTournamentMatch === 'function') {
                 window._resolveTournamentMatch(true, currentHeroes, currentEnemies, regionName);
             }
-            
+            if (typeof window.endGroupBattle === 'function') window.endGroupBattle(true, 'victory', regionName);
+            window.currentBattleState = null;
+            window._lastBattleHeroes = null;
             setTimeout(() => battleScreen.remove(), 1500);
         }
 
@@ -510,18 +475,14 @@
                 let originalHero = battleHero.clanObj;
                 if (originalHero && battleHero.hp !== undefined) core.applyBattleOutcome(originalHero, battleHero);
             }
-            
             for (let i = 0; i < currentHeroes.length; i++) {
                 let heroObj = currentHeroes[i].clanObj;
                 if (heroObj && heroObj.isAuto && typeof window.autoEquipHero === 'function') {
                     window.autoEquipHero(heroObj);
                 }
             }
-            
             core.generateBattleStory(regionName, playerHeroes, currentEnemies, false, {});
-            
             refreshAllHeroUI();
-            
             if (typeof window.renderFavoriteHeroesBar === 'function') {
                 window.renderFavoriteHeroesBar();
                 var bar = document.getElementById('favorite-heroes-bar');
@@ -531,19 +492,16 @@
                     bar.style.display = '';
                 }
             }
-            
             battleActive = false;
             const attackBtn = document.getElementById('battle-attack');
             if (attackBtn) attackBtn.disabled = true;
-            if (typeof window.endGroupBattle === 'function') window.endGroupBattle(false, 'defeat');
-            window.currentBattleState = null;
-            window._lastBattleHeroes = null;
-            
-            // ⭐ Уведомяваме турнира за резултата (ако има pending турнирен двубой)
+            // ⭐ Уведомяваме турнира за резултата (загуба)
             if (window._pendingTournamentMatch && typeof window._resolveTournamentMatch === 'function') {
                 window._resolveTournamentMatch(false, currentHeroes, currentEnemies, regionName);
             }
-            
+            if (typeof window.endGroupBattle === 'function') window.endGroupBattle(false, 'defeat');
+            window.currentBattleState = null;
+            window._lastBattleHeroes = null;
             setTimeout(() => battleScreen.remove(), 1500);
         }
 
@@ -576,15 +534,12 @@
             battleActive = false;
             const attackBtn = document.getElementById('battle-attack');
             if (attackBtn) attackBtn.disabled = true;
-            if (typeof window.endGroupBattle === 'function') window.endGroupBattle(false, 'retreat');
-            window.currentBattleState = null;
-            window._lastBattleHeroes = null;
-            
-            // ⭐ При отстъпление също уведомяваме турнира (загуба)
             if (window._pendingTournamentMatch && typeof window._resolveTournamentMatch === 'function') {
                 window._resolveTournamentMatch(false, currentHeroes, currentEnemies, regionName);
             }
-            
+            if (typeof window.endGroupBattle === 'function') window.endGroupBattle(false, 'retreat');
+            window.currentBattleState = null;
+            window._lastBattleHeroes = null;
             setTimeout(() => battleScreen.remove(), 1500);
         }
 
@@ -617,40 +572,30 @@
         console.log("✅ Битката е готова (с подкрепления от нелюбими герои)!");
     }
 
-  // === КРАЙ НА БИТКАТА - ГЛОБАЛНО РЕШЕНИЕ ЗА ТУРНИРА ===
-window.endGroupBattle = function(isVictory, reason = "", regionName = "") {
-    console.log(`🏁 endGroupBattle извикана | Победа: ${isVictory} | Турнир: ${!!window._pendingTournamentMatch}`);
-
-    // === 1. ОСВОБОЖДАВАНЕ НА ТУРНИРА (най-важното) ===
-    if (window._pendingTournamentMatch) {
-        console.log("🔓 Изпълняваме _resolveTournamentMatch...");
-        if (typeof window._resolveTournamentMatch === 'function') {
-            window._resolveTournamentMatch(isVictory, null, null, regionName || "Турнирен двубой");
+    // ⭐ Истинската endGroupBattle – тук уведомяваме турнира
+    function endGroupBattle(isVictory, reason, regionName) {
+        console.log(`🏁 Битката приключи. Победа: ${isVictory}, Причина: ${reason}, Регион: ${regionName || 'неизвестен'}`);
+        let questHero = null;
+        if (typeof window.getStrongestHero === 'function') questHero = window.getStrongestHero();
+        if (window.checkAllQuestsProgress && questHero) window.checkAllQuestsProgress(questHero, regionName || window.currentRegion, "battle");
+        if (typeof window.handleBattleEnd === 'function') window.handleBattleEnd(isVictory, reason);
+        refreshAllHeroUI();
+        if (typeof window.updateStrongestHeroUI === 'function') window.updateStrongestHeroUI();
+        if (typeof window.saveGreatBulgariaGame === 'function') window.saveGreatBulgariaGame();
+        // ⭐ Уведомяваме турнира за резултата (ако има pending)
+        if (window._pendingTournamentMatch && typeof window._resolveTournamentMatch === 'function') {
+            window._resolveTournamentMatch(isVictory, null, null, regionName);
         }
-        window._pendingTournamentMatch = null;
     }
 
-    window._tournamentForcedHero = null;
-
-    // === 2. ОСВОБОЖДАВАНЕ НА ИГРАТА ===
-    const turnBtn = document.querySelector('.next-turn-btn');
-    if (turnBtn) {
-        turnBtn.disabled = false;
-        turnBtn.style.opacity = "1";
-    }
-
-    // === 3. ОБНОВЯВАНЕ ===
-    if (typeof window.updateAllUI === 'function') window.updateAllUI();
-    if (typeof window.renderFavoriteHeroesBar === 'function') window.renderFavoriteHeroesBar();
-    if (typeof window.refreshAllHeroUI === 'function') window.refreshAllHeroUI();
-
-    // === 4. Летопис ===
-    if (window.addWorldEvent) {
-        const result = isVictory ? "Победа в турнирен двубой!" : "Поражение в турнирен двубой...";
-        window.addWorldEvent("🏆 Турнир на шампионите", result, isVictory ? "🏆" : "💀");
-    }
-
-    console.log("✅ Турнирът е напълно отключен");
-};
-
- })();
+    window.Battle = {
+        start: startBattle,
+        end: endGroupBattle,
+        refreshUI: refreshAllHeroUI,
+        getReinforcements: core.getReinforcements
+    };
+    window.startBattle = window.Battle.start;
+    window.endGroupBattle = window.Battle.end;
+    window.refreshAllHeroUI = window.Battle.refreshUI;
+    console.log("✅ battle.js зареден (версия 9.5 – турнирни двубои работят)");
+})();
