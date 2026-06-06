@@ -1,6 +1,6 @@
 /** ========================================================================== 
 ПРОЕКТ: ВЕЛИКА БЪЛГАРИЯ
-ФАЙЛ: ui.js (ВЕРСИЯ 7.1 – БЕЗ TOAST И KEYDOWN)
+ФАЙЛ: ui.js (ВЕРСИЯ 8.0 – БЕЗ ПОРТРЕТИ, САМО ИКОНКИ)
 ========================================================================== */ 
 window.selectedHero = null;
 
@@ -75,12 +75,10 @@ function renderTopHeroTroops(hero) {
 let updateStrongestHeroTimer = null;
 // Нова функция: сумира злато, армия и сила на всички живи герои
 window.updateTotalStatsUI = function() {
-    //console.log("updateTotalStatsUI извикана"); // за дебъг
     let totalGold = 0, totalArmy = 0, totalPower = 0;
     if (window.worldData && window.worldData.clans) {
         for (let key in window.worldData.clans) {
             let hero = window.worldData.clans[key];
-            // Внимавай: isJoined трябва да е true, isAlive да не е false
             if (hero && hero.isJoined === true && hero.isAlive !== false) {
                 totalGold += (typeof hero.gold === 'number' ? hero.gold : 0);
                 totalArmy += (typeof hero.armySize === 'number' ? hero.armySize : 0);
@@ -88,16 +86,13 @@ window.updateTotalStatsUI = function() {
             }
         }
     }
-    // Обновяване на HTML
     const goldSpan = document.getElementById('val-gold');
     const armySpan = document.getElementById('val-army');
     const powerSpan = document.getElementById('val-hero-power');
     if (goldSpan) goldSpan.innerText = totalGold;
     if (armySpan) armySpan.innerText = totalArmy;
     if (powerSpan) powerSpan.innerText = totalPower;
-    //console.log("Сумарни стойности:", totalGold, totalArmy, totalPower);
     
-    // Ляв панел (Топ герой) – без да засягаме горните
     const strongest = window.getStrongestHero();
     if (strongest) {
         const profileBox = document.getElementById('active-character-profile');
@@ -120,24 +115,10 @@ window.updateTotalStatsUI = function() {
             const troopsHtml = (typeof renderTopHeroTroops === 'function') ? renderTopHeroTroops(strongest) : '';
             profileBox.innerHTML = topHeroTitle + heroInfo + troopsHtml;
         }
-        if (strongest.portrait) {
-            const profileBox = document.getElementById('active-character-profile');
-            if (profileBox) {
-                let existingImg = profileBox.querySelector('.hero-portrait-img');
-                if (!existingImg) {
-                    const img = document.createElement('img');
-                    img.className = 'hero-portrait-img';
-                    img.style.cssText = 'width: 60px; height: 60px; border-radius: 50%; margin-bottom: 10px; border: 2px solid #d4af37; object-fit: cover;';
-                    profileBox.prepend(img);
-                } else {
-                    existingImg.src = strongest.portrait;
-                }
-            }
-        }
+        // Няма портрет – премахваме всякакъв img
     }
 };
 
-// Алиас (важно!)
 window.updateStrongestHeroUI = window.updateTotalStatsUI;
 
 // ==================== ИКОНКА ЗА КЛАС ====================
@@ -172,7 +153,6 @@ window.addHeroLog = function(hero, icon, message) {
     hero.actionLog.unshift({ icon, message, time: Date.now() });
     if (hero.actionLog.length > 15) hero.actionLog.pop();
     
-    // Обновяваме UI само ако този герой е избраният или най-силният (в класически режим)
     let currentDisplayHero = null;
     if (window.gameMode === 'solo' && window.currentHero) {
         currentDisplayHero = window.currentHero;
@@ -190,97 +170,6 @@ window.addHeroLog = function(hero, icon, message) {
     }
 };
 
-// ⭐ Кеш за fallback аватари (генерира се веднъж на герой)
-const fallbackAvatarCache = new Map();
-
-// ==================== ГЕНЕРИРАНЕ НА ПОРТРЕТ С POLLINATIONS.AI (подобрена версия) ====================
-window.generateHeroPortrait = async function(hero, retries = 2) {
-    if (!hero) return null;
-    if (hero.portrait) return hero.portrait;
-
-    const prompt = `fantasy rpg character portrait of ${hero.name} the ${hero.currentClass || hero.className || "warrior"}, digital painting, D&D style, face front, detailed, cinematic lighting, high quality, 512x512`;
-    const seed = Math.floor(Math.random() * 10000);
-    const url = `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}?width=256&height=256&seed=${seed}`;
-
-    const attempt = async (remaining) => {
-        return new Promise((resolve, reject) => {
-            const img = new Image();
-            img.crossOrigin = "Anonymous"; // за fallback canvas, ако решиш
-            img.onload = () => {
-                hero.portrait = url;
-                // Запазване и обновяване на UI
-                if (typeof window.saveGreatBulgariaGame === 'function') window.saveGreatBulgariaGame();
-                if (typeof window.updateAllUI === 'function') window.updateAllUI();
-                console.log(`✅ Портрет за ${hero.name} зареден от ${url}`);
-                resolve(url);
-            };
-            img.onerror = async () => {
-                if (remaining > 0) {
-                    console.warn(`⚠️ Портрет за ${hero.name} не успя, опит ${4 - remaining}/${retries}...`);
-                    await new Promise(r => setTimeout(r, 1500));
-                    attempt(remaining - 1).then(resolve).catch(reject);
-                } else {
-                    console.error(`❌ Неуспех за ${hero.name} след ${retries} опита.`);
-                    // fallback – генериране на canvas аватар
-                    try {
-                        const fallbackUrl = await generateFallbackAvatar(hero);
-                        hero.portrait = fallbackUrl;
-                        if (!fallbackAvatarCache.has(hero.id)) fallbackAvatarCache.set(hero.id, fallbackUrl);
-                        if (typeof window.saveGreatBulgariaGame === 'function') window.saveGreatBulgariaGame();
-                        if (typeof window.updateAllUI === 'function') window.updateAllUI();
-                        resolve(fallbackUrl);
-                    } catch (fbErr) {
-                        reject(new Error(`Грешка при зареждане на портрет и fallback за ${hero.name}`));
-                    }
-                }
-            };
-            img.src = url;
-        });
-    };
-
-    try {
-        return await attempt(retries);
-    } catch(e) {
-        console.warn(`❌ ${e.message}`);
-        return null;
-    }
-};
-
-// Помощна функция за генериране на canvas аватар (кеширана)
-function generateFallbackAvatar(hero) {
-    // Връщаме кеширания аватар, ако има
-    if (fallbackAvatarCache.has(hero.id)) return fallbackAvatarCache.get(hero.id);
-    
-    const canvas = document.createElement('canvas');
-    canvas.width = 128;
-    canvas.height = 128;
-    const ctx = canvas.getContext('2d');
-    
-    const grad = ctx.createLinearGradient(0, 0, canvas.width, canvas.height);
-    grad.addColorStop(0, '#2c1a0c');
-    grad.addColorStop(1, '#4a2a1a');
-    ctx.fillStyle = grad;
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
-    
-    ctx.strokeStyle = '#d4af37';
-    ctx.lineWidth = 3;
-    ctx.strokeRect(4, 4, canvas.width - 8, canvas.height - 8);
-    
-    const classIcon = window.getClassIcon ? window.getClassIcon(hero.currentClass) : '⚔️';
-    ctx.font = `bold ${canvas.width * 0.4}px "Cinzel", serif`;
-    ctx.fillStyle = '#ffdd99';
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    ctx.fillText(classIcon, canvas.width/2, canvas.height/2);
-    
-    ctx.font = `14px "Cinzel", serif`;
-    ctx.fillStyle = '#ffaa66';
-    ctx.fillText(hero.name.substring(0, 10), canvas.width/2, canvas.height - 20);
-    
-    const dataUrl = canvas.toDataURL('image/png');
-    fallbackAvatarCache.set(hero.id, dataUrl);
-    return dataUrl;
-}
 // ==================== ПРЕВКЛЮЧВАНЕ НА ЦЯЛ ЕКРАН ====================
 window.toggleGameFullScreen = function() { 
     if (!document.fullscreenElement && !document.mozFullScreenElement && !document.webkitFullscreenElement && !document.msFullscreenElement) { 
@@ -472,10 +361,8 @@ window.hireNewHero = function() {
     if (window.gameMode === 'solo' && !window.currentHero) window.currentHero = newHero;
     
     if (typeof window.renderFavoriteHeroesBar === 'function') {
-    window.renderFavoriteHeroesBar(); // без изтриване на innerHTML (функцията го прави сама)
-}
-if (typeof window.renderSingleBar === 'function') window.renderSingleBar();
-if (typeof window.updateStrongestHeroUI === 'function') window.updateStrongestHeroUI();
+        window.renderFavoriteHeroesBar();
+    }
     if (typeof window.renderSingleBar === 'function') window.renderSingleBar();
     if (typeof window.updateStrongestHeroUI === 'function') window.updateStrongestHeroUI();
     
@@ -512,7 +399,7 @@ function getAllHeroes() {
                     equipment: heroData.equipment || Array(12).fill(null),
                     isCompanion: heroData.isCompanion === true,
                     isFavorite: heroData.isFavorite || heroData.isFavoriteInBarracks || false,
-                    portrait: heroData.portrait,
+                    portrait: null,
                     hp: heroData.hp || heroData.maxHp || 100,
                     maxHp: heroData.maxHp || 100
                 });
@@ -537,7 +424,7 @@ function getAllHeroes() {
             equipment: window.currentHero.equipment || Array(12).fill(null),
             isCompanion: window.currentHero.isCompanion === true,
             isFavorite: window.currentHero.isFavorite || false,
-            portrait: window.currentHero.portrait,
+            portrait: null,
             hp: window.currentHero.hp || window.currentHero.maxHp || 100,
             maxHp: window.currentHero.maxHp || 100
         });
@@ -632,7 +519,6 @@ function showHeroProfile(hero) {
     `;
     
     let autoBtnHtml = `<button id="auto-mode-btn" style="background:${autoOn ? '#4a6a2a' : '#2c1a0c'}; border:none; border-radius:20px; color:#ffdd99; padding:8px 16px; margin-top:10px; cursor:pointer; width:100%;">${autoOn ? '✅ AUTO РЕЖИМ: ВКЛЮЧЕН' : '🤖 AUTO РЕЖИМ: ИЗКЛЮЧЕН'}</button>`;
-    let generatePortraitBtnHtml = `<button id="generate-portrait-btn" style="background:#2c1a0c; border:none; border-radius:20px; color:#ffdd99; padding:6px 12px; margin-top:8px; width:100%; cursor:pointer;">🎨 Генерирай портрет</button>`;
     let shareBtnHtml = `<button id="share-hero-btn" style="background:#2c1a0c; border:none; border-radius:20px; color:#ffdd99; padding:6px 12px; margin-top:8px; width:100%; cursor:pointer;">📤 Сподели визитка</button>`;
     
     let hpPercent = (hero.hp / hero.maxHp) * 100;
@@ -665,14 +551,9 @@ function showHeroProfile(hero) {
         </div>
     `;
     
-    let portraitHtml = '';
-    if (hero.portrait) {
-        portraitHtml = `<div style="text-align: center; margin: 0 auto 10px auto;">
-                            <img src="${hero.portrait}" style="width: 100px; height: 100px; border-radius: 50%; border: 3px solid #ffd700; object-fit: cover; box-shadow: 0 0 15px rgba(0,0,0,0.5);">
-                        </div>`;
-    } else {
-        portraitHtml = `<div style="font-size: 48px; text-align: center; margin-bottom: 5px;">⚔️</div>`;
-    }
+    // Само иконка на класа, без портрет
+    let classIcon = getClassIcon(hero.currentClass);
+    let portraitHtml = `<div style="font-size: 64px; text-align: center; margin-bottom: 10px;">${classIcon}</div>`;
 
     let logHtml = '<div style="background:#0d0a07; border-radius:12px; padding:12px; margin-top:10px;"><h4 style="color:#ffdd99; margin:0 0 8px 0;">📜 ГЕРОИЧЕСКИ ДНЕВНИК</h4><div style="max-height:140px; overflow-y:auto; font-size:10px;">';
     if (hero.actionLog && hero.actionLog.length) {
@@ -709,7 +590,6 @@ function showHeroProfile(hero) {
                 ${petHtml}
                 ${skillsHtml}
                 ${autoBtnHtml}
-                ${generatePortraitBtnHtml}
                 ${shareBtnHtml}
                 ${logHtml}
                 <button id="close-profile-modal" style="background:#2c1a0c; border:none; padding:8px 20px; border-radius:40px; color:#ffdd99; margin-top:15px; cursor:pointer; width:100%;">🔒 ЗАТВОРИ</button>
@@ -781,26 +661,7 @@ function showHeroProfile(hero) {
             }
         };
     }
-
-    const genBtn = modal.querySelector('#generate-portrait-btn');
-    if (genBtn) {
-        genBtn.onclick = async () => {
-            genBtn.innerText = '⏳ Генериране...';
-            genBtn.disabled = true;
-            try {
-                await window.generateHeroPortrait(hero);
-                const portraitContainer = modal.querySelector('div[style*="text-align:center"] > div:first-child');
-                if (portraitContainer && hero.portrait) {
-                    portraitContainer.innerHTML = `<img src="${hero.portrait}" style="width: 100px; height: 100px; border-radius: 50%; border: 3px solid #ffd700; object-fit: cover; box-shadow: 0 0 15px rgba(0,0,0,0.5);">`;
-                }
-                genBtn.innerText = '✅ Портретът е готов';
-                setTimeout(() => genBtn.remove(), 1500);
-            } catch(e) {
-                genBtn.innerText = '❌ Грешка, опитай отново';
-                genBtn.disabled = false;
-            }
-        };
-    }
+    
     let adoptBtn = modal.querySelector('#adopt-pet-btn');
     if (adoptBtn) {
         adoptBtn.onclick = () => {
@@ -834,15 +695,10 @@ function showHeroProfile(hero) {
 }
 
 // ==================== ЛЕНТА С ЛЮБИМИ ГЕРОИ (5 СЛОТА, XP, HP, AUTO/РЪЧЕН) ====================
-/**
- * Рендира лентата с любими герои (5 слота) с цветове според класа на героя.
- * Използва getClassBorderColor(className) от classes.js.
- */
 window.renderFavoriteHeroesBar = function() {
     var container = document.getElementById('favorite-heroes-bar');
     if (!container) return;
 
-    // Събираме живите любими герои
     var favoriteHeroesList = [];
     if (window.worldData && window.worldData.clans) {
         for (var key in window.worldData.clans) {
@@ -852,11 +708,9 @@ window.renderFavoriteHeroesBar = function() {
             }
         }
     }
-    // Сортираме по ниво (от най-високо към най-ниско)
     favoriteHeroesList.sort(function(a, b) { return (b.level || 1) - (a.level || 1); });
     var top5 = favoriteHeroesList.slice(0, 5);
 
-    // Изчистваме контейнера
     container.innerHTML = '';
 
     for (var i = 0; i < 5; i++) {
@@ -865,12 +719,10 @@ window.renderFavoriteHeroesBar = function() {
         slot.className = 'favorite-slot';
 
         if (hero) {
-            // ⭐ Определяме цвят според класа на героя
-            var classColor = '#1e3a5f'; // цвят по подразбиране (син)
+            var classColor = '#1e3a5f';
             if (window.getClassBorderColor && typeof window.getClassBorderColor === 'function') {
                 classColor = window.getClassBorderColor(hero.currentClass || hero.className);
             } else {
-                // Резервно mapping, ако функцията липсва
                 var className = (hero.currentClass || hero.className || '').toLowerCase();
                 if (className.includes('берсерк')) classColor = '#ff6347';
                 else if (className.includes('паладин')) classColor = '#87ceeb';
@@ -880,27 +732,20 @@ window.renderFavoriteHeroesBar = function() {
                 else if (className.includes('сенчест')) classColor = '#4a4a4a';
                 else classColor = '#c9a87b';
             }
-            // Добавяме фон с лека прозрачност и цветна рамка
-            slot.style.backgroundColor = classColor + '40'; // 25% прозрачност
+            slot.style.backgroundColor = classColor + '40';
             slot.style.border = '2px solid ' + classColor;
 
-            // Актуални стойности
             var hpPercent = (hero.hp / hero.maxHp) * 100;
             var hpColor = hpPercent > 70 ? '#4caf50' : (hpPercent > 30 ? '#ff9800' : '#f44336');
             var needXP = (window.rpgDatabase && window.rpgDatabase.getXPRequiredForLevel) ? window.rpgDatabase.getXPRequiredForLevel(hero.level || 1) : 150;
             var currentXP = hero.isAuto ? (hero.xp || 0) : (hero.storedXP || 0);
             var xpPercent = Math.min(100, (currentXP / needXP) * 100);
 
-            var portraitHtml = '';
-var hasValidPortrait = hero.portrait && (hero.portrait.startsWith('data:image') || hero.portrait.startsWith('http'));
-if (hasValidPortrait) {
-    portraitHtml = '<img src="' + hero.portrait + '" class="hero-portrait-img" onerror="this.style.display=\'none\'; this.parentElement.querySelector(\'.hero-icon\').style.display=\'flex\';">';
-}
-// Ако няма портрет – показваме иконката (тя вече ще се покаже от iconHtml)
             var classIcon = window.getClassIcon ? window.getClassIcon(hero.currentClass) : '⚔️';
-            var iconHtml = '<div class="hero-icon" style="' + (hero.portrait ? 'display:none;' : '') + '">' + classIcon + '</div>';
+            // Само иконка, без портрет
+            var iconHtml = '<div class="hero-icon" style="font-size: 32px;">' + classIcon + '</div>';
 
-            slot.innerHTML = portraitHtml + iconHtml +
+            slot.innerHTML = iconHtml +
                 '<div class="hero-name" title="' + hero.name + '">' + hero.name.substring(0, 12) + '</div>' +
                 '<div class="hero-level-power">Ниво ' + hero.level + ' | 💪 ' + (hero.heroPower || 100) + '</div>' +
                 '<div class="hp-bar"><div class="hp-fill" style="width:' + hpPercent + '%; background:' + hpColor + ';"></div></div>' +
@@ -912,7 +757,6 @@ if (hasValidPortrait) {
                 '</div>' +
                 '<div class="auto-badge">' + (hero.isAuto ? '🤖 AUTO' : '👤 MANUAL') + '</div>';
 
-            // Бутон за премахване/добавяне на любим (сърце)
             var heartBtn = document.createElement('button');
             heartBtn.innerHTML = '❤️';
             heartBtn.style.cssText = 'position:absolute; top:4px; right:4px; background:none; border:none; font-size:12px; cursor:pointer; color:#ff4466;';
@@ -927,7 +771,6 @@ if (hasValidPortrait) {
             })(hero);
             slot.appendChild(heartBtn);
 
-            // Бутон за AUTO/MANUAL
             var autoToggle = document.createElement('button');
             autoToggle.innerText = hero.isAuto ? 'AUTO' : 'MAN';
             autoToggle.style.cssText = 'position:absolute; bottom:4px; left:4px; font-size:8px; background:#2c1a0c; border:1px solid #d4af37; border-radius:4px; padding:1px 3px; cursor:pointer; color:#ffd700;';
@@ -949,7 +792,6 @@ if (hasValidPortrait) {
             })(hero);
             slot.appendChild(autoToggle);
 
-            // Клик върху слота – показва профила на героя
             slot.onclick = (function(h) {
                 return function() {
                     window.setSelectedHero(h);
@@ -957,7 +799,6 @@ if (hasValidPortrait) {
                 };
             })(hero);
         } else {
-            // Празен слот – добавяне на герой
             slot.classList.add('empty');
             slot.innerHTML = '<div style="font-size:28px;">➕</div><div style="font-size:10px;">Добави герой</div>';
             slot.style.backgroundColor = 'rgba(255,255,255,0.03)';
@@ -975,6 +816,7 @@ if (hasValidPortrait) {
         container.appendChild(slot);
     }
 };
+
 // ==================== ОСНОВНО ОБНОВЯВАНЕ НА ЛЕВИЯ ПАНЕЛ ====================
 window.updateCharacterUI = function(hero) {
     if (!hero) return;
@@ -997,26 +839,7 @@ window.updateCharacterUI = function(hero) {
             '<div>Любимец: ' + petStatus + '</div>' +
             '</div>';
     }
-    if (hero.portrait) {
-        const profileBox = document.getElementById('active-character-profile');
-        if (profileBox) {
-            let existingImg = profileBox.querySelector('.hero-portrait-img');
-            if (!existingImg) {
-                const img = document.createElement('img');
-                img.className = 'hero-portrait-img';
-                img.style.cssText = 'width: 60px; height: 60px; border-radius: 50%; margin-bottom: 10px; border: 2px solid #d4af37; object-fit: cover;';
-                profileBox.insertBefore(img, profileBox.firstChild);
-                existingImg = img;
-            }
-            existingImg.src = hero.portrait;
-        }
-    } else {
-        const profileBox = document.getElementById('active-character-profile');
-        if (profileBox) {
-            const oldImg = profileBox.querySelector('.hero-portrait-img');
-            if (oldImg) oldImg.remove();
-        }
-    }
+    // Премахваме целия код за портрети (img)
     if (profileBox && !document.getElementById('open-rpg-modal-btn')) {
         const rpgBtn = document.createElement('button');
         rpgBtn.id = "open-rpg-modal-btn";
@@ -1049,7 +872,6 @@ window.updateCharacterUI = function(hero) {
 
 // ========== ГЛАВНАТА ФУНКЦИЯ – РАБОТИ САМО С ОРИГИНАЛНИЯ ЛЕТОПИС ==========
 window.showAdvisorMsg = function(msg, buttons) {
-    // Намираме контейнера за летопис (оригиналния, а не модал)
     let container = document.querySelector('#unifiedChronicle .events-container') || 
                     document.getElementById('eventsListContainer') ||
                     document.querySelector('#unifiedChronicle');
@@ -1058,11 +880,9 @@ window.showAdvisorMsg = function(msg, buttons) {
         return;
     }
 
-    // Създаваме основния елемент за събитие
     let eventDiv = document.createElement('div');
     eventDiv.className = 'chronicle-event interactive-event';
 
-    // Определяме иконка според съдържанието на съобщението
     let icon = '📜';
     if (msg.includes('💰') || msg.includes('злато')) icon = '💰';
     else if (msg.includes('💒') || msg.includes('брак')) icon = '💒';
@@ -1075,13 +895,11 @@ window.showAdvisorMsg = function(msg, buttons) {
     else if (msg.includes('🌟') || msg.includes('клас')) icon = '🌟';
     else if (msg.includes('🏺')) icon = '🏺';
 
-    // Добавяме иконка и текст
     let textSpan = document.createElement('div');
     textSpan.className = 'chronicle-text';
     textSpan.innerHTML = `<strong>${icon}</strong> ${msg}`;
     eventDiv.appendChild(textSpan);
 
-    // Добавяме време (ако има)
     let timeSpan = document.createElement('div');
     timeSpan.className = 'chronicle-time';
     if (window.gameTime) {
@@ -1096,7 +914,6 @@ window.showAdvisorMsg = function(msg, buttons) {
     }
     eventDiv.appendChild(timeSpan);
 
-    // Ако има бутони, ги добавяме
     if (buttons && buttons.length) {
         let btnWrap = document.createElement('div');
         btnWrap.className = 'chronicle-buttons';
@@ -1123,26 +940,25 @@ window.showAdvisorMsg = function(msg, buttons) {
             btn.onmouseout = () => { btn.style.background = '#d4af37'; };
             btn.onclick = (e) => {
                 e.stopPropagation();
-                b.action();          // изпълнява действието на бутона
-                eventDiv.remove();   // премахва съобщението от летописа
+                b.action();
+                eventDiv.remove();
             };
             btnWrap.appendChild(btn);
         });
         eventDiv.appendChild(btnWrap);
     }
 
-    // Добавяме събитието най-отгоре в летописа
     if (container.children.length > 0) {
         container.insertBefore(eventDiv, container.firstChild);
     } else {
         container.appendChild(eventDiv);
     }
 
-    // Ограничаваме броя на събитията в летописа до 50
     while (container.children.length > 50) {
         container.removeChild(container.lastChild);
     }
 };
+
 // ==================== ИНСПЕКЦИЯ НА ГЕРОЙ ====================
 window.inspectHeroProfile = function(clanKey) { 
     if (!window.worldData || !window.worldData.clans || !window.worldData.clans[clanKey]) { 
@@ -1203,11 +1019,8 @@ function createHeroCard(hero, isMobile) {
     let fav = isFavorite(hero.id);
     const classIcon = getClassIcon(hero.className);
     
-    const portraitHtml = hero.portrait ? 
-        `<div style="width: 40px; height: 40px; border-radius: 50%; overflow: hidden; display: flex; align-items: center; justify-content: center; background: #2c1a0c; flex-shrink: 0;">
-            <img src="${hero.portrait}" style="width: 100%; height: 100%; object-fit: cover;">
-        </div>` : 
-        `<div style="font-size:22px; flex-shrink: 0;">${classIcon}</div>`;
+    // Само иконка, без портрет
+    const portraitHtml = `<div style="font-size:24px; flex-shrink: 0;">${classIcon}</div>`;
     
     if (isMobile) {
         card.style.cssText = `background: rgba(20,15,10,0.9); border-radius: 12px; padding: 6px 10px; min-width: 100px; text-align: center; cursor: pointer; border: 1px solid #c9a87b; flex-shrink: 0;`;
@@ -1664,7 +1477,6 @@ if (typeof window.updateStrongestHeroUI === 'function') window.updateStrongestHe
 (function addResponsiveButtonStyles() {
     const style = document.createElement('style');
     style.textContent = `
-        /* Стилове за всички бутони в летописа */
         .chronicle-event button {
             background: #d4af37 !important;
             color: #000 !important;
@@ -1677,13 +1489,11 @@ if (typeof window.updateStrongestHeroUI === 'function') window.updateStrongestHe
             transition: 0.1s;
             white-space: nowrap;
         }
-        /* Осигуряваме, че бутоните са на нов ред и не залепват за текста */
         .chronicle-event div[style*="display: flex"] {
             flex-wrap: wrap !important;
             gap: 6px !important;
             margin-top: 8px !important;
         }
-        /* За мобилни устройства (ширина под 768px) */
         @media (max-width: 768px) {
             .chronicle-event button {
                 padding: 2px 8px !important;
@@ -1706,7 +1516,6 @@ if (typeof window.updateStrongestHeroUI === 'function') window.updateStrongestHe
                 font-size: 9px !important;
             }
         }
-        /* За много малки телефони (ширина под 480px) */
         @media (max-width: 480px) {
             .chronicle-event button {
                 padding: 2px 6px !important;
@@ -1720,13 +1529,12 @@ if (typeof window.updateStrongestHeroUI === 'function') window.updateStrongestHe
     `;
     document.head.appendChild(style);
 })();
+
 // Перманентна синхронизация на HP след всяка битка
 if (typeof window.endGroupBattle === 'function') {
     const originalEndBattle = window.endGroupBattle;
     window.endGroupBattle = function(isVictory, reason, regionName) {
-        // Извикваме оригиналната функция
         originalEndBattle(isVictory, reason, regionName);
-        // Принудително обновяване на UI
         if (typeof window.refreshAllHeroUI === 'function') {
             window.refreshAllHeroUI();
         } else {
@@ -1734,7 +1542,6 @@ if (typeof window.endGroupBattle === 'function') {
             if (typeof window.renderFavoriteHeroesBar === 'function') window.renderFavoriteHeroesBar();
             if (typeof window.renderSingleBar === 'function') window.renderSingleBar();
         }
-        // Запазване на играта след битка
         if (typeof window.saveGreatBulgariaGame === 'function') window.saveGreatBulgariaGame();
     };
     console.log("✅ Перманентна поправка за HP инсталирана");
@@ -1751,7 +1558,6 @@ function addCouncilButton() {
     councilBtn.innerHTML = '🏛️';
     councilBtn.title = 'Управление на съветниците';
     councilBtn.onclick = () => window.openCouncilUI();
-    // Вмъкваме преди бутона за класации или най-отзад
     const leaderboardBtn = document.getElementById('leaderboard-btn');
     if (leaderboardBtn) {
         bottomControls.insertBefore(councilBtn, leaderboardBtn);
@@ -1761,7 +1567,6 @@ function addCouncilButton() {
 }
 
 window.openCouncilUI = function() {
-    // Намираме главния герой (най-силния или селектирания)
     let mainHero = null;
     if (window.gameMode === 'solo' && window.currentHero) {
         mainHero = window.currentHero;
@@ -1776,7 +1581,6 @@ window.openCouncilUI = function() {
     if (!window.clanCouncil) window.clanCouncil = {};
     const council = window.clanCouncil[clanName] || {};
     
-    // Събираме всички живи наети герои от този клан
     const clanHeroes = [];
     if (window.worldData && window.worldData.clans) {
         for (let key in window.worldData.clans) {
@@ -1791,7 +1595,6 @@ window.openCouncilUI = function() {
         return;
     }
     
-    // Дефиниции на позициите
     const positions = [
         { id: "chancellor", name: "Канцлер", desc: "Увеличава дипломатическите бонуси" },
         { id: "marshal", name: "Маршал", desc: "Увеличава военната мощ на армията" },
@@ -1800,7 +1603,6 @@ window.openCouncilUI = function() {
         { id: "chaplain", name: "Свещеник", desc: "Увеличава мистичните бонуси" }
     ];
     
-    // Генерираме HTML
     let html = `
         <div style="background: #0a0a2a; border: 2px solid #d4af37; border-radius: 24px; padding: 20px; max-width: 600px; width: 90%; text-align: center;">
             <h2 style="color: #ffd700; margin: 0 0 10px 0;">🏛️ Държавен съвет на клан ${clanName}</h2>
@@ -1823,7 +1625,6 @@ window.openCouncilUI = function() {
             else currentHeroName = "Неизвестен";
         }
         
-        // Опции за падащо меню
         let optionsHtml = `<option value="">-- Избери герой --</option>`;
         for (let h of clanHeroes) {
             let selected = (currentHeroObj && h.id === currentHeroObj.id) ? 'selected' : '';
@@ -1865,7 +1666,6 @@ window.openCouncilUI = function() {
     modal.innerHTML = html;
     document.body.appendChild(modal);
     
-    // Обработка на бутоните
     modal.querySelectorAll('.appoint-council-btn').forEach(btn => {
         btn.onclick = () => {
             const position = btn.getAttribute('data-position');
@@ -1881,7 +1681,7 @@ window.openCouncilUI = function() {
                 window.appointCouncilor(clanName, position, hero.id);
                 if (window.showAdvisorMsg) window.showAdvisorMsg(`✅ ${hero.name} беше назначен за ${window.getPositionName(position)}.`);
                 modal.remove();
-                window.openCouncilUI(); // опресняване
+                window.openCouncilUI();
             } else {
                 if (window.showAdvisorMsg) window.showAdvisorMsg("❌ Системата за съветници не е заредена (diplomacy.js).");
             }
@@ -1907,7 +1707,6 @@ window.openCouncilUI = function() {
     modal.onclick = (e) => { if (e.target === modal) modal.remove(); };
 };
 
-// Добавяме бутон след зареждане на DOM
 setTimeout(() => {
     addCouncilButton();
 }, 1000);
@@ -1915,4 +1714,4 @@ setTimeout(() => {
 console.log("✅ ui.js – добавен UI за съветници (политическа система)");
 
 // ==================== КРАЙ НА ui.js ====================
-console.log("✅ ui.js зареден успешно - версия без toast");
+console.log("✅ ui.js зареден успешно - версия без портрети, само иконки");
