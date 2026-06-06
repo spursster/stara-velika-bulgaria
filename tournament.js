@@ -1,6 +1,6 @@
 /**
- * tournament.js – Елиминационен турнир (поетапно, с пауза при играч)
- * Версия: 7.2 – само наети герои, един мач на ход, поддръжка на пауза
+ * tournament.js – Елиминационен турнир (с летопис и автоматично стартиране)
+ * Версия: 7.3 – съобщенията отиват в летописа, дебъг логове
  */
 window.tournament = (function() {
     const MIN_YEARS_BETWEEN_TOURNAMENTS = 20;
@@ -15,16 +15,16 @@ window.tournament = (function() {
     let autoStartCounter = 0;
     let autoStartEnabled = true;
 
-    // Нови променливи за поетапно изпълнение
-    let currentMatchIndex = 0;      // кой мач от roundMatches се изпълнява в момента
-    let pendingMatch = null;         // { match, round, matchNumber, isSemifinal, isFinal }
-    let tournamentPaused = false;    // дали чакаме играч да изиграе битка
+    let currentMatchIndex = 0;
+    let pendingMatch = null;
+    let tournamentPaused = false;
 
     function resetLastYear() {
         lastTournamentYear = null;
         autoStartEnabled = true;
         autoStartCounter = 0;
         localStorage.removeItem('tournament_last_year');
+        console.log("🔁 tournament.resetLastYear() извикана – таймерът е нулиран");
     }
 
     try {
@@ -48,7 +48,6 @@ window.tournament = (function() {
         return (window.gameTime.year - lastTournamentYear) >= MIN_YEARS_BETWEEN_TOURNAMENTS;
     }
 
-    // ⭐ ПРОМЕНЕНО: Взимаме само наетите герои (isJoined === true)
     function getAllLivingHeroes() {
         let heroes = [];
         if (window.worldData && window.worldData.clans) {
@@ -130,17 +129,15 @@ window.tournament = (function() {
         }
     }
 
+    // ⭐ НОВА ВЕРСИЯ НА log – директно добавя в летописа
     function log(message, icon = "🏆") {
-        let fullMessage = icon + " " + message;
-        if (window.showAdvisorMsg) {
-            window.showAdvisorMsg(fullMessage);
-        } else if (window.addWorldEvent) {
+        if (window.addWorldEvent) {
             window.addWorldEvent("ТУРНИР", message, icon);
+        } else {
+            console.log(`${icon} ${message}`);
         }
-        console.log(fullMessage);
     }
 
-    // ⭐ НОВА ФУНКЦИЯ: показва бутон за битка и спира турнира
     function showTournamentBattleButton(pending) {
         const match = pending.match;
         const heroA = match.heroA;
@@ -166,13 +163,10 @@ window.tournament = (function() {
             btnContainer.remove();
             startTournamentBattle(pending);
         };
-
-        // Блокираме бутона "Ход"
         const turnBtn = document.querySelector('.next-turn-btn');
         if (turnBtn) turnBtn.disabled = true;
     }
 
-    // ⭐ НОВА ФУНКЦИЯ: стартира битка за турнирния двубой (използва се само при мач с играч)
     function startTournamentBattle(pending) {
         const match = pending.match;
         const playerHero = match.heroA.isPlayer ? match.heroA : match.heroB;
@@ -185,18 +179,17 @@ window.tournament = (function() {
         
         const playerHeroObj = playerHero.heroObj;
         
-        // ⭐ Създаваме обект за принудително форсиране – добавяме id от участника
-              window._tournamentForcedHero = {
+        window._tournamentForcedHero = {
             ...playerHeroObj,
             id: playerHero.id,
-            clanObj: playerHeroObj,   // ⬅️ Това решава грешката с gold
+            clanObj: playerHeroObj,
             _isTournamentForced: true
         };
         
         console.log(`🏆 Турнирен двубой: играчът изпраща герой: ${playerHero.name} (id: ${playerHero.id})`);
         
         const tournamentEnemy = {
-            name: opponentHero.name,          // opponentHero.name трябва да е стринг
+            name: opponentHero.name,
             armySize: opponentHero.power,
             defenseLevel: 1,
             isTournamentDuel: true,
@@ -209,24 +202,20 @@ window.tournament = (function() {
             opponentHero: opponentHero
         };
         
-        // Проверка дали startBattle съществува
         if (typeof window.startBattle !== 'function') {
             console.error("❌ window.startBattle не е функция! battle.js не е зареден правилно.");
-            // Може да покажем съобщение на играча
-            if (window.showAdvisorMsg) window.showAdvisorMsg("Грешка: Бойната система не е заредена. Опитайте да презаредите играта.");
+            if (window.showAdvisorMsg) window.showAdvisorMsg("Грешка: Бойната система не е заредена.");
             return;
         }
         
         window.startBattle(tournamentEnemy);
     }
 
-    // ⭐ ТАЗИ ФУНКЦИЯ СЕ ИЗВИКВА ОТ battle.js (чрез endGroupBattle) СЛЕД ПРИКЛЮЧВАНЕ НА БИТКАТА
     window._resolveTournamentMatch = function(isVictory, battleHeroes, enemies, regionName) {
         if (!window._pendingTournamentMatch) return;
         const pending = window._pendingTournamentMatch.pending;
         const match = pending.match;
         
-        // Определяме победител
         let winnerHero;
         if (isVictory) {
             winnerHero = match.heroA.isPlayer ? match.heroA : match.heroB;
@@ -234,70 +223,51 @@ window.tournament = (function() {
             winnerHero = match.heroA.isPlayer ? match.heroB : match.heroA;
         }
         
-        // Добавяме победителя в списъка за следващия рунд
         remainingHeroes.push(winnerHero);
-        
-        // Изчистваме глобалните флагове
         window._pendingTournamentMatch = null;
         window._tournamentForcedHero = null;
         
-        // Освобождаваме бутона "Ход"
         const turnBtn = document.querySelector('.next-turn-btn');
         if (turnBtn) turnBtn.disabled = false;
         
-        // Премахваме pending мача и паузата
         pendingMatch = null;
         tournamentPaused = false;
         
-        // Увеличаваме индекса на мачовете (този мач е изигран)
         currentMatchIndex++;
         
-        // Ако сме стигнали края на рунда, го финализираме
         if (currentMatchIndex >= roundMatches.length) {
             finishRound();
         } else {
-            // Иначе продължаваме със следващия мач в същия рунд
-            // Но трябва да извикаме advance отново, за да обработи следващия мач
             if (window.tournament.isActive()) {
                 window.tournament.advance();
             }
         }
     };
 
-    // ⭐ НОВА ВЕРСИЯ НА advanceTournament – изпълнява само един мач на ход (или на извикване)
     function advanceTournament() {
         if (!tournamentActive) return;
-        if (tournamentPaused) return;  // чакаме играч да изиграе битка
-        
-        // Ако няма текущи мачове, опитай да финишираш рунда (това може да стане само при победа)
+        if (tournamentPaused) return;
         if (!roundMatches.length) {
             finishRound();
             return;
         }
-        
-        // Ако сме изиграли всички мачове в рунда, финишираме
         if (currentMatchIndex >= roundMatches.length) {
             finishRound();
             return;
         }
         
-        // Вземаме следващия мач
         let match = roundMatches[currentMatchIndex];
         if (!match) return;
         
-        // Проверка за "почивка" (bye)
         if (match.heroB && match.heroB.isBye) {
             remainingHeroes.push(match.heroA);
             currentMatchIndex++;
-            // След като обработим byе, продължаваме със следващия мач (рекурсивно, но без риск от безкраен цикъл)
             advanceTournament();
             return;
         }
         
-        // Проверка дали това е мач с герой на играча
         const isPlayerMatch = (match.heroA.isPlayer === true) || (match.heroB.isPlayer === true);
         if (isPlayerMatch && !pendingMatch) {
-            // Спираме турнира и запазваме този мач
             pendingMatch = {
                 match: match,
                 round: currentRound,
@@ -307,10 +277,9 @@ window.tournament = (function() {
             };
             tournamentPaused = true;
             showTournamentBattleButton(pendingMatch);
-            return;   // спираме – чакаме играча
+            return;
         }
         
-        // Иначе – симулираме битката между двама NPC (или NPC с тъмен конник и т.н.)
         let isSemifinal = (totalRounds - currentRound === 1 && remainingHeroes.length <= 4);
         let isFinal = (totalRounds - currentRound === 0 && remainingHeroes.length <= 2);
         if (currentRound === totalRounds && remainingHeroes.length === 1) isFinal = true;
@@ -321,11 +290,9 @@ window.tournament = (function() {
         
         currentMatchIndex++;
         
-        // Ако сме изиграли всички мачове, финишираме рунда
         if (currentMatchIndex >= roundMatches.length) {
             finishRound();
         }
-        // Няма нужда да извикваме advance рекурсивно – играчът ще натисне "Ход" отново
     }
     
     function finishRound() {
@@ -353,7 +320,7 @@ window.tournament = (function() {
         currentRound++;
         roundMatches = createMatches(remainingHeroes);
         remainingHeroes = [];
-        currentMatchIndex = 0;   // нулираме индекса за новия рунд
+        currentMatchIndex = 0;
         
         if (roundMatches.length === 0) {
             tournamentActive = false;
@@ -401,7 +368,6 @@ window.tournament = (function() {
         }
 
         totalRounds = Math.log2(targetCount);
-        // Разбъркване
         for (let i = participants.length - 1; i > 0; i--) {
             let j = Math.floor(Math.random() * (i + 1));
             [participants[i], participants[j]] = [participants[j], participants[i]];
@@ -410,7 +376,7 @@ window.tournament = (function() {
         roundMatches = createMatches(participants);
         remainingHeroes = [];
         currentRound = 1;
-        currentMatchIndex = 0;   // започваме от първия мач
+        currentMatchIndex = 0;
         tournamentActive = true;
         pendingMatch = null;
         tournamentPaused = false;
@@ -431,6 +397,7 @@ window.tournament = (function() {
     }
 
     function checkAutoStart() {
+        console.log(`🔍 checkAutoStart: autoStartEnabled=${autoStartEnabled}, lastTournamentYear=${lastTournamentYear}, counter=${autoStartCounter}`);
         if (!autoStartEnabled) return;
         if (tournamentActive) return;
         if (lastTournamentYear !== null) {
@@ -460,7 +427,6 @@ window.tournament = (function() {
     };
 })();
 
-// Презаписваме processTurn, за да сме сигурни, че турнирът напредва всеки ход
 const originalProcessTurn = window.processTurn;
 window.processTurn = function() {
     if (originalProcessTurn) originalProcessTurn();
