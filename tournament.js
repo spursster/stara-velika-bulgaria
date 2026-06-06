@@ -186,9 +186,10 @@ window.tournament = (function() {
         const playerHeroObj = playerHero.heroObj;
         
         // ⭐ Създаваме обект за принудително форсиране – добавяме id от участника
-        window._tournamentForcedHero = {
+              window._tournamentForcedHero = {
             ...playerHeroObj,
-            id: playerHero.id,                // ⬅️ това решава проблема с undefined
+            id: playerHero.id,
+            clanObj: playerHeroObj,   // ⬅️ Това решава грешката с gold
             _isTournamentForced: true
         };
         
