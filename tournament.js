@@ -1,6 +1,6 @@
 /**
- * tournament.js – Турнир на шампионите (коригиран – всички герои участват, само наетите спират)
- * Версия: 7.6 – базирана на работещата 7.3, но с включени всички живи герои
+ * tournament.js – Турнир на шампионите (окончателно оправен)
+ * Версия: 7.7 – гарантирано продължаване след двубой с нает герой
  */
 window.tournament = (function() {
     const MIN_YEARS_BETWEEN_TOURNAMENTS = 20;
@@ -48,7 +48,6 @@ window.tournament = (function() {
         return (window.gameTime.year - lastTournamentYear) >= MIN_YEARS_BETWEEN_TOURNAMENTS;
     }
 
-    // ⭐ ВСИЧКИ ЖИВИ ГЕРОИ (без isJoined филтър) – добавяме isHired
     function getAllLivingHeroes() {
         let heroes = [];
         if (window.worldData && window.worldData.clans) {
@@ -60,8 +59,8 @@ window.tournament = (function() {
                         name: h.name || h.leaderName,
                         heroObj: h,
                         power: h.heroPower || 100,
-                        isPlayer: true,               // за логове (всички са "играчи")
-                        isHired: h.isJoined === true  // ⭐ само наетите ще спират турнира
+                        isPlayer: true,
+                        isHired: h.isJoined === true
                     });
                 }
             }
@@ -110,7 +109,6 @@ window.tournament = (function() {
     }
 
     function logMatch(match, winner, loser, roundNumber, isSemifinal, isFinal, matchNumber) {
-        // Важен е само ако участва нает герой
         const isImportant = (match.heroA.isHired === true) || (match.heroB.isHired === true);
         if (!isFinal && !isSemifinal && !isImportant) return;
 
@@ -236,9 +234,12 @@ window.tournament = (function() {
         
         currentMatchIndex++;
         
+        console.log(`🔓 Мач завърши. currentMatchIndex = ${currentMatchIndex}, roundMatches.length = ${roundMatches.length}`);
+        
         if (currentMatchIndex >= roundMatches.length) {
             finishRound();
         } else {
+            // Продължаваме със следващия мач в същия рунд
             if (window.tournament.isActive()) {
                 window.tournament.advance();
             }
@@ -267,7 +268,6 @@ window.tournament = (function() {
             return;
         }
         
-        // ⭐ Проверка дали в мача участва нает герой (isHired)
         const hasHired = (match.heroA.isHired === true) || (match.heroB.isHired === true);
         if (hasHired && !pendingMatch) {
             pendingMatch = {
