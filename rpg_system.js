@@ -4,6 +4,11 @@
 
 window.rpgDatabase = window.rpgDatabase || {};
 
+// Помощна функция дали турнир е активен
+function isTournamentActive() {
+    return window.tournament && typeof window.tournament.isActive === 'function' && window.tournament.isActive();
+}
+
 // Хранилище за висящи точки умения (само за герои, на които е показан бутон)
 if (!window._pendingSkillPoints) window._pendingSkillPoints = {};
 // Хранилище за висящи предложения за еволюция на клас
@@ -135,18 +140,23 @@ window.gainHeroXP = function(hero, amount) {
                 window.autoEquipHero(hero);
             }
             
-            if (typeof isMyHero === 'function' && isMyHero(hero) && hero.skillPoints > 0) {
-                window._pendingSkillPoints[hero.id] = hero.skillPoints;
-                if (window.ChronicleEvents && typeof window.ChronicleEvents.generateSkillPointOffer === 'function') {
-                    const ev = window.ChronicleEvents.generateSkillPointOffer(hero);
-                    window.showAdvisorMsg(ev.message, ev.buttons);
-                } else {
-                    window.showAdvisorMsg(`⭐ ${hero.name} получи точка умение!`);
-                }
-            } else if (!(typeof isMyHero === 'function' && isMyHero(hero)) && hero.isAuto && hero.skillPoints > 0) {
-                if (typeof window.autoAssignSkillPoint === 'function') window.autoAssignSkillPoint(hero);
-            }
+         if (typeof isMyHero === 'function' && isMyHero(hero) && hero.skillPoints > 0) {
+    if (isTournamentActive()) {
+        // По време на турнир – автоматично разпределяне, без въпроси
+        if (typeof window.autoAssignSkillPoint === 'function') {
+            window.autoAssignSkillPoint(hero);
+            if (window.addHeroLog) window.addHeroLog(hero, "🧠", `Автоматично разпределена точка умение (по време на турнир).`);
         }
+    } else {
+        window._pendingSkillPoints[hero.id] = hero.skillPoints;
+        if (window.ChronicleEvents && typeof window.ChronicleEvents.generateSkillPointOffer === 'function') {
+            const ev = window.ChronicleEvents.generateSkillPointOffer(hero);
+            window.showAdvisorMsg(ev.message, ev.buttons);
+        } else {
+            window.showAdvisorMsg(`⭐ ${hero.name} получи точка умение!`);
+        }
+    }
+}
     } else {
         // manual режим
         hero.storedXP += amount;
@@ -281,29 +291,34 @@ window.checkArcheAgeClass = function(hero) {
     const newClass = available[0];
     if (hero.currentClass === newClass.name) return;
     
-    if (typeof isMyHero === 'function' && isMyHero(hero)) {
-        if (!window._pendingClassEvolution[hero.id]) {
-            window._pendingClassEvolution[hero.id] = newClass.name;
-            if (window.ChronicleEvents && typeof window.ChronicleEvents.generateClassEvolutionOffer === 'function') {
-                const ev = window.ChronicleEvents.generateClassEvolutionOffer(hero, hero.currentClass, newClass.name);
-                window.showAdvisorMsg(ev.message, ev.buttons);
-            } else {
-                window.showAdvisorMsg(`🌟 ${hero.name} може да се издигне до ${newClass.name}!`);
-            }
-        }
-    } else {
-        const oldClass = hero.currentClass;
-        hero.currentClass = newClass.name;
-        if (window.applyClassBonuses) window.applyClassBonuses(hero, newClass.name);
-        showRPGMessage("ЕВОЛЮЦИЯ", `👑 ${hero.name} се издигна от "${oldClass}" до "${hero.currentClass}"!`, "success");
-    }
-};
 
 // ==================== АВТОМАТИЧНО РЕШАВАНЕ НА ВИСЯЩИ ПРЕДЛОЖЕНИЯ (ВИКА СЕ В КРАЯ НА ХОД) ====================
 window.resolvePendingChoices = function() {
     if (!window.worldData || !window.worldData.clans) return;
     
-    for (let key in window.worldData.clans) {
+    for (let key in window.worldData.clans) {if (typeof isMyHero === 'function' && isMyHero(hero)) {
+    if (isTournamentActive()) {
+        // Автоматично приемане на новия клас по време на турнир
+        const oldClass = hero.currentClass;
+        hero.currentClass = newClass.name;
+        if (window.applyClassBonuses) window.applyClassBonuses(hero, newClass.name);
+        showRPGMessage("ЕВОЛЮЦИЯ", `👑 ${hero.name} се издигна от "${oldClass}" до "${hero.currentClass}" (автоматично по време на турнир)!`, "success");
+    } else if (!window._pendingClassEvolution[hero.id]) {
+        window._pendingClassEvolution[hero.id] = newClass.name;
+        if (window.ChronicleEvents && typeof window.ChronicleEvents.generateClassEvolutionOffer === 'function') {
+            const ev = window.ChronicleEvents.generateClassEvolutionOffer(hero, hero.currentClass, newClass.name);
+            window.showAdvisorMsg(ev.message, ev.buttons);
+        } else {
+            window.showAdvisorMsg(`🌟 ${hero.name} може да се издигне до ${newClass.name}!`);
+        }
+    }
+} else {
+    // За ненаети герои – както досега (автоматично)
+    const oldClass = hero.currentClass;
+    hero.currentClass = newClass.name;
+    if (window.applyClassBonuses) window.applyClassBonuses(hero, newClass.name);
+    showRPGMessage("ЕВОЛЮЦИЯ", `👑 ${hero.name} се издигна от "${oldClass}" до "${hero.currentClass}"!`, "success");
+}
         let hero = window.worldData.clans[key];
         if (!hero) continue;
         
