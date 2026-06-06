@@ -1,11 +1,7 @@
 /**
- * MapGenerator.js – ПРОЦЕДУРНА VORONOI КАРТА (версия 3.2)
- * - Автоматично генерира фиксирани координати за всички региони
- * - НЕ променя world_data.js – всички координати се изчисляват на летене
- * - Картата е стабилна (една и съща при всяко отваряне)
+ * MapGenerator.js – Voronoi карта (версия 3.3 – с проверки за d3 и размери)
  */
 
-// Хеш функция за преобразуване на низ в число (детерминистично)
 function simpleHash(str) {
     let hash = 0;
     for (let i = 0; i < str.length; i++) {
@@ -16,25 +12,22 @@ function simpleHash(str) {
 }
 
 function getRegionCoordinates(regionName, index, total) {
-    // Предварително дефинирани зони за исторически региони (на база ключови думи)
     const nameLower = regionName.toLowerCase();
-    
-    // Балкански региони (център – България)
+    // Балкани
     if (nameLower.includes("плиска") || nameLower.includes("преслав") || nameLower.includes("търнов") ||
         nameLower.includes("видин") || nameLower.includes("софия") || nameLower.includes("пловдив") ||
         nameLower.includes("одрин") || nameLower.includes("траки") || nameLower.includes("мизия") ||
         nameLower.includes("добруджа") || nameLower.includes("македония") || nameLower.includes("битоля") ||
         nameLower.includes("охрид") || nameLower.includes("силистра") || nameLower.includes("варна") ||
         nameLower.includes("русе") || nameLower.includes("шум") || nameLower.includes("бургас") ||
-        nameLower.includes("стара загора") || nameLower.includes("хасково") || nameLower.includes("кърджали")) {
-        // Балкани – x между 300 и 700, y между 250 и 450
+        nameLower.includes("стара загора") || nameLower.includes("хасково") || nameLower.includes("кърджали") ||
+        nameLower.includes("белград") || nameLower.includes("скопие") || nameLower.includes("ниш") ||
+        nameLower.includes("прищина") || nameLower.includes("тирана") || nameLower.includes("загреб") ||
+        nameLower.includes("любляна") || nameLower.includes("сараево") || nameLower.includes("подгорица")) {
         let hash = simpleHash(regionName);
-        let x = 300 + (hash % 400);
-        let y = 250 + (Math.floor(hash / 100) % 200);
-        return { x, y };
+        return { x: 300 + (hash % 400), y: 250 + (Math.floor(hash / 100) % 200) };
     }
-    
-    // Западна Европа (Италия, Франция, Германия, Британия)
+    // Западна Европа
     if (nameLower.includes("венеция") || nameLower.includes("рим") || nameLower.includes("париж") ||
         nameLower.includes("лондон") || nameLower.includes("ахен") || nameLower.includes("берлин") ||
         nameLower.includes("виена") || nameLower.includes("прага") || nameLower.includes("милано") ||
@@ -42,28 +35,26 @@ function getRegionCoordinates(regionName, index, total) {
         nameLower.includes("бордо") || nameLower.includes("кентърбъри") || nameLower.includes("единбург") ||
         nameLower.includes("дъблин") || nameLower.includes("брюксел") || nameLower.includes("кьолн") ||
         nameLower.includes("мюнхен") || nameLower.includes("хамбург") || nameLower.includes("бремен") ||
-        nameLower.includes("франкфурт") || nameLower.includes("ко") && (nameLower.includes("енхаген") === false)) {
+        nameLower.includes("франкфурт")) {
         let hash = simpleHash(regionName);
-        let x = 100 + (hash % 300);
-        let y = 200 + (Math.floor(hash / 100) % 300);
-        return { x, y };
+        return { x: 100 + (hash % 300), y: 200 + (Math.floor(hash / 100) % 300) };
     }
-    
-    // Източна Европа, Русия, Степ (Киев, Москва, Кавказ, Хазари)
+    // Източна Европа, Русия
     if (nameLower.includes("киев") || nameLower.includes("москва") || nameLower.includes("новгород") ||
         nameLower.includes("владимир") || nameLower.includes("суздал") || nameLower.includes("рязан") ||
         nameLower.includes("твер") || nameLower.includes("смоленск") || nameLower.includes("полоцк") ||
         nameLower.includes("минск") || nameLower.includes("витебск") || nameLower.includes("чернигов") ||
         nameLower.includes("переяслав") || nameLower.includes("астрахан") || nameLower.includes("сарай") ||
         nameLower.includes("казан") || nameLower.includes("булгар") || nameLower.includes("дербент") ||
-        nameLower.includes("тбилиси") || nameLower.includes("баку")) {
+        nameLower.includes("тбилиси") || nameLower.includes("баку") || nameLower.includes("банат") ||
+        nameLower.includes("трансилвания") || nameLower.includes("букурещ") || nameLower.includes("яш") ||
+        nameLower.includes("клуж") || nameLower.includes("тимишоара") || nameLower.includes("крайова") ||
+        nameLower.includes("брашов") || nameLower.includes("сибиу") || nameLower.includes("галац") ||
+        nameLower.includes("браила")) {
         let hash = simpleHash(regionName);
-        let x = 650 + (hash % 350);
-        let y = 150 + (Math.floor(hash / 100) % 300);
-        return { x, y };
+        return { x: 650 + (hash % 350), y: 150 + (Math.floor(hash / 100) % 300) };
     }
-    
-    // Близък изток, Персия, Арабия, Египет
+    // Близък изток, Персия, Индия
     if (nameLower.includes("анкара") || nameLower.includes("кония") || nameLower.includes("трапезунд") ||
         nameLower.includes("никея") || nameLower.includes("смирна") || nameLower.includes("антиохия") ||
         nameLower.includes("дамаск") || nameLower.includes("багдад") || nameLower.includes("йерусалим") ||
@@ -76,22 +67,16 @@ function getRegionCoordinates(regionName, index, total) {
         nameLower.includes("калкута") || nameLower.includes("мадрас") || nameLower.includes("пешавар") ||
         nameLower.includes("кашмир") || nameLower.includes("ланка")) {
         let hash = simpleHash(regionName);
-        let x = 800 + (hash % 400);
-        let y = 300 + (Math.floor(hash / 100) % 300);
-        return { x, y };
+        return { x: 800 + (hash % 400), y: 300 + (Math.floor(hash / 100) % 300) };
     }
-    
-    // Далечен изток, Китай, Япония, Корея
+    // Далечен изток
     if (nameLower.includes("пекин") || nameLower.includes("нанкин") || nameLower.includes("сиан") ||
         nameLower.includes("хангжу") || nameLower.includes("киото") || nameLower.includes("токио") ||
         nameLower.includes("корея") || nameLower.includes("виетнам")) {
         let hash = simpleHash(regionName);
-        let x = 1150 + (hash % 200);
-        let y = 250 + (Math.floor(hash / 100) % 250);
-        return { x, y };
+        return { x: 1150 + (hash % 200), y: 250 + (Math.floor(hash / 100) % 250) };
     }
-    
-    // Африка (без Египет)
+    // Африка
     if (nameLower.includes("картаген") || nameLower.includes("тунис") || nameLower.includes("триполи") ||
         nameLower.includes("киренайка") || nameLower.includes("фес") || nameLower.includes("маракеш") ||
         nameLower.includes("тимбукту") || nameLower.includes("гана") || nameLower.includes("сонгай") ||
@@ -100,23 +85,17 @@ function getRegionCoordinates(regionName, index, total) {
         nameLower.includes("килиманджаро") || nameLower.includes("занзибар") || nameLower.includes("мадагаскар") ||
         nameLower.includes("конго") || nameLower.includes("сахара")) {
         let hash = simpleHash(regionName);
-        let x = 500 + (hash % 500);
-        let y = 550 + (Math.floor(hash / 100) % 250);
-        return { x, y };
+        return { x: 500 + (hash % 500), y: 550 + (Math.floor(hash / 100) % 250) };
     }
-    
-    // Острови (Гренландия, Исландия, Ирландия, Сицилия, Крит, Кипър, Малта, Балеари, Канарски, Мадейра)
+    // Острови
     if (nameLower.includes("гренландия") || nameLower.includes("исландия") || nameLower.includes("ирландия") ||
         nameLower.includes("сицилия") || nameLower.includes("крит") || nameLower.includes("кипър") ||
         nameLower.includes("малта") || nameLower.includes("балеари") || nameLower.includes("канарски") ||
         nameLower.includes("мадейра")) {
         let hash = simpleHash(regionName);
-        let x = 50 + (hash % 250);
-        let y = 400 + (Math.floor(hash / 100) % 200);
-        return { x, y };
+        return { x: 50 + (hash % 250), y: 400 + (Math.floor(hash / 100) % 200) };
     }
-    
-    // Фентъзи митични земи (разположени в горния ляв и десен ъгъл)
+    // Фентъзи
     const fantasyKeywords = ["авалон", "атлантида", "му", "лемурия", "хиперборея", "елдърлейн", "мория", "еребор", "мордор", "изенгард", "рохан", "гондор", "ривендъл", "лотлориен", "мирквуд", "дейл", "есгарот", "валинор", "нибелунгайм", "мидгард", "асгард", "ванахейм", "йотунхейм", "алфхайм", "сварталхайм", "настронт", "олимп", "тартар", "елизиум", "хесперид"];
     if (fantasyKeywords.some(kw => nameLower.includes(kw))) {
         let hash = simpleHash(regionName);
@@ -124,12 +103,9 @@ function getRegionCoordinates(regionName, index, total) {
         let y = 50 + (Math.floor(hash / 100) % 200);
         return { x, y };
     }
-    
-    // Всички останали (процедурни или неизвестни) – разполагаме ги в оставащото пространство
+    // Останали
     let hash = simpleHash(regionName);
-    let x = 300 + (hash % 800);
-    let y = 100 + (Math.floor(hash / 100) % 500);
-    return { x, y };
+    return { x: 300 + (hash % 800), y: 100 + (Math.floor(hash / 100) % 500) };
 }
 
 window.openInteractiveMap = function() {
@@ -139,20 +115,20 @@ window.openInteractiveMap = function() {
     const modal = document.createElement('div');
     modal.id = 'interactive-map-modal';
     modal.style.cssText = `
-        position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-        background: rgba(0, 0, 0, 0.9); backdrop-filter: blur(8px);
-        z-index: 300000; display: flex; align-items: center; justify-content: center;
-        padding: 12px; box-sizing: border-box;
+        position: fixed; top:0; left:0; width:100%; height:100%;
+        background:rgba(0,0,0,0.9); backdrop-filter:blur(8px);
+        z-index:300000; display:flex; align-items:center; justify-content:center;
+        padding:12px; box-sizing:border-box;
     `;
 
     modal.innerHTML = `
-        <div style="background: #0a0a1a; border: 2px solid #d4af37; border-radius: 24px; width: 100%; max-width: 1300px; height: 90vh; display: flex; flex-direction: column; overflow: hidden;">
-            <div style="padding: 10px 16px; background: #1a1a2e; border-bottom: 2px solid #d4af37; display: flex; justify-content: space-between; align-items: center; flex-shrink: 0;">
-                <h2 style="color: #ffd700; margin: 0; font-size: 1.2rem;">🗺️ Карта на Велика България</h2>
-                <button id="closeMapBtn" style="background: #2c1a0c; border: 1px solid #ff8888; border-radius: 50%; width: 32px; height: 32px; color: #ff8888; cursor: pointer; font-size: 18px;">✕</button>
+        <div style="background:#0a0a1a; border:2px solid #d4af37; border-radius:24px; width:100%; max-width:1300px; height:90vh; display:flex; flex-direction:column; overflow:hidden;">
+            <div style="padding:10px 16px; background:#1a1a2e; border-bottom:2px solid #d4af37; display:flex; justify-content:space-between; align-items:center; flex-shrink:0;">
+                <h2 style="color:#ffd700; margin:0; font-size:1.2rem;">🗺️ Карта на Велика България</h2>
+                <button id="closeMapBtn" style="background:#2c1a0c; border:1px solid #ff8888; border-radius:50%; width:32px; height:32px; color:#ff8888; cursor:pointer;">✕</button>
             </div>
-            <div id="voronoi-map-container" style="flex: 1; background: #0f0f1a; position: relative; overflow: auto;"></div>
-            <div style="padding: 6px 10px; background: #1a1a2e; border-top: 1px solid #d4af37; font-size: 0.7rem; color: #ccc; text-align: center; flex-shrink: 0;">
+            <div id="voronoi-map-container" style="flex:1; background:#0f0f1a; position:relative; overflow:auto;"></div>
+            <div style="padding:6px 10px; background:#1a1a2e; border-top:1px solid #d4af37; font-size:0.7rem; color:#ccc; text-align:center; flex-shrink:0;">
                 🏰 Кликнете върху регион за информация
             </div>
         </div>
@@ -165,57 +141,51 @@ window.openInteractiveMap = function() {
     function renderVoronoiMap() {
         if (!window.worldData || !window.worldData.regions) {
             console.warn("worldData не е готов");
+            setTimeout(renderVoronoiMap, 100);
             return;
         }
 
         const width = container.clientWidth;
         const height = container.clientHeight;
-        if (width < 100 || height < 100) return;
+        if (width < 50 || height < 50) {
+            console.warn("Контейнерът няма размери, опитвам отново...");
+            setTimeout(renderVoronoiMap, 100);
+            return;
+        }
 
         const regions = Object.values(window.worldData.regions);
         const ownedRegions = (window.playerRegions && window.playerRegions.flat) ? window.playerRegions.flat() : [];
 
         function getRegionColor(region) {
-            if (ownedRegions.includes(region.name)) return '#2c8a2c';      // ваш
-            if (region.ancientOwner) return '#aa55ff';                    // древен
-            if (region.nativeClans && region.nativeClans.length > 0 && region.nativeClans[0] !== "Независим") return '#aa3a3a'; // враг
-            return '#6a6a6a';                                            // независим
+            if (ownedRegions.includes(region.name)) return '#2c8a2c';
+            if (region.ancientOwner) return '#aa55ff';
+            if (region.nativeClans && region.nativeClans.length > 0 && region.nativeClans[0] !== "Независим") return '#aa3a3a';
+            return '#6a6a6a';
         }
 
-        // Генериране на точки със стабилни координати
         const points = [];
         const margin = Math.min(50, width * 0.08);
         
         regions.forEach((region, idx) => {
-            // Получаваме или изчисляваме координати
-            let x, y;
-            if (region.x !== undefined && region.y !== undefined) {
-                // Ако вече има координати в worldData, ползваме тях
-                x = margin + (region.x / 1300) * (width - 2 * margin);
-                y = margin + (region.y / 700) * (height - 2 * margin);
-            } else {
-                // Изчисляваме координати на база име
-                const coords = getRegionCoordinates(region.name, idx, regions.length);
-                x = margin + (coords.x / 1300) * (width - 2 * margin);
-                y = margin + (coords.y / 700) * (height - 2 * margin);
-            }
+            const coords = getRegionCoordinates(region.name, idx, regions.length);
+            let x = margin + (coords.x / 1300) * (width - 2 * margin);
+            let y = margin + (coords.y / 700) * (height - 2 * margin);
             points.push({ x, y, region });
         });
 
-        // Използваме d3-delaunay
-        if (typeof d3 === 'undefined') {
+        if (typeof d3 === 'undefined' || typeof d3.Delaunay === 'undefined') {
+            console.warn("d3 не е зареден, зареждам...");
             const script = document.createElement('script');
             script.src = 'https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js';
             script.onload = () => drawVoronoi(points, width, height, container, getRegionColor);
             document.head.appendChild(script);
-        } else {
-            drawVoronoi(points, width, height, container, getRegionColor);
+            return;
         }
+        drawVoronoi(points, width, height, container, getRegionColor);
     }
 
     function drawVoronoi(points, width, height, container, getRegionColor) {
         container.innerHTML = '';
-
         const delaunay = d3.Delaunay.from(points.map(p => [p.x, p.y]));
         const voronoi = delaunay.voronoi([0, 0, width, height]);
 
@@ -235,8 +205,7 @@ window.openInteractiveMap = function() {
             svg.style.pointerEvents = 'none';
 
             const polygon = document.createElementNS('http://www.w3.org/2000/svg', 'polygon');
-            const pointsAttr = cell.map(p => `${p[0]},${p[1]}`).join(' ');
-            polygon.setAttribute('points', pointsAttr);
+            polygon.setAttribute('points', cell.map(p => `${p[0]},${p[1]}`).join(' '));
             polygon.setAttribute('fill', color);
             polygon.setAttribute('stroke', '#d4af37');
             polygon.setAttribute('stroke-width', '1.2');
@@ -268,26 +237,24 @@ window.openInteractiveMap = function() {
 
             polygon.addEventListener('click', (e) => {
                 e.stopPropagation();
-                if (typeof window.inspectRegion === 'function') {
-                    window.inspectRegion(region.name);
-                } else {
-                    alert(`${region.name}\nВойски: ${region.armySize}\nЗащита: ${region.defenseLevel}`);
-                }
+                if (typeof window.inspectRegion === 'function') window.inspectRegion(region.name);
+                else alert(`${region.name}\nВойски: ${region.armySize}\nЗащита: ${region.defenseLevel}`);
             });
         });
-        console.log(`✅ Voronoi карта генерирана – ${points.length} региона, размер ${width}x${height}`);
+        console.log(`✅ Voronoi карта: ${points.length} региона, размер ${width}x${height}`);
     }
 
-    setTimeout(() => renderVoronoiMap(), 30);
+    // Първоначално извикване с малко закъснение
+    setTimeout(renderVoronoiMap, 100);
 
     let resizeTimeout;
     function handleResize() {
         if (!document.getElementById('interactive-map-modal')) return;
         clearTimeout(resizeTimeout);
-        resizeTimeout = setTimeout(() => renderVoronoiMap(), 200);
+        resizeTimeout = setTimeout(renderVoronoiMap, 200);
     }
     window.addEventListener('resize', handleResize);
-    window.addEventListener('orientationchange', () => setTimeout(() => renderVoronoiMap(), 100));
+    window.addEventListener('orientationchange', () => setTimeout(renderVoronoiMap, 100));
 
     const closeBtn = modal.querySelector('#closeMapBtn');
     const closeModal = () => {
@@ -301,12 +268,8 @@ window.openInteractiveMap = function() {
 
 window.refreshMap = function() {
     const modal = document.getElementById('interactive-map-modal');
-    if (modal) {
-        modal.remove();
-        window.openInteractiveMap();
-    } else {
-        console.warn("Картата не е отворена.");
-    }
+    if (modal) modal.remove();
+    window.openInteractiveMap();
 };
 
-console.log("✅ MapGenerator.js версия 3.2 зареден – стабилна Voronoi карта без промяна на world_data.js");
+console.log("✅ MapGenerator.js версия 3.3 – Voronoi карта с проверки за d3");
