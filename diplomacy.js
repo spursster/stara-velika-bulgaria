@@ -698,4 +698,211 @@ window.openMarriageMenu = function() {
     modal.classList.add('active');
 };
 
+// ==================== ПОЛИТИЧЕСКА СИСТЕМА – СЪВЕТНИЦИ И БОРБА ЗА ТРОН ====================
+
+// --- 1. Структура на съвета за всеки клан ---
+if (!window.clanCouncil) window.clanCouncil = {};
+if (!window.clanBonuses) window.clanBonuses = {};
+
+// Помощна функция за намиране на герой по ID (или по име/clan)
+function getHeroByIdOrName(identifier) {
+    if (!window.worldData || !window.worldData.clans) return null;
+    for (let key in window.worldData.clans) {
+        let h = window.worldData.clans[key];
+        if (h.id === identifier || h.name === identifier || h.clan === identifier) return h;
+    }
+    return null;
+}
+
+// --- 2. Назначаване на съветник ---
+window.appointCouncilor = function(clanName, position, heroId) {
+    if (!clanName || !position) return false;
+    if (!window.clanCouncil[clanName]) window.clanCouncil[clanName] = {};
+    
+    const hero = getHeroByIdOrName(heroId);
+    if (!hero || hero.clan !== clanName) {
+        if (window.showAdvisorMsg) window.showAdvisorMsg(`❌ Героят не принадлежи на клан ${clanName}!`);
+        return false;
+    }
+    
+    // Проверка дали позицията е валидна
+    const validPositions = ["chancellor", "marshal", "steward", "spymaster", "chaplain"];
+    if (!validPositions.includes(position)) return false;
+    
+    window.clanCouncil[clanName][position] = hero.id || hero.name;
+    window.recalcCouncilBonuses(clanName);
+    
+    if (window.addWorldEvent) {
+        window.addWorldEvent("🏛️ НАЗНАЧЕНИЕ", `${hero.name} стана ${window.getPositionName(position)} на клан ${clanName}.`, "👑");
+    }
+    return true;
+};
+
+// --- 3. Освобождаване на съветник ---
+window.dismissCouncilor = function(clanName, position) {
+    if (!window.clanCouncil[clanName] || !window.clanCouncil[clanName][position]) return false;
+    delete window.clanCouncil[clanName][position];
+    window.recalcCouncilBonuses(clanName);
+    if (window.addWorldEvent) window.addWorldEvent("🏛️ ОСВОБОЖДАВАНЕ", `Позицията ${window.getPositionName(position)} на клан ${clanName} освободена.`, "📜");
+    return true;
+};
+
+// --- 4. Имена на позициите (за UI) ---
+window.getPositionName = function(position) {
+    const names = {
+        chancellor: "Канцлер (дипломация)",
+        marshal: "Маршал (армия)",
+        steward: "Стюард (икономика)",
+        spymaster: "Шпионски майстор (разузнаване)",
+        chaplain: "Свещеник (мистика)"
+    };
+    return names[position] || position;
+};
+
+// --- 5. Изчисляване на бонусите от съветниците ---
+window.recalcCouncilBonuses = function(clanName) {
+    if (!window.clanCouncil[clanName]) window.clanCouncil[clanName] = {};
+    const council = window.clanCouncil[clanName];
+    let bonuses = { armyBonus: 0, goldBonus: 0, diplomacyBonus: 0, spyDefense: 0, mysticismBonus: 0 };
+    
+    for (let [pos, heroRef] of Object.entries(council)) {
+        if (!heroRef) continue;
+        const hero = getHeroByIdOrName(heroRef);
+        if (!hero || hero.isAlive === false) continue;
+        
+        // Вземаме умения (hero.skills) или бонус от черти
+        let diplomacy = hero.skills?.diplomacy || 0;
+        let command = hero.skills?.command || hero.skills?.leadership || 0;
+        let economy = hero.skills?.economy || hero.skills?.trade || 0;
+        let mysticism = hero.skills?.mysticism || 0;
+        
+        switch(pos) {
+            case "chancellor":
+                bonuses.diplomacyBonus += 0.05 + diplomacy * 0.02;
+                break;
+            case "marshal":
+                bonuses.armyBonus += 0.1 + command * 0.03;
+                break;
+            case "steward":
+                bonuses.goldBonus += 0.1 + economy * 0.05;
+                break;
+            case "spymaster":
+                bonuses.spyDefense += 10 + hero.level * 2;
+                break;
+            case "chaplain":
+                bonuses.mysticismBonus += 0.1 + mysticism * 0.02;
+                break;
+        }
+    }
+    window.clanBonuses[clanName] = bonuses;
+    return bonuses;
+};
+
+// --- 6. Вземане на бонус за даден клан (използва се от economy, battle, diplomacy) ---
+window.getClanBonus = function(clanName, bonusType) {
+    if (!window.clanBonuses[clanName]) window.recalcCouncilBonuses(clanName);
+    const bonuses = window.clanBonuses[clanName] || {};
+    return bonuses[bonusType] || 0;
+};
+
+// --- 7. Борба за трон (проверка при смяна на ход) ---
+window.checkSuccessionCrisis = function(clanName) {
+    if (!clanName) return;
+    // Събираме всички живи наети герои от този клан
+    const heroesInClan = [];
+    for (let key in window.worldData.clans) {
+        let h = window.worldData.clans[key];
+        if (h.clan === clanName && h.isJoined === true && h.isAlive !== false) {
+            heroesInClan.push(h);
+        }
+    }
+    if (heroesInClan.length < 2) return;
+    
+    // Сортираме по сила (heroPower)
+    heroesInClan.sort((a,b) => (b.heroPower || 0) - (a.heroPower || 0));
+    const leader = heroesInClan[0];
+    const challenger = heroesInClan[1];
+    
+    // Ако challenger има поне 80% от силата на leader, има риск от борба
+    const leaderPower = leader.heroPower || 100;
+    const challengerPower = challenger.heroPower || 100;
+    if (challengerPower >= leaderPower * 0.8 && Math.random() < 0.05) { // 5% шанс на ход
+        // Задействаме събитие
+        if (window.addWorldEvent) {
+            window.addWorldEvent("⚔️ БОРБА ЗА ТРОН", `В клан ${clanName} избухна борба за власт между ${leader.name} и ${challenger.name}!`, "⚔️");
+        }
+        
+        // Ако някой от тях е герой на играча – показваме бутони
+        const isPlayerLeader = (typeof isMyHero === 'function' && isMyHero(leader));
+        const isPlayerChallenger = (typeof isMyHero === 'function' && isMyHero(challenger));
+        
+        if (isPlayerLeader || isPlayerChallenger) {
+            if (window.showAdvisorMsg) {
+                window.showAdvisorMsg(`Кого подкрепяте в борбата за трон на ${clanName}?`, [
+                    { label: `🏆 ${leader.name}`, action: () => window.resolveSuccession(clanName, leader, challenger) },
+                    { label: `👑 ${challenger.name}`, action: () => window.resolveSuccession(clanName, challenger, leader) },
+                    { label: "🤝 Опит за помирение", action: () => window.attemptReconciliation(clanName, leader, challenger) }
+                ]);
+            }
+        } else {
+            // Симулираме изход според силите
+            const leaderWins = Math.random() < (leaderPower / (leaderPower + challengerPower));
+            window.resolveSuccession(clanName, leaderWins ? leader : challenger, leaderWins ? challenger : leader);
+        }
+    }
+};
+
+// --- 8. Разрешаване на борбата ---
+window.resolveSuccession = function(clanName, winner, loser) {
+    if (!winner || !loser) return;
+    // Победителят остава, победеният напуска клана и умира (или става независим)
+    loser.isJoined = false;
+    loser.isAlive = false;
+    
+    // Прехвърляме регионите на победения към победителя
+    if (window.playerRegions && Array.isArray(window.playerRegions.flat)) {
+        const loserRegions = [];
+        for (let i = 0; i < window.playerRegions.length; i++) {
+            if (window.playerRegions[i] === loser.name || window.playerRegions[i] === loser.clan) {
+                loserRegions.push(window.playerRegions[i]);
+            }
+        }
+        loserRegions.forEach(region => {
+            if (!window.playerRegions.includes(region)) window.playerRegions.push(region);
+        });
+    }
+    
+    // Победителят получава бонус мощ
+    winner.heroPower = (winner.heroPower || 100) + 50;
+    if (window.updateStrongestHeroUI) window.updateStrongestHeroUI();
+    
+    if (window.addWorldEvent) {
+        window.addWorldEvent("👑 НОВ ВЛАДЕТЕЛ", `${winner.name} спечели борбата за трон на ${clanName}. ${loser.name} е победен и изчезнал!`, "👑");
+    }
+};
+
+// --- 9. Опит за помирение (намалява напрежението) ---
+window.attemptReconciliation = function(clanName, heroA, heroB) {
+    // Намаляваме силата на challenger с 10%, увеличаваме лоялност
+    heroB.heroPower = Math.max(50, (heroB.heroPower || 100) * 0.9);
+    if (window.addWorldEvent) {
+        window.addWorldEvent("🤝 ПОМИРЕНИЕ", `В клан ${clanName} конфликтът между ${heroA.name} и ${heroB.name} беше потушен временно.`, "🤝");
+    }
+};
+
+// --- 10. Извикване на проверка за борба за трон при всеки ход (ако има повече от един герой в клан) ---
+// Тази функция трябва да се извиква от processTurn или от края на хода
+window.autoCheckSuccession = function() {
+    if (!window.worldData || !window.worldData.clans) return;
+    const clanSet = new Set();
+    for (let key in window.worldData.clans) {
+        let h = window.worldData.clans[key];
+        if (h.isJoined && h.isAlive !== false && h.clan) clanSet.add(h.clan);
+    }
+    for (let clan of clanSet) {
+        window.checkSuccessionCrisis(clan);
+    }
+};
+
+console.log("✅ diplomacy.js – добавена политическа система (съветници и борба за трон)");
 console.log("✅ diplomacy.js версия 8.1 зареден – без currentHero, с updateStrongestHeroUI и оправен брачен прозорец");
