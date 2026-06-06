@@ -1,31 +1,12 @@
 /**
- * MapGenerator.js – Leaflet карта с постоянни имена и линии между регионите
- * - Имената на регионите се винаги видими (без mouseover)
- * - Линиите се генерират автоматично между близки региони (разстояние < 2.5 градуса)
- * - Запазва zoom, pan, клъстери, цветове според притежател
+ * MapGenerator.js – Leaflet карта с иконки (вместо кръгчета), клъстери, линии
+ * - Иконки: 🏰 за ваши региони, 👹 за вражески, 🏺 за древни, 🏜️ за независими
+ * - Запазени: клъстери, постоянни имена, линии, zoom/pan, цветове (в tooltip)
  */
-// Най-отгоре във файла:
-let blockAutoMap = false;
-
-window.openInteractiveMap = function(force = false) {
-    if (!force && blockAutoMap) {
-        console.log("Картата е блокирана за автоматично отваряне.");
-        return;
-    }
-    console.trace("openInteractiveMap called from:");
-    // ... останалият код ...
-};
-
-// Тази функция да се вика само от бутона
-window.userRequestMap = function() {
-    blockAutoMap = false;
-    window.openInteractiveMap(true);
-};
 
 window.openInteractiveMap = function() {
-    // Проверка за Leaflet
     if (typeof L === 'undefined') {
-        console.error("Leaflet (L) не е зареден");
+        console.error("Leaflet не е зареден");
         alert("Грешка: Липсва Leaflet библиотеката.");
         return;
     }
@@ -50,7 +31,7 @@ window.openInteractiveMap = function() {
             </div>
             <div id="leaflet-cluster-container" style="flex:1; background:#0f0f1a;"></div>
             <div style="padding:6px 10px; background:#1a1a2e; border-top:1px solid #d4af37; font-size:0.7rem; color:#ccc; text-align:center;">
-                🖱️ Плъзгай | 🔍 Мащабирай | 🏷️ Имената на регионите са винаги видими | 🌐 Линиите показват връзки
+                🖱️ Плъзгай | 🔍 Мащабирай | 🏷️ Имената са винаги видими | 🌐 Линиите показват пътища
             </div>
         </div>
     `;
@@ -68,114 +49,161 @@ window.openInteractiveMap = function() {
         minZoom: 4
     }).addTo(map);
 
-    // ---------- Данни за регионите ----------
     const regions = Object.values(window.worldData.regions);
     const ownedRegions = (window.playerRegions && window.playerRegions.flat) ? window.playerRegions.flat() : [];
 
-    // Цвят според притежател
-    function getRegionColor(region) {
-        if (ownedRegions.includes(region.name)) return '#2c8a2c';
-        if (region.ancientOwner) return '#aa55ff';
-        if (region.nativeClans && region.nativeClans.length > 0 && region.nativeClans[0] !== "Независим") return '#cc5555';
-        return '#6a6a6a';
+    // Функция за цвят (използва се в tooltip и за иконките)
+    function getRegionIconAndColor(region) {
+        if (ownedRegions.includes(region.name)) {
+            return { icon: '🏰', color: '#2c8a2c', tooltipColor: '#88ff88' }; // ваш – замък
+        }
+        if (region.ancientOwner) {
+            return { icon: '🏺', color: '#aa55ff', tooltipColor: '#dd99ff' }; // древен – амфора
+        }
+        if (region.nativeClans && region.nativeClans.length > 0 && region.nativeClans[0] !== "Независим") {
+            return { icon: '👹', color: '#cc5555', tooltipColor: '#ffaaaa' }; // враг – чудовище
+        }
+        return { icon: '🏜️', color: '#6a6a6a', tooltipColor: '#ccccaa' }; // независим – пустиня
     }
 
-    // Генериране на координати (същата логическа подредба като преди)
+    // Логически координати (без кръг) – групиране по зони (същото като преди)
     function getCoords(regionName, idx) {
         const nameLower = regionName.toLowerCase();
+        // Балкани
         if (nameLower.includes("плиска") || nameLower.includes("преслав") || nameLower.includes("търнов") ||
             nameLower.includes("софия") || nameLower.includes("пловдив") || nameLower.includes("одрин") ||
-            nameLower.includes("македония")) {
+            nameLower.includes("македония") || nameLower.includes("траки") || nameLower.includes("мизия") ||
+            nameLower.includes("добруджа") || nameLower.includes("битоля") || nameLower.includes("охрид") ||
+            nameLower.includes("силистра") || nameLower.includes("варна") || nameLower.includes("русе") ||
+            nameLower.includes("шум") || nameLower.includes("бургас") || nameLower.includes("стара загора") ||
+            nameLower.includes("хасково") || nameLower.includes("кърджали") || nameLower.includes("белград") ||
+            nameLower.includes("скопие") || nameLower.includes("ниш") || nameLower.includes("прищина") ||
+            nameLower.includes("тирана") || nameLower.includes("загреб") || nameLower.includes("подгорица")) {
             return { lat: 42.0 + (idx % 5) * 0.4, lng: 24.0 + (idx % 7) * 0.6 };
         }
-        if (nameLower.includes("рим") || nameLower.includes("париж") || nameLower.includes("лондон")) {
+        // Западна Европа
+        if (nameLower.includes("рим") || nameLower.includes("париж") || nameLower.includes("лондон") ||
+            nameLower.includes("ахен") || nameLower.includes("берлин") || nameLower.includes("виена") ||
+            nameLower.includes("прага") || nameLower.includes("милано") || nameLower.includes("неапол") ||
+            nameLower.includes("марсилия") || nameLower.includes("лион") || nameLower.includes("бордо") ||
+            nameLower.includes("кентърбъри") || nameLower.includes("единбург") || nameLower.includes("дъблин") ||
+            nameLower.includes("брюксел") || nameLower.includes("кьолн") || nameLower.includes("мюнхен") ||
+            nameLower.includes("хамбург") || nameLower.includes("бремен") || nameLower.includes("франкфурт") ||
+            nameLower.includes("венеция")) {
             return { lat: 48.0 + (idx % 4) * 0.5, lng: 2.0 + (idx % 6) * 1.2 };
         }
-        if (nameLower.includes("киев") || nameLower.includes("москва")) {
+        // Източна Европа, Русия, Степ
+        if (nameLower.includes("киев") || nameLower.includes("москва") || nameLower.includes("новгород") ||
+            nameLower.includes("минск") || nameLower.includes("казан") || nameLower.includes("астрахан") ||
+            nameLower.includes("тбилиси") || nameLower.includes("баку") || nameLower.includes("банат") ||
+            nameLower.includes("трансилвания") || nameLower.includes("букурещ") || nameLower.includes("яш")) {
             return { lat: 50.0 + (idx % 3) * 0.8, lng: 30.0 + (idx % 5) * 1.5 };
         }
-        if (nameLower.includes("каиро") || nameLower.includes("багдад")) {
+        // Близък изток, Персия, Индия
+        if (nameLower.includes("каиро") || nameLower.includes("багдад") || nameLower.includes("техеран") ||
+            nameLower.includes("исфахан") || nameLower.includes("шираз") || nameLower.includes("делхи") ||
+            nameLower.includes("бомбай") || nameLower.includes("калкута") || nameLower.includes("ланка") ||
+            nameLower.includes("мекка") || nameLower.includes("медина") || nameLower.includes("йерусалим") ||
+            nameLower.includes("дамаск") || nameLower.includes("антиохия")) {
             return { lat: 32.0 + (idx % 4) * 0.7, lng: 44.0 + (idx % 5) * 1.2 };
         }
-        const fantasy = ["авалон", "атлантида", "мордор", "елизиум"];
-        if (fantasy.some(kw => nameLower.includes(kw))) {
-            return { lat: 35.0 + (idx % 5) * 3.0, lng: 15.0 + (idx % 6) * 4.0 };
+        // Африка
+        if (nameLower.includes("картаген") || nameLower.includes("тунис") || nameLower.includes("маракеш") ||
+            nameLower.includes("тимбукту") || nameLower.includes("гана") || nameLower.includes("мали") ||
+            nameLower.includes("абисиния") || nameLower.includes("мерое") || nameLower.includes("нубия") ||
+            nameLower.includes("зимбабве") || nameLower.includes("конго") || nameLower.includes("сахара")) {
+            return { lat: 15.0 + (idx % 5) * 3.0, lng: 15.0 + (idx % 6) * 4.0 };
         }
-        const angle = idx * 0.15;
-        const radius = 5.5;
-        return { lat: 42.5 + radius * Math.cos(angle), lng: 25.5 + radius * Math.sin(angle) };
+        // Фентъзи
+        const fantasyKeywords = ["авалон", "атлантида", "му", "лемурия", "хиперборея", "елдърлейн", "мория", "еребор", "мордор", "изенгард", "рохан", "гондор", "ривендъл", "лотлориен", "мирквуд", "дейл", "есгарот", "валинор", "нибелунгайм", "мидгард", "асгард", "ванахейм", "йотунхейм", "алфхайм", "сварталхайм", "настронт", "олимп", "тартар", "елизиум", "хесперид"];
+        if (fantasyKeywords.some(kw => nameLower.includes(kw))) {
+            return { lat: 55.0 + (idx % 5) * 3.0, lng: 5.0 + (idx % 6) * 4.0 };
+        }
+        // Останали
+        return { lat: 42.5 + (idx % 7) * 1.5, lng: 25.5 + (idx % 9) * 2.0 };
     }
 
-    // Изчисляваме координатите за всички региони и ги запазваме
     const regionPoints = regions.map((region, idx) => {
         const coords = getCoords(region.name, idx);
         return { region, lat: coords.lat, lng: coords.lng };
     });
 
-    // ---------- 1. ДОБАВЯНЕ НА ЛИНИИ МЕЖДУ БЛИЗКИ РЕГИОНИ ----------
-    // Функция за изчисляване на разстояние в градуси (евклидово)
+    // Линии между близки региони
     function distance(lat1, lng1, lat2, lng2) {
         const dx = lat1 - lat2;
         const dy = lng1 - lng2;
         return Math.sqrt(dx*dx + dy*dy);
     }
-    const MAX_DIST = 2.5; // максимално разстояние за свързване (около 250 км)
-
+    const MAX_DIST = 2.5;
     const lines = [];
     for (let i = 0; i < regionPoints.length; i++) {
         for (let j = i+1; j < regionPoints.length; j++) {
-            const d = distance(regionPoints[i].lat, regionPoints[i].lng, regionPoints[j].lat, regionPoints[j].lng);
-            if (d < MAX_DIST) {
+            if (distance(regionPoints[i].lat, regionPoints[i].lng, regionPoints[j].lat, regionPoints[j].lng) < MAX_DIST) {
                 lines.push([[regionPoints[i].lat, regionPoints[i].lng], [regionPoints[j].lat, regionPoints[j].lng]]);
             }
         }
     }
-    // Добавяме линиите към картата (първо, за да са под маркерите)
     lines.forEach(line => {
-        L.polyline(line, {
-            color: '#d4af37',
-            weight: 1.5,
-            opacity: 0.4,
-            dashArray: '5, 5' // пунктир за по-приятен вид
-        }).addTo(map);
+        L.polyline(line, { color: '#d4af37', weight: 1.5, opacity: 0.4, dashArray: '5, 5' }).addTo(map);
     });
-    console.log(`📏 Добавени ${lines.length} линии между региони.`);
 
-    // ---------- 2. ДОБАВЯНЕ НА МАРКЕРИ (кръгчета) И ПОСТОЯННИ ИМЕНА ----------
+    // Клъстер група
     const markers = L.markerClusterGroup({
         maxClusterRadius: 50,
         spiderfyOnMaxZoom: true,
-        zoomToBoundsOnClick: true
+        zoomToBoundsOnClick: true,
+        iconCreateFunction: function(cluster) {
+            // Клъстерите също ще имат хубава иконка
+            return L.divIcon({
+                html: `<div style="background:#d4af37; color:#000; border-radius:50%; width:30px; height:30px; display:flex; align-items:center; justify-content:center; font-weight:bold; box-shadow:0 0 5px gold;">${cluster.getChildCount()}</div>`,
+                className: 'custom-cluster',
+                iconSize: L.point(30, 30)
+            });
+        }
     });
 
     regionPoints.forEach((rp) => {
         const region = rp.region;
-        const color = getRegionColor(region);
+        const { icon, color, tooltipColor } = getRegionIconAndColor(region);
         
-        // 2.1 Кръгче (маркер)
-        const circle = L.circleMarker([rp.lat, rp.lng], {
-            radius: 10,
-            fillColor: color,
-            color: '#d4af37',
-            weight: 1.8,
-            fillOpacity: 0.85
-        });
-        circle.bindTooltip(`<b>${region.name}</b><br>🏰 Сила: ${region.armySize}<br>🛡️ Защита: ${region.defenseLevel}`, { sticky: true });
-        circle.on('click', () => {
-            if (typeof window.inspectRegion === 'function') {
-                window.inspectRegion(region.name);
-            } else {
-                alert(region.name);
-            }
-        });
-        markers.addLayer(circle);
+        // Създаваме HTML иконка (divIcon) с емоджи и цвят на фона
+        const iconHtml = `
+            <div style="
+                background: ${color};
+                width: 32px;
+                height: 32px;
+                border-radius: 50%;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-size: 20px;
+                border: 2px solid #d4af37;
+                box-shadow: 0 0 5px rgba(0,0,0,0.5);
+                cursor: pointer;
+            ">${icon}</div>
+        `;
         
-        // 2.2 Постоянно име (текст) – използваме L.marker с divIcon, за да е винаги видимо
+        const customIcon = L.divIcon({
+            className: 'custom-marker-icon',
+            html: iconHtml,
+            iconSize: [32, 32],
+            popupAnchor: [0, -16]
+        });
+        
+        const marker = L.marker([rp.lat, rp.lng], { icon: customIcon });
+        marker.bindTooltip(`<b style="color:${tooltipColor}">${region.name}</b><br>🏰 Сила: ${region.armySize}<br>🛡️ Защита: ${region.defenseLevel}`, { sticky: true });
+        marker.on('click', () => {
+            if (typeof window.inspectRegion === 'function') window.inspectRegion(region.name);
+            else alert(region.name);
+        });
+        markers.addLayer(marker);
+
+        // Постоянно име (леко отместено надолу, за да не покрива иконката)
         const labelIcon = L.divIcon({
             className: 'region-label',
-            html: `<div style="background: rgba(0,0,0,0.6); padding: 2px 6px; border-radius: 12px; border: 1px solid #d4af37; color: #ffdd99; font-size: 11px; font-family: 'Cinzel', serif; white-space: nowrap; text-shadow: 1px 1px 0 #000;">${region.name}</div>`,
+            html: `<div style="background: rgba(0,0,0,0.6); padding: 2px 6px; border-radius: 12px; border: 1px solid #d4af37; color: #ffdd99; font-size: 11px; font-family: 'Cinzel', serif; white-space: nowrap;">${region.name}</div>`,
             iconSize: [80, 20],
-            iconAnchor: [40, 25] // позициониране под кръгчето
+            iconAnchor: [40, 25]
         });
         const labelMarker = L.marker([rp.lat, rp.lng], { icon: labelIcon, interactive: false });
         markers.addLayer(labelMarker);
@@ -183,7 +211,6 @@ window.openInteractiveMap = function() {
 
     map.addLayer(markers);
     
-    // ---------- Затваряне на модала ----------
     const closeBtn = modal.querySelector('#closeMapBtn');
     if (closeBtn) closeBtn.onclick = () => modal.remove();
     modal.addEventListener('click', (e) => { if (e.target === modal) modal.remove(); });
@@ -196,4 +223,4 @@ window.refreshMap = function() {
     window.openInteractiveMap();
 };
 
-console.log("✅ MapGenerator.js – Leaflet с постоянни имена и линии между регионите");
+console.log("✅ MapGenerator.js – Leaflet карта с персонализирани иконки (🏰🏺👹🏜️)");
