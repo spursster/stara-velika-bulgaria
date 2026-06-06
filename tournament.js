@@ -361,6 +361,13 @@ window.tournament = (function() {
             log(finalMsg, "🏆");
             tournamentActive = false;
             saveLastTournamentYear();
+            // Записваме победителя в класацията
+if (winner && winner.heroObj && window.gameTime) {
+    let power = winner.heroObj.heroPower || winner.power || 100;
+    let className = winner.heroObj.currentClass || winner.className || "Воевода";
+    let petName = winner.heroObj.pet ? (window.divinePets?.[winner.heroObj.pet]?.name || winner.heroObj.pet) : null;
+    addTournamentWinner(winner.heroObj, window.gameTime.year, power, className, petName);
+}
             return;
         }
         
@@ -478,6 +485,89 @@ window.tournament = (function() {
         resetLastYear: resetLastYear
     };
 })();
+
+// ==================== ЕЛИТНА КЛАСАЦИЯ ====================
+window.tournamentWinners = window.tournamentWinners || [];
+
+// Зареждане от localStorage
+try {
+    const saved = localStorage.getItem('tournament_winners');
+    if (saved) window.tournamentWinners = JSON.parse(saved);
+} catch(e) { console.warn(e); }
+
+function saveTournamentWinners() {
+    localStorage.setItem('tournament_winners', JSON.stringify(window.tournamentWinners.slice(0, 30))); // пазим последните 30
+}
+
+// Добавяне на победител
+function addTournamentWinner(winnerObj, year, power, className, petName) {
+    const entry = {
+        name: winnerObj.name || winnerObj.leaderName,
+        year: year,
+        power: power,
+        class: className || winnerObj.currentClass || "Воевода",
+        pet: petName || (winnerObj.pet ? (window.divinePets?.[winnerObj.pet]?.name || winnerObj.pet) : "—"),
+        timestamp: Date.now()
+    };
+    window.tournamentWinners.unshift(entry);
+    if (window.tournamentWinners.length > 30) window.tournamentWinners.pop();
+    saveTournamentWinners();
+}
+
+// Показване на класацията (нова версия)
+window.showTournamentLeaderboard = function() {
+    const winners = window.tournamentWinners;
+    const modal = document.createElement('div');
+    modal.id = 'tournament-leaderboard-modal';
+    modal.style.cssText = `
+        position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+        background: rgba(0,0,0,0.85); backdrop-filter: blur(12px);
+        display: flex; align-items: center; justify-content: center;
+        z-index: 200000; font-family: 'Cinzel', serif;
+    `;
+
+    let listHtml = '';
+    if (winners.length === 0) {
+        listHtml = `<div style="text-align: center; padding: 40px; color: #aaa;">🏆 Все още няма завършен турнир. Бъди първият шампион! 🏆</div>`;
+    } else {
+        listHtml = winners.map((w, idx) => `
+            <div style="display: flex; align-items: center; gap: 15px; padding: 10px 15px; background: rgba(255,255,255,0.05); border-bottom: 1px solid rgba(212,175,55,0.3); transition: 0.2s;">
+                <div style="width: 40px; font-size: 24px; font-weight: bold; color: #ffd966;">${idx+1}.</div>
+                <div style="flex: 2; font-weight: bold;">🏆 ${w.name}</div>
+                <div style="flex: 1;">📅 ${w.year} г.</div>
+                <div style="flex: 1;">⚔️ ${w.power}</div>
+                <div style="flex: 1; background: rgba(0,0,0,0.5); padding: 4px 8px; border-radius: 20px;">🎭 ${w.class}</div>
+                <div style="flex: 1;">🐉 ${w.pet}</div>
+            </div>
+        `).join('');
+    }
+
+    modal.innerHTML = `
+        <div style="background: linear-gradient(145deg, #1a1a2e, #16213e); border: 2px solid #d4af37; border-radius: 24px; padding: 20px; max-width: 900px; width: 95%; max-height: 80vh; display: flex; flex-direction: column; box-shadow: 0 20px 35px rgba(0,0,0,0.5);">
+            <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #d4af37; padding-bottom: 10px; margin-bottom: 15px;">
+                <h2 style="margin: 0; color: #ffd966; text-shadow: 2px 2px 0 #5a3e1a;">🏅 ЕЛИТНА КЛАСАЦИЯ НА ШАМПИОНИТЕ 🏅</h2>
+                <button id="close-leaderboard" style="background: #d4af37; border: none; font-size: 20px; width: 36px; height: 36px; border-radius: 50%; cursor: pointer; font-weight: bold;">✕</button>
+            </div>
+            <div style="overflow-y: auto; flex: 1; margin-top: 5px;">
+                <div style="display: flex; gap: 15px; padding: 8px 15px; background: #0f0f1a; border-radius: 12px; margin-bottom: 8px; font-weight: bold; color: #ffd966;">
+                    <div style="width: 40px;">#</div>
+                    <div style="flex: 2;">Шампион</div>
+                    <div style="flex: 1;">Година</div>
+                    <div style="flex: 1;">Сила</div>
+                    <div style="flex: 1;">Клас</div>
+                    <div style="flex: 1;">Питомец</div>
+                </div>
+                ${listHtml}
+            </div>
+            <div style="margin-top: 15px; text-align: center; font-size: 12px; color: #aaa;">
+                📜 Само последните 30 победители се помнят.
+            </div>
+        </div>
+    `;
+    document.body.appendChild(modal);
+    modal.querySelector('#close-leaderboard').onclick = () => modal.remove();
+    modal.onclick = (e) => { if (e.target === modal) modal.remove(); };
+};
 
 const originalProcessTurn = window.processTurn;
 window.processTurn = function() {
