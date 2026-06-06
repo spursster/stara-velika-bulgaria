@@ -412,10 +412,16 @@
     // ========== СЪБИРАНЕ НА ГЕРОИТЕ НА ИГРАЧА (ДОБАВЕНА) ==========
     function collectPlayerHeroes() {
         // ⭐ Ако има турнирен двубой, връщаме САМО този герой, без промени
-        if (window._tournamentForcedHero) {
+                if (window._tournamentForcedHero) {
             const forced = window._tournamentForcedHero;
             console.log(`🏟️ Battle-core: турнирен герой форсиран: ${forced.name} (${forced.id})`);
-            // Уверяваме се, че обектът има минимални полета за битката
+            // Ако обектът няма inventory/equipment, но оригиналният герой (който е в forced.clanObj) има,
+            // копираме ги
+            if (!forced.inventory && forced.clanObj && forced.clanObj.inventory) {
+                forced.inventory = forced.clanObj.inventory;
+                forced.equipment = forced.clanObj.equipment;
+            }
+            // Уверяваме се, че има минимални полета за битката
             if (!forced.hp) forced.hp = forced.maxHp || 100;
             if (!forced.maxHp) forced.maxHp = 100;
             if (!forced.power) forced.power = forced.heroPower || 100;
