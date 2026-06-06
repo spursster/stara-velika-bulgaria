@@ -1,6 +1,7 @@
 /**
  * personalityTraits.js
  * 250 УНИКАЛНИ ЧЕРТИ НА ХАРАКТЕРА – само имена и описание.
+ * + автоматични бонуси (генерирани от името)
  */
 
 window.personalityTraitsDB = {
@@ -256,17 +257,60 @@ window.personalityTraitsDB = {
     "trait_250": { name: "Нещастен", description: "Често е в лошо настроение." }
 };
 
-// Забележка: горе има 250 записа, всеки с уникален ключ trait_001 до trait_250.
-// Имената са различни (въпреки че някои семантично близки, те са различни думи).
-
-window.getRandomPersonalityTraits = function(hero, count = 3) {
-    const all = Object.values(window.personalityTraitsDB);
-    // разбъркване
-    for (let i = all.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [all[i], all[j]] = [all[j], all[i]];
+// ==================== АВТОМАТИЧНИ БОНУСИ ЗА ВСЯКА ЧЕРТА ====================
+(function() {
+    function generateBonusFromTraitName(name) {
+        const lower = name.toLowerCase();
+        let bonus = {};
+        if (lower.includes("агресив") || lower.includes("свиреп") || lower.includes("жесток")) bonus.attackBonus = 0.10;
+        if (lower.includes("предпазлив") || lower.includes("скрупульоз") || lower.includes("корав")) bonus.defenseBonus = 0.10;
+        if (lower.includes("смел") || lower.includes("безстрашн")) bonus.attackBonus = 0.05;
+        if (lower.includes("боязлив") || lower.includes("плашлив")) bonus.defenseBonus = -0.10;
+        if (lower.includes("стратег") || lower.includes("хитър")) { bonus.attackBonus = 0.05; bonus.defenseBonus = 0.05; }
+        if (lower.includes("импулсив") || lower.includes("буен")) { bonus.critChanceBonus = 0.15; bonus.attackMalus = -0.05; }
+        if (lower.includes("хаотичен") || lower.includes("ексцентричен")) { bonus.critChanceBonus = 0.20; bonus.defenseBonus = -0.10; }
+        if (lower.includes("алчен") || lower.includes("пестелив")) bonus.goldBonus = 0.15;
+        if (lower.includes("щедър") || lower.includes("разточителен")) { bonus.goldBonus = -0.10; bonus.diplomacyBonus = 0.10; }
+        if (lower.includes("трудолюбив") || lower.includes("усърден")) bonus.economyBonus = 0.10;
+        if (lower.includes("мързелив")) bonus.economyBonus = -0.15;
+        if (lower.includes("търговец") || lower.includes("купец")) { bonus.goldBonus = 0.20; bonus.diplomacyBonus = 0.05; }
+        if (lower.includes("общителен") || lower.includes("дружелюбен")) bonus.diplomacyBonus = 0.15;
+        if (lower.includes("затворен") || lower.includes("неприветлив")) bonus.diplomacyBonus = -0.15;
+        if (lower.includes("лоялен") || lower.includes("честен")) { bonus.diplomacyBonus = 0.10; bonus.defenseBonus = 0.05; }
+        if (lower.includes("предателски") || lower.includes("коварен")) { bonus.diplomacyBonus = -0.20; bonus.critChanceBonus = 0.10; }
+        if (lower.includes("дипломатичен") || lower.includes("обходителен")) bonus.diplomacyBonus = 0.20;
+        if (lower.includes("амбициозен") || lower.includes("целенасочен")) bonus.xpBonus = 0.15;
+        if (lower.includes("мързелив") || lower.includes("безразличен")) bonus.xpBonus = -0.15;
+        if (lower.includes("любопитен") || lower.includes("любознателен")) bonus.xpBonus = 0.10;
+        if (lower.includes("оптимист") || lower.includes("щастлив")) bonus.moraleBonus = 15;
+        if (lower.includes("песимист") || lower.includes("нещастен")) bonus.moraleBonus = -15;
+        return bonus;
     }
-    return all.slice(0, count).map(t => ({ traitId: t.id, name: t.name, description: t.description }));
-};
 
-console.log(`✅ Заредени ${Object.keys(window.personalityTraitsDB).length} уникални черти на характера.`);
+    // Обхожда всички черти и добавя поле bonus, ако липсва
+    for (let id in window.personalityTraitsDB) {
+        let trait = window.personalityTraitsDB[id];
+        if (!trait.bonus) {
+            trait.bonus = generateBonusFromTraitName(trait.name);
+        }
+    }
+
+    // Функция за сумиране на бонусите на герой
+    window.getPersonalityBonuses = function(hero) {
+        if (!hero || !hero.personality) return {};
+        let total = { attackBonus: 0, defenseBonus: 0, critChanceBonus: 0, 
+                      goldBonus: 0, economyBonus: 0, diplomacyBonus: 0,
+                      xpBonus: 0, moraleBonus: 0 };
+        for (let trait of hero.personality) {
+            const traitData = window.personalityTraitsDB[trait.id];
+            if (traitData && traitData.bonus) {
+                for (let [key, val] of Object.entries(traitData.bonus)) {
+                    total[key] = (total[key] || 0) + val;
+                }
+            }
+        }
+        return total;
+    };
+})();
+
+console.log(`✅ PersonalityTraits.js – 250 оригинални черти + автоматични бонуси`);
