@@ -735,5 +735,20 @@
     }
 })();
 </script>
+    <script>
+(function() {
+    // Съществуващата функция inspectRegion (ако е дефинирана) се презаписва, за да затваря картата
+    const originalInspect = window.inspectRegion;
+    if (originalInspect) {
+        window.inspectRegion = function(regionName) {
+            // Затваряме картата, ако е отворена
+            const mapModal = document.getElementById('interactive-map-modal');
+            if (mapModal) mapModal.remove();
+            // Извикваме оригиналната функция
+            originalInspect(regionName);
+        };
+    }
+})();
+</script>
 </body>
 </html>
