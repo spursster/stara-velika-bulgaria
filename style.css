@@ -1756,3 +1756,190 @@ body.season-spring { background: linear-gradient(180deg, #0a2a4a 0%, #1a4a3a 100
 body.season-summer { background: linear-gradient(180deg, #0a2a4a 0%, #2a3a0a 100%); }
 body.season-autumn { background: linear-gradient(180deg, #0a2a4a 0%, #3a2a0a 100%); }
 body.season-winter { background: linear-gradient(180deg, #0a2a4a 0%, #0a1a3a 100%); }
+
+/* ========== НОВ ТРИКОЛОНЕН ДИЗАЙН (БЕЗ РУШЕНЕ) ========== */
+/* Скриваме визуално старите ленти, но не ги премахваме от DOM */
+#top-bar,
+.bottom-fixed-wrapper {
+    display: none !important;
+}
+
+/* Пренареждаме основния контейнер като 3 колони */
+#game-container {
+    display: grid !important;
+    grid-template-columns: 220px 1fr 280px !important;
+    gap: 12px !important;
+    padding: 12px !important;
+    height: 100vh !important;
+    overflow: hidden !important;
+    margin: 0 !important;
+    max-width: none !important;
+}
+
+/* Ляв панел – подготвяме го за вертикална лента с герои */
+#sidebar-left {
+    display: flex !important;
+    flex-direction: column !important;
+    overflow-y: auto !important;
+    background: rgba(10, 20, 40, 0.85) !important;
+    border-radius: 20px !important;
+    padding: 12px !important;
+}
+
+/* Вертикална лента с любими герои (в левия панел) */
+#favorite-heroes-bar {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 8px !important;
+    width: 100% !important;
+}
+
+.favorite-slot {
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    gap: 8px !important;
+    padding: 6px 8px !important;
+    min-height: 55px !important;
+    width: 100% !important;
+    background: rgba(0,0,0,0.5) !important;
+    border-radius: 12px !important;
+    cursor: pointer !important;
+}
+.favorite-slot .hero-level-power,
+.favorite-slot .hero-stats,
+.favorite-slot .hp-bar,
+.favorite-slot .xp-bar,
+.favorite-slot .auto-badge {
+    display: none !important;
+}
+.favorite-slot .hero-icon {
+    font-size: 28px !important;
+}
+.favorite-slot .hero-name {
+    font-size: 11px !important;
+    font-weight: bold !important;
+    color: #ffdd99 !important;
+    flex: 1 !important;
+}
+
+/* Централен панел – летописът заема горна част, след това топ герой и портали */
+#game-main-area {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 16px !important;
+    overflow-y: auto !important;
+    background: rgba(0,0,0,0.3) !important;
+    border-radius: 20px !important;
+    padding: 12px !important;
+}
+
+#unifiedChronicle {
+    flex-shrink: 0 !important;
+    max-height: 40vh !important;
+    overflow-y: auto !important;
+}
+
+#active-character-profile,
+#clans-container {
+    background: rgba(0,0,0,0.5) !important;
+    border-radius: 16px !important;
+    padding: 12px !important;
+}
+
+/* Десен панел – команден център (първоначално празен, ще се попълва от JS) */
+#sidebar-right {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 16px !important;
+    overflow-y: auto !important;
+    background: rgba(10, 20, 40, 0.85) !important;
+    border-radius: 20px !important;
+    padding: 12px !important;
+}
+
+/* Класове за елементите, които ще добавим динамично в десния панел */
+.command-stats {
+    background: rgba(0,0,0,0.5);
+    border-radius: 16px;
+    padding: 10px;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-around;
+    gap: 8px;
+    font-size: 0.9rem;
+    font-weight: bold;
+}
+.stat-item {
+    background: rgba(0,0,0,0.3);
+    padding: 4px 12px;
+    border-radius: 30px;
+}
+.command-buttons {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    justify-content: center;
+}
+.command-btn {
+    background: #2c1a0c;
+    border: 1px solid #d4af37;
+    border-radius: 30px;
+    padding: 6px 12px;
+    font-size: 0.75rem;
+    color: #ffdd99;
+    cursor: pointer;
+    white-space: nowrap;
+}
+.next-turn-btn {
+    background: linear-gradient(135deg, #ffd700, #b8860b);
+    border: 1px solid white;
+    color: black;
+    font-weight: bold;
+    font-size: 0.9rem;
+    padding: 6px 16px;
+    min-width: 80px;
+}
+.command-new-game {
+    background: #daa520;
+    color: black;
+    width: 100%;
+    margin-top: 8px;
+    font-weight: bold;
+}
+
+/* Адаптивност за по-малки екрани (таблети, телефони) */
+@media (max-width: 900px) {
+    #game-container {
+        grid-template-columns: 180px 1fr 220px !important;
+        gap: 8px !important;
+        padding: 8px !important;
+    }
+    .command-btn {
+        font-size: 0.65rem;
+        padding: 4px 8px;
+    }
+    .next-turn-btn {
+        font-size: 0.8rem;
+        padding: 4px 12px;
+    }
+}
+@media (max-width: 700px) {
+    #game-container {
+        grid-template-columns: 140px 1fr 180px !important;
+    }
+    .favorite-slot .hero-icon { font-size: 22px; }
+    .favorite-slot .hero-name { font-size: 9px; }
+    .command-stats { font-size: 0.7rem; }
+}
+@media (max-width: 550px) {
+    #game-container {
+        grid-template-columns: 100px 1fr 120px !important;
+        gap: 4px !important;
+        padding: 4px !important;
+    }
+    .command-btn { font-size: 0.55rem; padding: 2px 4px; }
+    .next-turn-btn { font-size: 0.7rem; padding: 2px 8px; }
+    .favorite-slot .hero-icon { font-size: 18px; }
+    .favorite-slot .hero-name { font-size: 8px; }
+}
