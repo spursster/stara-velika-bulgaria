@@ -826,5 +826,182 @@
     }, 1000); // проверява всяка секунда
 })();
 </script>
+
+    <script>
+(function() {
+    // Кеш за генерираните текстури (по тип)
+    const textureCache = {};
+
+    // Генерира процедурна текстура според тип
+    function generateTexture(type, width = 400, height = 200) {
+        // Ако вече сме генерирали за този тип, връщаме кешираната
+        if (textureCache[type]) return textureCache[type];
+        
+        const canvas = document.createElement('canvas');
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        
+        switch(type) {
+            case 'battle':
+                // Каменна текстура – тъмна, зърнеста, с пукнатини
+                const imgData = ctx.getImageData(0, 0, width, height);
+                for (let i = 0; i < imgData.data.length; i += 4) {
+                    let gray = 30 + Math.random() * 70;
+                    imgData.data[i] = gray;
+                    imgData.data[i+1] = gray * 0.9;
+                    imgData.data[i+2] = gray * 0.7;
+                    imgData.data[i+3] = 255;
+                }
+                ctx.putImageData(imgData, 0, 0);
+                ctx.beginPath();
+                for (let i = 0; i < 20; i++) {
+                    ctx.moveTo(Math.random() * width, Math.random() * height);
+                    ctx.lineTo(Math.random() * width, Math.random() * height);
+                    ctx.strokeStyle = `rgba(0,0,0,${0.2 + Math.random() * 0.3})`;
+                    ctx.lineWidth = 1 + Math.random() * 2;
+                    ctx.stroke();
+                }
+                break;
+            case 'diplomacy':
+                // Пергамент
+                const grad = ctx.createLinearGradient(0, 0, width, height);
+                grad.addColorStop(0, '#d2b48c');
+                grad.addColorStop(1, '#c2a070');
+                ctx.fillStyle = grad;
+                ctx.fillRect(0, 0, width, height);
+                for (let i = 0; i < 100; i++) {
+                    ctx.fillStyle = `rgba(80,50,20,${Math.random() * 0.3})`;
+                    ctx.beginPath();
+                    ctx.ellipse(
+                        Math.random() * width, Math.random() * height,
+                        2 + Math.random() * 8, 2 + Math.random() * 8,
+                        0, 0, Math.PI * 2
+                    );
+                    ctx.fill();
+                }
+                break;
+            case 'mystic':
+                // Мистична – тъмно лилаво със звезди и мъгла
+                const grad2 = ctx.createLinearGradient(0, 0, width, height);
+                grad2.addColorStop(0, '#1a0a3a');
+                grad2.addColorStop(1, '#2a1a5a');
+                ctx.fillStyle = grad2;
+                ctx.fillRect(0, 0, width, height);
+                for (let i = 0; i < 300; i++) {
+                    ctx.fillStyle = `rgba(255,255,200,${Math.random() * 0.8})`;
+                    ctx.fillRect(
+                        Math.random() * width, Math.random() * height,
+                        1 + Math.random() * 2, 1 + Math.random() * 2
+                    );
+                }
+                for (let i = 0; i < 30; i++) {
+                    ctx.fillStyle = `rgba(150,100,200,${Math.random() * 0.2})`;
+                    ctx.beginPath();
+                    ctx.ellipse(
+                        Math.random() * width, Math.random() * height,
+                        30 + Math.random() * 80, 20 + Math.random() * 60,
+                        0, 0, Math.PI * 2
+                    );
+                    ctx.fill();
+                }
+                break;
+            default:
+                // Стандартен шум
+                const noiseData = ctx.getImageData(0, 0, width, height);
+                for (let i = 0; i < noiseData.data.length; i += 4) {
+                    let v = 80 + Math.random() * 100;
+                    noiseData.data[i] = v;
+                    noiseData.data[i+1] = v;
+                    noiseData.data[i+2] = v;
+                    noiseData.data[i+3] = 255;
+                }
+                ctx.putImageData(noiseData, 0, 0);
+        }
+        const dataUrl = canvas.toDataURL();
+        textureCache[type] = dataUrl; // кешираме
+        return dataUrl;
+    }
+
+    // Определя тип събитие по текста
+    function getEventType(text) {
+        const lower = text.toLowerCase();
+        if (lower.includes('битка') || lower.includes('⚔️') || lower.includes('нападение')) return 'battle';
+        if (lower.includes('брак') || lower.includes('съюз') || lower.includes('дипломат') || lower.includes('🕊️')) return 'diplomacy';
+        if (lower.includes('магия') || lower.includes('портал') || lower.includes('пророчество') || lower.includes('🌀')) return 'mystic';
+        return 'default';
+    }
+
+    // Обновява фоновете на всички събития
+    function updateChronicleBackgrounds() {
+        const events = document.querySelectorAll('#eventsListContainer .chronicle-event');
+        events.forEach(event => {
+            const textElem = event.querySelector('.chronicle-text');
+            if (!textElem) return;
+            const text = textElem.innerText;
+            const type = getEventType(text);
+            const bgUrl = generateTexture(type);
+            // Задаваме фон и смесваме с тъмен цвят за четимост
+            event.style.backgroundImage = `url(${bgUrl})`;
+            event.style.backgroundSize = 'cover';
+            event.style.backgroundPosition = 'center';
+            event.style.backgroundColor = 'rgba(0,0,0,0.5)';
+            event.style.backgroundBlendMode = 'overlay';
+        });
+    }
+
+    // Възстановява оригиналните фонове
+    function restoreOriginalBackgrounds() {
+        const events = document.querySelectorAll('#eventsListContainer .chronicle-event');
+        events.forEach(event => {
+            event.style.backgroundImage = '';
+            event.style.backgroundColor = '';
+            event.style.backgroundBlendMode = '';
+        });
+    }
+
+    // Наблюдаваме за нови събития
+    let observer = null;
+    function startObserver() {
+        if (observer) observer.disconnect();
+        const container = document.getElementById('eventsListContainer');
+        if (!container) return;
+        observer = new MutationObserver(() => {
+            updateChronicleBackgrounds();
+        });
+        observer.observe(container, { childList: true, subtree: true });
+    }
+
+    // Инициализация при зареждане
+    function initProceduralBackgrounds() {
+        updateChronicleBackgrounds();
+        startObserver();
+        // Добавяме малък панел с бутони (може да се скрие, ако пречи)
+        if (!document.getElementById('bg-control-panel')) {
+            const panel = document.createElement('div');
+            panel.id = 'bg-control-panel';
+            panel.style.cssText = 'position:fixed; bottom:20px; right:20px; z-index:99999; background:rgba(0,0,0,0.7); border-radius:40px; padding:6px; display:flex; gap:8px;';
+            panel.innerHTML = `
+                <button id="refresh-bg-btn" style="background:#daa520; border:none; border-radius:30px; padding:4px 12px; color:#000; font-weight:bold; cursor:pointer;">🎨 Обнови фонове</button>
+                <button id="restore-bg-btn" style="background:#2c1a0c; border:1px solid #d4af37; border-radius:30px; padding:4px 12px; color:#ffdd99; cursor:pointer;">↺ Възстанови</button>
+            `;
+            document.body.appendChild(panel);
+            document.getElementById('refresh-bg-btn').onclick = () => {
+                // Изчистваме кеша, за да се генерират нови
+                for (let key in textureCache) delete textureCache[key];
+                updateChronicleBackgrounds();
+            };
+            document.getElementById('restore-bg-btn').onclick = () => restoreOriginalBackgrounds();
+        }
+    }
+
+    // Стартираме, когато DOM е готов
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initProceduralBackgrounds);
+    } else {
+        initProceduralBackgrounds();
+    }
+})();
+</script>
 </body>
 </html>
