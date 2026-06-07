@@ -909,6 +909,90 @@ window.autoCheckSuccession = function() {
         window.checkSuccessionCrisis(clan);
     }
 };
+// ==================== ДИПЛОМАЦИЯ ХЪБ (ЦЕНТРАЛЕН ПАНЕЛ) ====================
+window.openDiplomacyHub = function() {
+    // Премахваме стар модал, ако има
+    const oldModal = document.getElementById('diplomacy-hub-modal');
+    if (oldModal) oldModal.remove();
+
+    // Създаваме нов модал
+    const modal = document.createElement('div');
+    modal.id = 'diplomacy-hub-modal';
+    modal.style.cssText = `
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0,0,0,0.85);
+        backdrop-filter: blur(8px);
+        z-index: 500000;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-family: 'Cinzel', serif;
+        padding: 15px;
+        box-sizing: border-box;
+    `;
+
+    // Вземаме отношенията (ако няма, инициализираме)
+    if (!window.clanRelations || Object.keys(window.clanRelations).length === 0) {
+        if (typeof window.initDiplomacy === 'function') window.initDiplomacy();
+    }
+    const relations = window.clanRelations || {};
+
+    // Генерираме редове на таблицата
+    let rows = '';
+    for (let clan in relations) {
+        let rel = Math.floor(relations[clan] || 50);
+        let color = rel >= 70 ? '#4caf50' : (rel >= 40 ? '#ffeb3b' : '#f44336');
+        let status = rel >= 70 ? 'Съюзник' : (rel >= 40 ? 'Неутрален' : 'Враждебен');
+        rows += `
+            <tr style="border-bottom: 1px solid #334466;">
+                <td style="padding:12px 8px; font-weight: bold;">${clan}</td>
+                <td style="padding:12px 8px; color:${color}; font-weight:bold;">${rel}%</td>
+                <td style="padding:12px 8px; display:none;" class="desktop-only">${status}</td>
+                <td style="padding:12px 8px; white-space: nowrap;">
+                    <button onclick="window.proposeMarriage('${clan}', 500, 50); document.getElementById('diplomacy-hub-modal')?.remove();" 
+                        style="margin:3px; padding:6px 12px; background:#2c5f2c; border:none; border-radius:20px; color:white; cursor:pointer;">💍 Брак</button>
+                    <button onclick="window.showAdvisorMsg('🎁 Подарък към ${clan} (в разработка)');" 
+                        style="margin:3px; padding:6px 12px; background:#b8860b; border:none; border-radius:20px; color:white; cursor:pointer;">🎁</button>
+                </td>
+            </tr>
+        `;
+    }
+
+    if (!rows) {
+        rows = `<tr><td colspan="4" style="text-align:center; padding:40px; color:#777;">Няма данни за дипломатически отношения.</td></tr>`;
+    }
+
+    modal.innerHTML = `
+        <div style="background: #0a0a2e; border: 2px solid #d4af37; border-radius: 24px; width: 90%; max-width: 1000px; max-height: 85vh; display: flex; flex-direction: column; overflow: hidden;">
+            <div style="padding: 15px 20px; background: #1a2538; border-bottom: 2px solid #d4af37; display: flex; justify-content: space-between; align-items: center;">
+                <h2 style="margin:0; color:#ffd700;">🕊️ ДИПЛОМАЦИЯ</h2>
+                <button onclick="this.closest('#diplomacy-hub-modal').remove()" style="background:#2c1a0c; border:1px solid #ff8888; color:#ff8888; width:36px; height:36px; border-radius:50%; font-size:20px; cursor:pointer;">✕</button>
+            </div>
+            <div style="padding: 15px; overflow-y: auto; flex: 1;">
+                <table style="width:100%; border-collapse: collapse; color:#ddd; font-size:0.9rem;">
+                    <thead style="position: sticky; top:0; background:#1e2a44;">
+                        <tr>
+                            <th style="padding:12px 8px; text-align:left;">Клан</th>
+                            <th style="padding:12px 8px;">Отношение</th>
+                            <th style="padding:12px 8px; display:none;" class="desktop-only">Статус</th>
+                            <th style="padding:12px 8px;">Действия</th>
+                        </tr>
+                    </thead>
+                    <tbody>${rows}</tbody>
+                </table>
+            </div>
+            <div style="padding:12px; background:#1a2538; text-align:center; font-size:0.8rem; color:#aaa;">
+                Отношенията се променят с вашите действия. Натиснете "Брак", за да предложите династичен съюз.
+            </div>
+        </div>
+    `;
+
+    document.body.appendChild(modal);
+};
 
 console.log("✅ diplomacy.js – добавена политическа система (съветници и борба за трон)");
 console.log("✅ diplomacy.js версия 8.1 зареден – без currentHero, с updateStrongestHeroUI и оправен брачен прозорец");
