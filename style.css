@@ -602,11 +602,11 @@ html, body {
     overflow-y: auto !important;
 }
 
-/* ========== ВЕРТИКАЛНА ЛЕНТА С ГЕРОИ (ПЪЛНА ИНФОРМАЦИЯ) ========== */
+/* ========== ВЕРТИКАЛНА ЛЕНТА С ЛЮБИМИ ГЕРОИ (ПЪЛНА ИНФОРМАЦИЯ) ========== */
 #favorite-heroes-bar {
     display: flex !important;
     flex-direction: column !important;
-    gap: 10px !important;
+    gap: 8px !important;
     width: 100% !important;
 }
 
@@ -614,20 +614,24 @@ html, body {
     display: flex !important;
     flex-direction: column !important;
     align-items: center !important;
-    background: rgba(0,0,0,0.5) !important;
+    background: rgba(0,0,0,0.6) !important;
     border-radius: 16px !important;
-    padding: 10px 6px !important;
-    cursor: pointer !important;
+    padding: 8px 6px !important;
     position: relative !important;
     width: 100% !important;
     box-sizing: border-box !important;
     text-align: center !important;
+    transition: 0.1s !important;
+}
+.favorite-slot:hover {
+    transform: translateX(4px);
+    background: rgba(255,215,0,0.15) !important;
 }
 
 /* Иконка */
 .favorite-slot .hero-icon {
     font-size: 36px !important;
-    margin-bottom: 4px !important;
+    margin-bottom: 2px !important;
 }
 
 /* Име */
@@ -639,19 +643,19 @@ html, body {
     overflow: hidden !important;
     text-overflow: ellipsis !important;
     max-width: 100% !important;
-    margin-bottom: 2px !important;
 }
 
 /* Ниво и сила */
 .favorite-slot .hero-level-power {
     display: block !important;
-    font-size: 9px !important;
+    font-size: 10px !important;
     color: #ccaa77 !important;
     margin: 2px 0 !important;
 }
 
 /* Ленти за живот и опит */
-.favorite-slot .hp-bar, .favorite-slot .xp-bar {
+.favorite-slot .hp-bar,
+.favorite-slot .xp-bar {
     display: block !important;
     width: 100% !important;
     height: 4px !important;
@@ -660,7 +664,8 @@ html, body {
     border-radius: 2px !important;
     overflow: hidden !important;
 }
-.favorite-slot .hp-fill, .favorite-slot .xp-fill {
+.favorite-slot .hp-fill,
+.favorite-slot .xp-fill {
     height: 100% !important;
 }
 .favorite-slot .hp-fill {
@@ -675,28 +680,26 @@ html, body {
     display: flex !important;
     justify-content: center !important;
     gap: 8px !important;
-    font-size: 8px !important;
+    font-size: 9px !important;
     margin: 4px 0 !important;
     width: 100% !important;
 }
 .favorite-slot .hero-stats span {
-    font-size: 8px !important;
+    font-size: 9px !important;
 }
 
 /* AUTO/MANUAL значка */
 .favorite-slot .auto-badge {
     display: inline-block !important;
-    font-size: 7px !important;
+    font-size: 8px !important;
     background: #2c1a0c !important;
     padding: 2px 6px !important;
     border-radius: 12px !important;
-    margin-top: 4px !important;
-    width: fit-content !important;
-    align-self: center !important;
+    margin-top: 3px !important;
 }
 
 /* Сърце (премахване от любими) – горе вдясно */
-.favorite-slot button:first-of-type {
+.favorite-slot button:first-child {
     position: absolute !important;
     top: 4px !important;
     right: 4px !important;
@@ -708,9 +711,8 @@ html, body {
     z-index: 2 !important;
 }
 
-/* AUTO/MANUAL бутон – долу вляво */
-.favorite-slot .auto-toggle-btn,
-.favorite-slot button:last-of-type {
+/* AUTO/MANUAL бутон (втори бутон) – долу вляво */
+.favorite-slot button:last-child {
     position: absolute !important;
     bottom: 4px !important;
     left: 4px !important;
@@ -718,12 +720,76 @@ html, body {
     border: 1px solid #d4af37 !important;
     border-radius: 4px !important;
     font-size: 8px !important;
-    padding: 1px 4px !important;
+    padding: 2px 5px !important;
     cursor: pointer !important;
     color: #ffd700 !important;
     z-index: 2 !important;
 }
 
+/* ========== АДАПТАЦИЯ ЗА ТЕЛЕФОН (ЛАНДШАФТ) ========== */
+@media (max-width: 700px) {
+    .favorite-slot .hero-icon {
+        font-size: 28px !important;
+    }
+    .favorite-slot .hero-name {
+        font-size: 10px !important;
+    }
+    .favorite-slot .hero-level-power {
+        font-size: 8px !important;
+    }
+    .favorite-slot .hero-stats span,
+    .favorite-slot .auto-badge {
+        font-size: 8px !important;
+    }
+    .favorite-slot .hp-bar,
+    .favorite-slot .xp-bar {
+        height: 3px !important;
+    }
+    .favorite-slot button:first-child {
+        font-size: 12px !important;
+    }
+    .favorite-slot button:last-child {
+        font-size: 7px !important;
+        padding: 1px 4px !important;
+    }
+}
+
+@media (max-width: 550px) {
+    .favorite-slot {
+        padding: 6px 4px !important;
+    }
+    .favorite-slot .hero-icon {
+        font-size: 24px !important;
+    }
+    .favorite-slot .hero-name {
+        font-size: 9px !important;
+    }
+    .favorite-slot .hero-level-power {
+        font-size: 7px !important;
+    }
+    .favorite-slot .hero-stats span {
+        font-size: 7px !important;
+    }
+    .favorite-slot .hp-bar,
+    .favorite-slot .xp-bar {
+        height: 2px !important;
+        margin: 2px 0 !important;
+    }
+    .favorite-slot .auto-badge {
+        font-size: 6px !important;
+        padding: 1px 4px !important;
+    }
+    .favorite-slot button:first-child {
+        font-size: 10px !important;
+        top: 2px !important;
+        right: 2px !important;
+    }
+    .favorite-slot button:last-child {
+        font-size: 6px !important;
+        bottom: 2px !important;
+        left: 2px !important;
+    }
+}
 /* Адаптивност за много малки екрани (телефони) */
 @media (max-width: 700px) {
     .favorite-slot .hero-icon {
