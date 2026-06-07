@@ -55,34 +55,31 @@ html, body {
 /* -----------------------------------------------
    4. ЛЕТОПИС
 ----------------------------------------------- */
+/* Летопис – показва колкото събития са добавени, с вътрешен скрол при нужда */
 #unifiedChronicle {
     background: transparent;
-    margin-bottom: 20px;
+    overflow-y: auto;
+    flex: 1;
+    min-height: 0;
+    max-height: none !important; /* премахваме ограничението от 40vh */
 }
 
-.chronicle-event {
-    background: rgba(20, 20, 40, 0.6);
-    border-left: 3px solid #d4af37;
-    padding: 6px 10px;
-    margin-bottom: 6px;
-    border-radius: 8px;
+#eventsListContainer {
     display: flex;
-    gap: 10px;
-    font-size: 0.8rem;
+    flex-direction: column;
+    gap: 6px;
 }
-
-.chronicle-icon { font-size: 1.3rem; min-width: 32px; text-align: center; }
-.chronicle-text { flex: 1; color: #f0f0f0; }
-.chronicle-time { color: #ccccaa; font-size: 0.65rem; white-space: nowrap; }
 
 .load-more-btn {
     background: rgba(212, 175, 55, 0.2);
     border: 1px solid #d4af37;
     border-radius: 30px;
-    color: #ffd700;
     padding: 4px 12px;
+    color: #ffd700;
     cursor: pointer;
     margin-top: 8px;
+    align-self: center;
+    font-size: 0.7rem;
 }
 
 /* -----------------------------------------------
