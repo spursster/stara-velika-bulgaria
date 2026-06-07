@@ -860,5 +860,39 @@
     window.addEventListener('orientationchange', checkOrientation);
 })();
 </script>
+
+<script>
+// === АДАПТАЦИЯ НА КАРТИТЕ ЗА ТЕЛЕФОН ===
+(function() {
+    // 1. Корекция за Leaflet картата (openInteractiveMap)
+    if (window.openInteractiveMap) {
+        const originalMap = window.openInteractiveMap;
+        window.openInteractiveMap = function() {
+            originalMap();
+            setTimeout(() => {
+                const container = document.querySelector('#interactive-map-modal .leaflet-container');
+                if (container && container._leaflet_id) {
+                    container._leaflet_map.invalidateSize();
+                }
+            }, 200);
+        };
+    }
+
+    // 2. (Незадължително) Корекция за openRegionsMap (по-добри размери)
+    if (window.openRegionsMap) {
+        const originalRegionsMap = window.openRegionsMap;
+        window.openRegionsMap = function() {
+            originalRegionsMap();
+            setTimeout(() => {
+                const modal = document.getElementById('regions-map-overlay');
+                if (modal) {
+                    const scrollDiv = modal.querySelector('div[style*="overflow-y: auto"]');
+                    if (scrollDiv) scrollDiv.style.maxHeight = 'calc(90vh - 100px)';
+                }
+            }, 50);
+        };
+    }
+})();
+</script>
 </body>
 </html>
