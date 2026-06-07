@@ -746,7 +746,58 @@ html, body {
 #single-hero-bar {
     display: none !important;
 }
+/* Скриваме втората хоризонтална лента с герои */
+#single-hero-bar {
+    display: none !important;
+}
 
+/* Забрана за портретен режим на телефони */
+@media (max-width: 768px) and (orientation: portrait) {
+    body {
+        overflow: hidden !important;
+        position: fixed !important;
+        width: 100% !important;
+        height: 100% !important;
+    }
+    #orientation-overlay {
+        display: flex !important;
+    }
+    #game-container, #top-bar, .bottom-fixed-wrapper, .mobile-section {
+        display: none !important;
+    }
+}
+
+#orientation-overlay {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: #0a2a4a;
+    z-index: 999999;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    font-family: 'Cinzel', serif;
+    color: #ffd700;
+    padding: 20px;
+    box-sizing: border-box;
+}
+#orientation-overlay .icon {
+    font-size: 80px;
+    margin-bottom: 20px;
+}
+#orientation-overlay h2 {
+    font-size: 24px;
+    margin-bottom: 10px;
+}
+#orientation-overlay p {
+    font-size: 16px;
+    color: #ccc;
+    max-width: 80%;
+}
 /* Сезонни теми (оставяме ги) */
 body.season-spring { background: linear-gradient(180deg, #0a2a4a 0%, #1a4a3a 100%); }
 body.season-summer { background: linear-gradient(180deg, #0a2a4a 0%, #2a3a0a 100%); }
