@@ -602,42 +602,154 @@ html, body {
     overflow-y: auto !important;
 }
 
-/* Вертикална лента с любими герои (преместена от долния контейнер) */
+/* ========== ВЕРТИКАЛНА ЛЕНТА С ГЕРОИ (ПЪЛНА ИНФОРМАЦИЯ) ========== */
 #favorite-heroes-bar {
     display: flex !important;
     flex-direction: column !important;
-    gap: 8px !important;
+    gap: 10px !important;
     width: 100% !important;
 }
 
 .favorite-slot {
     display: flex !important;
-    flex-direction: row !important;
+    flex-direction: column !important;
     align-items: center !important;
-    gap: 8px !important;
-    padding: 6px 8px !important;
-    min-height: 55px !important;
-    width: 100% !important;
     background: rgba(0,0,0,0.5) !important;
-    border-radius: 12px !important;
-}
-.favorite-slot .hero-level-power,
-.favorite-slot .hero-stats,
-.favorite-slot .hp-bar,
-.favorite-slot .xp-bar,
-.favorite-slot .auto-badge {
-    display: none !important;
-}
-.favorite-slot .hero-icon {
-    font-size: 28px !important;
-}
-.favorite-slot .hero-name {
-    font-size: 11px !important;
-    font-weight: bold !important;
-    color: #ffdd99 !important;
-    flex: 1 !important;
+    border-radius: 16px !important;
+    padding: 10px 6px !important;
+    cursor: pointer !important;
+    position: relative !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
+    text-align: center !important;
 }
 
+/* Иконка */
+.favorite-slot .hero-icon {
+    font-size: 36px !important;
+    margin-bottom: 4px !important;
+}
+
+/* Име */
+.favorite-slot .hero-name {
+    font-size: 12px !important;
+    font-weight: bold !important;
+    color: #ffdd99 !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    max-width: 100% !important;
+    margin-bottom: 2px !important;
+}
+
+/* Ниво и сила */
+.favorite-slot .hero-level-power {
+    display: block !important;
+    font-size: 9px !important;
+    color: #ccaa77 !important;
+    margin: 2px 0 !important;
+}
+
+/* Ленти за живот и опит */
+.favorite-slot .hp-bar, .favorite-slot .xp-bar {
+    display: block !important;
+    width: 100% !important;
+    height: 4px !important;
+    margin: 3px 0 !important;
+    background: #2a1a0a !important;
+    border-radius: 2px !important;
+    overflow: hidden !important;
+}
+.favorite-slot .hp-fill, .favorite-slot .xp-fill {
+    height: 100% !important;
+}
+.favorite-slot .hp-fill {
+    background: #4caf50 !important;
+}
+.favorite-slot .xp-fill {
+    background: #44aa44 !important;
+}
+
+/* Статистики (❤️, 💰, ⚔️) */
+.favorite-slot .hero-stats {
+    display: flex !important;
+    justify-content: center !important;
+    gap: 8px !important;
+    font-size: 8px !important;
+    margin: 4px 0 !important;
+    width: 100% !important;
+}
+.favorite-slot .hero-stats span {
+    font-size: 8px !important;
+}
+
+/* AUTO/MANUAL значка */
+.favorite-slot .auto-badge {
+    display: inline-block !important;
+    font-size: 7px !important;
+    background: #2c1a0c !important;
+    padding: 2px 6px !important;
+    border-radius: 12px !important;
+    margin-top: 4px !important;
+    width: fit-content !important;
+    align-self: center !important;
+}
+
+/* Сърце (премахване от любими) – горе вдясно */
+.favorite-slot button:first-of-type {
+    position: absolute !important;
+    top: 4px !important;
+    right: 4px !important;
+    background: none !important;
+    border: none !important;
+    font-size: 14px !important;
+    cursor: pointer !important;
+    color: #ff4466 !important;
+    z-index: 2 !important;
+}
+
+/* AUTO/MANUAL бутон – долу вляво */
+.favorite-slot .auto-toggle-btn,
+.favorite-slot button:last-of-type {
+    position: absolute !important;
+    bottom: 4px !important;
+    left: 4px !important;
+    background: #2c1a0c !important;
+    border: 1px solid #d4af37 !important;
+    border-radius: 4px !important;
+    font-size: 8px !important;
+    padding: 1px 4px !important;
+    cursor: pointer !important;
+    color: #ffd700 !important;
+    z-index: 2 !important;
+}
+
+/* Адаптивност за много малки екрани (телефони) */
+@media (max-width: 700px) {
+    .favorite-slot .hero-icon {
+        font-size: 28px !important;
+    }
+    .favorite-slot .hero-name {
+        font-size: 10px !important;
+    }
+    .favorite-slot .hero-level-power {
+        font-size: 8px !important;
+    }
+    .favorite-slot .hero-stats span,
+    .favorite-slot .auto-badge {
+        font-size: 7px !important;
+    }
+    .favorite-slot .hp-bar, .favorite-slot .xp-bar {
+        height: 3px !important;
+    }
+    .favorite-slot button:first-of-type {
+        font-size: 12px !important;
+    }
+    .favorite-slot .auto-toggle-btn {
+        font-size: 7px !important;
+        padding: 1px 3px !important;
+    }
+}
 /* Централен панел – летопис, топ герой, портали, подредени вертикално */
 #game-main-area {
     display: flex !important;
