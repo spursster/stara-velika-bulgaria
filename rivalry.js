@@ -21,14 +21,14 @@
     let turnCounter = 0;
 
     // Помощна функция за намиране на "играча" (най-силен герой)
-    function getPlayerHero() {
-        if (typeof window.getStrongestHero === 'function') {
-            return window.getStrongestHero();
-        }
-        // Резервен вариант (само за соло режим)
-        if (window.currentHero) return window.currentHero;
-        return null;
+   function getPlayerHero() {
+    if (typeof window.getStrongestHero === 'function') {
+        return window.getStrongestHero();
     }
+    // Само в соло режим използваме currentHero като резерв
+    if (window.gameMode === 'solo' && window.currentHero) return window.currentHero;
+    return null;
+}
 
     function getAllHeroes(forAttackers = true) {
         let heroes = [];
@@ -196,6 +196,9 @@
             window.updateStrongestHeroUI();
         }
         if (typeof window.renderSingleBar === 'function') window.renderSingleBar();
+        if (typeof window.renderFavoriteHeroesBar === 'function') {
+    window.renderFavoriteHeroesBar();
+}
 
         console.log(`🔥 НАПАДЕНИЕ (ход ${turnCounter}): ${attacker.name} нападна ${victim.name} и открадна ${stolenInfo.type}`);
     };
