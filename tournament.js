@@ -105,25 +105,38 @@ window.tournament = (function() {
         };
     }
 
-    function simulateBattle(heroA, heroB) {
+   function simulateBattle(heroA, heroB) {
     let powerA = (heroA.power || 100) * (0.7 + Math.random() * 0.7);
     let powerB = (heroB.power || 100) * (0.7 + Math.random() * 0.7);
     let winner = powerA >= powerB ? heroA : heroB;
     let loser = winner === heroA ? heroB : heroA;
     
-    // ⭐ Даваме XP и на двамата (дори на загубилия)
+    // Уверяваме се, че winner.heroObj сочи към оригиналния обект в worldData.clans
+    if (winner.heroObj && typeof winner.heroObj === 'object') {
+        // Ако winner.heroObj вече е оригиналният обект, добре; иначе го намираме
+        if (!winner.heroObj.isJoined && winner.heroObj.clan) {
+            // Опитваме се да намерим оригиналния герой по clan
+            for (let key in window.worldData.clans) {
+                let original = window.worldData.clans[key];
+                if (original.name === winner.name && original.clan === winner.clan) {
+                    winner.heroObj = original;
+                    break;
+                }
+            }
+        }
+    }
+    
     if (winner.heroObj && typeof window.gainHeroXP === 'function') {
-        let xpGain = Math.floor(10 + Math.random() * 15);   // победител: 10–25 XP
+        let xpGain = Math.floor(10 + Math.random() * 15);
         window.gainHeroXP(winner.heroObj, xpGain);
     }
     if (loser.heroObj && typeof window.gainHeroXP === 'function') {
-        let xpGain = Math.floor(5 + Math.random() * 10);    // загубил: 5–15 XP
+        let xpGain = Math.floor(5 + Math.random() * 10);
         window.gainHeroXP(loser.heroObj, xpGain);
     }
     
     return { winner, loser };
 }
-
     function logMatch(match, winner, loser, roundNumber, isSemifinal, isFinal, matchNumber) {
         const isImportant = (match.heroA.isHired === true) || (match.heroB.isHired === true);
         if (!isFinal && !isSemifinal && !isImportant) return;
@@ -239,18 +252,34 @@ window.tournament = (function() {
     }
     let opponentHero = (match.heroA === winnerHero) ? match.heroB : match.heroA;
     
-    // ⭐ Даваме XP на противника (независимо от изхода на битката)
+    // ⭐ КРИТИЧНА ПРОМЯНА: Намираме оригиналния обект на победителя
+    let originalWinner = winnerHero.heroObj;
+    if (!originalWinner || !originalWinner.isJoined) {
+        // Опитваме се да намерим оригиналния герой по име и клан
+        for (let key in window.worldData.clans) {
+            let h = window.worldData.clans[key];
+            if (h.name === winnerHero.name && h.clan === winnerHero.clan) {
+                originalWinner = h;
+                winnerHero.heroObj = h;
+                break;
+            }
+        }
+    }
+    
+    // Даваме XP на противника (независимо от изхода)
     if (opponentHero && opponentHero.heroObj && typeof window.gainHeroXP === 'function') {
         let xpGain = Math.floor(5 + Math.random() * 10);
         window.gainHeroXP(opponentHero.heroObj, xpGain);
     }
-    // ⭐ Бонус XP за победителя (в допълнение към това, което battle.js вече даде)
+    // Бонус XP за победителя
     if (winnerHero && winnerHero.heroObj && typeof window.gainHeroXP === 'function') {
         let bonusXp = Math.floor(5 + Math.random() * 10);
         window.gainHeroXP(winnerHero.heroObj, bonusXp);
     }
     
+    // Добавяме победителя (с оригиналния обект) в remainingHeroes
     remainingHeroes.push(winnerHero);
+    
     window._pendingTournamentMatch = null;
     window._tournamentForcedHero = null;
     
@@ -275,7 +304,6 @@ window.tournament = (function() {
         finishRound();
     }
 };
-
     // ⭐ ПРОМЕНЕНА ФУНКЦИЯ – изиграва до MATCHES_PER_TURN мача на ход
     function advanceTournament() {
         if (!tournamentActive) return;
@@ -340,57 +368,78 @@ window.tournament = (function() {
         }
     }
     
-    function finishRound() {
-        if (!tournamentActive) return;
-        
-        if (remainingHeroes.length === 1) {
-            winner = remainingHeroes[0];
-            let finalMsg = `🏆 **Шампион на Турнира на шампионите** 🏆\n${winner.name} спечели турнира!`;
-           if (winner.isHired && winner.heroObj) {
-    let petIds = Object.keys(window.divinePets || {});
-    if (petIds.length) {
-        let randomPet = petIds[Math.floor(Math.random() * petIds.length)];
-        winner.heroObj.pet = randomPet;
-        // Автоматично екипиране (преизчисляване на силата)
-        if (winner.heroObj.isAuto && typeof window.autoEquipHero === 'function') {
-            window.autoEquipHero(winner.heroObj);
+   function finishRound() {
+    if (!tournamentActive) return;
+    
+    if (remainingHeroes.length === 1) {
+        winner = remainingHeroes[0];
+        // Гарантираме, че winner.heroObj сочи към истинския герой в worldData
+        let trueWinnerObj = winner.heroObj;
+        if (!trueWinnerObj || !trueWinnerObj.isJoined) {
+            for (let key in window.worldData.clans) {
+                let h = window.worldData.clans[key];
+                if (h.name === winner.name && h.clan === winner.clan) {
+                    trueWinnerObj = h;
+                    winner.heroObj = h;
+                    break;
+                }
+            }
         }
-        finalMsg += ` Награда: ${winner.name} получава ${window.divinePets[randomPet].name}! 🐉`;
+        let finalMsg = `🏆 **Шампион на Турнира на шампионите** 🏆\n${winner.name} спечели турнира!`;
+        if (trueWinnerObj) {
+            let petIds = Object.keys(window.divinePets || {});
+            if (petIds.length) {
+                let randomPet = petIds[Math.floor(Math.random() * petIds.length)];
+                trueWinnerObj.pet = randomPet;
+                if (trueWinnerObj.isAuto && typeof window.autoEquipHero === 'function') {
+                    window.autoEquipHero(trueWinnerObj);
+                }
+                finalMsg += ` Награда: ${winner.name} получава ${window.divinePets[randomPet].name}! 🐉`;
+            }
+            // Записваме в класацията с trueWinnerObj
+            if (window.gameTime) {
+                window.addTournamentWinner(
+                    trueWinnerObj,
+                    window.gameTime.year,
+                    trueWinnerObj.heroPower || winner.power || 100,
+                    trueWinnerObj.currentClass,
+                    trueWinnerObj.pet ? (window.divinePets?.[trueWinnerObj.pet]?.name || trueWinnerObj.pet) : null
+                );
+            }
+        } else {
+            // Аварийно – записваме с winner (но няма да има heroObj)
+            if (window.gameTime) {
+                window.addTournamentWinner(
+                    { name: winner.name, currentClass: winner.className || "Воевода" },
+                    window.gameTime.year,
+                    winner.power || 100,
+                    winner.className || "Воевода",
+                    null
+                );
+            }
+        }
+        log(finalMsg, "🏆");
+        tournamentActive = false;
+        saveLastTournamentYear();
+        return;
     }
-}
-            log(finalMsg, "🏆");
-            tournamentActive = false;
-            saveLastTournamentYear();
-            // Записваме победителя в класацията
-if (winner && winner.heroObj && window.gameTime) {
-    window.addTournamentWinner(
-        winner.heroObj,
-        window.gameTime.year,
-        winner.heroObj.heroPower || winner.power || 100,
-        winner.heroObj.currentClass,
-        winner.heroObj.pet ? (window.divinePets?.[winner.heroObj.pet]?.name || winner.heroObj.pet) : null
-    );
-}
-            return;
-        }
-        
-        log(`🎯 Рунд ${currentRound} завърши. Остават ${remainingHeroes.length} участници.`, "📊");
-        
-        currentRound++;
-        roundMatches = createMatches(remainingHeroes);
-        remainingHeroes = [];
-        currentMatchIndex = 0;
-        
-        if (roundMatches.length === 0) {
-            tournamentActive = false;
-            return;
-        }
-        log(`🏁 Започва Рунд ${currentRound} (${roundMatches.length} двубоя).`, "🏁");
-        
-        // Автоматично стартираме първия мач в новия рунд
-        setTimeout(() => advanceTournament(), 100);
+    
+    log(`🎯 Рунд ${currentRound} завърши. Остават ${remainingHeroes.length} участници.`, "📊");
+    
+    currentRound++;
+    roundMatches = createMatches(remainingHeroes);
+    remainingHeroes = [];
+    currentMatchIndex = 0;
+    
+    if (roundMatches.length === 0) {
+        tournamentActive = false;
+        return;
     }
-
+    log(`🏁 Започва Рунд ${currentRound} (${roundMatches.length} двубоя).`, "🏁");
+    
+    // Автоматично стартираме първия мач в новия рунд
+    setTimeout(() => advanceTournament(), 100);
+}
     function createMatches(participants) {
         let matches = [];
         for (let i = 0; i < participants.length; i += 2) {
