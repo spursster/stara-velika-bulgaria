@@ -1,27 +1,38 @@
-<!DOCTYPE html>
+.<!DOCTYPE html>
 <html lang="bg">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Велика България</title>
+    <title>Велика България </title>
     <link rel="icon" type="image/png" sizes="32x32" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsMAAA7DAcdvqGQAAAGzSURBVFhH7ZbNSsNAEIR3UV/AB/BlfAQfQZ8g4EFPnpXePUhBUIoWCXhWCCKFDf0B0dDG1KzGQEJ2s5tsdvODhQxL2unuzE6y2w8F+chHAYIgCIIg/KNbZQcTodwBp4Ew74DT2iFYd2TajctPIew7MLFnT5jzzqzUzgpCEQpJ0mktkPfwIzsJURwDoGk6NQN2FopQMBwAq7Vg3oFD4cEBUB9kKoIGmHfgUDgKAERQMFwFWq0G+g50BYAJYJsHA8A5r6BMQEZwL3CyP6A7+BZg2p6xQsYGMvT7sQyZMwBWBc2CqKvA/7n1N0OBAdhLhA0EoF8ARVHw9mRaRwZgLxE2EIB+Ac/nD3Sd1l2FmRwAe4mwgQD0CziOYiJ4Pp8BvCR0GfIACkB+vl7e/wHIN+/cO6C/AnkHcE6cc+4d0F8BfcDnBKZpmO04jpm2bUNmAHuJsIEAdB4Ae4mwgQB0HgB7ibCBAHQeAHuJsIEAdB6A3iVYnh/mHK7JYVkWtm0D9neYzx2yxy/yPtP3/cy2bUxTVZ5Op0YXYz+OQgiCIAiCIAg/8AF6hlz2sS1PDgAAAABJRU5ErkJggg==">
     <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Montserrat:wght@300;400;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-    <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css" />
-    <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css" />
-    <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css" />
+<link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css" />
+<script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
 </head>
 <body>
 
-<main id="game-container">
-    <!-- Ляв панел: само любими герои (вертикални) -->
-    <aside id="sidebar-left">
-        <div id="favorite-heroes-bar" class="favorite-bar"></div>
-    </aside>
+<header id="top-bar">
+    <div class="top-bar-stats">
+        <div class="stat-box">⚔️ <span id="val-hero-power">0</span></div>
+        <div class="stat-box">💰 <span id="val-gold">0</span></div>
+        <div class="stat-box">🏹 <span id="val-army">0</span></div>
+        <div class="stat-box">⏳ <span id="current-time-info">пролет, 480 г. пр.н.е.</span></div>
+    </div>
+    <div class="top-bar-controls">
+        <!-- тук вече няма бутон за нова игра – преместен е долу -->
+    </div>
+</header>
 
-    <!-- Централен панел: летопис + топ герой + портали -->
+<main id="game-container">
+    <aside id="sidebar-left">
+        <div style="text-align: center;">
+            <div id="active-character-profile"></div>
+        </div>
+    </aside>
     <section id="game-main-area">
         <div id="unifiedChronicle">
             <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #d4af37; padding-bottom: 5px; margin-bottom: 10px;">
@@ -30,22 +41,64 @@
             </div>
             <div id="eventsListContainer"></div>
         </div>
-        <div id="active-character-profile" class="center-section"></div>
-        <div id="clans-container" class="center-section">
-            <h3 style="color:#ffd700; text-align:center;">ПОРТАЛ</h3>
-            <div id="portal-content">Тук ще се показват клановете</div>
-        </div>
         <div style="text-align: center;">
             <h1 style="color:#ffd700;">ЕВАЛА ДАРА !</h1>
             <p style="color:#ccc;">Води своя род към величие</p>
         </div>
     </section>
-
-    <!-- Десен панел: команден център -->
-    <aside id="sidebar-right"></aside>
+    <aside id="sidebar-right">
+        <div style="text-align: center;">
+            <h3 style="color:#ffd700;">ПОРТАЛ</h3>
+            <div id="clans-container"></div>
+        </div>
+    </aside>
 </main>
 
-<!-- Скриптове -->
+<!-- НОВ ОБВИВАЩ КОНТЕЙНЕР за двете ленти -->
+<div class="bottom-fixed-wrapper">
+    <div id="bottom-controls">
+        <div class="new-game-menu-container bottom-mobile-only" id="mobileNewGameContainer">
+    <button class="glass-btn" id="mobileNewGameBtn">🎮 Нова игра</button>
+</div>
+        <div class="new-game-menu-container bottom-menu">
+            <button class="glass-btn" id="newGameBtn">🎮 Нова игра / Продължи</button>
+            <div class="new-game-dropdown bottom-dropdown" id="newGameDropdown">
+                <div class="new-game-option" data-mode="classic">
+                    <span class="new-game-option-icon">🏰</span>
+                    <span>Класически режим (много герои)</span>
+                </div>
+                <div class="new-game-option" data-mode="solo">
+                    <span class="new-game-option-icon">⚔️</span>
+                    <span>Соло режим (RPG приключение)</span>
+                </div>
+                <div class="new-game-divider"></div>
+                <div class="new-game-option" id="continueGameOption">
+                    <span class="new-game-option-icon">📜</span>
+                    <span>Продължи текущата игра</span>
+                </div>
+            </div>
+        </div>
+        <button class="icon-btn" onclick="window.openInteractiveMap()" title="Карта">🗺️</button>
+        <button class="icon-btn" onclick="if(typeof window.openBarracksUI === 'function') window.openBarracksUI(); else alert('Казармите не са достъпни в момента')" title="Казарми">🏹</button>
+        <button class="icon-btn" onclick="window.startBattle('Мизия')" title="Битка">⚔️</button>
+        <button class="next-turn-btn" onclick="window.processTurn()">► Ход</button>
+        <button class="icon-btn" onclick="window.openEventsMenu?.()" title="Събития">📜</button>
+        <button class="icon-btn" onclick="window.openExpeditionsMenu?.()" title="Експедиции">🧭</button>
+        <button class="icon-btn" onclick="window.toggleTreasury()" title="Съкровищница">🎒</button>
+        <button class="icon-btn" onclick="window.tournament.start()" title="Турнир">🎖️</button>
+        <button class="icon-btn" onclick="window.hireNewHero?.()" title="Наеми герой">👑</button>
+        <button class="icon-btn" onclick="window.toggleGameFullScreen?.()" title="Цял екран">⬚</button>
+        <button class="icon-btn" onclick="window.armyMarket?.show?.()" title="Пазар за армия">🏪</button>
+        <button onclick="window.openMarriageMenu()">💒 Брак</button>
+        <button class="icon-btn" onclick="window.openDiplomacyHub?.()" title="Дипломация">🕊️</button>
+        <button class="icon-btn" onclick="window.showLeaderBoardModal()" title="Класации">🏆</button>
+    </div>
+
+    <!-- Лента с любими герои (5 слота) -->
+    <div id="favorite-heroes-bar" class="favorite-bar"></div>
+</div>
+
+<!-- 1. ДАННИ И БАЗИ -->
 <script src="gameState.js"></script>
 <script src="world_data.js"></script>
 <script src="database.js"></script>
@@ -53,15 +106,20 @@
 <script src="PersonalityTraits.js"></script>
 <script src="classes.js"></script>
 
+
+<!-- 2. ОСНОВНИ СИСТЕМИ (RPG, ЕВОЛЮЦИЯ) -->
 <script src="rpg_system.js"></script>
 <script src="characterEvolution.js"></script>
 <script src="leaderboard.js"></script>
 <script src="time.js"></script>
 
+<!-- 3. UI И ЛЕТОПИС (важно: ui.js преди всички модули, които го използват) -->
 <script src="ui.js"></script>
+     <!-- ИНТЕРАКТИВЕН ЛЕТОПИС (бутони) -->
 <script src="ui-manager.js"></script>
 <script src="ui-modals.js"></script>
 
+<!-- 4. ИКОНОМИКА, ДИПЛОМАЦИЯ, РЕГИОНИ, БИТКИ (разчитат на UI и летопис) -->
 <script src="economy.js"></script>
 <script src="diplomacy.js"></script>
 <script src="MapGenerator.js"></script>
@@ -73,6 +131,7 @@
 <script src="armyMarket.js"></script>
 <script src="barracks.js"></script>
 
+<!-- 5. КУЕСТИ, СЪБИТИЯ, МЕХАНИКИ -->
 <script src="quests.js"></script>
 <script src="events.js"></script>
 <script src="mechanics.js"></script>
@@ -80,165 +139,577 @@
 <script src="tournament.js"></script>
 <script src="rivalry.js"></script>
 
+<!-- 6. ТЪРГОВИЯ И ДИНАМИЧНИ СЪБИТИЯ (ако има отделен файл) -->
 <script src="trade_events.js"></script>
+
+<!-- 7. СОЛО РЕЖИМ (НЕ СЕ ПИПА, НО ТРЯБВА ДА Е ЗАРЕДЕН) -->
 <script src="soloMode.js"></script>
 
+<!-- 8. ОСНОВНА ЛОГИКА НА ИГРАТА (САВ, ЗАРЕЖДАНЕ, НОВА ИГРА) – НАЙ-ОТЗАД -->
 <script src="core-init.js"></script>
 <script src="logic.js"></script>
 
+<!-- 9. ДОПЪЛНИТЕЛНИ UI ЕКСТРИ (СКИЛОВЕ, СПОДЕЛЯНЕ) -->
 <script src="skills-ui.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <script src="social-share.js"></script>
 
-<!-- Инициализация на новия интерфейс -->
 <script>
-    (function() {
-        // Изграждане на командния панел
-        function buildCommandPanel() {
-            const rightPanel = document.getElementById('sidebar-right');
-            if (!rightPanel) return;
-            rightPanel.innerHTML = '';
+// ==================== ГЛОБАЛНИ ДОПЪЛНЕНИЯ (без currentHero в класически режим) ====================
+(function() {
+    // Заглушки за липсващи функции (ако не са заредени)
+    if (typeof window.renderTop6HeroesUI !== 'function') {
+        window.renderTop6HeroesUI = function() {
+            console.log("⚠️ renderTop6HeroesUI извикана, но не е дефинирана (заглушка)");
+        };
+    }
+    if (typeof window.createLegendaryHero !== 'function') {
+        window.createLegendaryHero = function() {};
+    }
+    if (typeof window.triggerRandomDuelChallenge !== 'function') {
+        window.triggerRandomDuelChallenge = function() {};
+    }
 
-            // 1. Статистики
-            const statsDiv = document.createElement('div');
-            statsDiv.className = 'command-stats';
-            statsDiv.innerHTML = `
-                <div class="stat-item">⚔️ <span id="cmd-power">0</span></div>
-                <div class="stat-item">💰 <span id="cmd-gold">0</span></div>
-                <div class="stat-item">🏹 <span id="cmd-army">0</span></div>
-                <div class="stat-item">⏳ <span id="cmd-time">пролет, 480 г. пр.н.е.</span></div>
-            `;
-            rightPanel.appendChild(statsDiv);
+    // Коригирана toggleTreasury – работи с избрания герой (getSelectedHero)
+    const originalToggle = window.toggleTreasury;
+    if (originalToggle) {
+        window.toggleTreasury = function() {
+            let hero = null;
+            if (window.gameMode === 'solo') {
+                hero = window.currentHero;
+            } else {
+                hero = (typeof window.getSelectedHero === 'function') ? window.getSelectedHero() : null;
+                if (!hero && typeof window.getStrongestHero === 'function') hero = window.getStrongestHero();
+            }
+            if (!hero) {
+                if (window.showAdvisorPopup) {
+                    window.showAdvisorPopup("ВНИМАНИЕ", "Заредете игра или започнете нова, за да отворите съкровищницата.", "warning");
+                } else {
+                    alert("Съкровищницата не е достъпна. Моля, започнете нова игра.");
+                }
+                return;
+            }
+            originalToggle();
+        };
+    }
 
-            // 2. Бутони
-            const btnsDiv = document.createElement('div');
-            btnsDiv.className = 'command-buttons';
+    // Функция за показване на модал за избор на режим
+    window.showGameModeModal = function() {
+        const existingModal = document.getElementById('gameModeModal');
+        if (existingModal) existingModal.remove();
 
-            const buttons = [
-                { icon: '🗺️', text: 'Карта', action: 'window.openInteractiveMap()' },
-                { icon: '🏹', text: 'Казарми', action: 'if(window.openBarracksUI) window.openBarracksUI(); else alert("Казармите не са достъпни")' },
-                { icon: '⚔️', text: 'Битка', action: 'window.startBattle("Мизия")' },
-                { icon: '►', text: 'Ход', class: 'next-turn-btn', action: 'window.processTurn()' },
-                { icon: '📜', text: 'Събития', action: 'window.openEventsMenu?.()' },
-                { icon: '🧭', text: 'Експедиции', action: 'window.openExpeditionsMenu?.()' },
-                { icon: '🎒', text: 'Съкровищница', action: 'window.toggleTreasury()' },
-                { icon: '🎖️', text: 'Турнир', action: 'window.tournament.start()' },
-                { icon: '👑', text: 'Наеми герой', action: 'window.hireNewHero?.()' },
-                { icon: '⬚', text: 'Цял екран', action: 'window.toggleGameFullScreen?.()' },
-                { icon: '🏪', text: 'Пазар', action: 'window.armyMarket?.show?.()' },
-                { icon: '💒', text: 'Брак', action: 'window.openMarriageMenu()' },
-                { icon: '🕊️', text: 'Дипломация', action: 'window.openDiplomacyHub?.()' },
-                { icon: '🏆', text: 'Класации', action: 'window.showLeaderBoardModal()' }
-            ];
+        const modal = document.createElement('div');
+        modal.id = 'gameModeModal';
+        modal.style.cssText = `
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.85);
+            backdrop-filter: blur(8px);
+            z-index: 2147483647;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Cinzel', serif;
+        `;
+        modal.innerHTML = `
+            <div style="background: #0a0a1a; border: 2px solid #d4af37; border-radius: 24px; padding: 20px; max-width: 300px; width: 90%; text-align: center;">
+                <h3 style="color: #ffd700; margin-top: 0;">Избор на режим</h3>
+                <button class="mode-select-btn" data-mode="classic" style="width: 100%; margin: 8px 0; padding: 10px; background: #2c5a2a; border: none; border-radius: 30px; color: white; font-weight: bold; cursor: pointer;">🏰 Класически режим</button>
+                <button class="mode-select-btn" data-mode="solo" style="width: 100%; margin: 8px 0; padding: 10px; background: #daa520; border: none; border-radius: 30px; color: black; font-weight: bold; cursor: pointer;">⚔️ Соло режим</button>
+                <div style="height: 1px; background: #d4af37; margin: 12px 0;"></div>
+                <button id="continueGameBtn" style="width: 100%; padding: 10px; background: #2c1a0c; border: 1px solid #d4af37; border-radius: 30px; color: #ffdd99; cursor: pointer;">📜 Продължи текущата игра</button>
+                <button id="closeModalBtn" style="width: 100%; margin-top: 12px; padding: 8px; background: none; border: 1px solid #ff6666; border-radius: 30px; color: #ffaaaa; cursor: pointer;">Затвори</button>
+            </div>
+        `;
+        document.body.appendChild(modal);
 
-            buttons.forEach(cfg => {
-                const btn = document.createElement('button');
-                btn.innerHTML = `${cfg.icon} ${cfg.text}`;
-                if (cfg.class) btn.classList.add(cfg.class);
-                else btn.classList.add('command-btn');
-                btn.setAttribute('onclick', cfg.action);
-                btnsDiv.appendChild(btn);
-            });
-
-            // Бутон "Нова игра"
-            const newGameBtn = document.createElement('button');
-            newGameBtn.innerHTML = '🎮 Нова игра / Продължи';
-            newGameBtn.classList.add('command-new-game');
-            newGameBtn.onclick = () => {
-                if (typeof window.showGameModeModal === 'function') window.showGameModeModal();
-                else alert("Системата за нова игра не е готова.");
-            };
-            btnsDiv.appendChild(newGameBtn);
-
-            rightPanel.appendChild(btnsDiv);
+        function startGame(mode) {
+            localStorage.removeItem('GreatBulgaria_SaveGame');
+            localStorage.removeItem('favoriteHeroesFinal');
+            localStorage.removeItem('heroAutoState');
+            localStorage.removeItem('barracksFavorites');
+            window.gameMode = mode;
+            if (typeof window.startFreshGameLogic === 'function') {
+                window.startFreshGameLogic();
+            } else {
+                location.reload();
+            }
         }
 
-        // Пренасочване на updateTotalStatsUI
-        window.updateTotalStatsUI = function() {
-            let totalGold = 0, totalArmy = 0, totalPower = 0;
-            if (window.worldData && window.worldData.clans) {
-                for (let key in window.worldData.clans) {
-                    let hero = window.worldData.clans[key];
-                    if (hero && hero.isJoined === true && hero.isAlive !== false) {
-                        totalGold += hero.gold || 0;
-                        totalArmy += hero.armySize || 0;
-                        totalPower += hero.heroPower || 0;
+        function continueGame() {
+            const hasSave = localStorage.getItem('GreatBulgaria_SaveGame');
+            if (!hasSave) {
+                alert("Няма запазена игра. Започнете нова игра първо.");
+                modal.remove();
+                return;
+            }
+            if (typeof window.loadGreatBulgariaGame === 'function') {
+                window.loadGreatBulgariaGame();
+                modal.remove();
+            } else {
+                location.reload();
+            }
+        }
+
+        modal.querySelectorAll('.mode-select-btn').forEach(btn => {
+            btn.onclick = () => {
+                const mode = btn.getAttribute('data-mode');
+                modal.remove();
+                startGame(mode);
+            };
+        });
+        const continueBtn = modal.querySelector('#continueGameBtn');
+        if (continueBtn) continueBtn.onclick = continueGame;
+        const closeBtn = modal.querySelector('#closeModalBtn');
+        if (closeBtn) closeBtn.onclick = () => modal.remove();
+        modal.onclick = (e) => { if (e.target === modal) modal.remove(); };
+    };
+
+    // Ако няма запазена игра, показваме модала след кратко закъснение
+    const hasSave = localStorage.getItem('GreatBulgaria_SaveGame');
+    if (!hasSave) {
+        setTimeout(window.showGameModeModal, 200);
+    } else {
+        if (typeof window.loadGreatBulgariaGame === 'function') {
+            window.loadGreatBulgariaGame();
+        }
+    }
+})();
+
+// Прикачване на бутона "Нова игра" към модала
+(function() {
+    const newGameBtn = document.getElementById('newGameBtn');
+    if (newGameBtn) {
+        newGameBtn.onclick = function(e) {
+            e.stopPropagation();
+            if (typeof window.showGameModeModal === 'function') {
+                window.showGameModeModal();
+            } else {
+                alert("Системата за нова игра не е готова. Моля, презаредете страницата.");
+            }
+        };
+    }
+})();
+</script>
+
+<script>
+(function() {
+    // Филтър за дублиращи се врагове (без промяна)
+    if (window.rivalrySystem && typeof window.rivalrySystem.getEnemyHeroes === 'function') {
+        const originalGetEnemy = window.rivalrySystem.getEnemyHeroes;
+        window.rivalrySystem.getEnemyHeroes = function() {
+            let enemies = originalGetEnemy();
+            let unique = [];
+            let seen = new Set();
+            for (let e of enemies) {
+                let id = e.id || e.name || e.clan;
+                if (!seen.has(id)) {
+                    seen.add(id);
+                    unique.push(e);
+                }
+            }
+            return unique;
+        };
+        console.log("✅ Филтър за дублиращи се врагове активиран.");
+    }
+
+    // Обновяване на името в горната лента – работи с най-силния герой в класически режим
+    function updateHeroNameInTopBar() {
+        let hero = null;
+        if (window.gameMode === 'solo') {
+            hero = window.currentHero;
+        } else {
+            if (typeof window.getStrongestHero === 'function') hero = window.getStrongestHero();
+            if (!hero && typeof window.getSelectedHero === 'function') hero = window.getSelectedHero();
+        }
+        if (!hero) return;
+        let heroName = hero.name || "Герой";
+        let container = document.querySelector('#top-bar .top-bar-stats');
+        if (!container) return;
+        let existing = container.querySelector('.active-hero-name');
+        if (!existing) {
+            let span = document.createElement('span');
+            span.className = 'active-hero-name';
+            span.innerHTML = `👑 ${heroName}`;
+            container.appendChild(span);
+        } else {
+            existing.innerHTML = `👑 ${heroName}`;
+        }
+    }
+    setInterval(updateHeroNameInTopBar, 1000);
+    updateHeroNameInTopBar();
+
+    // Заглушка за openRegionsMap
+    if (typeof window.openRegionsMap !== 'function') {
+        window.openRegionsMap = function() {};
+    }
+
+   
+
+    // Инициализация на летописа (worldEvents)
+    if (!window.worldEvents) window.worldEvents = [];
+    window.addWorldEvent = function(title, desc, icon, year) {
+        window.worldEvents.unshift({ id: Date.now(), title, description: desc, icon: icon || '📜', time: year || window.gameTime?.year ? `${window.gameTime.year} г. ${window.gameTime.era}` : "480 г. пр.н.е." });
+        if (window.worldEvents.length > 100) window.worldEvents.pop();
+        if (typeof window.displayEvents === 'function') window.displayEvents();
+        else console.log("Летопис:", title, desc);
+    };
+    window.displayEvents = function() {
+        const cont = document.getElementById('eventsListContainer');
+        if (!cont) return;
+        const events = window.worldEvents || [];
+        if (!events.length) { cont.innerHTML = '<div style="text-align:center; color:#888;">⏳ Няма събития</div>'; return; }
+        let html = '';
+        events.slice(0, 7).forEach(ev => {
+            html += `<div class="chronicle-event"><div class="chronicle-icon">${ev.icon || '📜'}</div><div class="chronicle-text"><strong>${ev.title}</strong> — ${ev.description}</div><div class="chronicle-time">${ev.time}</div></div>`;
+        });
+        if (events.length > 7) html += `<button class="load-more-btn" onclick="window.displayEventsFull()">📖 Зареди още ${events.length-7}</button>`;
+        cont.innerHTML = html;
+    };
+    window.displayEventsFull = function() {
+        const cont = document.getElementById('eventsListContainer');
+        if (!cont) return;
+        let html = '';
+        (window.worldEvents || []).forEach(ev => {
+            html += `<div class="chronicle-event"><div class="chronicle-icon">${ev.icon || '📜'}</div><div class="chronicle-text"><strong>${ev.title}</strong> — ${ev.description}</div><div class="chronicle-time">${ev.time}</div></div>`;
+        });
+        cont.innerHTML = html;
+    };
+
+    // Премахваме създаването на фалшив window.currentHero – в класически режим той не трябва да съществува.
+    // Вместо това, ако няма герой, разчитаме на getStrongestHero / getSelectedHero.
+
+    window.updateTimeUI = function() {
+        const timeSpan = document.getElementById('current-time-info');
+        if (!timeSpan || !window.gameTime) return;
+        const seasons = ["🌱 Пролет", "☀️ Лято", "🍂 Есен", "❄️ Зима"];
+        const currentSeason = seasons[window.gameTime.seasonIndex] || "Сезон";
+        timeSpan.innerHTML = `${currentSeason} ${window.gameTime.year} г. ${window.gameTime.era}`;
+    };
+    
+    window.updateTimeUI();
+    
+    window.processTurn = function() {
+        if (window.tournament) {
+    if (window.tournament.isActive && window.tournament.isActive()) {
+        window.tournament.advance();
+    } else {
+        window.tournament.checkAutoStart();
+    }
+}
+        if (typeof window.processAncientCivilizations === 'function') window.processAncientCivilizations();
+        if (!window.gameTime) {
+            window.gameTime = { seasonIndex: 0, year: 480, era: "пр.н.е." };
+        }
+        window.gameTime.seasonIndex++;
+        if (window.gameTime.seasonIndex > 3) {
+            window.gameTime.seasonIndex = 0;
+            if (window.gameTime.era === "пр.н.е." && window.gameTime.year > 0) {
+                window.gameTime.year--;
+                if (window.gameTime.year === 0) {
+                    window.gameTime.year = 1;
+                    window.gameTime.era = "от н.е.";
+                }
+            } else {
+                window.gameTime.year++;
+            }
+        }
+        window.updateTimeUI();
+        
+        if (typeof window.calculateEconomy === 'function') window.calculateEconomy();
+        if (typeof window.processClanDiplomacyAutomation === 'function') window.processClanDiplomacyAutomation();
+        if (typeof window.advanceExpeditionsTurn === 'function') window.advanceExpeditionsTurn();
+        if (typeof window.autonomousRegionConquest === 'function') window.autonomousRegionConquest();
+
+        // Обновяване на героите (без currentHero)
+        if (window.worldData && window.worldData.clans) {
+            for (let key in window.worldData.clans) {
+                let hero = window.worldData.clans[key];
+                if (hero.isJoined === true && hero.isAlive !== false) {
+                    if (typeof window.evolveHero === 'function') window.evolveHero(hero);
+                    if (typeof window.automateHero === 'function') window.automateHero(hero);
+                    if (hero.hp < hero.maxHp) {
+                        let regen = Math.max(1, Math.floor(hero.maxHp * 0.05));
+                        let endurance = hero.skills?.endurance || 0;
+                        regen += endurance;
+                        hero.hp = Math.min(hero.maxHp, hero.hp + regen);
                     }
                 }
             }
-            const goldSpan = document.getElementById('cmd-gold');
-            const armySpan = document.getElementById('cmd-army');
-            const powerSpan = document.getElementById('cmd-power');
-            if (goldSpan) goldSpan.innerText = totalGold;
-            if (armySpan) armySpan.innerText = totalArmy;
-            if (powerSpan) powerSpan.innerText = totalPower;
+        }
+        if (typeof window.checkRandomAttack === 'function') window.checkRandomAttack();
+        
+        // В класически режим даваме XP на най-силния герой (или на всички живи?)
+        // За простота – на най-силния
+        let mainHero = null;
+        if (window.gameMode === 'solo') {
+            mainHero = window.currentHero;
+        } else {
+            if (typeof window.getStrongestHero === 'function') mainHero = window.getStrongestHero();
+        }
+        if (mainHero && window.gainHeroXP) window.gainHeroXP(mainHero, 15);
+        
+        if (Math.random() < 0.02 && typeof window.createLegendaryHero === 'function') window.createLegendaryHero();
+        if (Math.random() < 0.15 && typeof window.triggerRandomDuelChallenge === 'function') window.triggerRandomDuelChallenge();
+        
+        // Обновяване на UI с най-силния герой (ляв панел)
+        if (typeof window.updateStrongestHeroUI === 'function') {
+            window.updateStrongestHeroUI();
+        }
+        // За съвместимост със стари функции
+        if (window.renderTop6HeroesUI) window.renderTop6HeroesUI();
+        if (typeof window.renderSingleBar === 'function') window.renderSingleBar();
+        if (typeof window.saveGreatBulgariaGame === 'function') window.saveGreatBulgariaGame();
+    };
 
-            // Обновяване на времето
-            const timeSpan = document.getElementById('cmd-time');
-            if (timeSpan && window.gameTime) {
-                const seasons = ["🌱 Пролет", "☀️ Лято", "🍂 Есен", "❄️ Зима"];
-                const season = seasons[window.gameTime.seasonIndex] || "Сезон";
-                timeSpan.innerText = `${season} ${window.gameTime.year} г. ${window.gameTime.era}`;
+    if (typeof window.toggleTreasury !== 'function') {
+        window.toggleTreasury = function() {
+            let hero = null;
+            if (window.gameMode === 'solo') hero = window.currentHero;
+            else if (typeof window.getSelectedHero === 'function') hero = window.getSelectedHero();
+            else if (typeof window.getStrongestHero === 'function') hero = window.getStrongestHero();
+            if (!hero) { alert("Няма герой"); return; }
+            const inv = hero.inventory || [];
+            let html = '<div class="modal-overlay" id="treasuryModal"><div class="modal-content"><h2>🏺 Съкровищница</h2>';
+            if (!inv.length) html += '<p>Няма артефакти.</p>';
+            else {
+                html += '<div style="display:grid; grid-template-columns:repeat(auto-fill, minmax(100px,1fr)); gap:10px;">';
+                inv.forEach(i => {
+                    html += `<div style="background:#1a1a2e; border:1px solid gold; border-radius:12px; padding:8px; text-align:center;">
+                                <div style="font-size:30px;">${i.icon || '🏺'}</div>
+                                <div>${i.name || 'Артефакт'}</div>
+                                <div style="font-size:10px;">+${i.bonus?.heroPower || 0} сила</div>
+                            </div>`;
+                });
+                html += '</div>';
             }
-
-            // Обновяване на топ героя в центъра
-            const strongest = window.getStrongestHero();
-            const profileBox = document.getElementById('active-character-profile');
-            if (profileBox && strongest) {
-                let petStatus = "Няма";
-                if (strongest.pet && window.rpgDatabase?.petsDatabase?.[strongest.pet]) {
-                    const p = window.rpgDatabase.petsDatabase[strongest.pet];
-                    petStatus = p.icon + " " + p.name;
-                }
-                profileBox.innerHTML = `
-                    <div style="background:rgba(0,0,0,0.5); border-radius:16px; padding:12px;">
-                        <div style="font-weight:bold; font-size:1rem; color:#ffd700;">🏆 Най-силен герой</div>
-                        <div style="font-weight:bold;font-size:1.2rem;">${strongest.name || "Неизвестен"}</div>
-                        <div>Клан ${strongest.clan || "Свободен"} | ${window.getClassIcon ? window.getClassIcon(strongest.currentClass) : '⚔️'} Клас: ${strongest.currentClass || "Багатур"}</div>
-                        <div>Ниво: ${strongest.level || 1} | Възраст: ${strongest.age || 50} г.</div>
-                        <div>Бойна Сила: ⚔️ ${strongest.heroPower || 150}</div>
-                        <div>Свободни точки: ${strongest.skillPoints || 0}</div>
-                        <div>Любимец: ${petStatus}</div>
-                    </div>
-                `;
-            }
+            html += `<button id="closeTreasury" style="margin-top:15px; background:#d4af37; border:none; border-radius:20px; padding:6px 12px;">Затвори</button></div></div>`;
+            const oldM = document.getElementById('treasuryModal');
+            if (oldM) oldM.remove();
+            const modal = document.createElement('div');
+            modal.innerHTML = html;
+            document.body.appendChild(modal);
+            modal.querySelector('#closeTreasury').onclick = () => modal.remove();
+            modal.onclick = e => { if(e.target === modal) modal.remove(); };
         };
-        window.updateStrongestHeroUI = window.updateTotalStatsUI;
+    }
 
-        // Пренасочване на renderFavoriteHeroesBar за вертикален вид
-        const originalRenderFav = window.renderFavoriteHeroesBar;
-        window.renderFavoriteHeroesBar = function() {
-            if (originalRenderFav) originalRenderFav();
-            const slots = document.querySelectorAll('.favorite-slot');
-            slots.forEach(slot => {
-                slot.style.display = 'flex';
-                slot.style.flexDirection = 'row';
-                slot.style.alignItems = 'center';
-                slot.style.gap = '8px';
-                slot.style.padding = '6px 8px';
-                slot.style.minHeight = '55px';
-                slot.style.width = '100%';
-                slot.style.justifyContent = 'flex-start';
-                // Скриваме излишните детайли
-                slot.querySelectorAll('.hero-level-power, .hero-stats, .hp-bar, .xp-bar, .auto-badge').forEach(el => el.style.display = 'none');
-                const icon = slot.querySelector('.hero-icon');
-                if (icon) icon.style.fontSize = '28px';
-                const name = slot.querySelector('.hero-name');
-                if (name) name.style.fontSize = '11px';
-            });
-        };
+    // Добавяне на няколко примерни събития в летописа, ако е празен
+    if (window.worldEvents.length === 0) {
+        window.addWorldEvent("🏛️ Основаване на Тракийското царство", "Тракийските племена се обединяват", "🏰", "480 г. пр.н.е.");
+        window.addWorldEvent("⚔️ Подготовка за война", "Персийската империя набира войски", "⚔️", "480 г. пр.н.е.");
+    }
+    window.displayEvents();
 
-        // Извикване при старт
-        window.addEventListener('DOMContentLoaded', () => {
-            buildCommandPanel();
-            if (typeof window.renderFavoriteHeroesBar === 'function') window.renderFavoriteHeroesBar();
-            if (typeof window.updateTotalStatsUI === 'function') window.updateTotalStatsUI();
-            // Актуализация на статистиките всяка секунда
-            setInterval(() => {
-                if (typeof window.updateTotalStatsUI === 'function') window.updateTotalStatsUI();
-            }, 1000);
+    // Обновяване на UI с най-силния герой при старт
+    if (typeof window.updateStrongestHeroUI === 'function') {
+        window.updateStrongestHeroUI();
+    }
+    if (window.addWorldEvent) window.addWorldEvent("⚙️ ХОД", "Светът се променя...", "🌍");
+    if (window.renderTop6HeroesUI) window.renderTop6HeroesUI();
+    if (window.initHeroBar) window.initHeroBar();
+    document.getElementById('clearChronicleBtn')?.addEventListener('click', () => {
+        if(confirm("Изчисти летописа?")) { window.worldEvents = []; window.displayEvents(); }
+    });
+    
+    console.log("✅ Играта е напълно готова (без currentHero в класически режим)!");
+})();
+</script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+
+
+
+
+    <script>
+(function() {
+    // ==================== Lazy loading на skills.js ====================
+    let skillsLoaded = false;
+    let skillsLoading = null;
+    window.loadSkills = function() {
+        if (skillsLoaded) return Promise.resolve();
+        if (skillsLoading) return skillsLoading;
+        skillsLoading = new Promise((resolve, reject) => {
+            const script = document.createElement('script');
+            script.src = 'skills.js';
+            script.onload = () => {
+                skillsLoaded = true;
+                console.log("✅ skills.js зареден lazy");
+                resolve();
+            };
+            script.onerror = () => reject(new Error("Грешка при зареждане на skills.js"));
+            document.head.appendChild(script);
         });
-    })();
+        return skillsLoading;
+    };
+
+    // Прокси за window.advancedSkills
+    let _advancedSkills = null;
+    Object.defineProperty(window, 'advancedSkills', {
+        get: function() {
+            if (!skillsLoaded) {
+                console.warn("⚠️ advancedSkills не е зареден, опит за динамично зареждане...");
+                // Това е синхронен опит, няма да работи добре. По-добре да използваме асинхронен подход.
+                // Затова ще оставим това като предупреждение.
+                return null;
+            }
+            return _advancedSkills;
+        },
+        set: function(val) { _advancedSkills = val; },
+        configurable: true
+    });
+    // По-добре: презаписваме функциите, които използват advancedSkills
+    const originalOpenSkillsUI = window.openSkillsUI;
+    if (originalOpenSkillsUI) {
+        window.openSkillsUI = async function(...args) {
+            await window.loadSkills();
+            return originalOpenSkillsUI(...args);
+        };
+    }
+    // Също и за getAdvancedSkillBonuses, learnAdvancedSkill и др.
+    const originalGetAdvancedSkillBonuses = window.getAdvancedSkillBonuses;
+    if (originalGetAdvancedSkillBonuses) {
+        window.getAdvancedSkillBonuses = async function(...args) {
+            await window.loadSkills();
+            return originalGetAdvancedSkillBonuses(...args);
+        };
+    }
+    const originalLearnAdvancedSkill = window.learnAdvancedSkill;
+    if (originalLearnAdvancedSkill) {
+        window.learnAdvancedSkill = async function(...args) {
+            await window.loadSkills();
+            return originalLearnAdvancedSkill(...args);
+        };
+    }
+    const originalGetAllAdvancedSkills = window.getAllAdvancedSkills;
+    if (originalGetAllAdvancedSkills) {
+        window.getAllAdvancedSkills = async function(...args) {
+            await window.loadSkills();
+            return originalGetAllAdvancedSkills(...args);
+        };
+    }
+
+    // ==================== Lazy loading на items.js ====================
+    let itemsLoaded = false;
+    let itemsLoading = null;
+    window.loadItems = function() {
+        if (itemsLoaded) return Promise.resolve();
+        if (itemsLoading) return itemsLoading;
+        itemsLoading = new Promise((resolve, reject) => {
+            const script = document.createElement('script');
+            script.src = 'items.js';
+            script.onload = () => {
+                itemsLoaded = true;
+                console.log("✅ items.js зареден lazy");
+                resolve();
+            };
+            script.onerror = () => reject(new Error("Грешка при зареждане на items.js"));
+            document.head.appendChild(script);
+        });
+        return itemsLoading;
+    };
+
+    // Прокси за функции, които разчитат на items.js
+    const originalToggleTreasury = window.toggleTreasury;
+    if (originalToggleTreasury) {
+        window.toggleTreasury = async function(...args) {
+            await window.loadItems();
+            return originalToggleTreasury(...args);
+        };
+    }
+    const originalAutoEquipHero = window.autoEquipHero;
+    if (originalAutoEquipHero) {
+        window.autoEquipHero = async function(...args) {
+            await window.loadItems();
+            return originalAutoEquipHero(...args);
+        };
+    }
+    const originalGetInventoryBonuses = window.getInventoryBonuses;
+    if (originalGetInventoryBonuses) {
+        window.getInventoryBonuses = async function(...args) {
+            await window.loadItems();
+            return originalGetInventoryBonuses(...args);
+        };
+    }
+    const originalCheckSetCompletion = window.checkSetCompletion;
+    if (originalCheckSetCompletion) {
+        window.checkSetCompletion = async function(...args) {
+            await window.loadItems();
+            return originalCheckSetCompletion(...args);
+        };
+    }
+
+    // ==================== Lazy loading на chronicle_events.js ====================
+    let chronicleEventsLoaded = false;
+    let chronicleEventsLoading = null;
+    window.loadChronicleEvents = function() {
+        if (chronicleEventsLoaded) return Promise.resolve();
+        if (chronicleEventsLoading) return chronicleEventsLoading;
+        chronicleEventsLoading = new Promise((resolve, reject) => {
+            const script = document.createElement('script');
+            script.src = 'chronicle_events.js';
+            script.onload = () => {
+                chronicleEventsLoaded = true;
+                console.log("✅ chronicle_events.js зареден lazy");
+                resolve();
+            };
+            script.onerror = () => reject(new Error("Грешка при зареждане на chronicle_events.js"));
+            document.head.appendChild(script);
+        });
+        return chronicleEventsLoading;
+    };
+
+    // Прокси за triggerRandomChronicleEvent
+    const originalTrigger = window.triggerRandomChronicleEvent;
+    if (originalTrigger) {
+        window.triggerRandomChronicleEvent = async function(...args) {
+            await window.loadChronicleEvents();
+            return originalTrigger(...args);
+        };
+    }
+    // За window.ChronicleEvents – обектът се създава от chronicle_events.js, не може да се проксира лесно.
+    // Но можем да заредим скрипта при първи достъп до ChronicleEvents.
+    let _ChronicleEvents = null;
+    Object.defineProperty(window, 'ChronicleEvents', {
+        get: function() {
+            if (!chronicleEventsLoaded) {
+                console.warn("⚠️ ChronicleEvents не е зареден, опит за динамично зареждане...");
+                // Асинхронно зареждане – тук няма как да върнем Promise.
+                // Затова по-добре да заредим при нужда синхронно? Не може.
+                // Вместо това, презаписваме функциите, които използват ChronicleEvents.
+                window.loadChronicleEvents().catch(console.error);
+                return null;
+            }
+            return _ChronicleEvents;
+        },
+        set: function(val) { _ChronicleEvents = val; },
+        configurable: true
+    });
+
+    // Презаписваме функции, които разчитат на ChronicleEvents.generate...
+    const originalGenerateEconomicEvent = window.ChronicleEvents?.generateEconomicEvent;
+    if (originalGenerateEconomicEvent) {
+        window.generateEconomicEvent = async function(...args) {
+            await window.loadChronicleEvents();
+            return window.ChronicleEvents.generateEconomicEvent(...args);
+        };
+    }
+    // ... аналогично за другите генератори (но те са рядко използвани, ще се заредят при нужда).
+})();
+</script>
+
+   <script>
+(function() {
+    var mobileBtn = document.getElementById('mobileNewGameBtn');
+    if (mobileBtn && typeof window.showGameModeModal === 'function') {
+        mobileBtn.onclick = function(e) {
+            e.stopPropagation();
+            window.showGameModeModal();
+        };
+    }
+})();
 </script>
 
 </body>
