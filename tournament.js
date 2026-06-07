@@ -450,6 +450,14 @@ window.tournament = (function() {
         if (typeof window.updateAllUI === 'function') {
             window.updateAllUI();
         }
+        // Ако профилът на победителя е отворен, затваряме и отваряме отново
+const openProfile = document.getElementById('ultimate-profile-modal');
+if (openProfile && trueWinnerObj) {
+    openProfile.remove();
+    if (typeof window.showHeroProfile === 'function') {
+        window.showHeroProfile(trueWinnerObj);
+    }
+}
         return;
     }
     
