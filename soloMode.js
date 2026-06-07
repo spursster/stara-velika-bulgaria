@@ -233,6 +233,7 @@ function showSoloSettingsUI() {
 }
     // ==================== ДОБАВЯНЕ НА БУТОНИ В ИНСПЕКЦИЯТА ====================
 function patchRegionInspection() {
+    if (window.gameMode !== 'solo') return;
     const originalInspect = window.inspectRegion;
     if (!originalInspect) return;
     
@@ -320,6 +321,7 @@ function setupTravelFunction() {
 }
     // ==================== ХУК ЗА БИТКИ ====================
 function setupBattleHook() {
+    if (window.gameMode !== 'solo') return;
     if (typeof window.endGroupBattle !== 'function') return;
     const original = window.endGroupBattle;
     window.endGroupBattle = function(isVictory, reason, ...args) {
@@ -331,6 +333,7 @@ function setupBattleHook() {
 }
     // ==================== КАРТА (СОЛО ВЕРСИЯ) ====================
 function replaceMapWithSoloVersion() {
+    if (window.gameMode !== 'solo') return;
     window.openRegionsMap = function() {
          const old = document.getElementById('regions-map-overlay');
         if (old) old.remove();
@@ -537,21 +540,21 @@ function patchHireHero() {
 
 // ==================== ФИЛТРИРАНЕ НА СПИСЪЦИТЕ С ГЕРОИ ====================
 function patchHeroLists() {
-    // Презаписваме getAllHeroes, за да връща само главен герой + спътници
+    // 3.1 Презаписване на getAllHeroes – връща само главен герой + спътници в solo режим
     if (typeof window.getAllHeroes === 'function') {
-        const original = window.getAllHeroes;
+        const originalGetAllHeroes = window.getAllHeroes;
         window.getAllHeroes = function() {
-            let heroes = original();
             if (window.gameMode === 'solo') {
-                let main = heroes.find(h => h.id === window.currentHero.clan);
+                let heroes = originalGetAllHeroes();
+                let main = heroes.find(h => h.id === window.currentHero?.clan);
                 let comps = heroes.filter(h => h.isCompanion === true);
                 return main ? [main, ...comps] : comps;
             }
-            return heroes;
+            return originalGetAllHeroes();
         };
     }
     
-    // Презаписваме renderTop6HeroesUI, за да показва до 5 героя (главен + спътници) с иконки
+    // 3.2 Презаписване на renderTop6HeroesUI – показва до 5 героя (главен + спътници) с иконки
     if (typeof window.renderTop6HeroesUI === 'function') {
         const originalRender = window.renderTop6HeroesUI;
         window.renderTop6HeroesUI = function() {
@@ -560,19 +563,18 @@ function patchHeroLists() {
                 if (!eliteBar) return;
                 
                 let heroes = window.getAllHeroes ? window.getAllHeroes() : [];
-                heroes = heroes.filter(h => h.isCompanion || h.id === window.currentHero.clan);
+                heroes = heroes.filter(h => h.isCompanion || h.id === window.currentHero?.clan);
                 
                 if (!heroes.length) {
                     eliteBar.innerHTML = '<div style="color:#aaa;">Няма герои</div>';
                     return;
                 }
                 
-                eliteBar.innerHTML = " ";
-                // Показваме до 5 героя (вместо 6)
+                eliteBar.innerHTML = '';
                 heroes.slice(0, 5).forEach(hero => {
                     const card = document.createElement('div');
-                    card.className = "elite-hero-card";
-                    card.style.cssText = "background: rgba(0,0,0,0.6); border-radius: 12px; padding: 6px 12px; min-width: 100px; text-align: center; cursor: pointer; border: 1px solid #c9a87b;";
+                    card.className = 'elite-hero-card';
+                    card.style.cssText = 'background: rgba(0,0,0,0.6); border-radius: 12px; padding: 6px 12px; min-width: 100px; text-align: center; cursor: pointer; border: 1px solid #c9a87b;';
                     card.onclick = () => { if (window.showHeroProfile) window.showHeroProfile(hero); };
                     
                     let needXP = 100 + (hero.level - 1) * 50;
@@ -581,12 +583,12 @@ function patchHeroLists() {
                     const classIcon = window.getClassIcon(hero.className);
                     
                     card.innerHTML = `
-                         <div style="font-weight:bold;color:#ffdd99;">${classIcon} ${hero.name}</div>
-                         <div style="font-size:10px;color:#ccaa77;">Ниво ${hero.level}</div>
-                         <div style="background:#2a1a0a;height:3px;border-radius:2px;margin:4px 0;">
-                             <div style="background:#44aa44;height:100%;width:${xpPercent}%;border-radius:2px;"></div>
-                         </div>
-                         <button class="auto-btn" style="background:#2c1a0c;border:none;font-size:9px;padding:2px 6px;border-radius:20px;color:#ffdd99;margin-top:4px;">${hero.isAuto ? "Auto" : "Manual"}</button>
+                        <div style="font-weight:bold;color:#ffdd99;">${classIcon} ${hero.name}</div>
+                        <div style="font-size:10px;color:#ccaa77;">Ниво ${hero.level}</div>
+                        <div style="background:#2a1a0a;height:3px;border-radius:2px;margin:4px 0;">
+                            <div style="background:#44aa44;height:100%;width:${xpPercent}%;border-radius:2px;"></div>
+                        </div>
+                        <button class="auto-btn" style="background:#2c1a0c;border:none;font-size:9px;padding:2px 6px;border-radius:20px;color:#ffdd99;margin-top:4px;">${hero.isAuto ? "Auto" : "Manual"}</button>
                     `;
                     eliteBar.appendChild(card);
                 });
@@ -597,8 +599,6 @@ function patchHeroLists() {
         };
     }
 }
-
-
 // Експортиране на функции, които трябва да са глобални
 window.showSoloSettingsUI = showSoloSettingsUI;
 window.updateRegionIndicator = updateRegionIndicator;
