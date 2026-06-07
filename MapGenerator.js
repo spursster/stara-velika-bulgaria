@@ -148,18 +148,45 @@ window.openInteractiveMap = function() {
     });
 
     // Клъстер група
-    const markers = L.markerClusterGroup({
-        maxClusterRadius: 50,
-        spiderfyOnMaxZoom: true,
-        zoomToBoundsOnClick: true,
-        iconCreateFunction: function(cluster) {
-            return L.divIcon({
-                html: `<div style="background:#d4af37; color:#000; border-radius:50%; width:30px; height:30px; display:flex; align-items:center; justify-content:center; font-weight:bold; box-shadow:0 0 5px gold;">${cluster.getChildCount()}</div>`,
-                className: 'custom-cluster',
-                iconSize: L.point(30, 30)
-            });
+const markers = L.markerClusterGroup({
+    maxClusterRadius: 50,
+    spiderfyOnMaxZoom: true,
+    zoomToBoundsOnClick: true,
+    iconCreateFunction: function(cluster) {
+        // Вземаме всички маркери в клъстера
+        const childMarkers = cluster.getAllChildMarkers();
+        let allOwned = true;
+        let anyOwned = false;
+        for (let marker of childMarkers) {
+            // Проверяваме дали маркерът има свойство regionName
+            const regionName = marker.options.regionName;
+            if (regionName) {
+                const isOwned = (window.playerRegions && window.playerRegions.flat().includes(regionName));
+                if (!isOwned) allOwned = false;
+                else anyOwned = true;
+            }
         }
-    });
+        let bgColor, textColor, shadow;
+        if (allOwned) {
+            bgColor = "#2c5a2a";  // зелено – всички региони са ваши
+            textColor = "#ffffff";
+            shadow = "0 0 5px #88ff88";
+        } else if (anyOwned) {
+            bgColor = "#d4af37";  // златисто – някои са ваши
+            textColor = "#000000";
+            shadow = "0 0 5px gold";
+        } else {
+            bgColor = "#8b3a3a";  // червеникаво – нито един не е ваш
+            textColor = "#ffffff";
+            shadow = "0 0 5px #ff8888";
+        }
+        return L.divIcon({
+            html: `<div style="background:${bgColor}; color:${textColor}; border-radius:50%; width:30px; height:30px; display:flex; align-items:center; justify-content:center; font-weight:bold; box-shadow:${shadow};">${cluster.getChildCount()}</div>`,
+            className: 'custom-cluster',
+            iconSize: L.point(30, 30)
+        });
+    }
+});
 
     regionPoints.forEach((rp) => {
         const region = rp.region;
@@ -189,13 +216,16 @@ window.openInteractiveMap = function() {
             popupAnchor: [0, -17]
         });
         
-        const marker = L.marker([rp.lat, rp.lng], { icon: customIcon });
-        marker.bindTooltip(`<b>${region.name}</b><br>🏰 Сила: ${region.armySize}<br>🛡️ Защита: ${region.defenseLevel}`, { sticky: true });
-        marker.on('click', () => {
-            if (typeof window.inspectRegion === 'function') window.inspectRegion(region.name);
-            else alert(region.name);
-        });
-        markers.addLayer(marker);
+        const marker = L.marker([rp.lat, rp.lng], { 
+    icon: customIcon,
+    regionName: region.name   // <-- вътре в обекта с опции
+});
+marker.bindTooltip(`<b>${region.name}</b><br>🏰 Сила: ${region.armySize}<br>🛡️ Защита: ${region.defenseLevel}`, { sticky: true });
+marker.on('click', () => {
+    if (typeof window.inspectRegion === 'function') window.inspectRegion(region.name);
+    else alert(region.name);
+});
+markers.addLayer(marker);
 
         // Постоянно име (леко под иконката)
         const labelIcon = L.divIcon({
