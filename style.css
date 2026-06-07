@@ -55,13 +55,15 @@ html, body {
 /* -----------------------------------------------
    4. ЛЕТОПИС
 ----------------------------------------------- */
-/* Летопис – показва колкото събития са добавени, с вътрешен скрол при нужда */
+/* ========== ЛЕТОПИС – ПОКАЗВА 10 СЪБИТИЯ + БУТОН "ЗАРЕДИ ОЩЕ" ========== */
 #unifiedChronicle {
     background: transparent;
     overflow-y: auto;
     flex: 1;
     min-height: 0;
     max-height: none !important; /* премахваме ограничението от 40vh */
+    display: flex;
+    flex-direction: column;
 }
 
 #eventsListContainer {
@@ -74,14 +76,29 @@ html, body {
     background: rgba(212, 175, 55, 0.2);
     border: 1px solid #d4af37;
     border-radius: 30px;
-    padding: 4px 12px;
+    padding: 6px 12px;
     color: #ffd700;
     cursor: pointer;
-    margin-top: 8px;
+    margin-top: 12px;
     align-self: center;
-    font-size: 0.7rem;
+    font-size: 0.75rem;
+    font-weight: bold;
+    transition: 0.2s;
+    display: block !important;
+    width: fit-content;
+}
+.load-more-btn:hover {
+    background: rgba(212, 175, 55, 0.4);
+    transform: scale(1.02);
 }
 
+/* Уверяваме се, че и на малки екрани бутонът се вижда */
+@media (max-width: 768px) {
+    .load-more-btn {
+        padding: 4px 10px;
+        font-size: 0.7rem;
+    }
+}
 /* -----------------------------------------------
    5. БИТКА (МОДАЛЕН ПРОЗОРЕЦ)
 ----------------------------------------------- */
