@@ -342,7 +342,7 @@ window.ChronicleEvents.generatePeasantRevoltEvent = function(hero) {
     };
 };
 
-// ==================== СЛУЧАЙЕН ИЗБОР НА СЪБИТИЕ ====================
+// ==================== СЛУЧАЕН ИЗБОР НА СЪБИТИЕ ====================
 window.triggerRandomChronicleEvent = function() {
     const hero = (function getMainHero() {
         if (window.gameMode === 'solo') return window.currentHero;
