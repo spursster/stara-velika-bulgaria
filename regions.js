@@ -171,21 +171,20 @@ window.openRegionsMap = function() {
     }
 };
 
-// ==================== Функция за инспекция на регион (подобрена) ====================
+// ==================== Функция за инспекция на регион (АДАПТИВНА ЗА ТЕЛЕФОН) ====================
 window.inspectRegion = function(regionName) {
     if (!window.worldData || !window.worldData.regions[regionName]) {
         showRegionMessage("ГРЕШКА", "Регионът не съществува!", "error");
         return;
     }
     const reg = window.worldData.regions[regionName];
-  // Взимаме подходящия герой според режима
-let hero = null;
-if (window.gameMode === 'solo' && window.currentHero) {
-    hero = window.currentHero;
-} else {
-    hero = window.getSelectedHero ? window.getSelectedHero() : (window.getStrongestHero ? window.getStrongestHero() : null);
-}
-if (!hero) return;
+    let hero = null;
+    if (window.gameMode === 'solo' && window.currentHero) {
+        hero = window.currentHero;
+    } else {
+        hero = window.getSelectedHero ? window.getSelectedHero() : (window.getStrongestHero ? window.getStrongestHero() : null);
+    }
+    if (!hero) return;
 
     const owned = (window.playerRegions && window.playerRegions.flat) ? window.playerRegions.flat() : [];
     const isOwned = owned.includes(regionName);
@@ -200,23 +199,40 @@ if (!hero) return;
     const overlay = document.createElement('div');
     overlay.id = 'region-inspect-overlay';
     overlay.style.cssText = `
-        position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-        background: rgba(0,0,0,0.85); backdrop-filter: blur(6px);
-        display: flex; justify-content: center; align-items: center;
-        z-index: 400000; font-family: 'Cinzel', serif; padding: 15px;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0,0,0,0.85);
+        backdrop-filter: blur(6px);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        z-index: 400000;
+        font-family: 'Cinzel', serif;
+        padding: 10px;
         box-sizing: border-box;
     `;
 
     const content = document.createElement('div');
     content.style.cssText = `
-        background: rgba(0,0,0,0.9); border-radius: 28px; padding: 20px;
-        max-width: 450px; width: 100%; text-align: center;
-        border: 1px solid #c9a87b; box-shadow: 0 20px 35px rgba(0,0,0,0.5);
+        background: rgba(0,0,0,0.9);
+        border-radius: 24px;
+        padding: 16px;
+        max-width: 90%;
+        width: auto;
+        max-height: 70vh;
+        overflow-y: auto;
+        text-align: center;
+        border: 1px solid #c9a87b;
+        box-shadow: 0 20px 35px rgba(0,0,0,0.5);
         position: relative;
+        font-size: 0.85rem;
     `;
 
     content.innerHTML = `
-        <button id="close-inspect-x" style="position: absolute; top: 12px; left: 12px; background: rgba(255,80,80,0.2); border: 1px solid #ff8888; color: #ff8888; font-size: 18px; width: 32px; height: 32px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center;">✕</button>
+        <button id="close-inspect-x" style="position: absolute; top: 8px; left: 8px; background: rgba(255,80,80,0.2); border: 1px solid #ff8888; color: #ff8888; font-size: 18px; width: 32px; height: 32px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center;">✕</button>
         <h3 style="color: #ffdd99; margin-top: 5px;">🏛️ Инспекция: ${regionName}</h3>
         <p>⛰️ Терен: ${reg.terrain || "Неизвестен"}</p>
         <p>💰 Ресурс: ${reg.resource || "Неизвестен"}</p>
@@ -224,7 +240,7 @@ if (!hero) return;
         <p>🛡️ Защита: Ниво ${reg.defenseLevel || 1}</p>
         <p>🏗️ Инфраструктура: Ниво ${reg.infrastructureLevel || 1}</p>
         <p>⚠️ Трудност: ${reg.difficulty || 50}%</p>
-        <div id="action-div" style="margin: 20px 0;"></div>
+        <div id="action-div" style="margin: 15px 0; display: flex; flex-direction: column; gap: 8px;"></div>
         <button id="close-inspect-footer" style="background: #333; border: 1px solid #666; padding: 8px 20px; border-radius: 40px; color: #ffdd99; cursor: pointer; margin-top: 5px;">Затвори</button>
     `;
 
@@ -265,12 +281,20 @@ if (!hero) return;
         actionDiv.appendChild(attackBtn);
     }
 
-    const closeX = content.querySelector('#close-inspect-x');
-    const closeFooter = content.querySelector('#close-inspect-footer');
     const closeHandler = () => overlay.remove();
-    if (closeX) closeX.addEventListener('click', closeHandler);
-    if (closeFooter) closeFooter.addEventListener('click', closeHandler);
+    content.querySelector('#close-inspect-x').addEventListener('click', closeHandler);
+    content.querySelector('#close-inspect-footer').addEventListener('click', closeHandler);
     overlay.addEventListener('click', (e) => { if (e.target === overlay) closeHandler(); });
+
+    // Допълнителна адаптация за много малки екрани (телефони в ландшафт)
+    if (window.innerWidth <= 900 && window.innerHeight <= 700) {
+        content.style.fontSize = '0.75rem';
+        const btns = content.querySelectorAll('button');
+        btns.forEach(btn => {
+            btn.style.padding = '6px 12px';
+            btn.style.fontSize = '0.7rem';
+        });
+    }
 };
 
 // ==================== Помощна функция за обновяване на картата ====================
