@@ -1189,50 +1189,67 @@ html, body {
     }
 }
 
-/* ========== АДАПТИРАНЕ НА LEAFLET КАРТА ЗА ТЕЛЕФОН ========== */
+/* ========== АДАПТАЦИЯ НА КАРТАТА С РЕГИОНИ ЗА ТЕЛЕФОН (ЛАНДШАФТ) ========== */
 @media (max-width: 900px) {
-    #interactive-map-modal > div {
-        width: 98% !important;
-        height: 95vh !important;
-        padding: 5px !important;
+    /* Самият модал да заема целия екран */
+    #regions-map-overlay {
+        padding: 8px !important;
+        align-items: flex-start !important;
+        overflow-y: auto !important;
     }
-    .leaflet-container {
-        height: 100% !important;
+    #regions-map-overlay > div {
         width: 100% !important;
+        max-width: 100% !important;
+        height: auto !important;
+        max-height: 98vh !important;
+        margin: 0 !important;
+        border-radius: 16px !important;
+        overflow-y: auto !important;
     }
-    .leaflet-control-zoom {
-        top: 10px !important;
-        right: 10px !important;
+    /* Контейнерът с картички да има вътрешен скрол, ако е необходимо */
+    #regions-map-overlay > div > div:nth-child(2) {
+        max-height: calc(98vh - 120px) !important;
+        overflow-y: auto !important;
+        padding: 10px !important;
     }
-    .leaflet-control-zoom a {
-        width: 30px !important;
-        height: 30px !important;
-        line-height: 30px !important;
-        font-size: 18px !important;
+    /* Картичките – 2 колони */
+    #regions-map-overlay .region-card {
+        width: calc(50% - 12px) !important;
+        min-width: 120px !important;
+        margin: 6px !important;
+        padding: 8px 4px !important;
+        box-sizing: border-box !important;
     }
-    .leaflet-control-attribution {
-        font-size: 8px !important;
-        bottom: 0 !important;
+    /* Текстът в картичката да се пренася, за да не излиза извън ширината */
+    #regions-map-overlay .region-card div {
+        word-break: break-word !important;
+        overflow-wrap: break-word !important;
     }
-    /* Иконките на маркерите – по-малки */
-    .custom-marker-icon div {
-        width: 30px !important;
-        height: 30px !important;
-        font-size: 18px !important;
+    /* Име на регион – да не надвишава ширината */
+    #regions-map-overlay .region-card div:nth-child(2) {
+        font-size: 0.8rem !important;
+        white-space: normal !important;
+        line-height: 1.2 !important;
+        padding: 0 2px !important;
     }
-    /* Постоянни имена на регионите */
-    .region-label div {
-        font-size: 9px !important;
-        padding: 2px 6px !important;
-        white-space: nowrap !important;
+    /* Бутони за затваряне – по-големи и видими */
+    #closeMapBtnTopLeft, #closeMapBtnBottom {
+        width: 40px !important;
+        height: 40px !important;
+        font-size: 24px !important;
     }
-    /* Бутон за затваряне на картата */
-    #closeMapBtn {
-        width: 36px !important;
-        height: 36px !important;
-        font-size: 20px !important;
-        top: 8px !important;
-        left: 8px !important;
+    /* Заглавие – по-малък шрифт */
+    #regions-map-overlay h2 {
+        font-size: 1.2rem !important;
+    }
+}
+
+/* За много тесни екрани (под 550px) – 1 колона */
+@media (max-width: 550px) {
+    #regions-map-overlay .region-card {
+        width: calc(100% - 20px) !important;
+        max-width: 280px !important;
+        margin: 8px auto !important;
     }
 }
 /* Сезонни теми (оставяме ги) */
