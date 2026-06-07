@@ -117,6 +117,8 @@
      <!-- ИНТЕРАКТИВЕН ЛЕТОПИС (бутони) -->
 <script src="ui-manager.js"></script>
 <script src="ui-modals.js"></script>
+<script src="chronicle_events.js"></script>
+    
 
 <!-- 4. ИКОНОМИКА, ДИПЛОМАЦИЯ, РЕГИОНИ, БИТКИ (разчитат на UI и летопис) -->
 <script src="economy.js"></script>
@@ -640,62 +642,7 @@
         };
     }
 
-    // ==================== Lazy loading на chronicle_events.js ====================
-    let chronicleEventsLoaded = false;
-    let chronicleEventsLoading = null;
-    window.loadChronicleEvents = function() {
-        if (chronicleEventsLoaded) return Promise.resolve();
-        if (chronicleEventsLoading) return chronicleEventsLoading;
-        chronicleEventsLoading = new Promise((resolve, reject) => {
-            const script = document.createElement('script');
-            script.src = 'chronicle_events.js';
-            script.onload = () => {
-                chronicleEventsLoaded = true;
-                console.log("✅ chronicle_events.js зареден lazy");
-                resolve();
-            };
-            script.onerror = () => reject(new Error("Грешка при зареждане на chronicle_events.js"));
-            document.head.appendChild(script);
-        });
-        return chronicleEventsLoading;
-    };
-
-    // Прокси за triggerRandomChronicleEvent
-    const originalTrigger = window.triggerRandomChronicleEvent;
-    if (originalTrigger) {
-        window.triggerRandomChronicleEvent = async function(...args) {
-            await window.loadChronicleEvents();
-            return originalTrigger(...args);
-        };
-    }
-    // За window.ChronicleEvents – обектът се създава от chronicle_events.js, не може да се проксира лесно.
-    // Но можем да заредим скрипта при първи достъп до ChronicleEvents.
-    let _ChronicleEvents = null;
-    Object.defineProperty(window, 'ChronicleEvents', {
-        get: function() {
-            if (!chronicleEventsLoaded) {
-                console.warn("⚠️ ChronicleEvents не е зареден, опит за динамично зареждане...");
-                // Асинхронно зареждане – тук няма как да върнем Promise.
-                // Затова по-добре да заредим при нужда синхронно? Не може.
-                // Вместо това, презаписваме функциите, които използват ChronicleEvents.
-                window.loadChronicleEvents().catch(console.error);
-                return null;
-            }
-            return _ChronicleEvents;
-        },
-        set: function(val) { _ChronicleEvents = val; },
-        configurable: true
-    });
-
-    // Презаписваме функции, които разчитат на ChronicleEvents.generate...
-    const originalGenerateEconomicEvent = window.ChronicleEvents?.generateEconomicEvent;
-    if (originalGenerateEconomicEvent) {
-        window.generateEconomicEvent = async function(...args) {
-            await window.loadChronicleEvents();
-            return window.ChronicleEvents.generateEconomicEvent(...args);
-        };
-    }
-    // ... аналогично за другите генератори (но те са рядко използвани, ще се заредят при нужда).
+   
 })();
 </script>
 
@@ -893,6 +840,21 @@
         };
     }
 })();
+</script>
+
+    <script>
+    (function() {
+        // Уверяваме се, че ChronicleEvents съществува
+        if (!window.ChronicleEvents) {
+            console.warn("⚠️ ChronicleEvents не е зареден, опит за ръчно зареждане...");
+            var script = document.createElement('script');
+            script.src = 'chronicle_events.js';
+            script.onload = function() {
+                console.log("✅ chronicle_events.js зареден ръчно");
+            };
+            document.head.appendChild(script);
+        }
+    })();
 </script>
 </body>
 </html>
