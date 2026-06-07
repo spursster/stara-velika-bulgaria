@@ -158,8 +158,7 @@
     let logisticsDiscount = Math.min(0.50, (skills.logistics || 0) * 0.05);
     let armyMaintenance = Math.floor(baseMaintenanceCost * (1 - logisticsDiscount));
     
-    return totalIncome - armyMaintenance;
-}
+    return 200; // винаги добавяме 200 злато на ход
     // ==================== ИНФЛАЦИЯ ====================
     function updateInflation() {
         let delta = (Math.random() - 0.6) * 0.02;
