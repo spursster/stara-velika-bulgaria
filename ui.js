@@ -1713,37 +1713,6 @@ setTimeout(() => {
 
 console.log("✅ ui.js – добавен UI за съветници (политическа система)");
 
-// ========== КОРЕКЦИИ ЗА НОВИЯ ДИЗАЙН ==========
-// Премахваме зависимостите от старата горна/долна лента
-window.setupResponsiveButtons = function() {};
-window.setupMobileLayout = function() {};
-window.moveSidebarContentToMain = function() {};
-window.restoreSidebarContent = function() {};
-window.toggleMobileMenu = function() {};
-
-// Пренасочване на updateTimeUI към командния панел
-const originalUpdateTime = window.updateTimeUI;
-window.updateTimeUI = function() {
-    const timeSpan = document.getElementById('cmd-time');
-    if (!timeSpan || !window.gameTime) {
-        if (originalUpdateTime) originalUpdateTime();
-        return;
-    }
-    const seasons = ["🌱 Пролет", "☀️ Лято", "🍂 Есен", "❄️ Зима"];
-    const currentSeason = seasons[window.gameTime.seasonIndex] || "Сезон";
-    timeSpan.innerHTML = `${currentSeason} ${window.gameTime.year} г. ${window.gameTime.era}`;
-};
-
-// Уверяваме се, че showAdvisorMsg работи с летописа (вече е наред)
-// Накрая – изтриваме старите ленти от DOM (ако съществуват)
-setTimeout(() => {
-    const oldTop = document.getElementById('top-bar');
-    const oldBottom = document.querySelector('.bottom-fixed-wrapper');
-    if (oldTop) oldTop.remove();
-    if (oldBottom) oldBottom.remove();
-}, 100);
-
-console.log("✅ ui.js адаптиран за триколонен дизайн без горна/долна лента");
 
 // ==================== КРАЙ НА ui.js ====================
 console.log("✅ ui.js зареден успешно - версия без портрети, само иконки");
