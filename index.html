@@ -711,6 +711,124 @@
     }
 })();
 </script>
+    <script>
+(function() {
+    // Изчакваме DOM да се зареди
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initNewLayout);
+    } else {
+        initNewLayout();
+    }
+
+    function initNewLayout() {
+        // 1. Преместваме лентата с любими герои в левия панел
+        const favBar = document.getElementById('favorite-heroes-bar');
+        const leftPanel = document.getElementById('sidebar-left');
+        if (favBar && leftPanel && !leftPanel.contains(favBar)) {
+            leftPanel.innerHTML = ''; // изчистваме (в левия панел няма нищо важно)
+            leftPanel.appendChild(favBar);
+        }
+
+        // 2. Създаваме команден панел в десния панел
+        const rightPanel = document.getElementById('sidebar-right');
+        if (rightPanel) {
+            rightPanel.innerHTML = ''; // изчистваме стария "ПОРТАЛ" (той вече е в центъра)
+
+            // 2.1 Клонираме статистиките от горната лента
+            const statsOrig = document.querySelector('#top-bar .top-bar-stats');
+            if (statsOrig) {
+                const statsClone = statsOrig.cloneNode(true);
+                statsClone.classList.add('command-stats');
+                // Премахваме името на активния герой от клона (ако има)
+                const activeHero = statsClone.querySelector('.active-hero-name');
+                if (activeHero) activeHero.remove();
+                rightPanel.appendChild(statsClone);
+            }
+
+            // 2.2 Контейнер за бутоните
+            const btnContainer = document.createElement('div');
+            btnContainer.className = 'command-buttons';
+            rightPanel.appendChild(btnContainer);
+
+            // 2.3 Клонираме всички бутони от долната лента
+            const bottomBtns = document.querySelectorAll('#bottom-controls button, #bottom-controls .icon-btn, #bottom-controls .next-turn-btn');
+            bottomBtns.forEach(orig => {
+                // Пропускаме елементите, свързани с менюто за нова игра (те ще ги добавим отделно)
+                if (orig.closest && orig.closest('.new-game-menu-container')) return;
+                const btn = orig.cloneNode(true);
+                // Копираме функциите
+                if (orig.onclick) btn.onclick = orig.onclick;
+                if (orig.getAttribute('onclick')) btn.setAttribute('onclick', orig.getAttribute('onclick'));
+                // Оформяме според типа
+                const isNextTurn = (btn.innerText.includes('Ход') || btn.innerText.includes('►') || orig.classList && orig.classList.contains('next-turn-btn'));
+                if (isNextTurn) {
+                    btn.classList.add('next-turn-btn');
+                    btn.classList.remove('command-btn');
+                } else {
+                    btn.classList.add('command-btn');
+                }
+                btnContainer.appendChild(btn);
+            });
+
+            // 2.4 Добавяме специален бутон за нова игра (клонираме от долната лента)
+            const newGameOrig = document.getElementById('newGameBtn');
+            if (newGameOrig) {
+                const newBtn = newGameOrig.cloneNode(true);
+                newBtn.classList.add('command-new-game');
+                if (newGameOrig.onclick) newBtn.onclick = newGameOrig.onclick;
+                if (newGameOrig.getAttribute('onclick')) newBtn.setAttribute('onclick', newGameOrig.getAttribute('onclick'));
+                rightPanel.appendChild(newBtn);
+            }
+        }
+
+        // 3. Пренасочваме updateTotalStatsUI, за да обновява и клонираните елементи
+        const originalUpdateStats = window.updateTotalStatsUI;
+        if (originalUpdateStats) {
+            window.updateTotalStatsUI = function() {
+                originalUpdateStats(); // обновява оригиналните полета (в скритата горна лента)
+                // Обновяваме и новите полета в десния панел
+                const goldSpan = document.getElementById('cmd-gold');
+                const armySpan = document.getElementById('cmd-army');
+                const powerSpan = document.getElementById('cmd-power');
+                if (goldSpan) goldSpan.innerText = document.getElementById('val-gold')?.innerText || '0';
+                if (armySpan) armySpan.innerText = document.getElementById('val-army')?.innerText || '0';
+                if (powerSpan) powerSpan.innerText = document.getElementById('val-hero-power')?.innerText || '0';
+            };
+            window.updateTotalStatsUI();
+        }
+
+        // 4. Пренасочваме updateTimeUI за новия панел
+        const originalUpdateTime = window.updateTimeUI;
+        if (originalUpdateTime) {
+            window.updateTimeUI = function() {
+                originalUpdateTime();
+                const timeSpan = document.getElementById('cmd-time');
+                if (timeSpan && window.gameTime) {
+                    const seasons = ["🌱 Пролет", "☀️ Лято", "🍂 Есен", "❄️ Зима"];
+                    const season = seasons[window.gameTime.seasonIndex] || "Сезон";
+                    timeSpan.innerText = `${season} ${window.gameTime.year} г. ${window.gameTime.era}`;
+                }
+            };
+            window.updateTimeUI();
+        }
+
+        // 5. Заменяме идентификаторите на клонираните статистики, за да могат да се обновяват
+        const statsCloneDiv = rightPanel?.querySelector('.command-stats');
+        if (statsCloneDiv) {
+            const goldSpan = statsCloneDiv.querySelector('#val-gold');
+            const armySpan = statsCloneDiv.querySelector('#val-army');
+            const powerSpan = statsCloneDiv.querySelector('#val-hero-power');
+            const timeSpan = statsCloneDiv.querySelector('#current-time-info');
+            if (goldSpan) goldSpan.id = 'cmd-gold';
+            if (armySpan) armySpan.id = 'cmd-army';
+            if (powerSpan) powerSpan.id = 'cmd-power';
+            if (timeSpan) timeSpan.id = 'cmd-time';
+        }
+
+        console.log('✅ Нов триколонен дизайн активиран (без рушене). Презаредете за връщане към оригиналния вид.');
+    }
+})();
+</script>
 
 </body>
 </html>
