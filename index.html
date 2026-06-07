@@ -835,5 +835,31 @@
     <p>Играта "Велика България" изисква <strong>хоризонтален (ландшафтен) изглед</strong> за най-добро игрово изживяване на телефони.</p>
     <p>Завъртете телефона си на ширина, за да продължите.</p>
 </div>
+    <script>
+(function() {
+    var overlay = document.getElementById('orientation-overlay');
+    if (!overlay) return;
+
+    function checkOrientation() {
+        // Ако ширината на екрана е по-малка от височината => портретен режим
+        var isPortrait = window.innerHeight > window.innerWidth;
+        // На телефони (ширина <= 768px) показваме overlay само при портрет
+        var isMobile = window.innerWidth <= 768;
+        
+        if (isMobile && isPortrait) {
+            overlay.style.display = 'flex';
+        } else {
+            overlay.style.display = 'none';
+        }
+    }
+
+    // Проверяваме при зареждане
+    checkOrientation();
+    // Следим за промяна на размера на екрана (при завъртане)
+    window.addEventListener('resize', checkOrientation);
+    // За iOS има и orientationchange
+    window.addEventListener('orientationchange', checkOrientation);
+})();
+</script>
 </body>
 </html>
