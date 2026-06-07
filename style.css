@@ -1,6 +1,11 @@
 /* ==========================================================================
-   ВЕЛИКА БЪЛГАРИЯ – НОВ ТРИКОЛОНЕН ДИЗАЙН
+   ВЕЛИКА БЪЛГАРИЯ – МАТОВ СИН ФОН, БЯЛ И ЖЪЛТ ТЕКСТ
+   Добавени стилове за армия пазара (трооп карти)
    ========================================================================== */
+
+/* -----------------------------------------------
+   1. ГЛОБАЛНИ СТИЛОВЕ И ФОН
+----------------------------------------------- */
 * {
     margin: 0;
     padding: 0;
@@ -12,45 +17,119 @@ html, body {
     background: #0a2a4a;
     font-family: 'Montserrat', sans-serif;
     color: #f0f0f0;
-    overflow: hidden;
+    overflow-x: hidden;
 }
 
-/* 3-колонен грид */
+/* -----------------------------------------------
+   2. ГОРЕН ИНФОРМАЦИОНЕН ПАНЕЛ
+----------------------------------------------- */
+#top-bar {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    align-items: center;
+    background: rgba(15, 15, 30, 0.85);
+    backdrop-filter: blur(12px);
+    border-bottom: 2px solid #d4af37;
+    padding: 8px 16px;
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+}
+
+.top-bar-stats {
+    display: flex;
+    gap: 15px;
+    flex-wrap: wrap;
+    align-items: center;
+}
+
+.stat-box {
+    font-family: 'Cinzel', serif;
+    font-weight: bold;
+    color: #ffd966;
+    background: rgba(0, 0, 0, 0.5);
+    padding: 4px 12px;
+    border-radius: 30px;
+    font-size: 0.9rem;
+}
+
+.active-hero-name {
+    background: rgba(0, 0, 0, 0.6);
+    border-radius: 30px;
+    padding: 4px 12px;
+    margin-left: 10px;
+    font-size: 0.85rem;
+    color: #ffd966;
+    font-weight: bold;
+    white-space: nowrap;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.top-bar-controls {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.glass-btn {
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(4px);
+    border: 1px solid rgba(255, 215, 0, 0.5);
+    border-radius: 30px;
+    padding: 5px 12px;
+    font-weight: bold;
+    color: #ffdd99;
+    cursor: pointer;
+    transition: 0.2s;
+}
+
+.glass-btn:hover {
+    background: rgba(255, 215, 0, 0.2);
+    transform: scale(1.02);
+}
+
+.new-game-menu-container .glass-btn {
+    background: linear-gradient(135deg, rgba(212, 175, 55, 0.35), rgba(184, 134, 11, 0.2));
+    border-color: #ffd700;
+}
+
+/* -----------------------------------------------
+   3. ОСНОВЕН КОНТЕЙНЕР (3-колонен layout)
+----------------------------------------------- */
 #game-container {
     display: grid;
-    grid-template-columns: 200px 1fr 260px;
-    gap: 12px;
-    height: 100vh;
-    padding: 12px;
-    overflow: hidden;
+    grid-template-columns: 260px 1fr 260px;
+    gap: 15px;
+    max-width: 1400px;
+    margin: 15px auto;
+    padding: 0 15px 80px 15px;
 }
 
-/* Ляв панел – само любими герои */
-#sidebar-left {
-    background: rgba(10, 20, 40, 0.85);
+#sidebar-left, #sidebar-right {
+    background: rgba(10, 20, 40, 0.7);
     backdrop-filter: blur(8px);
-    border-radius: 20px;
+    border-radius: 16px;
     padding: 12px;
-    overflow-y: auto;
+    border: 1px solid rgba(212, 175, 55, 0.3);
 }
 
-/* Централен панел */
 #game-main-area {
     background: rgba(0, 0, 0, 0.3);
     backdrop-filter: blur(12px);
     border-radius: 20px;
-    padding: 12px;
-    overflow-y: auto;
-    display: flex;
-    flex-direction: column;
-    gap: 16px;
+    padding: 16px;
+    color: #f0f0f0;
 }
 
-/* Летопис */
+/* -----------------------------------------------
+   4. ЛЕТОПИС
+----------------------------------------------- */
 #unifiedChronicle {
-    flex-shrink: 0;
-    max-height: 40vh;
-    overflow-y: auto;
+    background: transparent;
+    margin-bottom: 20px;
 }
 
 .chronicle-event {
@@ -63,165 +142,1617 @@ html, body {
     gap: 10px;
     font-size: 0.8rem;
 }
-.chronicle-text { flex: 1; }
-.chronicle-time { font-size: 0.65rem; color: #ccccaa; white-space: nowrap; }
-.chronicle-buttons {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 6px;
-    margin-top: 8px;
-}
-.chronicle-btn {
-    background: #d4af37;
-    border: none;
-    border-radius: 20px;
-    padding: 4px 12px;
-    font-size: 0.7rem;
-    font-weight: bold;
-    cursor: pointer;
-}
 
-/* Секции в центъра (топ герой, портали) */
-.center-section {
-    background: rgba(0, 0, 0, 0.5);
-    border-radius: 16px;
-    padding: 12px;
-}
+.chronicle-icon { font-size: 1.3rem; min-width: 32px; text-align: center; }
+.chronicle-text { flex: 1; color: #f0f0f0; }
+.chronicle-time { color: #ccccaa; font-size: 0.65rem; white-space: nowrap; }
 
-/* Десен панел – команден център */
-#sidebar-right {
-    background: rgba(10, 20, 40, 0.85);
-    backdrop-filter: blur(8px);
-    border-radius: 20px;
-    padding: 12px;
-    overflow-y: auto;
-    display: flex;
-    flex-direction: column;
-    gap: 16px;
-}
-
-.command-stats {
-    background: rgba(0, 0, 0, 0.5);
-    border-radius: 16px;
-    padding: 10px;
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: space-around;
-    gap: 8px;
-    font-size: 0.9rem;
-    font-weight: bold;
-}
-.stat-item {
-    background: rgba(0,0,0,0.3);
-    padding: 4px 12px;
-    border-radius: 30px;
-}
-
-.command-buttons {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 8px;
-    justify-content: center;
-}
-.command-btn {
-    background: #2c1a0c;
+.load-more-btn {
+    background: rgba(212, 175, 55, 0.2);
     border: 1px solid #d4af37;
     border-radius: 30px;
-    padding: 6px 12px;
-    font-size: 0.75rem;
-    color: #ffdd99;
+    color: #ffd700;
+    padding: 4px 12px;
     cursor: pointer;
-    white-space: nowrap;
+    margin-top: 8px;
 }
+
+/* -----------------------------------------------
+   5. ФИКСИРАН КОНТЕЙНЕР ОТДОЛУ (БУТОНИ + ЛЕНТА)
+----------------------------------------------- */
+.bottom-fixed-wrapper {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  width: 100vw; /* ⭐ КРИТИЧНО: предотвратява хоризонтален overflow на страницата */
+  display: flex;
+  flex-direction: column;
+  z-index: 2000;
+  background: transparent;
+  overscroll-behavior: none; /* ⭐ Спира скрол на цялото приложение при плъзгане в менюто */
+}
+
+/* Долна лента с бутони */
+#bottom-controls {
+  background: #0a2a4a !important;
+  backdrop-filter: none !important;
+  border-top: 2px solid #d4af37;
+  display: flex;
+  justify-content: flex-start;
+  align-items: center;
+  
+  /* ⭐ ФИЗИЧЕСКА БУФЕРНА ЗОНА */
+  padding: 12px 16px 12px 32px !important; 
+  margin: 0;
+  width: 100%;
+  box-sizing: border-box;
+  
+  /* ⭐ СКРОЛ ПОВЕДЕНИЕ */
+  overflow-x: auto;
+  flex-wrap: nowrap;
+  white-space: nowrap;
+  scroll-behavior: auto; /* ⭐ Махаме smooth за директна реакция на пръста */
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-x: contain;
+  touch-action: pan-x pinch-zoom; /* ⭐ Блокира вертикалния скрол ВЪРХУ менюто */
+  
+  /* ⭐ КРИТИЧНО ЗА ТАБЛЕТИ */
+  scroll-snap-type: none; /* ⭐ ИЗКЛЮЧЕНО напълно */
+  scroll-padding-left: 32px; /* ⭐ Казва на браузъра да спира скрола точно тук */
+  
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+#bottom-controls::-webkit-scrollbar { display: none; }
+
+/* Сигурност: първият елемент да не залепва за ръба */
+#bottom-controls > *:first-child {
+  margin-left: 2px;
+}
+
+.icon-btn, .next-turn-btn {
+  background: none;
+  border: none;
+  font-size: 26px;
+  cursor: pointer;
+  padding: 6px 14px;
+  border-radius: 40px;
+  transition: 0.2s;
+  color: #ffdd99;
+  flex-shrink: 0;
+  scroll-snap-align: none; /* ⭐ Премахваме залепването */
+  margin-right: 10px; /* ⭐ Разстояние между бутоните */
+}
+#bottom-controls .icon-btn:last-child, 
+#bottom-controls .next-turn-btn:last-child {
+  margin-right: 0;
+}
+
+/* Лента с любими герои */
+.favorite-bar {
+    background: #0a2a4a !important;
+    backdrop-filter: none !important;
+    border-top: 1px solid #d4af37;
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    padding: 8px;
+    margin: 0;
+    overflow-x: auto;
+    scrollbar-width: thin;
+}
+
+.favorite-slot {
+    position: relative;          /* <-- КЛЮЧОВО за бутона ❤️ */
+    background: #1e3a5f !important;
+    backdrop-filter: none !important;
+    border: 1px solid #d4af37;
+    text-align: center;
+    padding: 6px;
+    min-width: 85px;
+    border-radius: 10px;
+    min-height: 120px;
+    flex: 1;
+    cursor: pointer;
+    transition: 0.2s;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+}
+.favorite-slot:hover {
+    background: #2a4a6f !important;
+    border-color: #ffd700;
+    transform: translateY(-2px);
+}
+.favorite-slot img {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    object-fit: cover;
+    margin-bottom: 4px;
+}
+.favorite-slot .hero-icon {
+    font-size: 28px;
+    color: #ffd966;
+}
+.favorite-slot .hero-name {
+    color: #ffd966 !important;
+    font-weight: bold !important;
+    font-size: 12px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 100%;
+}
+.favorite-slot .hero-level, 
+.favorite-slot .hero-stats span {
+    color: #f0f0f0;
+}
+.favorite-slot.empty {
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px dashed #aaa;
+    justify-content: center;
+    font-size: 20px;
+    color: #aaa;
+}
+
+.icon-btn {
+    background: none;
+    border: none;
+    font-size: 26px;
+    cursor: pointer;
+    padding: 6px 12px;
+    border-radius: 40px;
+    transition: 0.2s;
+    color: #ffdd99;
+    flex-shrink: 0;
+    scroll-snap-align: start;
+}
+.icon-btn:hover { transform: scale(1.1); text-shadow: 0 0 8px gold; }
+
 .next-turn-btn {
     background: linear-gradient(135deg, #ffd700, #b8860b);
     border: 1px solid white;
     color: black;
     font-weight: bold;
-    font-size: 0.9rem;
-    padding: 6px 16px;
-    min-width: 80px;
-}
-.command-new-game {
-    background: #daa520;
-    color: black;
-    width: 100%;
-    margin-top: 8px;
-    font-weight: bold;
+    font-size: 1rem;
+    padding: 6px 18px;
+    border-radius: 40px;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    cursor: pointer;
+    flex-shrink: 0;
+    scroll-snap-align: start;
 }
 
-/* Вертикална лента с любими герои */
-.favorite-bar {
+#bottom-controls .hero-profile-btn,
+#bottom-controls button[onclick*="showHeroProfile"],
+.bottom-hero-btn {
+    display: none !important;
+}
+
+/* -----------------------------------------------
+   6. БИТКА (МОДАЛЕН ПРОЗОРЕЦ)
+----------------------------------------------- */
+.ultimate-battle {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(135deg, #0a1a2e 0%, #0a2a4a 100%);
+    z-index: 100000;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-family: 'Cinzel', serif;
+    animation: battleFadeIn 0.3s ease;
+    padding: 15px;
+}
+
+.battle-container {
+    width: 100%;
+    max-width: 1200px;
+    background: rgba(0, 0, 0, 0.75);
+    backdrop-filter: blur(12px);
+    border-radius: 32px;
+    border: 2px solid #c9a87b;
+    overflow: hidden;
     display: flex;
     flex-direction: column;
-    gap: 8px;
-    width: 100%;
-}
-.favorite-slot {
-    display: flex !important;
-    flex-direction: row !important;
-    align-items: center;
-    gap: 8px;
-    background: rgba(0,0,0,0.5);
-    border-radius: 12px;
-    padding: 6px 8px;
-    cursor: pointer;
-    transition: 0.2s;
-}
-.favorite-slot:hover {
-    background: rgba(255,215,0,0.2);
-    transform: translateX(4px);
-}
-.favorite-slot .hero-icon {
-    font-size: 28px;
-}
-.favorite-slot .hero-name {
-    font-size: 11px;
-    font-weight: bold;
-    color: #ffdd99;
-    flex: 1;
-}
-/* Скриваме детайлите */
-.favorite-slot .hero-level-power,
-.favorite-slot .hero-stats,
-.favorite-slot .hp-bar,
-.favorite-slot .xp-bar,
-.favorite-slot .auto-badge {
-    display: none;
+    max-height: 95vh;
+    position: relative;
 }
 
-/* Адаптивност */
-@media (max-width: 900px) {
+.close-battle-btn {
+    position: absolute;
+    top: 12px;
+    left: 12px;
+    width: 36px;
+    height: 36px;
+    background: rgba(0,0,0,0.6);
+    border: 1px solid #ff4444;
+    color: #ff4444;
+    border-radius: 50%;
+    font-size: 18px;
+    cursor: pointer;
+    z-index: 101;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.close-battle-btn:hover {
+    background: rgba(255,68,68,0.2);
+    transform: scale(1.05);
+}
+
+.battle-header {
+    background: linear-gradient(135deg, #1a1a2e, #0d0d1a);
+    padding: 12px 20px;
+    text-align: center;
+    border-bottom: 2px solid #c9a87b;
+    color: #ffdd99;
+}
+
+.heroes-grid {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 10px;
+    padding: 15px;
+}
+
+.hero-card {
+    background: linear-gradient(145deg, rgba(30,25,20,0.9), rgba(20,15,10,0.95));
+    border-radius: 14px;
+    padding: 8px;
+    text-align: center;
+    border: 1px solid rgba(201,168,123,0.4);
+    color: #f0f0f0;
+}
+.hp-bar-bg {
+    background: #2a1a0a;
+    height: 6px;
+    border-radius: 3px;
+    margin: 6px 0;
+    overflow: hidden;
+}
+.hp-bar-fill {
+    background: linear-gradient(90deg, #cc3333, #ff5555);
+    height: 100%;
+    width: 100%;
+    transition: width 0.3s;
+}
+.battle-log {
+    background: rgba(0,0,0,0.5);
+    border-radius: 12px;
+    padding: 8px;
+    height: 100px;
+    overflow-y: auto;
+    font-size: 10px;
+    font-family: monospace;
+    color: #ddccaa;
+}
+@keyframes battleFadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+/* -----------------------------------------------
+   7. МОДАЛИ
+----------------------------------------------- */
+.market-modal,
+#barracks-screen,
+#regions-map-overlay,
+#hero-rpg-modal,
+#skills-ui-modal,
+#event-overlay-modal,
+#treasury-overlay,
+#wm-marriage-modal,
+#elite-heroes-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.85);
+    backdrop-filter: blur(8px);
+    z-index: 200000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 15px;
+    box-sizing: border-box;
+}
+.modal-content, .glass-panel {
+    background: #0a1a2e;
+    border: 2px solid #d4af37;
+    border-radius: 24px;
+    max-width: 90%;
+    max-height: 90%;
+    overflow: auto;
+    padding: 20px;
+    color: #f0f0f0;
+}
+.elite-modal-card {
+    background: rgba(0, 0, 0, 0.6);
+    border: 1px solid #c9a87b;
+    border-radius: 12px;
+    padding: 8px;
+    cursor: pointer;
+    transition: transform 0.2s, border-color 0.2s;
+    color: #f0f0f0;
+}
+.elite-modal-card:hover {
+    transform: translateY(-3px);
+    border-color: #ffd700;
+}
+
+/* -----------------------------------------------
+   8. БУТОНИ (ОБЩИ)
+----------------------------------------------- */
+.menu-btn, .action-btn, .battle-btn, .footer-btn {
+    background: linear-gradient(135deg, rgba(30,30,30,0.9), rgba(15,15,15,0.9));
+    border: 1px solid rgba(214,175,55,0.5);
+    color: #d4af37;
+    padding: 10px 20px;
+    font-family: 'Cinzel', serif;
+    font-size: 0.9rem;
+    font-weight: bold;
+    cursor: pointer;
+    border-radius: 40px;
+    transition: all 0.2s;
+}
+.menu-btn:hover, .battle-btn:hover, .footer-btn:hover {
+    background: linear-gradient(135deg, #1f1f1f, #2d2510);
+    border-color: #ffd700;
+    color: #ffd700;
+    transform: translateY(-2px);
+}
+.action-btn {
+    background: linear-gradient(135deg, #8b0000, #4a0000);
+    border-color: #ff4444;
+    color: white;
+    animation: pulseGlow 3s infinite alternate;
+}
+@keyframes pulseGlow {
+    0% { box-shadow: 0 4px 6px rgba(0,0,0,0.3); }
+    100% { box-shadow: 0 0 15px rgba(139,0,0,0.6); }
+}
+
+/* -----------------------------------------------
+   9. НОВА ИГРА (ДРОПДАУН МЕНЮ)
+----------------------------------------------- */
+.new-game-menu-container {
+    position: relative;
+    display: inline-block;
+}
+.new-game-dropdown {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    background: rgba(15,15,20,0.98);
+    backdrop-filter: blur(12px);
+    border: 1px solid rgba(212,175,55,0.5);
+    border-radius: 12px;
+    padding: 8px 0;
+    min-width: 220px;
+    z-index: 10000;
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(-10px);
+    transition: all 0.25s ease;
+}
+.new-game-dropdown.show {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+}
+.new-game-option {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 16px;
+    color: #ffdd99;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+.new-game-option:hover {
+    background: rgba(212,175,55,0.2);
+    color: #ffd700;
+}
+#bottom-controls .new-game-menu-container {
+    position: relative;
+}
+#bottom-controls .new-game-dropdown {
+    position: absolute;
+    bottom: 100%;
+    left: 0;
+    margin-bottom: 12px;
+    top: auto !important;
+    transform: translateY(0) !important;
+}
+
+/* -----------------------------------------------
+   10. АДАПТИВНОСТ (RESPONSIVE)
+----------------------------------------------- */
+@media (max-width: 1024px) {
     #game-container {
-        grid-template-columns: 160px 1fr 200px;
+        grid-template-columns: 1fr;
+        padding: 10px 10px 90px 10px;
+    }
+    #sidebar-left, #sidebar-right {
+        order: 2;
+    }
+    #game-main-area {
+        order: 1;
+    }
+    .stat-box {
+        font-size: 0.85rem;
+        padding: 2px 8px;
+    }
+}
+@media (max-width: 768px) {
+#bottom-controls {
+padding: 8px 12px; /* По-малък padding за таблети */
+gap: 6px;
+}
+}
+
+@media (max-width: 600px) {
+#bottom-controls {
+padding: 6px 10px; /* Още по-малък за телефони */
+gap: 4px;
+}
+}
+@media (max-width: 768px) {
+    #top-bar {
+        flex-direction: column;
         gap: 8px;
-        padding: 8px;
     }
-    .command-btn {
-        font-size: 0.65rem;
-        padding: 4px 8px;
+    .top-bar-stats {
+        display: flex;
+        overflow-x: auto;
+        width: 100%;
+        gap: 6px;
+        justify-content: space-between;
     }
-    .next-turn-btn {
-        font-size: 0.8rem;
+    .stat-box, .active-hero-name {
+        font-size: 0.7rem;
+        white-space: nowrap;
+        flex-shrink: 0;
+    }
+    .top-bar-controls {
+        width: 100%;
+        justify-content: space-evenly;
+    }
+    .glass-btn {
+        font-size: 0.7rem;
         padding: 4px 12px;
     }
-}
-@media (max-width: 700px) {
-    #game-container {
-        grid-template-columns: 120px 1fr 160px;
+    .heroes-grid {
+        grid-template-columns: repeat(3, 1fr);
+        gap: 6px;
     }
-    .favorite-slot .hero-icon { font-size: 22px; }
-    .favorite-slot .hero-name { font-size: 9px; }
-    .command-stats { font-size: 0.7rem; }
+    .battle-btn {
+        padding: 6px 12px;
+        font-size: 0.7rem;
+        min-width: 80px;
+    }
+    .favorite-bar {
+        gap: 6px;
+        padding: 6px;
+    }
+    .favorite-slot {
+        min-width: 70px;
+        padding: 4px;
+    }
+    .favorite-slot .hero-name {
+        font-size: 10px;
+    }
 }
-@media (max-width: 550px) {
+@media (max-width: 600px) {
+    #sidebar-left, #sidebar-right {
+        display: none;
+    }
     #game-container {
-        grid-template-columns: 100px 1fr 120px;
+        display: block;
+        padding: 8px;
+    }
+    #top-bar {
+        flex-direction: row;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        padding: 6px 8px;
+    }
+    .top-bar-stats {
+        order: 1;
+        width: auto;
+        gap: 4px;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+    .stat-box {
+        font-size: 0.6rem;
+        padding: 2px 6px;
+        white-space: nowrap;
+    }
+    .active-hero-name {
+        font-size: 0.55rem;
+        padding: 2px 6px;
+    }
+    .top-bar-controls {
+        order: 2;
+        width: 100%;
+        justify-content: space-evenly;
+        margin-top: 6px;
+    }
+    .top-bar-controls .glass-btn:not(.menu-toggle) {
+        display: none;
+    }
+    .favorite-bar {
+        gap: 4px;
+        padding: 4px 6px;
+    }
+    .favorite-slot .hero-icon {
+        font-size: 20px;
+    }
+    .favorite-slot .hero-name {
+        font-size: 9px;
+    }
+    #game-main-area {
+        padding: 10px;
+        margin-top: 10px;
+    }
+    .mobile-section {
+        background: rgba(0,0,0,0.5);
+        border-radius: 12px;
+        padding: 12px;
+        margin-bottom: 15px;
+    }
+    .heroes-grid {
+        display: flex;
+        overflow-x: auto;
+        gap: 8px;
+        padding: 5px;
+        -webkit-overflow-scrolling: touch;
+    }
+    .heroes-grid .hero-card {
+        flex: 0 0 90px;
+    }
+    .action-buttons {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 8px;
+    }
+    .battle-btn {
+        width: 100%;
+        justify-content: center;
+        padding: 8px 12px;
+    }
+    .monster-card {
+        max-width: 95%;
+        margin: 0 auto;
+    }
+    .modal-content,
+    .glass-panel,
+    .wm-container,
+    #barracks-screen > div,
+    #regions-map-overlay > div,
+    #hero-rpg-modal > div,
+    #skills-ui-modal > div,
+    #elite-heroes-modal > div {
+        width: 95% !important;
+        max-width: 95% !important;
+        padding: 12px !important;
+    }
+    .close-modal-x,
+    .close-battle-btn,
+    .wm-close {
+        width: 40px !important;
+        height: 40px !important;
+        font-size: 24px !important;
+        top: 5px !important;
+        right: 5px !important;
+    }
+    .troop-shop {
+        grid-template-columns: 1fr !important;
+    }
+    .troop-card {
+        padding: 10px;
+    }
+    .buy-btn, .sell-btn {
+        padding: 6px 12px;
+        font-size: 0.75rem;
+    }
+    .new-game-menu-container .glass-btn {
+        display: flex !important;
+    }
+    .new-game-dropdown {
+        z-index: 300000 !important;
+    }
+    #bottom-controls .new-game-dropdown {
+        position: fixed;
+        bottom: auto;
+        top: 50% !important;
+        left: 50% !important;
+        transform: translate(-50%, -50%) !important;
+        margin-bottom: 0;
+    }
+}
+@media (max-width: 480px) {
+    .heroes-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    .hero-card {
+        padding: 4px;
+    }
+    .hero-name {
+        font-size: 9px;
+    }
+    .battle-btn {
+        padding: 5px 8px;
+        font-size: 0.65rem;
+        min-width: 65px;
+    }
+    .glass-btn {
+        font-size: 0.65rem;
+        padding: 3px 8px;
+    }
+    .favorite-bar {
         gap: 4px;
         padding: 4px;
     }
-    .command-btn { font-size: 0.55rem; padding: 2px 4px; }
-    .next-turn-btn { font-size: 0.7rem; padding: 2px 8px; }
-    .favorite-slot .hero-icon { font-size: 18px; }
-    .favorite-slot .hero-name { font-size: 8px; }
+    .favorite-slot {
+        min-width: 60px;
+        padding: 3px;
+    }
+    .favorite-slot .hero-name {
+        font-size: 9px;
+    }
 }
+
+/* Други помощни класове */
+#top-elite-bar {
+    display: none !important;
+}
+#single-hero-bar {
+    display: none !important;
+}
+.menu-toggle,
+#mobile-menu-panel,
+.all-heroes-btn,
+.bottom-hero-btn {
+    display: none !important;
+}
+
+/* Принудително центриране на всички модали (вкл. дипломация) */
+.modal-overlay,
+.market-modal,
+#barracks-screen,
+#regions-map-overlay,
+#hero-rpg-modal,
+#skills-ui-modal,
+#event-overlay-modal,
+#treasury-overlay,
+#wm-marriage-modal,
+#elite-heroes-modal {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    bottom: 0 !important;
+    width: 100% !important;
+    height: 100% !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    margin: 0 !important;
+    padding: 15px !important;
+    box-sizing: border-box !important;
+}
+
+.modal-content,
+.glass-panel,
+#diplomacy-hub-modal .modal-content {
+    margin: auto !important;
+    max-width: 90% !important;
+    max-height: 90% !important;
+    overflow: auto !important;
+    position: relative !important;
+    top: auto !important;
+    bottom: auto !important;
+    left: auto !important;
+    right: auto !important;
+    transform: none !important;
+}
+
+/* ========== КОРЕКЦИЯ ЗА ДИПЛОМАЦИЯТА ========== */
+#diplomacy-hub-modal {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    bottom: 0 !important;
+    width: 100% !important;
+    height: 100% !important;
+    background: rgba(0, 0, 0, 0.85) !important;
+    backdrop-filter: blur(8px) !important;
+    z-index: 300000 !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    margin: 0 !important;
+    padding: 15px !important;
+    box-sizing: border-box !important;
+}
+
+#diplomacy-hub-modal .modal-content {
+    margin: auto !important;
+    max-width: 95% !important;
+    max-height: 90% !important;
+    overflow: auto !important;
+    position: relative !important;
+    top: auto !important;
+    bottom: auto !important;
+    transform: none !important;
+}
+
+/* ========== АДАПТИВНОСТ ЗА СЛОТОВЕТЕ НА ГЕРОИТЕ (ТЕЛЕФОНИ) ========== */
+@media (max-width: 768px) {
+    .favorite-slot {
+        min-height: 80px !important;
+        padding: 4px 2px !important;
+        min-width: 65px !important;
+    }
+    .favorite-slot .hero-icon {
+        font-size: 20px !important;
+    }
+    .favorite-slot .hero-name {
+        font-size: 9px !important;
+        white-space: normal !important;
+        word-break: break-word !important;
+        line-height: 1.2 !important;
+    }
+    .favorite-slot .hero-level-power,
+    .favorite-slot .hero-stats span,
+    .favorite-slot .auto-badge {
+        font-size: 7px !important;
+    }
+    .favorite-slot img {
+        width: 32px !important;
+        height: 32px !important;
+    }
+}
+
+@media (max-width: 480px) {
+    .favorite-slot {
+        min-height: 70px !important;
+        min-width: 55px !important;
+        padding: 3px 1px !important;
+    }
+    .favorite-slot .hero-icon {
+        font-size: 16px !important;
+    }
+    .favorite-slot .hero-name {
+        font-size: 8px !important;
+    }
+    .favorite-slot .hero-level-power,
+    .favorite-slot .hero-stats span,
+    .favorite-slot .auto-badge {
+        font-size: 6px !important;
+    }
+    .favorite-slot img {
+        width: 28px !important;
+        height: 28px !important;
+    }
+}
+
+/* ========== АРМИЯ ПАЗАР – ДОПЪЛНИТЕЛНИ СТИЛОВЕ ЗА ТРООП КАРТИ ========== */
+.troop-card {
+    transition: transform 0.1s;
+}
+.troop-card:hover {
+    transform: scale(1.02);
+    border-color: #ffd700 !important;
+}
+.buy-btn, .sell-btn {
+    font-family: inherit;
+    font-weight: bold;
+    transition: 0.1s;
+}
+.buy-btn:active, .sell-btn:active {
+    transform: scale(0.95);
+}
+.troop-shop {
+    scrollbar-width: thin;
+    scrollbar-color: #d4af37 #0a1a2e;
+}
+.troop-shop::-webkit-scrollbar {
+    width: 6px;
+}
+.troop-shop::-webkit-scrollbar-track {
+    background: #0a1a2e;
+}
+.troop-shop::-webkit-scrollbar-thumb {
+    background: #d4af37;
+    border-radius: 3px;
+}
+
+/* Затваряне при клик върху фоновата тъмна област (за всички модали) */
+.market-modal,
+#armyMarketModal {
+    cursor: pointer;
+}
+.market-modal .glass-panel,
+.market-modal .modal-content,
+#armyMarketModal > div {
+    cursor: default;
+}
+
+/* TikTok Share Button */
+#share-hero-btn {
+  background: linear-gradient(135deg, #25F4EE 0%, #FE2C55 100%) !important;
+  color: #fff !important;
+  font-weight: bold;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 20px;
+  cursor: pointer;
+  transition: transform 0.2s, box-shadow 0.2s;
+  box-shadow: 0 4px 12px rgba(37, 244, 238, 0.3);
+}
+
+#share-hero-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(37, 244, 238, 0.5);
+}
+
+#share-hero-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.top-hero-troops {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 8px;
+    margin-top: 12px;
+}
+.troop-type {
+    text-align: center;
+    width: 50px;
+}
+.troop-type img, .troop-type .icon {
+    width: 36px;
+    height: 36px;
+    font-size: 28px;
+}
+.troop-count {
+    font-size: 11px;
+    color: #ffdd99;
+}
+@media (max-width: 768px) {
+    .troop-type { width: 40px; }
+    .troop-type .icon { font-size: 24px; }
+}
+@media (max-width: 768px) {
+    #active-character-profile .troops-list {
+        gap: 2px;
+    }
+    #active-character-profile .troops-list div {
+        min-width: 30px;
+    }
+    #active-character-profile .troops-list div div:first-child {
+        font-size: 1rem;
+    }
+}
+
+/* ==================== ИНТЕРАКТИВЕН ЛЕТОПИС ==================== */
+.chronicle-event.interactive-event {
+    background: rgba(0, 0, 0, 0.65);
+    border-left: 4px solid #ffaa44;
+    margin-bottom: 10px;
+    padding: 10px 12px;
+    border-radius: 0 12px 12px 0;
+    transition: all 0.2s ease-in-out;
+    backdrop-filter: blur(2px);
+    display: flex;
+    flex-direction: column;  /* гарантира, че бутоните са под текста */
+}
+
+.chronicle-event.interactive-event:hover {
+    transform: translateX(4px);
+    background: rgba(0, 0, 0, 0.85);
+    border-left-width: 6px;
+}
+
+/* Контейнер за бутоните – винаги на нов ред */
+.chronicle-buttons {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 12px;
+    justify-content: flex-start;
+    width: 100%;           /* заема цялата ширина */
+}
+
+/* Основни стилове за бутоните */
+.chronicle-btn {
+    background: #d4af37;
+    border: none;
+    border-radius: 30px;
+    padding: 6px 16px;
+    font-size: 0.8rem;
+    font-weight: bold;
+    color: #000;
+    cursor: pointer;
+    transition: all 0.15s linear;
+    font-family: 'Cinzel', 'Montserrat', sans-serif;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+    white-space: nowrap;   /* предотвратява пренасяне на текста на бутона */
+}
+
+.chronicle-btn:hover {
+    background: #ffaa44 !important;
+    transform: scale(1.02);
+    box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+}
+
+.chronicle-btn:active {
+    transform: scale(0.98);
+}
+
+/* ========== АДАПТИВНОСТ ЗА ТАБЛЕТИ ========== */
+@media (max-width: 768px) {
+    .chronicle-event.interactive-event {
+        padding: 8px 10px;
+        margin-bottom: 8px;
+    }
+    .chronicle-buttons {
+        gap: 6px;
+        margin-top: 8px;
+    }
+    .chronicle-btn {
+        padding: 4px 12px;
+        font-size: 0.7rem;
+        white-space: nowrap;
+    }
+}
+
+/* ========== АДАПТИВНОСТ ЗА ТЕЛЕФОНИ (малки екрани) ========== */
+@media (max-width: 480px) {
+    .chronicle-event.interactive-event {
+        padding: 6px 8px;
+        margin-bottom: 6px;
+    }
+    .chronicle-buttons {
+        gap: 5px;
+        margin-top: 6px;
+    }
+    .chronicle-btn {
+        padding: 3px 10px;
+        font-size: 0.65rem;
+        white-space: nowrap;
+    }
+}
+
+/* За много тесни екрани (напр. 320px) – позволяваме пренасяне на текста на бутоните, ако е необходимо */
+@media (max-width: 360px) {
+    .chronicle-btn {
+        white-space: normal;
+        word-break: keep-all;
+        padding: 3px 8px;
+        font-size: 0.6rem;
+    }
+}
+
+/* ==================== СТИЛЕН И АДАПТИВЕН БИТКА ЕКРАН ==================== */
+
+/* Основен контейнер */
+.ultimate-battle {
+    background: radial-gradient(circle at 20% 30%, #0f0f1f, #03030f);
+    font-family: 'Cinzel', 'Montserrat', sans-serif;
+}
+
+/* Битка контейнер (стъклен панел) */
+.battle-container {
+    background: rgba(10, 20, 30, 0.65) !important;
+    backdrop-filter: blur(12px) brightness(0.9);
+    border: 2px solid rgba(212, 175, 55, 0.7) !important;
+    border-radius: 32px !important;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(212, 175, 55, 0.3) inset !important;
+}
+
+/* Заглавие */
+.battle-header h1 {
+    font-size: 1.6rem;
+    text-shadow: 0 0 6px #ffaa33;
+    letter-spacing: 3px;
+}
+
+/* Герои и врагове – адаптивни карти */
+.heroes-grid, .enemies-grid {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 12px;
+    margin: 15px 0;
+}
+
+.hero-card, .enemy-card {
+    background: linear-gradient(145deg, rgba(30, 25, 40, 0.9), rgba(15, 10, 20, 0.95));
+    border-radius: 24px;
+    padding: 12px 8px;
+    width: 160px;
+    transition: transform 0.2s, box-shadow 0.2s;
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.4);
+    border: 1px solid rgba(212, 175, 55, 0.5);
+}
+
+.hero-card:hover, .enemy-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 12px 20px rgba(0, 0, 0, 0.5);
+    border-color: #ffd966;
+}
+
+/* Портрет */
+.hero-portrait {
+    width: 70px;
+    height: 70px;
+    border: 3px solid #ffd700;
+    box-shadow: 0 0 12px rgba(0,0,0,0.5);
+}
+
+.hero-icon {
+    font-size: 48px;
+}
+
+/* Име и клас */
+.hero-name, .enemy-name {
+    font-size: 1rem;
+    font-weight: bold;
+    color: #ffdd99;
+    text-shadow: 0 1px 2px black;
+}
+
+/* Ленти за живот */
+.hp-bar-bg, .hp-bar {
+    background: #2a1a0a;
+    height: 10px;
+    border-radius: 6px;
+    overflow: hidden;
+    margin: 8px 0;
+}
+
+.hp-bar-fill, .hp-fill {
+    background: linear-gradient(90deg, #dc143c, #ff6666);
+    height: 100%;
+    border-radius: 6px;
+    transition: width 0.2s ease;
+}
+
+/* Текст за живот */
+.hero-hp-text, .hero-stats span:first-child {
+    font-size: 11px;
+    font-weight: bold;
+    color: #ffaa77;
+}
+
+/* Бутони за действие */
+.action-buttons {
+    background: rgba(0, 0, 0, 0.5);
+    border-radius: 60px;
+    padding: 12px;
+    margin-top: 10px;
+}
+
+.battle-btn {
+    background: linear-gradient(135deg, #2c1a0c, #1f1207);
+    border: 1px solid #d4af37;
+    border-radius: 40px;
+    padding: 8px 20px;
+    font-size: 1rem;
+    color: #ffdd99;
+    transition: 0.1s;
+}
+
+.battle-btn:active {
+    transform: scale(0.96);
+}
+
+.attack-btn {
+    background: linear-gradient(135deg, #7a2e1a, #5a1e0a);
+    border-color: #ffaa44;
+    box-shadow: 0 0 10px rgba(255, 68, 0, 0.5);
+}
+
+/* Лог за битката */
+.battle-log {
+    background: rgba(0, 0, 0, 0.7);
+    border-radius: 20px;
+    font-size: 12px;
+    font-family: monospace;
+    max-height: 150px;
+    overflow-y: auto;
+}
+
+/* Адаптивност */
+@media (max-width: 768px) {
+    .hero-card, .enemy-card {
+        width: 130px;
+        padding: 8px 4px;
+    }
+    .hero-portrait {
+        width: 50px;
+        height: 50px;
+    }
+    .hero-icon {
+        font-size: 36px;
+    }
+    .battle-btn {
+        padding: 5px 12px;
+        font-size: 0.75rem;
+    }
+    .hero-name, .enemy-name {
+        font-size: 0.8rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .hero-card, .enemy-card {
+        width: calc(50% - 8px);
+        min-width: 100px;
+    }
+    .heroes-grid, .enemies-grid {
+        gap: 6px;
+    }
+    .battle-btn {
+        padding: 4px 8px;
+        font-size: 0.65rem;
+    }
+    .action-buttons {
+        gap: 6px;
+    }
+} 
+
+/* ========== БИТКА – СПЕЦИАЛНО ЗА ТЕЛЕФОНИ ========== */
+@media (max-width: 768px) {
+    /* Контейнерът на битката да не излиза извън екрана */
+    .ultimate-battle {
+        padding: 5px !important;
+        align-items: flex-start !important;
+        overflow-y: auto !important;
+    }
+
+    /* Контейнерът на битката да има бял/светъл фон за контраст */
+    .battle-container {
+        background: #0a0a1a !important;
+        width: 100% !important;
+        max-width: none !important;
+        border-radius: 16px !important;
+        padding: 10px !important;
+    }
+
+    /* Лента с бутоните – задължително да е видима и да не препокрива */
+    .action-buttons {
+        display: flex !important;
+        flex-wrap: wrap !important;
+        justify-content: center !important;
+        gap: 8px !important;
+        background: #000000aa !important;
+        border-radius: 40px !important;
+        padding: 8px !important;
+        margin-top: 15px !important;
+        position: relative !important;
+        z-index: 300001 !important;
+    }
+
+    /* Всеки бутон в битката – задължително видим и кликабилен */
+    .battle-btn {
+        background: #daa520 !important;
+        border: 2px solid #ffffff !important;
+        border-radius: 40px !important;
+        color: #000000 !important;
+        font-weight: bold !important;
+        font-size: 0.75rem !important;
+        padding: 6px 12px !important;
+        min-width: 70px !important;
+        text-shadow: none !important;
+        box-shadow: 0 2px 6px black !important;
+        flex-shrink: 0 !important;
+    }
+
+    /* Специално за бутона "АТАКА" – още по-ярък */
+    .attack-btn {
+        background: #ff6600 !important;
+        color: white !important;
+        border-color: yellow !important;
+    }
+
+    /* Героите да се подреждат в два реда */
+    .heroes-grid, .enemies-grid {
+        display: grid !important;
+        grid-template-columns: repeat(2, 1fr) !important;
+        gap: 8px !important;
+        padding: 5px !important;
+    }
+
+    /* Карта на герой – да не е твърде широка */
+    .hero-card, .enemy-card {
+        width: auto !important;
+        min-width: 0 !important;
+        padding: 6px !important;
+        margin: 0 !important;
+    }
+
+    /* Портретите да са малки, за да има място */
+    .hero-portrait {
+        width: 40px !important;
+        height: 40px !important;
+    }
+
+    .hero-icon {
+        font-size: 28px !important;
+    }
+
+    /* Име и текст – да не преливат */
+    .hero-name, .enemy-name {
+        font-size: 10px !important;
+        white-space: normal !important;
+        word-break: break-word !important;
+    }
+
+    /* Лента за живот – по-тънка */
+    .hp-bar-bg {
+        height: 6px !important;
+    }
+
+    /* Логът да се свива */
+    .battle-log {
+        max-height: 80px !important;
+        font-size: 9px !important;
+    }
+
+    /* Затварящият бутон (X) да е по-голям */
+    .close-battle-btn {
+        width: 32px !important;
+        height: 32px !important;
+        font-size: 16px !important;
+        top: 5px !important;
+        left: 5px !important;
+    }
+}
+/* ========== БИТКА – ОПТИМИЗИРАНА ЗА ТЕЛЕФОНИ (компактни слотове, едър текст) ========== */
+@media (max-width: 768px) {
+    /* Контейнерът на битката да не излиза извън екрана */
+    .ultimate-battle {
+        padding: 6px !important;
+        align-items: flex-start !important;
+        overflow-y: auto !important;
+    }
+
+    .battle-container {
+        background: #0a0a1a !important;
+        width: 100% !important;
+        max-width: none !important;
+        border-radius: 20px !important;
+        padding: 8px !important;
+    }
+
+    /* Мрежа за герои и врагове – 2 на ред (по-широки, но по-ниски) */
+    .heroes-grid, .enemies-grid {
+        display: grid !important;
+        grid-template-columns: repeat(2, 1fr) !important;
+        gap: 8px !important;
+        margin: 8px 0 !important;
+    }
+
+    /* Карта на герой – по-компактна */
+    .hero-card, .enemy-card {
+        background: rgba(0, 0, 0, 0.7) !important;
+        border: 1px solid #d4af37 !important;
+        border-radius: 16px !important;
+        padding: 6px 4px !important;
+        width: auto !important;
+        min-width: 0 !important;
+        display: flex !important;
+        flex-direction: column !important;
+        align-items: center !important;
+    }
+
+    /* Портрет или иконка – малки */
+    .hero-portrait {
+        width: 36px !important;
+        height: 36px !important;
+        margin-bottom: 2px !important;
+    }
+    .hero-icon {
+        font-size: 28px !important;
+        margin-bottom: 2px !important;
+    }
+
+    /* Име на героя – едро и четливо */
+    .hero-name, .enemy-name {
+        font-size: 12px !important;
+        font-weight: bold !important;
+        color: #ffdd99 !important;
+        text-align: center !important;
+        white-space: normal !important;
+        word-break: keep-all !important;
+        margin: 2px 0 !important;
+    }
+
+    /* Клас и ниво – малък шрифт */
+    .hero-class, .hero-level-power {
+        font-size: 8px !important;
+        color: #ccaa77 !important;
+    }
+
+    /* Ленти за живот и опит – по-тънки */
+    .hp-bar-bg, .xp-bar {
+        height: 5px !important;
+        margin: 3px 0 !important;
+    }
+
+    /* Текст за статистики (❤️, ⚔️, 💰) – по-едър */
+    .hero-stats {
+        display: flex !important;
+        justify-content: space-between !important;
+        width: 100% !important;
+        gap: 6px !important;
+        font-size: 10px !important;
+        font-weight: bold !important;
+        margin-top: 4px !important;
+    }
+    .hero-stats span {
+        font-size: 10px !important;
+    }
+
+    /* Бутони за действие – видими и големи */
+    .action-buttons {
+        display: flex !important;
+        flex-wrap: wrap !important;
+        justify-content: center !important;
+        gap: 8px !important;
+        background: #000000cc !important;
+        border-radius: 60px !important;
+        padding: 8px !important;
+        margin-top: 12px !important;
+    }
+    .battle-btn {
+        background: #daa520 !important;
+        border: 1px solid white !important;
+        border-radius: 40px !important;
+        color: black !important;
+        font-weight: bold !important;
+        font-size: 12px !important;
+        padding: 5px 12px !important;
+        min-width: 70px !important;
+    }
+    .attack-btn {
+        background: #ff6600 !important;
+        color: white !important;
+    }
+
+    /* Лог за битката – да не заема много място */
+    .battle-log {
+        max-height: 100px !important;
+        font-size: 10px !important;
+        padding: 4px !important;
+    }
+
+    /* Бутон за затваряне – да се вижда */
+    .close-battle-btn {
+        width: 28px !important;
+        height: 28px !important;
+        font-size: 14px !important;
+        top: 4px !important;
+        left: 4px !important;
+        background: rgba(0,0,0,0.7) !important;
+        border: 1px solid #ff8888 !important;
+    }
+}
+/* ============================================================
+   МОБИЛНА ОПТИМИЗАЦИЯ – ФОКУС ВЪРХУ ЛЕНТАТА С ГЕРОИ (5 СЛОТА)
+   ============================================================ */
+
+@media (max-width: 768px) {
+    /* Контейнерът на лентата с любими – да заема цялата ширина */
+    .favorite-bar {
+        display: flex !important;
+        flex-direction: row !important;
+        justify-content: space-around !important;
+        gap: 6px !important;
+        padding: 8px 4px !important;
+        overflow-x: visible !important;  /* няма нужда от скрол, защото са точно 5 */
+        flex-wrap: nowrap !important;
+    }
+
+    /* Всеки слот – да тежи еднакво и да има достатъчно място */
+    .favorite-slot {
+        flex: 1 !important;
+        min-width: 0 !important;        /* позволява свиване */
+        max-width: none !important;
+        min-height: auto !important;
+        padding: 6px 2px !important;
+        border-radius: 12px !important;
+    }
+
+    /* Иконка на героя (или портрет) */
+    .favorite-slot .hero-icon {
+        font-size: 24px !important;
+        margin-bottom: 2px !important;
+    }
+
+    /* Изображение на портрет */
+    .favorite-slot img {
+        width: 40px !important;
+        height: 40px !important;
+        border-radius: 50% !important;
+        margin-bottom: 2px !important;
+    }
+
+    /* Име на героя – да се пренася на нов ред, ако е дълго */
+    .favorite-slot .hero-name {
+        font-size: 10px !important;
+        white-space: normal !important;
+        word-break: break-word !important;
+        line-height: 1.2 !important;
+        max-width: 100% !important;
+        overflow: visible !important;
+        text-overflow: clip !important;
+    }
+
+    /* Допълнителна информация (ниво, сила) */
+    .favorite-slot .hero-level-power {
+        font-size: 8px !important;
+        white-space: nowrap !important;
+        overflow-x: hidden !important;
+        text-overflow: ellipsis !important;
+        max-width: 100% !important;
+    }
+
+    /* Статистики (❤️, 💰, ⚔️) */
+    .favorite-slot .hero-stats {
+        display: flex !important;
+        justify-content: center !important;
+        gap: 4px !important;
+        font-size: 8px !important;
+        margin-top: 2px !important;
+    }
+    .favorite-slot .hero-stats span {
+        font-size: 8px !important;
+    }
+
+    /* Ленти за живот и опит */
+    .favorite-slot .hp-bar, .favorite-slot .xp-bar {
+        height: 4px !important;
+        margin: 2px 0 !important;
+    }
+
+    /* Бутон за AUTO/MANUAL – да е по-малък */
+    .favorite-slot .auto-badge {
+        font-size: 7px !important;
+        padding: 1px 4px !important;
+    }
+
+    /* Сърце (премахване от любими) – по-малко */
+    .favorite-slot button:first-of-type {
+        font-size: 10px !important;
+        top: 2px !important;
+        right: 2px !important;
+    }
+
+    /* Празен слот */
+    .favorite-slot.empty {
+        font-size: 14px !important;
+        justify-content: center !important;
+        align-items: center !important;
+    }
+}
+
+/* Още по-малки телефони (под 480px) – още по-компактно */
+@media (max-width: 480px) {
+    .favorite-slot {
+        padding: 4px 1px !important;
+    }
+    .favorite-slot .hero-icon {
+        font-size: 20px !important;
+    }
+    .favorite-slot img {
+        width: 32px !important;
+        height: 32px !important;
+    }
+    .favorite-slot .hero-name {
+        font-size: 9px !important;
+    }
+    .favorite-slot .hero-level-power {
+        font-size: 7px !important;
+    }
+    .favorite-slot .hero-stats span {
+        font-size: 7px !important;
+    }
+}
+
+/* Долен панел с бутони – подобрен скрол и по-големи зони за натискане */
+@media (max-width: 768px) {
+    #bottom-controls {
+        padding: 6px 8px !important;
+        gap: 6px !important;
+    }
+    .icon-btn, .next-turn-btn {
+        font-size: 22px !important;
+        padding: 4px 10px !important;
+        margin-right: 0 !important;
+    }
+    .next-turn-btn {
+        font-size: 14px !important;
+        padding: 4px 12px !important;
+    }
+  
+}
+
+/* Летопис – по-четим на телефон */
+@media (max-width: 768px) {
+    .chronicle-event {
+        flex-wrap: wrap !important;
+        gap: 4px !important;
+    }
+    .chronicle-text {
+        font-size: 11px !important;
+        line-height: 1.3 !important;
+    }
+    .chronicle-time {
+        font-size: 9px !important;
+        white-space: normal !important;
+    }
+    .chronicle-buttons {
+        justify-content: center !important;
+    }
+    .chronicle-btn {
+        padding: 4px 8px !important;
+        font-size: 10px !important;
+    }
+}
+
+/* Ляв панел (профил на героя) на телефон – да не е твърде голям */
+@media (max-width: 768px) {
+    #active-character-profile {
+        font-size: 12px !important;
+    }
+    #active-character-profile div {
+        margin-bottom: 4px !important;
+    }
+    .hero-portrait-img {
+        width: 50px !important;
+        height: 50px !important;
+    }
+}
+@media (max-width: 768px) {
+    .top-bar-controls .new-game-menu-container {
+        display: none !important;
+    }
+}
+/* На десктоп – скриваме мобилния бутон */
+@media (min-width: 769px) {
+    .bottom-mobile-only {
+        display: none !important;
+    }
+}
+
+/* На телефон – скриваме горния бутон за нова игра */
+@media (max-width: 768px) {
+    .top-bar-controls .new-game-menu-container {
+        display: none !important;
+    }
+}
+#save-indicator { background: transparent !important; border: none !important; }
+
+body.season-spring { background: linear-gradient(180deg, #0a2a4a 0%, #1a4a3a 100%); }
+body.season-summer { background: linear-gradient(180deg, #0a2a4a 0%, #2a3a0a 100%); }
+body.season-autumn { background: linear-gradient(180deg, #0a2a4a 0%, #3a2a0a 100%); }
+body.season-winter { background: linear-gradient(180deg, #0a2a4a 0%, #0a1a3a 100%); }
