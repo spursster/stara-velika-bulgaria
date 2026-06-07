@@ -808,5 +808,23 @@
         }
     })();
 </script>
+ <script>
+(function() {
+    // Запазваме копие на текущите региони на играча
+    let playerRegionsBackup = JSON.stringify(window.playerRegions);
+    
+    setInterval(() => {
+        const current = JSON.stringify(window.playerRegions);
+        if (current !== playerRegionsBackup) {
+            playerRegionsBackup = current;
+            const mapModal = document.getElementById('interactive-map-modal');
+            if (mapModal && typeof window.refreshMap === 'function') {
+                window.refreshMap();
+                console.log("🔄 Интерактивната карта е опреснена автоматично след промяна на регионите.");
+            }
+        }
+    }, 1000); // проверява всяка секунда
+})();
+</script>
 </body>
 </html>
