@@ -104,6 +104,7 @@
 <script src="troopsData.js"></script>
 <script src="PersonalityTraits.js"></script>
 <script src="classes.js"></script>
+<script src="items.js"></script>
 
 
 <!-- 2. ОСНОВНИ СИСТЕМИ (RPG, ЕВОЛЮЦИЯ) -->
@@ -592,56 +593,7 @@
         };
     }
 
-    // ==================== Lazy loading на items.js ====================
-    let itemsLoaded = false;
-    let itemsLoading = null;
-    window.loadItems = function() {
-        if (itemsLoaded) return Promise.resolve();
-        if (itemsLoading) return itemsLoading;
-        itemsLoading = new Promise((resolve, reject) => {
-            const script = document.createElement('script');
-            script.src = 'items.js';
-            script.onload = () => {
-                itemsLoaded = true;
-                console.log("✅ items.js зареден lazy");
-                resolve();
-            };
-            script.onerror = () => reject(new Error("Грешка при зареждане на items.js"));
-            document.head.appendChild(script);
-        });
-        return itemsLoading;
-    };
-
-    // Прокси за функции, които разчитат на items.js
-    const originalToggleTreasury = window.toggleTreasury;
-    if (originalToggleTreasury) {
-        window.toggleTreasury = async function(...args) {
-            await window.loadItems();
-            return originalToggleTreasury(...args);
-        };
-    }
-    const originalAutoEquipHero = window.autoEquipHero;
-    if (originalAutoEquipHero) {
-        window.autoEquipHero = async function(...args) {
-            await window.loadItems();
-            return originalAutoEquipHero(...args);
-        };
-    }
-    const originalGetInventoryBonuses = window.getInventoryBonuses;
-    if (originalGetInventoryBonuses) {
-        window.getInventoryBonuses = async function(...args) {
-            await window.loadItems();
-            return originalGetInventoryBonuses(...args);
-        };
-    }
-    const originalCheckSetCompletion = window.checkSetCompletion;
-    if (originalCheckSetCompletion) {
-        window.checkSetCompletion = async function(...args) {
-            await window.loadItems();
-            return originalCheckSetCompletion(...args);
-        };
-    }
-
+   
    
 })();
 </script>
