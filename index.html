@@ -827,14 +827,13 @@
 })();
 </script>
 
-    <script>
+<script>
 (function() {
     // Кеш за генерираните текстури (по тип)
     const textureCache = {};
 
     // Генерира процедурна текстура според тип
     function generateTexture(type, width = 400, height = 200) {
-        // Ако вече сме генерирали за този тип, връщаме кешираната
         if (textureCache[type]) return textureCache[type];
         
         const canvas = document.createElement('canvas');
@@ -844,7 +843,6 @@
         
         switch(type) {
             case 'battle':
-                // Каменна текстура – тъмна, зърнеста, с пукнатини
                 const imgData = ctx.getImageData(0, 0, width, height);
                 for (let i = 0; i < imgData.data.length; i += 4) {
                     let gray = 30 + Math.random() * 70;
@@ -864,7 +862,6 @@
                 }
                 break;
             case 'diplomacy':
-                // Пергамент
                 const grad = ctx.createLinearGradient(0, 0, width, height);
                 grad.addColorStop(0, '#d2b48c');
                 grad.addColorStop(1, '#c2a070');
@@ -882,7 +879,6 @@
                 }
                 break;
             case 'mystic':
-                // Мистична – тъмно лилаво със звезди и мъгла
                 const grad2 = ctx.createLinearGradient(0, 0, width, height);
                 grad2.addColorStop(0, '#1a0a3a');
                 grad2.addColorStop(1, '#2a1a5a');
@@ -907,7 +903,6 @@
                 }
                 break;
             default:
-                // Стандартен шум
                 const noiseData = ctx.getImageData(0, 0, width, height);
                 for (let i = 0; i < noiseData.data.length; i += 4) {
                     let v = 80 + Math.random() * 100;
@@ -919,11 +914,10 @@
                 ctx.putImageData(noiseData, 0, 0);
         }
         const dataUrl = canvas.toDataURL();
-        textureCache[type] = dataUrl; // кешираме
+        textureCache[type] = dataUrl;
         return dataUrl;
     }
 
-    // Определя тип събитие по текста
     function getEventType(text) {
         const lower = text.toLowerCase();
         if (lower.includes('битка') || lower.includes('⚔️') || lower.includes('нападение')) return 'battle';
@@ -932,16 +926,13 @@
         return 'default';
     }
 
-    // Обновява фоновете на всички събития
     function updateChronicleBackgrounds() {
         const events = document.querySelectorAll('#eventsListContainer .chronicle-event');
         events.forEach(event => {
             const textElem = event.querySelector('.chronicle-text');
             if (!textElem) return;
-            const text = textElem.innerText;
-            const type = getEventType(text);
+            const type = getEventType(textElem.innerText);
             const bgUrl = generateTexture(type);
-            // Задаваме фон и смесваме с тъмен цвят за четимост
             event.style.backgroundImage = `url(${bgUrl})`;
             event.style.backgroundSize = 'cover';
             event.style.backgroundPosition = 'center';
@@ -950,52 +941,20 @@
         });
     }
 
-    // Възстановява оригиналните фонове
-    function restoreOriginalBackgrounds() {
-        const events = document.querySelectorAll('#eventsListContainer .chronicle-event');
-        events.forEach(event => {
-            event.style.backgroundImage = '';
-            event.style.backgroundColor = '';
-            event.style.backgroundBlendMode = '';
-        });
-    }
-
-    // Наблюдаваме за нови събития
     let observer = null;
     function startObserver() {
         if (observer) observer.disconnect();
         const container = document.getElementById('eventsListContainer');
         if (!container) return;
-        observer = new MutationObserver(() => {
-            updateChronicleBackgrounds();
-        });
+        observer = new MutationObserver(() => updateChronicleBackgrounds());
         observer.observe(container, { childList: true, subtree: true });
     }
 
-    // Инициализация при зареждане
     function initProceduralBackgrounds() {
         updateChronicleBackgrounds();
         startObserver();
-        // Добавяме малък панел с бутони (може да се скрие, ако пречи)
-        if (!document.getElementById('bg-control-panel')) {
-            const panel = document.createElement('div');
-            panel.id = 'bg-control-panel';
-            panel.style.cssText = 'position:fixed; bottom:20px; right:20px; z-index:99999; background:rgba(0,0,0,0.7); border-radius:40px; padding:6px; display:flex; gap:8px;';
-            panel.innerHTML = `
-                <button id="refresh-bg-btn" style="background:#daa520; border:none; border-radius:30px; padding:4px 12px; color:#000; font-weight:bold; cursor:pointer;">🎨 Обнови фонове</button>
-                <button id="restore-bg-btn" style="background:#2c1a0c; border:1px solid #d4af37; border-radius:30px; padding:4px 12px; color:#ffdd99; cursor:pointer;">↺ Възстанови</button>
-            `;
-            document.body.appendChild(panel);
-            document.getElementById('refresh-bg-btn').onclick = () => {
-                // Изчистваме кеша, за да се генерират нови
-                for (let key in textureCache) delete textureCache[key];
-                updateChronicleBackgrounds();
-            };
-            document.getElementById('restore-bg-btn').onclick = () => restoreOriginalBackgrounds();
-        }
     }
 
-    // Стартираме, когато DOM е готов
     if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', initProceduralBackgrounds);
     } else {
