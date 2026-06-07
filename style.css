@@ -1943,3 +1943,65 @@ body.season-winter { background: linear-gradient(180deg, #0a2a4a 0%, #0a1a3a 100
     .favorite-slot .hero-icon { font-size: 18px; }
     .favorite-slot .hero-name { font-size: 8px; }
 }
+/* ========== ПРИНУДИТЕЛЕН ТРИКОЛОНЕН ИЗГЛЕД ЗА ВСИЧКИ УСТРОЙСТВА (ВКЛ. ТЕЛЕФОНИ) ========== */
+/* Отменяме всички стари медийни заявки, които развалят оформлението */
+@media (max-width: 1024px), (max-width: 768px), (max-width: 600px), (max-width: 480px) {
+    /* Възстановяваме грид оформлението за всички екрани */
+    #game-container {
+        display: grid !important;
+        grid-template-columns: 180px 1fr 220px !important;
+        gap: 8px !important;
+        padding: 8px !important;
+        height: 100vh !important;
+        overflow: hidden !important;
+        margin: 0 !important;
+        max-width: none !important;
+    }
+
+    /* Показваме страничните панели (старите медийни заявки ги скриват) */
+    #sidebar-left, #sidebar-right {
+        display: flex !important;
+        order: 0 !important;
+    }
+
+    /* Коригираме ширината за много малки екрани */
+    @media (max-width: 550px) {
+        #game-container {
+            grid-template-columns: 100px 1fr 120px !important;
+        }
+    }
+
+    /* Уверяваме се, че лентата с любими герои вътре в левия панел е вертикална */
+    .favorite-bar {
+        flex-direction: column !important;
+        gap: 6px !important;
+    }
+
+    .favorite-slot {
+        min-height: 50px !important;
+        padding: 4px 6px !important;
+    }
+
+    /* Централният панел да има вертикално подреждане */
+    #game-main-area {
+        display: flex !important;
+        flex-direction: column !important;
+        gap: 12px !important;
+        overflow-y: auto !important;
+    }
+
+    /* Летописът да заема подходяща височина */
+    #unifiedChronicle {
+        max-height: 35vh !important;
+    }
+
+    /* Бутоните в десния панел да не се разтягат прекалено */
+    .command-buttons button {
+        font-size: 0.65rem !important;
+        padding: 4px 8px !important;
+    }
+    .next-turn-btn {
+        font-size: 0.8rem !important;
+        padding: 4px 10px !important;
+    }
+}
