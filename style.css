@@ -798,6 +798,107 @@ html, body {
     color: #ccc;
     max-width: 80%;
 }
+/* ========== АДАПТИВНИ МОДАЛИ ЗА ТЕЛЕФОНИ (LANDSCAPE) ========== */
+@media (max-width: 900px) {
+    /* Общи правила за всички модали */
+    .modal-content,
+    .glass-panel,
+    #barracks-screen > div,
+    #regions-map-overlay > div,
+    #hero-rpg-modal > div,
+    #skills-ui-modal > div,
+    #elite-heroes-modal > div,
+    #diplomacy-hub-modal .modal-content,
+    #wm-marriage-modal .wm-container,
+    #treasury-overlay > div,
+    #event-overlay-modal > div,
+    .market-modal .modal-content,
+    .ultimate-battle .battle-container {
+        width: 95% !important;
+        max-width: 95% !important;
+        max-height: 90vh !important;
+        padding: 12px !important;
+        overflow-y: auto !important;
+    }
+    
+    /* Битка – специфични корекции */
+    .hero-card, .enemy-card {
+        width: 140px !important;
+        padding: 6px !important;
+    }
+    .hero-portrait {
+        width: 40px !important;
+        height: 40px !important;
+    }
+    .hero-icon {
+        font-size: 28px !important;
+    }
+    .battle-btn {
+        padding: 4px 10px !important;
+        font-size: 0.7rem !important;
+    }
+    .battle-log {
+        max-height: 100px !important;
+        font-size: 10px !important;
+    }
+    .action-buttons {
+        gap: 6px !important;
+        flex-wrap: wrap !important;
+    }
+
+    /* Казарми – таблици и карти */
+    .barracks-tabs {
+        flex-wrap: wrap !important;
+    }
+    .troop-card {
+        min-width: 140px !important;
+    }
+    .elite-hero-card {
+        width: 90px !important;
+        min-width: 70px !important;
+    }
+
+    /* Дипломация – таблица */
+    #diplomacy-table-body td,
+    #diplomacy-table-body th {
+        padding: 8px 4px !important;
+        font-size: 0.7rem !important;
+    }
+    .desktop-only {
+        display: none !important;
+    }
+
+    /* Летопис – повече редове, по-малък шрифт */
+    .chronicle-event {
+        padding: 4px 6px !important;
+        gap: 6px !important;
+    }
+    .chronicle-text {
+        font-size: 10px !important;
+    }
+    .chronicle-time {
+        font-size: 8px !important;
+        white-space: normal !important;
+    }
+    .chronicle-btn {
+        padding: 2px 8px !important;
+        font-size: 9px !important;
+    }
+}
+
+/* Още по-малки екрани (телефони под 600px ширина) */
+@media (max-width: 600px) {
+    .hero-card, .enemy-card {
+        width: calc(50% - 8px) !important;
+        min-width: 100px !important;
+    }
+    .troop-card {
+        min-width: 120px !important;
+    }
+    .elite-hero-card {
+        width: 80px !important;
+    }
+}
 /* Сезонни теми (оставяме ги) */
 body.season-spring { background: linear-gradient(180deg, #0a2a4a 0%, #1a4a3a 100%); }
 body.season-summer { background: linear-gradient(180deg, #0a2a4a 0%, #2a3a0a 100%); }
