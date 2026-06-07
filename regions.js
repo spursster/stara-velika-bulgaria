@@ -104,7 +104,7 @@ window.openRegionsMap = function() {
     });
 
     modal.innerHTML = `
-        <div style="background: rgba(10,10,20,0.95); border: 2px solid #d4af37; border-radius: 28px; max-width: 95%; max-height: 90%; width: 100%; display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 20px 40px rgba(0,0,0,0.6);">
+     <div style="background: rgba(10,10,20,0.95); border: 2px solid #d4af37; border-radius: 0; width: 100%; height: 100%; max-width: 100%; max-height: 100%; display: flex; flex-direction: column; overflow: auto; box-shadow: none; margin: 0;">
             <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #d4af37; padding: 12px 20px; background: rgba(0,0,0,0.3); flex-shrink: 0;">
                 <button id="closeMapBtnTopLeft" style="background: rgba(255,80,80,0.2); border: 1px solid #ff8888; color: #ff8888; font-size: 20px; width: 36px; height: 36px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: 0.2s;" onmouseover="this.style.background='rgba(255,80,80,0.4)';" onmouseout="this.style.background='rgba(255,80,80,0.2)';">✕</button>
                 <h2 style="color: #ffd700; margin: 0; font-size: 1.4rem; text-align: center; flex: 1;">🗺️ ИНТЕРАКТИВНА КАРТА</h2>
