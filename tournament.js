@@ -386,15 +386,31 @@ window.tournament = (function() {
             }
         }
         let finalMsg = `🏆 **Шампион на Турнира на шампионите** 🏆\n${winner.name} спечели турнира!`;
+        
+        // Награда – божествен питомец
         if (trueWinnerObj) {
             let petIds = Object.keys(window.divinePets || {});
-            if (petIds.length) {
+            if (petIds.length > 0) {
                 let randomPet = petIds[Math.floor(Math.random() * petIds.length)];
                 trueWinnerObj.pet = randomPet;
+                // Добавяме информация за питомеца в rpgDatabase.petsDatabase, ако съществува
+                if (window.rpgDatabase && window.rpgDatabase.petsDatabase) {
+                    let petData = window.divinePets[randomPet];
+                    if (petData) {
+                        window.rpgDatabase.petsDatabase[randomPet] = {
+                            name: petData.name,
+                            icon: petData.icon,
+                            desc: petData.desc
+                        };
+                    }
+                }
+                // Автоматично екипиране, ако героят е в auto режим
                 if (trueWinnerObj.isAuto && typeof window.autoEquipHero === 'function') {
                     window.autoEquipHero(trueWinnerObj);
                 }
                 finalMsg += ` Награда: ${winner.name} получава ${window.divinePets[randomPet].name}! 🐉`;
+            } else {
+                finalMsg += ` Награда: За съжаление няма налични божествени питомци в момента.`;
             }
             // Записваме в класацията с trueWinnerObj
             if (window.gameTime) {
@@ -417,10 +433,23 @@ window.tournament = (function() {
                     null
                 );
             }
+            finalMsg += ` (Наградата не може да бъде присъдена поради техническа грешка.)`;
         }
+        
         log(finalMsg, "🏆");
         tournamentActive = false;
         saveLastTournamentYear();
+        
+        // Опресняване на UI, за да се види новият питомец
+        if (typeof window.updateStrongestHeroUI === 'function') {
+            window.updateStrongestHeroUI();
+        }
+        if (typeof window.renderFavoriteHeroesBar === 'function') {
+            window.renderFavoriteHeroesBar();
+        }
+        if (typeof window.updateAllUI === 'function') {
+            window.updateAllUI();
+        }
         return;
     }
     
