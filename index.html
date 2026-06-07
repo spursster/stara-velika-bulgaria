@@ -357,18 +357,18 @@
         if (typeof window.displayEvents === 'function') window.displayEvents();
         else console.log("Летопис:", title, desc);
     };
-    window.displayEvents = function() {
-        const cont = document.getElementById('eventsListContainer');
-        if (!cont) return;
-        const events = window.worldEvents || [];
-        if (!events.length) { cont.innerHTML = '<div style="text-align:center; color:#888;">⏳ Няма събития</div>'; return; }
-        let html = '';
-        events.slice(0, 7).forEach(ev => {
-            html += `<div class="chronicle-event"><div class="chronicle-icon">${ev.icon || '📜'}</div><div class="chronicle-text"><strong>${ev.title}</strong> — ${ev.description}</div><div class="chronicle-time">${ev.time}</div></div>`;
-        });
-        if (events.length > 7) html += `<button class="load-more-btn" onclick="window.displayEventsFull()">📖 Зареди още ${events.length-7}</button>`;
-        cont.innerHTML = html;
-    };
+ window.displayEvents = function() {
+    const cont = document.getElementById('eventsListContainer');
+    if (!cont) return;
+    const events = window.worldEvents || [];
+    if (!events.length) { cont.innerHTML = '<div style="text-align:center; color:#888;">⏳ Няма събития</div>'; return; }
+    let html = '';
+    events.slice(0, 10).forEach(ev => {
+        html += `<div class="chronicle-event"><div class="chronicle-icon">${ev.icon || '📜'}</div><div class="chronicle-text"><strong>${ev.title}</strong> — ${ev.description}</div><div class="chronicle-time">${ev.time}</div></div>`;
+    });
+    if (events.length > 10) html += `<button class="load-more-btn" onclick="window.displayEventsFull()">📖 Зареди още ${events.length-10}</button>`;
+    cont.innerHTML = html;
+};
     window.displayEventsFull = function() {
         const cont = document.getElementById('eventsListContainer');
         if (!cont) return;
