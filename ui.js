@@ -24,17 +24,19 @@ window.setSelectedHero = function(hero) {
 window.getStrongestHero = function() {
     let strongest = null;
     let maxPower = -1;
-    if (!window.worldData || !window.worldData.clans) return window.currentHero || null;
-    for (let id in window.worldData.clans) {
-        let hero = window.worldData.clans[id];
-        if (!hero.isJoined || hero.isAlive === false) continue;
-        let power = (hero.heroPower || 100) + (hero.armySize || 0) / 10 + (hero.level || 1) * 5;
-        if (power > maxPower) {
-            maxPower = power;
-            strongest = hero;
+    if (window.worldData && window.worldData.clans) {
+        for (let id in window.worldData.clans) {
+            let hero = window.worldData.clans[id];
+            if (!hero.isJoined || hero.isAlive === false) continue;
+            let power = (hero.heroPower || 100) + (hero.armySize || 0) / 10 + (hero.level || 1) * 5;
+            if (power > maxPower) {
+                maxPower = power;
+                strongest = hero;
+            }
         }
     }
-    if (!strongest && window.currentHero) strongest = window.currentHero;
+    // Само в соло режим използваме currentHero като резерв
+    if (!strongest && window.gameMode === 'solo' && window.currentHero) strongest = window.currentHero;
     return strongest;
 };
 // Показва хоризонтален списък с до 5 типа войски, сортирани по обща сила (брой * атака)
@@ -153,15 +155,16 @@ window.addHeroLog = function(hero, icon, message) {
     hero.actionLog.unshift({ icon, message, time: Date.now() });
     if (hero.actionLog.length > 15) hero.actionLog.pop();
     
-    let currentDisplayHero = null;
-    if (window.gameMode === 'solo' && window.currentHero) {
-        currentDisplayHero = window.currentHero;
-    } else {
-        currentDisplayHero = window.getSelectedHero ? window.getSelectedHero() : (window.getStrongestHero ? window.getStrongestHero() : null);
-    }
-    if (hero === currentDisplayHero && typeof window.updateCharacterUI === 'function') {
-        window.updateCharacterUI(hero);
-    }
+  let currentDisplayHero = null;
+if (window.gameMode === 'solo' && window.currentHero) {
+    currentDisplayHero = window.currentHero;
+} else {
+    currentDisplayHero = window.getSelectedHero ? window.getSelectedHero() : (window.getStrongestHero ? window.getStrongestHero() : null);
+}
+// Сравняваме по id или име, а не по референция (заради възможни копия)
+if (hero && currentDisplayHero && (hero.id === currentDisplayHero.id || hero.name === currentDisplayHero.name) && typeof window.updateCharacterUI === 'function') {
+    window.updateCharacterUI(hero);
+}
     
     if (typeof window.updateAllUI === 'function') {
         window.updateAllUI();
@@ -406,10 +409,10 @@ function getAllHeroes() {
             }
         }
     }
-    if (heroes.length === 0 && window.currentHero && window.currentHero.isAlive !== false) {
-        heroes.push({
-            id: window.currentHero.clan || "hero",
-            name: window.currentHero.name || "Воевода",
+  if (heroes.length === 0 && window.gameMode === 'solo' && window.currentHero && window.currentHero.isAlive !== false) {
+    heroes.push({
+        id: window.currentHero.clan || "hero",
+        name: window.currentHero.name || "Воевода",
             level: window.currentHero.level || 1,
             className: window.currentHero.currentClass || "Багатур",
             xp: window.currentHero.xp || 0,
