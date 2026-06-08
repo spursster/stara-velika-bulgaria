@@ -7,6 +7,10 @@ window.tournament = (function() {
     const MIN_YEARS_BETWEEN_TOURNAMENTS = 20;
     const MATCHES_PER_TURN = 3;
 
+    function getAbsoluteYear() {
+    if (!window.gameTime) return 0;
+    return window.gameTime.era === "пр.н.е." ? -window.gameTime.year : window.gameTime.year;
+}
     let tournamentActive = false;
     let currentRound = 0;
     let roundMatches = [];
@@ -37,25 +41,19 @@ window.tournament = (function() {
     } catch(e) {}
 
 function saveLastTournamentYear() {
-    if (window.gameTime) {
-        // Запазваме годината, след която може да започне нов турнир
-        let currentYear = window.gameTime.year;
-        // Ако сме пр.н.е., използваме отрицателна стойност за сравнение
-        let absoluteYear = (window.gameTime.era === "пр.н.е.") ? -currentYear : currentYear;
-        let nextAllowedYear = absoluteYear + MIN_YEARS_BETWEEN_TOURNAMENTS;
-        lastTournamentYear = nextAllowedYear;
-        localStorage.setItem('tournament_last_year', lastTournamentYear);
-        autoStartEnabled = false;
-        autoStartCounter = 0;
-    }
+    if (!window.gameTime) return;
+    const currentAbs = getAbsoluteYear();
+    lastTournamentYear = currentAbs + MIN_YEARS_BETWEEN_TOURNAMENTS;
+    localStorage.setItem('tournament_last_year', lastTournamentYear);
+    autoStartEnabled = false;
+    autoStartCounter = 0;
 }
 
 function canStartTournament() {
     if (!window.gameTime) return false;
     if (lastTournamentYear === null) return true;
-    let currentYear = window.gameTime.year;
-    let absoluteYear = (window.gameTime.era === "пр.н.е.") ? -currentYear : currentYear;
-    return absoluteYear >= lastTournamentYear;
+    const currentAbs = getAbsoluteYear();
+    return currentAbs >= lastTournamentYear;
 }
 
     function getAllLivingHeroes() {
@@ -447,15 +445,12 @@ function canStartTournament() {
     }
 
     function prepareTournament() {
-        if (!canStartTournament()) {
-            let yearsLeft = MIN_YEARS_BETWEEN_TOURNAMENTS - (window.gameTime.year - lastTournamentYear);
-            if (yearsLeft > 0) log(`Турнирът може да се проведе след ${yearsLeft} години.`, "⏳");
-            return false;
-        }
-        if (tournamentActive) {
-            log("Турнир вече е активен!", "⚠️");
-            return false;
-        }
+  if (!canStartTournament()) {
+    const currentAbs = getAbsoluteYear();
+    let yearsLeft = lastTournamentYear - currentAbs;
+    if (yearsLeft > 0) log(`Турнирът може да се проведе след ${yearsLeft} години.`, "⏳");
+    return false;
+}
 
         let players = getAllLivingHeroes();
         let civs = getCivilizationChampions();
