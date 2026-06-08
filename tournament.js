@@ -89,7 +89,7 @@ window.tournament = (function() {
         }));
     }
 
-    // === НОВА ФУНКЦИЯ ЗА ЖЕНСКИ ВЛАДЕТЕЛКИ ===
+    // === ФУНКЦИЯ ЗА ЖЕНСКИ ВЛАДЕТЕЛКИ ===
     function getRandomFemaleRulers(count) {
         if (!window.femaleWorldRulers || window.femaleWorldRulers.length === 0) return [];
         const shuffled = [...window.femaleWorldRulers];
@@ -449,7 +449,7 @@ window.tournament = (function() {
 
         let players = getAllLivingHeroes();
         let civs = getCivilizationChampions();
-        let femaleRulers = getRandomFemaleRulers(8); // 8 владетелки
+        let femaleRulers = getRandomFemaleRulers(8);
         let participants = [...players, ...civs, ...femaleRulers];
         log(`📋 Събрани ${participants.length} участници.`);
 
@@ -523,7 +523,7 @@ window.tournament = (function() {
     };
 })();
 
-// Класация на победителите (ако липсва)
+// Класация на победителите
 window.tournamentWinners = window.tournamentWinners || [];
 try {
     const saved = localStorage.getItem('tournament_winners');
