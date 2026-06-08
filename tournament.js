@@ -30,23 +30,33 @@ window.tournament = (function() {
     try {
         let saved = localStorage.getItem('tournament_last_year');
         if (saved) lastTournamentYear = parseInt(saved);
-        if (lastTournamentYear !== null) autoStartEnabled = false;
+       if (lastTournamentYear !== null) {
+    autoStartEnabled = false;
+    autoStartCounter = 0;
+}
     } catch(e) {}
 
-    function saveLastTournamentYear() {
-        if (window.gameTime) {
-            lastTournamentYear = window.gameTime.year;
-            localStorage.setItem('tournament_last_year', lastTournamentYear);
-            autoStartEnabled = false;
-            autoStartCounter = 0;
-        }
+function saveLastTournamentYear() {
+    if (window.gameTime) {
+        // Запазваме годината, след която може да започне нов турнир
+        let currentYear = window.gameTime.year;
+        // Ако сме пр.н.е., използваме отрицателна стойност за сравнение
+        let absoluteYear = (window.gameTime.era === "пр.н.е.") ? -currentYear : currentYear;
+        let nextAllowedYear = absoluteYear + MIN_YEARS_BETWEEN_TOURNAMENTS;
+        lastTournamentYear = nextAllowedYear;
+        localStorage.setItem('tournament_last_year', lastTournamentYear);
+        autoStartEnabled = false;
+        autoStartCounter = 0;
     }
+}
 
-    function canStartTournament() {
-        if (!window.gameTime) return false;
-        if (lastTournamentYear === null) return true;
-        return (window.gameTime.year - lastTournamentYear) >= MIN_YEARS_BETWEEN_TOURNAMENTS;
-    }
+function canStartTournament() {
+    if (!window.gameTime) return false;
+    if (lastTournamentYear === null) return true;
+    let currentYear = window.gameTime.year;
+    let absoluteYear = (window.gameTime.era === "пр.н.е.") ? -currentYear : currentYear;
+    return absoluteYear >= lastTournamentYear;
+}
 
     function getAllLivingHeroes() {
         let heroes = [];
