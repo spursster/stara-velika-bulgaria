@@ -911,88 +911,187 @@ window.autoCheckSuccession = function() {
 };
 // ==================== ДИПЛОМАЦИЯ ХЪБ (ЦЕНТРАЛЕН ПАНЕЛ) ====================
 window.openDiplomacyHub = function() {
-    // Премахваме стар модал, ако има
     const oldModal = document.getElementById('diplomacy-hub-modal');
     if (oldModal) oldModal.remove();
 
-    // Създаваме нов модал
-    const modal = document.createElement('div');
-    modal.id = 'diplomacy-hub-modal';
-    modal.style.cssText = `
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background: rgba(0,0,0,0.85);
-        backdrop-filter: blur(8px);
-        z-index: 500000;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-family: 'Cinzel', serif;
-        padding: 15px;
-        box-sizing: border-box;
-    `;
-
-    // Вземаме отношенията (ако няма, инициализираме)
     if (!window.clanRelations || Object.keys(window.clanRelations).length === 0) {
         if (typeof window.initDiplomacy === 'function') window.initDiplomacy();
     }
     const relations = window.clanRelations || {};
+    const alliances = window.alliances || [];
+    const casusBelli = window.casusBelli || [];
 
-    // Генерираме редове на таблицата
-    let rows = '';
-    for (let clan in relations) {
-        let rel = Math.floor(relations[clan] || 50);
-        let color = rel >= 70 ? '#4caf50' : (rel >= 40 ? '#ffeb3b' : '#f44336');
-        let status = rel >= 70 ? 'Съюзник' : (rel >= 40 ? 'Неутрален' : 'Враждебен');
-        rows += `
-            <tr style="border-bottom: 1px solid #334466;">
-                <td style="padding:12px 8px; font-weight: bold;">${clan}</td>
-                <td style="padding:12px 8px; color:${color}; font-weight:bold;">${rel}%</td>
-                <td style="padding:12px 8px; display:none;" class="desktop-only">${status}</td>
-                <td style="padding:12px 8px; white-space: nowrap;">
-                    <button onclick="window.proposeMarriage('${clan}', 500, 50); document.getElementById('diplomacy-hub-modal')?.remove();" 
-                        style="margin:3px; padding:6px 12px; background:#2c5f2c; border:none; border-radius:20px; color:white; cursor:pointer;">💍 Брак</button>
-                    <button onclick="window.showAdvisorMsg('🎁 Подарък към ${clan} (в разработка)');" 
-                        style="margin:3px; padding:6px 12px; background:#b8860b; border:none; border-radius:20px; color:white; cursor:pointer;">🎁</button>
-                </td>
-            </tr>
-        `;
+    // Взимаме текущия клан на играча
+    let playerClan = null;
+    const hero = window.getDiplomacyHero ? window.getDiplomacyHero() : null;
+    if (hero) playerClan = hero.clan;
+
+    function renderRelationsTab() {
+        let rows = '';
+        for (let clan in relations) {
+            let rel = Math.floor(relations[clan] || 50);
+            let color = rel >= 70 ? '#4caf50' : (rel >= 40 ? '#ffeb3b' : '#f44336');
+            let status = rel >= 70 ? 'Съюзник' : (rel >= 40 ? 'Неутрален' : 'Враждебен');
+            rows += `
+                <tr style="border-bottom:1px solid #334466;">
+                    <td style="padding:12px 8px; font-weight:bold;">${clan}</td>
+                    <td style="padding:12px 8px; color:${color}; font-weight:bold;">${rel}%</td>
+                    <td style="padding:12px 8px;" class="desktop-only">${status}</td>
+                    <td style="padding:12px 8px; white-space:nowrap;">
+                        <button class="diplo-marriage-btn" data-clan="${clan}" style="margin:3px; padding:4px 8px; background:#2c5f2c; border:none; border-radius:20px; color:white; cursor:pointer;">💍 Брак</button>
+                        <button class="diplo-gift-btn" data-clan="${clan}" style="margin:3px; padding:4px 8px; background:#b8860b; border:none; border-radius:20px; color:white; cursor:pointer;">🎁 Подарък</button>
+                        ${playerClan ? `<button class="diplo-alliance-btn" data-clan="${clan}" style="margin:3px; padding:4px 8px; background:#2c5f2c; border:none; border-radius:20px; color:white; cursor:pointer;">🤝 Съюз</button>` : ''}
+                    </td>
+                </tr>
+            `;
+        }
+        if (!rows) rows = `<tr><td colspan="4" style="text-align:center; padding:40px; color:#777;">Няма данни за дипломатически отношения.</td></tr>`;
+        return `<table style="width:100%; border-collapse:collapse; color:#ddd; font-size:0.9rem;">
+            <thead><tr><th>Клан</th><th>Отношение</th><th class="desktop-only">Статус</th><th>Действия</th></tr></thead>
+            <tbody>${rows}</tbody>
+        </table>`;
     }
 
-    if (!rows) {
-        rows = `<tr><td colspan="4" style="text-align:center; padding:40px; color:#777;">Няма данни за дипломатически отношения.</td></tr>`;
+    function renderAlliancesTab() {
+        if (!playerClan) return '<div style="padding:20px; text-align:center; color:#aaa;">Няма активен клан.</div>';
+        const myAlliances = alliances.filter(a => a.clanA === playerClan || a.clanB === playerClan);
+        if (myAlliances.length === 0) return '<div style="padding:20px; text-align:center; color:#aaa;">Нямате активни съюзи. Отидете в "Отношения", за да предложите съюз.</div>';
+        let html = '<div style="display:flex; flex-direction:column; gap:10px;">';
+        myAlliances.forEach(a => {
+            const other = a.clanA === playerClan ? a.clanB : a.clanA;
+            const endYear = a.endYear || 'неопределен';
+            html += `
+                <div style="background:rgba(0,0,0,0.4); border-radius:16px; padding:12px; display:flex; justify-content:space-between; align-items:center;">
+                    <div><strong>🤝 ${other}</strong><br><span style="font-size:11px;">от ${a.startYear} г. до ${endYear} г.</span></div>
+                    <button class="break-alliance-btn" data-clan="${other}" style="background:#5a2a2a; border:none; border-radius:20px; padding:4px 12px; color:#ffaaaa; cursor:pointer;">💔 Развали</button>
+                </div>
+            `;
+        });
+        html += '</div>';
+        return html;
     }
 
-    modal.innerHTML = `
-        <div style="background: #0a0a2e; border: 2px solid #d4af37; border-radius: 24px; width: 90%; max-width: 1000px; max-height: 85vh; display: flex; flex-direction: column; overflow: hidden;">
-            <div style="padding: 15px 20px; background: #1a2538; border-bottom: 2px solid #d4af37; display: flex; justify-content: space-between; align-items: center;">
-                <h2 style="margin:0; color:#ffd700;">🕊️ ДИПЛОМАЦИЯ</h2>
-                <button onclick="this.closest('#diplomacy-hub-modal').remove()" style="background:#2c1a0c; border:1px solid #ff8888; color:#ff8888; width:36px; height:36px; border-radius:50%; font-size:20px; cursor:pointer;">✕</button>
-            </div>
-            <div style="padding: 15px; overflow-y: auto; flex: 1;">
-                <table style="width:100%; border-collapse: collapse; color:#ddd; font-size:0.9rem;">
-                    <thead style="position: sticky; top:0; background:#1e2a44;">
-                        <tr>
-                            <th style="padding:12px 8px; text-align:left;">Клан</th>
-                            <th style="padding:12px 8px;">Отношение</th>
-                            <th style="padding:12px 8px; display:none;" class="desktop-only">Статус</th>
-                            <th style="padding:12px 8px;">Действия</th>
-                        </tr>
-                    </thead>
-                    <tbody>${rows}</tbody>
-                </table>
-            </div>
-            <div style="padding:12px; background:#1a2538; text-align:center; font-size:0.8rem; color:#aaa;">
-                Отношенията се променят с вашите действия. Натиснете "Брак", за да предложите династичен съюз.
+    function renderCasusBelliTab() {
+        if (!playerClan) return '<div style="padding:20px; text-align:center; color:#aaa;">Няма активен клан.</div>';
+        const myCB = casusBelli.filter(cb => cb.aggressor === playerClan);
+        if (myCB.length === 0) return '<div style="padding:20px; text-align:center; color:#aaa;">Нямате активни казус бели. Те се получават, когато друг клан ви нападне или наруши територия.</div>';
+        let html = '<div style="display:flex; flex-direction:column; gap:10px;">';
+        myCB.forEach(cb => {
+            html += `
+                <div style="background:rgba(0,0,0,0.4); border-radius:16px; padding:12px;">
+                    <div><strong>⚔️ Срещу ${cb.target}</strong></div>
+                    <div style="font-size:11px;">Причина: ${cb.reason}</div>
+                    <div style="font-size:11px;">Изтича след: ${cb.expiresTurn - (window.gameTurn || 0)} хода</div>
+                    <button class="declare-war-cb-btn" data-target="${cb.target}" style="margin-top:8px; background:#7a2e1a; border:none; border-radius:20px; padding:4px 12px; color:white; cursor:pointer;">⚔️ ОБЯВИ ВОЙНА</button>
+                </div>
+            `;
+        });
+        html += '</div>';
+        return html;
+    }
+
+    const modalHtml = `
+        <div id="diplomacy-hub-modal" style="position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.85); backdrop-filter:blur(8px); z-index:500000; display:flex; align-items:center; justify-content:center; font-family:'Cinzel', serif; padding:15px; box-sizing:border-box;">
+            <div style="background:#0a0a2e; border:2px solid #d4af37; border-radius:24px; width:90%; max-width:1000px; max-height:85vh; display:flex; flex-direction:column; overflow:hidden;">
+                <div style="padding:15px 20px; background:#1a2538; border-bottom:2px solid #d4af37; display:flex; justify-content:space-between; align-items:center;">
+                    <h2 style="margin:0; color:#ffd700;">🕊️ ДИПЛОМАЦИЯ</h2>
+                    <button class="close-diplo-modal" style="background:#2c1a0c; border:1px solid #ff8888; color:#ff8888; width:36px; height:36px; border-radius:50%; font-size:20px; cursor:pointer;">✕</button>
+                </div>
+                <div style="display:flex; gap:10px; padding:10px 20px 0 20px; border-bottom:1px solid #3a2a1a;">
+                    <button class="diplo-tab-btn active" data-tab="relations">📜 Отношения</button>
+                    <button class="diplo-tab-btn" data-tab="alliances">🤝 Съюзи</button>
+                    <button class="diplo-tab-btn" data-tab="casus">⚔️ Казус бели</button>
+                </div>
+                <div id="diplo-tab-content" style="padding:20px; overflow-y:auto; flex:1;">
+                    ${renderRelationsTab()}
+                </div>
+                <div style="padding:12px; background:#1a2538; text-align:center; font-size:0.8rem; color:#aaa;">
+                    💡 Бракът подобрява отношенията и носи зестра. Съюзът изисква 60+ отношение и трае 10 години.
+                </div>
             </div>
         </div>
     `;
 
-    document.body.appendChild(modal);
-};
+    document.body.insertAdjacentHTML('beforeend', modalHtml);
+    const modal = document.getElementById('diplomacy-hub-modal');
 
+    // Затваряне
+    modal.querySelectorAll('.close-diplo-modal').forEach(btn => btn.onclick = () => modal.remove());
+    modal.addEventListener('click', (e) => { if (e.target === modal) modal.remove(); });
+
+    // Табове
+    const tabBtns = modal.querySelectorAll('.diplo-tab-btn');
+    const tabContent = modal.querySelector('#diplo-tab-content');
+    tabBtns.forEach(btn => {
+        btn.onclick = () => {
+            tabBtns.forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            const tab = btn.dataset.tab;
+            if (tab === 'relations') tabContent.innerHTML = renderRelationsTab();
+            else if (tab === 'alliances') tabContent.innerHTML = renderAlliancesTab();
+            else if (tab === 'casus') tabContent.innerHTML = renderCasusBelliTab();
+            attachDiploEventHandlers(modal);
+        };
+    });
+
+    function attachDiploEventHandlers(modalEl) {
+        // Брак
+        modalEl.querySelectorAll('.diplo-marriage-btn').forEach(btn => {
+            btn.onclick = () => {
+                const clan = btn.dataset.clan;
+                const cost = 500;
+                const successChance = 40;
+                window.proposeMarriage(clan, cost, successChance);
+                modalEl.remove();
+                setTimeout(() => window.openDiplomacyHub(), 500);
+            };
+        });
+        // Подарък
+        modalEl.querySelectorAll('.diplo-gift-btn').forEach(btn => {
+            btn.onclick = () => {
+                const clan = btn.dataset.clan;
+                const heroPay = window.getDiplomacyHero();
+                if (heroPay && heroPay.gold >= 200) {
+                    heroPay.gold -= 200;
+                    window.clanRelations[clan] = Math.min(100, (window.clanRelations[clan] || 50) + 15);
+                    if (window.addWorldEvent) window.addWorldEvent("🎁 ПОДАРЪК", `${heroPay.name} изпрати дарове на ${clan}. Отношенията се подобриха.`, "🎁");
+                    modalEl.remove();
+                    setTimeout(() => window.openDiplomacyHub(), 500);
+                } else {
+                    window.showAdvisorMsg("❌ Нямате 200 злато за подарък.");
+                }
+            };
+        });
+        // Предложение за съюз
+        modalEl.querySelectorAll('.diplo-alliance-btn').forEach(btn => {
+            btn.onclick = () => {
+                const clan = btn.dataset.clan;
+                if (window.proposeAlliance) window.proposeAlliance(clan);
+                else window.showAdvisorMsg("Системата за съюзи не е активирана.");
+                modalEl.remove();
+                setTimeout(() => window.openDiplomacyHub(), 500);
+            };
+        });
+        // Разваляне на съюз
+        modalEl.querySelectorAll('.break-alliance-btn').forEach(btn => {
+            btn.onclick = () => {
+                const clan = btn.dataset.clan;
+                if (window.breakAlliance) window.breakAlliance(clan);
+                modalEl.remove();
+                setTimeout(() => window.openDiplomacyHub(), 500);
+            };
+        });
+        // Обявяване на война от казус бели
+        modalEl.querySelectorAll('.declare-war-cb-btn').forEach(btn => {
+            btn.onclick = () => {
+                const target = btn.dataset.target;
+                if (window.declareWar) window.declareWar(target, 'casus_belli');
+                modalEl.remove();
+                setTimeout(() => window.openDiplomacyHub(), 500);
+            };
+        });
+    }
+    attachDiploEventHandlers(modal);
+};
 console.log("✅ diplomacy.js – добавена политическа система (съветници и борба за трон)");
 console.log("✅ diplomacy.js версия 8.1 зареден – без currentHero, с updateStrongestHeroUI и оправен брачен прозорец");
