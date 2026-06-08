@@ -317,5 +317,48 @@ setTimeout(() => {
             }
         }
     }
+    // ==================== ПОЛ И МЕСТОИМЕНИЯ ЗА ГЕРОИ ====================
+window.femaleHeroNames = [
+    "Теодора", "Ирина", "Елена", "Райна", "Светлана", "Мария", "Калина", "Бояна", 
+    "Десислава", "Цветана", "Клеопатра VII", "Анна", "Евдокия", "Магдалина", "София",
+    "Виктория", "Екатерина", "Александра", "Гана", "Румяна", "Грозданка", "Неда"
+];
+
+window.getHeroGender = function(hero) {
+    if (!hero || !hero.name) return "male";
+    const name = hero.name;
+    if (window.femaleHeroNames.some(fn => name.includes(fn) || name === fn)) {
+        return "female";
+    }
+    return "male";
+};
+
+window.getHeroPronoun = function(hero, form = "subject") {
+    const gender = hero.gender || window.getHeroGender(hero);
+    if (gender === "female") {
+        if (form === "subject") return "тя";
+        if (form === "object") return "я";
+        if (form === "possessive") return "ѝ";
+        if (form === "reflexive") return "се";
+        return "тя";
+    } else {
+        if (form === "subject") return "той";
+        if (form === "object") return "го";
+        if (form === "possessive") return "му";
+        if (form === "reflexive") return "се";
+        return "той";
+    }
+};
+
+// Автоматично задаване на gender при инициализация
+if (typeof window.initializeHeroRPGData === 'function') {
+    const originalInit = window.initializeHeroRPGData;
+    window.initializeHeroRPGData = function(hero) {
+        originalInit(hero);
+        if (hero && !hero.gender) {
+            hero.gender = window.getHeroGender(hero);
+        }
+    };
+}
     console.log("✅ characterEvolution.js зареден – инвестиционните съобщения са премахнати");
 }, 1000);
