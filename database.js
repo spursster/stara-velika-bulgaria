@@ -4,7 +4,7 @@
  * 13 РАВНОПРАВНИ КЛАНОВЕ
  * ВЕРСИЯ: 7.1 – ИНТЕГРИРАНА С CHRONICLE EVENTS
  */
-
+ -*- coding: utf-8 -*-
 window.bulgarianClans = {
     "Дуло": {
         heroes: [
