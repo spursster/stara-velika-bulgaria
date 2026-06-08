@@ -293,6 +293,65 @@ window.hireExistingHero = function(heroId, cost) {
     }
 };
 
+// ==================== 50 ЖЕНСКИ ИСТОРИЧЕСКИ ВЛАДЕТЕЛКИ (без поле dynasty) ====================
+window.femaleWorldRulers = [
+    // Античност (15)
+    { name: "Хатшепсут", country: "Египет", flag: "🇪🇬", power: 155, class: "Фараон", cost: 1250 },
+    { name: "Томирис", country: "Саки", flag: "🇰🇿", power: 145, class: "Воителка", cost: 1100 },
+    { name: "Артемизия I", country: "Кария", flag: "🇹🇷", power: 130, class: "Адмирал", cost: 1000 },
+    { name: "Зенобия", country: "Палмира", flag: "🇸🇾", power: 140, class: "Владетелка", cost: 1150 },
+    { name: "Боудица", country: "Британия", flag: "🇬🇧", power: 135, class: "Берсерк", cost: 1050 },
+    { name: "Мада", country: "Индия", flag: "🇮🇳", power: 125, class: "Рани", cost: 950 },
+    { name: "Семирамида", country: "Асирия", flag: "🇮🇶", power: 140, class: "Царица", cost: 1100 },
+    { name: "Амаласунта", country: "Италия", flag: "🇮🇹", power: 130, class: "Кралица", cost: 1000 },
+    { name: "Картли", country: "Грузия", flag: "🇬🇪", power: 120, class: "Царица", cost: 950 },
+    { name: "Маниа", country: "Лидия", flag: "🇹🇷", power: 125, class: "Владетелка", cost: 980 },
+    { name: "Олимпиада", country: "Епир", flag: "🇬🇷", power: 135, class: "Царица", cost: 1050 },
+    { name: "Агрипина Стара", country: "Рим", flag: "🇮🇹", power: 130, class: "Патриция", cost: 1000 },
+    { name: "Луцила", country: "Рим", flag: "🇮🇹", power: 125, class: "Августа", cost: 980 },
+    { name: "Плотина", country: "Рим", flag: "🇮🇹", power: 128, class: "Августа", cost: 990 },
+    { name: "Юлия Домна", country: "Рим", flag: "🇮🇹", power: 132, class: "Августа", cost: 1020 },
+
+    // Средновековие (15)
+    { name: "Ирина Атинянка", country: "Византия", flag: "🇬🇷", power: 135, class: "Императрица", cost: 1050 },
+    { name: "Теодора (Юстинианова)", country: "Византия", flag: "🇬🇷", power: 130, class: "Императрица", cost: 1000 },
+    { name: "Елена (Комнина)", country: "Византия", flag: "🇬🇷", power: 125, class: "Императрица", cost: 980 },
+    { name: "Олга Киевска", country: "Киевска Рус", flag: "🇺🇦", power: 140, class: "Княгиня", cost: 1100 },
+    { name: "Елинор Аквитанска", country: "Англия", flag: "🇬🇧", power: 145, class: "Кралица", cost: 1150 },
+    { name: "Матилда", country: "Англия", flag: "🇬🇧", power: 130, class: "Кралица", cost: 1020 },
+    { name: "Бланка Кастилска", country: "Франция", flag: "🇫🇷", power: 135, class: "Регентка", cost: 1080 },
+    { name: "Маргарет I Датска", country: "Дания", flag: "🇩🇰", power: 145, class: "Кралица", cost: 1150 },
+    { name: "Тамара Грузинска", country: "Грузия", flag: "🇬🇪", power: 150, class: "Царица", cost: 1200 },
+    { name: "Ядвига Полска", country: "Полша", flag: "🇵🇱", power: 135, class: "Кралица", cost: 1050 },
+    { name: "Зоя Палеологина", country: "Византия", flag: "🇬🇷", power: 130, class: "Императрица", cost: 1000 },
+    { name: "Ана Немска", country: "СРИ", flag: "🇩🇪", power: 128, class: "Императрица", cost: 990 },
+    { name: "Катерина Корнар", country: "Кипър", flag: "🇨🇾", power: 125, class: "Кралица", cost: 980 },
+    { name: "Изабела Френска", country: "Франция", flag: "🇫🇷", power: 132, class: "Кралица", cost: 1020 },
+    { name: "Христина", country: "Швеция", flag: "🇸🇪", power: 128, class: "Кралица", cost: 1000 },
+
+    // Ренесанс и Ново време (20)
+    { name: "Екатерина Велика", country: "Русия", flag: "🇷🇺", power: 160, class: "Императрица", cost: 1400 },
+    { name: "Елизабет I", country: "Англия", flag: "🇬🇧", power: 155, class: "Кралица", cost: 1300 },
+    { name: "Изабела Кастилска", country: "Испания", flag: "🇪🇸", power: 150, class: "Кралица", cost: 1250 },
+    { name: "Мария Терезия", country: "Австрия", flag: "🇦🇹", power: 150, class: "Ерцхерцогиня", cost: 1250 },
+    { name: "Кристина Шведска", country: "Швеция", flag: "🇸🇪", power: 140, class: "Кралица", cost: 1150 },
+    { name: "Катерина Сфорца", country: "Италия", flag: "🇮🇹", power: 135, class: "Кондотиер", cost: 1100 },
+    { name: "Нур Джахан", country: "Индия", flag: "🇮🇳", power: 130, class: "Императрица", cost: 1050 },
+    { name: "Лакшми Баи", country: "Индия", flag: "🇮🇳", power: 145, class: "Рани", cost: 1200 },
+    { name: "Тахома", country: "САЩ", flag: "🇺🇸", power: 120, class: "Индианска вожд", cost: 900 },
+    { name: "Виктория", country: "Великобритания", flag: "🇬🇧", power: 155, class: "Кралица", cost: 1300 },
+    { name: "Луиза", country: "Дания", flag: "🇩🇰", power: 135, class: "Кралица", cost: 1050 },
+    { name: "Амалия", country: "Гърция", flag: "🇬🇷", power: 130, class: "Кралица", cost: 1000 },
+    { name: "Мария Стюарт", country: "Шотландия", flag: "🏴󠁧󠁢󠁳󠁣󠁴󠁿", power: 145, class: "Кралица", cost: 1150 },
+    { name: "Анна Стюарт", country: "Великобритания", flag: "🇬🇧", power: 140, class: "Кралица", cost: 1100 },
+    { name: "Катарина II Медичи", country: "Франция", flag: "🇫🇷", power: 135, class: "Регентка", cost: 1080 },
+    { name: "Анна Австрийска", country: "Франция", flag: "🇫🇷", power: 132, class: "Кралица", cost: 1050 },
+    { name: "София Шарлота", country: "Прусия", flag: "🇩🇪", power: 130, class: "Кралица", cost: 1020 },
+    { name: "Мария Луиза", country: "Испания", flag: "🇪🇸", power: 128, class: "Кралица", cost: 1000 },
+    { name: "Каролина Матилда", country: "Дания", flag: "🇩🇰", power: 125, class: "Кралица", cost: 980 },
+    { name: "Мария-Антоанета", country: "Франция", flag: "🇫🇷", power: 140, class: "Кралица", cost: 1100 }
+];
+
 // ==================== СТАРИ ФУНКЦИИ ЗА СЪВМЕСТИМОСТ ====================
 window.hireClanHero = function(heroName, clanName, cost, heroPower) {
     for (let key in window.worldData.clans) {
