@@ -1716,6 +1716,19 @@ setTimeout(() => {
 
 console.log("✅ ui.js – добавен UI за съветници (политическа система)");
 
+window.getHeroPronoun = function(hero, form = "subject") {
+    if (hero.gender === "female") {
+        if (form === "subject") return "тя";
+        if (form === "object") return "я";
+        if (form === "possessive") return "ѝ";
+        return "тя";
+    }
+    if (form === "subject") return "той";
+    if (form === "object") return "го";
+    if (form === "possessive") return "му";
+    return "той";
+};
+
 
 // ==================== КРАЙ НА ui.js ====================
 console.log("✅ ui.js зареден успешно - версия без портрети, само иконки");
