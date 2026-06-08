@@ -82,41 +82,40 @@
     // ----------------------------------------------------------------------
     // 4. ОСНОВНИ ДЕЙСТВИЯ (покупка / продажба)
     // ----------------------------------------------------------------------
-    function buyTroop(typeId, quantity) {
-        const hero = getSelectedHero();
-        if (!hero) return;
-        const troop = allTroops.find(t => t.id === typeId);
-        if (!troop) return;
-        const totalCost = troop.basePrice * quantity;
-        if (hero.gold < totalCost) return;   // няма известие – просто мълчалив отказ
-        hero.gold -= totalCost;
-        if (!hero.armyDetails) hero.armyDetails = {};
-        hero.armyDetails[typeId] = (hero.armyDetails[typeId] || 0) + quantity;
-        // Преизчисляване на общата армия
-        let total = 0;
-        for (let id of allTroopIds) total += hero.armyDetails[id] || 0;
-        hero.armySize = total;
-        hero.currentArmy = total;
-        refreshFavoritesBar();
-    }
+    
+   function buyTroop(typeId, quantity, explicitHero = null) {
+    const hero = explicitHero || getSelectedHero();
+    if (!hero) return;
+    const troop = allTroops.find(t => t.id === typeId);
+    if (!troop) return;
+    const totalCost = troop.basePrice * quantity;
+    if (hero.gold < totalCost) return;
+    hero.gold -= totalCost;
+    if (!hero.armyDetails) hero.armyDetails = {};
+    hero.armyDetails[typeId] = (hero.armyDetails[typeId] || 0) + quantity;
+    let total = 0;
+    for (let id of allTroopIds) total += hero.armyDetails[id] || 0;
+    hero.armySize = total;
+    hero.currentArmy = total;
+    refreshFavoritesBar();
+}
 
-    function sellTroop(typeId, quantity) {
-        const hero = getSelectedHero();
-        if (!hero) return;
-        const troop = allTroops.find(t => t.id === typeId);
-        if (!troop) return;
-        const current = hero.armyDetails?.[typeId] || 0;
-        if (current < quantity) return;
-        const refund = Math.floor(troop.basePrice * 0.6 * quantity);
-        hero.gold += refund;
-        hero.armyDetails[typeId] = current - quantity;
-        let total = 0;
-        for (let id of allTroopIds) total += hero.armyDetails[id] || 0;
-        hero.armySize = total;
-        hero.currentArmy = total;
-        refreshFavoritesBar();
-    }
-
+function sellTroop(typeId, quantity, explicitHero = null) {
+    const hero = explicitHero || getSelectedHero();
+    if (!hero) return;
+    const troop = allTroops.find(t => t.id === typeId);
+    if (!troop) return;
+    const current = hero.armyDetails?.[typeId] || 0;
+    if (current < quantity) return;
+    const refund = Math.floor(troop.basePrice * 0.6 * quantity);
+    hero.gold += refund;
+    hero.armyDetails[typeId] = current - quantity;
+    let total = 0;
+    for (let id of allTroopIds) total += hero.armyDetails[id] || 0;
+    hero.armySize = total;
+    hero.currentArmy = total;
+    refreshFavoritesBar();
+}
     // ----------------------------------------------------------------------
     // 5. ОБНОВЯВАНЕ НА МОДАЛА С ДАННИТЕ НА ИЗБРАНИЯ ГЕРОЙ
     // ----------------------------------------------------------------------
