@@ -1,8 +1,8 @@
 /**
-* МОДУЛ: БАЗА ДАННИ - Велика България
+ * МОДУЛ: БАЗА ДАННИ - Велика България
  * ВСИЧКИ СА ГЕРОИ (HEROES) – НЯМА ВОДАЧИ, НЯМА ЙЕРАРХИЯ
  * 13 РАВНОПРАВНИ КЛАНОВЕ
- * ВЕРСИЯ: 7.1 – ИНТЕГРИРАНА С CHRONICLE EVENTS
+ * ВЕРСИЯ: 7.2 – ДОБАВЕНИ ЖЕНСКИ ВЛАДЕТЕЛКИ И НАЕМАНЕ
  */
 
 window.bulgarianClans = {
@@ -177,7 +177,7 @@ function getAllHeroesFromWorld() {
     return heroes;
 }
 
-// ==================== ТАВЕРНА UI (оставяме както е) ====================
+// ==================== ТАВЕРНА UI ====================
 window.openTavernUI = function() {
     const mainArea = document.getElementById('game-main-area');
     if (!mainArea) return;
@@ -188,11 +188,6 @@ window.openTavernUI = function() {
         if (hero.isJoined === false) {
             availableHeroes.push({ id: key, ...hero });
         }
-    }
-    
-    if (availableHeroes.length === 0) {
-        mainArea.innerHTML = `<div style="padding:20px; text-align:center; color:#888;">Няма повече герои за наемане. Всички са вече във вашата дружина!</div>`;
-        return;
     }
     
     let htmlContent = `
@@ -226,11 +221,46 @@ window.openTavernUI = function() {
             </button>
         </div>`;
     }
+    
+    // Раздел за женски владетелки
+    if (window.femaleWorldRulers && window.femaleWorldRulers.length > 0) {
+        htmlContent += `<hr style="margin:20px 0; border-color:#d4af37;"><h3 style="color:#ffd700; text-align:center;">👑 Чуждоземни владетелки</h3>`;
+        for (let ruler of window.femaleWorldRulers) {
+            // Проверка дали вече не е наета
+            let alreadyHired = false;
+            for (let key in window.worldData.clans) {
+                let h = window.worldData.clans[key];
+                if (h.name === ruler.name || (h.name && h.name.includes(ruler.name))) {
+                    alreadyHired = true;
+                    break;
+                }
+            }
+            if (alreadyHired) continue;
+            
+            htmlContent += `
+            <div style="background: rgba(20,20,20,0.8); border: 1px solid #d4af37; padding: 12px; border-radius: 6px; display: flex; flex-direction: column; justify-content: space-between;">
+                <div>
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:5px;">
+                        <strong style="color:#ffd700; font-size:13px;">${ruler.flag} ${ruler.name}</strong>
+                        <span style="font-size:9px; background:#d4af37; color:#000; padding:1px 5px; border-radius:3px;">${ruler.country}</span>
+                    </div>
+                    <div style="font-size:10px; color:#ccc; margin-bottom:10px;">
+                       ⚔️ Бойна мощ: <strong>${ruler.power}</strong><br>
+                       🎭 Клас: <strong>${ruler.class}</strong>
+                    </div>
+                </div>
+                <button onclick="window.hireFemaleRuler('${ruler.name.replace(/'/g, "\\'")}', ${ruler.cost}, ${ruler.power}, '${ruler.class}', '${ruler.flag}', '${ruler.country}')" style="width:100%; background:#d4af37; color:#000; border:none; padding:6px; font-weight:bold; cursor:pointer; border-radius:4px; font-size:10px;">
+                   Отключи за 💰 ${ruler.cost}
+                </button>
+            </div>`;
+        }
+    }
+    
     htmlContent += `</div><button class="menu-btn" onclick="window.backToMainMenu ? window.backToMainMenu() : location.reload();" style="width: 100%; margin-top: 15px;">Назад към Главното Меню</button></div>`;
     mainArea.innerHTML = htmlContent;
 };
 
-// ==================== НАЕМАНЕ НА СЪЩЕСТВУВАЩ ГЕРОЙ (С ИНТЕРАКТИВЕН ЛЕТОПИС) ====================
+// ==================== НАЕМАНЕ НА СЪЩЕСТВУВАЩ ГЕРОЙ ====================
 window.hireExistingHero = function(heroId, cost) {
     const payingHero = getPayingHeroForHire();
     if (!payingHero) {
@@ -288,6 +318,62 @@ window.hireExistingHero = function(heroId, cost) {
     }
 };
 
+// ==================== НАЕМАНЕ НА ЖЕНСКА ВЛАДЕТЕЛКА ====================
+window.hireFemaleRuler = function(name, cost, power, className, flag, country) {
+    const payingHero = getPayingHeroForHire();
+    if (!payingHero) {
+        if (window.showAdvisorPopup) window.showAdvisorPopup("ГРЕШКА", "Няма герой, който да плати!", "error");
+        return;
+    }
+    if (payingHero.gold < cost) {
+        if (window.showAdvisorPopup) window.showAdvisorPopup("ГРЕШКА", `Недостатъчно злато! Нужни: ${cost}`, "error");
+        return;
+    }
+    payingHero.gold -= cost;
+
+    const newHeroId = `ruler_${name.replace(/\s/g, '_')}_${Date.now()}`;
+    const newHero = {
+        name: `${flag} ${name}`,
+        clan: country,
+        isJoined: true,
+        isFavorite: false,
+        level: 1,
+        xp: 0,
+        heroPower: power,
+        power: power,
+        gold: 800,
+        armySize: 200,
+        currentArmy: 200,
+        currentClass: className,
+        className: className,
+        age: 30 + Math.floor(Math.random() * 30),
+        isAuto: true,
+        skillPoints: 0,
+        skills: { tactics: 0, endurance: 0, economy: 0, mysticism: 0, leadership: 0 },
+        equipment: Array(12).fill(null),
+        inventory: [],
+        pet: null,
+        learnedSkills: {},
+        armyDetails: { infantry: 100, archers: 50, cavalry: 30, elite: 20 },
+        gender: "female"
+    };
+    if (window.initializeHeroRPGData) window.initializeHeroRPGData(newHero);
+    if (window.ensureCompleteArmyDetails) window.ensureCompleteArmyDetails(newHero);
+    if (window.generateHeroPortrait) window.generateHeroPortrait(newHero).catch(e => console.warn(e));
+
+    if (!window.worldData) window.worldData = {};
+    if (!window.worldData.clans) window.worldData.clans = {};
+    window.worldData.clans[newHeroId] = newHero;
+    if (!window.unlockedHeroes) window.unlockedHeroes = [];
+    window.unlockedHeroes.push(newHero);
+
+    if (window.addWorldEvent) window.addWorldEvent("👑 НАЕТА ВЛАДЕТЕЛКА", `${newHero.name} се присъедини към вашата дружина!`, "👑");
+    if (window.updateStrongestHeroUI) window.updateStrongestHeroUI();
+    if (window.renderFavoriteHeroesBar) window.renderFavoriteHeroesBar();
+    if (window.updateAllUI) window.updateAllUI();
+    window.openTavernUI();
+};
+
 // ==================== СТАРИ ФУНКЦИИ ЗА СЪВМЕСТИМОСТ ====================
 window.hireClanHero = function(heroName, clanName, cost, heroPower) {
     for (let key in window.worldData.clans) {
@@ -302,7 +388,7 @@ window.hireClanHero = function(heroName, clanName, cost, heroPower) {
 
 window.buyHeroFromDatabase = window.hireClanHero;
 
-// ==================== 50 ЖЕНСКИ ИСТОРИЧЕСКИ ВЛАДЕТЕЛКИ (без дублиране с българските кланове) ====================
+// ==================== 50 ЖЕНСКИ ИСТОРИЧЕСКИ ВЛАДЕТЕЛКИ ====================
 window.femaleWorldRulers = [
     { name: "Хатшепсут", country: "Египет", flag: "🇪🇬", power: 155, class: "Фараон", cost: 1250 },
     { name: "Томирис", country: "Саки", flag: "🇰🇿", power: 145, class: "Воителка", cost: 1100 },
@@ -330,7 +416,7 @@ window.femaleWorldRulers = [
     { name: "Тамара Грузинска", country: "Грузия", flag: "🇬🇪", power: 150, class: "Царица", cost: 1200 },
     { name: "Ядвига Полска", country: "Полша", flag: "🇵🇱", power: 135, class: "Кралица", cost: 1050 },
     { name: "Зоя Палеологина", country: "Византия", flag: "🇬🇷", power: 130, class: "Императрица", cost: 1000 },
-    { name: "Ана Немска", country: "Свещена Римска империя", flag: "🇩🇪", power: 128, class: "Императрица", cost: 990 },
+    { name: "Ана Немска", country: "СРИ", flag: "🇩🇪", power: 128, class: "Императрица", cost: 990 },
     { name: "Катерина Корнар", country: "Кипър", flag: "🇨🇾", power: 125, class: "Кралица", cost: 980 },
     { name: "Изабела Френска", country: "Франция", flag: "🇫🇷", power: 132, class: "Кралица", cost: 1020 },
     { name: "Христина Шведска (ранна)", country: "Швеция", flag: "🇸🇪", power: 128, class: "Кралица", cost: 1000 },
