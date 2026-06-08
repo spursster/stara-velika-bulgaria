@@ -97,6 +97,11 @@
 
     // ==================== ОСНОВНА ФУНКЦИЯ startBattle ====================
     function startBattle(regionInput) {
+        // Затваряме всички модали на карти, за да не пречат на битката
+const mapModal = document.getElementById('interactive-map-modal');
+if (mapModal) mapModal.remove();
+const regionsModal = document.getElementById('regions-map-overlay');
+if (regionsModal) regionsModal.remove();
         core.resetNarrative();
         console.log("⚔️ startBattle извикана с:", regionInput);
 
