@@ -295,7 +295,6 @@ window.hireExistingHero = function(heroId, cost) {
 
 // ==================== 50 ЖЕНСКИ ИСТОРИЧЕСКИ ВЛАДЕТЕЛКИ (без поле dynasty) ====================
 window.femaleWorldRulers = [
-    // Античност (15)
     { name: "Хатшепсут", country: "Египет", flag: "🇪🇬", power: 155, class: "Фараон", cost: 1250 },
     { name: "Томирис", country: "Саки", flag: "🇰🇿", power: 145, class: "Воителка", cost: 1100 },
     { name: "Артемизия I", country: "Кария", flag: "🇹🇷", power: 130, class: "Адмирал", cost: 1000 },
@@ -311,8 +310,6 @@ window.femaleWorldRulers = [
     { name: "Луцила", country: "Рим", flag: "🇮🇹", power: 125, class: "Августа", cost: 980 },
     { name: "Плотина", country: "Рим", flag: "🇮🇹", power: 128, class: "Августа", cost: 990 },
     { name: "Юлия Домна", country: "Рим", flag: "🇮🇹", power: 132, class: "Августа", cost: 1020 },
-
-    // Средновековие (15)
     { name: "Ирина Атинянка", country: "Византия", flag: "🇬🇷", power: 135, class: "Императрица", cost: 1050 },
     { name: "Теодора (Юстинианова)", country: "Византия", flag: "🇬🇷", power: 130, class: "Императрица", cost: 1000 },
     { name: "Елена (Комнина)", country: "Византия", flag: "🇬🇷", power: 125, class: "Императрица", cost: 980 },
@@ -328,8 +325,6 @@ window.femaleWorldRulers = [
     { name: "Катерина Корнар", country: "Кипър", flag: "🇨🇾", power: 125, class: "Кралица", cost: 980 },
     { name: "Изабела Френска", country: "Франция", flag: "🇫🇷", power: 132, class: "Кралица", cost: 1020 },
     { name: "Христина", country: "Швеция", flag: "🇸🇪", power: 128, class: "Кралица", cost: 1000 },
-
-    // Ренесанс и Ново време (20)
     { name: "Екатерина Велика", country: "Русия", flag: "🇷🇺", power: 160, class: "Императрица", cost: 1400 },
     { name: "Елизабет I", country: "Англия", flag: "🇬🇧", power: 155, class: "Кралица", cost: 1300 },
     { name: "Изабела Кастилска", country: "Испания", flag: "🇪🇸", power: 150, class: "Кралица", cost: 1250 },
@@ -351,7 +346,6 @@ window.femaleWorldRulers = [
     { name: "Каролина Матилда", country: "Дания", flag: "🇩🇰", power: 125, class: "Кралица", cost: 980 },
     { name: "Мария-Антоанета", country: "Франция", flag: "🇫🇷", power: 140, class: "Кралица", cost: 1100 }
 ];
-
 // ==================== СТАРИ ФУНКЦИИ ЗА СЪВМЕСТИМОСТ ====================
 window.hireClanHero = function(heroName, clanName, cost, heroPower) {
     for (let key in window.worldData.clans) {
