@@ -605,11 +605,42 @@ window.updateRegionIndicator = updateRegionIndicator;
 
 // Ако travelToRegion вече е дефинирана, гарантираме, че е глобална
 if (typeof window.travelToRegion !== 'function') {
-    window.travelToRegion = function(regionName) {
-        console.warn("travelToRegion не е готова все още");
-        return false;
-    };
-}
+   window.travelToRegion = function(regionName) {
+    if (isTraveling) return false;
+    
+    let neighbors = window.regionConnections[window.currentRegion];
+    if (!neighbors || !neighbors.includes(regionName)) return false;
+    
+    isTraveling = true;
+    setTimeout(() => {
+        window.currentRegion = regionName;
+        window.visitedRegions.add(regionName);
+        
+        if (window.showAdvisorMsg) window.showAdvisorMsg(`🚶 Пристигнахте в ${regionName}.`);
+        updateRegionIndicator();
+        
+        if (window.checkAllQuestsProgress) {
+            window.checkAllQuestsProgress(window.currentHero, regionName, "travel");
+        }
+        
+        let chance = window.soloSettings.questChance || 0.3;
+        if (window.generateRandomQuest && Math.random() < chance) {
+            let q = window.generateRandomQuest(regionName);
+            if (q && window.addQuest) window.addQuest(q);
+        }
+        
+        // Обновяване на картата, ако е отворена
+        const mapModal = document.getElementById('regions-map-overlay');
+        if (mapModal && typeof window.refreshMap === 'function') {
+            window.refreshMap();
+        } else if (window.openRegionsMap) {
+            window.openRegionsMap();
+        }
+        
+        isTraveling = false;
+    }, window.soloSettings.enableAnimations ? 300 : 0);
+    return true;
+};
 // Експортиране на функцията initSoloMode
 window.initSoloMode = initSoloMode;
 })();
