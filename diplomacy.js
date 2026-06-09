@@ -920,12 +920,13 @@ window.openDiplomacyHub = function() {
     const relations = window.clanRelations || {};
     const alliances = window.alliances || [];
     const casusBelli = window.casusBelli || [];
+    const guilds = window.guilds || {};
 
-    // Взимаме текущия клан на играча
     let playerClan = null;
     const hero = window.getDiplomacyHero ? window.getDiplomacyHero() : null;
     if (hero) playerClan = hero.clan;
 
+    // ---------- Функции за рендиране на табовете ----------
     function renderRelationsTab() {
         let rows = '';
         for (let clan in relations) {
@@ -990,6 +991,41 @@ window.openDiplomacyHub = function() {
         return html;
     }
 
+    // --- НОВ ТАБ ЗА ГИЛДИИ ---
+    function renderGuildsTab() {
+        const heroLocal = window.getDiplomacyHero ? window.getDiplomacyHero() : null;
+        let html = '<div style="display:flex; flex-direction:column; gap:20px;">';
+        for (let gid in guilds) {
+            const guild = guilds[gid];
+            const isJoined = guild.joined;
+            html += `
+                <div style="background:rgba(0,0,0,0.4); border-radius:16px; padding:15px; border:1px solid #d4af37;">
+                    <div style="display:flex; justify-content:space-between; align-items:center;">
+                        <h3 style="margin:0; color:#ffd700;">${guild.name}</h3>
+                        ${!isJoined ? `<button class="join-guild-btn" data-guild="${gid}" style="background:#2c5a2a; border:none; border-radius:20px; padding:4px 12px; color:white; cursor:pointer;">➕ Присъедини се</button>` : `<span style="color:#88ff88;">✅ Член</span>`}
+                    </div>
+                    <p style="font-size:12px; color:#ccc;">${gid === 'merchants' ? 'Увеличава доходите от търговия и намалява цените в казармите.' : (gid === 'warriors' ? 'Увеличава атаката на армията и скоростта на набиране.' : 'Увеличава магическата сила и шанса за намиране на артефакти.')}</p>
+                    <div style="font-size:11px; color:#aaa;">
+                        <strong>Текущи бонуси:</strong><br>
+                        ${gid === 'merchants' ? `💰 +${guild.benefits.goldBonus || 0}% злато, 🛒 -${(guild.benefits.tradeDiscount || 0)*100}% цена на войски` : 
+                          gid === 'warriors' ? `⚔️ +${guild.benefits.attackBonus || 0} атака, 🏹 +${(guild.benefits.armyRecruitmentSpeed || 0)*100}% скорост на наемане` :
+                          `🔮 +${guild.benefits.spellPower || 0} магическа сила, 🏺 +${(guild.benefits.artifactDiscovery || 0)*100}% шанс за артефакт`}
+                    </div>
+                    ${isJoined && guild.quests && guild.quests.length ? `
+                        <div style="margin-top:12px;">
+                            <strong>📜 Активни задачи:</strong>
+                            <ul style="font-size:11px; margin:5px 0 0 15px;">
+                                ${guild.quests.map(q => `<li>${q.name} (${q.desc}) – Прогрес: ${q.objective.progress}/${q.objective.target}</li>`).join('')}
+                            </ul>
+                        </div>
+                    ` : ''}
+                </div>
+            `;
+        }
+        html += '</div>';
+        return html;
+    }
+
     const modalHtml = `
         <div id="diplomacy-hub-modal" style="position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.85); backdrop-filter:blur(8px); z-index:500000; display:flex; align-items:center; justify-content:center; font-family:'Cinzel', serif; padding:15px; box-sizing:border-box;">
             <div style="background:#0a0a2e; border:2px solid #d4af37; border-radius:24px; width:90%; max-width:1000px; max-height:85vh; display:flex; flex-direction:column; overflow:hidden;">
@@ -1001,6 +1037,7 @@ window.openDiplomacyHub = function() {
                     <button class="diplo-tab-btn active" data-tab="relations">📜 Отношения</button>
                     <button class="diplo-tab-btn" data-tab="alliances">🤝 Съюзи</button>
                     <button class="diplo-tab-btn" data-tab="casus">⚔️ Казус бели</button>
+                    <button class="diplo-tab-btn" data-tab="guilds">🏛️ Гилдии</button>
                 </div>
                 <div id="diplo-tab-content" style="padding:20px; overflow-y:auto; flex:1;">
                     ${renderRelationsTab()}
@@ -1015,11 +1052,9 @@ window.openDiplomacyHub = function() {
     document.body.insertAdjacentHTML('beforeend', modalHtml);
     const modal = document.getElementById('diplomacy-hub-modal');
 
-    // Затваряне
     modal.querySelectorAll('.close-diplo-modal').forEach(btn => btn.onclick = () => modal.remove());
     modal.addEventListener('click', (e) => { if (e.target === modal) modal.remove(); });
 
-    // Табове
     const tabBtns = modal.querySelectorAll('.diplo-tab-btn');
     const tabContent = modal.querySelector('#diplo-tab-content');
     tabBtns.forEach(btn => {
@@ -1030,23 +1065,20 @@ window.openDiplomacyHub = function() {
             if (tab === 'relations') tabContent.innerHTML = renderRelationsTab();
             else if (tab === 'alliances') tabContent.innerHTML = renderAlliancesTab();
             else if (tab === 'casus') tabContent.innerHTML = renderCasusBelliTab();
+            else if (tab === 'guilds') tabContent.innerHTML = renderGuildsTab();
             attachDiploEventHandlers(modal);
         };
     });
 
     function attachDiploEventHandlers(modalEl) {
-        // Брак
         modalEl.querySelectorAll('.diplo-marriage-btn').forEach(btn => {
             btn.onclick = () => {
                 const clan = btn.dataset.clan;
-                const cost = 500;
-                const successChance = 40;
-                window.proposeMarriage(clan, cost, successChance);
+                window.proposeMarriage(clan, 500, 40);
                 modalEl.remove();
                 setTimeout(() => window.openDiplomacyHub(), 500);
             };
         });
-        // Подарък
         modalEl.querySelectorAll('.diplo-gift-btn').forEach(btn => {
             btn.onclick = () => {
                 const clan = btn.dataset.clan;
@@ -1062,17 +1094,14 @@ window.openDiplomacyHub = function() {
                 }
             };
         });
-        // Предложение за съюз
         modalEl.querySelectorAll('.diplo-alliance-btn').forEach(btn => {
             btn.onclick = () => {
                 const clan = btn.dataset.clan;
                 if (window.proposeAlliance) window.proposeAlliance(clan);
-                else window.showAdvisorMsg("Системата за съюзи не е активирана.");
                 modalEl.remove();
                 setTimeout(() => window.openDiplomacyHub(), 500);
             };
         });
-        // Разваляне на съюз
         modalEl.querySelectorAll('.break-alliance-btn').forEach(btn => {
             btn.onclick = () => {
                 const clan = btn.dataset.clan;
@@ -1081,7 +1110,6 @@ window.openDiplomacyHub = function() {
                 setTimeout(() => window.openDiplomacyHub(), 500);
             };
         });
-        // Обявяване на война от казус бели
         modalEl.querySelectorAll('.declare-war-cb-btn').forEach(btn => {
             btn.onclick = () => {
                 const target = btn.dataset.target;
@@ -1090,8 +1118,46 @@ window.openDiplomacyHub = function() {
                 setTimeout(() => window.openDiplomacyHub(), 500);
             };
         });
+        // Нови бутони за присъединяване към гилдия
+        modalEl.querySelectorAll('.join-guild-btn').forEach(btn => {
+            btn.onclick = () => {
+                const guildId = btn.dataset.guild;
+                const heroLocal = window.getDiplomacyHero();
+                if (!heroLocal) return;
+                const guild = window.guilds[guildId];
+                if (guild.joined) return;
+                if (heroLocal.level < 3 || heroLocal.gold < 500) {
+                    window.showAdvisorMsg(`❌ Изисква се ниво 3 и 500 злато, за да се присъедините към ${guild.name}.`);
+                    return;
+                }
+                // Използваме chronicle events за потвърждение (без нов бутон)
+                if (window.ChronicleEvents && typeof window.ChronicleEvents.generateGuildOffer === 'function') {
+                    const ev = window.ChronicleEvents.generateGuildOffer(guildId);
+                    window.showAdvisorMsg(ev.message, ev.buttons);
+                } else {
+                    // Резервно
+                    heroLocal.gold -= 500;
+                    guild.joined = true;
+                    window.showAdvisorMsg(`✅ Вие се присъединихте към ${guild.name}!`);
+                }
+                modalEl.remove();
+                setTimeout(() => window.openDiplomacyHub(), 500);
+            };
+        });
     }
     attachDiploEventHandlers(modal);
+};
+// ==================== ПОЛУЧАВАНЕ НА БОНУСИ ОТ ГИЛДИИ ====================
+window.getGuildBonus = function(bonusType) {
+    let total = 0;
+    const guilds = window.guilds || {};
+    for (let gid in guilds) {
+        const guild = guilds[gid];
+        if (guild.joined && guild.benefits && guild.benefits[bonusType]) {
+            total += guild.benefits[bonusType];
+        }
+    }
+    return total;
 };
 console.log("✅ diplomacy.js – добавена политическа система (съветници и борба за трон)");
 console.log("✅ diplomacy.js версия 8.1 зареден – без currentHero, с updateStrongestHeroUI и оправен брачен прозорец");
