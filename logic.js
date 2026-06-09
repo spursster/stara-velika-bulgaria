@@ -417,83 +417,113 @@
 
     // ========== ЗАРЕЖДАНЕ ==========
     function loadGreatBulgariaGame() {
-        const saved = localStorage.getItem('GreatBulgaria_SaveGame');
-        if (!saved) return false;
-        try {
-            const parsed = JSON.parse(saved);
-            if (parsed.worldData) window.worldData = parsed.worldData;
-            window.gameTime = parsed.gameTime || { seasonIndex: 0, year: 480, era: "пр.н.е." };
-            window.gameMode = parsed.gameMode || 'classic';
-            window.currentRegion = parsed.currentRegion || "Плиска";
-            window.companions = parsed.companions || [];
-            window.activeQuests = parsed.activeQuests || [];
-            window.completedQuests = parsed.completedQuests || [];
+    const saved = localStorage.getItem('GreatBulgaria_SaveGame');
+    if (!saved) return false;
+    try {
+        const parsed = JSON.parse(saved);
+        if (parsed.worldData) window.worldData = parsed.worldData;
+        window.gameTime = parsed.gameTime || { seasonIndex: 0, year: 480, era: "пр.н.е." };
+        window.gameMode = parsed.gameMode || 'classic';
+        window.currentRegion = parsed.currentRegion || "Плиска";
+        window.companions = parsed.companions || [];
+        window.activeQuests = parsed.activeQuests || [];
+        window.completedQuests = parsed.completedQuests || [];
 
-            let rawRegions = parsed.playerRegions || [];
-            if (Array.isArray(rawRegions)) {
-                let normalized = [];
-                for (let item of rawRegions) {
-                    if (Array.isArray(item)) {
-                        for (let sub of item) normalized.push(sub);
-                    } else if (typeof item === 'string') normalized.push(item);
-                }
-                window.playerRegions = normalized;
-            } else {
-                window.playerRegions = [];
+        let rawRegions = parsed.playerRegions || [];
+        if (Array.isArray(rawRegions)) {
+            let normalized = [];
+            for (let item of rawRegions) {
+                if (Array.isArray(item)) {
+                    for (let sub of item) normalized.push(sub);
+                } else if (typeof item === 'string') normalized.push(item);
             }
-            if (window.playerRegions.length === 0 && window.currentRegion) window.playerRegions.push(window.currentRegion);
+            window.playerRegions = normalized;
+        } else {
+            window.playerRegions = [];
+        }
+        if (window.playerRegions.length === 0 && window.currentRegion) window.playerRegions.push(window.currentRegion);
 
-            if (window.gameMode === 'solo' && parsed.currentHero) {
-                window.currentHero = parsed.currentHero;
-            } else {
-                if (window.currentHero) delete window.currentHero;
-            }
+        if (window.gameMode === 'solo' && parsed.currentHero) {
+            window.currentHero = parsed.currentHero;
+        } else {
+            if (window.currentHero) delete window.currentHero;
+        }
 
-            if (!window.worldData.clans) window.worldData.clans = {};
-            for (let key in window.worldData.clans) {
-                let hero = window.worldData.clans[key];
-                if (hero && hero.isJoined === true) {
-                    let endurance = (hero.skills && hero.skills.endurance) || 0;
-                    hero.maxHp = 100 + (hero.level - 1) * 20 + endurance * 15;
-                    if (!hero.hp || isNaN(hero.hp) || hero.hp > hero.maxHp) hero.hp = hero.maxHp;
-                    if (typeof hero.isAlive === 'undefined') hero.isAlive = true;
-                }
-            }
-            if (window.companions) {
-                window.companions.forEach(comp => {
-                    let endurance = (comp.skills && comp.skills.endurance) || 0;
-                    comp.maxHp = 100 + (comp.level - 1) * 20 + endurance * 15;
-                    if (!comp.hp || isNaN(comp.hp) || comp.hp > comp.maxHp) comp.hp = comp.maxHp;
-                    comp.isAlive = true;
-                });
-            }
-
-            if (typeof window.updateStrongestHeroUI === 'function') window.updateStrongestHeroUI();
-            if (window.renderTop6HeroesUI) window.renderTop6HeroesUI();
-            if (typeof window.renderSingleBar === 'function') window.renderSingleBar();
-            if (window.updatePortalContainerUI) window.updatePortalContainerUI();
-            if (window.updateTimeUI) window.updateTimeUI();
-
-            if (window.gameMode === 'solo' && typeof window.initSoloMode === 'function') window.initSoloMode();
-            if (typeof window.ensureHeroesHavePortraits === 'function') window.ensureHeroesHavePortraits();
-            if (typeof window.showAdvisorMsg === 'function') window.showAdvisorMsg("👑 Добре дошъл обратно, Воеводо!");
-            if (typeof window.saveGreatBulgariaGame === 'function') window.saveGreatBulgariaGame();
-
-            if (window.worldData && window.worldData.regions) {
-                for (let name in window.worldData.regions) {
-                    if (window.worldData.regions[name].ancientOwner === undefined) {
-                        window.worldData.regions[name].ancientOwner = null;
+        // ========== НОВО: Възстановяване на companions в worldData.clans ==========
+        if (window.companions && window.companions.length > 0) {
+            for (let comp of window.companions) {
+                let exists = false;
+                for (let key in window.worldData.clans) {
+                    if (window.worldData.clans[key].id === comp.id || window.worldData.clans[key].name === comp.name) {
+                        exists = true;
+                        break;
                     }
                 }
+                if (!exists) {
+                    const newId = comp.id || `companion_${comp.name.replace(/\s/g, '_')}_${Date.now()}`;
+                    comp.id = newId;
+                    if (!comp.armyDetails) comp.armyDetails = { infantry: 80, archers: 30, cavalry: 25, elite: 15 };
+                    if (!comp.skills) comp.skills = { tactics: 0, endurance: 0, economy: 0, mysticism: 0, leadership: 0 };
+                    if (!comp.equipment) comp.equipment = Array(12).fill(null);
+                    if (!comp.inventory) comp.inventory = [];
+                    if (!comp.learnedSkills) comp.learnedSkills = {};
+                    if (!comp.pet) comp.pet = null;
+                    let endurance = comp.skills?.endurance || 0;
+                    comp.maxHp = 100 + (comp.level - 1) * 20 + endurance * 15;
+                    if (!comp.hp || comp.hp > comp.maxHp) comp.hp = comp.maxHp;
+                    comp.isAlive = true;
+                    comp.isJoined = true;
+                    comp.isCompanion = true;
+                    window.worldData.clans[newId] = comp;
+                }
             }
-            return true;
-        } catch (e) {
-            console.error("Грешка при зареждане:", e);
-            localStorage.removeItem('GreatBulgaria_SaveGame');
-            return false;
         }
-    }
+        // ========================================================================
 
+        if (!window.worldData.clans) window.worldData.clans = {};
+        for (let key in window.worldData.clans) {
+            let hero = window.worldData.clans[key];
+            if (hero && hero.isJoined === true) {
+                let endurance = (hero.skills && hero.skills.endurance) || 0;
+                hero.maxHp = 100 + (hero.level - 1) * 20 + endurance * 15;
+                if (!hero.hp || isNaN(hero.hp) || hero.hp > hero.maxHp) hero.hp = hero.maxHp;
+                if (typeof hero.isAlive === 'undefined') hero.isAlive = true;
+            }
+        }
+        if (window.companions) {
+            window.companions.forEach(comp => {
+                let endurance = (comp.skills && comp.skills.endurance) || 0;
+                comp.maxHp = 100 + (comp.level - 1) * 20 + endurance * 15;
+                if (!comp.hp || isNaN(comp.hp) || comp.hp > comp.maxHp) comp.hp = comp.maxHp;
+                comp.isAlive = true;
+            });
+        }
+
+        if (typeof window.updateStrongestHeroUI === 'function') window.updateStrongestHeroUI();
+        if (window.renderTop6HeroesUI) window.renderTop6HeroesUI();
+        if (typeof window.renderSingleBar === 'function') window.renderSingleBar();
+        if (window.updatePortalContainerUI) window.updatePortalContainerUI();
+        if (window.updateTimeUI) window.updateTimeUI();
+
+        if (window.gameMode === 'solo' && typeof window.initSoloMode === 'function') window.initSoloMode();
+        if (typeof window.ensureHeroesHavePortraits === 'function') window.ensureHeroesHavePortraits();
+        if (typeof window.showAdvisorMsg === 'function') window.showAdvisorMsg("👑 Добре дошъл обратно, Воеводо!");
+        if (typeof window.saveGreatBulgariaGame === 'function') window.saveGreatBulgariaGame();
+
+        if (window.worldData && window.worldData.regions) {
+            for (let name in window.worldData.regions) {
+                if (window.worldData.regions[name].ancientOwner === undefined) {
+                    window.worldData.regions[name].ancientOwner = null;
+                }
+            }
+        }
+        return true;
+    } catch (e) {
+        console.error("Грешка при зареждане:", e);
+        localStorage.removeItem('GreatBulgaria_SaveGame');
+        return false;
+    }
+}
     // ========== НОРМАЛИЗАЦИЯ НА PLAYER REGIONS ==========
     function normalizePlayerRegions() {
         if (!window.playerRegions) window.playerRegions = [];
