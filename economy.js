@@ -1,7 +1,7 @@
 /**
 ==========================================================================
 ПРОЕКТ: ВЕЛИКА БЪЛГАРИЯ
-ФАЙЛ: economy.js (ВЕРСИЯ 8.1 – ОПРАВЕН СИНТАКСИС + АДАПТАЦИЯ ЗА НОВИЯ UI)
+ФАЙЛ: economy.js (ВЕРСИЯ 8.2 – ДОБАВЕН ДОХОД ЗА СПЪТНИЦИ В СОЛО РЕЖИМ)
 ==========================================================================
 */
 
@@ -52,7 +52,6 @@
         if (strongest && strongest.clan === hero.clan) {
             let goldSpan = document.getElementById('val-gold');
             if (goldSpan) goldSpan.innerText = hero.gold;
-            // Обновяваме и новите полета в десния панел (ако съществуват)
             const cmdGold = document.getElementById('cmd-gold');
             if (cmdGold) cmdGold.innerText = hero.gold;
         }
@@ -192,7 +191,6 @@
         let armyMaintenance = Math.floor(baseMaintenanceCost * (1 - logisticsDiscount));
         
         let finalProfit = totalIncome - armyMaintenance;
-        // Гарантираме, че доходът не е отрицателен
         return Math.max(50, finalProfit);
     }
 
@@ -252,75 +250,129 @@
         window.playerRegions = normalized;
         if (window.playerRegions.length === 0 && window.currentRegion) window.playerRegions.push(window.currentRegion);
         
-        const hero = getMainEconomicHero();
-        if (!hero) return;
-        
-        if (window.initializeHeroRPGData) window.initializeHeroRPGData(hero);
-        ensureArmyDetails(hero);
-        
-        updateInflation();
-        triggerRandomEconomicEvent();
-        
-        let finalProfit = recalculateIncome(hero);
-        hero.gold = (hero.gold || 0) + finalProfit;
-        if (hero.gold < 0) hero.gold = 0;
-        syncHeroGold(hero);
-        
-        if (window.worldData && window.worldData.clans && hero.clan && window.worldData.clans[hero.clan]) {
-            window.worldData.clans[hero.clan].gold = hero.gold;
-        }
-        
-        // Автономна икономика за другите герои
-        for (let key in window.worldData.clans) {
-            let clan = window.worldData.clans[key];
-            if (hero && key === hero.clan) continue;
-            ensureArmyDetails(clan);
-            clan.gold = clan.gold || 0;
-            clan.gold += 150 + Math.floor(Math.random() * 100);
-            
-            if (Math.random() < 0.15 && clan.gold > 300) {
-                let investAmount = Math.min(500, Math.floor(clan.gold * 0.3));
-                investGold(clan, investAmount, 2);
-            }
-            
-            if (clan.gold >= 80 && (clan.armySize || 0) < 1500) {
-                let cost = 80;
-                let troopsBought = Math.floor(Math.random() * 60) + 30;
-                if (clan.gold >= cost) {
-                    clan.gold -= cost;
-                    let troopTypes = window.ALL_TROOP_IDS || ["infantry", "archers", "cavalry", "elite"];
-                    let selectedType = troopTypes[Math.floor(Math.random() * troopTypes.length)];
-                    if (!clan.armyDetails[selectedType]) clan.armyDetails[selectedType] = 0;
-                    clan.armyDetails[selectedType] += troopsBought;
-                    let total = 0;
-                    for (let t in clan.armyDetails) total += clan.armyDetails[t] || 0;
-                    clan.armySize = total;
-                    clan.currentArmy = total;
+        // ========== РАЗЛИЧНО ЗА СОЛО РЕЖИМ ==========
+        if (window.gameMode === 'solo') {
+            // 1. Главен герой получава нормален доход
+            const hero = getMainEconomicHero();
+            if (hero && hero.isAlive !== false) {
+                if (window.initializeHeroRPGData) window.initializeHeroRPGData(hero);
+                ensureArmyDetails(hero);
+                updateInflation();
+                triggerRandomEconomicEvent();
+                let profit = recalculateIncome(hero);
+                hero.gold = (hero.gold || 0) + profit;
+                if (hero.gold < 0) hero.gold = 0;
+                syncHeroGold(hero);
+                if (window.worldData && window.worldData.clans && hero.clan && window.worldData.clans[hero.clan]) {
+                    window.worldData.clans[hero.clan].gold = hero.gold;
                 }
             }
             
-            if (window.gainHeroXP) window.gainHeroXP(clan, 25);
-            else {
-                clan.xp = (clan.xp || 0) + 25;
-                let requiredXP = (clan.level || 1) * 150;
-                if (clan.xp >= requiredXP) {
-                    clan.xp -= requiredXP;
-                    clan.level = (clan.level || 1) + 1;
-                    clan.skillPoints = (clan.skillPoints || 0) + 1;
-                    clan.heroPower = (clan.heroPower || 100) + 15;
+            // 2. Спътниците получават базов доход
+            if (window.companions && window.companions.length > 0) {
+                for (let comp of window.companions) {
+                    if (comp.isAlive === false) continue;
+                    if (window.initializeHeroRPGData) window.initializeHeroRPGData(comp);
+                    ensureArmyDetails(comp);
+                    let baseCompanionIncome = 50 + Math.floor(Math.random() * 50) + (comp.level || 1) * 5;
+                    comp.gold = (comp.gold || 0) + baseCompanionIncome;
+                    if (comp.gold < 0) comp.gold = 0;
+                    // Синхронизация с worldData.clans
+                    for (let key in window.worldData.clans) {
+                        if (window.worldData.clans[key].id === comp.id || window.worldData.clans[key].name === comp.name) {
+                            window.worldData.clans[key].gold = comp.gold;
+                            break;
+                        }
+                    }
+                    // Автоматично купуване на армия, ако е auto и има достатъчно злато
+                    if (comp.isAuto && comp.gold > 200 && (comp.armySize || 0) < 800) {
+                        let cost = 80;
+                        let troopsBought = Math.floor(Math.random() * 40) + 20;
+                        if (comp.gold >= cost) {
+                            comp.gold -= cost;
+                            let troopTypes = window.ALL_TROOP_IDS || ["infantry", "archers", "cavalry", "elite"];
+                            let selectedType = troopTypes[Math.floor(Math.random() * troopTypes.length)];
+                            if (!comp.armyDetails) comp.armyDetails = {};
+                            comp.armyDetails[selectedType] = (comp.armyDetails[selectedType] || 0) + troopsBought;
+                            let total = 0;
+                            for (let t in comp.armyDetails) total += comp.armyDetails[t] || 0;
+                            comp.armySize = total;
+                            comp.currentArmy = total;
+                        }
+                    }
+                    // Даване на малко XP на спътниците
+                    if (window.gainHeroXP) window.gainHeroXP(comp, 15);
                 }
             }
-            if (window.armyMarket && typeof window.armyMarket.sync === 'function') window.armyMarket.sync(clan);
+        } else {
+            // ========== КЛАСИЧЕСКИ РЕЖИМ (оригинална логика) ==========
+            const hero = getMainEconomicHero();
+            if (!hero) return;
+            if (window.initializeHeroRPGData) window.initializeHeroRPGData(hero);
+            ensureArmyDetails(hero);
+            updateInflation();
+            triggerRandomEconomicEvent();
+            let finalProfit = recalculateIncome(hero);
+            hero.gold = (hero.gold || 0) + finalProfit;
+            if (hero.gold < 0) hero.gold = 0;
+            syncHeroGold(hero);
+            
+            if (window.worldData && window.worldData.clans && hero.clan && window.worldData.clans[hero.clan]) {
+                window.worldData.clans[hero.clan].gold = hero.gold;
+            }
+            
+            // Автономна икономика за другите герои
+            for (let key in window.worldData.clans) {
+                let clan = window.worldData.clans[key];
+                if (hero && key === hero.clan) continue;
+                ensureArmyDetails(clan);
+                clan.gold = clan.gold || 0;
+                clan.gold += 150 + Math.floor(Math.random() * 100);
+                
+                if (Math.random() < 0.15 && clan.gold > 300) {
+                    let investAmount = Math.min(500, Math.floor(clan.gold * 0.3));
+                    investGold(clan, investAmount, 2);
+                }
+                
+                if (clan.gold >= 80 && (clan.armySize || 0) < 1500) {
+                    let cost = 80;
+                    let troopsBought = Math.floor(Math.random() * 60) + 30;
+                    if (clan.gold >= cost) {
+                        clan.gold -= cost;
+                        let troopTypes = window.ALL_TROOP_IDS || ["infantry", "archers", "cavalry", "elite"];
+                        let selectedType = troopTypes[Math.floor(Math.random() * troopTypes.length)];
+                        if (!clan.armyDetails[selectedType]) clan.armyDetails[selectedType] = 0;
+                        clan.armyDetails[selectedType] += troopsBought;
+                        let total = 0;
+                        for (let t in clan.armyDetails) total += clan.armyDetails[t] || 0;
+                        clan.armySize = total;
+                        clan.currentArmy = total;
+                    }
+                }
+                
+                if (window.gainHeroXP) window.gainHeroXP(clan, 25);
+                else {
+                    clan.xp = (clan.xp || 0) + 25;
+                    let requiredXP = (clan.level || 1) * 150;
+                    if (clan.xp >= requiredXP) {
+                        clan.xp -= requiredXP;
+                        clan.level = (clan.level || 1) + 1;
+                        clan.skillPoints = (clan.skillPoints || 0) + 1;
+                        clan.heroPower = (clan.heroPower || 100) + 15;
+                    }
+                }
+                if (window.armyMarket && typeof window.armyMarket.sync === 'function') window.armyMarket.sync(clan);
+            }
         }
         
-        if (window.updateCharacterUI) window.updateCharacterUI(hero);
+        // Общи неща (актуализация на UI)
+        if (window.updateCharacterUI) window.updateCharacterUI(window.currentHero || window.getStrongestHero());
         if (typeof window.updateStrongestHeroUI === 'function') window.updateStrongestHeroUI();
         if (typeof window.renderSingleBar === 'function') window.renderSingleBar();
-        if (window.armyMarket && typeof window.armyMarket.sync === 'function') window.armyMarket.sync(hero);
+        if (window.armyMarket && typeof window.armyMarket.sync === 'function') window.armyMarket.sync(window.currentHero || window.getStrongestHero());
         if (window.advanceExpeditionsTurn) window.advanceExpeditionsTurn();
         
-        // Допълнителен лог за дебъг
-        console.log(`💰 Икономика: ${hero.name} получи ${finalProfit} злато. Общо: ${hero.gold}`);
+        console.log(`💰 Икономиката е изчислена (${window.gameMode === 'solo' ? 'соло режим, companions получават доход' : 'класически режим'})`);
     }
 
     // ==================== ПУБЛИЧНО API ====================
@@ -333,12 +385,11 @@
         getMainHero: getMainEconomicHero
     };
 
-    // Запазваме старите глобални имена за обратна съвместимост
     window.recalculateIncome = window.Economy.recalcIncome;
     window.investGold = window.Economy.invest;
     window.establishTradeRoute = window.Economy.trade;
     window.calculateEconomy = window.Economy.run;
     window.syncHeroGold = window.Economy.syncGold;
 
-    console.log("✅ economy.js версия 8.1 – оправен синтаксис, икономиката вече работи");
+    console.log("✅ economy.js версия 8.2 – добавена поддръжка за спътници в соло режим");
 })();
