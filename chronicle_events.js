@@ -381,4 +381,74 @@ window.triggerRandomChronicleEvent = function() {
     }
 };
 
+/**
+ * Добавя интерактивно събитие в летописа с опционални бутони.
+ * @param {string} title - Заглавие на събитието (напр. "БИТКАТА ПРИ ПЛИСКА")
+ * @param {string} storyText - Описателен текст (разказ)
+ * @param {Array} buttons - Масив от обекти { label, action }
+ * @param {string} icon - Емоджи икона (по подразбиране "📜")
+ */
+window.addStoryEvent = function(title, storyText, buttons = [], icon = "📜") {
+    const container = document.getElementById('eventsListContainer');
+    if (!container) return;
+
+    // Генерираме уникален ID за събитието (за да можем да скрием бутоните след употреба)
+    const eventId = 'story_' + Date.now() + '_' + Math.random().toString(36).substr(2, 6);
+
+    let html = `
+        <div id="${eventId}" class="chronicle-event interactive">
+            <div class="chronicle-icon">${icon}</div>
+            <div class="chronicle-text">
+                <strong>${title}</strong><br>
+                ${storyText}
+            </div>
+            <div class="chronicle-time">${window.gameTime ? `${window.getSeasonEmoji()} ${window.gameTime.year} г. ${window.gameTime.era}` : ''}</div>
+    `;
+
+    if (buttons && buttons.length) {
+        html += `<div class="chronicle-buttons">`;
+        buttons.forEach((btn, idx) => {
+            html += `<button data-event="${eventId}" data-btn="${idx}" class="chronicle-btn">${btn.label}</button>`;
+        });
+        html += `</div>`;
+    }
+    html += `</div>`;
+
+    container.insertAdjacentHTML('afterbegin', html);
+
+    // Прикачваме слушатели за бутоните
+    if (buttons && buttons.length) {
+        const eventDiv = document.getElementById(eventId);
+        const btnContainer = eventDiv.querySelector('.chronicle-buttons');
+        if (btnContainer) {
+            btnContainer.querySelectorAll('.chronicle-btn').forEach((btnElem, idx) => {
+                btnElem.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    // Изпълняваме действието
+                    if (buttons[idx] && typeof buttons[idx].action === 'function') {
+                        buttons[idx].action();
+                    }
+                    // След натискане, премахваме бутоните (или ги деактивираме)
+                    btnContainer.remove();
+                    // Маркираме събитието като "решено" – може да добавим текст
+                    const textDiv = eventDiv.querySelector('.chronicle-text');
+                    textDiv.innerHTML += `<br><span style="color:#88ff88;">[Избор: ${buttons[idx].label}]</span>`;
+                });
+            });
+        }
+    }
+
+    // Ограничаваме броя на събитията в летописа до 50 (както досега)
+    while (container.children.length > 50) {
+        container.removeChild(container.lastChild);
+    }
+};
+
+// Помощна функция за сезона (за да не пишем повторно)
+window.getSeasonEmoji = function() {
+    if (!window.gameTime) return "📅";
+    const seasons = ["🌱 Пролет", "☀️ Лято", "🍂 Есен", "❄️ Зима"];
+    return seasons[window.gameTime.seasonIndex] || "📅";
+};
+
 console.log("✅ chronicle_events.js зареден – генераторите са готови (вкл. нови интерактивни събития)");
