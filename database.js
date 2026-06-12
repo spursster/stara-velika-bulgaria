@@ -2,7 +2,7 @@
  * МОДУЛ: БАЗА ДАННИ - Велика България
  * ВСИЧКИ СА ГЕРОИ (HEROES) – НЯМА ВОДАЧИ, НЯМА ЙЕРАРХИЯ
  * 13 РАВНОПРАВНИ КЛАНОВЕ
- * ВЕРСИЯ: 7.2 – ДОБАВЕНИ ЖЕНСКИ ВЛАДЕТЕЛКИ И НАЕМАНЕ
+ * ВЕРСИЯ: 7.3 – ПОПРАВЕНИ ГРЕШКИ (дублирани герои, липсващи функции)
  */
 
 window.bulgarianClans = {
@@ -39,7 +39,8 @@ window.bulgarianClans = {
         heroes: ["Михаил III Шишман", "Иван Александър", "Иван Шишман", "Иван Срацимир", "Белаур", "Фружин", "Иван Асен IV"]
     },
     "Македони": {
-        heroes: ["Каран","Филип II", "Пердика I", "Александър I", "Пердика II", "Архелай I", "Аминта III", "Филип II", "Александър III Велики", "Филип III", "Александър IV"]
+        // Премахнат дублиращият се "Филип II"
+        heroes: ["Каран", "Филип II", "Пердика I", "Александър I", "Пердика II", "Архелай I", "Аминта III", "Александър III Велики", "Филип III", "Александър IV"]
     },
     "Птоломеи": {
         heroes: ["Птолемей I Сотер", "Птолемей II Филаделф", "Птолемей III Евергет", "Птолемей IV Филопатор", "Птолемей V Епифан", "Клеопатра VII"]
@@ -145,8 +146,8 @@ window.initializeAllHeroesInWorld = function() {
                     elite: Math.floor(armySize * 0.1)
                 }
             };
-            if (window.initializeHeroRPGData) window.initializeHeroRPGData(hero);
-            if (window.ensureCompleteArmyDetails) window.ensureCompleteArmyDetails(hero);
+            if (typeof window.initializeHeroRPGData === 'function') window.initializeHeroRPGData(hero);
+            if (typeof window.ensureCompleteArmyDetails === 'function') window.ensureCompleteArmyDetails(hero);
             window.worldData.clans[heroId] = hero;
             if (window.worldData.heroes) window.worldData.heroes[heroId] = hero;
             addedCount++;
@@ -175,6 +176,17 @@ function getAllHeroesFromWorld() {
         if (fallback) heroes.push(fallback);
     }
     return heroes;
+}
+
+// Дефиниране на backToMainMenu, ако липсва
+if (typeof window.backToMainMenu !== 'function') {
+    window.backToMainMenu = function() {
+        if (typeof window.location !== 'undefined') {
+            window.location.reload();
+        } else {
+            console.warn("backToMainMenu не е дефинирана и няма location за презареждане.");
+        }
+    };
 }
 
 // ==================== ТАВЕРНА UI ====================
@@ -226,7 +238,6 @@ window.openTavernUI = function() {
     if (window.femaleWorldRulers && window.femaleWorldRulers.length > 0) {
         htmlContent += `<hr style="margin:20px 0; border-color:#d4af37;"><h3 style="color:#ffd700; text-align:center;">👑 Чуждоземни владетелки</h3>`;
         for (let ruler of window.femaleWorldRulers) {
-            // Проверка дали вече не е наета
             let alreadyHired = false;
             for (let key in window.worldData.clans) {
                 let h = window.worldData.clans[key];
@@ -285,8 +296,11 @@ window.hireExistingHero = function(heroId, cost) {
             window.generateHeroPortrait(hero).catch(e => console.warn(e));
         }
         
-        if (window.armyMarket && typeof window.armyMarket.sync === 'function') window.armyMarket.sync(hero);
-        if (window.updateCharacterUI) window.updateCharacterUI(payingHero);
+        // Поправка: armyMarket.sync не приема аргументи
+        if (window.armyMarket && typeof window.armyMarket.sync === 'function') {
+            window.armyMarket.sync();
+        }
+        if (typeof window.updateCharacterUI === 'function') window.updateCharacterUI(payingHero);
         if (typeof window.updateStrongestHeroUI === 'function') {
             window.updateStrongestHeroUI();
         }
@@ -357,9 +371,11 @@ window.hireFemaleRuler = function(name, cost, power, className, flag, country) {
         armyDetails: { infantry: 100, archers: 50, cavalry: 30, elite: 20 },
         gender: "female"
     };
-    if (window.initializeHeroRPGData) window.initializeHeroRPGData(newHero);
-    if (window.ensureCompleteArmyDetails) window.ensureCompleteArmyDetails(newHero);
-    if (window.generateHeroPortrait) window.generateHeroPortrait(newHero).catch(e => console.warn(e));
+    if (typeof window.initializeHeroRPGData === 'function') window.initializeHeroRPGData(newHero);
+    if (typeof window.ensureCompleteArmyDetails === 'function') window.ensureCompleteArmyDetails(newHero);
+    if (typeof window.generateHeroPortrait === 'function') {
+        window.generateHeroPortrait(newHero).catch(e => console.warn(e));
+    }
 
     if (!window.worldData) window.worldData = {};
     if (!window.worldData.clans) window.worldData.clans = {};
@@ -368,9 +384,9 @@ window.hireFemaleRuler = function(name, cost, power, className, flag, country) {
     window.unlockedHeroes.push(newHero);
 
     if (window.addWorldEvent) window.addWorldEvent("👑 НАЕТА ВЛАДЕТЕЛКА", `${newHero.name} се присъедини към вашата дружина!`, "👑");
-    if (window.updateStrongestHeroUI) window.updateStrongestHeroUI();
-    if (window.renderFavoriteHeroesBar) window.renderFavoriteHeroesBar();
-    if (window.updateAllUI) window.updateAllUI();
+    if (typeof window.updateStrongestHeroUI === 'function') window.updateStrongestHeroUI();
+    if (typeof window.renderFavoriteHeroesBar === 'function') window.renderFavoriteHeroesBar();
+    if (typeof window.updateAllUI === 'function') window.updateAllUI();
     window.openTavernUI();
 };
 
@@ -441,3 +457,5 @@ window.femaleWorldRulers = [
     { name: "Каролина Матилда", country: "Дания", flag: "🇩🇰", power: 125, class: "Кралица", cost: 980 },
     { name: "Мария-Антоанета", country: "Франция", flag: "🇫🇷", power: 140, class: "Кралица", cost: 1100 }
 ];
+
+console.log("✅ database.js – преработен (версия 7.3), без дублирани герои, с проверки за липсващи функции");
