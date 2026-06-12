@@ -60,10 +60,11 @@
     if (_battleInProgress) return "";
     _battleInProgress = true;
 
-    if (!_battleNarrative || _battleNarrative.length === 0) {
-        _battleInProgress = false;
-        return isVictory ? `Силите ви сразяват врага в ${regionName}. Победата е ваша!` : `Войските ви отстъпват от ${regionName}. Поражението е горчиво.`;
-    }
+    let narrativeEmpty = (!_battleNarrative || _battleNarrative.length === 0);
+if (narrativeEmpty) {
+    // Генерираме минимален разказ, но пак ще минем през целия код
+    _battleNarrative = [{ text: "Битката беше кратка и жестока.", type: "info" }];
+}
 
     let mvpHero = null;
     let maxDamage = 0;
