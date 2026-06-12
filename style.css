@@ -21,11 +21,10 @@ html, body {
 
 /* -----------------------------------------------
    2. СТАРИТЕ ГОРНА И ДОЛНА ЛЕНТА – ПРЕМАХНАТИ (вече не се използват)
-   Оставете празно, за да не пречат.
 ----------------------------------------------- */
 
 /* -----------------------------------------------
-   3. ОСНОВЕН КОНТЕЙНЕР – ще се пренареди от новия CSS
+   3. ОСНОВЕН КОНТЕЙНЕР
 ----------------------------------------------- */
 #game-container {
     display: grid;
@@ -35,7 +34,6 @@ html, body {
     padding: 0 15px 80px 15px;
 }
 
-/* Ляв и десен панел – основен фон */
 #sidebar-left, #sidebar-right {
     background: rgba(10, 20, 40, 0.7);
     backdrop-filter: blur(8px);
@@ -55,13 +53,12 @@ html, body {
 /* -----------------------------------------------
    4. ЛЕТОПИС
 ----------------------------------------------- */
-/* ========== ЛЕТОПИС – ПОКАЗВА 10 СЪБИТИЯ + БУТОН "ЗАРЕДИ ОЩЕ" ========== */
 #unifiedChronicle {
     background: transparent;
     overflow-y: auto;
     flex: 1;
     min-height: 0;
-    max-height: none !important; /* премахваме ограничението от 40vh */
+    max-height: none !important;
     display: flex;
     flex-direction: column;
 }
@@ -92,13 +89,13 @@ html, body {
     transform: scale(1.02);
 }
 
-/* Уверяваме се, че и на малки екрани бутонът се вижда */
 @media (max-width: 768px) {
     .load-more-btn {
         padding: 4px 10px;
         font-size: 0.7rem;
     }
 }
+
 /* -----------------------------------------------
    5. БИТКА (МОДАЛЕН ПРОЗОРЕЦ)
 ----------------------------------------------- */
@@ -288,7 +285,7 @@ html, body {
 }
 
 /* -----------------------------------------------
-   8. ДРОПДАУН МЕНЮ ЗА НОВА ИГРА (остава, но лентите са скрити)
+   8. ДРОПДАУН МЕНЮ ЗА НОВА ИГРА
 ----------------------------------------------- */
 .new-game-menu-container {
     position: relative;
@@ -362,7 +359,6 @@ html, body {
     border-radius: 3px;
 }
 
-/* Затваряне при клик върху фона на модалите */
 .market-modal,
 #armyMarketModal {
     cursor: pointer;
@@ -373,7 +369,6 @@ html, body {
     cursor: default;
 }
 
-/* TikTok Share Button */
 #share-hero-btn {
   background: linear-gradient(135deg, #25F4EE 0%, #FE2C55 100%) !important;
   color: #fff !important;
@@ -414,51 +409,6 @@ html, body {
 .troop-count {
     font-size: 11px;
     color: #ffdd99;
-}
-
-/* ==================== ИНТЕРАКТИВЕН ЛЕТОПИС ==================== */
-.chronicle-event.interactive-event {
-    background: rgba(0, 0, 0, 0.65);
-    border-left: 4px solid #ffaa44;
-    margin-bottom: 10px;
-    padding: 10px 12px;
-    border-radius: 0 12px 12px 0;
-    transition: all 0.2s ease-in-out;
-    backdrop-filter: blur(2px);
-    display: flex;
-    flex-direction: column;
-}
-.chronicle-event.interactive-event:hover {
-    transform: translateX(4px);
-    background: rgba(0, 0, 0, 0.85);
-    border-left-width: 6px;
-}
-.chronicle-buttons {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 8px;
-    margin-top: 12px;
-    justify-content: flex-start;
-    width: 100%;
-}
-.chronicle-btn {
-    background: #d4af37;
-    border: none;
-    border-radius: 30px;
-    padding: 6px 16px;
-    font-size: 0.8rem;
-    font-weight: bold;
-    color: #000;
-    cursor: pointer;
-    transition: 0.15s;
-    white-space: nowrap;
-}
-.chronicle-btn:hover {
-    background: #ffaa44 !important;
-    transform: scale(1.02);
-}
-.chronicle-btn:active {
-    transform: scale(0.98);
 }
 
 /* ==================== СТИЛЕН И АДАПТИВЕН БИТКА ЕКРАН ==================== */
@@ -555,7 +505,6 @@ html, body {
     overflow-y: auto;
 }
 
-/* ========== АДАПТИВНОСТ ЗА МОДАЛИ И БИТКИ (телефони) ========== */
 @media (max-width: 768px) {
     .hero-card, .enemy-card {
         width: 130px;
@@ -577,13 +526,11 @@ html, body {
 }
 
 /* ========== НОВ ТРИКОЛОНЕН ДИЗАЙН (ПРИНУДИТЕЛЕН ЗА ВСИЧКИ ЕКРАНИ) ========== */
-/* Скриваме старите ленти (те остават в DOM, но не се виждат) */
 #top-bar,
 .bottom-fixed-wrapper {
     display: none !important;
 }
 
-/* Пренареждаме основния контейнер в 3 колони */
 #game-container {
     display: grid !important;
     grid-template-columns: 220px 1fr 280px !important;
@@ -595,14 +542,12 @@ html, body {
     max-width: none !important;
 }
 
-/* Ляв панел – подготвяме го за вертикална лента с герои */
 #sidebar-left {
     display: flex !important;
     flex-direction: column !important;
     overflow-y: auto !important;
 }
 
-/* ========== ВЕРТИКАЛНА ЛЕНТА С ЛЮБИМИ ГЕРОИ (ПЪЛНА ИНФОРМАЦИЯ) ========== */
 #favorite-heroes-bar {
     display: flex !important;
     flex-direction: column !important;
@@ -627,14 +572,10 @@ html, body {
     transform: translateX(4px);
     background: rgba(255,215,0,0.15) !important;
 }
-
-/* Иконка */
 .favorite-slot .hero-icon {
     font-size: 36px !important;
     margin-bottom: 2px !important;
 }
-
-/* Име */
 .favorite-slot .hero-name {
     font-size: 12px !important;
     font-weight: bold !important;
@@ -644,16 +585,12 @@ html, body {
     text-overflow: ellipsis !important;
     max-width: 100% !important;
 }
-
-/* Ниво и сила */
 .favorite-slot .hero-level-power {
     display: block !important;
     font-size: 10px !important;
     color: #ccaa77 !important;
     margin: 2px 0 !important;
 }
-
-/* Ленти за живот и опит */
 .favorite-slot .hp-bar,
 .favorite-slot .xp-bar {
     display: block !important;
@@ -674,8 +611,6 @@ html, body {
 .favorite-slot .xp-fill {
     background: #44aa44 !important;
 }
-
-/* Статистики (❤️, 💰, ⚔️) */
 .favorite-slot .hero-stats {
     display: flex !important;
     justify-content: center !important;
@@ -687,8 +622,6 @@ html, body {
 .favorite-slot .hero-stats span {
     font-size: 9px !important;
 }
-
-/* AUTO/MANUAL значка */
 .favorite-slot .auto-badge {
     display: inline-block !important;
     font-size: 8px !important;
@@ -697,8 +630,6 @@ html, body {
     border-radius: 12px !important;
     margin-top: 3px !important;
 }
-
-/* Сърце (премахване от любими) – горе вдясно */
 .favorite-slot button:first-child {
     position: absolute !important;
     top: 4px !important;
@@ -710,8 +641,6 @@ html, body {
     color: #ff4466 !important;
     z-index: 2 !important;
 }
-
-/* AUTO/MANUAL бутон (втори бутон) – долу вляво */
 .favorite-slot button:last-child {
     position: absolute !important;
     bottom: 4px !important;
@@ -726,97 +655,29 @@ html, body {
     z-index: 2 !important;
 }
 
-/* ========== АДАПТАЦИЯ ЗА ТЕЛЕФОН (ЛАНДШАФТ) ========== */
 @media (max-width: 700px) {
-    .favorite-slot .hero-icon {
-        font-size: 28px !important;
-    }
-    .favorite-slot .hero-name {
-        font-size: 10px !important;
-    }
-    .favorite-slot .hero-level-power {
-        font-size: 8px !important;
-    }
+    .favorite-slot .hero-icon { font-size: 28px !important; }
+    .favorite-slot .hero-name { font-size: 10px !important; }
+    .favorite-slot .hero-level-power { font-size: 8px !important; }
     .favorite-slot .hero-stats span,
-    .favorite-slot .auto-badge {
-        font-size: 8px !important;
-    }
-    .favorite-slot .hp-bar,
-    .favorite-slot .xp-bar {
-        height: 3px !important;
-    }
-    .favorite-slot button:first-child {
-        font-size: 12px !important;
-    }
-    .favorite-slot button:last-child {
-        font-size: 7px !important;
-        padding: 1px 4px !important;
-    }
+    .favorite-slot .auto-badge { font-size: 8px !important; }
+    .favorite-slot .hp-bar, .favorite-slot .xp-bar { height: 3px !important; }
+    .favorite-slot button:first-child { font-size: 12px !important; }
+    .favorite-slot button:last-child { font-size: 7px !important; padding: 1px 4px !important; }
 }
 
 @media (max-width: 550px) {
-    .favorite-slot {
-        padding: 6px 4px !important;
-    }
-    .favorite-slot .hero-icon {
-        font-size: 24px !important;
-    }
-    .favorite-slot .hero-name {
-        font-size: 9px !important;
-    }
-    .favorite-slot .hero-level-power {
-        font-size: 7px !important;
-    }
-    .favorite-slot .hero-stats span {
-        font-size: 7px !important;
-    }
-    .favorite-slot .hp-bar,
-    .favorite-slot .xp-bar {
-        height: 2px !important;
-        margin: 2px 0 !important;
-    }
-    .favorite-slot .auto-badge {
-        font-size: 6px !important;
-        padding: 1px 4px !important;
-    }
-    .favorite-slot button:first-child {
-        font-size: 10px !important;
-        top: 2px !important;
-        right: 2px !important;
-    }
-    .favorite-slot button:last-child {
-        font-size: 6px !important;
-        bottom: 2px !important;
-        left: 2px !important;
-    }
+    .favorite-slot { padding: 6px 4px !important; }
+    .favorite-slot .hero-icon { font-size: 24px !important; }
+    .favorite-slot .hero-name { font-size: 9px !important; }
+    .favorite-slot .hero-level-power { font-size: 7px !important; }
+    .favorite-slot .hero-stats span { font-size: 7px !important; }
+    .favorite-slot .hp-bar, .favorite-slot .xp-bar { height: 2px !important; margin: 2px 0 !important; }
+    .favorite-slot .auto-badge { font-size: 6px !important; padding: 1px 4px !important; }
+    .favorite-slot button:first-child { font-size: 10px !important; top: 2px !important; right: 2px !important; }
+    .favorite-slot button:last-child { font-size: 6px !important; bottom: 2px !important; left: 2px !important; }
 }
-/* Адаптивност за много малки екрани (телефони) */
-@media (max-width: 700px) {
-    .favorite-slot .hero-icon {
-        font-size: 28px !important;
-    }
-    .favorite-slot .hero-name {
-        font-size: 10px !important;
-    }
-    .favorite-slot .hero-level-power {
-        font-size: 8px !important;
-    }
-    .favorite-slot .hero-stats span,
-    .favorite-slot .auto-badge {
-        font-size: 7px !important;
-    }
-    .favorite-slot .hp-bar, .favorite-slot .xp-bar {
-        height: 3px !important;
-    }
-    .favorite-slot button:first-of-type {
-        font-size: 12px !important;
-    }
-    .favorite-slot .auto-toggle-btn {
-        font-size: 7px !important;
-        padding: 1px 3px !important;
-    }
-}
-/* Централен панел – летопис, топ герой, портали, подредени вертикално */
+
 #game-main-area {
     display: flex !important;
     flex-direction: column !important;
@@ -835,7 +696,6 @@ html, body {
     padding: 12px !important;
 }
 
-/* Десен панел – команден център (пълни се от JS) */
 #sidebar-right {
     display: flex !important;
     flex-direction: column !important;
@@ -843,7 +703,6 @@ html, body {
     overflow-y: auto !important;
 }
 
-/* Класове за динамично добавените елементи в десния панел */
 .command-stats {
     background: rgba(0,0,0,0.5);
     border-radius: 16px;
@@ -893,7 +752,6 @@ html, body {
     font-weight: bold;
 }
 
-/* Адаптивност за по-малки екрани (таблети, телефони) */
 @media (max-width: 900px) {
     #game-container {
         grid-template-columns: 180px 1fr 220px !important;
@@ -923,7 +781,6 @@ html, body {
     .favorite-slot .hero-name { font-size: 8px; }
 }
 
-/* Гаранция, че старите медийни заявки не развалят дизайна */
 @media (max-width: 1024px), (max-width: 768px), (max-width: 600px) {
     #sidebar-left, #sidebar-right {
         display: flex !important;
@@ -934,11 +791,6 @@ html, body {
     }
 }
 
-/* Скриваме втората (хоризонтална) лента с герои, която се създава от renderSingleBar() */
-#single-hero-bar {
-    display: none !important;
-}
-/* Скриваме втората хоризонтална лента с герои */
 #single-hero-bar {
     display: none !important;
 }
@@ -990,9 +842,9 @@ html, body {
     color: #ccc;
     max-width: 80%;
 }
-/* ========== АДАПТИВНИ МОДАЛИ ЗА ТЕЛЕФОНИ (LANDSCAPE) ========== */
+
+/* ========== АДАПТИВНИ МОДАЛИ ЗА ТЕЛЕФОНИ ========== */
 @media (max-width: 900px) {
-    /* Общи правила за всички модали */
     .modal-content,
     .glass-panel,
     #barracks-screen > div,
@@ -1012,107 +864,49 @@ html, body {
         padding: 12px !important;
         overflow-y: auto !important;
     }
-    
-    /* Битка – специфични корекции */
-    .hero-card, .enemy-card {
-        width: 140px !important;
-        padding: 6px !important;
-    }
-    .hero-portrait {
-        width: 40px !important;
-        height: 40px !important;
-    }
-    .hero-icon {
-        font-size: 28px !important;
-    }
-    .battle-btn {
-        padding: 4px 10px !important;
-        font-size: 0.7rem !important;
-    }
-    .battle-log {
-        max-height: 100px !important;
-        font-size: 10px !important;
-    }
-    .action-buttons {
-        gap: 6px !important;
-        flex-wrap: wrap !important;
-    }
-
-    /* Казарми – таблици и карти */
-    .barracks-tabs {
-        flex-wrap: wrap !important;
-    }
-    .troop-card {
-        min-width: 140px !important;
-    }
-    .elite-hero-card {
-        width: 90px !important;
-        min-width: 70px !important;
-    }
-
-    /* Дипломация – таблица */
+    .hero-card, .enemy-card { width: 140px !important; padding: 6px !important; }
+    .hero-portrait { width: 40px !important; height: 40px !important; }
+    .hero-icon { font-size: 28px !important; }
+    .battle-btn { padding: 4px 10px !important; font-size: 0.7rem !important; }
+    .battle-log { max-height: 100px !important; font-size: 10px !important; }
+    .action-buttons { gap: 6px !important; flex-wrap: wrap !important; }
+    .barracks-tabs { flex-wrap: wrap !important; }
+    .troop-card { min-width: 140px !important; }
+    .elite-hero-card { width: 90px !important; min-width: 70px !important; }
     #diplomacy-table-body td,
-    #diplomacy-table-body th {
-        padding: 8px 4px !important;
-        font-size: 0.7rem !important;
-    }
-    .desktop-only {
-        display: none !important;
-    }
-
-    /* Летопис – повече редове, по-малък шрифт */
-    .chronicle-event {
-        padding: 4px 6px !important;
-        gap: 6px !important;
-    }
-    .chronicle-text {
-        font-size: 10px !important;
-    }
-    .chronicle-time {
-        font-size: 8px !important;
-        white-space: normal !important;
-    }
-    .chronicle-btn {
-        padding: 2px 8px !important;
-        font-size: 9px !important;
-    }
+    #diplomacy-table-body th { padding: 8px 4px !important; font-size: 0.7rem !important; }
+    .desktop-only { display: none !important; }
+    .chronicle-event { padding: 4px 6px !important; gap: 6px !important; }
+    .chronicle-text { font-size: 10px !important; }
+    .chronicle-time { font-size: 8px !important; white-space: normal !important; }
+    .chronicle-btn { padding: 2px 8px !important; font-size: 9px !important; }
 }
 
-/* Още по-малки екрани (телефони под 600px ширина) */
 @media (max-width: 600px) {
-    .hero-card, .enemy-card {
-        width: calc(50% - 8px) !important;
-        min-width: 100px !important;
-    }
-    .troop-card {
-        min-width: 120px !important;
-    }
-    .elite-hero-card {
-        width: 80px !important;
-    }
+    .hero-card, .enemy-card { width: calc(50% - 8px) !important; min-width: 100px !important; }
+    .troop-card { min-width: 120px !important; }
+    .elite-hero-card { width: 80px !important; }
 }
-/* ========== ПРЕМАХВАНЕ НА СКРОЛ ЛЕНТАТА ОТ ЛЕТОПИСА, САМО ЦЕНТРАЛЕН ПАНЕЛ СКРОЛИРА ========== */
+
+/* ========== ПРЕМАХВАНЕ НА СКРОЛ ЛЕНТАТА ОТ ЛЕТОПИСА ========== */
 #unifiedChronicle {
     overflow: visible !important;
     max-height: none !important;
     flex-shrink: 0;
 }
-
 #eventsListContainer {
     overflow: visible !important;
 }
-
 #game-main-area {
     overflow-y: auto !important;
     overflow-x: hidden !important;
     height: 100% !important;
 }
-
 .chronicle-event {
     overflow: visible;
 }
 
-/* ========== АДАПТИРАНЕ НА КАРТАТА С РЕГИОНИ ЗА ТЕЛЕФОН ========== */
+/* ========== АДАПТИРАНЕ НА КАРТАТА С РЕГИОНИ ========== */
 @media (max-width: 900px) {
     #regions-map-overlay .region-card {
         width: calc(33% - 16px) !important;
@@ -1120,148 +914,30 @@ html, body {
         padding: 8px 4px !important;
         font-size: 0.7rem !important;
     }
-    #regions-map-overlay .region-card div:first-child {
-        font-size: 24px !important;
-    }
-    #regions-map-overlay .region-card div:nth-child(2) {
-        font-size: 0.8rem !important;
-    }
+    #regions-map-overlay .region-card div:first-child { font-size: 24px !important; }
+    #regions-map-overlay .region-card div:nth-child(2) { font-size: 0.8rem !important; }
     #regions-map-overlay .region-card div:nth-child(3),
-    #regions-map-overlay .region-card div:nth-child(4) {
-        font-size: 9px !important;
-    }
-    #regions-map-overlay > div {
-        padding: 10px !important;
-    }
-    #closeMapBtnTopLeft, #closeMapBtnBottom {
-        width: 32px !important;
-        height: 32px !important;
-        font-size: 16px !important;
-    }
+    #regions-map-overlay .region-card div:nth-child(4) { font-size: 9px !important; }
+    #regions-map-overlay > div { padding: 10px !important; }
+    #closeMapBtnTopLeft, #closeMapBtnBottom { width: 32px !important; height: 32px !important; font-size: 16px !important; }
 }
-
 @media (max-width: 550px) {
-    #regions-map-overlay .region-card {
-        width: calc(50% - 16px) !important;
-    }
+    #regions-map-overlay .region-card { width: calc(50% - 16px) !important; }
 }
 
-/* ========== АДАПТИРАНЕ НА КАРТАТА С РЕГИОНИ ЗА ТЕЛЕФОН (ЛАНДШАФТ) ========== */
 @media (max-width: 900px) {
-    /* Модалът на регионите да е почти цял екран */
-    #regions-map-overlay > div {
-        width: 98% !important;
-        max-width: 98% !important;
-        height: 95vh !important;
-        padding: 8px !important;
-    }
-    /* Картичките на регионите – 2 колони */
-    #regions-map-overlay .region-card {
-        width: calc(50% - 16px) !important;
-        min-width: 110px !important;
-        padding: 6px 4px !important;
-        margin: 6px !important;
-    }
-    #regions-map-overlay .region-card div:first-child {
-        font-size: 28px !important;
-    }
-    #regions-map-overlay .region-card div:nth-child(2) {
-        font-size: 0.85rem !important;
-    }
-    #regions-map-overlay .region-card div:nth-child(3),
-    #regions-map-overlay .region-card div:nth-child(4) {
-        font-size: 9px !important;
-    }
-    /* Бутони за затваряне – по-големи */
-    #closeMapBtnTopLeft, #closeMapBtnBottom {
-        width: 36px !important;
-        height: 36px !important;
-        font-size: 20px !important;
-    }
+    #regions-map-overlay { position: fixed !important; top: 0 !important; left: 0 !important; width: 100% !important; height: 100% !important; background: #000 !important; margin: 0 !important; padding: 0 !important; display: flex !important; align-items: flex-start !important; overflow-y: auto !important; }
+    #regions-map-overlay > div { width: 100% !important; max-width: 100% !important; height: auto !important; min-height: 100% !important; margin: 0 !important; border-radius: 0 !important; padding: 10px !important; display: flex !important; flex-direction: column !important; background: #0a0a1a !important; }
+    #regions-map-overlay > div > div:nth-child(2) { display: flex !important; flex-wrap: wrap !important; justify-content: center !important; gap: 10px !important; flex: 1 !important; overflow-y: visible !important; }
+    .region-card { width: calc(50% - 20px) !important; min-width: 130px !important; box-sizing: border-box !important; margin: 0 !important; }
+    .region-card div:nth-child(2) { white-space: normal !important; word-break: break-word !important; font-size: 0.8rem !important; }
+    #closeMapBtnTopLeft, #closeMapBtnBottom { width: 44px !important; height: 44px !important; font-size: 28px !important; }
+}
+@media (max-width: 550px) {
+    #regions-map-overlay .region-card { width: calc(100% - 20px) !important; max-width: 280px !important; margin: 8px auto !important; }
 }
 
-/* За много тесни екрани (под 550px) – 1 колона */
-@media (max-width: 550px) {
-    #regions-map-overlay .region-card {
-        width: calc(100% - 20px) !important;
-        max-width: 200px !important;
-        margin: 8px auto !important;
-    }
-}
-
-/* ========== ФИНАЛНА КОРЕКЦИЯ ЗА КАРТА НА ТЕЛЕФОН ========== */
-@media (max-width: 900px) {
-    #regions-map-overlay {
-        position: fixed !important;
-        top: 0 !important;
-        left: 0 !important;
-        width: 100% !important;
-        height: 100% !important;
-        background: #000 !important;
-        margin: 0 !important;
-        padding: 0 !important;
-        display: flex !important;
-        align-items: flex-start !important;
-        overflow-y: auto !important;
-    }
-    #regions-map-overlay > div {
-        width: 100% !important;
-        max-width: 100% !important;
-        height: auto !important;
-        min-height: 100% !important;
-        margin: 0 !important;
-        border-radius: 0 !important;
-        padding: 10px !important;
-        display: flex !important;
-        flex-direction: column !important;
-        background: #0a0a1a !important;
-    }
-    /* Секцията с картички */
-    #regions-map-overlay > div > div:nth-child(2) {
-        display: flex !important;
-        flex-wrap: wrap !important;
-        justify-content: center !important;
-        gap: 10px !important;
-        flex: 1 !important;
-        overflow-y: visible !important;
-    }
-    /* Картичките */
-    .region-card {
-        width: calc(50% - 20px) !important;
-        min-width: 130px !important;
-        box-sizing: border-box !important;
-        margin: 0 !important;
-    }
-    .region-card div:nth-child(2) {
-        white-space: normal !important;
-        word-break: break-word !important;
-        font-size: 0.8rem !important;
-    }
-    /* Бутони за затваряне */
-    #closeMapBtnTopLeft, #closeMapBtnBottom {
-        width: 44px !important;
-        height: 44px !important;
-        font-size: 28px !important;
-    }
-}
-/* За много тесни екрани (под 550px) – 1 колона */
-@media (max-width: 550px) {
-    #regions-map-overlay .region-card {
-        width: calc(100% - 20px) !important;
-        max-width: 280px !important;
-        margin: 8px auto !important;
-    }
-}
-/* За много тесни екрани (под 550px) – 1 колона */
-@media (max-width: 550px) {
-    #regions-map-overlay .region-card {
-        width: calc(100% - 20px) !important;
-        max-width: 280px !important;
-        margin: 8px auto !important;
-    }
-}
-
-/* Интерактивни събития в летописа */
+/* ==================== ИНТЕРАКТИВЕН ЛЕТОПИС (САМО ВЕДНЪЖ) ==================== */
 .chronicle-event.interactive {
     background: rgba(0, 0, 0, 0.65);
     border-left: 4px solid #ffaa44;
@@ -1297,12 +973,22 @@ html, body {
     cursor: pointer;
     transition: 0.15s;
     white-space: nowrap;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
 }
 .chronicle-btn:hover {
     background: #ffaa44 !important;
     transform: scale(1.02);
 }
-/* Сезонни теми (оставяме ги) */
+@media (max-width: 768px) {
+    .chronicle-btn {
+        padding: 4px 12px;
+        font-size: 0.7rem;
+    }
+}
+
+/* Сезонни теми */
 body.season-spring { background: linear-gradient(180deg, #0a2a4a 0%, #1a4a3a 100%); }
 body.season-summer { background: linear-gradient(180deg, #0a2a4a 0%, #2a3a0a 100%); }
 body.season-autumn { background: linear-gradient(180deg, #0a2a4a 0%, #3a2a0a 100%); }
