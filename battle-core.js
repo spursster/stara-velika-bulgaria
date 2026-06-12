@@ -56,158 +56,166 @@
         return " с непоколебима воля, вдъхновяваща всички около себе си";
     }
 
-    function generateBattleStory(regionName, heroes, enemies, isVictory, rewards) {
-        if (_battleInProgress) return "";
-        _battleInProgress = true;
+   function generateBattleStory(regionName, heroes, enemies, isVictory, rewards) {
+    if (_battleInProgress) return "";
+    _battleInProgress = true;
 
-        if (!_battleNarrative || _battleNarrative.length === 0) {
-            _battleInProgress = false;
-            return isVictory ? `Силите ви сразяват врага в ${regionName}. Победата е ваша!` : `Войските ви отстъпват от ${regionName}. Поражението е горчиво.`;
+    if (!_battleNarrative || _battleNarrative.length === 0) {
+        _battleInProgress = false;
+        return isVictory ? `Силите ви сразяват врага в ${regionName}. Победата е ваша!` : `Войските ви отстъпват от ${regionName}. Поражението е горчиво.`;
+    }
+
+    let mvpHero = null;
+    let maxDamage = 0;
+    for (let id in _damageDealt) {
+        if (_damageDealt[id] > maxDamage) {
+            maxDamage = _damageDealt[id];
+            mvpHero = heroes.find(h => h.id === id);
         }
-
-        let mvpHero = null;
-        let maxDamage = 0;
-        for (let id in _damageDealt) {
-            if (_damageDealt[id] > maxDamage) {
-                maxDamage = _damageDealt[id];
-                mvpHero = heroes.find(h => h.id === id);
-            }
-        }
-        if (!mvpHero && heroes.length) mvpHero = heroes.find(h => h.hp > 0) || heroes[0];
-        
-        if (mvpHero && mvpHero.clanObj) {
-            if (!window.mvpHistory) window.mvpHistory = [];
-            window.mvpHistory.unshift({
-                heroName: mvpHero.name,
-                damage: maxDamage,
-                region: regionName,
-                timestamp: Date.now()
-            });
-            if (window.mvpHistory.length > 20) window.mvpHistory.pop();
-            const heroObj = mvpHero.clanObj;
-            if (heroObj) {
-                if (window.gainHeroXP) window.gainHeroXP(heroObj, 5);
-                else heroObj.xp = (heroObj.xp || 0) + 5;
-                heroObj.morale = Math.min(100, (heroObj.morale || 50) + 5);
-            }
-        }
-        
-        const region = window.worldData?.regions?.[regionName];
-        let terrainIntro = region ? getTerrainIntro(region.terrain) : `В ${regionName} се разрази яростна битка.`;
-
-        const maxEvents = 6;
-        let importantEvents = _battleNarrative.slice(0, maxEvents);
-        if (importantEvents.length > 3 && Math.random() > 0.7) {
-            const older = _battleNarrative[maxEvents];
-            if (older) importantEvents.push(older);
-        }
-        let battleFlow = "";
-        for (let ev of importantEvents) battleFlow += ` ▸ ${ev.text}\n`;
-
-        let climax = "";
-        let bonusGold = 0, bonusXP = 0, bonusMorale = 0;
-
-        if (isVictory) {
-            const strongestHero = heroes.reduce((a, b) => (a.power > b.power ? a : b), heroes[0]);
-            const classSuffix = getClassClimax(strongestHero);
-            const epicTurns = [
-                `Тогава ${strongestHero.name}${classSuffix} нанесе решителния удар.`,
-                `Изведнъж небето се разцепи и ${strongestHero.name}${classSuffix} удари безмилостно.`,
-                `Когато всички изглеждаше загубено, ${strongestHero.name}${classSuffix} възкръсна и сразява врага.`,
-                `Земята потрепери под краката на ${strongestHero.name}${classSuffix}.`
-            ];
-            let epicLine = epicTurns[Math.floor(Math.random() * epicTurns.length)];
-            const ending = [" Врагът потрепери и побягна.", " Оцелелите се разпръснаха в паника.", " Бойното поле остана покрито с трупове на противника.", " Славата на победителите ще се помни с векове."];
-            climax = epicLine + ending[Math.floor(Math.random() * ending.length)];
-            if (rewards.gold) bonusGold = Math.floor(rewards.gold * 0.2);
-            if (rewards.xp) bonusXP = Math.floor(rewards.xp * 0.2);
-            bonusMorale = 15;
-        } else {
-            const randomHero = heroes[Math.floor(Math.random() * heroes.length)];
-            const defeatMessages = [
-                `Въпреки смелостта на ${randomHero.name}, силите ви не стигнаха. Отстъплението беше неизбежно.`,
-                `Предателство в собствените редици доведе до разгром.`,
-                `Вражеският командир се оказа по-хитър. Загубите са тежки.`,
-                `Съдбата се обърна срещу вас в последния миг.`
-            ];
-            climax = defeatMessages[Math.floor(Math.random() * defeatMessages.length)];
-            if (rewards.gold) bonusGold = -Math.floor(rewards.gold * 0.1);
-            bonusMorale = -15;
-        }
-
-        const firstHero = heroes.find(h => h.hp > 0);
-        if (firstHero && isVictory && Math.random() > 0.6) {
-            climax += `\nЛично ${firstHero.name} събра трофеите и вдигна знамето на победата.`;
-        }
-
-        let mvpSection = "";
-        if (mvpHero && maxDamage > 0) {
-            const dmgPercent = ((maxDamage / (rewards?.totalDamage || maxDamage)) * 100).toFixed(0);
-            mvpSection = `\n🌟 **MVP на битката: ${mvpHero.name}** с ${maxDamage} щети (${dmgPercent}% от общите)! 🌟\n`;
-            if (isVictory) {
-                mvpSection += `🏅 За героизма си ${mvpHero.name} получава +5 опит и +5 морал.\n`;
-            }
-        }
-        
-        let story = `🏰 **Епичната битка за ${regionName}**\n\n${terrainIntro}\n${battleFlow}\n---\n✨ **${isVictory ? "ПОБЕДА" : "ПОРАЖЕНИЕ"}** ✨\n${climax}\n${mvpSection}`;
-        if (rewards.gold) story += `💰 Намерено злато: ${rewards.gold}\n`;
-        if (rewards.xp) story += `📚 Придобит опит: ${rewards.xp}\n`;
-        if (rewards.artifact) story += `🏺 Открит артефакт: "${rewards.artifact.name}"\n`;
-
-        if (!window.epicChronicles) window.epicChronicles = [];
-        window.epicChronicles.unshift({
-            title: `Битката за ${regionName} (${window.gameTime ? window.gameTime.year + " г." : "н.е."})`,
-            story: story,
-            timestamp: Date.now(),
-            isVictory: isVictory,
-            mvp: mvpHero ? mvpHero.name : null
+    }
+    if (!mvpHero && heroes.length) mvpHero = heroes.find(h => h.hp > 0) || heroes[0];
+    
+    if (mvpHero && mvpHero.clanObj) {
+        if (!window.mvpHistory) window.mvpHistory = [];
+        window.mvpHistory.unshift({
+            heroName: mvpHero.name,
+            damage: maxDamage,
+            region: regionName,
+            timestamp: Date.now()
         });
-        if (window.epicChronicles.length > 20) window.epicChronicles.pop();
+        if (window.mvpHistory.length > 20) window.mvpHistory.pop();
+        const heroObj = mvpHero.clanObj;
+        if (heroObj) {
+            if (window.gainHeroXP) window.gainHeroXP(heroObj, 5);
+            else heroObj.xp = (heroObj.xp || 0) + 5;
+            heroObj.morale = Math.min(100, (heroObj.morale || 50) + 5);
+        }
+    }
+    
+    const region = window.worldData?.regions?.[regionName];
+    let terrainIntro = region ? getTerrainIntro(region.terrain) : `В ${regionName} се разрази яростна битка.`;
 
-        if (isVictory && typeof window.showAdvisorMsg === 'function') {
-            const buttons = [
-                { label: `🏛️ Издигни паметник (+${bonusXP} опит, +10 морал)`, action: () => {
-                    if (bonusXP > 0) {
-                        const livingHeroes = heroes.filter(h => h.hp > 0);
-                        const xpPerHero = Math.floor(bonusXP / livingHeroes.length);
-                        for (let h of livingHeroes) {
-                            const heroObj = h.heroObj || h.clanObj;
-                            if (window.gainHeroXP) window.gainHeroXP(heroObj, xpPerHero);
-                            else heroObj.xp = (heroObj.xp || 0) + xpPerHero;
-                        }
-                    }
-                    for (let h of heroes) {
+    const maxEvents = 6;
+    let importantEvents = _battleNarrative.slice(0, maxEvents);
+    if (importantEvents.length > 3 && Math.random() > 0.7) {
+        const older = _battleNarrative[maxEvents];
+        if (older) importantEvents.push(older);
+    }
+    let battleFlow = "";
+    for (let ev of importantEvents) battleFlow += ` ▸ ${ev.text}\n`;
+
+    let climax = "";
+    let bonusGold = 0, bonusXP = 0, bonusMorale = 0;
+
+    if (isVictory) {
+        const strongestHero = heroes.reduce((a, b) => (a.power > b.power ? a : b), heroes[0]);
+        const classSuffix = getClassClimax(strongestHero);
+        const epicTurns = [
+            `Тогава ${strongestHero.name}${classSuffix} нанесе решителния удар.`,
+            `Изведнъж небето се разцепи и ${strongestHero.name}${classSuffix} удари безмилостно.`,
+            `Когато всички изглеждаше загубено, ${strongestHero.name}${classSuffix} възкръсна и сразява врага.`,
+            `Земята потрепери под краката на ${strongestHero.name}${classSuffix}.`
+        ];
+        let epicLine = epicTurns[Math.floor(Math.random() * epicTurns.length)];
+        const ending = [" Врагът потрепери и побягна.", " Оцелелите се разпръснаха в паника.", " Бойното поле остана покрито с трупове на противника.", " Славата на победителите ще се помни с векове."];
+        climax = epicLine + ending[Math.floor(Math.random() * ending.length)];
+        if (rewards.gold) bonusGold = Math.floor(rewards.gold * 0.2);
+        if (rewards.xp) bonusXP = Math.floor(rewards.xp * 0.2);
+        bonusMorale = 15;
+    } else {
+        const randomHero = heroes[Math.floor(Math.random() * heroes.length)];
+        const defeatMessages = [
+            `Въпреки смелостта на ${randomHero.name}, силите ви не стигнаха. Отстъплението беше неизбежно.`,
+            `Предателство в собствените редици доведе до разгром.`,
+            `Вражеският командир се оказа по-хитър. Загубите са тежки.`,
+            `Съдбата се обърна срещу вас в последния миг.`
+        ];
+        climax = defeatMessages[Math.floor(Math.random() * defeatMessages.length)];
+        if (rewards.gold) bonusGold = -Math.floor(rewards.gold * 0.1);
+        bonusMorale = -15;
+    }
+
+    const firstHero = heroes.find(h => h.hp > 0);
+    if (firstHero && isVictory && Math.random() > 0.6) {
+        climax += `\nЛично ${firstHero.name} събра трофеите и вдигна знамето на победата.`;
+    }
+
+    let mvpSection = "";
+    if (mvpHero && maxDamage > 0) {
+        const dmgPercent = ((maxDamage / (rewards?.totalDamage || maxDamage)) * 100).toFixed(0);
+        mvpSection = `\n🌟 **MVP на битката: ${mvpHero.name}** с ${maxDamage} щети (${dmgPercent}% от общите)! 🌟\n`;
+        if (isVictory) {
+            mvpSection += `🏅 За героизма си ${mvpHero.name} получава +5 опит и +5 морал.\n`;
+        }
+    }
+    
+    let story = `🏰 **Епичната битка за ${regionName}**\n\n${terrainIntro}\n${battleFlow}\n---\n✨ **${isVictory ? "ПОБЕДА" : "ПОРАЖЕНИЕ"}** ✨\n${climax}\n${mvpSection}`;
+    if (rewards.gold) story += `💰 Намерено злато: ${rewards.gold}\n`;
+    if (rewards.xp) story += `📚 Придобит опит: ${rewards.xp}\n`;
+    if (rewards.artifact) story += `🏺 Открит артефакт: "${rewards.artifact.name}"\n`;
+
+    if (!window.epicChronicles) window.epicChronicles = [];
+    window.epicChronicles.unshift({
+        title: `Битката за ${regionName} (${window.gameTime ? window.gameTime.year + " г." : "н.е."})`,
+        story: story,
+        timestamp: Date.now(),
+        isVictory: isVictory,
+        mvp: mvpHero ? mvpHero.name : null
+    });
+    if (window.epicChronicles.length > 20) window.epicChronicles.pop();
+
+    // ==================== ПРОМЯНАТА Е ТУК ====================
+    if (isVictory && typeof window.addStoryEvent === 'function') {
+        const buttons = [
+            { label: `🏛️ Издигни паметник (+${bonusXP} опит, +10 морал)`, action: () => {
+                if (bonusXP > 0) {
+                    const livingHeroes = heroes.filter(h => h.hp > 0);
+                    const xpPerHero = Math.floor(bonusXP / livingHeroes.length);
+                    for (let h of livingHeroes) {
                         const heroObj = h.heroObj || h.clanObj;
-                        heroObj.morale = Math.min(100, (heroObj.morale || 50) + 10);
+                        if (window.gainHeroXP) window.gainHeroXP(heroObj, xpPerHero);
+                        else heroObj.xp = (heroObj.xp || 0) + xpPerHero;
                     }
-                    if (window.addWorldEvent) window.addWorldEvent("🏛️ ПАМЕТНИК", `${heroes[0]?.name || "Героите"} издигнаха паметник в чест на победата.`, "🏛️");
-                    if (window.updateAllUI) window.updateAllUI();
-                } },
-                { label: `💰 Разграби лагера (+${bonusGold} злато)`, action: () => {
-                    if (bonusGold > 0) {
-                        const livingHeroes = heroes.filter(h => h.hp > 0);
-                        const randomHero = livingHeroes[Math.floor(Math.random() * livingHeroes.length)];
-                        const heroObj = randomHero.heroObj || randomHero.clanObj;
-                        heroObj.gold += bonusGold;
-                        if (window.addWorldEvent) window.addWorldEvent("💰 ПЛЯЧКОС", `${heroObj.name} намери ${bonusGold} злато в лагера на врага.`, "💰");
-                    }
-                    if (window.updateAllUI) window.updateAllUI();
-                } },
-                { label: `📜 Запиши хроника (без бонус)`, action: () => {
-                    if (window.addWorldEvent) window.addWorldEvent("📜 ХРОНИКА", `Битката при ${regionName} ще се помни вечно.`, "📜");
-                } }
-            ];
+                }
+                for (let h of heroes) {
+                    const heroObj = h.heroObj || h.clanObj;
+                    heroObj.morale = Math.min(100, (heroObj.morale || 50) + 10);
+                }
+                if (window.addWorldEvent) window.addWorldEvent("🏛️ ПАМЕТНИК", `${heroes[0]?.name || "Героите"} издигнаха паметник в чест на победата.`, "🏛️");
+                if (window.updateAllUI) window.updateAllUI();
+            } },
+            { label: `💰 Разграби лагера (+${bonusGold} злато)`, action: () => {
+                if (bonusGold > 0) {
+                    const livingHeroes = heroes.filter(h => h.hp > 0);
+                    const randomHero = livingHeroes[Math.floor(Math.random() * livingHeroes.length)];
+                    const heroObj = randomHero.heroObj || randomHero.clanObj;
+                    heroObj.gold += bonusGold;
+                    if (window.addWorldEvent) window.addWorldEvent("💰 ПЛЯЧКОС", `${heroObj.name} намери ${bonusGold} злато в лагера на врага.`, "💰");
+                }
+                if (window.updateAllUI) window.updateAllUI();
+            } },
+            { label: `📜 Запиши хроника (без бонус)`, action: () => {
+                if (window.addWorldEvent) window.addWorldEvent("📜 ХРОНИКА", `Битката при ${regionName} ще се помни вечно.`, "📜");
+            } }
+        ];
+        window.addStoryEvent(`🏆 ПОБЕДА В БИТКАТА ЗА ${regionName}`, story, buttons, "⚔️");
+    } else if (!isVictory && typeof window.addStoryEvent === 'function') {
+        window.addStoryEvent(`💔 ПОРАЖЕНИЕ В БИТКАТА ЗА ${regionName}`, story, [], "💀");
+    } else {
+        // fallback за стари версии
+        if (isVictory && typeof window.showAdvisorMsg === 'function') {
+            const buttons = [ /* ... старите бутони ... */ ];
             window.showAdvisorMsg(story, buttons);
         } else if (!isVictory && typeof window.showAdvisorMsg === 'function') {
             window.showAdvisorMsg(story);
         } else {
             console.log(story);
         }
-
-        _battleInProgress = false;
-        return story;
     }
 
+    _battleInProgress = false;
+    return story;
+}
     // ========== ПОМОЩНИ ФУНКЦИИ ЗА БОНУСИ ==========
     function getTroopSpecialEffects(hero) {
         if (!hero || !hero.armyDetails || !window.ALL_TROOP_TYPES) return {};
