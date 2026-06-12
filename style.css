@@ -1260,6 +1260,48 @@ html, body {
         margin: 8px auto !important;
     }
 }
+
+/* Интерактивни събития в летописа */
+.chronicle-event.interactive {
+    background: rgba(0, 0, 0, 0.65);
+    border-left: 4px solid #ffaa44;
+    margin-bottom: 10px;
+    padding: 10px 12px;
+    border-radius: 0 12px 12px 0;
+    transition: all 0.2s ease-in-out;
+    backdrop-filter: blur(2px);
+    display: flex;
+    flex-direction: column;
+}
+.chronicle-event.interactive:hover {
+    transform: translateX(4px);
+    background: rgba(0, 0, 0, 0.85);
+    border-left-width: 6px;
+}
+.chronicle-buttons {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 12px;
+    justify-content: flex-start;
+    width: 100%;
+}
+.chronicle-btn {
+    background: #d4af37;
+    border: none;
+    border-radius: 30px;
+    padding: 6px 16px;
+    font-size: 0.8rem;
+    font-weight: bold;
+    color: #000;
+    cursor: pointer;
+    transition: 0.15s;
+    white-space: nowrap;
+}
+.chronicle-btn:hover {
+    background: #ffaa44 !important;
+    transform: scale(1.02);
+}
 /* Сезонни теми (оставяме ги) */
 body.season-spring { background: linear-gradient(180deg, #0a2a4a 0%, #1a4a3a 100%); }
 body.season-summer { background: linear-gradient(180deg, #0a2a4a 0%, #2a3a0a 100%); }
