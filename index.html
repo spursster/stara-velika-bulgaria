@@ -105,7 +105,7 @@
         <div id="favorite-heroes-bar" class="favorite-bar"></div>
     </div>
 
-    <!-- ==================== СКРИПТОВЕ (ПОДРЕДЕНИ ПРАВИЛНО) ==================== -->
+    <!-- ==================== СКРИПТОВЕ ==================== -->
     <!-- 1. БАЗИ И ДАННИ -->
     <script src="gameState.js"></script>
     <script src="world_data.js"></script>
@@ -153,23 +153,38 @@
     <!-- 7. СОЛО РЕЖИМ -->
     <script src="soloMode.js"></script>
 
-    <!-- 8. ОСНОВНА ЛОГИКА НА ИГРАТА -->
+    <!-- 8. ОСНОВНА ЛОГИКА -->
     <script src="logic.js"></script>
     <script src="core-init.js"></script>
 
-    <!-- 9. ДОПЪЛНИТЕЛНИ UI ЕКСТРИ -->
+    <!-- 9. ДОПЪЛНИТЕЛНИ UI -->
     <script src="skills-ui.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <script src="social-share.js"></script>
 
-    <!-- 10. PUTER.JS (AI портрети) – с изключване на досадните съобщения -->
+    <!-- 10. PUTER.JS (ВРЕМЕННО ИЗКЛЮЧЕН, ЗА ДА НЯМА ГРЕШКИ) -->
     <script src="https://js.puter.com/v2/"></script>
     <script>
-        // Изключване на съобщението "Submit this app to the Puter App Store"
+        // Изключване на досадните съобщения
         if (typeof puter !== 'undefined') {
             puter.quiet = true;
         }
-        // Резервни функции за облачно запазване (ако по някаква причина липсват в logic.js)
+        
+        // ПРЕЗАПИСВАНЕ НА generateHeroPortrait, ЗА ДА НЕ ГЕНЕРИРА ГРЕШКИ (временно)
+        if (typeof window.generateHeroPortrait !== 'function') {
+            window.generateHeroPortrait = async function(hero) {
+                // Не правим нищо – използваме иконка вместо портрет
+                return;
+            };
+        } else {
+            const originalPortrait = window.generateHeroPortrait;
+            window.generateHeroPortrait = async function(hero) {
+                // Изключваме Puter.js, за да не върши грешки
+                return;
+            };
+        }
+        
+        // Резервни функции за облачно запазване
         if (typeof window.saveGameToCloud !== 'function') {
             window.saveGameToCloud = async function() {
                 if (typeof puter === 'undefined') { console.warn("Puter.js не е зареден"); return false; }
