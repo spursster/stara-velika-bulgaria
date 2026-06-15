@@ -714,6 +714,9 @@ window.renderFavoriteHeroesBar = function() {
     favoriteHeroesList.sort(function(a, b) { return (b.level || 1) - (a.level || 1); });
     var top5 = favoriteHeroesList.slice(0, 5);
 
+    // Намираме най-силния герой (за целия клан, не само сред любимите)
+    var strongestHero = window.getStrongestHero ? window.getStrongestHero() : null;
+
     container.innerHTML = '';
 
     for (var i = 0; i < 5; i++) {
@@ -738,6 +741,11 @@ window.renderFavoriteHeroesBar = function() {
             slot.style.backgroundColor = classColor + '40';
             slot.style.border = '2px solid ' + classColor;
 
+            // Ако този герой е най-силният, добавяме клас liquid-glass
+            if (strongestHero && hero.name === strongestHero.name) {
+                slot.classList.add('liquid-glass');
+            }
+
             var hpPercent = (hero.hp / hero.maxHp) * 100;
             var hpColor = hpPercent > 70 ? '#4caf50' : (hpPercent > 30 ? '#ff9800' : '#f44336');
             var needXP = (window.rpgDatabase && window.rpgDatabase.getXPRequiredForLevel) ? window.rpgDatabase.getXPRequiredForLevel(hero.level || 1) : 150;
@@ -745,7 +753,6 @@ window.renderFavoriteHeroesBar = function() {
             var xpPercent = Math.min(100, (currentXP / needXP) * 100);
 
             var classIcon = window.getClassIcon ? window.getClassIcon(hero.currentClass) : '⚔️';
-            // Само иконка, без портрет
             var iconHtml = '<div class="hero-icon" style="font-size: 32px;">' + classIcon + '</div>';
 
             slot.innerHTML = iconHtml +
@@ -819,7 +826,6 @@ window.renderFavoriteHeroesBar = function() {
         container.appendChild(slot);
     }
 };
-
 // ==================== ОСНОВНО ОБНОВЯВАНЕ НА ЛЕВИЯ ПАНЕЛ ====================
 window.updateCharacterUI = function(hero) {
     if (!hero) return;
