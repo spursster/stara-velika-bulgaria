@@ -702,5 +702,79 @@
         }, 150);
     });
 
+ // ==================== Puter.js ОБЛАЧНО ЗАПАЗВАНЕ ====================
+window.saveGameToCloud = async function() {
+    if (typeof puter === 'undefined') {
+        console.warn("Puter.js не е зареден");
+        return false;
+    }
+    try {
+        // Вземаме текущото състояние на играта
+        const saveData = {
+            version: "2.0.0",
+            timestamp: Date.now(),
+            worldData: window.worldData,
+            gameTime: window.gameTime,
+            gameMode: window.gameMode,
+            currentRegion: window.currentRegion,
+            companions: window.companions,
+            activeQuests: window.activeQuests,
+            completedQuests: window.completedQuests,
+            playerRegions: window.playerRegions,
+            currentHero: window.currentHero // за соло режим
+        };
+        await puter.kv.set('GreatBulgaria_SaveGame', JSON.stringify(saveData));
+        console.log("💾 Играта е запазена в облака (Puter)");
+        if (window.showAdvisorPopup) {
+            window.showAdvisorPopup("Облачно запазване", "Играта е запазена успешно в облака!", "success");
+        }
+        return true;
+    } catch (err) {
+        console.error("Грешка при облачно запазване:", err);
+        return false;
+    }
+};
+
+window.loadGameFromCloud = async function() {
+    if (typeof puter === 'undefined') {
+        console.warn("Puter.js не е зареден");
+        return false;
+    }
+    try {
+        const saved = await puter.kv.get('GreatBulgaria_SaveGame');
+        if (!saved) {
+            console.log("Няма запазена игра в облака.");
+            return false;
+        }
+        const data = JSON.parse(saved);
+        // Възстановяване на данните (същата логика като в GameSave.load)
+        if (data.worldData) window.worldData = data.worldData;
+        if (data.gameTime) window.gameTime = data.gameTime;
+        if (data.gameMode) window.gameMode = data.gameMode;
+        if (data.currentRegion) window.currentRegion = data.currentRegion;
+        if (data.companions) window.companions = data.companions;
+        if (data.activeQuests) window.activeQuests = data.activeQuests;
+        if (data.completedQuests) window.completedQuests = data.completedQuests;
+        if (data.playerRegions) window.playerRegions = data.playerRegions;
+        if (window.gameMode === 'solo' && data.currentHero) window.currentHero = data.currentHero;
+        
+        // Синхронизиране на UI
+        if (typeof window.updateStrongestHeroUI === 'function') window.updateStrongestHeroUI();
+        if (typeof window.renderFavoriteHeroesBar === 'function') window.renderFavoriteHeroesBar();
+        if (typeof window.renderSingleBar === 'function') window.renderSingleBar();
+        if (typeof window.updateTimeUI === 'function') window.updateTimeUI();
+        if (typeof window.updatePortalContainerUI === 'function') window.updatePortalContainerUI();
+        
+        console.log("✅ Играта е заредена от облака");
+        if (window.showAdvisorPopup) {
+            window.showAdvisorPopup("Облачно зареждане", "Играта е заредена успешно от облака!", "success");
+        }
+        return true;
+    } catch (err) {
+        console.error("Грешка при облачно зареждане:", err);
+        return false;
+    }
+};
+
     console.log("✅ logic.js версия 8.1 – оправено запазване");
 })();
