@@ -2,7 +2,7 @@
  * МОДУЛ: БАЗА ДАННИ - Велика България
  * ВСИЧКИ СА ГЕРОИ (HEROES) – НЯМА ВОДАЧИ, НЯМА ЙЕРАРХИЯ
  * 13 РАВНОПРАВНИ КЛАНОВЕ
- * ВЕРСИЯ: 7.3 – ПОПРАВЕНИ ГРЕШКИ (дублирани герои, липсващи функции)
+ * ВЕРСИЯ: 8.0 – ДОБАВЕНИ НАЧАЛНИ КЛАСОВЕ (Heroes стил)
  */
 
 window.bulgarianClans = {
@@ -39,7 +39,6 @@ window.bulgarianClans = {
         heroes: ["Михаил III Шишман", "Иван Александър", "Иван Шишман", "Иван Срацимир", "Белаур", "Фружин", "Иван Асен IV"]
     },
     "Македони": {
-        // Премахнат дублиращият се "Филип II"
         heroes: ["Каран", "Филип II", "Пердика I", "Александър I", "Пердика II", "Архелай I", "Аминта III", "Александър III Велики", "Филип III", "Александър IV"]
     },
     "Птоломеи": {
@@ -73,6 +72,71 @@ if (!window.clansDatabase) {
         };
     }
 }
+
+// ==================== НАЧАЛНИ КЛАСОВЕ (Heroes of Might and Magic стил) ====================
+window.starterClasses = [
+    { name: "Маг", icon: "🧙", bonuses: { heroPower: 15, mysticismBonus: 0.1, spellPower: 5 }, desc: "Владее магическите изкуства." },
+    { name: "Стрелец", icon: "🏹", bonuses: { heroPower: 10, archeryBonus: 0.15, critChance: 0.05 }, desc: "Точен стрелец от разстояние." },
+    { name: "Паладин", icon: "🛡️", bonuses: { heroPower: 20, defenseBonus: 10, moraleBonus: 10 }, desc: "Свещен воин със силна защита." },
+    { name: "Берсерк", icon: "🗡️", bonuses: { heroPower: 25, critDamage: 0.2, damageReduction: -0.05 }, desc: "Жесток воин с бойна ярост." },
+    { name: "Воевода", icon: "⚔️", bonuses: { heroPower: 15, armyBonus: 0.1, leadership: 5 }, desc: "Умел стратег и командир." },
+    { name: "Крадец", icon: "🗡️", bonuses: { heroPower: 10, dodgeChance: 0.15, critChance: 0.1 }, desc: "Скрит убиец от сенките." },
+    { name: "Жрец", icon: "🕊️", bonuses: { heroPower: 5, healBonus: 15, mysticismBonus: 0.15 }, desc: "Служител на божествената светлина." },
+    { name: "Друид", icon: "🌿", bonuses: { heroPower: 10, natureDamage: 10, healAllies: 5 }, desc: "Пазител на природата." },
+    { name: "Рицар", icon: "🏇", bonuses: { heroPower: 20, cavalryBonus: 0.2, defense: 10 }, desc: "Брониран конник." },
+    { name: "Некромант", icon: "💀", bonuses: { heroPower: 15, darkMagic: 0.15, lifeSteal: 0.05 }, desc: "Повелител на мъртвите." },
+    { name: "Елементалист", icon: "🌪️", bonuses: { heroPower: 12, elementalDamage: 15, manaRegen: 5 }, desc: "Господар на стихиите." },
+    { name: "Инженер", icon: "🔧", bonuses: { heroPower: 8, siegeBonus: 0.2, buildCostReduction: 10 }, desc: "Майстор на обсадни машини." },
+    { name: "Лечител", icon: "💚", bonuses: { heroPower: 5, healAmount: 20, regeneration: 5 }, desc: "Лекува раните на съюзниците." },
+    { name: "Пазител", icon: "🛡️", bonuses: { heroPower: 18, defense: 15, hpBonus: 20 }, desc: "Непробиваема защита." }
+];
+
+// ==================== ПОМОЩНИ ФУНКЦИИ ЗА КЛАСОВЕ ====================
+window.getRandomStarterClass = function() {
+    if (!window.starterClasses || window.starterClasses.length === 0) {
+        return { name: "Воевода", icon: "⚔️", bonuses: {}, desc: "" };
+    }
+    const randomIndex = Math.floor(Math.random() * window.starterClasses.length);
+    return { ...window.starterClasses[randomIndex] };
+};
+
+window.applyClassToHero = function(hero, classObj) {
+    if (!hero || !classObj) return;
+    hero.currentClass = classObj.name;
+    hero.className = classObj.name;
+    hero.classIcon = classObj.icon;
+    if (classObj.bonuses) {
+        for (let [stat, value] of Object.entries(classObj.bonuses)) {
+            if (stat === 'heroPower') hero.heroPower = (hero.heroPower || 100) + value;
+            else if (stat === 'attackBonus') hero.attackBonus = (hero.attackBonus || 0) + value;
+            else if (stat === 'defenseBonus') hero.defenseBonus = (hero.defenseBonus || 0) + value;
+            else if (stat === 'defense') hero.defense = (hero.defense || 0) + value;
+            else if (stat === 'critChance') hero.critChanceBonus = (hero.critChanceBonus || 0) + value;
+            else if (stat === 'critDamage') hero.critDamageBonus = (hero.critDamageBonus || 0) + value;
+            else if (stat === 'dodgeChance') hero.dodgeChance = (hero.dodgeChance || 0) + value;
+            else if (stat === 'mysticismBonus') hero.mysticismBonus = (hero.mysticismBonus || 0) + value;
+            else if (stat === 'armyBonus') hero.armyBonus = (hero.armyBonus || 0) + value;
+            else if (stat === 'moraleBonus') hero.morale = Math.min(100, (hero.morale || 50) + value);
+            else if (stat === 'healBonus') hero.healBonus = (hero.healBonus || 0) + value;
+            else if (stat === 'healAmount') hero.healAmount = (hero.healAmount || 0) + value;
+            else if (stat === 'natureDamage') hero.natureDamage = (hero.natureDamage || 0) + value;
+            else if (stat === 'darkMagic') hero.darkMagic = (hero.darkMagic || 0) + value;
+            else if (stat === 'lifeSteal') hero.lifeSteal = (hero.lifeSteal || 0) + value;
+            else if (stat === 'spellPower') hero.spellPower = (hero.spellPower || 0) + value;
+            else if (stat === 'elementalDamage') hero.elementalDamage = (hero.elementalDamage || 0) + value;
+            else if (stat === 'manaRegen') hero.manaRegen = (hero.manaRegen || 0) + value;
+            else if (stat === 'siegeBonus') hero.siegeBonus = (hero.siegeBonus || 0) + value;
+            else if (stat === 'buildCostReduction') hero.buildCostReduction = (hero.buildCostReduction || 0) + value;
+            else if (stat === 'regeneration') hero.regeneration = (hero.regeneration || 0) + value;
+            else if (stat === 'hpBonus') hero.maxHp = (hero.maxHp || 100) + value;
+            else if (stat === 'cavalryBonus') hero.cavalryBonus = (hero.cavalryBonus || 0) + value;
+            else if (stat === 'archeryBonus') hero.archeryBonus = (hero.archeryBonus || 0) + value;
+            else if (stat === 'leadership') hero.leadership = (hero.leadership || 0) + value;
+        }
+    }
+    if (window.recalculateHeroPower) window.recalculateHeroPower(hero);
+    if (window.recalculateHeroMaxHp) window.recalculateHeroMaxHp(hero);
+};
 
 // ==================== ПОМОЩНИ ФУНКЦИИ ЗА ВЗЕМАНЕ НА ПЛАЩАЩ ГЕРОЙ ====================
 function getPayingHeroForHire() {
@@ -108,13 +172,26 @@ window.initializeAllHeroesInWorld = function() {
             if (exists) continue;
             
             const heroId = `hero_${clanName}_${heroName.replace(/\s/g, '_')}`;
-            let power = 100, gold = 1000, armySize = 200, className = "Воевода";
+            let power = 100, gold = 1000, armySize = 200, specialClass = "Воевода";
+            let isSpecial = false;
             if (["Александър III Велики", "Симеон Велики", "Кубрат", "Влад III Дракула"].includes(heroName)) {
-                power = 190; gold = 2000; armySize = 400; className = "Легенда";
+                power = 190; gold = 2000; armySize = 400; specialClass = "Легенда"; isSpecial = true;
             } else if (["Атила", "Филип II", "Самуил", "Птолемей I Сотер"].includes(heroName)) {
-                power = 165; gold = 1500; armySize = 300; className = "Герой";
+                power = 165; gold = 1500; armySize = 300; specialClass = "Герой"; isSpecial = true;
             } else if (["Аспарух", "Тервел", "Крум", "Калоян", "Борис I"].includes(heroName)) {
-                power = 130; gold = 1200; armySize = 250; className = "Войн";
+                power = 130; gold = 1200; armySize = 250; specialClass = "Войн"; isSpecial = true;
+            }
+            
+            // Избор на начален клас
+            let starterClass = null;
+            if (isSpecial) {
+                starterClass = { name: specialClass, icon: "⭐", bonuses: { heroPower: power - 100 }, desc: "" };
+            } else {
+                starterClass = window.getRandomStarterClass();
+                // Корекция на силата според класа
+                if (starterClass.bonuses && starterClass.bonuses.heroPower) {
+                    power += starterClass.bonuses.heroPower;
+                }
             }
             
             const hero = {
@@ -129,8 +206,9 @@ window.initializeAllHeroesInWorld = function() {
                 gold: gold,
                 armySize: armySize,
                 currentArmy: armySize,
-                currentClass: className,
-                className: className,
+                currentClass: starterClass.name,
+                className: starterClass.name,
+                classIcon: starterClass.icon,
                 age: 30 + Math.floor(Math.random() * 30),
                 isAuto: true,
                 skillPoints: 0,
@@ -146,6 +224,25 @@ window.initializeAllHeroesInWorld = function() {
                     elite: Math.floor(armySize * 0.1)
                 }
             };
+            
+            // Прилагане на бонусите от класа
+            if (starterClass.bonuses) {
+                for (let [stat, value] of Object.entries(starterClass.bonuses)) {
+                    if (stat === 'heroPower') hero.heroPower = (hero.heroPower || 100) + value;
+                    else if (stat === 'attackBonus') hero.attackBonus = (hero.attackBonus || 0) + value;
+                    else if (stat === 'defenseBonus') hero.defenseBonus = (hero.defenseBonus || 0) + value;
+                    else if (stat === 'defense') hero.defense = (hero.defense || 0) + value;
+                    else if (stat === 'critChance') hero.critChanceBonus = (hero.critChanceBonus || 0) + value;
+                    else if (stat === 'critDamage') hero.critDamageBonus = (hero.critDamageBonus || 0) + value;
+                    else if (stat === 'dodgeChance') hero.dodgeChance = (hero.dodgeChance || 0) + value;
+                    else if (stat === 'mysticismBonus') hero.mysticismBonus = (hero.mysticismBonus || 0) + value;
+                    else if (stat === 'armyBonus') hero.armyBonus = (hero.armyBonus || 0) + value;
+                    else if (stat === 'moraleBonus') hero.morale = Math.min(100, (hero.morale || 50) + value);
+                    else if (stat === 'healBonus') hero.healBonus = (hero.healBonus || 0) + value;
+                    // останалите бонуси могат да се добавят при нужда
+                }
+            }
+            
             if (typeof window.initializeHeroRPGData === 'function') window.initializeHeroRPGData(hero);
             if (typeof window.ensureCompleteArmyDetails === 'function') window.ensureCompleteArmyDetails(hero);
             window.worldData.clans[heroId] = hero;
@@ -153,7 +250,7 @@ window.initializeAllHeroesInWorld = function() {
             addedCount++;
         }
     }
-    console.log(`✅ Добавени ${addedCount} нови герои (без дублиране).`);
+    console.log(`✅ Добавени ${addedCount} нови герои с разнообразни начални класове.`);
 };
 
 // ==================== ВЗИМАНЕ НА ВСИЧКИ НАЕТИ ГЕРОИ ====================
@@ -225,7 +322,8 @@ window.openTavernUI = function() {
                 </div>
                 <div style="font-size:10px; color:#ccc; margin-bottom:10px;">
                    ⚔️ Бойна мощ: <strong>${heroPower}</strong><br>
-                   🛡️ Лична гвардия: <strong>${hero.armySize} бойци</strong>
+                   🛡️ Лична гвардия: <strong>${hero.armySize} бойци</strong><br>
+                   🎭 Клас: <strong>${hero.currentClass || "Воевода"}</strong>
                 </div>
             </div>
             <button onclick="window.hireExistingHero('${hero.id}', ${cost})" style="width:100%; background:#d4af37; color:#000; border:none; padding:6px; font-weight:bold; cursor:pointer; text-transform:uppercase; border-radius:4px; font-size:10px;">
@@ -292,11 +390,16 @@ window.hireExistingHero = function(heroId, cost) {
         hero.isJoined = true;
         hero.isFavorite = false;
         
+        // Ако героят няма клас (или е "Воевода"), даваме му случаен начален клас
+        if (!hero.currentClass || hero.currentClass === "Воевода") {
+            const starterClass = window.getRandomStarterClass();
+            window.applyClassToHero(hero, starterClass);
+        }
+        
         if (typeof window.generateHeroPortrait === 'function') {
             window.generateHeroPortrait(hero).catch(e => console.warn(e));
         }
         
-        // Поправка: armyMarket.sync не приема аргументи
         if (window.armyMarket && typeof window.armyMarket.sync === 'function') {
             window.armyMarket.sync();
         }
@@ -360,6 +463,7 @@ window.hireFemaleRuler = function(name, cost, power, className, flag, country) {
         currentArmy: 200,
         currentClass: className,
         className: className,
+        classIcon: window.getClassIcon ? window.getClassIcon(className) : "👸",
         age: 30 + Math.floor(Math.random() * 30),
         isAuto: true,
         skillPoints: 0,
@@ -447,8 +551,8 @@ window.femaleWorldRulers = [
     { name: "Тахома", country: "САЩ", flag: "🇺🇸", power: 120, class: "Индианска вожд", cost: 900 },
     { name: "Виктория", country: "Великобритания", flag: "🇬🇧", power: 155, class: "Кралица", cost: 1300 },
     { name: "Луиза Датска", country: "Дания", flag: "🇩🇰", power: 135, class: "Кралица", cost: 1050 },
-    { name: "Амалия Гръцка", country: "България", flag: "BG", power: 130, class: "Кралица", cost: 1000 },
-    { name: "Мария Стюарт", country: "Великобритания", flag: "🇬🇧", power: 145, class: "Кралица", cost: 1150 },
+    { name: "Амалия Гръцка", country: "Гърция", flag: "🇬🇷", power: 130, class: "Кралица", cost: 1000 },
+    { name: "Мария Стюарт", country: "Шотландия", flag: "🏴󠁧󠁢󠁳󠁣󠁴󠁿", power: 145, class: "Кралица", cost: 1150 },
     { name: "Анна Стюарт", country: "Великобритания", flag: "🇬🇧", power: 140, class: "Кралица", cost: 1100 },
     { name: "Катарина Медичи", country: "Франция", flag: "🇫🇷", power: 135, class: "Регентка", cost: 1080 },
     { name: "Анна Австрийска", country: "Франция", flag: "🇫🇷", power: 132, class: "Кралица", cost: 1050 },
@@ -458,4 +562,4 @@ window.femaleWorldRulers = [
     { name: "Мария-Антоанета", country: "Франция", flag: "🇫🇷", power: 140, class: "Кралица", cost: 1100 }
 ];
 
-console.log("✅ database.js – преработен (версия 7.3), без дублирани герои, с проверки за липсващи функции");
+console.log("✅ database.js – версия 8.0 с разнообразни начални класове и бонуси");
