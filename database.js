@@ -552,7 +552,6 @@ window.femaleWorldRulers = [
     { name: "Виктория", country: "Великобритания", flag: "🇬🇧", power: 155, class: "Кралица", cost: 1300 },
     { name: "Луиза Датска", country: "Дания", flag: "🇩🇰", power: 135, class: "Кралица", cost: 1050 },
     { name: "Амалия Гръцка", country: "Гърция", flag: "🇬🇷", power: 130, class: "Кралица", cost: 1000 },
-    { name: "Мария Стюарт", country: "Шотландия", flag: "🏴󠁧󠁢󠁳󠁣󠁴󠁿", power: 145, class: "Кралица", cost: 1150 },
     { name: "Анна Стюарт", country: "Великобритания", flag: "🇬🇧", power: 140, class: "Кралица", cost: 1100 },
     { name: "Катарина Медичи", country: "Франция", flag: "🇫🇷", power: 135, class: "Регентка", cost: 1080 },
     { name: "Анна Австрийска", country: "Франция", flag: "🇫🇷", power: 132, class: "Кралица", cost: 1050 },
