@@ -1854,11 +1854,11 @@ window.generateHeroPortrait = async function(hero) {
     const prompt = `historical fantasy portrait of ${hero.name}, ${classDesc}, detailed face, medieval style, epic lighting, no text, no watermark, high quality, 4k, cinematic`;
     
     // Списък с модели, които Puter.js поддържа (може да добавиш още)
-    const models = [
-        "stabilityai/stable-diffusion-3-medium",
-        "stabilityai/sd-turbo",
-        "stabilityai/stable-diffusion-xl-1024-v1-0"
-    ];
+ const models = [
+    "stabilityai/stable-diffusion-2-1",
+    "stabilityai/stable-diffusion-3.5-large",
+    "stabilityai/stable-diffusion-3.5-medium"
+];
     
     for (let model of models) {
         try {
