@@ -988,6 +988,17 @@ html, body {
     }
 }
 
+/* Клас за течно-стъклен ефект */
+.liquid-glass {
+    filter: url(#liquidGlitch);
+    transition: filter 0.2s ease;
+}
+
+/* За по-силен ефект при ховър */
+.liquid-glass:hover {
+    filter: url(#liquidGlitchStrong);
+}
+
 /* Сезонни теми */
 body.season-spring { background: linear-gradient(180deg, #0a2a4a 0%, #1a4a3a 100%); }
 body.season-summer { background: linear-gradient(180deg, #0a2a4a 0%, #2a3a0a 100%); }
