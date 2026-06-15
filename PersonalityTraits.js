@@ -254,8 +254,8 @@ window.personalityTraitsDB = {
     "trait_247": { name: "Справедлив", description: "Отнася се честно с всички." },
     "trait_248": { name: "Несправедлив", description: "Облагодетелства себе си или приятели." },
     "trait_249": { name: "Щастлив", description: "Често е в добро настроение." },
-    "trait_250": { name: "Нещастен", description: "Често е в лошо настроение." }
-     "trait_251": { name: "Нудист", description: "Предпочита естественото състояние пред бронята. Не се влияе от студ или жега.", bonus: { defenseBonus: -0.15, moraleBonus: 10, diplomacyBonus: 0.05 } }
+"trait_250": { name: "Нещастен", description: "Често е в лошо настроение." },
+    "trait_251": { name: "Нудист", description: "Предпочита естественото състояние пред бронята. Не се влияе от студ или жега.", bonus: { defenseBonus: -0.15, moraleBonus: 10, diplomacyBonus: 0.05 } }
 };
 
 // ==================== АВТОМАТИЧНИ БОНУСИ ЗА ВСЯКА ЧЕРТА ====================
