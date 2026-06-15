@@ -220,7 +220,7 @@ window.personalityTraitsDB = {
     "trait_213": { name: "Авантюрист", description: "Търси приключения и риск." },
     "trait_214": { name: "Домашен", description: "Предпочита спокойствието на дома." },
     "trait_215": { name: "Късметлия", description: "Често му върви." },
-    "trait_216": { name: "Нещастник", description: "У винаги го сполетява." },
+    "trait_216": { name: "Нещастник", description: "Винаги го сполетява." },
     "trait_217": { name: "Талантлив", description: "Има природни дарби." },
     "trait_218": { name: "Бездарен", description: "Нищо не му се удава." },
     "trait_219": { name: "Обаятелен", description: "Харесва се на хората." },
@@ -254,7 +254,7 @@ window.personalityTraitsDB = {
     "trait_247": { name: "Справедлив", description: "Отнася се честно с всички." },
     "trait_248": { name: "Несправедлив", description: "Облагодетелства себе си или приятели." },
     "trait_249": { name: "Щастлив", description: "Често е в добро настроение." },
-"trait_250": { name: "Нещастен", description: "Често е в лошо настроение." },
+    "trait_250": { name: "Нещастен", description: "Често е в лошо настроение." },
     "trait_251": { name: "Нудист", description: "Предпочита естественото състояние пред бронята. Не се влияе от студ или жега.", bonus: { defenseBonus: -0.15, moraleBonus: 10, diplomacyBonus: 0.05 } }
 };
 
