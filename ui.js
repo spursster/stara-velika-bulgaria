@@ -1730,38 +1730,51 @@ window.getHeroPronoun = function(hero, form = "subject") {
 };
 
 // ==================== ГЕНЕРИРАНЕ НА ПОРТРЕТИ С POLLINATIONS.AI ====================
+window.POLLINATIONS_API_KEY = "pk_VWpFW2qfQ69lJLsa";
+
 window.generateHeroPortrait = async function(hero) {
     if (!hero) return;
     // Ако вече има портрет, не го генерираме отново
-    if (hero.portrait && hero.portrait.startsWith('http')) return;
+    if (hero.portrait && hero.portrait.startsWith('http') && !hero.portrait.includes('pollinations')) return;
     
-    // Подготвяме промпт (описание) за героя
-    const prompt = `Исторически/фентъзи портрет на ${hero.name} от клан ${hero.clan}, ${hero.currentClass || "воин"}, средновековен стил, детайлен, без текст, без воден знак`;
+    // Подобрен промпт според класа на героя
+    let classDesc = "";
+    if (hero.currentClass) {
+        const c = hero.currentClass.toLowerCase();
+        if (c.includes("маг")) classDesc = "маг с магическа аура";
+        else if (c.includes("паладин")) classDesc = "паладин в блестяща броня";
+        else if (c.includes("берсерк")) classDesc = "берсерк с бойна боя по лицето";
+        else if (c.includes("воевод")) classDesc = "воевод с кожена броня и меч";
+        else if (c.includes("стрелец")) classDesc = "стрелец с лък и кожена екипировка";
+        else classDesc = "воин в средновековна броня";
+    } else {
+        classDesc = "воин";
+    }
     
-    // Използваме НОВИЯ унифициран API (препоръчителен)
-    // За да няма воден знак, трябва API ключ, но за момента анонимните заявки работят (с воден знак)
-    // Ако искаш без воден знак, трябва да се регистрираш в pollinations.ai и да добавиш ?key=...
-    const url = `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}?width=512&height=512&nologo=false`;
+    const prompt = `исторически фентъзи портрет на ${hero.name}, ${classDesc}, от клан ${hero.clan}, средновековен стил, детайлно лице, без текст, без воден знак`;
     
-    // Временно използваме "заглушка" – ако заявката е бавна или неуспешна, ще ползваме иконка
+    // Използваме новия унифициран API с nologo и ключа
+    const url = `https://gen.pollinations.ai/image/${encodeURIComponent(prompt)}?width=512&height=512&nologo=true&key=${window.POLLINATIONS_API_KEY}`;
+    
     hero.portrait = url;
+    console.log(`🎨 Генериране на портрет за ${hero.name}: ${url}`);
     
-    // Асинхронно опитваме да заредим изображението, за да проверим дали е валидно
+    // Опитваме да заредим изображението (не е задължително да чакаме)
     try {
         const img = new Image();
         img.crossOrigin = "Anonymous";
-        await new Promise((resolve, reject) => {
-            img.onload = resolve;
-            img.onerror = reject;
-            img.src = url;
-            setTimeout(() => reject(new Error("Timeout")), 5000);
-        });
-        console.log(`✅ Портрет за ${hero.name} генериран успешно.`);
+        await Promise.race([
+            new Promise((resolve, reject) => {
+                img.onload = () => resolve();
+                img.onerror = () => reject(new Error("Failed to load image"));
+                img.src = url;
+            }),
+            new Promise((_, reject) => setTimeout(() => reject(new Error("Timeout")), 10000))
+        ]);
+        console.log(`✅ Портрет за ${hero.name} зареден успешно.`);
     } catch (err) {
-        console.warn(`⚠️ Неуспешно генериране на портрет за ${hero.name}:`, err);
-        // Използваме иконка като fallback
-        hero.portrait = null;
-        hero.icon = window.getClassIcon ? window.getClassIcon(hero.currentClass) : "⚔️";
+        console.warn(`⚠️ Неуспешно зареждане на портрет за ${hero.name}: ${err.message}`);
+        // Не трием portrait, защото може да се зареди по-късно или да има частичен success
     }
     
     // Актуализираме UI, ако е необходимо
@@ -1769,33 +1782,18 @@ window.generateHeroPortrait = async function(hero) {
     if (window.renderFavoriteHeroesBar) window.renderFavoriteHeroesBar();
 };
 
-// Автоматично генериране на портрети за всички наети герои при стартиране
-if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', () => {
-        setTimeout(() => {
-            if (window.worldData && window.worldData.clans) {
-                for (let key in window.worldData.clans) {
-                    let hero = window.worldData.clans[key];
-                    if (hero.isJoined === true && !hero.portrait) {
-                        window.generateHeroPortrait(hero);
-                    }
-                }
-            }
-        }, 1000);
-    });
-} else {
+// Автоматично генериране за всички наети герои при старт
+document.addEventListener('DOMContentLoaded', () => {
     setTimeout(() => {
         if (window.worldData && window.worldData.clans) {
             for (let key in window.worldData.clans) {
                 let hero = window.worldData.clans[key];
-                if (hero.isJoined === true && !hero.portrait) {
+                if (hero.isJoined === true && (!hero.portrait || hero.portrait === '')) {
                     window.generateHeroPortrait(hero);
                 }
             }
         }
     }, 1000);
-}
-
-
+});
 // ==================== КРАЙ НА ui.js ====================
 console.log("✅ ui.js зареден успешно - версия без портрети, само иконки");
