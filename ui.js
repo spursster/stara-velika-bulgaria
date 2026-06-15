@@ -252,6 +252,32 @@ function getAllHeroesFromDatabase() {
     return heroesList;
 }
 
+// ==================== НАЕМАНЕ НА ГЕРОИ ====================
+function getAllHeroesFromDatabase() {
+    let heroesList = [];
+    let heroesSource = window.bulgarianClans;
+    if (!heroesSource) return heroesList;
+    for (let clanName in heroesSource) {
+        let clanData = heroesSource[clanName];
+        if (clanData.heroes && Array.isArray(clanData.heroes)) {
+            clanData.heroes.forEach(heroName => {
+                let power = 130;
+                let cost = 800;
+                let className = "Воевода";
+                if (heroName.includes("Александър") || heroName.includes("Симеон") || heroName.includes("Кубрат") || heroName.includes("Влад")) {
+                    power = 190; cost = 1500; className = "Легенда";
+                } else if (heroName.includes("Атила") || heroName.includes("Филип") || heroName.includes("Самуил") || heroName.includes("Птолемей")) {
+                    power = 165; cost = 1200; className = "Герой";
+                } else if (heroName.includes("Аспарух") || heroName.includes("Тервель") || heroName.includes("Крум")) {
+                    power = 140; cost = 1000; className = "Войн";
+                }
+                heroesList.push({ name: heroName, clan: clanName, power: power, cost: cost, className: className });
+            });
+        }
+    }
+    return heroesList;
+}
+
 window.hireNewHero = function() {
     if (window.gameMode === 'solo') {
         var favoriteCount = 0;
@@ -351,6 +377,36 @@ window.hireNewHero = function() {
         maxHp: 0,
         hp: 0
     };
+    
+    // *** НОВО: Прилагане на случаен начален клас, ако не е специален герой ***
+    if (!["Легенда", "Герой", "Войн"].includes(randomHero.className) && typeof window.getRandomStarterClass === 'function') {
+        const starterClass = window.getRandomStarterClass();
+        if (starterClass) {
+            newHero.currentClass = starterClass.name;
+            newHero.className = starterClass.name;
+            newHero.classIcon = starterClass.icon;
+            if (starterClass.bonuses && typeof window.applyClassToHero === 'function') {
+                window.applyClassToHero(newHero, starterClass);
+            } else if (starterClass.bonuses) {
+                // Ръчно прилагане на бонуси
+                for (let [stat, value] of Object.entries(starterClass.bonuses)) {
+                    if (stat === 'heroPower') newHero.heroPower = (newHero.heroPower || 100) + value;
+                    else if (stat === 'attackBonus') newHero.attackBonus = (newHero.attackBonus || 0) + value;
+                    else if (stat === 'defenseBonus') newHero.defenseBonus = (newHero.defenseBonus || 0) + value;
+                    else if (stat === 'defense') newHero.defense = (newHero.defense || 0) + value;
+                    else if (stat === 'critChance') newHero.critChanceBonus = (newHero.critChanceBonus || 0) + value;
+                    else if (stat === 'critDamage') newHero.critDamageBonus = (newHero.critDamageBonus || 0) + value;
+                    else if (stat === 'dodgeChance') newHero.dodgeChance = (newHero.dodgeChance || 0) + value;
+                    else if (stat === 'mysticismBonus') newHero.mysticismBonus = (newHero.mysticismBonus || 0) + value;
+                    else if (stat === 'armyBonus') newHero.armyBonus = (newHero.armyBonus || 0) + value;
+                    else if (stat === 'moraleBonus') newHero.morale = Math.min(100, (newHero.morale || 50) + value);
+                }
+            }
+            console.log(`🎭 Новонает герой ${newHero.name} получи клас: ${starterClass.name}`);
+        }
+    }
+    // *** КРАЙ НА ПРОМЯНАТА ***
+    
     var endurance = newHero.skills.endurance || 0;
     var levelBonus = (newHero.level - 1) * 20;
     var calcMax = 100 + levelBonus + endurance * 15;
@@ -383,7 +439,6 @@ window.hireNewHero = function() {
         if (typeof window.renderBarracksLayout === 'function') window.renderBarracksLayout();
     }
 };
-
 // ==================== ДАННИ ЗА ГЕРОИТЕ ====================
 function getAllHeroes() {
     let heroes = [];
