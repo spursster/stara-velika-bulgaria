@@ -1,5 +1,5 @@
 // ==================== СТРОИТЕЛСТВО В РЕГИОНИТЕ ====================
-// Версия 1.2 – с проверка за съществуване на region.buildings
+// Версия 1.3 – с проверка за съществуване на window.inspectRegion
 
 window.buildingsDB = {
     barracks: {
@@ -84,7 +84,6 @@ window.buildInRegion = function(regionName, buildingId, hero) {
     const region = window.worldData?.regions?.[regionName];
     if (!region) return { success: false, msg: "Регионът не съществува." };
     
-    // Гарантираме, че region.buildings съществува
     if (!region.buildings) {
         region.buildings = {
             barracks: 0, market: 0, temple: 0, wall: 0, harbor: 0
@@ -141,9 +140,9 @@ window.buildInRegion = function(regionName, buildingId, hero) {
     return { success: true, msg: `Успешно построихте ниво ${region.buildings[buildingId]} на ${building.name} в ${regionName}!` };
 };
 
-// Пачваме inspectRegion, за да показва бутони за строителство
-const originalInspectRegion = window.inspectRegion;
-if (originalInspectRegion) {
+// ==================== ПАЧВАНЕ НА INSPECTREGION ====================
+if (typeof window.inspectRegion === 'function') {
+    const originalInspectRegion = window.inspectRegion;
     window.inspectRegion = function(regionName) {
         originalInspectRegion(regionName);
         setTimeout(() => {
@@ -155,8 +154,6 @@ if (originalInspectRegion) {
 
             const region = window.worldData?.regions[regionName];
             if (!region) return;
-            
-            // Инициализираме сградите, ако липсват
             if (!region.buildings) {
                 region.buildings = { barracks: 0, market: 0, temple: 0, wall: 0, harbor: 0 };
             }
@@ -200,9 +197,11 @@ if (originalInspectRegion) {
             actionDiv.appendChild(buildingsContainer);
         }, 100);
     };
+} else {
+    console.warn("⚠️ inspectRegion не е дефинирана – строителството няма да се добави.");
 }
 
-// Инициализация при старт
+// ==================== ИНИЦИАЛИЗАЦИЯ ПРИ СТАРТ ====================
 if (typeof window.startFreshGameLogic === 'function') {
     const originalStart = window.startFreshGameLogic;
     window.startFreshGameLogic = function() {
@@ -219,4 +218,4 @@ if (typeof window.loadGreatBulgariaGame === 'function') {
     };
 }
 
-console.log("✅ regionBuilding.js зареден – строителство в регионите (с проверка за съществуване на buildings)");
+console.log("✅ regionBuilding.js зареден – строителство в регионите (с проверка за съществуване на inspectRegion)");
