@@ -26,7 +26,7 @@ function showGameMessage(title, message, type = "info") {
     } else if (window.showAdvisorMsg) {
         window.showAdvisorMsg(message);
     } else {
-        console.log(`${title}: ${message}`);
+        alert(`${title}: ${message}`);
     }
 }
 
