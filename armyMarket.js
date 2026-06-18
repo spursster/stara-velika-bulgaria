@@ -1,5 +1,15 @@
 // ======================== АРМИЯ ПАЗАР – НАПЪЛНО САМОСТОЯТЕЛНА ВЕРСИЯ ========================
 (function() {
+    if (typeof window.ALL_TROOP_TYPES === 'undefined') {
+        console.warn("⚠️ ALL_TROOP_TYPES липсва. Създавам резервен масив.");
+        window.ALL_TROOP_TYPES = [
+            { id: "infantry", name: "Пехотинец", basePrice: 10, attack: 8, defense: 12, icon: "⚔️", desc: "Основна пехота", special: null, category: "basic" },
+            { id: "archers", name: "Стрелец", basePrice: 15, attack: 15, defense: 6, icon: "🏹", desc: "Далекобойни", special: null, category: "basic" },
+            { id: "cavalry", name: "Конник", basePrice: 30, attack: 25, defense: 18, icon: "🐎", desc: "Бързи атаки", special: null, category: "basic" },
+            { id: "elite", name: "Елитен войн", basePrice: 70, attack: 45, defense: 40, icon: "🛡️", desc: "Най-добрите", special: null, category: "basic" }
+        ];
+        window.ALL_TROOP_IDS = window.ALL_TROOP_TYPES.map(t => t.id);
+    }
     // ----------------------------------------------------------------------
     // 1. ДОБАВЯНЕ НА ЛИПСВАЩИ ВОЙСКИ (ако не съществуват)
     // ----------------------------------------------------------------------
