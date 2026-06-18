@@ -1,5 +1,5 @@
 // =========================================================================
-// ВЕЛИКА БЪЛГАРИЯ - rpg_system.js (ВЕРСИЯ 8.2 – ОПРАВЕНИ СКОБИ)
+// ВЕЛИКА БЪЛГАРИЯ - rpg_system.js (ВЕРСИЯ 8.3 – ОПРАВЕНА ПРОВЕРКА ЗА isMyHero)
 // =========================================================================
 
 window.rpgDatabase = window.rpgDatabase || {};
@@ -302,7 +302,10 @@ window.resolvePendingChoices = function() {
         let hero = window.worldData.clans[key];
         if (!hero) continue;
         
-        if (typeof isMyHero === 'function' && isMyHero(hero)) {
+        const isPlayerHero = (typeof isMyHero === 'function' && isMyHero(hero)) ||
+                             (window.gameMode === 'solo' && window.currentHero && window.currentHero.id === hero.id);
+        
+        if (isPlayerHero) {
             if (window._pendingSkillPoints && window._pendingSkillPoints[hero.id] > 0 && hero.skillPoints > 0) {
                 if (typeof window.autoAssignSkillPoint === 'function') {
                     window.autoAssignSkillPoint(hero);
@@ -464,4 +467,4 @@ setTimeout(() => {
     }
 }, 1500);
 
-console.log("✅ rpg_system.js версия 8.2 зареден – оправени скоби");
+console.log("✅ rpg_system.js версия 8.3 зареден – оправена проверка за isMyHero");
