@@ -11,6 +11,12 @@ window.openInteractiveMap = function() {
         return;
     }
 
+    if (!window.worldData || !window.worldData.regions) {
+        console.error("worldData.regions не е дефиниран");
+        alert("Грешка: Данните за света не са заредени.");
+        return;
+    }
+
     const oldModal = document.getElementById('interactive-map-modal');
     if (oldModal) oldModal.remove();
 
