@@ -9,6 +9,7 @@ function saveTournamentWinners() {
     localStorage.setItem('tournament_winners', JSON.stringify(window.tournamentWinners.slice(0, 30)));
 }
 
+
 // Функция за добавяне на нов турнирен победител (да се извиква от tournament.js)
 window.addTournamentWinner = function(winnerObj, year, power, className, petName) {
     const entry = {
