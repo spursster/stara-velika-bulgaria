@@ -1,7 +1,8 @@
 /** ========================================================================== 
 ПРОЕКТ: ВЕЛИКА БЪЛГАРИЯ
-ФАЙЛ: ui.js (ВЕРСИЯ 8.2 – ПОРТРЕТИ ОТ PUTER + ИКОНКИ + ПРОВЕРКИ ЗА СТАБИЛНОСТ)
+ФАЙЛ: ui.js (ВЕРСИЯ 8.3 – ОПРАВЕНИ ПРОВЕРКИ И РЕЗЕРВНИ ВАРИАНТИ)
 ========================================================================== */ 
+
 window.selectedHero = null;
 
 window.setSelectedHero = function(hero) {
@@ -57,7 +58,6 @@ window.getTotalGold = function() {
 window.deductGoldFromTotal = function(amount) {
     if (amount <= 0) return true;
     let remaining = amount;
-    // Събираме всички живи наети герои, сортирани по злато (низходящо)
     let heroes = [];
     for (let key in window.worldData.clans) {
         let hero = window.worldData.clans[key];
@@ -71,17 +71,16 @@ window.deductGoldFromTotal = function(amount) {
         let deduct = Math.min(hero.gold, remaining);
         hero.gold -= deduct;
         remaining -= deduct;
-        // Актуализираме UI за този герой
         if (window.updateCharacterUI) window.updateCharacterUI(hero);
     }
-    if (remaining > 0) return false; // не би трябвало да се случи
-    // Обновяваме общата статистика
+    if (remaining > 0) return false;
     if (window.updateStrongestHeroUI) window.updateStrongestHeroUI();
     if (window.renderFavoriteHeroesBar) window.renderFavoriteHeroesBar();
     if (window.renderSingleBar) window.renderSingleBar();
     return true;
 };
-// Показва хоризонтален списък с до 5 типа войски (с проверка за ALL_TROOP_TYPES)
+
+// ==================== ПОКАЗВАНЕ НА ВОЙСКИТЕ НА ТОП ГЕРОЙ ====================
 function renderTopHeroTroops(hero) {
     if (!hero || !hero.armyDetails) return '<div style="font-size:10px; color:#aa8866;">⚔️ Без войски</div>';
     if (!window.ALL_TROOP_TYPES) return '<div style="font-size:10px; color:#aa8866;">⚔️ Няма данни за войски</div>';
@@ -114,9 +113,7 @@ function renderTopHeroTroops(hero) {
     return html;
 }
 
-let updateStrongestHeroTimer = null;
-
-// Сумира злато, армия и сила на всички живи герои
+// ==================== ОБНОВЯВАНЕ НА ТОТАЛНИТЕ СТАТИСТИКИ ====================
 window.updateTotalStatsUI = function() {
     let totalGold = 0, totalArmy = 0, totalPower = 0;
     if (window.worldData && window.worldData.clans) {
@@ -145,7 +142,6 @@ window.updateTotalStatsUI = function() {
                 const p = window.rpgDatabase.petsDatabase[strongest.pet];
                 petStatus = p.icon + " " + p.name;
             }
-            // --- ПОРТРЕТ В ЛЕВИЯ ПАНЕЛ (ако има) ---
             let portraitHtml = '';
             if (strongest.portrait && strongest.portrait.startsWith('http')) {
                 portraitHtml = `<img src="${strongest.portrait}" style="width:80px; height:80px; border-radius:50%; border:2px solid #ffd700; margin:0 auto 10px auto; object-fit:cover;">`;
@@ -293,14 +289,12 @@ function getAllHeroesFromDatabase() {
     return heroesList;
 }
 
-
 window.hireNewHero = function() {
     if (window.gameMode === 'solo') {
         window.showAdvisorPopup("СОЛО РЕЖИМ", "В соло режим не можете да наемате герои. Можете да намирате спътници в регионите (до 4).", "warning");
         return;
     }
     
-    // Проверка за лимит на любимите герои (максимум 5)
     let favoriteCount = 0;
     if (window.worldData && window.worldData.clans) {
         for (let key in window.worldData.clans) {
@@ -319,7 +313,6 @@ window.hireNewHero = function() {
         return;
     }
     
-    // Филтрираме вече наетите
     let hiredNames = new Set();
     if (window.worldData && window.worldData.clans) {
         for (let key in window.worldData.clans) {
@@ -341,20 +334,18 @@ window.hireNewHero = function() {
         return;
     }
     
-    // Успешно наемане – взимаме парите от общото злато
     let success = window.deductGoldFromTotal(cost);
     if (!success) {
         window.showAdvisorPopup("ГРЕШКА", "Проблем с отнемането на златото!", "error");
         return;
     }
     
-    // Създаваме новия герой
     let newId = "hero_" + Date.now() + "_" + Math.floor(Math.random() * 10000);
     let newHero = {
         name: randomHero.name,
         clan: randomHero.clan,
         isJoined: true,
-        isFavorite: true,   // добавяме го директно в любимите
+        isFavorite: true,
         level: 1,
         xp: 0,
         heroPower: randomHero.power,
@@ -369,7 +360,7 @@ window.hireNewHero = function() {
         storedXP:0,
         isAuto: true,
         equipment: Array(12).fill(null),
-        inventory: Array(12).fill(null),
+        inventory: [],
         pet: null,
         age: 30,
         learnedSkills: {},
@@ -378,7 +369,6 @@ window.hireNewHero = function() {
         hp: 0
     };
     
-    // Прилагане на начален клас (ако не е специален)
     if (!["Легенда", "Герой", "Войн"].includes(randomHero.className) && typeof window.getRandomStarterClass === 'function') {
         const starterClass = window.getRandomStarterClass();
         if (starterClass) {
@@ -390,7 +380,6 @@ window.hireNewHero = function() {
             } else if (starterClass.bonuses) {
                 for (let [stat, value] of Object.entries(starterClass.bonuses)) {
                     if (stat === 'heroPower') newHero.heroPower += value;
-                    // други бонуси – опростено
                 }
             }
         }
@@ -409,18 +398,17 @@ window.hireNewHero = function() {
     if (!window.unlockedHeroes) window.unlockedHeroes = [];
     window.unlockedHeroes.push(newHero);
     
-    // Генериране на портрет (ако има Puter)
     if (typeof window.generateHeroPortrait === 'function') {
         window.generateHeroPortrait(newHero).catch(e => console.warn(e));
     }
     
-    // Обновяване на UI
     if (typeof window.renderFavoriteHeroesBar === 'function') window.renderFavoriteHeroesBar();
     if (typeof window.renderSingleBar === 'function') window.renderSingleBar();
     if (typeof window.updateStrongestHeroUI === 'function') window.updateStrongestHeroUI();
     
     window.showAdvisorPopup("УСПЕШНО НАЕМАНЕ", `✨ ${newHero.name} от род ${newHero.clan} се закле във вярност!<br><br>💰 Останало общо злато: ${window.getTotalGold()}<br>⚔️ Бойна сила: ${newHero.power}`, "success");
 };
+
 // ==================== ДАННИ ЗА ГЕРОИТЕ ====================
 function getAllHeroes() {
     let heroes = [];
@@ -497,13 +485,13 @@ function equipArtifact(hero, artifact, slotIndex) {
     if (window.recalculateHeroPower) window.recalculateHeroPower(hero);
     if (window.updateCharacterUI) window.updateCharacterUI(hero);
     if (window.armyMarket && window.armyMarket.sync) window.armyMarket.sync(hero);
-    else if (window.saveHeroData) window.saveHeroData(hero);
     if (window.recalculateHeroMaxHp) window.recalculateHeroMaxHp(hero);
     if (typeof window.updateStrongestHeroUI === 'function') window.updateStrongestHeroUI();
 }
 
-// ==================== ПРОФИЛ НА ГЕРОЙ (С ПОРТРЕТ) ====================
+// ==================== ПРОФИЛ НА ГЕРОЙ ====================
 function showHeroProfile(hero) {
+    if (!hero) return;
     const armyValue = hero.armySize !== undefined ? hero.armySize : (hero.army || 0);
     let needXP = 100 + (hero.level - 1) * 50;
     let currentXP = hero.isAuto ? (hero.xp || 0) : (hero.storedXP || 0);
@@ -598,7 +586,6 @@ function showHeroProfile(hero) {
         </div>
     `;
     
-    // --- ПОРТРЕТ В ПРОФИЛА (ако има) ---
     let portraitHtml = '';
     if (hero.portrait && hero.portrait.startsWith('http')) {
         portraitHtml = `<img src="${hero.portrait}" style="width:120px; height:120px; border-radius:50%; border:3px solid #ffd700; margin:0 auto 15px auto; object-fit:cover; box-shadow:0 0 15px rgba(0,0,0,0.5);">`;
@@ -606,7 +593,6 @@ function showHeroProfile(hero) {
         let classIcon = getClassIcon(hero.currentClass);
         portraitHtml = `<div style="font-size: 80px; text-align: center; margin-bottom: 15px;">${classIcon}</div>`;
     }
-    // ---------------------------------
 
     let logHtml = '<div style="background:#0d0a07; border-radius:12px; padding:12px; margin-top:10px;"><h4 style="color:#ffdd99; margin:0 0 8px 0;">📜 ГЕРОИЧЕСКИ ДНЕВНИК</h4><div style="max-height:140px; overflow-y:auto; font-size:10px;">';
     if (hero.actionLog && hero.actionLog.length) {
@@ -747,7 +733,7 @@ function showHeroProfile(hero) {
     }
 }
 
-// ==================== ЛЕНТА С ЛЮБИМИ ГЕРОИ (С ПОРТРЕТИ) ====================
+// ==================== ЛЕНТА С ЛЮБИМИ ГЕРОИ ====================
 window.renderFavoriteHeroesBar = function() {
     var container = document.getElementById('favorite-heroes-bar');
     if (!container) return;
@@ -799,7 +785,6 @@ window.renderFavoriteHeroesBar = function() {
             var currentXP = hero.isAuto ? (hero.xp || 0) : (hero.storedXP || 0);
             var xpPercent = Math.min(100, (currentXP / needXP) * 100);
 
-            // --- ПОРТРЕТ В ЛЕНТАТА С ЛЮБИМИ (ако има) ---
             let imageHtml = '';
             if (hero.portrait && hero.portrait.startsWith('http')) {
                 imageHtml = `<img src="${hero.portrait}" style="width:50px; height:50px; border-radius:50%; border:2px solid ${classColor}; object-fit:cover; margin:0 auto 5px auto;">`;
@@ -807,7 +792,6 @@ window.renderFavoriteHeroesBar = function() {
                 let classIcon = window.getClassIcon ? window.getClassIcon(hero.currentClass) : '⚔️';
                 imageHtml = `<div class="hero-icon" style="font-size: 32px;">${classIcon}</div>`;
             }
-            // -------------------------------------------
 
             slot.innerHTML = imageHtml +
                 '<div class="hero-name" title="' + hero.name + '">' + hero.name.substring(0, 12) + '</div>' +
@@ -867,25 +851,24 @@ window.renderFavoriteHeroesBar = function() {
             slot.innerHTML = '<div style="font-size:28px;">➕</div><div style="font-size:10px;">Добави герой</div>';
             slot.style.backgroundColor = 'rgba(255,255,255,0.03)';
             slot.style.border = '1px dashed #aaa';
-        slot.onclick = function() {
-    if (favoriteHeroesList.length >= 5) {
-        if (window.showAdvisorPopup) window.showAdvisorPopup("ВНИМАНИЕ", "Максимум 5 любими героя!", "warning");
-        else alert("Максимум 5 любими героя!");
-        return;
-    }
-    // Директно наемане на нов герой (използва общото злато)
-    if (typeof window.hireNewHero === 'function') {
-        window.hireNewHero();
-    } else {
-        if (window.showAdvisorPopup) window.showAdvisorPopup("ИНФО", "Системата за наемане не е готова.", "info");
-    }
-};
+            slot.onclick = function() {
+                if (favoriteHeroesList.length >= 5) {
+                    if (window.showAdvisorPopup) window.showAdvisorPopup("ВНИМАНИЕ", "Максимум 5 любими героя!", "warning");
+                    else alert("Максимум 5 любими героя!");
+                    return;
+                }
+                if (typeof window.hireNewHero === 'function') {
+                    window.hireNewHero();
+                } else {
+                    if (window.showAdvisorPopup) window.showAdvisorPopup("ИНФО", "Системата за наемане не е готова.", "info");
+                }
+            };
         }
         container.appendChild(slot);
     }
 };
 
-// ==================== ОСНОВНО ОБНОВЯВАНЕ НА ЛЕВИЯ ПАНЕЛ (С ПОРТРЕТ) ====================
+// ==================== ОСНОВНО ОБНОВЯВАНЕ НА ЛЕВИЯ ПАНЕЛ ====================
 window.updateCharacterUI = function(hero) {
     if (!hero) return;
     if (window.initializeHeroRPGData) window.initializeHeroRPGData(hero);
@@ -897,14 +880,12 @@ window.updateCharacterUI = function(hero) {
             const p = window.rpgDatabase.petsDatabase[hero.pet];
             petStatus = p.icon + " " + p.name;
         }
-        // --- ПОРТРЕТ В ЛЕВИЯ ПАНЕЛ (ако има) ---
         let portraitHtml = '';
         if (hero.portrait && hero.portrait.startsWith('http')) {
             portraitHtml = `<img src="${hero.portrait}" style="width:80px; height:80px; border-radius:50%; border:2px solid #ffd700; margin:0 auto 10px auto; object-fit:cover;">`;
         } else {
             portraitHtml = `<div style="font-size:48px; margin-bottom:5px;">${getClassIcon(hero.currentClass)}</div>`;
         }
-        // -------------------------------------
         profileBox.innerHTML = '<div style="text-align:center;">' +
             portraitHtml +
             '<div style="font-weight:bold;font-size:1.2rem;">' + (hero.name || "Неизвестен") + '</div>' +
@@ -1095,14 +1076,12 @@ function createHeroCard(hero, isMobile) {
     let fav = isFavorite(hero.id);
     const classIcon = getClassIcon(hero.className);
     
-    // --- ПОРТРЕТ В КАРТИЧКАТА (ако има) ---
     let portraitHtml = '';
     if (hero.portrait && hero.portrait.startsWith('http')) {
         portraitHtml = `<img src="${hero.portrait}" style="width:40px; height:40px; border-radius:50%; border:1px solid #c9a87b; object-fit:cover;">`;
     } else {
         portraitHtml = `<div style="font-size:24px; flex-shrink:0;">${classIcon}</div>`;
     }
-    // -----------------------------------
     
     if (isMobile) {
         card.style.cssText = `background: rgba(20,15,10,0.9); border-radius: 12px; padding: 6px 10px; min-width: 100px; text-align: center; cursor: pointer; border: 1px solid #c9a87b; flex-shrink: 0;`;
@@ -1814,17 +1793,16 @@ window.getHeroPronoun = function(hero, form = "subject") {
     return "той";
 };
 
-// ==================== ГЕНЕРИРАНЕ НА ПОРТРЕТИ С PUTER.JS (С ПРОВЕРКИ И FALLBACK) ====================
+// ==================== ГЕНЕРИРАНЕ НА ПОРТРЕТИ С PUTER.JS ====================
 window.generateHeroPortrait = async function(hero) {
     if (!hero || hero.portrait) return;
     
-    // Проверка дали Puter.js е зареден
     if (typeof puter === 'undefined' || !puter.ai || !puter.ai.txt2img) {
         console.warn("Puter.js не е зареден – портретите няма да бъдат генерирани.");
         return;
     }
     
-    hero.portrait = null; // оставяме празно, за да може да се опита отново по-късно
+    hero.portrait = null;
 
     let classDesc = "";
     if (hero.currentClass) {
@@ -1839,12 +1817,11 @@ window.generateHeroPortrait = async function(hero) {
     
     const prompt = `historical fantasy portrait of ${hero.name}, ${classDesc}, detailed face, medieval style, epic lighting, no text, no watermark, high quality, 4k, cinematic`;
     
-    // Списък с модели, които Puter.js поддържа (може да добавиш още)
- const models = [
-    "stabilityai/stable-diffusion-2-1",
-    "stabilityai/stable-diffusion-3.5-large",
-    "stabilityai/stable-diffusion-3.5-medium"
-];
+    const models = [
+        "stabilityai/stable-diffusion-2-1",
+        "stabilityai/stable-diffusion-3.5-large",
+        "stabilityai/stable-diffusion-3.5-medium"
+    ];
     
     for (let model of models) {
         try {
@@ -1858,17 +1835,14 @@ window.generateHeroPortrait = async function(hero) {
                 hero.portrait = imgElement.src;
                 if (typeof window.updateCharacterUI === 'function') window.updateCharacterUI(hero);
                 console.log(`✅ Портретът на ${hero.name} е генериран успешно с модел ${model}.`);
-                return; // успех – излизаме от функцията
+                return;
             }
         } catch (error) {
             console.warn(`Модел ${model} не работи за ${hero.name}: ${error.message}`);
-            // продължаваме с следващия модел
         }
     }
     
     console.error(`❌ Грешка при генериране на портрет за ${hero.name} – нито един модел не успя.`);
-    // hero.portrait остава null – ще се покаже иконката на класа
 };
 
-// ==================== КРАЙ НА ui.js ====================
-console.log("✅ ui.js зареден успешно - версия с портрети от Puter, иконки и проверки за стабилност");
+console.log("✅ ui.js зареден успешно - версия 8.3 с оправени проверки и резервни варианти");
