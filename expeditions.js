@@ -6,8 +6,20 @@
 // Помощна функция за вземане на главния герой (без currentHero)
 function getMainHeroForExpeditions() {
     if (window.gameMode === 'solo') return window.currentHero || null;
-    if (typeof window.getStrongestHero === 'function') return window.getStrongestHero();
-    if (typeof window.getSelectedHero === 'function') return window.getSelectedHero();
+    if (typeof window.getStrongestHero === 'function') {
+        let hero = window.getStrongestHero();
+        if (hero) return hero;
+    }
+    if (typeof window.getSelectedHero === 'function') {
+        let hero = window.getSelectedHero();
+        if (hero) return hero;
+    }
+    if (window.worldData && window.worldData.clans) {
+        for (let key in window.worldData.clans) {
+            let h = window.worldData.clans[key];
+            if (h.isJoined && h.isAlive !== false) return h;
+        }
+    }
     return null;
 }
 
