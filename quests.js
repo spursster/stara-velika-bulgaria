@@ -243,7 +243,6 @@ if (typeof window.endGroupBattle === 'function') {
     window.endGroupBattle = function(isVictory, reason, ...args) {
         originalEndBattle(isVictory, reason, ...args);
         if (isVictory && window.currentRegion) {
-            // В класически режим – взимаме избрания герой, иначе най-силния
             let hero = null;
             if (window.gameMode === 'solo' && window.currentHero) {
                 hero = window.currentHero;
@@ -255,7 +254,6 @@ if (typeof window.endGroupBattle === 'function') {
             }
         }
     };
+} else {
+    console.warn("⚠️ endGroupBattle не е дефинирана – куестовете няма да се ъпдейтват след битка.");
 }
-
-    console.log("✅ Епическата система за куестове е активна (хармонизирана версия).");
-})();
