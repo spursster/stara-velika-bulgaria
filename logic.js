@@ -225,26 +225,28 @@
     }
 
     // ========== ИНИЦИАЛИЗАЦИЯ НА ВСИЧКИ ГЕРОИ ОТ DATABASE ==========
-    function initializeAllHeroesFromDatabase() {
-        if (!window.worldData) window.worldData = {};
-        if (!window.worldData.clans) window.worldData.clans = {};
-        const clans = window.bulgarianClans;
-        if (!clans) return;
-        for (let clanName in clans) {
-            const heroesList = clans[clanName].heroes;
-            if (!heroesList) continue;
-            for (let heroName of heroesList) {
-                const heroId = "hero_" + clanName + "_" + heroName.replace(/\s/g, '_');
-                if (window.worldData.clans[heroId]) continue;
-                const hero = createHeroObject(heroName, clanName);
-                hero.isJoined = false;
-                hero.isFavorite = false;
-                window.worldData.clans[heroId] = hero;
-            }
-        }
-        console.log("✅ Инициализирани " + Object.keys(window.worldData.clans).length + " герои от database.js");
+function initializeAllHeroesFromDatabase() {
+    if (!window.bulgarianClans) {
+        console.error("❌ window.bulgarianClans липсва! Няма герои за инициализация.");
+        return;
     }
-
+    if (!window.worldData) window.worldData = {};
+    if (!window.worldData.clans) window.worldData.clans = {};
+    const clans = window.bulgarianClans;
+    for (let clanName in clans) {
+        const heroesList = clans[clanName].heroes;
+        if (!heroesList) continue;
+        for (let heroName of heroesList) {
+            const heroId = "hero_" + clanName + "_" + heroName.replace(/\s/g, '_');
+            if (window.worldData.clans[heroId]) continue;
+            const hero = createHeroObject(heroName, clanName);
+            hero.isJoined = false;
+            hero.isFavorite = false;
+            window.worldData.clans[heroId] = hero;
+        }
+    }
+    console.log("✅ Инициализирани " + Object.keys(window.worldData.clans).length + " герои от database.js");
+}
     // ========== СЛУЧАЕН ГЕРОЙ ОТ БАЗАТА ==========
     function getRandomHeroFromDatabase() {
         initializeAllHeroesFromDatabase();
