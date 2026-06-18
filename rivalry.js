@@ -21,11 +21,16 @@
     let turnCounter = 0;
 
     // Помощна функция за намиране на "играча" (най-силен герой)
-   function getPlayerHero() {
+function getPlayerHero() {
     if (typeof window.getStrongestHero === 'function') {
         return window.getStrongestHero();
     }
-    // Само в соло режим използваме currentHero като резерв
+    if (window.worldData && window.worldData.clans) {
+        for (let key in window.worldData.clans) {
+            let h = window.worldData.clans[key];
+            if (h.isJoined && h.isAlive !== false) return h;
+        }
+    }
     if (window.gameMode === 'solo' && window.currentHero) return window.currentHero;
     return null;
 }
