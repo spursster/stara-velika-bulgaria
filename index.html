@@ -18,16 +18,22 @@
     <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css" />
     <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css" />
     <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
-    <!-- Инициализация на основни скрипти в правилен ред -->
-    <script src="core-init.js"></script>
-    <script src="logic.js"></script>
-    <script src="gameState.js"></script>
-    <script src="database.js"></script>
-    <script src="config.json"></script>
 
-    <!-- Lazy loading на skills.js -->
+    <!-- Асинхронная загрузка skills.js -->
     <script>
-                        (function() {
+        window.loadSkills = function() {
+            return new Promise((resolve) => {
+                    const script = document.createElement('script');
+                    script.src = 'skills.js';
+                script.onload = () => resolve();
+                    document.head.appendChild(script);
+                });
+                                };
+                </script>
+
+    <!-- Lazy loading на skills.js (изначальный код) -->
+    <script>
+            (function() {
             let skillsLoaded = false, skillsLoading = null;
             window.loadSkills = function() {
                 if (skillsLoaded) return Promise.resolve();
@@ -39,50 +45,79 @@
                         skillsLoaded = true;
                         console.log("✅ skills.js зареден");
                         resolve();
-                                        };
+                            };
                     script.onerror = () => reject(new Error("Грешка при зареждане на skills.js"));
                     document.head.appendChild(script);
                 });
                 return skillsLoading;
-                                };
-
-            // Зареждане на функциите, които зависят от skills.js
-                    const originalOpenSkillsUI = window.openSkillsUI;
-                    if (originalOpenSkillsUI) window.openSkillsUI = async (...args) => {
-                        await window.loadSkills();
-                        return originalOpenSkillsUI(...args);
                     };
 
-                    const originalGetAdvancedSkillBonuses = window.getAdvancedSkillBonuses;
-                    if (originalGetAdvancedSkillBonuses) window.getAdvancedSkillBonuses = async (...args) => {
-                        await window.loadSkills();
-                        return originalGetAdvancedSkillBonuses(...args);
+            const originalOpenSkillsUI = window.openSkillsUI;
+            if (originalOpenSkillsUI) window.openSkillsUI = async (...args) => {
+                await window.loadSkills();
+                return originalOpenSkillsUI(...args);
+            };
+
+            const originalGetAdvancedSkillBonuses = window.getAdvancedSkillBonuses;
+            if (originalGetAdvancedSkillBonuses) window.getAdvancedSkillBonuses = async (...args) => {
+                await window.loadSkills();
+                return originalGetAdvancedSkillBonuses(...args);
                     };
 
-                    const originalLearnAdvancedSkill = window.learnAdvancedSkill;
-                    if (originalLearnAdvancedSkill) window.learnAdvancedSkill = async (...args) => {
-                        await window.loadSkills();
-                        return originalLearnAdvancedSkill(...args);
-                    };
+            const originalLearnAdvancedSkill = window.learnAdvancedSkill;
+            if (originalLearnAdvancedSkill) window.learnAdvancedSkill = async (...args) => {
+                await window.loadSkills();
+                return originalLearnAdvancedSkill(...args);
+        };
 
-                    const originalGetAllAdvancedSkills = window.getAllAdvancedSkills;
-                    if (originalGetAllAdvancedSkills) window.getAllAdvancedSkills = async (...args) => {
-                        await window.loadSkills();
-                        return originalGetAllAdvancedSkills(...args);
-                    };
-                })();
-                </script>
+            const originalGetAllAdvancedSkills = window.getAllAdvancedSkills;
+            if (originalGetAllAdvancedSkills) window.getAllAdvancedSkills = async (...args) => {
+                await window.loadSkills();
+                return originalGetAllAdvancedSkills(...args);
+            };
+        })();
+        </script>
+
+    <!-- Загрузка всех основных скриптов в правильном порядке -->
+    <script src="core-init.js"></script>
+    <script src="logic.js"></script>
+    <script src="gameState.js"></script>
+    <script src="database.js"></script>
+    <script src="config.json"></script>
 
     <!-- Инициализация на играта -->
-    <script>
+        <script>
         window.startGameCore();
-    </script>
+        window.loadSkills().then(() => {
+            if (typeof window.startFreshGameLogic === 'function') {
+                window.startFreshGameLogic();
+            }
+        });
+        </script>
 
     <!-- Инициализация на основни скрипти -->
-    <script src="skills.js"></script>
+        <script>
+        function updateHeroNameInTopBar() {
+            let hero = null;
+            if (window.gameMode === 'solo') hero = window.currentHero;
+            else hero = window.getStrongestHero?.() || window.getSelectedHero?.();
+            if (!hero) return;
+            let heroName = hero.name || "Герой";
+            let container = document.querySelector('#top-bar .top-bar-stats');
+                    if (!container) return;
+            let existing = container.querySelector('.active-hero-name');
+            if (!existing) {
+                let span = document.createElement('span');
+                span.className = 'active-hero-name';
+                span.innerHTML = `👑 ${heroName}`;
+                container.appendChild(span);
+            } else existing.innerHTML = `👑 ${heroName}`;
+                }
+        setInterval(updateHeroNameInTopBar, 1000);
+        updateHeroNameInTopBar();
+        </script>
 
-    <!-- Инициализация на основни скрипти в правилен ред -->
-    <script src="core-init.js"></script>
+    <noscript><script src="skills.js"></script></noscript>
 
     <svg style="position: absolute; width: 0; height: 0; visibility: hidden;">
         <defs>
@@ -98,19 +133,6 @@
             </filter>
         </defs>
     </svg>
-
-    <!-- Инициализация на играта -->
-    <script>
-        window.startGameCore();
-        window.loadSkills().then(() => {
-            if (typeof window.startFreshGameLogic === 'function') {
-                window.startFreshGameLogic();
-            }
-        });
-    </script>
-
-    <!-- Инициализация на основни скрипти -->
-    <script src="core-init.js"></script>
 
     <header id="top-bar">
         <div class="top-bar-stats">
@@ -172,50 +194,13 @@
         <div id="favorite-heroes-bar" class="favorite-bar"></div>
     </div>
 
-    <!-- Lazy loading на skills.js -->
+    <!-- Инициализация на играта -->
         <script>
-            (function() {
-            let skillsLoaded = false, skillsLoading = null;
-            window.loadSkills = function() {
-                if (skillsLoaded) return Promise.resolve();
-                if (skillsLoading) return skillsLoading;
-                skillsLoading = new Promise((resolve, reject) => {
-                    const script = document.createElement('script');
-                    script.src = 'skills.js';
-                    script.onload = () => {
-                        skillsLoaded = true;
-                        console.log("✅ skills.js зареден");
-                        resolve();
-                            };
-                    script.onerror = () => reject(new Error("Грешка при зареждане на skills.js"));
-                    document.head.appendChild(script);
-                });
-                return skillsLoading;
-                    };
-            })();
+        window.startGameCore();
         </script>
 
     <!-- Останалите части от скрипта -->
         <script>
-        function updateHeroNameInTopBar() {
-            let hero = null;
-            if (window.gameMode === 'solo') hero = window.currentHero;
-            else hero = window.getStrongestHero?.() || window.getSelectedHero?.();
-            if (!hero) return;
-            let heroName = hero.name || "Герой";
-            let container = document.querySelector('#top-bar .top-bar-stats');
-            if (!container) return;
-            let existing = container.querySelector('.active-hero-name');
-            if (!existing) {
-                let span = document.createElement('span');
-                span.className = 'active-hero-name';
-                span.innerHTML = `👑 ${heroName}`;
-                container.appendChild(span);
-            } else existing.innerHTML = `👑 ${heroName}`;
-        }
-        setInterval(updateHeroNameInTopBar, 1000);
-        updateHeroNameInTopBar();
-
         if (typeof window.openRegionsMap !== 'function') window.openRegionsMap = function() {};
 
         if (!window.worldEvents) window.worldEvents = [];
@@ -647,4 +632,5 @@
                 }
             })();
         </script>
+    </script>
 
