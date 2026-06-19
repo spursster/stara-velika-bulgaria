@@ -18,24 +18,6 @@
     <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css" />
     <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css" />
     <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
-</head>
-
-<body>
-    <svg style="position: absolute; width: 0; height: 0; visibility: hidden;">
-        <defs>
-            <filter id="liquidGlitch" x="-20%" y="-20%" width="140%" height="140%">
-                <feTurbulence type="fractalNoise" baseFrequency="0.02 0.04" numOctaves="2" result="noise" />
-                <feDisplacementMap in="SourceGraphic" in2="noise" scale="8" xChannelSelector="R" yChannelSelector="G" />
-                <feGaussianBlur stdDeviation="0.5" />
-            </filter>
-            <filter id="liquidGlitchStrong" x="-30%" y="-30%" width="160%" height="160%">
-                <feTurbulence type="fractalNoise" baseFrequency="0.03 0.06" numOctaves="3" result="noise" />
-                <feDisplacementMap in="SourceGraphic" in2="noise" scale="15" xChannelSelector="R" yChannelSelector="G" />
-                <feGaussianBlur stdDeviation="1" />
-            </filter>
-        </defs>
-    </svg>
-
     <!-- Инициализация на основни скрипти в правилен ред -->
     <script src="core-init.js"></script>
     <script src="logic.js"></script>
@@ -55,7 +37,7 @@
                     script.src = 'skills.js';
                     script.onload = () => {
                         skillsLoaded = true;
-                        console.log("✅ skills.js зареден lazy");
+                        console.log("✅ skills.js зареден");
                         resolve();
                                         };
                     script.onerror = () => reject(new Error("Грешка при зареждане на skills.js"));
@@ -63,22 +45,26 @@
                 });
                 return skillsLoading;
                                 };
+
             // Зареждане на функциите, които зависят от skills.js
                     const originalOpenSkillsUI = window.openSkillsUI;
                     if (originalOpenSkillsUI) window.openSkillsUI = async (...args) => {
                         await window.loadSkills();
                         return originalOpenSkillsUI(...args);
                     };
+
                     const originalGetAdvancedSkillBonuses = window.getAdvancedSkillBonuses;
                     if (originalGetAdvancedSkillBonuses) window.getAdvancedSkillBonuses = async (...args) => {
                         await window.loadSkills();
                         return originalGetAdvancedSkillBonuses(...args);
                     };
+
                     const originalLearnAdvancedSkill = window.learnAdvancedSkill;
                     if (originalLearnAdvancedSkill) window.learnAdvancedSkill = async (...args) => {
                         await window.loadSkills();
                         return originalLearnAdvancedSkill(...args);
                     };
+
                     const originalGetAllAdvancedSkills = window.getAllAdvancedSkills;
                     if (originalGetAllAdvancedSkills) window.getAllAdvancedSkills = async (...args) => {
                         await window.loadSkills();
@@ -86,6 +72,32 @@
                     };
                 })();
                 </script>
+
+    <!-- Инициализация на играта -->
+    <script>
+        window.startGameCore();
+    </script>
+
+    <!-- Инициализация на основни скрипти -->
+    <script src="skills.js"></script>
+
+    <!-- Инициализация на основни скрипти в правилен ред -->
+    <script src="core-init.js"></script>
+
+    <svg style="position: absolute; width: 0; height: 0; visibility: hidden;">
+        <defs>
+            <filter id="liquidGlitch" x="-20%" y="-20%" width="140%" height="140%">
+                <feTurbulence type="fractalNoise" baseFrequency="0.02 0.04" numOctaves="2" result="noise" />
+                <feDisplacementMap in="SourceGraphic" in2="noise" scale="8" xChannelSelector="R" yChannelSelector="G" />
+                <feGaussianBlur stdDeviation="0.5" />
+            </filter>
+            <filter id="liquidGlitchStrong" x="-30%" y="-30%" width="160%" height="160%">
+                <feTurbulence type="fractalNoise" baseFrequency="0.03 0.06" numOctaves="3" result="noise" />
+                <feDisplacementMap in="SourceGraphic" in2="noise" scale="15" xChannelSelector="R" yChannelSelector="G" />
+                <feGaussianBlur stdDeviation="1" />
+            </filter>
+        </defs>
+    </svg>
 
     <!-- Инициализация на играта -->
     <script>
@@ -129,7 +141,7 @@
             <div style="text-align: center;">
                 <h3 style="color:#ffd700;">ПОРТАЛ</h3>
                 <div id="clans-container"></div>
-            </div>
+            </aside>
         </aside>
     </main>
 
@@ -161,8 +173,8 @@
     </div>
 
     <!-- Lazy loading на skills.js -->
-    <script>
-        (function() {
+        <script>
+            (function() {
             let skillsLoaded = false, skillsLoading = null;
             window.loadSkills = function() {
                 if (skillsLoaded) return Promise.resolve();
@@ -172,19 +184,19 @@
                     script.src = 'skills.js';
                     script.onload = () => {
                         skillsLoaded = true;
-                        console.log("✅ skills.js зареден lazy");
+                        console.log("✅ skills.js зареден");
                         resolve();
-                    };
+                            };
                     script.onerror = () => reject(new Error("Грешка при зареждане на skills.js"));
                     document.head.appendChild(script);
                 });
                 return skillsLoading;
-            };
-        })();
-    </script>
+                    };
+            })();
+        </script>
 
     <!-- Останалите части от скрипта -->
-    <script>
+        <script>
         function updateHeroNameInTopBar() {
             let hero = null;
             if (window.gameMode === 'solo') hero = window.currentHero;
@@ -212,7 +224,7 @@
             if (window.worldEvents.length > 100) window.worldEvents.pop();
             if (typeof window.displayEvents === 'function') window.displayEvents();
             else console.log("Летопис:", title, desc);
-        };
+                    };
 
         window.displayEvents = function() {
             const cont = document.getElementById('eventsListContainer');
@@ -635,6 +647,4 @@
                 }
             })();
         </script>
-
-        <script src="skills.js"></script>
 
