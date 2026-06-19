@@ -1,17 +1,16 @@
 /**
  * =========================================================================
- * ВЕЛИКА БЪЛГАРИЯ – ЦЕНТРАЛИЗИРАНО СЪСТОЯНИЕ (GameState) GameState клас
+ * ВЕЛИКА БЪЛГАРИЯ – ЦЕНТРАЛИЗИРАНО СЪСТОЯНИЕ (GameState)
  * Версия: 1.0
  * 
- * Единствен източник на истина за цялата игра. Всички глобални променливи
+ * Единствен източник на истина за цялата игра.
+ * Всички глобални променливи (worldData, playerRegions, gameTime и т.н.)
  * ще бъдат пренасочени към този обект, без да се нарушава съществуващият код.
  * =========================================================================
  */
 
-import { EventEmitter } from './eventEmitter.js';
-
 (function() {
-    // Вътрешно състояние
+    // ==================== ВЪТРЕШНО СЪСТОЯНИЕ ====================
     const _state = {
         // Основни данни
         worldData: null,
@@ -53,96 +52,105 @@ import { EventEmitter } from './eventEmitter.js';
         _listeners: new Map()
     };
 
-    // GameState клас
-    class GameState {
-        constructor() {
-            this._state = _state;
-            this._initializeGlobals();
-        }
-
+    // ==================== ПУБЛИЧНИ МЕТОДИ ====================
+    const GameState = {
         // Взимане на стойност
         get(key) {
-            return this._state[key];
-        }
+            return _state[key];
+        },
+        
         // Задаване на стойност (с нотификация)
         set(key, value) {
-            const oldValue = this._state[key];
-            this._state[key] = value;
+            const oldValue = _state[key];
+            _state[key] = value;
             this.notify(key, oldValue, value);
-        }
+        },
+        
         // Обновяване на множество полета наведнъж
         update(updates) {
             for (let [key, value] of Object.entries(updates)) {
-                const oldValue = this._state[key];
-                this._state[key] = value;
+                const oldValue = _state[key];
+                _state[key] = value;
                 this.notify(key, oldValue, value);
             }
-        }
+        },
+        
         // Проверка дали ключ съществува
         has(key) {
-            return key in this._state;
-        }
+            return key in _state;
+        },
+        
         // Слушане за промени
         subscribe(key, callback) {
-            if (!this._state._listeners.has(key)) {
-                this._state._listeners.set(key, []);
+            if (!_state._listeners.has(key)) {
+                _state._listeners.set(key, []);
             }
-            const callbacks = this._state._listeners.get(key);
-            callbacks.push(callback);
-
+            _state._listeners.get(key).push(callback);
+            
+            // Връща функция за unsubscribe
             return () => {
+                const callbacks = _state._listeners.get(key);
+                if (callbacks) {
                     const index = callbacks.indexOf(callback);
                     if (index !== -1) callbacks.splice(index, 1);
+                }
             };
-        }
+        },
+        
         // Нотифициране на слушателите
         notify(key, oldValue, newValue) {
-            const callbacks = this._state._listeners.get(key);
+            const callbacks = _state._listeners.get(key);
             if (callbacks) {
-                callbacks.forEach(callback => {
+                callbacks.forEach(cb => {
                     try {
-                        callback(oldValue, newValue);
+                        cb(oldValue, newValue);
                     } catch(e) {
                         console.error(`Грешка в listener за ${key}:`, e);
                     }
                 });
             }
-        }
+        },
+        
         // Запазване на цялото състояние (за save game)
         export() {
+            // Връщаме копие, за да не може външен код да променя вътрешното състояние директно
             return JSON.parse(JSON.stringify({
-                worldData: this._state.worldData,
-                playerRegions: this._state.playerRegions,
-                gameTime: this._state.gameTime,
-                gameMode: this._state.gameMode,
-                currentRegion: this._state.currentRegion,
-                companions: this._state.companions,
-                unlockedHeroes: this._state.unlockedHeroes,
-                activeQuests: this._state.activeQuests,
-                completedQuests: this._state.completedQuests,
-                currentTurn: this._state.currentTurn,
-                clanRelations: this._state.clanRelations,
-                prisoners: this._state.prisoners,
-                tradeRoutes: this._state.tradeRoutes,
-                investments: this._state.investments,
-                economyHistory: this._state.economyHistory,
-                worldEvents: this._state.worldEvents,
-                economySettings: this._state.economySettings
+                worldData: _state.worldData,
+                playerRegions: _state.playerRegions,
+                gameTime: _state.gameTime,
+                gameMode: _state.gameMode,
+                currentRegion: _state.currentRegion,
+                companions: _state.companions,
+                unlockedHeroes: _state.unlockedHeroes,
+                activeQuests: _state.activeQuests,
+                completedQuests: _state.completedQuests,
+                currentTurn: _state.currentTurn,
+                clanRelations: _state.clanRelations,
+                prisoners: _state.prisoners,
+                tradeRoutes: _state.tradeRoutes,
+                investments: _state.investments,
+                economyHistory: _state.economyHistory,
+                worldEvents: _state.worldEvents,
+                // visitedRegions и activePortals не се запазват (ще се регенерират)
+                economySettings: _state.economySettings
             }));
-        }
+        },
+        
         // Зареждане на състояние (от save file)
         import(data) {
             for (let key in data) {
-                if (key in this._state && key !== '_listeners' && key !== '_initialized') {
-                    this._state[key] = data[key];
+                if (key in _state && key !== '_listeners' && key !== '_initialized') {
+                    _state[key] = data[key];
                     this.notify(key, undefined, data[key]);
                 }
             }
+            // Възстановяване на Set за visitedRegions, ако има данни
             if (data.visitedRegions) {
-                this._state.visitedRegions = new Set(data.visitedRegions);
+                _state.visitedRegions = new Set(data.visitedRegions);
             }
-            this._state._initialized = true;
-        }
+            _state._initialized = true;
+        },
+        
         // Инициализация на начални стойности (ако липсват)
         initDefaults() {
             if (!_state.worldData) _state.worldData = { clans: {}, regions: {} };
@@ -156,15 +164,13 @@ import { EventEmitter } from './eventEmitter.js';
             if (!_state.worldEvents) _state.worldEvents = [];
             _state._initialized = true;
         }
+    };
 
-        // Инициализация на глобални променливи
-        _initializeGlobals() {
-            // Проверка за localStorage
-            if (typeof Storage === 'undefined') {
-                console.error('Вашият браузър не поддържа localStorage. Функционалността може да е ограничена.');
-            }
-
-            // Обратна съвместимост с старите глобални променливи
+    // ==================== ПРОНАСОЧВАНЕ НА СТАРИТЕ ГЛОБАЛНИ ПРОМЕНЛИВИ ====================
+    // Това позволява на съществуващия код да продължи да работи, без да се променя,
+    // докато постепенно мигрираме към GameState.
+    
+    // Дефинираме getter/setter за най-често използваните глобални променливи
     const legacyGlobals = [
         'worldData', 'playerRegions', 'gameTime', 'gameMode', 'currentRegion',
         'companions', 'unlockedHeroes', 'activeQuests', 'completedQuests',
@@ -174,59 +180,33 @@ import { EventEmitter } from './eventEmitter.js';
     
     for (let key of legacyGlobals) {
         Object.defineProperty(window, key, {
-                    get() {
-                        return this.get(key);
-                    },
-                    set(value) {
-                        this.set(key, value);
-                    },
+            get() { return GameState.get(key); },
+            set(value) { GameState.set(key, value); },
             configurable: true,
             enumerable: true
         });
     }
     
-            // Специални случаи
+    // Специални случаи (visitedRegions и activePortals – не са винаги в state, но ги добавяме)
     Object.defineProperty(window, 'visitedRegions', {
-                get() {
-                    return this.get('visitedRegions');
-                },
-                set(value) {
-                    this.set('visitedRegions', value);
-                },
+        get() { return GameState.get('visitedRegions'); },
+        set(value) { GameState.set('visitedRegions', value); },
         configurable: true,
         enumerable: true
     });
     
     Object.defineProperty(window, 'activePortals', {
-                get() {
-                    return this.get('activePortals');
-                },
-                set(value) {
-                    this.set('activePortals', value);
-                },
+        get() { return GameState.get('activePortals'); },
+        set(value) { GameState.set('activePortals', value); },
         configurable: true,
         enumerable: true
     });
     
-    // Инициализираме стандартни стойности
-            this.initDefaults();
-        }
-    }
+    // Експортираме GameState глобално
+    window.GameState = GameState;
     
-    // Инициализираме GameState
-    const gameState = new GameState();
-
-    // Импортираме EventEmitter за нотификации
-    window.GameState = gameState;
-
-    // Проверка за localStorage и error handling
-    if (typeof Storage === 'undefined') {
-        console.error('Вашият браузър не поддържа localStorage. Функционалността може да е ограничена.');
-    }
-
-    // Инициализация на GameState
+    // Инициализираме стандартни стойности
+    GameState.initDefaults();
+    
     console.log("✅ gameState.js зареден – централизирано състояние, обратна съвместимост със старите глобални променливи");
 })();
-
-
-
