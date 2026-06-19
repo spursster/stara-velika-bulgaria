@@ -69,4 +69,29 @@ window.startGameCore = function() {
     })();
 </script>
 
+<!-- Убедитесь, что скрипти загружават се в правилен редок -->
+<script src="core-init.js"></script>
+<script src="logic.js"></script>
+<script src="gameState.js"></script>
+<script src="database.js"></script>
 
+<!-- Инициализация на асинхронната загрузка на skills.js -->
+<script>
+    window.loadSkills = function() {
+        return new Promise((resolve, reject) => {
+            const script = document.createElement('script');
+            script.src = 'skills.js';
+            script.onload = () => {
+                console.log("✅ skills.js загружен");
+                resolve();
+            };
+            script.onerror = () => reject(new Error("skills.js не загрузился"));
+            document.head.appendChild(script);
+        });
+    };
+</script>
+
+<!-- Инициализация игре -->
+<script>
+    window.startGameCore();
+</script>
