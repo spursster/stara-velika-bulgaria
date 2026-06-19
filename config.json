@@ -1,0 +1,10 @@
+{
+  "name": "stara-velika-bulgaria",
+  "title": "Велика България",
+  "version": "7.1",
+  "description": "Епична браузерна стратегическа RPG игра за древна България",
+  "platform": "browser",
+  "language": "Bulgarian",
+  "license": "MIT",
+  "entry": "index.html"
+}
