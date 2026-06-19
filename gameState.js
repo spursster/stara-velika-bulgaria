@@ -228,3 +228,5 @@ import { EventEmitter } from './eventEmitter.js';
     console.log("✅ gameState.js зареден – централизирано състояние, обратна съвместимост със старите глобални променливи");
 })();
 
+
+
